@@ -1,0 +1,27 @@
+@import "tailwindcss" theme(static);
+@import "@nuxt/ui";
+
+body {
+  @apply bg-[#F2F0E9];
+}
+
+@theme static {
+  --color-green-50: #eaf0f1;
+  --color-green-100: #d4e0e2;
+  --color-green-200: #a9c1c5;
+  --color-green-300: #7ea2a8;
+  --color-green-400: #53838b;
+  --color-green-500: #28646e;
+  --color-green-600: #205058;
+  --color-green-700: #183c42;
+  --color-green-800: #10282c;
+  --color-green-900: #081416;
+}
+
+@theme {
+  --breakpoint-phone: 40rem;
+  --breakpoint-tablet: 48rem;
+  --breakpoint-laptop: 64rem;
+  --breakpoint-desktop: 80rem;
+  --breakpoint-widescreen: 90rem;
+}

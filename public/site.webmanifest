@@ -1,0 +1,19 @@
+{
+  "name": "Liker Land (v3)",
+  "short_name": "Liker Land",
+  "icons": [
+    {
+      "src": "/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "theme_color": "#28646e",
+  "background_color": "#F2F0E9",
+  "display": "standalone"
+}

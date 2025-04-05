@@ -1,0 +1,43 @@
+{
+  "name": "liker-land-v3",
+  "version": "0.1.0",
+  "private": false,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "@magiclabs/wagmi-connector": "2.1.0",
+    "@nuxt/eslint": "^1.2.0",
+    "@nuxt/icon": "^1.11.0",
+    "@nuxt/ui": "^3.0.0",
+    "@nuxtjs/i18n": "^9.3.4",
+    "@pinia/nuxt": "^0.10.1",
+    "@tanstack/vue-query": "^5.68.0",
+    "@vueuse/nuxt": "^13.0.0",
+    "@wagmi/vue": "^0.1.14",
+    "epubjs": "^0.3.93",
+    "eslint": "^9.22.0",
+    "i": "^0.3.7",
+    "jwt-decode": "^4.0.0",
+    "npm": "^10.9.2",
+    "nuxt": "^3.16.0",
+    "nuxt-auth-utils": "^0.5.17",
+    "nuxt-security": "^2.2.0",
+    "pinia": "^3.0.1",
+    "typescript": "^5.8.2",
+    "viem": "^2.23.12",
+    "vue": "^3.5.13",
+    "vue-router": "^4.5.0"
+  },
+  "devDependencies": {
+    "@iconify-json/material-symbols": "^1.2.17",
+    "@iconify-json/simple-icons": "^1.2.29"
+  }
+}
