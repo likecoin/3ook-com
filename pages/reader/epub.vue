@@ -421,9 +421,9 @@ async function loadEPub() {
   })
 
   rendition.value.on('relocated', (location: Location) => {
-    const href = location.start.href;
-    if (navItems.value.some((item) => item.href === href)) {
-      activeNavItemHref.value = href;
+    const href = location.start.href
+    if (navItems.value.some(item => item.href === href)) {
+      activeNavItemHref.value = href
     }
     percentage.value = book.locations.percentageFromCfi(location.start.cfi)
   })
