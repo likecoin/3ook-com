@@ -1,0 +1,47 @@
+# Settings for Backend (on Cloud Run).
+# See https://firebase.google.com/docs/app-hosting/configure#cloud-run
+runConfig:
+  minInstances: 0
+  # maxInstances: 100
+  # concurrency: 80
+  # cpu: 1
+  # memoryMiB: 512
+
+# Environment variables and secrets.
+env:
+  # Configure environment variables.
+  # See https://firebase.google.com/docs/app-hosting/configure#user-defined-environment
+  - variable: NODE_OPTIONS
+    value: --max-old-space-size=4096
+    availability:
+      - BUILD
+  - variable: ARWEAVE_ENDPOINT
+    value: https://gateway.irys.xyz
+  - variable: IPFS_ENDPOINT
+    value: https://w3s.link/ipfs
+  - variable: LIKECOIN_API_ENDPOINT
+    value: https://api.like.co
+  - variable: LIKECOIN_CHAIN_API_ENDPOINT
+    value: https://mainnet-node.like.co
+  - variable: LIKECOIN_STATIC_ENDPOINT
+    value: https://static.like.co
+  - variable: LIKER_LAND_V2_URL
+    value: https://liker.land
+  - variable: MAGIC_LINK_API_KEY
+    value: pk_live_583D0D54D78940DA
+  - variable: MAGIC_LINK_CHAIN_ID
+    value: 10
+  - variable: MAGIC_LINK_CUSTOM_LOGO_URL
+    value: https://liker.land/logo.png
+  - variable: MAGIC_LINK_RPC_URL
+    value: https://mainnet.optimism.io
+  - variable: NUXT_SESSION_PASSWORD
+    secret: V3_NUXT_SESSION_PASSWORD
+  - variable: PDF_VIEWER_ORIGIN
+    value: https://likecoin.github.io
+  - variable: PDF_VIEWER_PATH
+    value: /pdf.js/web/viewer.html
+  # Grant access to secrets in Cloud Secret Manager.
+  # See https://firebase.google.com/docs/app-hosting/configure#secret-parameters
+  # - variable: MY_SECRET
+  #   secret: mySecretRef
