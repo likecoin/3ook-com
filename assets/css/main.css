@@ -25,3 +25,12 @@ body {
   --breakpoint-desktop: 80rem;
   --breakpoint-widescreen: 90rem;
 }
+
+@layer utilities {
+  .mb-safe {
+    margin-bottom: env(safe-area-inset-bottom);
+  }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
