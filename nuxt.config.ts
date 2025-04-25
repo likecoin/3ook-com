@@ -80,6 +80,8 @@ export default defineNuxtConfig({
           '\'self\'',
           'blob:',
         ],
+        // NOTE: Resolve Safari force HTTPS in development
+        'upgrade-insecure-requests': process.env.NODE_ENV === 'development' ? false : true,
       },
       // NOTE: Allow Magic Link/PDF.js iframes
       crossOriginEmbedderPolicy: 'unsafe-none',
