@@ -40,7 +40,7 @@ env:
   - variable: PDF_VIEWER_ORIGIN
     value: https://likecoin.github.io
   - variable: PDF_VIEWER_PATH
-    value: /pdf.js/web/viewer.html
+    value: /pdf.js/legacy/web/viewer.html
   # Grant access to secrets in Cloud Secret Manager.
   # See https://firebase.google.com/docs/app-hosting/configure#secret-parameters
   # - variable: MY_SECRET
