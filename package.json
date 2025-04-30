@@ -10,7 +10,8 @@
     "lint:fix": "eslint . --fix",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "typecheck": "nuxt typecheck"
   },
   "dependencies": {
     "@magiclabs/wagmi-connector": "2.1.0",
@@ -31,13 +32,14 @@
     "nuxt-auth-utils": "^0.5.17",
     "nuxt-security": "^2.2.0",
     "pinia": "^3.0.1",
-    "typescript": "^5.8.2",
     "viem": "^2.23.12",
     "vue": "^3.5.13",
     "vue-router": "^4.5.0"
   },
   "devDependencies": {
     "@iconify-json/material-symbols": "^1.2.17",
-    "@iconify-json/simple-icons": "^1.2.29"
+    "@iconify-json/simple-icons": "^1.2.29",
+    "typescript": "^5.8.3",
+    "vue-tsc": "^2.2.10"
   }
 }
