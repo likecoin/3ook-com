@@ -37,7 +37,7 @@ const menuItems = computed(() => [
   },
   {
     label: $t('tab_bar_shelf'),
-    to: { name: 'bookshelf' },
+    to: { name: 'shelf' },
     icon: 'auto-stories-outline',
     iconActive: 'auto-stories',
   },

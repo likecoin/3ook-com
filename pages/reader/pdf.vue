@@ -61,7 +61,7 @@ onMounted(async () => {
       title: $t('error_reader_fetch_metadata_failed'),
       message: (error as Error).message,
       onClose: () => {
-        navigateTo(localeRoute({ name: 'bookshelf' }))
+        navigateTo(localeRoute({ name: 'shelf' }))
       },
     })
     return
@@ -75,7 +75,7 @@ onMounted(async () => {
       title: $t('error_reader_load_pdf_failed'),
       message: (error as Error).message,
       onClose: () => {
-        navigateTo(localeRoute({ name: 'bookshelf' }))
+        navigateTo(localeRoute({ name: 'shelf' }))
       },
     })
   }

@@ -7,7 +7,7 @@
         variant="ghost"
         size="xl"
         icon="i-material-symbols-arrow-back-rounded"
-        :to="localeRoute({ name: 'bookshelf' })"
+        :to="localeRoute({ name: 'shelf' })"
       />
 
       <div>

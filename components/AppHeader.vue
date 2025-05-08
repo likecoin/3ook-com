@@ -59,7 +59,7 @@ const getRouteBaseName = useRouteBaseName()
 
 const menuItems = computed(() => [
   { label: $t('app_header_store'), to: { name: 'store' } },
-  { label: $t('app_header_shelf'), to: { name: 'bookshelf' } },
+  { label: $t('app_header_shelf'), to: { name: 'shelf' } },
 ].map(item => ({
   ...item,
   to: localeRoute(item.to),
