@@ -113,6 +113,21 @@
             <LocaleSwitcher :is-icon-hidden="true" />
           </div>
 
+          <div class="flex justify-between flex-wrap gap-2 px-3">
+            <div class="flex items-center gap-2">
+              <UIcon
+                name="i-material-symbols-arrow-split-rounded"
+                class="size-5"
+              />
+              <span
+                class="text-sm"
+                v-text="$t('user_page_evm_switch')"
+              />
+            </div>
+
+            <USwitch v-model="isEVMMode" />
+          </div>
+
           <UButton
             :label="$t('user_page_contact_support')"
             href="https://go.crisp.chat/chat/embed/?website_id=5c009125-5863-4059-ba65-43f177ca33f7"
@@ -165,9 +180,17 @@
 </template>
 
 <script setup lang="ts">
+const appConfig = useAppConfig()
 const { t: $t } = useI18n()
 const { loggedIn: hasLoggedIn, user } = useUserSession()
 const userStore = useAccountStore()
+
+const isEVMMode = computed({
+  get: () => appConfig.isEVMMode,
+  set: (value) => {
+    updateAppConfig({ isEVMMode: value })
+  },
+})
 
 async function handleLogin() {
   await userStore.login()
