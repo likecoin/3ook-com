@@ -2,7 +2,10 @@
 
 const {
   GA_TRACKING_ID,
+  NODE_ENV,
 } = process.env
+
+const isDevelopment = NODE_ENV === 'development'
 
 export default defineNuxtConfig({
   modules: [
@@ -27,6 +30,7 @@ export default defineNuxtConfig({
       likeCoinAPIEndpoint: process.env.LIKECOIN_API_ENDPOINT,
       likeCoinStaticEndpoint: process.env.LIKECOIN_STATIC_ENDPOINT,
       likeCoinChainAPIEndpoint: process.env.LIKECOIN_CHAIN_API_ENDPOINT,
+      likeCoinEVMChainAPIEndpoint: process.env.LIKECOIN_EVM_CHAIN_API_ENDPOINT,
       likerLandV2URL: process.env.LIKER_LAND_V2_URL,
       magicLinkAPIKey: process.env.MAGIC_LINK_API_KEY,
       magicLinkChainId: Number(process.env.MAGIC_LINK_CHAIN_ID) || 0,
@@ -68,10 +72,12 @@ export default defineNuxtConfig({
           'https://fonts.googleapis.com',
           'https://fonts.gstatic.com',
         ],
-        'frame-src': [
-          process.env.PDF_VIEWER_ORIGIN || '',
-          'https://auth.magic.link',
-        ],
+        'frame-src': isDevelopment
+          ? ['*']
+          : [
+              process.env.PDF_VIEWER_ORIGIN || '',
+              'https://auth.magic.link',
+            ],
         'base-uri': [
           '\'self\'',
         ],
@@ -90,7 +96,7 @@ export default defineNuxtConfig({
           'blob:',
         ],
         // NOTE: Resolve Safari force HTTPS in development
-        'upgrade-insecure-requests': process.env.NODE_ENV === 'development' ? false : true,
+        'upgrade-insecure-requests': isDevelopment ? false : true,
       },
       // NOTE: Allow Magic Link/PDF.js iframes
       crossOriginEmbedderPolicy: 'unsafe-none',

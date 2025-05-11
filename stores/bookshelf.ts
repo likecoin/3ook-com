@@ -1,7 +1,9 @@
 export const useBookshelfStore = defineStore('bookshelf', () => {
   const nftStore = useNFTStore()
   const { loggedIn: hasLoggedIn, user } = useUserSession()
+  const appConfig = useAppConfig()
 
+  const nftByNFTClassIds = ref<Record<string, Record<string, NFT>>>({})
   const nftClassIds = ref<string[]>([])
   const isFetching = ref(false)
   const hasFetched = ref(false)
@@ -16,24 +18,53 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
 
     try {
       isFetching.value = true
-      const res = await fetchLikeCoinChainNFTClasses({
-        nftOwner: user.value?.likeWallet,
-        expand: false,
-        reverse: true,
-        limit: 100,
-        key: isMore ? nextKey.value?.toString() : undefined,
-      })
-      const ids = nftStore.addNFTClasses(res.classes.filter((item) => {
-        const nftMetaCollectionId = item.metadata.nft_meta_collection_id
-        return nftMetaCollectionId?.includes('nft_book') || nftMetaCollectionId?.includes('book_nft')
-      }))
-      if (isMore) {
-        nftClassIds.value.push(...ids)
+      let newNFTClassIds: string[] = []
+      let res: FetchLikeCoinChainNFTsResponseData | FetchLegacyLikeCoinChainNFTClassesResponseData
+      const key = isMore ? nextKey.value?.toString() : undefined
+      if (appConfig.isEVMMode) {
+        const existedNFTClassIdsSet = new Set<string>(isMore ? nftClassIds.value : [])
+        res = await fetchLikeCoinChainNFTs({
+          nftOwner: user.value?.evmWallet,
+          key,
+        })
+        res.data.forEach((item) => {
+          const nftClassId = item.contract_address as `0x${string}`
+          if (!nftByNFTClassIds.value[nftClassId]) {
+            nftByNFTClassIds.value[nftClassId] = {}
+
+            // NOTE: The aggregated metadata response does not include `owner_address`,
+            // so we are manually including it here for now.
+            nftStore.addNFTClass({
+              address: nftClassId,
+              name: item.name,
+              owner_address: item.owner_address,
+            })
+          }
+          if (!existedNFTClassIdsSet.has(nftClassId)) {
+            existedNFTClassIdsSet.add(nftClassId)
+            newNFTClassIds.push(nftClassId)
+          }
+          const nftId = item.token_id
+          nftByNFTClassIds.value[nftClassId][nftId] = item
+        })
       }
       else {
-        nftClassIds.value = ids
+        res = await fetchLegacyLikeCoinChainNFTClasses({
+          nftOwner: user.value?.likeWallet,
+          key,
+        })
+        newNFTClassIds = nftStore.addLegacyNFTClasses(res.classes.filter((item) => {
+          const nftMetaCollectionId = item.metadata?.nft_meta_collection_id
+          return nftMetaCollectionId?.includes('nft_book') || nftMetaCollectionId?.includes('book_nft')
+        }))
       }
       nextKey.value = res.pagination.count < 100 ? undefined : res.pagination.next_key
+      if (isMore) {
+        nftClassIds.value.push(...newNFTClassIds)
+      }
+      else {
+        nftClassIds.value = newNFTClassIds
+      }
     }
     finally {
       isFetching.value = false

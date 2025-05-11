@@ -2,6 +2,8 @@
   "app_header_shelf": "Bookshelf",
   "app_header_store": "Bookstore",
   "bookshelf_more_menu_title": "More Options",
+  "bookshelf_no_items": "Your bookshelf is empty",
+  "bookshelf_no_items_cta_button": "Visit Bookstore",
   "bookshelf_open_in_epub": "Open EPUB",
   "bookshelf_open_in_pdf": "Open PDF",
   "bookshelf_open_in_type": "Open {type}",

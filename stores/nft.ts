@@ -2,8 +2,11 @@ export const useNFTStore = defineStore('nft', () => {
   const iscnStore = useISCNStore()
   const bookstoreStore = useBookstoreStore()
 
-  const nftClassByIdMap = ref<Record<string, NFTClass>>({})
+  const legacyNFTClassByIdMap = ref<Record<string, LegacyNFTClass>>({})
+  const nftClassByIdMap = ref<Record<string, Partial<NFTClass>>>({})
   const nftClassOwnersNFTIdMapByNFTClassIdMap = ref<Record<string, Record<string, NFTIdList>>>({})
+
+  const getLegacyNFTClassById = computed(() => (id: string) => legacyNFTClassByIdMap.value[id])
 
   const getNFTClassById = computed(() => (id: string) => nftClassByIdMap.value[id])
 
@@ -12,7 +15,10 @@ export const useNFTStore = defineStore('nft', () => {
   })
 
   const getISCNIdPrefixByNFTClassId = computed(() => (nftClassId: string) => {
-    const nftClass = getNFTClassById.value(nftClassId)
+    if (checkIsEVMAddress(nftClassId)) {
+      return undefined
+    }
+    const nftClass = getLegacyNFTClassById.value(nftClassId)
     return nftClass?.parent.iscn_id_prefix || undefined
   })
 
@@ -24,14 +30,36 @@ export const useNFTStore = defineStore('nft', () => {
     return iscnStore.getISCNRecordDataByIdPrefix(iscnIdPrefix)
   })
 
-  function addNFTClass(nftClass: NFTClass) {
-    nftClassByIdMap.value[nftClass.id] = nftClass
+  function addLegacyNFTClass(nftClass: LegacyNFTClass) {
+    legacyNFTClassByIdMap.value[nftClass.id] = nftClass
+  }
+
+  function addLegacyNFTClasses(nftClasses: LegacyNFTClass[]) {
+    const nftClassIds: string[] = []
+    for (const nftClass of nftClasses) {
+      nftClassIds.push(nftClass.id)
+      addLegacyNFTClass(nftClass)
+    }
+    return nftClassIds
+  }
+
+  function addNFTClass(nftClass: Partial<NFTClass>) {
+    if (nftClass.address) {
+      nftClassByIdMap.value[nftClass.address] = { ...nftClassByIdMap.value[nftClass.address], ...nftClass }
+    }
+  }
+
+  function addNFTClassMetadata(nftClassId: string, nftClassMetadata: NFTClassMetadata) {
+    nftClassByIdMap.value[nftClassId] = {
+      ...nftClassByIdMap.value[nftClassId],
+      metadata: nftClassMetadata,
+    }
   }
 
   function addNFTClasses(nftClasses: NFTClass[]) {
     const nftClassIds: string[] = []
     for (const nftClass of nftClasses) {
-      nftClassIds.push(nftClass.id)
+      nftClassIds.push(nftClass.address)
       addNFTClass(nftClass)
     }
     return nftClassIds
@@ -40,7 +68,7 @@ export const useNFTStore = defineStore('nft', () => {
   async function fetchNFTClassOwnersById(nftClassId: string) {
     let nextKey: number | undefined
     do {
-      const data = await fetchLikeCoinChainNFTClassOwnersById(nftClassId, { nextKey })
+      const data = await fetchLegacyLikeCoinChainNFTClassOwnersById(nftClassId, { nextKey })
       nextKey = data.pagination.next_key
       if (!nftClassOwnersNFTIdMapByNFTClassIdMap.value[nftClassId]) {
         nftClassOwnersNFTIdMapByNFTClassIdMap.value[nftClassId] = {}
@@ -62,7 +90,12 @@ export const useNFTStore = defineStore('nft', () => {
   async function fetchNFTClassAggregatedMetadataById(nftClassId: string, options?: FetchLikeCoinNFTClassAggregatedMetadataOptions) {
     const data = await fetchLikeCoinNFTClassAggregatedMetadataById(nftClassId, options)
     if (data.classData) {
-      addNFTClass(data.classData)
+      if (checkIsEVMAddress(nftClassId)) {
+        addNFTClassMetadata(nftClassId, data.classData as NFTClassMetadata)
+      }
+      else {
+        addLegacyNFTClass(data.classData as LegacyNFTClass)
+      }
     }
     if (data.ownerInfo) {
       nftClassOwnersNFTIdMapByNFTClassIdMap.value[nftClassId] = data.ownerInfo
@@ -91,15 +124,20 @@ export const useNFTStore = defineStore('nft', () => {
 
   return {
     nftClassByIdMap,
+    legacyNFTClassByIdMap,
     nftClassOwnersNFTIdMapByNFTClassIdMap,
 
     getNFTClassById,
+    getLegacyNFTClassById,
     getISCNIdPrefixByNFTClassId,
     getISCNDataByNFTClassId,
     getNFTClassFirstNFTIdByNFTClassIdAndOwnerWalletAddress,
 
     addNFTClass,
     addNFTClasses,
+    addNFTClassMetadata,
+    addLegacyNFTClass,
+    addLegacyNFTClasses,
     fetchNFTClassOwnersById,
     lazyFetchNFTClassOwnersById,
     fetchNFTClassAggregatedMetadataById,

@@ -2,7 +2,7 @@
   <div>
     <AppHeader />
 
-    <main class="flex flex-col items-center w-full max-w-[1440px] mx-auto px-4 laptop:px-12">
+    <main class="flex flex-col items-center w-full max-w-[1440px] mx-auto px-4 laptop:px-12 grow">
       <UCard
         v-if="!hasLoggedIn"
         class="w-full max-w-sm mt-8"
@@ -13,6 +13,28 @@
           <LoginButton />
         </template>
       </UCard>
+      <div
+        v-else-if="bookshelfStore.items.length === 0 && !bookshelfStore.isFetching && bookshelfStore.hasFetched"
+        class="flex flex-col items-center m-auto"
+      >
+        <UIcon
+          class="opacity-20"
+          name="i-material-symbols-menu-book-outline-rounded"
+          size="128"
+        />
+
+        <span
+          class="font-bold opacity-20"
+          v-text="$t('bookshelf_no_items')"
+        />
+
+        <UButton
+          class="mt-4"
+          leading-icon="i-material-symbols-storefront-outline"
+          :label="$t('bookshelf_no_items_cta_button')"
+          :to="localeRoute({ name: 'store' })"
+        />
+      </div>
       <ul
         v-else
         :class="[

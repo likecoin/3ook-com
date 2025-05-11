@@ -150,7 +150,11 @@ watch(isVisible, (visible) => {
   if (visible) {
     emit('visible', props.id)
     nftStore.lazyFetchNFTClassAggregatedMetadataById(props.id)
-    metadataStore.lazyFetchLikerInfoByWalletAddress(bookInfo.publisherWalletAddress.value)
+    if (bookInfo.publisherWalletAddress.value) {
+      metadataStore.lazyFetchLikerInfoByWalletAddress(bookInfo.publisherWalletAddress.value).catch(() => {
+        // NOTE: Ignore error
+      })
+    }
   }
 })
 

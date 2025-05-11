@@ -1,4 +1,4 @@
-export function normalizeURIToHTTP(url: string) {
+export function normalizeURIToHTTP(url?: string) {
   if (!url) return ''
   const config = useRuntimeConfig()
   const [schema, path] = url.split('://')
@@ -38,4 +38,8 @@ export function getRouteQuery(key: string, defaultValue = '') {
   const route = useRoute()
   const value = route.query[key]
   return (Array.isArray(value) ? value[0] : value) || defaultValue
+}
+
+export function checkIsEVMAddress(address: string) {
+  return /^0x[a-fA-F0-9]{40}$/.test(address)
 }

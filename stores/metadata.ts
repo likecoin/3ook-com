@@ -18,7 +18,7 @@ interface LikerInfo {
 export const useMetadataStore = defineStore('metadata', () => {
   const likerInfoByWalletAddressMap = ref<Record<string, LikerInfo>>({})
 
-  const getLikerInfoByWalletAddress = computed(() => (walletAddress: string) => likerInfoByWalletAddressMap.value[walletAddress])
+  const getLikerInfoByWalletAddress = computed(() => (walletAddress?: string) => walletAddress ? likerInfoByWalletAddressMap.value[walletAddress] : undefined)
 
   const config = useRuntimeConfig()
 

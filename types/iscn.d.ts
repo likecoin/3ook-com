@@ -15,16 +15,22 @@ declare interface ISCNStakeholder {
   rewardProportion: number
 }
 
-declare interface ReadActionTarget {
-  contentType: string
-  url: string
-  name: string
+declare interface PotentialAction {
+  '@type': string
 }
 
-declare interface ReadAction {
-  name: string
-  targets: ReadActionTarget[]
+declare interface ReadActionEntryPoint {
+  '@type': 'EntryPoint'
+  'contentType': string
+  'encodingType': string
+  'url': string
+  'name': string
 }
+
+declare type ReadAction = {
+  '@type': 'ReadAction'
+  'target': ReadActionEntryPoint[]
+} & PotentialAction
 
 declare interface ISCNContentMetadata {
   '@context': string
@@ -40,7 +46,7 @@ declare interface ISCNContentMetadata {
   'keywords': string
   'name': string
   'sameAs': string[]
-  'potentialAction': { ReadAction: ReadAction } | ReadAction[]
+  'potentialAction'?: PotentialAction
   'datePublished'?: string
   'thumbnailUrl': string
   'url'?: string

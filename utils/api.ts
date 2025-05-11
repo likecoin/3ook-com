@@ -1,4 +1,4 @@
-export interface FetchLikeCoinChainNFTClassesConfig {
+export interface FetchLegacyLikeCoinChainNFTClassesConfig {
   classOwner?: string
   nftOwner?: string
   expand?: boolean
@@ -8,23 +8,23 @@ export interface FetchLikeCoinChainNFTClassesConfig {
   nocache?: boolean
 }
 
-export interface FetchLikeCoinChainNFTClassesResponseData {
-  classes: NFTClass[]
+export interface FetchLegacyLikeCoinChainNFTClassesResponseData {
+  classes: LegacyNFTClass[]
   pagination: {
     next_key?: number
     count: number
   }
 }
 
-export function fetchLikeCoinChainNFTClasses({
+export function fetchLegacyLikeCoinChainNFTClasses({
   classOwner,
   nftOwner,
-  expand = true,
-  reverse = false,
-  limit,
+  expand = false,
+  reverse = true,
+  limit = 100,
   key,
   nocache,
-}: FetchLikeCoinChainNFTClassesConfig) {
+}: FetchLegacyLikeCoinChainNFTClassesConfig) {
   const query: Record<string, string> = {}
   if (classOwner) query.iscn_owner = classOwner
   if (nftOwner) query.owner = nftOwner
@@ -33,9 +33,77 @@ export function fetchLikeCoinChainNFTClasses({
   if (limit) query['pagination.limit'] = limit.toString()
   if (key) query['pagination.key'] = key
   if (nocache) query.ts = `${Math.round(new Date().getTime() / 1000)}`
-  const { fetch } = useLikeCoinChainAPI()
-  return fetch<FetchLikeCoinChainNFTClassesResponseData>('/likechain/likenft/v1/class', { query })
+  const { fetch } = useLegacyLikeCoinChainAPI()
+  return fetch<FetchLegacyLikeCoinChainNFTClassesResponseData>('/likechain/likenft/v1/class', { query })
 }
+
+export interface FetchLikeCoinChainNFTClassesConfig {
+  classOwner?: string
+  reverse?: boolean
+  limit?: number
+  key?: string
+  nocache?: boolean
+}
+
+export interface FetchLikeCoinChainNFTClassesResponseData {
+  data: NFTClass[]
+  pagination: {
+    next_key?: number
+    count: number
+  }
+}
+
+export function fetchLikeCoinChainNFTClasses({
+  classOwner,
+  reverse = true,
+  limit = 100,
+  key,
+  nocache,
+}: FetchLikeCoinChainNFTClassesConfig) {
+  const query: Record<string, string> = {}
+  if (reverse) query['pagination.reverse'] = reverse.toString()
+  if (limit) query['pagination.limit'] = limit.toString()
+  if (key) query['pagination.key'] = key
+  if (nocache) query.ts = `${Math.round(new Date().getTime() / 1000)}`
+  const { fetch } = useLikeCoinEVMChainAPI()
+  return fetch<FetchLikeCoinChainNFTClassesResponseData>(`/account/${classOwner}/booknfts`, {
+    query,
+  })
+};
+
+export interface FetchLikeCoinChainNFTsConfig {
+  nftOwner?: string
+  reverse?: boolean
+  limit?: number
+  key?: string
+  nocache?: boolean
+}
+
+export interface FetchLikeCoinChainNFTsResponseData {
+  data: NFT[]
+  pagination: {
+    next_key?: number
+    count: number
+  }
+}
+
+export function fetchLikeCoinChainNFTs({
+  nftOwner,
+  reverse = true,
+  limit = 100,
+  key,
+  nocache,
+}: FetchLikeCoinChainNFTsConfig) {
+  const query: Record<string, string> = {}
+  if (reverse) query['pagination.reverse'] = reverse.toString()
+  if (limit) query['pagination.limit'] = limit.toString()
+  if (key) query['pagination.key'] = key
+  if (nocache) query.ts = `${Math.round(new Date().getTime() / 1000)}`
+  const { fetch } = useLikeCoinEVMChainAPI()
+  return fetch<FetchLikeCoinChainNFTsResponseData>(`/account/${nftOwner}/tokens`, {
+    query,
+  })
+};
 
 export interface FetchISCNRecordsResponseData {
   latest_version: string
@@ -44,11 +112,11 @@ export interface FetchISCNRecordsResponseData {
 }
 
 export function fetchLikeCoinChainISCNRecordsByIdPrefix(iscnIdPrefix: string) {
-  const { fetch } = useLikeCoinChainAPI()
+  const { fetch } = useLegacyLikeCoinChainAPI()
   return fetch<FetchISCNRecordsResponseData>('/iscn/records/id', { query: { iscn_id: iscnIdPrefix } })
 }
 
-interface FetchLikeCoinChainNFTClassOwnersResponseData {
+interface FetchLegacyLikeCoinChainNFTClassOwnersResponseData {
   owners: NFTOwner[]
   pagination: {
     next_key?: number
@@ -56,9 +124,9 @@ interface FetchLikeCoinChainNFTClassOwnersResponseData {
   }
 }
 
-export function fetchLikeCoinChainNFTClassOwnersById(nftClassId: string, { nextKey }: { nextKey?: number } = {}) {
-  const { fetch } = useLikeCoinChainAPI()
-  return fetch<FetchLikeCoinChainNFTClassOwnersResponseData>('/likechain/likenft/v1/owner', {
+export function fetchLegacyLikeCoinChainNFTClassOwnersById(nftClassId: string, { nextKey }: { nextKey?: number } = {}) {
+  const { fetch } = useLegacyLikeCoinChainAPI()
+  return fetch<FetchLegacyLikeCoinChainNFTClassOwnersResponseData>('/likechain/likenft/v1/owner', {
     query: { class_id: nftClassId, next_key: nextKey },
   })
 }
@@ -70,7 +138,7 @@ export interface FetchLikeCoinNFTClassAggregatedMetadataOptions {
 }
 
 export interface FetchLikeCoinNFTClassAggregatedMetadataResponseData {
-  classData: NFTClass | null
+  classData: LegacyNFTClass | NFTClassMetadata | null
   iscnData: ISCNData | null
   ownerInfo: Record<string, NFTIdList> | null
   bookstoreInfo: BookstoreInfo | null
