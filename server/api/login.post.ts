@@ -50,6 +50,7 @@ export default defineEventHandler(async (event) => {
         signature: body.signature,
         message: body.message,
         signMethod: 'personal_sign',
+        expiresIn: '30d',
       },
     })
 
