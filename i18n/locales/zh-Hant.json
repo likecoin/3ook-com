@@ -13,7 +13,7 @@
   "error_reader_fetch_metadata_failed": "讀取書本元資料失敗",
   "error_reader_load_epub_failed": "載入 EPUB 失敗",
   "error_reader_load_pdf_failed": "載入 PDF 失敗",
-  "error_token_expired": "登入階段失效。",
+  "error_token_expired": "請重新登入。",
   "error_unknown": "未知錯誤",
   "footer_contact_us": "聯絡我們",
   "footer_terms": "使用條款",
