@@ -41,7 +41,7 @@ const {
   bookCoverSrc,
   bookFileURLWithCORS,
 } = useReader()
-const errorModal = useErrorModal()
+const { handleError } = useErrorHandler()
 
 const fileBuffer = ref<ArrayBuffer | null>(null)
 const iframeElementForPDFViewer = useTemplateRef<HTMLIFrameElement>('reader')
@@ -57,9 +57,8 @@ onMounted(async () => {
     await nftStore.lazyFetchNFTClassAggregatedMetadataById(nftClassId.value)
   }
   catch (error) {
-    await errorModal.open({
+    await handleError(error, {
       title: $t('error_reader_fetch_metadata_failed'),
-      message: (error as Error).message,
       onClose: () => {
         navigateTo(localeRoute({ name: 'shelf' }))
       },
@@ -71,9 +70,8 @@ onMounted(async () => {
     await loadPDF()
   }
   catch (error) {
-    await errorModal.open({
+    await handleError(error, {
       title: $t('error_reader_load_pdf_failed'),
-      message: (error as Error).message,
       onClose: () => {
         navigateTo(localeRoute({ name: 'shelf' }))
       },

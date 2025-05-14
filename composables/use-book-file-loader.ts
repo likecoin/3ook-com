@@ -34,6 +34,10 @@ export default function () {
       },
     })
     if (!res.ok) {
+      const errorText = await res.text()
+      if (errorText) {
+        throw new Error(errorText)
+      }
       throw new Error('FAILED_TO_LOAD_FILE')
     }
 

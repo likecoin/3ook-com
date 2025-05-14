@@ -251,7 +251,7 @@ const {
   bookCoverSrc,
   bookFileURLWithCORS,
 } = useReader()
-const errorModal = useErrorModal()
+const { handleError } = useErrorHandler()
 const overlay = useOverlay()
 
 const textToSpeechWIPModal = overlay.create(WIPModal, {
@@ -271,9 +271,8 @@ onMounted(async () => {
     await nftStore.lazyFetchNFTClassAggregatedMetadataById(nftClassId.value)
   }
   catch (error) {
-    await errorModal.open({
+    await handleError(error, {
       title: $t('error_reader_fetch_metadata_failed'),
-      message: (error as Error).message,
       onClose: () => {
         navigateTo(localeRoute({ name: 'shelf' }))
       },
@@ -285,9 +284,8 @@ onMounted(async () => {
     await loadEPub()
   }
   catch (error) {
-    await errorModal.open({
+    await handleError(error, {
       title: $t('error_reader_load_epub_failed'),
-      message: (error as Error).message,
       onClose: () => {
         navigateTo(localeRoute({ name: 'shelf' }))
       },

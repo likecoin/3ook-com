@@ -11,7 +11,7 @@ export const useAccountStore = defineStore('account', () => {
   const { signMessageAsync } = useSignMessage()
   const { fetch: refreshSession } = useUserSession()
   const overlay = useOverlay()
-  const errorModal = useErrorModal()
+  const { errorModal, handleError } = useErrorHandler()
   const { t: $t } = useI18n()
 
   const loginModal = overlay.create(LoginModal)
@@ -85,9 +85,7 @@ export const useAccountStore = defineStore('account', () => {
       if (error instanceof FetchError && error.data?.message === 'LIKECOIN_WALLET_ADDRESS_NOT_FOUND') {
         await errorModal.open({ description: $t('error_likecoin_wallet_address_not_found', { address: address.value }) })
       }
-      else {
-        console.error(error)
-      }
+      await handleError(error)
       return login()
     }
     finally {
