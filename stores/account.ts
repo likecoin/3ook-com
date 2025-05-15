@@ -9,7 +9,7 @@ export const useAccountStore = defineStore('account', () => {
   const { connectAsync, connectors, status } = useConnect()
   const { disconnectAsync } = useDisconnect()
   const { signMessageAsync } = useSignMessage()
-  const { fetch: refreshSession } = useUserSession()
+  const { fetch: refreshSession, user } = useUserSession()
   const overlay = useOverlay()
   const { errorModal, handleError } = useErrorHandler()
   const { t: $t } = useI18n()
@@ -19,6 +19,24 @@ export const useAccountStore = defineStore('account', () => {
   const likeWallet = ref<string | null>(null)
   const isLoggingIn = ref(false)
   const isConnectModalOpen = ref(false)
+
+  const isEVMModeActive = ref<boolean>(user.value?.isEVMModeActive || false)
+  const isEVMMode = computed({
+    get: () => isEVMModeActive.value,
+    set: async (value) => {
+      const prevValue = isEVMModeActive.value
+      isEVMModeActive.value = value
+      try {
+        await updateSettings({ isEVMModeActive: value })
+      }
+      catch (error) {
+        isEVMModeActive.value = prevValue
+        handleError(error, {
+          description: $t('account_page_update_settings_error'),
+        })
+      }
+    },
+  })
 
   async function login() {
     try {
@@ -99,12 +117,19 @@ export const useAccountStore = defineStore('account', () => {
     await refreshSession()
   }
 
+  async function updateSettings(params: { isEVMModeActive?: boolean } = {}) {
+    await $fetch('/api/account/settings', { method: 'POST', body: params })
+    await refreshSession()
+  }
+
   return {
     likeWallet,
     isLoggingIn,
     isConnectModalOpen,
+    isEVMMode,
 
     login,
     logout,
+    updateSettings,
   }
 })

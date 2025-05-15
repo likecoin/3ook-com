@@ -8,6 +8,7 @@ declare module '#auth-utils' {
     likeWallet: string
     jwtId: string
     token: string
+    isEVMModeActive?: boolean
   }
 }
 

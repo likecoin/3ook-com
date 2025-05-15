@@ -1,7 +1,7 @@
 export const useBookshelfStore = defineStore('bookshelf', () => {
   const nftStore = useNFTStore()
   const { loggedIn: hasLoggedIn, user } = useUserSession()
-  const appConfig = useAppConfig()
+  const accountStore = useAccountStore()
 
   const nftByNFTClassIds = ref<Record<string, Record<string, NFT>>>({})
   const nftClassIds = ref<string[]>([])
@@ -21,7 +21,7 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
       let newNFTClassIds: string[] = []
       let res: FetchLikeCoinChainNFTsResponseData | FetchLegacyLikeCoinChainNFTClassesResponseData
       const key = isMore ? nextKey.value?.toString() : undefined
-      if (appConfig.isEVMMode) {
+      if (accountStore.isEVMMode) {
         const existedNFTClassIdsSet = new Set<string>(isMore ? nftClassIds.value : [])
         res = await fetchLikeCoinChainNFTs({
           nftOwner: user.value?.evmWallet,
