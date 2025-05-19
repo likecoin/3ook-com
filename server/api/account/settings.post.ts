@@ -4,7 +4,7 @@ export default defineEventHandler(async (event) => {
   await setUserSession(event, {
     user: {
       ...session.user,
-      isEVMModeActive: body.isEVMModeActive || session.user.isEVMModeActive || false,
+      isEVMModeActive: body.isEVMModeActive ?? session.user.isEVMModeActive ?? false,
     },
   })
 })

@@ -20,7 +20,7 @@ export const useAccountStore = defineStore('account', () => {
   const isLoggingIn = ref(false)
   const isConnectModalOpen = ref(false)
 
-  const isEVMModeActive = ref<boolean>(user.value?.isEVMModeActive || false)
+  const isEVMModeActive = ref<boolean>(user.value?.isEVMModeActive ?? false)
   const isEVMMode = computed({
     get: () => isEVMModeActive.value,
     set: async (value) => {
