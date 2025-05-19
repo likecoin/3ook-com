@@ -20,6 +20,7 @@
     "@nuxt/ui": "^3.0.0",
     "@nuxtjs/i18n": "^9.3.4",
     "@pinia/nuxt": "^0.10.1",
+    "@sentry/nuxt": "^9.20.0",
     "@tanstack/vue-query": "^5.68.0",
     "@vueuse/nuxt": "^13.0.0",
     "@wagmi/vue": "^0.1.14",
@@ -42,5 +43,8 @@
     "@iconify-json/simple-icons": "^1.2.29",
     "typescript": "^5.8.3",
     "vue-tsc": "^2.2.10"
+  },
+  "overrides": {
+    "@vercel/nft": "^0.27.4"
   }
 }

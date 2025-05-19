@@ -16,12 +16,16 @@ export default defineNuxtConfig({
     '@vueuse/nuxt',
     'nuxt-security',
     'nuxt-gtag',
+    '@sentry/nuxt/module',
   ],
+
   devtools: { enabled: true },
   css: ['~/assets/css/main.css'],
+
   ui: {
     colorMode: false,
   },
+
   runtimeConfig: {
     public: {
       likeCoinAPIEndpoint: process.env.LIKECOIN_API_ENDPOINT,
@@ -38,10 +42,17 @@ export default defineNuxtConfig({
       pdfViewerURL: `${process.env.PDF_VIEWER_ORIGIN}${process.env.PDF_VIEWER_PATH}`,
     },
   },
+
+  sourcemap: {
+    client: 'hidden',
+  },
+
   compatibilityDate: '2024-11-01',
+
   gtag: {
     id: GA_TRACKING_ID,
   },
+
   i18n: {
     locales: [
       {
@@ -58,6 +69,7 @@ export default defineNuxtConfig({
     lazy: true,
     defaultLocale: 'zh-Hant',
   },
+
   security: {
     headers: {
       contentSecurityPolicy: {
@@ -94,6 +106,13 @@ export default defineNuxtConfig({
       },
       // NOTE: Allow Magic Link/PDF.js iframes
       crossOriginEmbedderPolicy: 'unsafe-none',
+    },
+  },
+
+  sentry: {
+    sourceMapsUploadOptions: {
+      org: 'likerland-team',
+      project: 'liker-land-v3',
     },
   },
 })
