@@ -40,6 +40,7 @@ export default defineNuxtConfig({
       ipfsEndpoint: process.env.IPFS_ENDPOINT,
       pdfViewerOrigin: process.env.PDF_VIEWER_ORIGIN,
       pdfViewerURL: `${process.env.PDF_VIEWER_ORIGIN}${process.env.PDF_VIEWER_PATH}`,
+      sentryDsn: process.env.SENTRY_DSN,
     },
   },
 

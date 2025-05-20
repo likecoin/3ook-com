@@ -1,10 +1,11 @@
 import * as Sentry from '@sentry/nuxt'
 
-if (process.env.NODE_ENV !== 'development') {
+const sentryDsn = useRuntimeConfig().public.sentryDsn
+if (sentryDsn) {
   Sentry.init({
     // If set up, you can use your runtime config here
     // dsn: useRuntimeConfig().public.sentry.dsn,
-    dsn: 'https://07b4bd03c1d828f7e241ccc9e47a2f80@o149940.ingest.us.sentry.io/4509350693240832',
+    dsn: sentryDsn,
 
     // We recommend adjusting this value in production, or using tracesSampler
     // for finer control
