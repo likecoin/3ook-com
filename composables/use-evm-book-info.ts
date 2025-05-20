@@ -24,7 +24,7 @@ export function useEVMBookInfo({ nftClassId = '' }: { nftClassId?: string } = {}
     return new Date(contentMetadata.value?.recordTimestamp || Date.now())
   })
 
-  const externalURL = computed(() => contentMetadata.value?.external_url)
+  const externalURL = computed(() => contentMetadata.value?.external_link)
 
   const contentFingerprints = computed(() => contentMetadata.value?.contentFingerprints || [])
 
