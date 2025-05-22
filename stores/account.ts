@@ -26,6 +26,7 @@ export const useAccountStore = defineStore('account', () => {
     set: async (value) => {
       const prevValue = isEVMModeActive.value
       isEVMModeActive.value = value
+      if (!user.value) return
       try {
         await updateSettings({ isEVMModeActive: value })
       }
@@ -37,6 +38,13 @@ export const useAccountStore = defineStore('account', () => {
       }
     },
   })
+
+  watch(
+    () => user.value,
+    (user) => {
+      isEVMModeActive.value = user?.isEVMModeActive ?? false
+    },
+  )
 
   async function login() {
     try {

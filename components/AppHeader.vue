@@ -38,6 +38,7 @@
             class="bg-white border-[#EBEBEB]"
             :src="user?.avatar"
             :alt="user?.displayName"
+            icon="i-material-symbols-person-2-rounded"
             size="xl"
           />
         </NuxtLink>

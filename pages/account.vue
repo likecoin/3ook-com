@@ -11,6 +11,7 @@
           class="bg-white border-[#EBEBEB]"
           :src="user?.avatar"
           :alt="user?.displayName"
+          icon="i-material-symbols-person-2-rounded"
           size="3xl"
         />
         <div
@@ -109,7 +110,10 @@
             icon="i-material-symbols-arrow-split-rounded"
             :label="$t('user_page_evm_switch')"
           >
-            <USwitch v-model="accountStore.isEVMMode" />
+            <USwitch
+              v-model="accountStore.isEVMMode"
+              :disabled="!user?.likeWallet"
+            />
           </AccountSettingsItem>
 
           <UButton

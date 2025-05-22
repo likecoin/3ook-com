@@ -1,5 +1,7 @@
 import { jwtDecode } from 'jwt-decode'
 
+import { checkIsEVMAddress } from '~/utils'
+
 export default defineEventHandler(async (event) => {
   let body: {
     walletAddress: string
@@ -12,6 +14,12 @@ export default defineEventHandler(async (event) => {
       throw createError({
         status: 400,
         message: 'MISSING_ADDRESS',
+      })
+    }
+    if (!checkIsEVMAddress(body.walletAddress)) {
+      throw createError({
+        status: 400,
+        message: 'INVALID_ADDRESS',
       })
     }
     if (!body.message) {
@@ -37,47 +45,64 @@ export default defineEventHandler(async (event) => {
 
   const config = useRuntimeConfig()
   try {
-    const authorizeRes = await $fetch<{
-      jwtid: string
-      token: string
-    }>(`${config.public.likeCoinAPIEndpoint}/wallet/authorize`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: {
-        wallet: body.walletAddress,
-        signature: body.signature,
-        message: body.message,
-        signMethod: 'personal_sign',
-        expiresIn: '30d',
-      },
-    })
-
-    const { likeWallet } = jwtDecode<{ likeWallet: string }>(authorizeRes.token)
-    if (!likeWallet) {
-      throw createError({
-        status: 401,
-        message: 'LIKECOIN_WALLET_ADDRESS_NOT_FOUND',
+    let likeWallet: string | undefined
+    let jwtId: string | undefined
+    let token: string | undefined
+    try {
+      const authorizeRes = await $fetch<{
+        jwtid: string
+        token: string
+      }>(`${config.public.likeCoinAPIEndpoint}/wallet/authorize`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: {
+          wallet: body.walletAddress,
+          signature: body.signature,
+          message: body.message,
+          signMethod: 'personal_sign',
+          expiresIn: '30d',
+        },
       })
+      ;({ likeWallet } = jwtDecode<{ likeWallet: string }>(authorizeRes.token))
+      jwtId = authorizeRes.jwtid
+      token = authorizeRes.token
+    }
+    catch {
+      console.warn('Failed to authorize wallet')
     }
 
-    const userInfoRes = await $fetch<{
-      user: string
-      displayName: string
-      avatar: string
-      description: string
-    }>(`${config.public.likeCoinAPIEndpoint}/users/addr/${likeWallet}/min`)
+    let likerId: string | undefined
+    let displayName: string | undefined
+    let description: string | undefined
+    let avatar: string | undefined
+    try {
+      const userInfoRes = await $fetch<{
+        user: string
+        displayName: string
+        description: string
+        avatar: string
+      }>(`${config.public.likeCoinAPIEndpoint}/users/addr/${body.walletAddress}/min`)
+      likerId = userInfoRes.user
+      displayName = userInfoRes.displayName
+      avatar = userInfoRes.avatar
+      description = userInfoRes.description
+    }
+    catch {
+      console.warn('Failed to fetch user info for wallet')
+    }
 
     const userInfo = {
-      likerId: userInfoRes.user,
-      displayName: userInfoRes.displayName,
-      avatar: userInfoRes.avatar,
-      description: userInfoRes.description,
       evmWallet: body.walletAddress,
-      likeWallet: likeWallet,
-      token: authorizeRes.token,
-      jwtId: authorizeRes.jwtid,
+      likeWallet,
+      token,
+      jwtId,
+      likerId,
+      displayName,
+      description,
+      avatar,
+      isEVMModeActive: !likeWallet,
     }
     await setUserSession(event, { user: userInfo })
 
