@@ -1,6 +1,7 @@
 <template>
   <div class="relative flex items-end aspect-2/3">
     <img
+      ref="imgElement"
       :class="[
         'bg-white',
         'border',
@@ -59,6 +60,14 @@ const emit = defineEmits(['click'])
 
 const hasLoaded = ref(false)
 const hasError = ref(false)
+
+const imgElement = useTemplateRef<HTMLImageElement>('imgElement')
+
+onMounted(() => {
+  if (imgElement.value?.complete) {
+    hasLoaded.value = true
+  }
+})
 
 watch(
   () => props.src,
