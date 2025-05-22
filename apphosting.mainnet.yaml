@@ -15,6 +15,12 @@ env:
     value: --max-old-space-size=4096
     availability:
       - BUILD
+  - variable: AIRTABLE_CMS_BASE_ID
+    value: appdrA6ruqhPRRFQj
+  - variable: AIRTABLE_CMS_PRODUCTS_TABLE_ID
+    value: tblYTTj9AkyKAi8Md
+  - variable: AIRTABLE_API_SECRET
+    secret: V3_AIRTABLE_API_SECRET
   - variable: ARWEAVE_ENDPOINT
     value: https://gateway.irys.xyz
   - variable: IPFS_ENDPOINT

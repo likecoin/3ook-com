@@ -30,7 +30,10 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
+    airtableAPISecret: process.env.AIRTABLE_API_SECRET,
     public: {
+      airtableCMSBaseId: process.env.AIRTABLE_CMS_BASE_ID,
+      airtableCMSProductsTableId: process.env.AIRTABLE_CMS_PRODUCTS_TABLE_ID,
       likeCoinAPIEndpoint: process.env.LIKECOIN_API_ENDPOINT,
       likeCoinStaticEndpoint: process.env.LIKECOIN_STATIC_ENDPOINT,
       likeCoinChainAPIEndpoint: process.env.LIKECOIN_CHAIN_API_ENDPOINT,

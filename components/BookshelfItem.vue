@@ -90,9 +90,6 @@ const metadataStore = useMetadataStore()
 const bookInfo = useBookInfo({ nftClassId: props.nftClassId })
 const bookCoverSrc = computed(() => getResizedImageURL(bookInfo.coverSrc.value, { size: 300 }))
 
-const lazyLoadTriggerElement = useTemplateRef<HTMLLIElement>('lazyLoadTrigger')
-const isVisible = useElementVisibility(lazyLoadTriggerElement, { once: true })
-
 const isLargerScreen = useMediaQuery('(min-width: 1024px)')
 
 const menuItems = computed<DropdownMenuItem[]>(() => {
@@ -128,7 +125,7 @@ const menuItems = computed<DropdownMenuItem[]>(() => {
   ]
 })
 
-watch(isVisible, (visible) => {
+useVisibility('lazyLoadTrigger', (visible) => {
   if (visible) {
     emit('visible', props.nftClassId)
     nftStore.lazyFetchNFTClassAggregatedMetadataById(props.nftClassId).catch(() => {

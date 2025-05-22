@@ -115,7 +115,7 @@ watch(
   () => hasLoggedIn.value,
   async (hasLoggedIn) => {
     if (hasLoggedIn) {
-      await bookshelfStore.fetchItems()
+      await bookshelfStore.fetchItems({ isRefresh: true })
     }
   },
 )
@@ -124,7 +124,7 @@ watch(
   () => shouldLoadMore.value,
   (shouldLoadMore) => {
     if (shouldLoadMore) {
-      bookshelfStore.fetchItems({ isMore: true })
+      bookshelfStore.fetchItems()
     }
   },
 )

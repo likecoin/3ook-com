@@ -11,8 +11,8 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
 
   const items = computed(() => nftClassIds.value.map(nftClassId => ({ id: nftClassId, nftClassId })))
 
-  async function fetchItems({ isMore = false } = {}) {
-    if (!hasLoggedIn.value || isFetching.value || (isMore && !nextKey.value)) {
+  async function fetchItems({ isRefresh = false } = {}) {
+    if (!hasLoggedIn.value || isFetching.value || (!isRefresh && !nextKey.value)) {
       return
     }
 
@@ -20,9 +20,9 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
       isFetching.value = true
       let newNFTClassIds: string[] = []
       let res: FetchLikeCoinChainNFTsResponseData | FetchLegacyLikeCoinChainNFTClassesResponseData
-      const key = isMore ? nextKey.value?.toString() : undefined
+      const key = isRefresh ? undefined : nextKey.value?.toString()
       if (accountStore.isEVMMode) {
-        const existedNFTClassIdsSet = new Set<string>(isMore ? nftClassIds.value : [])
+        const existedNFTClassIdsSet = new Set<string>(isRefresh ? [] : nftClassIds.value)
         res = await fetchLikeCoinChainNFTs({
           nftOwner: user.value?.evmWallet,
           key,
@@ -59,11 +59,11 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
         }))
       }
       nextKey.value = res.pagination.count < 100 ? undefined : res.pagination.next_key
-      if (isMore) {
-        nftClassIds.value.push(...newNFTClassIds)
+      if (isRefresh) {
+        nftClassIds.value = newNFTClassIds
       }
       else {
-        nftClassIds.value = newNFTClassIds
+        nftClassIds.value.push(...newNFTClassIds)
       }
     }
     finally {
