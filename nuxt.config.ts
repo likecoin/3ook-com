@@ -31,6 +31,8 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     airtableAPISecret: process.env.AIRTABLE_API_SECRET,
+    azureSubscriptionKey: process.env.AZURE_SUBSCRIPTION_KEY,
+    azureServiceRegion: process.env.AZURE_SERVICE_REGION || 'westus2',
     public: {
       airtableCMSBaseId: process.env.AIRTABLE_CMS_BASE_ID,
       airtableCMSProductsTableId: process.env.AIRTABLE_CMS_PRODUCTS_TABLE_ID,
