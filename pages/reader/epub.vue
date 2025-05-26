@@ -217,6 +217,7 @@ import ePub, {
   type Rendition as RenditionBase,
   type NavItem,
   type Location,
+  EpubCFI,
 } from 'epubjs'
 
 import type Section from 'epubjs/types/section'
@@ -296,6 +297,7 @@ onMounted(async () => {
 })
 
 const rendition = ref<Rendition>()
+const textContentElements = ref<{ cfi: string, el: Element, text: string }[]>([])
 
 const navItems = ref<NavItem[]>([])
 const activeNavItemLabel = computed(() => {
@@ -315,6 +317,7 @@ const isAtFirstPage = computed(() => {
   return currentSectionIndex.value === 0 && percentage.value === 0
 })
 const isRightToLeft = ref(false)
+const currentPageEndCfi = ref<string>('')
 
 const FONT_SIZE_OPTIONS = [
   6, 8, 10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 40, 48, 56, 64, 72,
@@ -391,6 +394,15 @@ async function loadEPub() {
 
   rendition.value.on('rendered', (section: Section, view: EpubView) => {
     currentSectionIndex.value = section.index
+    textContentElements.value = Array.from(section.contents.querySelectorAll('p, h1, h2, h3, h4, h5, h6'))
+      .filter(element => !!element.textContent?.trim())
+      .map((el) => {
+        const range = new Range()
+        range.selectNodeContents(el)
+        const cfi = section.cfiFromRange(range)
+        return { cfi, el, text: el.textContent?.trim() || '' }
+      })
+
     isRightToLeft.value = view.settings.direction === 'rtl'
 
     if (cleanUpClickListener) {
@@ -419,6 +431,7 @@ async function loadEPub() {
   })
 
   rendition.value.on('relocated', (location: Location) => {
+    currentPageEndCfi.value = location.end.cfi
     const href = location.start.href
     if (navItems.value.some(item => item.href === href)) {
       activeNavItemHref.value = href
