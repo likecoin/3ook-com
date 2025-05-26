@@ -58,21 +58,38 @@
               @click="isDesktopToCOpen = !isDesktopToCOpen"
             />
 
-            <UButton
-              class="laptop:hidden"
-              icon="i-material-symbols-headphones-rounded"
-              variant="ghost"
-              :disabled="isReaderLoading"
-              @click="textToSpeechWIPModal.open"
-            />
-            <UButton
-              class="max-laptop:hidden"
-              icon="i-material-symbols-headphones-rounded"
-              :label="$t('reader_text_to_speech_button')"
-              variant="ghost"
-              :disabled="isReaderLoading"
-              @click="textToSpeechWIPModal.open"
-            />
+            <template v-if="!isTextToSpeechPlaying || isTextToSpeechPaused">
+              <UButton
+                class="laptop:hidden"
+                icon="i-material-symbols-headphones-rounded"
+                variant="ghost"
+                :disabled="isReaderLoading"
+                @click="startTextToSpeech"
+              />
+              <UButton
+                class="max-laptop:hidden"
+                icon="i-material-symbols-headphones-rounded"
+                :label="$t('reader_text_to_speech_button')"
+                variant="ghost"
+                :disabled="isReaderLoading"
+                @click="startTextToSpeech"
+              />
+            </template>
+            <template v-else>
+              <UButton
+                class="laptop:hidden"
+                icon="i-material-symbols-pause-rounded"
+                variant="ghost"
+                @click="pauseTextToSpeech"
+              />
+              <UButton
+                class="max-laptop:hidden"
+                icon="i-material-symbols-pause-rounded"
+                :label="$t('reader_text_to_speech_button')"
+                variant="ghost"
+                @click="pauseTextToSpeech"
+              />
+            </template>
 
             <USlideover
               :title="$t('reader_display_options_button')"
@@ -221,7 +238,6 @@ import ePub, {
 } from 'epubjs'
 
 import type Section from 'epubjs/types/section'
-import { WIPModal } from '#components'
 
 declare interface EpubView {
   window: Window
@@ -253,13 +269,6 @@ const {
   bookFileURLWithCORS,
 } = useReader()
 const { handleError } = useErrorHandler()
-const overlay = useOverlay()
-
-const textToSpeechWIPModal = overlay.create(WIPModal, {
-  props: {
-    title: $t('reader_text_to_speech_title'),
-  },
-})
 
 const isReaderLoading = ref(false)
 const isDesktopToCOpen = ref(false)
@@ -428,6 +437,10 @@ async function loadEPub() {
         }
       }
     })
+
+    if (isTextToSpeechPlaying.value) {
+      startTextToSpeech()
+    }
   })
 
   rendition.value.on('relocated', (location: Location) => {
@@ -482,6 +495,103 @@ function increaseFontSize() {
 
 function decreaseFontSize() {
   adjustFontSize(-1)
+}
+
+const isTextToSpeechPlaying = ref(false)
+const isTextToSpeechPaused = ref(false)
+const audioQueue = ref<HTMLAudioElement[]>([])
+const currentAudioIndex = ref(0)
+
+function pauseTextToSpeech() {
+  if (isTextToSpeechPlaying.value) {
+    if (audioQueue.value[currentAudioIndex.value]) {
+      audioQueue.value[currentAudioIndex.value].pause()
+    }
+    isTextToSpeechPaused.value = true
+  }
+}
+
+function createAudio(element: { cfi: string, el: Element, text: string }) {
+  const audio = new Audio()
+  const params = new URLSearchParams({
+    text: element.text,
+    language: 'zh-HK',
+    voice: 'female1',
+    rate: '1.0',
+  })
+  audio.src = `/api/reader/tts?${params.toString()}`
+
+  audio.onplay = () => {
+    rendition.value?.display(element.cfi)
+    rendition.value?.annotations.remove(element.cfi, 'highlight')
+    rendition.value?.annotations.highlight(element.cfi, {}, () => {}, '', {
+      fill: '#FFEB3B',
+    })
+  }
+  audio.onended = () => {
+    rendition.value?.annotations.remove(element.cfi, 'highlight')
+    if (audioQueue.value.length < textContentElements.value.length) {
+      const nextAudio = createAudio(textContentElements.value[audioQueue.value.length])
+      audioQueue.value.push(nextAudio)
+    }
+    if (currentAudioIndex.value < audioQueue.value.length - 1) {
+      currentAudioIndex.value++
+      const element = textContentElements.value[currentAudioIndex.value]
+      const cfi = new EpubCFI(element.cfi)
+      if (cfi.compare(cfi, currentPageEndCfi.value) >= 0) {
+        nextPage()
+      }
+      audioQueue.value[currentAudioIndex.value].play()
+    }
+    else {
+      nextPage()
+    }
+  }
+
+  audio.onerror = (e) => {
+    console.error('Audio playback error:', e)
+  }
+  return audio
+}
+
+async function startTextToSpeech() {
+  if (isTextToSpeechPaused.value) {
+    isTextToSpeechPaused.value = false
+    if (audioQueue.value[currentAudioIndex.value]) {
+      audioQueue.value[currentAudioIndex.value].play()
+    }
+    return
+  }
+
+  audioQueue.value.forEach((audio) => {
+    audio.pause()
+    audio.src = ''
+  })
+  audioQueue.value = []
+  currentAudioIndex.value = 0
+  isTextToSpeechPlaying.value = true
+
+  try {
+    // load up to 2 paragraphs for text-to-speech
+    for (let i = 0; i < Math.min(2, textContentElements.value.length); i++) {
+      const audio = createAudio(textContentElements.value[i])
+      audioQueue.value.push(audio)
+    }
+
+    if (audioQueue.value.length > 0) {
+      audioQueue.value[0].play()
+    }
+    else {
+      nextPage()
+    }
+  }
+  catch (error) {
+    console.error('Text to speech error:', error)
+    isTextToSpeechPlaying.value = false
+    await handleError(error, {
+      title: $t('error_text_to_speech_failed'),
+    })
+  }
 }
 
 const isShiftPressed = useKeyModifier('Shift')
