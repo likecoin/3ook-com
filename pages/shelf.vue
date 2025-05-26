@@ -107,7 +107,7 @@ const shouldLoadMore = useElementVisibility(infiniteScrollDetectorElement)
 
 onMounted(async () => {
   if (hasLoggedIn.value) {
-    await bookshelfStore.fetchItems({ isRefresh: true })
+    await bookshelfStore.fetchItems()
   }
 })
 
