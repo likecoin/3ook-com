@@ -403,15 +403,26 @@ async function loadEPub() {
 
   rendition.value.on('rendered', (section: Section, view: EpubView) => {
     currentSectionIndex.value = section.index
-    textContentElements.value = Array.from(section.contents.querySelectorAll('p, h1, h2, h3, h4, h5, h6'))
+    const elements = Array.from(section.contents.querySelectorAll('p, h1, h2, h3, h4, h5, h6'))
       .filter(element => !!element.textContent?.trim())
       .map((el) => {
         const range = new Range()
         range.selectNodeContents(el)
         const cfi = section.cfiFromRange(range)
-        return { cfi, el, text: el.textContent?.trim() || '' }
+        const text = el.textContent?.trim() || ''
+        const segments = splitTextIntoSegments(text)
+        return { cfi, el, text, segments }
       })
 
+    textContentElements.value = elements.reduce((acc, element) => {
+      return acc.concat(element.segments.map((text) => {
+        return ({
+          cfi: element.cfi,
+          el: element.el,
+          text,
+        })
+      }))
+    }, [] as { cfi: string, el: Element, text: string, segments?: string[] }[])
     isRightToLeft.value = view.settings.direction === 'rtl'
 
     if (cleanUpClickListener) {
@@ -451,6 +462,34 @@ async function loadEPub() {
     }
     percentage.value = book.locations.percentageFromCfi(location.start.cfi)
   })
+}
+
+function splitTextIntoSegments(text: string): string[] {
+  if (!text) return []
+  const punctuationRegex = /([.!?;。！？；：，、][\s\u200B]*)/
+  const segments = text.split(punctuationRegex)
+  const result: string[] = []
+
+  let currentSegment = ''
+  for (let i = 0; i < segments.length; i++) {
+    const segment = segments[i].trim()
+    if (!segment) continue
+    if (segment.length === 1 || currentSegment.length + segment.length < 100) {
+      currentSegment += segment
+    }
+    else {
+      if (currentSegment) {
+        result.push(currentSegment)
+      }
+      currentSegment = segment
+    }
+  }
+
+  if (currentSegment) {
+    result.push(currentSegment)
+  }
+
+  return result
 }
 
 function setActiveNavItemHref(href: string) {
