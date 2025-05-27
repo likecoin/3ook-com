@@ -17,7 +17,9 @@ function speakTextAsync(synthesizer: sdk.SpeechSynthesizer, text: string, voiceN
       <voice name='${voiceName}'>
         <prosody rate="${rate}">
           <lang xml:lang='${language}'>
-            ${escapedText}
+            <mstts:express-as style="narration-relaxed">
+              ${escapedText}
+            </mstts:express-as>
           </lang>
         </prosody>
       </voice>
