@@ -90,6 +90,11 @@
                 @click="pauseTextToSpeech"
               />
             </template>
+            <USelect
+              v-if="isShowTextToSpeechOptions"
+              v-model="ttsLanguage"
+              :items="ttsLanguageOptions"
+            />
 
             <USlideover
               :title="$t('reader_display_options_button')"
@@ -307,6 +312,12 @@ onMounted(async () => {
 
 const rendition = ref<Rendition>()
 const textContentElements = ref<{ cfi: string, el: Element, text: string }[]>([])
+const ttsLanguageOptions = [
+  { label: '粵', value: 'zh-HK' },
+  { label: '國', value: 'zh-TW' },
+  { label: 'En', value: 'en-US' },
+]
+const ttsLanguage = ref('zh-HK')
 
 const navItems = ref<NavItem[]>([])
 const activeNavItemLabel = computed(() => {
@@ -536,6 +547,7 @@ function decreaseFontSize() {
   adjustFontSize(-1)
 }
 
+const isShowTextToSpeechOptions = ref(false)
 const isTextToSpeechPlaying = ref(false)
 const isTextToSpeechPaused = ref(false)
 const audioQueue = ref<HTMLAudioElement[]>([])
@@ -554,7 +566,7 @@ function createAudio(element: { cfi: string, el: Element, text: string }) {
   const audio = new Audio()
   const params = new URLSearchParams({
     text: element.text,
-    language: 'zh-HK',
+    language: ttsLanguage.value,
     voice: 'female1',
     rate: '1.0',
   })
@@ -594,6 +606,7 @@ function createAudio(element: { cfi: string, el: Element, text: string }) {
 }
 
 async function startTextToSpeech() {
+  isShowTextToSpeechOptions.value = true
   if (isTextToSpeechPaused.value) {
     isTextToSpeechPaused.value = false
     if (audioQueue.value[currentAudioIndex.value]) {
