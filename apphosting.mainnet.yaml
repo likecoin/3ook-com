@@ -29,8 +29,8 @@ env:
     value: https://api.like.co
   - variable: LIKECOIN_CHAIN_API_ENDPOINT
     value: https://mainnet-node.like.co
-  # - variable: LIKECOIN_EVM_CHAIN_API_ENDPOINT
-  #   value: TBC
+  - variable: LIKECOIN_EVM_CHAIN_API_ENDPOINT
+    value: https://api.v3.like.co/indexer/api
   - variable: LIKECOIN_STATIC_ENDPOINT
     value: https://static.like.co
   - variable: LIKER_LAND_V2_URL
