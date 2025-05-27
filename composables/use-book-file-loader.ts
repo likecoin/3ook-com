@@ -35,10 +35,13 @@ export default function () {
     })
     if (!res.ok) {
       const errorText = await res.text()
-      if (errorText) {
-        throw new Error(errorText)
-      }
-      throw new Error('FAILED_TO_LOAD_FILE')
+      throw createError({
+        statusCode: res.status,
+        message: errorText || 'FAILED_TO_LOAD_FILE',
+        data: {
+          url,
+        },
+      })
     }
 
     const streamReader = res?.body?.getReader()

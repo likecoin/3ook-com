@@ -1,24 +1,12 @@
-import { FetchError } from 'ofetch'
-
 import { ErrorModal } from '#components'
 
-function getErrorMessage(error: unknown) {
-  if (error instanceof Error) {
-    return error.message
+type ErrorHandler =
+  | string
+  | {
+    description?: string
+    isLogError?: boolean
+    onClose?: () => void
   }
-  if (error instanceof FetchError) {
-    if (typeof error.data === 'string') {
-      return error.data
-    }
-    if (error.data?.message) {
-      return error.data.message
-    }
-  }
-  if (typeof error === 'string') {
-    return error
-  }
-  return ''
-}
 
 export default function () {
   const localeRoute = useLocaleRoute()
@@ -30,39 +18,65 @@ export default function () {
   async function handleError(error: unknown, props: {
     title?: string
     description?: string
+    customHandlerMap?: Record<string | number, ErrorHandler>
+    logPrefix?: string
     onClose?: () => void
   } = {}) {
-    let hasHandled = false
-    let description = props.description
-    let closeHandler = props.onClose
-    const errorMessage = getErrorMessage(error)
-    switch (errorMessage) {
-      case 'TOKEN_EXPIRED':
-        description = $t('error_token_expired')
-        closeHandler = () => {
-          accountStore.logout()
-          navigateTo(localeRoute({ name: 'account' }))
-        }
-        hasHandled = true
-        break
-
-      case 'Internal server error':
-        description = $t('error_internal_server_error')
-        break
-
-      default:
-        break
+    const { message: rawErrorMessage, statusCode, url } = parseError(error)
+    let handler: ErrorHandler | undefined
+    // Custom error handling
+    if (props.customHandlerMap?.[rawErrorMessage]) {
+      handler = props.customHandlerMap[rawErrorMessage]
     }
-    if (!hasHandled) {
-      console.error(error)
+    else if (statusCode && props.customHandlerMap?.[statusCode]) {
+      handler = props.customHandlerMap[statusCode]
     }
+    // Generic error handling
+    if (!handler) {
+      switch (rawErrorMessage) {
+        case 'TOKEN_EXPIRED':
+          handler = {
+            description: $t('error_token_expired'),
+            onClose: () => {
+              accountStore.logout()
+              navigateTo(localeRoute({ name: 'account' }))
+            },
+          }
+          break
+
+        default:
+          break
+      }
+    }
+
+    if (!handler || (typeof handler !== 'string' && handler.isLogError)) {
+      console.error(...(props.logPrefix ? [`[${props.logPrefix}]`, error] : [error]))
+    }
+
+    let description: string | undefined
+    if (typeof handler === 'string') {
+      description = handler
+    }
+    else if (handler) {
+      description = handler.description
+    }
+    else if (props.description) {
+      description = props.description
+    }
+    else if (rawErrorMessage === 'Internal server error' || statusCode === 500) {
+      description = $t('error_internal_server_error')
+    }
+    else {
+      description = $t('error_unknown')
+    }
+
     await errorModal.open({
       title: props.title || $t('error_modal_title'),
-      description: description || $t('error_unknown'),
-      rawMessage: errorMessage,
-      onClose: closeHandler,
+      description,
+      rawMessage: !handler ? `${url ? `${url}\n\n` : ''}${rawErrorMessage}` : undefined,
+      onClose: (typeof handler !== 'string' ? handler?.onClose : undefined) || props.onClose,
     })
-    return hasHandled
+    return !!handler
   }
 
   return {

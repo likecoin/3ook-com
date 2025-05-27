@@ -29,7 +29,7 @@
 
       <code
         v-if="props.rawMessage"
-        class="block not-first:mt-4 px-2 py-1 text-xs font-mono font-medium rounded-md border border-gray-300 bg-gray-100 break-all"
+        class="block not-first:mt-4 px-2 py-1 text-xs font-mono font-medium rounded-md border border-gray-300 bg-gray-100 break-all whitespace-pre-wrap"
         v-text="rawMessage"
       />
     </template>
