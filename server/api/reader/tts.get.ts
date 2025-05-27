@@ -1,60 +1,24 @@
-import { PassThrough } from 'stream'
-import * as sdk from 'microsoft-cognitiveservices-speech-sdk'
+import type {
+  LanguageCode,
+  VoiceId,
+} from '@aws-sdk/client-polly'
+import {
+  PollyClient,
+  SynthesizeSpeechCommand,
+} from '@aws-sdk/client-polly'
 
-function escapeSSML(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
+let client: PollyClient | null = null
+
+const LANG_MAPPING = {
+  'en-US': 'en-US',
+  'zh-TW': 'cmn-CN',
+  'zh-HK': 'yue-CN',
 }
 
-function speakTextAsync(synthesizer: sdk.SpeechSynthesizer, text: string, voiceName: string, language: string, rate: string = '1.0') {
-  return new Promise((resolve, reject) => {
-    const escapedText = escapeSSML(text)
-    const ssml = `<speak xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="http://www.w3.org/2001/mstts" xmlns:emo="http://www.w3.org/2009/10/emotionml" version="1.0" xml:lang="${language}">
-      <voice name='${voiceName}'>
-        <prosody rate="${rate}">
-          <lang xml:lang='${language}'>
-            <mstts:express-as style="narration-relaxed">
-              ${escapedText}
-            </mstts:express-as>
-          </lang>
-        </prosody>
-      </voice>
-    </speak>`
-    synthesizer.speakSsmlAsync(ssml,
-      function (result) {
-        synthesizer.close()
-        resolve(result)
-      },
-      function (err) {
-        synthesizer.close()
-        reject(err)
-      })
-  })
-}
-
-const LANG_TO_NAME: Record<string, Record<string, string>> = {
-  'en-US': {
-    female1: 'zh-CN-XiaochenMultilingualNeural',
-    female2: 'zh-CN-XiaoxiaoMultilingualNeural',
-    male1: 'zh-CN-YunyiMultilingualNeural',
-    male2: 'zh-CN-YunfanMultilingualNeural',
-  },
-  'zh-TW': {
-    female1: 'zh-CN-XiaochenMultilingualNeural',
-    female2: 'zh-CN-XiaoxiaoMultilingualNeural',
-    male1: 'zh-CN-YunyiMultilingualNeural',
-    male2: 'zh-CN-YunfanMultilingualNeural',
-  },
-  'zh-HK': {
-    female1: 'zh-CN-XiaochenMultilingualNeural',
-    female2: 'zh-CN-XiaoxiaoMultilingualNeural',
-    male1: 'zh-CN-YunyiMultilingualNeural',
-    male2: 'zh-CN-YunfanMultilingualNeural',
-  },
+const VOICE_MAPPING = {
+  'en-US': 'Ruth',
+  'zh-TW': 'Zhiyu',
+  'zh-HK': 'Hiujin',
 }
 
 export default defineEventHandler(async (event) => {
@@ -67,57 +31,57 @@ export default defineEventHandler(async (event) => {
   }
   const config = useRuntimeConfig()
   const {
-    azureSubscriptionKey: subscriptionKey = '',
-    azureServiceRegion: serviceRegion = 'westus2',
+    awsAccessKeyId,
+    awsAccessKeySecret,
+    awsRegion = 'us-west-2',
   } = config
-  const { text, language, voice = 'female1', rate = '1.0' } = getQuery(event)
+  const { text, language: rawLanguage } = getQuery(event)
   if (!text || typeof text !== 'string') {
     throw createError({
       status: 400,
       message: 'MISSING_TEXT',
     })
   }
-  if (!language || typeof language !== 'string' || !voice || typeof voice !== 'string' || !LANG_TO_NAME?.[language]?.[voice]) {
+  if (!rawLanguage || typeof rawLanguage !== 'string' || !(rawLanguage in LANG_MAPPING)) {
     throw createError({
       status: 400,
       message: 'INVALID_LANGUAGE',
     })
   }
-  if (!rate || typeof rate !== 'string' || isNaN(parseFloat(rate))) {
-    throw createError({
-      status: 400,
-      message: 'INVALID_RATE',
-    })
-  }
+  const language = rawLanguage as keyof typeof LANG_MAPPING
   const logText = text.replace(/(\r\n|\n|\r)/gm, ' ')
   console.log(`[Speech] User ${session.user.evmWallet} requested conversion. Language: ${language}, Text: "${logText.substring(0, 50)}${logText.length > 50 ? '...' : ''}"`)
 
-  const bufferStream = new PassThrough()
-  const stream = sdk.PushAudioOutputStream.create({
-    write: a => bufferStream.write(Buffer.from(a)),
-    close: () => bufferStream.end(),
-  })
-  const audioConfig = sdk.AudioConfig.fromStreamOutput(stream)
-  const speechConfig = sdk.SpeechConfig.fromSubscription(subscriptionKey, serviceRegion)
-
-  speechConfig.speechSynthesisVoiceName = LANG_TO_NAME[language][voice]
-  speechConfig.speechSynthesisOutputFormat = sdk.SpeechSynthesisOutputFormat.Ogg16Khz16BitMonoOpus
-
-  const synthesizer = new sdk.SpeechSynthesizer(speechConfig, audioConfig)
-  synthesizer.SynthesisCanceled = function (_, e) {
-    const cancellationDetails = sdk.CancellationDetails.fromResult(e.result)
-    let str = `[Speech] Error for user ${session.user.evmWallet}: ` + sdk.CancellationReason[cancellationDetails.reason]
-    if (cancellationDetails.reason === sdk.CancellationReason.Error) {
-      str += ': ' + e.result.errorDetails
-    }
-    console.error(str)
+  if (!client) {
+    client = new PollyClient({
+      region: awsRegion,
+      credentials: {
+        accessKeyId: awsAccessKeyId,
+        secretAccessKey: awsAccessKeySecret,
+      },
+    })
   }
 
   try {
-    await speakTextAsync(synthesizer, text, LANG_TO_NAME[language][voice], language, rate)
+    const command = new SynthesizeSpeechCommand({
+      Text: text,
+      OutputFormat: 'ogg_vorbis',
+      VoiceId: VOICE_MAPPING[language] as VoiceId,
+      LanguageCode: LANG_MAPPING[language] as LanguageCode,
+      Engine: 'neural',
+      TextType: 'text',
+    })
+    const response = await client.send(command)
+    if (!response.AudioStream) {
+      throw createError({
+        status: 500,
+        message: 'SPEECH_SYNTHESIS_FAILED',
+      })
+    }
+    const stream = response.AudioStream.transformToWebStream()
     setHeader(event, 'content-type', 'audio/ogg; codecs=opus')
     setHeader(event, 'cache-control', 'public, max-age=3600')
-    return sendStream(event, bufferStream)
+    return sendStream(event, stream)
   }
   catch (error) {
     console.error(`[Speech] Failed to convert text for user ${session.user.evmWallet}:`, error)

@@ -21,8 +21,10 @@ env:
     value: tblYTTj9AkyKAi8Md
   - variable: AIRTABLE_API_SECRET
     secret: V3_AIRTABLE_API_SECRET
-  - variable: AZURE_SUBSCRIPTION_KEY
-    secret: AZURE_SUBSCRIPTION_KEY
+  - variable: AWS_ACCESS_KEY_ID
+    secret: AWS_ACCESS_KEY_ID
+  - variable: AWS_SECRET_ACCESS_KEY
+    secret: AWS_SECRET_ACCESS_KEY
   - variable: ARWEAVE_ENDPOINT
     value: https://gateway.irys.xyz
   - variable: IPFS_ENDPOINT

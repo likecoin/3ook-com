@@ -567,8 +567,6 @@ function createAudio(element: { cfi: string, el: Element, text: string }) {
   const params = new URLSearchParams({
     text: element.text,
     language: ttsLanguage.value,
-    voice: 'female2',
-    rate: '1.0',
   })
   audio.src = `/api/reader/tts?${params.toString()}`
 
