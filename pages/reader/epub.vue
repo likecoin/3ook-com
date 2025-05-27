@@ -1,6 +1,6 @@
 <template>
   <main class="flex flex-col justify-center items-center grow w-full">
-    <ReaderLoadingScreen
+    <BookLoadingScreen
       v-if="isReaderLoading"
       class="absolute inset-0"
       :book-name="bookInfo.name.value"

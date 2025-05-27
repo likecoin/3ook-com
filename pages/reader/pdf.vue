@@ -1,6 +1,6 @@
 <template>
   <main class="flex flex-col justify-center items-center grow w-full">
-    <ReaderLoadingScreen
+    <BookLoadingScreen
       v-if="isReaderLoading"
       :book-name="bookInfo.name.value"
       :book-cover-src="bookCoverSrc"
