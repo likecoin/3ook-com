@@ -49,6 +49,7 @@
           'gap-x-3 tablet:gap-x-6',
           'gap-y-6 tablet:gap-y-11',
 
+          'w-full',
           'pt-4',
           'pb-16',
         ]"
