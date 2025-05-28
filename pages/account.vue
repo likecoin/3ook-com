@@ -1,5 +1,8 @@
 <template>
-  <div>
+  <NuxtLayout
+    name="default"
+    :is-footer-visible-in-mobile="true"
+  >
     <AppHeader :is-connect-hidden="false" />
 
     <main class="w-full max-w-xl mx-auto p-4 space-y-4">
@@ -164,10 +167,13 @@
         @click="handleLogout"
       />
     </main>
-  </div>
+  </NuxtLayout>
 </template>
 
 <script setup lang="ts">
+// NOTE: Set `layout` to false for injecting props into `<NuxtLayout/>`.
+definePageMeta({ layout: false })
+
 const { t: $t } = useI18n()
 const { loggedIn: hasLoggedIn, user } = useUserSession()
 const accountStore = useAccountStore()
