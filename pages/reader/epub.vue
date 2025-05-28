@@ -318,6 +318,11 @@ const ttsLanguageOptions = [
   { label: 'En', value: 'en-US' },
 ]
 const ttsLanguage = ref('zh-HK')
+watch(ttsLanguage, (newLanguage, oldLanguage) => {
+  if (newLanguage !== oldLanguage) {
+    useTrackEvent('tts_language_change')
+  }
+})
 
 const navItems = ref<NavItem[]>([])
 const activeNavItemLabel = computed(() => {
@@ -559,6 +564,7 @@ function pauseTextToSpeech() {
       audioQueue.value[currentAudioIndex.value].pause()
     }
     isTextToSpeechPaused.value = true
+    useTrackEvent('tts_pause')
   }
 }
 
@@ -609,6 +615,7 @@ async function startTextToSpeech() {
     isTextToSpeechPaused.value = false
     if (audioQueue.value[currentAudioIndex.value]) {
       audioQueue.value[currentAudioIndex.value].play()
+      useTrackEvent('tts_resume')
     }
     return
   }
@@ -620,6 +627,7 @@ async function startTextToSpeech() {
   audioQueue.value = []
   currentAudioIndex.value = 0
   isTextToSpeechPlaying.value = true
+  useTrackEvent('tts_start')
 
   try {
     // load up to 2 paragraphs for text-to-speech
