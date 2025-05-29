@@ -135,6 +135,7 @@ export const likeCoinNFTClassAggregatedMetadataOptions = ['class_chain', 'class_
 export type LikeCoinNFTClassAggregatedMetadataOptionKey = typeof likeCoinNFTClassAggregatedMetadataOptions[number]
 export interface FetchLikeCoinNFTClassAggregatedMetadataOptions {
   exclude?: LikeCoinNFTClassAggregatedMetadataOptionKey[]
+  nocache?: boolean
 }
 
 export interface FetchLikeCoinNFTClassAggregatedMetadataResponseData {
@@ -144,15 +145,15 @@ export interface FetchLikeCoinNFTClassAggregatedMetadataResponseData {
   bookstoreInfo: BookstoreInfo | null
 }
 
-export function fetchLikeCoinNFTClassAggregatedMetadataById(nftClassId: string, options: FetchLikeCoinNFTClassAggregatedMetadataOptions = { exclude: [] }) {
+export function fetchLikeCoinNFTClassAggregatedMetadataById(nftClassId: string, options: FetchLikeCoinNFTClassAggregatedMetadataOptions = { exclude: [], nocache: false }) {
   const { fetch } = useLikeCoinAPI()
   const excludedOptionSet = new Set(options.exclude || [])
-  return fetch<FetchLikeCoinNFTClassAggregatedMetadataResponseData>('/likerland/nft/metadata', {
-    query: {
-      class_id: nftClassId,
-      data: likeCoinNFTClassAggregatedMetadataOptions.filter(option => !excludedOptionSet.has(option)),
-    },
-  })
+  const query: Record<string, string | string[]> = {
+    class_id: nftClassId,
+    data: likeCoinNFTClassAggregatedMetadataOptions.filter(option => !excludedOptionSet.has(option)),
+  }
+  if (options.nocache) query.ts = `${Math.round(new Date().getTime() / 1000)}`
+  return fetch<FetchLikeCoinNFTClassAggregatedMetadataResponseData>('/likerland/nft/metadata', { query })
 }
 
 export interface BookstoreCMSProductItem {

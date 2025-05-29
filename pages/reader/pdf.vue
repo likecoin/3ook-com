@@ -54,7 +54,7 @@ onMounted(async () => {
   isReaderLoading.value = true
   window.addEventListener('message', handlePDFViewerMessage)
   try {
-    await nftStore.lazyFetchNFTClassAggregatedMetadataById(nftClassId.value)
+    await nftStore.lazyFetchNFTClassAggregatedMetadataById(nftClassId.value, { nocache: true })
   }
   catch (error) {
     await handleError(error, {

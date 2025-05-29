@@ -268,7 +268,7 @@ const { loadingLabel, loadFileAsBuffer } = useBookFileLoader()
 onMounted(async () => {
   isReaderLoading.value = true
   try {
-    await nftStore.lazyFetchNFTClassAggregatedMetadataById(nftClassId.value)
+    await nftStore.lazyFetchNFTClassAggregatedMetadataById(nftClassId.value, { nocache: true })
   }
   catch (error) {
     await handleError(error, {
