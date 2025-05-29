@@ -1,24 +1,9 @@
-import type {
-  LanguageCode,
-  VoiceId,
-} from '@aws-sdk/client-polly'
-import {
-  PollyClient,
-  SynthesizeSpeechCommand,
-} from '@aws-sdk/client-polly'
-
-let client: PollyClient | null = null
+import { Readable } from 'stream'
 
 const LANG_MAPPING = {
-  'en-US': 'en-US',
-  'zh-TW': 'cmn-CN',
-  'zh-HK': 'yue-CN',
-}
-
-const VOICE_MAPPING = {
-  'en-US': 'Ruth',
-  'zh-TW': 'Zhiyu',
-  'zh-HK': 'Hiujin',
+  'en-US': 'English',
+  'zh-TW': 'Chinese',
+  'zh-HK': 'Chinese,Yue',
 }
 
 export default defineEventHandler(async (event) => {
@@ -31,9 +16,8 @@ export default defineEventHandler(async (event) => {
   }
   const config = useRuntimeConfig()
   const {
-    awsAccessKeyId,
-    awsAccessKeySecret,
-    awsRegion = 'us-west-2',
+    minimaxGroupId,
+    minimaxApiKey,
   } = config
   const { text, language: rawLanguage } = getQuery(event)
   if (!text || typeof text !== 'string') {
@@ -52,34 +36,40 @@ export default defineEventHandler(async (event) => {
   const logText = text.replace(/(\r\n|\n|\r)/gm, ' ')
   console.log(`[Speech] User ${session.user.evmWallet} requested conversion. Language: ${language}, Text: "${logText.substring(0, 50)}${logText.length > 50 ? '...' : ''}"`)
 
-  if (!client) {
-    client = new PollyClient({
-      region: awsRegion,
-      credentials: {
-        accessKeyId: awsAccessKeyId,
-        secretAccessKey: awsAccessKeySecret,
-      },
-    })
-  }
-
   try {
-    const command = new SynthesizeSpeechCommand({
-      Text: text,
-      OutputFormat: 'ogg_vorbis',
-      VoiceId: VOICE_MAPPING[language] as VoiceId,
-      LanguageCode: LANG_MAPPING[language] as LanguageCode,
-      Engine: 'neural',
-      TextType: 'text',
+    const command = {
+      text: text,
+      model: 'speech-02-hd',
+      voice_setting: {
+        voice_id: 'Chinese (Mandarin)_Crisp_Girl',
+      },
+      language_boost: LANG_MAPPING[language],
+    }
+
+    interface MinimaxT2AResponse {
+      data: {
+        audio: string
+      }
+    }
+
+    const response = await $fetch<MinimaxT2AResponse>(`https://api.minimaxi.chat/v1/t2a_v2?GroupId=${minimaxGroupId}`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${minimaxApiKey}`,
+      },
+      body: command,
     })
-    const response = await client.send(command)
-    if (!response.AudioStream) {
+
+    const audioHex = response.data.audio
+    if (!audioHex || typeof audioHex !== 'string') {
       throw createError({
         status: 500,
-        message: 'SPEECH_SYNTHESIS_FAILED',
+        message: 'INVALID_AUDIO_RESPONSE',
       })
     }
-    const stream = response.AudioStream.transformToWebStream()
-    setHeader(event, 'content-type', 'audio/ogg; codecs=opus')
+    const audioBuffer = Buffer.from(audioHex, 'hex')
+    const stream = Readable.from(audioBuffer)
+    setHeader(event, 'content-type', 'audio/mp3')
     setHeader(event, 'cache-control', 'public, max-age=3600')
     return sendStream(event, stream)
   }

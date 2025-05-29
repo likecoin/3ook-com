@@ -14,7 +14,6 @@
     "typecheck": "nuxt typecheck"
   },
   "dependencies": {
-    "@aws-sdk/client-polly": "^3.817.0",
     "@magiclabs/wagmi-connector": "2.1.0",
     "@nuxt/eslint": "^1.2.0",
     "@nuxt/icon": "^1.11.0",
