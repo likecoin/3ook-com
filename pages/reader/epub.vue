@@ -596,7 +596,9 @@ function createAudio(element: { cfi: string, el: Element, text: string }) {
       if (cfi.compare(cfi, currentPageEndCfi.value) >= 0) {
         nextPage()
       }
-      audioQueue.value[currentAudioIndex.value].play()
+      setTimeout(() => {
+        audioQueue.value[currentAudioIndex.value].play()
+      }, 200) // Add a small delay since some minimax voice doesn't have gap at the end
     }
     else {
       nextPage()
