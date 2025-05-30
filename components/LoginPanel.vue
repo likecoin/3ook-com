@@ -16,27 +16,29 @@
       @click="handleConnect('magic')"
     />
 
-    <USeparator
-      class="my-4"
-      :label="$t('login_panel_or_separator')"
-    />
+    <template v-if="othersConnectors.length">
+      <USeparator
+        class="my-4"
+        :label="$t('login_panel_or_separator')"
+      />
 
-    <ul class="flex flex-col gap-2">
-      <li
-        v-for="connector in othersConnectors"
-        :key="connector.id"
-        type="button"
-      >
-        <UButton
-          :label="connector.name"
-          color="neutral"
-          variant="soft"
-          size="lg"
-          block
-          @click="handleConnect(connector.id)"
-        />
-      </li>
-    </ul>
+      <ul class="flex flex-col gap-2">
+        <li
+          v-for="connector in othersConnectors"
+          :key="connector.id"
+          type="button"
+        >
+          <UButton
+            :label="connector.name"
+            color="neutral"
+            variant="soft"
+            size="lg"
+            block
+            @click="handleConnect(connector.id)"
+          />
+        </li>
+      </ul>
+    </template>
 
     <UAlert
       v-if="error"
@@ -56,7 +58,7 @@ const emit = defineEmits<{ connect: [string] }>()
 const { t: $t } = useI18n()
 const { connectors, error } = useConnect()
 
-const othersConnectors = computed(() => connectors.filter(c => c.id !== 'magic'))
+const othersConnectors = computed(() => connectors.filter(c => !['magic', 'injected'].includes(c.id)))
 
 function handleConnect(connectorId = '') {
   emit('connect', connectorId)
