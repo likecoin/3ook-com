@@ -150,10 +150,7 @@ function openContentURL(contentURL: { type?: string, url: string, name: string, 
 }
 
 function handleCoverClick() {
-  let contentURL = bookInfo.contentURLs.value.find(url => url.type === 'epub')
-  if (!contentURL) {
-    contentURL = bookInfo.contentURLs.value[0]
-  }
+  const contentURL = bookInfo.contentURLs.value.find(url => url.type === 'epub') ?? bookInfo.contentURLs.value[0]
   if (contentURL) {
     openContentURL(contentURL)
   }
