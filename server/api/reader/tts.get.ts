@@ -65,6 +65,7 @@ export default defineEventHandler(async (event) => {
 
     const audioHex = response.data.audio
     if (!audioHex || typeof audioHex !== 'string') {
+      console.error(`[Speech] Invalid audio response for user ${session.user.evmWallet}:`, response)
       throw createError({
         status: 500,
         message: 'INVALID_AUDIO_RESPONSE',
