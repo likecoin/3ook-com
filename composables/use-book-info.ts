@@ -26,12 +26,13 @@ export default function ({ nftClassId = '' }: { nftClassId?: string } = {}) {
     if (readAction) {
       entryPoints = readAction.target || []
     }
-    return entryPoints.map((entryPoint) => {
+    return entryPoints.map((entryPoint, index) => {
       const { contentType, url, name } = entryPoint
       return {
         url: normalizeURIToHTTP(url),
         name,
         type: extractContentTypeFromURL(contentType),
+        index,
       }
     })
   })
@@ -40,10 +41,11 @@ export default function ({ nftClassId = '' }: { nftClassId?: string } = {}) {
     if (readActionEntryPoints.value.length) {
       return readActionEntryPoints.value
     }
-    return bookInfo.sameAs.value.map(url => ({
+    return bookInfo.sameAs.value.map((url, index) => ({
       url: normalizeURIToHTTP(url),
       name: extractFilenameFromContentURL(url),
       type: extractContentTypeFromURL(url),
+      index,
     }))
   })
 

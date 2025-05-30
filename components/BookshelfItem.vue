@@ -94,7 +94,7 @@ const isLargerScreen = useMediaQuery('(min-width: 1024px)')
 
 const menuItems = computed<DropdownMenuItem[]>(() => {
   return [
-    ...bookInfo.contentURLs.value.map((contentURL, index) => {
+    ...bookInfo.contentURLs.value.map((contentURL) => {
       let label: string
       switch (contentURL.type) {
         case 'epub':
@@ -112,7 +112,7 @@ const menuItems = computed<DropdownMenuItem[]>(() => {
         label,
         icon: 'i-material-symbols-book-5-outline',
         onSelect: () => {
-          openContentURL({ ...contentURL, index })
+          openContentURL(contentURL)
         },
       }
     }),
