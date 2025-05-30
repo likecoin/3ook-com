@@ -18,11 +18,11 @@
         <UDropdownMenu
           v-if="isLargerScreen"
           :items="menuItems"
+          :modal="true"
         >
           <UButton
-            class="-mr-1.5 -mt-0.5"
+            class="-mr-2 -mt-1"
             icon="i-material-symbols-more-vert"
-            size="sm"
             color="neutral"
             variant="link"
           />
@@ -32,9 +32,8 @@
           :handle="false"
         >
           <UButton
-            class="-mr-1.5 -mt-0.5"
+            class="-mr-2 -mt-1"
             icon="i-material-symbols-more-vert"
-            size="sm"
             color="neutral"
             variant="link"
           />
