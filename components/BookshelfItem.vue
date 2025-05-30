@@ -94,7 +94,7 @@ const isLargerScreen = useMediaQuery('(min-width: 1024px)')
 
 const menuItems = computed<DropdownMenuItem[]>(() => {
   return [
-    ...bookInfo.contentURLs.value.map((contentURL) => {
+    ...bookInfo.contentURLs.value.map((contentURL, index) => {
       let label: string
       switch (contentURL.type) {
         case 'epub':
@@ -112,7 +112,7 @@ const menuItems = computed<DropdownMenuItem[]>(() => {
         label,
         icon: 'i-material-symbols-book-5-outline',
         onSelect: () => {
-          openContentURL(contentURL)
+          openContentURL({ ...contentURL, index })
         },
       }
     }),
@@ -139,12 +139,13 @@ useVisibility('lazyLoadTrigger', (visible) => {
   }
 })
 
-function openContentURL(contentURL: { type?: string, url: string, name: string }) {
+function openContentURL(contentURL: { type?: string, url: string, name: string, index?: number }) {
   emit('open', {
     nftClassId: props.nftClassId,
     type: contentURL.type,
     url: contentURL.url,
     name: contentURL.name,
+    index: contentURL.index,
   })
 }
 
