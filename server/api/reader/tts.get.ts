@@ -41,7 +41,10 @@ export default defineEventHandler(async (event) => {
       text: text,
       model: 'speech-02-hd',
       voice_setting: {
-        voice_id: 'Chinese (Mandarin)_Crisp_Girl',
+        voice_id: 'Chinese (Mandarin)_Warm_Bestie',
+        speed: 0.95,
+        pitch: -1,
+        emotion: 'neutral',
       },
       language_boost: LANG_MAPPING[language],
     }
