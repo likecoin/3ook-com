@@ -70,7 +70,7 @@ export default defineEventHandler(async (event) => {
     const audioBuffer = Buffer.from(audioHex, 'hex')
     const stream = Readable.from(audioBuffer)
     setHeader(event, 'content-type', 'audio/mp3')
-    setHeader(event, 'cache-control', 'public, max-age=3600')
+    setHeader(event, 'cache-control', 'public, max-age=14400')
     return sendStream(event, stream)
   }
   catch (error) {
