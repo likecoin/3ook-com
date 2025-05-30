@@ -145,7 +145,12 @@ function handleBookshelfItemOpen({
 }) {
   navigateTo(localeRoute({
     name: `reader-${type}`,
-    query: { nft_class_id: nftClassId, file_url: url, filename: name, index },
+    query: {
+      nft_class_id: nftClassId,
+      file_url: url,
+      filename: name,
+      index: index ?? 0,
+    },
   }))
 }
 </script>
