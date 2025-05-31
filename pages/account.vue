@@ -24,7 +24,7 @@
       </div>
       <UCard v-else>
         <UButton
-          :label="$t('user_page_login')"
+          :label="$t('account_page_login')"
           :loading="accountStore.isLoggingIn"
           variant="outline"
           block
@@ -35,7 +35,7 @@
       <section class="space-y-3 pt-4">
         <h2
           class="px-4 text-lg font-bold"
-          v-text="$t('user_page_account_title')"
+          v-text="$t('account_page_account_title')"
         />
 
         <UCard :ui="{ body: '!px-3 space-y-4' }">
@@ -47,7 +47,7 @@
               />
               <span
                 class="text-sm"
-                v-text="$t('user_page_liker_id')"
+                v-text="$t('account_page_liker_id')"
               />
             </div>
 
@@ -65,7 +65,7 @@
               />
               <span
                 class="text-sm"
-                v-text="$t('user_page_evm_wallet')"
+                v-text="$t('account_page_evm_wallet')"
               />
             </div>
 
@@ -83,7 +83,7 @@
               />
               <span
                 class="text-sm"
-                v-text="$t('user_page_cosmos_wallet')"
+                v-text="$t('account_page_cosmos_wallet')"
               />
             </div>
 
@@ -98,20 +98,20 @@
       <section class="space-y-3 pt-4">
         <h2
           class="px-4 text-lg font-bold"
-          v-text="$t('user_page_settings_and_help_title')"
+          v-text="$t('account_page_settings_and_help_title')"
         />
 
         <UCard :ui="{ body: '!px-3 space-y-4' }">
           <AccountSettingsItem
             icon="i-material-symbols-language"
-            :label="$t('user_page_locale')"
+            :label="$t('account_page_locale')"
           >
             <LocaleSwitcher :is-icon-hidden="true" />
           </AccountSettingsItem>
 
           <AccountSettingsItem
             icon="i-material-symbols-arrow-split-rounded"
-            :label="$t('user_page_evm_switch')"
+            :label="$t('account_page_evm_switch')"
           >
             <USwitch
               v-model="accountStore.isEVMMode"
@@ -120,7 +120,7 @@
           </AccountSettingsItem>
 
           <UButton
-            :label="$t('user_page_contact_support')"
+            :label="$t('account_page_contact_support')"
             href="https://go.crisp.chat/chat/embed/?website_id=5c009125-5863-4059-ba65-43f177ca33f7"
             target="_blank"
             variant="link"
@@ -132,7 +132,7 @@
           />
 
           <UButton
-            :label="$t('user_page_faq')"
+            :label="$t('account_page_faq')"
             href="https://docs.like.co/zh/depub/ebook"
             target="_blank"
             variant="link"
@@ -144,7 +144,7 @@
           />
 
           <UButton
-            :label="$t('user_page_publish_book')"
+            :label="$t('account_page_publish_book')"
             href="https://publish.liker.land"
             target="_blank"
             variant="link"
@@ -159,7 +159,7 @@
 
       <UButton
         v-if="hasLoggedIn"
-        :label="$t('user_page_logout')"
+        :label="$t('account_page_logout')"
         variant="outline"
         color="error"
         size="lg"
