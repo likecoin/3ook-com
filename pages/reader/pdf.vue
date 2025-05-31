@@ -1,5 +1,5 @@
 <template>
-  <main class="flex flex-col justify-center items-center grow w-full">
+  <main>
     <BookLoadingScreen
       v-if="isReaderLoading"
       :book-name="bookInfo.name.value"
@@ -23,8 +23,6 @@
 </template>
 
 <script setup lang="ts">
-definePageMeta({ layout: 'reader' })
-
 const { loggedIn: hasLoggedIn, user } = useUserSession()
 const localeRoute = useLocaleRoute()
 if (!hasLoggedIn.value) {

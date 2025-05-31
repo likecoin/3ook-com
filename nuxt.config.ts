@@ -23,6 +23,12 @@ export default defineNuxtConfig({
   ],
 
   devtools: { enabled: true },
+  app: {
+    layoutTransition: {
+      name: 'fade',
+      mode: 'out-in',
+    },
+  },
   css: ['~/assets/css/main.css'],
 
   ui: {

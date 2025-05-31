@@ -40,7 +40,7 @@
       v-text="props.bookName"
     />
 
-    <footer class="flex flex-col items-center w-full mt-[56px]">
+    <footer class="flex flex-col items-center w-full min-h-10 mt-[56px]">
       <slot
         v-if="$slots.footer"
         class="mt-[56px]"

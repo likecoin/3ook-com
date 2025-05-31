@@ -1,5 +1,5 @@
 <template>
-  <main class="flex flex-col justify-center items-center grow w-full">
+  <main>
     <BookLoadingScreen
       v-if="isReaderLoading"
       class="absolute inset-0"
@@ -256,8 +256,6 @@ declare interface Rendition extends RenditionBase {
     container: HTMLElement
   }
 }
-
-definePageMeta({ layout: 'reader' })
 
 const { loggedIn: hasLoggedIn } = useUserSession()
 const localeRoute = useLocaleRoute()

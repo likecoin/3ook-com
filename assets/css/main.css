@@ -2,7 +2,8 @@
 @import "@nuxt/ui";
 
 body {
-  @apply bg-[#F2F0E9];
+  --app-bg: #F2F0E9;
+  @apply bg-(--app-bg);
 }
 
 @theme static {
@@ -33,4 +34,15 @@ body {
   .pb-safe {
     padding-bottom: env(safe-area-inset-bottom);
   }
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.25s ease-in-out;
+}
+.fade-enter-from {
+  opacity: 0;
+}
+.fade-leave-to {
+  opacity: 0;
 }
