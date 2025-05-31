@@ -579,7 +579,7 @@ function createAudio(element: { cfi: string, el: Element, text: string }) {
   }
 
   audio.onerror = (e) => {
-    console.error('Audio playback error:', e)
+    console.warn('Audio playback error:', e)
   }
   return audio
 }
