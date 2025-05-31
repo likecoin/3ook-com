@@ -89,6 +89,10 @@ const infiniteScrollDetectorElement = useTemplateRef<HTMLLIElement>('infiniteScr
 const shouldLoadMore = useElementVisibility(infiniteScrollDetectorElement)
 const { handleError } = useErrorHandler()
 
+useHead({
+  title: $t('store_page_title'),
+})
+
 const tagId = ref('latest')
 
 const tag = computed(() => bookstoreStore.getBookstoreCMSTagById(tagId.value))

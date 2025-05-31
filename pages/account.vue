@@ -178,6 +178,10 @@ const { t: $t } = useI18n()
 const { loggedIn: hasLoggedIn, user } = useUserSession()
 const accountStore = useAccountStore()
 
+useHead({
+  title: $t('account_page_title'),
+})
+
 async function handleLogin() {
   await accountStore.login()
 }

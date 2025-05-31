@@ -8,6 +8,8 @@
 </template>
 
 <script setup lang="ts">
+const { t: $t } = useI18n()
+
 useHead({
   meta: [
     {
@@ -16,6 +18,7 @@ useHead({
         'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover',
     },
   ],
+  titleTemplate: title => title ? `${title} | ${$t('app_title')}` : $t('app_title'),
   link: [
     {
       rel: 'apple-touch-icon',

@@ -106,6 +106,10 @@ const bookshelfStore = useBookshelfStore()
 const infiniteScrollDetectorElement = useTemplateRef<HTMLLIElement>('infiniteScrollDetector')
 const shouldLoadMore = useElementVisibility(infiniteScrollDetectorElement)
 
+useHead({
+  title: $t('shelf_page_title'),
+})
+
 onMounted(async () => {
   if (hasLoggedIn.value) {
     await bookshelfStore.fetchItems()
