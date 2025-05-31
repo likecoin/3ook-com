@@ -58,7 +58,7 @@
               @click="isDesktopToCOpen = !isDesktopToCOpen"
             />
 
-            <template v-if="!isTextToSpeechPlaying || isTextToSpeechPaused">
+            <template v-if="!isTextToSpeechOn || !isTextToSpeechPlaying">
               <UButton
                 class="laptop:hidden"
                 icon="i-material-symbols-headphones-rounded"
@@ -438,7 +438,7 @@ async function loadEPub() {
           text,
         })
       }))
-    }, [] as { cfi: string, el: Element, text: string, segments?: string[] }[])
+    }, [] as { cfi: string, el: Element, text: string }[])
     isRightToLeft.value = view.settings.direction === 'rtl'
 
     if (cleanUpClickListener) {
@@ -465,7 +465,7 @@ async function loadEPub() {
       }
     })
 
-    if (isTextToSpeechPlaying.value) {
+    if (isTextToSpeechOn.value) {
       startTextToSpeech()
     }
   })
@@ -553,17 +553,17 @@ function decreaseFontSize() {
 }
 
 const isShowTextToSpeechOptions = ref(false)
+const isTextToSpeechOn = ref(false)
 const isTextToSpeechPlaying = ref(false)
-const isTextToSpeechPaused = ref(false)
 const audioQueue = ref<HTMLAudioElement[]>([])
 const currentAudioIndex = ref(0)
 
 function pauseTextToSpeech() {
-  if (isTextToSpeechPlaying.value) {
+  if (isTextToSpeechOn.value) {
     if (audioQueue.value[currentAudioIndex.value]) {
       audioQueue.value[currentAudioIndex.value].pause()
     }
-    isTextToSpeechPaused.value = true
+    isTextToSpeechPlaying.value = false
     useTrackEvent('tts_pause')
   }
 }
@@ -613,8 +613,8 @@ function createAudio(element: { cfi: string, el: Element, text: string }) {
 
 async function startTextToSpeech() {
   isShowTextToSpeechOptions.value = true
-  if (isTextToSpeechPaused.value) {
-    isTextToSpeechPaused.value = false
+  if (!isTextToSpeechPlaying.value) {
+    isTextToSpeechPlaying.value = true
     if (audioQueue.value[currentAudioIndex.value]) {
       audioQueue.value[currentAudioIndex.value].play()
       useTrackEvent('tts_resume')
@@ -628,7 +628,7 @@ async function startTextToSpeech() {
   })
   audioQueue.value = []
   currentAudioIndex.value = 0
-  isTextToSpeechPlaying.value = true
+  isTextToSpeechOn.value = true
   useTrackEvent('tts_start')
 
   try {
@@ -646,8 +646,7 @@ async function startTextToSpeech() {
     }
   }
   catch (error) {
-    console.error('Text to speech error:', error)
-    isTextToSpeechPlaying.value = false
+    isTextToSpeechOn.value = false
     await handleError(error, {
       title: $t('error_text_to_speech_failed'),
     })

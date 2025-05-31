@@ -17,7 +17,7 @@ export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const {
     minimaxGroupId,
-    minimaxApiKey,
+    minimaxAPIKey,
   } = config
   const { text, language: rawLanguage } = getQuery(event)
   if (!text || typeof text !== 'string') {
@@ -58,7 +58,7 @@ export default defineEventHandler(async (event) => {
     const response = await $fetch<MinimaxT2AResponse>(`https://api.minimaxi.chat/v1/t2a_v2?GroupId=${minimaxGroupId}`, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${minimaxApiKey}`,
+        Authorization: `Bearer ${minimaxAPIKey}`,
       },
       body: command,
     })
