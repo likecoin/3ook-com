@@ -90,7 +90,7 @@ export interface FetchLikeCoinChainNFTsResponseData {
 export function fetchLikeCoinChainNFTs({
   nftOwner,
   reverse = true,
-  limit = 100,
+  limit = 30,
   key,
   nocache,
 }: FetchLikeCoinChainNFTsConfig) {
