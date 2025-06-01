@@ -77,6 +77,8 @@ export default defineEventHandler(async (event) => {
     let displayName: string | undefined
     let description: string | undefined
     let avatar: string | undefined
+    // NOTE: Although the API supports querying user public info by EVM wallet address,
+    // it is not guaranteed that the EVM wallet address is set in the user db.
     if (likeWallet) {
       try {
         const userInfoRes = await $fetch<{
