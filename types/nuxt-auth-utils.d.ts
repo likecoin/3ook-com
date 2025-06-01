@@ -8,6 +8,8 @@ declare module '#auth-utils' {
     displayName?: string
     description?: string
     avatar?: string
+    email?: string
+    loginMethod?: string
     isEVMModeActive?: boolean
   }
 }

@@ -1,6 +1,7 @@
 import { useAccount, useConnect, useDisconnect, useSignMessage } from '@wagmi/vue'
 import { UserRejectedRequestError } from 'viem'
 import { FetchError } from 'ofetch'
+import type { Magic } from 'magic-sdk'
 
 import { LoginModal } from '#components'
 
@@ -65,9 +66,26 @@ export const useAccountStore = defineStore('account', () => {
       if (status.value !== 'success') {
         await connectAsync({ connector })
       }
-
       if (status.value !== 'success') {
-        throw new Error('Failed to connect')
+        throw createError({
+          statusCode: 400,
+          message: $t('error_connect_wallet_failed'),
+          fatal: true,
+        })
+      }
+
+      let email: string | undefined
+      if (connector.id === 'magic' && 'magic' in connector) {
+        const magic = connector.magic as Magic
+        try {
+          const userInfo = await magic.user.getInfo()
+          if (userInfo.email) {
+            email = userInfo.email
+          }
+        }
+        catch (error) {
+          console.warn('Failed to fetch user info from Magic SDK', error)
+        }
       }
 
       const message = JSON.stringify(
@@ -75,6 +93,8 @@ export const useAccountStore = defineStore('account', () => {
           action: 'authorize',
           evmWallet: address.value,
           ts: Date.now(),
+          email,
+          loginMethod: connector.id,
           permissions: [
             'profile',
             'read:nftbook',
@@ -98,6 +118,8 @@ export const useAccountStore = defineStore('account', () => {
           walletAddress: address.value,
           signature,
           message,
+          loginMethod: connector.id,
+          email,
           expiresIn: '30d',
         },
       })
@@ -130,6 +152,37 @@ export const useAccountStore = defineStore('account', () => {
     await refreshSession()
   }
 
+  async function exportPrivateKey() {
+    // NOTE: This function is only for login with Magic Link
+    if (user.value?.loginMethod !== 'magic') {
+      throw createError({
+        statusCode: 400,
+        message: $t('account_export_private_key_not_supported'),
+        fatal: true,
+      })
+    }
+
+    try {
+      const connector = connectors.find((c: { id: string }) => c.id === 'magic')
+      if (!connector || !('magic' in connector)) {
+        throw createError({
+          statusCode: 400,
+          message: $t('error_connect_wallet_failed'),
+          fatal: true,
+        })
+      }
+
+      const magic = connector.magic as Magic
+      await magic.user.revealPrivateKey()
+    }
+    catch (error) {
+      if (error instanceof Error && error.message.includes('User canceled action.')) {
+        return
+      }
+      throw error
+    }
+  }
+
   return {
     likeWallet,
     isLoggingIn,
@@ -139,5 +192,6 @@ export const useAccountStore = defineStore('account', () => {
     login,
     logout,
     updateSettings,
+    exportPrivateKey,
   }
 })

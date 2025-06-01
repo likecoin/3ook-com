@@ -57,8 +57,29 @@
             />
           </div>
 
-          <div class="flex justify-between flex-wrap gap-2 px-3">
+          <div
+            v-if="user?.email"
+            class="flex justify-between flex-wrap gap-2 px-3"
+          >
             <div class="flex items-center gap-2">
+              <UIcon
+                name="i-material-symbols-mail-outline-rounded"
+                class="size-5"
+              />
+              <span
+                class="text-sm"
+                v-text="$t('account_page_email')"
+              />
+            </div>
+
+            <div
+              class="text-sm"
+              v-text="user?.email"
+            />
+          </div>
+
+          <div class="flex justify-between flex-wrap gap-2 px-3">
+            <div class="flex items-start gap-2">
               <UIcon
                 name="i-material-symbols-check-box-outline-blank"
                 class="size-5"
@@ -69,10 +90,21 @@
               />
             </div>
 
-            <div
-              class="text-xs font-mono"
-              v-text="user?.evmWallet"
-            />
+            <div class="flex flex-col items-end">
+              <div
+                class="text-xs/5 font-mono"
+                v-text="user?.evmWallet"
+              />
+              <UButton
+                v-if="user?.loginMethod === 'magic'"
+                class="mt-1"
+                :label="$t('account_page_export_private_key_button_label')"
+                variant="outline"
+                color="error"
+                size="xs"
+                @click="handleMagicButtonClick"
+              />
+            </div>
           </div>
 
           <div class="flex justify-between flex-wrap gap-2 px-3">
@@ -188,5 +220,10 @@ async function handleLogin() {
 
 async function handleLogout() {
   await accountStore.logout()
+}
+
+async function handleMagicButtonClick() {
+  useTrackEvent('export_private_key')
+  await accountStore.exportPrivateKey()
 }
 </script>

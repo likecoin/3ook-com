@@ -7,6 +7,8 @@ export default defineEventHandler(async (event) => {
     walletAddress: string
     message: string
     signature: string
+    email?: string
+    loginMethod: string
   }
   try {
     body = await readBody(event)
@@ -102,6 +104,8 @@ export default defineEventHandler(async (event) => {
       displayName,
       description,
       avatar,
+      email: body.email,
+      loginMethod: body.loginMethod,
       isEVMModeActive: !likeWallet,
     }
     await setUserSession(event, { user: userInfo })
