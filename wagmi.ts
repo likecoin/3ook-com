@@ -8,33 +8,39 @@ export function createWagmiConfig({
   rpcURL = '',
   chainId,
   customLogoURL,
+  isServer = false,
 }: {
   apiKey: string
   rpcURL?: string
   chainId?: number
   customLogoURL?: string
+  isServer?: boolean
 }) {
   return createConfig({
     chains: [optimismSepolia, optimism],
     connectors: [
       injected(),
       metaMask(),
-      dedicatedWalletConnector({
-        chains: [optimismSepolia, optimism],
-        options: {
-          apiKey,
-          accentColor: '#131313',
-          customHeaderText: '3ook.com',
-          customLogo: customLogoURL,
-          isDarkMode: false,
-          magicSdkConfiguration: {
-            network: {
-              rpcUrl: rpcURL,
-              chainId,
+      // NOTE: @magiclabs/wagmi-connector is not compatible with SSR
+      // https://github.com/magiclabs/wagmi-magic-connector/issues/42#issuecomment-2771613002
+      ...(isServer
+        ? []
+        : [dedicatedWalletConnector({
+            chains: [optimismSepolia, optimism],
+            options: {
+              apiKey,
+              accentColor: '#131313',
+              customHeaderText: '3ook.com',
+              customLogo: customLogoURL,
+              isDarkMode: false,
+              magicSdkConfiguration: {
+                network: {
+                  rpcUrl: rpcURL,
+                  chainId,
+                },
+              },
             },
-          },
-        },
-      }),
+          })]),
     ],
     ssr: true,
     transports: {

@@ -14,6 +14,7 @@ export default defineNuxtPlugin((nuxtApp) => {
         rpcURL: config.public.magicLinkRPCURL,
         chainId: config.public.magicLinkChainId,
         customLogoURL: config.public.magicLinkCustomLogoURL,
+        isServer: !!nuxtApp.ssrContext,
       }),
     })
     .use(VueQueryPlugin, {})
