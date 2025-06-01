@@ -77,20 +77,22 @@ export default defineEventHandler(async (event) => {
     let displayName: string | undefined
     let description: string | undefined
     let avatar: string | undefined
-    try {
-      const userInfoRes = await $fetch<{
-        user: string
-        displayName: string
-        description: string
-        avatar: string
-      }>(`${config.public.likeCoinAPIEndpoint}/users/addr/${body.walletAddress}/min`)
-      likerId = userInfoRes.user
-      displayName = userInfoRes.displayName
-      avatar = userInfoRes.avatar
-      description = userInfoRes.description
-    }
-    catch {
-      console.warn('Failed to fetch user info for wallet')
+    if (likeWallet) {
+      try {
+        const userInfoRes = await $fetch<{
+          user: string
+          displayName: string
+          description: string
+          avatar: string
+        }>(`${config.public.likeCoinAPIEndpoint}/users/addr/${likeWallet}/min`)
+        likerId = userInfoRes.user
+        displayName = userInfoRes.displayName
+        avatar = userInfoRes.avatar
+        description = userInfoRes.description
+      }
+      catch {
+        console.warn('Failed to fetch user info for wallet')
+      }
     }
 
     const userInfo = {
