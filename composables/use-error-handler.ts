@@ -67,7 +67,7 @@ export default function () {
       description = $t('error_internal_server_error')
     }
     else {
-      description = $t('error_unknown')
+      description = parseErrorData<string>(error, 'description') || $t('error_unknown')
     }
 
     await errorModal.open({

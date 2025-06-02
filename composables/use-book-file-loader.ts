@@ -1,4 +1,5 @@
 export default function () {
+  const { t: $t } = useI18n()
   const { user } = useUserSession()
 
   const loadingFilesize = ref(0)
@@ -37,9 +38,10 @@ export default function () {
       const errorText = await res.text()
       throw createError({
         statusCode: res.status,
-        message: errorText || 'FAILED_TO_LOAD_FILE',
+        message: errorText,
         data: {
           url,
+          description: $t('error_book_file_loading_failed'),
         },
       })
     }

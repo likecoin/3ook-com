@@ -30,6 +30,7 @@
   "error_back_to_bookshelf_button_label": "Back to 3ookshelf",
   "error_back_to_bookstore_button_label": "Back to 3ookstore",
   "error_back_to_home_button_label": "Back to Home",
+  "error_book_file_loading_failed": "Failed to load the file.",
   "error_connect_wallet_failed": "Failed to connect wallet",
   "error_internal_server_error": "Internal server error.",
   "error_likecoin_wallet_address_not_found": "The LikeCoin wallet address linked to EVM wallet address {address} cannot be found",

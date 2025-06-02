@@ -25,14 +25,21 @@ export function getErrorStatusCode(error: unknown) {
   return 400
 }
 
+export function parseErrorData<T>(error: unknown, key: string): T | undefined {
+  if (error instanceof Error && 'data' in error && error.data && typeof error.data === 'object') {
+    const data = error.data as Record<string, unknown>
+    if (key in data) {
+      return data[key] as T
+    }
+  }
+  return undefined
+}
+
 export function getErrorURL(error: unknown) {
   if (error instanceof FetchError) {
     return error.response?.url
   }
-  if (error instanceof Error && 'data' in error && error.data && typeof error.data === 'object' && 'url' in error.data) {
-    return error.data.url as string
-  }
-  return undefined
+  return parseErrorData<string>(error, 'url')
 }
 
 export function parseError(error: unknown) {
