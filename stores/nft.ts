@@ -10,8 +10,8 @@ export const useNFTStore = defineStore('nft', () => {
 
   const getNFTClassById = computed(() => (id: string) => nftClassByIdMap.value[id])
 
-  const getNFTClassFirstNFTIdByNFTClassIdAndOwnerWalletAddress = computed(() => (nftClassId: string, ownerWalletAddress: string) => {
-    return nftClassOwnersNFTIdMapByNFTClassIdMap.value[nftClassId]?.[ownerWalletAddress]?.[0]
+  const getNFTIdsByNFTClassIdAndOwnerWalletAddress = computed(() => (nftClassId: string, ownerWalletAddress: string) => {
+    return nftClassOwnersNFTIdMapByNFTClassIdMap.value[nftClassId]?.[ownerWalletAddress] || []
   })
 
   const getISCNIdPrefixByNFTClassId = computed(() => (nftClassId: string) => {
@@ -131,7 +131,7 @@ export const useNFTStore = defineStore('nft', () => {
     getLegacyNFTClassById,
     getISCNIdPrefixByNFTClassId,
     getISCNDataByNFTClassId,
-    getNFTClassFirstNFTIdByNFTClassIdAndOwnerWalletAddress,
+    getNFTIdsByNFTClassIdAndOwnerWalletAddress,
 
     addNFTClass,
     addNFTClasses,
