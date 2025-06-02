@@ -216,6 +216,67 @@ export function createNFTBookPurchase({
   })
 }
 
+export function createNFTBookCartCheckout({
+  email,
+  items,
+  coupon,
+  referrer,
+  utmCampaign,
+  utmMedium,
+  utmSource,
+  gaClientId,
+  gaSessionId,
+  gadClickId,
+  gadSource,
+  fbClickId,
+}: {
+  email?: string
+  items: Array<CartItem>
+  coupon?: string
+  from?: string
+  referrer?: string
+  utmCampaign?: string
+  utmMedium?: string
+  utmSource?: string
+  gaClientId?: string
+  gaSessionId?: string
+  gadClickId?: string
+  gadSource?: string
+  fbClickId?: string
+}) {
+  const { fetch } = useLikeCoinAPI()
+  return fetch<{ url: string, paymentId: string }>('/likernft/book/purchase/cart/new', {
+    method: 'POST',
+    query: {
+      ga_client_id: gaClientId,
+      ga_session_id: gaSessionId,
+      utm_campaign: utmCampaign,
+      utm_source: utmSource,
+      utm_medium: utmMedium,
+      referrer,
+    },
+    body: {
+      email,
+      items: items.map(({ nftClassId: classId, price, ...item }) => ({
+        ...item,
+        classId,
+        customPriceInDecimal: price ? Math.floor(price * 100) : undefined,
+      })),
+      coupon,
+      referrer,
+      utmCampaign,
+      utmSource,
+      utmMedium,
+      gaClientId,
+      gaSessionId,
+      gadClickId,
+      gadSource,
+      fbClickId,
+      site: '3ook.com',
+    },
+  })
+}
+
 export interface FetchCartStatusByIdResponseData {
   email: string
   status: 'paid' | 'pendingClaim' | 'pending' | 'pendingNFT' | 'completed' | 'done'

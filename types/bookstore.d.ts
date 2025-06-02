@@ -41,3 +41,13 @@ declare interface BookstoreInfo {
   usageInfo: string
   timestamp: number
 }
+
+declare interface CartItem {
+  nftClassId: string
+  priceIndex: number
+  coupon?: string | undefined
+  price?: number | undefined
+  quantity?: number | undefined
+  from?: string | undefined
+  timestamp?: number | undefined
+}

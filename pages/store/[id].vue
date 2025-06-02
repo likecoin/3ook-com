@@ -185,7 +185,7 @@
               </ul>
               <footer class="flex flex-col mt-6 gap-3">
                 <UButton
-                  class="hidden cursor-pointer"
+                  class="cursor-pointer"
                   :label="$t('product_page_add_to_cart_button_label')"
                   size="xl"
                   :disabled="!!selectedPricingItem?.isSoldOut"
@@ -195,6 +195,8 @@
                 <UButton
                   class="cursor-pointer"
                   :label="$t('product_page_checkout_button_label')"
+                  color="neutral"
+                  variant="outline"
                   size="xl"
                   :loading="isPurchasing"
                   :disabled="!!selectedPricingItem?.isSoldOut || isPurchasing"
@@ -336,10 +338,11 @@ const getRouteBaseName = useRouteBaseName()
 const { t: $t } = useI18n()
 const toast = useToast()
 const wipModal = useWIPModal()
-const formatPrice = useFormatPrice()
+const { formatPrice } = useCurrency()
 const { loggedIn: hasLoggedIn, user } = useUserSession()
 const accountStore = useAccountStore()
 const nftStore = useNFTStore()
+const shoppingCartStore = useShoppingCartStore()
 const { handleError } = useErrorHandler()
 
 const nftClassId = computed(() => getRouteParam('id'))
@@ -481,12 +484,35 @@ async function handleSocialButtonClick(key: string) {
   }
 }
 
+const cartItem = computed(() => ({
+  nftClassId: nftClassId.value,
+  price: selectedPricingItem.value.price,
+  priceIndex: selectedPricingItem.value.index,
+  from: getRouteQuery('from'),
+  coupon: getRouteQuery('coupon'),
+}))
+
 function handleAddToCartButtonClick() {
   useTrackEvent('add_to_cart', { nft_class_id: nftClassId.value })
-  // TODO: Implement add to cart functionality
-  wipModal.open({
-    title: $t('product_page_add_to_cart_button_label'),
-  })
+  const isAddedToCart = shoppingCartStore.addItem(cartItem.value)
+  if (isAddedToCart) {
+    toast.add({
+      title: $t('cart_item_added_toast_description'),
+      description: bookInfo.name.value,
+      icon: 'i-material-symbols-shopping-bag',
+      color: 'success',
+      actions: [
+        {
+          label: $t('cart_item_added_toast_view_button_label'),
+          variant: 'outline',
+          onClick: () => {
+            useTrackEvent('view_cart')
+            navigateTo(localeRoute({ name: 'cart' }))
+          },
+        },
+      ],
+    })
+  }
 }
 
 const isPurchasing = ref(false)
@@ -502,11 +528,7 @@ async function handlePurchaseButtonClick() {
     }
     const { url, paymentId } = await createNFTBookPurchase({
       email: user.value?.email,
-      nftClassId: nftClassId.value,
-      price: selectedPricingItem.value.price,
-      priceIndex: selectedPricingItem.value.index,
-      from: route.query.from as string,
-      coupon: route.query.coupon as string,
+      ...cartItem.value,
     })
     useTrackEvent('begin_checkout', { payment_id: paymentId })
     await navigateTo(url, { external: true })
