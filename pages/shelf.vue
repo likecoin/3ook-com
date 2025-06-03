@@ -132,13 +132,11 @@ watch(
 
 function handleBookshelfItemOpen({
   type,
-  url,
   name,
   nftClassId,
   index,
 }: {
   type: string
-  url: string
   name: string
   nftClassId?: string
   index?: number
@@ -147,7 +145,6 @@ function handleBookshelfItemOpen({
     name: `reader-${type}`,
     query: {
       nft_class_id: nftClassId,
-      file_url: url,
       filename: name,
       index: index ?? 0,
     },

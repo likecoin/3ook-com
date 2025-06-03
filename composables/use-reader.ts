@@ -11,7 +11,6 @@ export default function () {
   })
 
   const nftId = computed(() => getRouteQuery('nft_id') || ownerFirstNFTId.value)
-  const fileURL = computed(() => getRouteQuery('file_url'))
   const filename = computed(() => getRouteQuery('filename'))
   const fileIndex = computed(() => getRouteQuery('index', '0'))
 
@@ -29,7 +28,6 @@ export default function () {
   return {
     nftClassId,
     nftId,
-    fileURL,
     filename,
     fileIndex,
 
