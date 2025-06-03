@@ -92,29 +92,36 @@ const bookCoverSrc = computed(() => getResizedImageURL(bookInfo.coverSrc.value, 
 const isLargerScreen = useMediaQuery('(min-width: 1024px)')
 
 const menuItems = computed<DropdownMenuItem[]>(() => {
-  return [
-    ...bookInfo.contentURLs.value.map((contentURL) => {
-      let label: string
-      switch (contentURL.type) {
-        case 'epub':
-          label = $t('bookshelf_open_in_epub')
-          break
-        case 'pdf':
-          label = $t('bookshelf_open_in_pdf')
-          break
-        default:
-          label = $t('bookshelf_open_in_type', { type: contentURL.type })
-          break
-      }
+  const sortedContentURLs = [...bookInfo.contentURLs.value].sort((a, b) => {
+    if (a.type === 'epub' && b.type !== 'epub') return -1
+    if (a.type !== 'epub' && b.type === 'epub') return 1
+    return 0
+  })
 
-      return {
-        label,
-        icon: 'i-material-symbols-book-5-outline',
-        onSelect: () => {
-          openContentURL(contentURL)
-        },
-      }
-    }),
+  const contentItems = sortedContentURLs.map((contentURL) => {
+    let label: string
+    switch (contentURL.type) {
+      case 'epub':
+        label = $t('bookshelf_open_in_epub')
+        break
+      case 'pdf':
+        label = $t('bookshelf_open_in_pdf')
+        break
+      default:
+        label = $t('bookshelf_open_in_type', { type: contentURL.type })
+        break
+    }
+
+    return {
+      label,
+      icon: 'i-material-symbols-book-5-outline',
+      onSelect: () => {
+        openContentURL(contentURL)
+      },
+    }
+  })
+  return [
+    ...contentItems,
     {
       label: $t('bookshelf_view_book_product_page'),
       icon: 'i-material-symbols-visibility-outline',
