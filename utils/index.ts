@@ -53,3 +53,26 @@ export function checkIsEVMAddress(address: string) {
 export function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
+
+const CONTENT_URL_TYPE_ORDER = ['epub', 'pdf']
+
+export function compareContentURL(
+  a: ContentURL,
+  b: ContentURL,
+) {
+  const indexA = CONTENT_URL_TYPE_ORDER.indexOf(a.type ?? '')
+  const indexB = CONTENT_URL_TYPE_ORDER.indexOf(b.type ?? '')
+
+  if (indexA === -1 && indexB === -1) {
+    return a.name.localeCompare(b.name)
+  }
+  else if (indexA === -1) {
+    return 1
+  }
+  else if (indexB === -1) {
+    return -1
+  }
+  else {
+    return indexA - indexB
+  }
+}

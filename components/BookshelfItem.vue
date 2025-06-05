@@ -93,37 +93,40 @@ const bookCoverSrc = computed(() => getResizedImageURL(bookInfo.coverSrc.value, 
 const isLargerScreen = useMediaQuery('(min-width: 1024px)')
 
 const menuItems = computed<DropdownMenuItem[]>(() => {
-  return [
-    ...bookInfo.contentURLs.value.map((contentURL) => {
-      let label: string
-      switch (contentURL.type) {
-        case 'epub':
-          label = $t('bookshelf_open_in_epub')
-          break
-        case 'pdf':
-          label = $t('bookshelf_open_in_pdf')
-          break
-        default:
-          label = $t('bookshelf_open_in_type', { type: contentURL.type })
-          break
-      }
+  const sortedContentURLs = [...bookInfo.contentURLs.value].sort(compareContentURL)
 
-      return {
-        label,
-        icon: 'i-material-symbols-book-5-outline',
-        onSelect: () => {
-          openContentURL(contentURL)
-        },
-      }
-    }),
-    {
-      label: $t('bookshelf_view_book_product_page'),
-      icon: 'i-material-symbols-visibility-outline',
-      to: accountStore.isEVMMode ? bookInfo.productPageRoute.value : getLikerLandV2NFTClassPageURL(props.nftClassId),
-      external: !accountStore.isEVMMode,
-      target: accountStore.isEVMMode ? undefined : '_blank',
-    },
-  ]
+  const contentItems: DropdownMenuItem[] = sortedContentURLs.map((contentURL) => {
+    let label: string
+    switch (contentURL.type) {
+      case 'epub':
+        label = $t('bookshelf_open_in_epub')
+        break
+      case 'pdf':
+        label = $t('bookshelf_open_in_pdf')
+        break
+      default:
+        label = $t('bookshelf_open_in_type', { type: contentURL.type })
+        break
+    }
+
+    return {
+      label,
+      icon: 'i-material-symbols-book-5-outline',
+      onSelect: () => {
+        openContentURL(contentURL)
+      },
+    }
+  })
+
+  contentItems.push({
+    label: $t('bookshelf_view_book_product_page'),
+    icon: 'i-material-symbols-visibility-outline',
+    to: accountStore.isEVMMode ? bookInfo.productPageRoute.value : getLikerLandV2NFTClassPageURL(props.nftClassId),
+    external: !accountStore.isEVMMode,
+    target: accountStore.isEVMMode ? undefined : '_blank',
+  })
+
+  return contentItems
 })
 
 useVisibility('lazyLoadTrigger', (visible) => {
