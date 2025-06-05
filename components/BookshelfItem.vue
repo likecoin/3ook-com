@@ -95,7 +95,7 @@ const isLargerScreen = useMediaQuery('(min-width: 1024px)')
 const menuItems = computed<DropdownMenuItem[]>(() => {
   const sortedContentURLs = [...bookInfo.contentURLs.value].sort(compareByType)
 
-  const contentItems = sortedContentURLs.map((contentURL) => {
+  const contentItems: DropdownMenuItem[] = sortedContentURLs.map((contentURL) => {
     let label: string
     switch (contentURL.type) {
       case 'epub':
@@ -117,15 +117,15 @@ const menuItems = computed<DropdownMenuItem[]>(() => {
       },
     }
   })
-  return [
-    ...contentItems,
-    {
-      label: $t('bookshelf_view_book_product_page'),
-      icon: 'i-material-symbols-visibility-outline',
-      href: getLikerLandV2NFTClassPageURL(props.nftClassId),
-      target: '_blank',
-    },
-  ]
+
+  contentItems.push({
+    label: $t('bookshelf_view_book_product_page'),
+    icon: 'i-material-symbols-visibility-outline',
+    href: getLikerLandV2NFTClassPageURL(props.nftClassId),
+    target: '_blank',
+  })
+
+  return contentItems
 })
 
 useVisibility('lazyLoadTrigger', (visible) => {
