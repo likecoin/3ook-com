@@ -82,6 +82,7 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['visible', 'open'])
+const typeOrder = ['epub', 'pdf']
 
 const { t: $t } = useI18n()
 const nftStore = useNFTStore()
@@ -92,11 +93,7 @@ const bookCoverSrc = computed(() => getResizedImageURL(bookInfo.coverSrc.value, 
 const isLargerScreen = useMediaQuery('(min-width: 1024px)')
 
 const menuItems = computed<DropdownMenuItem[]>(() => {
-  const sortedContentURLs = [...bookInfo.contentURLs.value].sort((a, b) => {
-    if (a.type === 'epub' && b.type !== 'epub') return -1
-    if (a.type !== 'epub' && b.type === 'epub') return 1
-    return 0
-  })
+  const sortedContentURLs = [...bookInfo.contentURLs.value].sort(compareByType)
 
   const contentItems = sortedContentURLs.map((contentURL) => {
     let label: string
@@ -159,6 +156,27 @@ function handleCoverClick() {
   const contentURL = bookInfo.contentURLs.value.find(url => url.type === 'epub') ?? bookInfo.contentURLs.value[0]
   if (contentURL) {
     openContentURL(contentURL)
+  }
+}
+
+function compareByType(
+  a: { type?: string, name: string },
+  b: { type?: string, name: string },
+) {
+  const indexA = typeOrder.indexOf(a.type ?? '')
+  const indexB = typeOrder.indexOf(b.type ?? '')
+
+  if (indexA === -1 && indexB === -1) {
+    return a.name.localeCompare(b.name)
+  }
+  else if (indexA === -1) {
+    return 1
+  }
+  else if (indexB === -1) {
+    return -1
+  }
+  else {
+    return indexA - indexB
   }
 }
 </script>
