@@ -57,6 +57,8 @@ env:
     value: G-WBSJGPMQE2
   - variable: SENTRY_DSN
     value: https://07b4bd03c1d828f7e241ccc9e47a2f80@o149940.ingest.us.sentry.io/4509350693240832
+  - variable: V3_PUBLIC_BASE_URL
+    value: https://3ook.com
   # Grant access to secrets in Cloud Secret Manager.
   # See https://firebase.google.com/docs/app-hosting/configure#secret-parameters
   # - variable: MY_SECRET
