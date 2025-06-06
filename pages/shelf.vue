@@ -59,6 +59,7 @@
           :id="item.nftClassId"
           :key="item.nftClassId"
           :nft-class-id="item.nftClassId"
+          :nft-ids="item.nftIds"
           @open="handleBookshelfItemOpen"
         />
 

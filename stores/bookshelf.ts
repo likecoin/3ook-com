@@ -9,11 +9,14 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
   const hasFetched = ref(false)
   const nextKey = ref<number | undefined>(undefined)
 
-  const items = computed(() => nftClassIds.value.map(nftClassId => ({ id: nftClassId, nftClassId })))
-
   const getNFTsByNFTClassId = computed(() => (nftClassId: string) => {
     return Object.values(nftByNFTClassIds.value[nftClassId] || {})
   })
+
+  const items = computed(() => nftClassIds.value.map(nftClassId => ({
+    nftClassId,
+    nftIds: getNFTsByNFTClassId.value(nftClassId).map(nft => nft.token_id),
+  })))
 
   async function fetchItems({ isRefresh: shouldRefresh = false } = {}) {
     const isRefresh = shouldRefresh || (!nftClassIds.value.length && !hasFetched.value)

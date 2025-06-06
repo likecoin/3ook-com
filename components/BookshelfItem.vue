@@ -79,6 +79,10 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  nftIds: {
+    type: Array as PropType<string[]>,
+    default: () => [],
+  },
 })
 
 const emit = defineEmits(['visible', 'open'])
@@ -144,7 +148,9 @@ useVisibility('lazyLoadTrigger', (visible) => {
 })
 
 function openContentURL(contentURL: ContentURL) {
-  const readerRoute = bookInfo.getReaderRoute.value({ contentURL })
+  // TODO: UI to select specific NFT Id
+  const nftId = props.nftIds[0]
+  const readerRoute = bookInfo.getReaderRoute.value({ nftId, contentURL })
   navigateTo(readerRoute)
   emit('open', {
     nftClassId: props.nftClassId,
