@@ -9,6 +9,9 @@
 
 <script setup lang="ts">
 const { t: $t } = useI18n()
+const config = useRuntimeConfig()
+const ogTitle = computed(() => $t('app_title'))
+const ogDescription = computed(() => $t('app_description'))
 
 useHead({
   meta: [
@@ -16,6 +19,26 @@ useHead({
       name: 'viewport',
       content:
         'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover',
+    },
+    {
+      name: 'description',
+      content: ogDescription,
+    },
+    {
+      property: 'og:site_name',
+      content: ogTitle,
+    },
+    {
+      property: 'og:title',
+      content: ogTitle,
+    },
+    {
+      property: 'og:description',
+      content: ogDescription,
+    },
+    {
+      property: 'og:image',
+      content: `${config.public.v3PublicURL}/images/og/default.jpg`,
     },
   ],
   titleTemplate: title => title ? `${title} | ${$t('app_title')}` : $t('app_title'),
