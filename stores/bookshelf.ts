@@ -4,7 +4,7 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
   const accountStore = useAccountStore()
 
   const nftByNFTClassIds = ref<Record<string, Record<string, NFT>>>({})
-  const nftClassIds = ref<string[]>([])
+  const legacyNFTClassIds = ref<string[]>([])
   const isFetching = ref(false)
   const hasFetched = ref(false)
   const nextKey = ref<number | undefined>(undefined)
@@ -13,24 +13,25 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
     return Object.values(nftByNFTClassIds.value[nftClassId] || {})
   })
 
-  const items = computed(() => nftClassIds.value.map(nftClassId => ({
-    nftClassId,
-    nftIds: getNFTsByNFTClassId.value(nftClassId).map(nft => nft.token_id),
-  })))
+  const items = computed(() => accountStore.isEVMMode
+    ? Object.entries(nftByNFTClassIds.value).map(([nftClassId, nfts]) => ({
+        nftClassId,
+        nftIds: Object.keys(nfts),
+      }))
+    : legacyNFTClassIds.value.map(nftClassId => ({ nftClassId, nftIds: [] })),
+  )
 
   async function fetchItems({ isRefresh: shouldRefresh = false } = {}) {
-    const isRefresh = shouldRefresh || (!nftClassIds.value.length && !hasFetched.value)
+    const isRefresh = shouldRefresh || (!items.value.length && !hasFetched.value)
     if (!hasLoggedIn.value || isFetching.value || (!isRefresh && !nextKey.value)) {
       return
     }
 
     try {
       isFetching.value = true
-      let newNFTClassIds: string[] = []
       let res: FetchLikeCoinChainNFTsResponseData | FetchLegacyLikeCoinChainNFTClassesResponseData
       const key = isRefresh ? undefined : nextKey.value?.toString()
       if (accountStore.isEVMMode) {
-        const existedNFTClassIdsSet = new Set<string>(isRefresh ? [] : nftClassIds.value)
         res = await fetchLikeCoinChainNFTs({
           nftOwner: user.value?.evmWallet,
           key,
@@ -49,10 +50,6 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
               owner_address: item.owner_address,
             })
           }
-          if (!existedNFTClassIdsSet.has(nftClassId)) {
-            existedNFTClassIdsSet.add(nftClassId)
-            newNFTClassIds.push(nftClassId)
-          }
           const nftId = item.token_id
           nftByNFTClassIds.value[nftClassId][nftId] = item
         })
@@ -62,18 +59,18 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
           nftOwner: user.value?.likeWallet,
           key,
         })
-        newNFTClassIds = nftStore.addLegacyNFTClasses(res.classes.filter((item) => {
+        const newNFTClassIds = nftStore.addLegacyNFTClasses(res.classes.filter((item) => {
           const nftMetaCollectionId = item.metadata?.nft_meta_collection_id
           return nftMetaCollectionId?.includes('nft_book') || nftMetaCollectionId?.includes('book_nft')
         }))
+        if (isRefresh) {
+          legacyNFTClassIds.value = newNFTClassIds
+        }
+        else {
+          legacyNFTClassIds.value.push(...newNFTClassIds)
+        }
       }
       nextKey.value = res.pagination.count < 100 ? undefined : res.pagination.next_key
-      if (isRefresh) {
-        nftClassIds.value = newNFTClassIds
-      }
-      else {
-        nftClassIds.value.push(...newNFTClassIds)
-      }
     }
     catch (error) {
       const statusCode = getErrorStatusCode(error)
@@ -91,12 +88,13 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
 
   watch([user, () => accountStore.isEVMMode], () => {
     hasFetched.value = false
-    nftClassIds.value = []
+    nftByNFTClassIds.value = {}
+    legacyNFTClassIds.value = []
     nextKey.value = undefined
   })
 
   return {
-    nftClassIds,
+    legacyNFTClassIds,
     isFetching,
     hasFetched,
     nextKey,
