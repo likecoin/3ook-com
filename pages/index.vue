@@ -17,5 +17,5 @@ const { loggedIn: hasLoggedIn } = useUserSession()
 
 const localeRoute = useLocaleRoute()
 
-await navigateTo(localeRoute({ name: hasLoggedIn.value ? 'shelf' : 'account' }))
+await navigateTo(localeRoute({ name: hasLoggedIn.value ? 'shelf' : 'store' }))
 </script>
