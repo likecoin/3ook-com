@@ -155,9 +155,9 @@
                     />
                     <span
                       v-else
-                      class="w-[20px] h-[20px] my-0.5 bg-white rounded-full border border-gray-300"
+                      class="shrink-0 w-[20px] h-[20px] my-0.5 bg-white rounded-full border border-gray-300"
                     />
-                    <div class="flex-1">
+                    <div class="grow">
                       <div class="flex justify-between items-center gap-3 text-green-500">
                         <span
                           class="font-semibold"
