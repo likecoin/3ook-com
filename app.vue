@@ -38,7 +38,7 @@ useHead({
     },
     {
       property: 'og:image',
-      content: `${config.public.v3PublicURL}/images/og/default.jpg`,
+      content: `${config.public.baseURL}/images/og/default.jpg`,
     },
   ],
   titleTemplate: title => title ? `${title} | ${$t('app_title')}` : $t('app_title'),
