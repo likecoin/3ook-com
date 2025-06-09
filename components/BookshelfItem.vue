@@ -149,7 +149,7 @@ useVisibility('lazyLoadTrigger', (visible) => {
 
 function openContentURL(contentURL: ContentURL) {
   // TODO: UI to select specific NFT Id
-  const nftId = props.nftIds[0]
+  const nftId = props.nftIds?.[0]
   const readerRoute = bookInfo.getReaderRoute.value({ nftId, contentURL })
   navigateTo(readerRoute)
   emit('open', {
