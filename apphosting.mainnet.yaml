@@ -21,6 +21,8 @@ env:
     value: tblYTTj9AkyKAi8Md
   - variable: AIRTABLE_API_SECRET
     secret: V3_AIRTABLE_API_SECRET
+  - variable: BASE_URL
+    value: https://3ook.com
   - variable: MINIMAX_GROUP_ID
     secret: MINIMAX_GROUP_ID
   - variable: MINIMAX_API_KEY
@@ -57,8 +59,6 @@ env:
     value: G-WBSJGPMQE2
   - variable: SENTRY_DSN
     value: https://07b4bd03c1d828f7e241ccc9e47a2f80@o149940.ingest.us.sentry.io/4509350693240832
-  - variable: BASE_URL
-    value: https://3ook.com
   # Grant access to secrets in Cloud Secret Manager.
   # See https://firebase.google.com/docs/app-hosting/configure#secret-parameters
   # - variable: MY_SECRET
