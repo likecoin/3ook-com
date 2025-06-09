@@ -10,8 +10,8 @@
 <script setup lang="ts">
 const { t: $t } = useI18n()
 const config = useRuntimeConfig()
-const ogTitle = computed(() => $t('app_title'))
-const ogDescription = computed(() => $t('app_description'))
+const ogTitle = $t('app_title')
+const ogDescription = $t('app_description')
 
 useHead({
   meta: [
