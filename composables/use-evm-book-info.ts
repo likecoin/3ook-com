@@ -13,7 +13,7 @@ export function useEVMBookInfo({ nftClassId = '' }: { nftClassId?: string } = {}
   const author = computed(() => contentMetadata.value?.author)
   const publisher = computed(() => contentMetadata.value?.publisher)
 
-  const coverSrc = computed(() => normalizeURIToHTTP(contentMetadata.value?.thumbnailUrl))
+  const coverSrc = computed(() => normalizeURIToHTTP(contentMetadata.value?.thumbnailUrl || contentMetadata.value?.image))
 
   const publishedDate = computed(() => {
     const datePublished = contentMetadata.value?.datePublished
