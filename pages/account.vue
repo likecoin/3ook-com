@@ -148,6 +148,16 @@
           />
 
           <UButton
+            :label="user?.isLikerPlus ? $t('account_page_manage_subscription') : $t('account_page_upgrade_to_plus')"
+            variant="link"
+            leading-icon="i-material-symbols-workspace-premium-rounded"
+            :color="user?.isLikerPlus ? 'neutral' : 'success'"
+            size="lg"
+            block
+            @click="handleLikerPlusButtonClick"
+          />
+
+          <UButton
             :label="$t('account_page_publish_book')"
             href="https://publish.liker.land"
             target="_blank"
@@ -181,6 +191,8 @@ definePageMeta({ layout: false })
 const { t: $t } = useI18n()
 const { loggedIn: hasLoggedIn, user } = useUserSession()
 const accountStore = useAccountStore()
+const localeRoute = useLocaleRoute()
+const { handleError } = useErrorHandler()
 
 useHead({
   title: $t('account_page_title'),
@@ -197,5 +209,22 @@ async function handleLogout() {
 async function handleMagicButtonClick() {
   useTrackEvent('export_private_key')
   await accountStore.exportPrivateKey()
+}
+
+async function handleLikerPlusButtonClick() {
+  if (user.value?.isLikerPlus) {
+    try {
+      const { url } = await fetchLikerPlusBillingPortalLink()
+      window.open(url, '_blank')
+    }
+    catch (error) {
+      await handleError(error, {
+        title: $t('error_billing_portal_failed'),
+      })
+    }
+  }
+  else {
+    navigateTo(localeRoute({ name: 'pricing' }))
+  }
 }
 </script>
