@@ -588,6 +588,15 @@ async function startTextToSpeech() {
       title: $t('reader_text_to_speech_not_available'),
       description: $t('reader_text_to_speech_not_available_description'),
       color: 'warning',
+      actions: [{
+        icon: 'i-material-symbols-shopping-cart',
+        label: 'Upgrade to Liker+',
+        color: 'neutral',
+        variant: 'outline',
+        onClick: () => {
+          navigateTo(localeRoute({ name: 'pricing' }))
+        },
+      }],
     })
     return
   }
