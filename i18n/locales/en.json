@@ -122,6 +122,8 @@
   "pricing_page_feature_1": "AI text-to-speech in Cantonese or Mandarin",
   "pricing_page_feature_2": "5% cashback on all book purchases, no limit",
   "pricing_page_feature_3": "Price is locked in once subscribed",
+  "pricing_page_liker_id_required": "Liker ID Required",
+  "pricing_page_liker_id_required_description": "You need a Liker ID to subscribe. Please contact support for assistance.",
   "pricing_page_membership_title": "3ookReader+ Membership",
   "pricing_page_monthly": "Monthly",
   "pricing_page_per_month": "/per month",
