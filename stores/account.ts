@@ -172,6 +172,11 @@ export const useAccountStore = defineStore('account', () => {
     await refreshSession()
   }
 
+  async function refreshSessionInfo() {
+    await $fetch('/api/account/refersh', { method: 'POST' })
+    await refreshSession()
+  }
+
   async function exportPrivateKey() {
     // NOTE: This function is only for login with Magic Link
     if (user.value?.loginMethod !== 'magic') {
@@ -212,6 +217,7 @@ export const useAccountStore = defineStore('account', () => {
     login,
     logout,
     updateSettings,
+    refreshSessionInfo,
     exportPrivateKey,
   }
 })
