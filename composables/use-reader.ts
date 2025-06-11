@@ -1,7 +1,26 @@
-export default function () {
+export default function (
+  {
+    nftClassIdInput,
+  }: {
+    nftClassIdInput?: Ref<string> | string
+
+  } = {},
+) {
   const config = useRuntimeConfig()
 
-  const nftClassId = computed(() => getRouteQuery('nft_class_id'))
+  const nftClassId = computed(() => {
+    const queryValue = getRouteQuery('nft_class_id')
+    if (queryValue !== undefined && queryValue !== '') {
+      return queryValue
+    }
+    else if (nftClassIdInput) {
+      return isRef(nftClassIdInput) ? nftClassIdInput.value : nftClassIdInput
+    }
+    else {
+      return ''
+    }
+  })
+
   const bookInfo = useBookInfo({ nftClassId: nftClassId.value })
 
   const nftId = computed(() => {
@@ -14,6 +33,13 @@ export default function () {
 
   const bookFileURLWithCORS = computed(() => {
     const url = new URL(`${config.public.likeCoinAPIEndpoint}/ebook-cors/`)
+    if (!nftClassId.value || nftId.value === undefined) {
+      throw createError({
+        statusCode: 400,
+        message: 'Missing required parameters',
+      })
+    }
+
     url.searchParams.set('class_id', nftClassId.value)
     if (nftId.value !== undefined) {
       url.searchParams.set('nft_id', nftId.value)

@@ -72,6 +72,7 @@
 </template>
 
 <script setup lang="ts">
+import { saveAs } from 'file-saver'
 import type { DropdownMenuItem } from '@nuxt/ui'
 
 const props = defineProps({
@@ -85,16 +86,23 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['visible', 'open'])
+const emit = defineEmits(['visible', 'open', 'download'])
 
 const { t: $t } = useI18n()
 const accountStore = useAccountStore()
 const nftStore = useNFTStore()
 const metadataStore = useMetadataStore()
+const { loadFileAsBuffer } = useBookFileLoader()
+const toast = useToast()
 const bookInfo = useBookInfo({ nftClassId: props.nftClassId })
+
+const { bookFileURLWithCORS } = useReader({
+  nftClassIdInput: props.nftClassId,
+})
 const bookCoverSrc = computed(() => getResizedImageURL(bookInfo.coverSrc.value, { size: 300 }))
 
 const isLargerScreen = useMediaQuery('(min-width: 1024px)')
+const fileDownloading = ref(false)
 
 const menuItems = computed<DropdownMenuItem[]>(() => {
   const sortedContentURLs = [...bookInfo.contentURLs.value].sort(compareContentURL)
@@ -186,6 +194,71 @@ function openContentURL(contentURL: ContentURL) {
     name: contentURL.name,
     index: contentURL.index,
   })
+}
+
+async function downloadUrl(url: string) {
+  try {
+    fileDownloading.value = true
+    const buffer = await loadFileAsBuffer(bookFileURLWithCORS.value)
+    if (!buffer) {
+      console.error('Failed to load book file as buffer')
+      return
+    }
+    const filename = extractFilenameFromURL(url)
+
+    saveAs(
+      new Blob([buffer], {
+        type: 'application/epub+zip',
+      }),
+      filename,
+    )
+  }
+  catch (e) {
+    toast.add({
+      title: $t('bookshelf_download_error'),
+      duration: 5000,
+      color: 'error',
+    })
+    console.error('Failed to download book file:', e)
+    return
+  }
+  finally {
+    fileDownloading.value = false
+    emit('download', {
+      nftClassId: props.nftClassId,
+      url,
+    })
+  }
+}
+
+function extractFilenameFromURL(url: string): string {
+  try {
+    const parsedUrl = new URL(url)
+    let filename = parsedUrl.searchParams.get('name') || 'download'
+
+    const match = filename.match(/^(.+?)((\.\w+)+)$/)
+    if (match) {
+      const baseName = match[1]
+      const extensions = match[2].split('.').filter(Boolean)
+      if (extensions.length > 1) {
+        const uniqueExtensions = Array.from(new Set(extensions))
+        if (uniqueExtensions.length === 1) {
+          // e.g., all ".epub" → keep one
+          filename = `${baseName}.${uniqueExtensions[0]}`
+        }
+        else {
+          // Preserve distinct extensions (e.g., ".tar.gz")
+          filename = `${baseName}.${uniqueExtensions.join('.')}`
+        }
+      }
+    }
+
+    return filename
+  }
+  catch {
+    console.warn('Invalid URL:', url)
+    return 'download'
+  }
 }
 
 function handleCoverClick() {
