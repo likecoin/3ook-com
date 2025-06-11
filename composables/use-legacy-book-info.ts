@@ -15,6 +15,9 @@ export default function ({ nftClassId = '' }: { nftClassId?: string } = {}) {
   const author = computed(() => contentMetadata.value?.author)
   const publisher = computed(() => contentMetadata.value?.publisher)
 
+  const isbn = computed(() => contentMetadata.value?.isbn)
+  const inLanguage = computed(() => contentMetadata.value?.inLanguage)
+
   const coverSrc = computed(() => normalizeURIToHTTP(nftClass.value?.metadata.image))
 
   const publishedDate = computed(() => {
@@ -42,6 +45,9 @@ export default function ({ nftClassId = '' }: { nftClassId?: string } = {}) {
     nftClassOwnerWalletAddress,
     author,
     publisher,
+
+    isbn,
+    inLanguage,
 
     publishedDate,
     releasedDate,
