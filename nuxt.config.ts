@@ -96,6 +96,7 @@ export default defineNuxtConfig({
   scripts: {
     registry: {
       crisp: true,
+      stripe: true,
     },
   },
 
