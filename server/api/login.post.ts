@@ -56,9 +56,6 @@ export default defineEventHandler(async (event) => {
         token: string
       }>(`${config.public.likeCoinAPIEndpoint}/wallet/authorize`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: {
           wallet: body.walletAddress,
           signature: body.signature,
@@ -71,8 +68,12 @@ export default defineEventHandler(async (event) => {
       jwtId = authorizeRes.jwtid
       token = authorizeRes.token
     }
-    catch {
-      console.warn('Failed to authorize wallet')
+    catch (error) {
+      console.error('Failed to authorize wallet:', error)
+      throw createError({
+        status: 401,
+        message: 'WALLET_AUTHORIZATION_FAILED',
+      })
     }
 
     let likerId: string | undefined
@@ -87,15 +88,21 @@ export default defineEventHandler(async (event) => {
         description: string
         avatar: string
         isLikerPlus?: boolean
-      }>(`${config.public.likeCoinAPIEndpoint}/users/addr/${body.walletAddress}/min`)
+      }>(`${config.public.likeCoinAPIEndpoint}/users/addr/${body.walletAddress}/min`, {
+        query: { ts: Date.now() },
+      })
       likerId = userInfoRes.user
       displayName = userInfoRes.displayName
       avatar = userInfoRes.avatar
       description = userInfoRes.description
       isLikerPlus = userInfoRes.isLikerPlus || false
     }
-    catch {
-      console.warn('Failed to fetch user info for wallet')
+    catch (error) {
+      console.error('Failed to fetch user info for wallet', error)
+      throw createError({
+        status: 401,
+        message: 'LOGIN_WITHOUT_LIKER_ID',
+      })
     }
 
     const userInfo = {

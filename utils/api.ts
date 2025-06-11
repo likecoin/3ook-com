@@ -290,3 +290,26 @@ export function fetchBookstoreCMSProductsByTagId(tagId: string, { offset, limit 
     },
   })
 }
+
+export function fetchUserRegisterCheck({
+  accountId,
+  walletAddress,
+  email,
+  magicDIDToken,
+}: {
+  accountId?: string
+  walletAddress?: string
+  email?: string
+  magicDIDToken?: string
+}) {
+  const { fetch } = useLikeCoinAPI()
+  return fetch(`/users/new/check`, {
+    method: 'POST',
+    body: {
+      user: accountId,
+      evmWallet: walletAddress,
+      email,
+      magicDIDToken,
+    },
+  })
+}

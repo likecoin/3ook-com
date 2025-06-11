@@ -3,7 +3,7 @@ import { UserRejectedRequestError } from 'viem'
 import { FetchError } from 'ofetch'
 import type { Magic } from 'magic-sdk'
 
-import { LoginModal } from '#components'
+import { LoginModal, RegistrationModal } from '#components'
 
 export const useAccountStore = defineStore('account', () => {
   const { address } = useAccount()
@@ -16,6 +16,7 @@ export const useAccountStore = defineStore('account', () => {
   const { t: $t } = useI18n()
 
   const loginModal = overlay.create(LoginModal)
+  const registrationFormModal = overlay.create(RegistrationModal)
 
   const likeWallet = ref<string | null>(null)
   const isLoggingIn = ref(false)
@@ -49,6 +50,164 @@ export const useAccountStore = defineStore('account', () => {
     { immediate: true, deep: true },
   )
 
+  const getEmailAlreadyUsedErrorMessage = ({
+    email,
+    evmWallet,
+    likeWallet,
+  }: {
+    email: string
+    evmWallet?: string
+    likeWallet?: string
+  }) => {
+    if (evmWallet) {
+      return $t('account_register_error_email_already_used_with_evm_wallet', { email, evmWallet })
+    }
+    if (likeWallet) {
+      return $t('account_register_error_email_already_used_with_like_wallet', { email, likeWallet })
+    }
+    return $t('account_register_error_email_already_used', { email })
+  }
+
+  async function checkIsRegistered({
+    walletAddress,
+    email,
+    magicDIDToken,
+  }: {
+    walletAddress: string
+    email?: string
+    magicDIDToken?: string
+  }) {
+    try {
+      await fetchUserRegisterCheck({ walletAddress, email, magicDIDToken })
+      // If the request succeeds, it means there is no account associated with the wallet address and email
+      return false
+    }
+    catch (error) {
+      if (error instanceof FetchError) {
+        switch (error.data?.error) {
+          case 'EMAIL_ALREADY_USED':
+            throw createError({
+              statusCode: 401,
+              data: {
+                description: getEmailAlreadyUsedErrorMessage({
+                  email: email as string,
+                  evmWallet: error.data?.evmWallet,
+                  likeWallet: error.data?.likeWallet,
+                }),
+              },
+            })
+
+          case 'EVM_WALLET_ALREADY_EXIST':
+            // Already registered
+            return true
+
+          default:
+        }
+      }
+      throw error
+    }
+  }
+
+  async function register({
+    walletAddress,
+    email,
+    loginMethod,
+    magicUserId,
+    magicDIDToken,
+  }: {
+    walletAddress: string
+    email?: string
+    loginMethod: string
+    magicUserId?: string
+    magicDIDToken?: string
+  }) {
+    let tempAccountId = generateAccountIdFromWalletAddress(walletAddress)
+    try {
+      await fetchUserRegisterCheck({ accountId: tempAccountId })
+    }
+    catch (error) {
+      if (error instanceof FetchError && error.data?.error === 'USER_ALREADY_EXIST') {
+        tempAccountId = error.data.alternative as string
+      }
+      else {
+        throw error
+      }
+    }
+    let payload: { accountId: string, email?: string } | undefined
+    // Loop until registration is successful or user cancels
+    while (true) {
+      try {
+        // Skip registration modal if email is provided
+        payload = email
+          ? {
+              accountId: tempAccountId,
+              email,
+            }
+          : await registrationFormModal.open({
+            accountId: tempAccountId,
+            isAccountIdHidden: true,
+            email: payload?.email || '',
+            isDisplayNameHidden: true,
+          })
+        if (!payload) {
+          // User canceled the registration
+          return false
+        }
+
+        // Prepare signature for registration
+        const message = JSON.stringify(
+          {
+            action: 'register',
+            evmWallet: walletAddress,
+            email: payload.email,
+            ts: Date.now(),
+          },
+          null,
+          2,
+        )
+        const signature = await signMessageAsync({ message })
+
+        await $fetch('/api/register', {
+          method: 'POST',
+          body: {
+            walletAddress,
+            signature,
+            message,
+            email: payload.email,
+            accountId: payload.accountId,
+            loginMethod,
+            magicUserId,
+            magicDIDToken,
+          },
+        })
+
+        return true
+      }
+      catch (error) {
+        if (error instanceof FetchError) {
+          switch (error.data?.message) {
+            case 'INVALID_USER_ID': {
+              await errorModal.open({ description: $t('account_register_error_invalid_account_id', { id: payload?.accountId }) })
+              continue
+            }
+            case 'EMAIL_ALREADY_USED': {
+              await errorModal.open({
+                description: getEmailAlreadyUsedErrorMessage({
+                  email: payload?.email as string,
+                  evmWallet: error.data?.evmWallet,
+                  likeWallet: error.data?.likeWallet,
+                }),
+              })
+              continue
+            }
+            default:
+          }
+        }
+        throw error
+      }
+    }
+  }
+
   async function login(preferredConnectorId?: string) {
     try {
       isLoggingIn.value = true
@@ -71,7 +230,9 @@ export const useAccountStore = defineStore('account', () => {
       if (status.value !== 'success') {
         await connectAsync({ connector })
       }
-      if (status.value !== 'success') {
+
+      const walletAddress = address.value
+      if (status.value !== 'success' || !walletAddress) {
         throw createError({
           statusCode: 400,
           message: $t('error_connect_wallet_failed'),
@@ -79,27 +240,47 @@ export const useAccountStore = defineStore('account', () => {
         })
       }
 
+      // Get email from Magic SDK if using Magic Link
       let email: string | undefined
-      if (connector.id === 'magic' && 'magic' in connector) {
+      let magicUserId: string | undefined
+      let magicDIDToken: string | undefined
+      const loginMethod = connector.id
+      if (loginMethod === 'magic' && 'magic' in connector) {
         const magic = connector.magic as Magic
         try {
           const userInfo = await magic.user.getInfo()
           if (userInfo.email) {
             email = userInfo.email
           }
+          if (userInfo.issuer) {
+            magicUserId = userInfo.issuer
+          }
+          magicDIDToken = await magic.user.getIdToken()
         }
         catch (error) {
           console.warn('Failed to fetch user info from Magic SDK', error)
         }
       }
 
+      // Check if the wallet address or email is already registered
+      let isRegistered = await checkIsRegistered({ walletAddress, email, magicDIDToken })
+      if (!isRegistered) {
+        // If not registered, proceed to registration
+        isRegistered = await register({ walletAddress, email, loginMethod, magicUserId, magicDIDToken })
+        if (!isRegistered) {
+          // User canceled the registration
+          return
+        }
+      }
+
+      // Prepare message for login
       const message = JSON.stringify(
         {
           action: 'authorize',
-          evmWallet: address.value,
+          evmWallet: walletAddress,
           ts: Date.now(),
           email,
-          loginMethod: connector.id,
+          loginMethod,
           permissions: [
             'profile',
             'read:nftbook',
@@ -116,14 +297,11 @@ export const useAccountStore = defineStore('account', () => {
 
       await $fetch('/api/login', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: {
-          walletAddress: address.value,
+          walletAddress,
           signature,
           message,
-          loginMethod: connector.id,
+          loginMethod,
           email,
           expiresIn: '30d',
         },
