@@ -40,6 +40,10 @@ useHead({
       property: 'og:image',
       content: `${config.public.baseURL}/images/og/default.jpg`,
     },
+    {
+      name: 'theme-color',
+      content: '#131313',
+    },
   ],
   titleTemplate: title => title ? `${title} | ${$t('app_title')}` : $t('app_title'),
   link: [
