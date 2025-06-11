@@ -40,13 +40,6 @@
                   <div v-text="$t('product_page_publisher_label')" />
                   <EntityItem :name="bookInfo.publisherName.value" />
                 </li>
-                <li v-if="bookInfo.nftClassOwnerWalletAddress.value">
-                  <div v-text="bookInfo.publisherName.value ? $t('product_page_distributor_label') : $t('product_page_publisher_label')" />
-                  <EntityItem
-                    :name="bookInfo.nftClassOwnerName.value"
-                    :wallet-address="bookInfo.nftClassOwnerWalletAddress.value"
-                  />
-                </li>
               </ul>
             </div>
           </div>
