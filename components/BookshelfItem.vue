@@ -3,11 +3,29 @@
     ref="lazyLoadTrigger"
     class="flex flex-col justify-end"
   >
-    <BookCover
-      :src="bookCoverSrc"
-      :alt="bookInfo.name.value"
-      @click="handleCoverClick"
-    />
+    <div class="relative">
+      <BookCover
+        :src="bookCoverSrc"
+        :alt="bookInfo.name.value"
+        @click="handleCoverClick"
+      />
+      <div
+        v-if="fileDownloading"
+        class="absolute inset-0 flex items-end justify-center bg-gray-200/45"
+      >
+        <div class="flex w-full items-center justify-center gap-2 py-[4px] bg-gray-200/80">
+          <UIcon
+            class="animate-spin"
+            name="material-symbols-progress-activity"
+            size="18"
+          />
+          <p
+            class="text-[12px]"
+            v-text="$t('bookshelf_file_downloading')"
+          />
+        </div>
+      </div>
+    </div>
 
     <div class="mt-2 h-[70px]">
       <div class="flex items-start gap-1">
