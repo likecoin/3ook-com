@@ -98,9 +98,13 @@ const isLargerScreen = useMediaQuery('(min-width: 1024px)')
 
 const menuItems = computed<DropdownMenuItem[]>(() => {
   const sortedContentURLs = [...bookInfo.contentURLs.value].sort(compareContentURL)
+  const contentItems: DropdownMenuItem[] = []
+  const downloadItems: DropdownMenuItem[] = []
+  const arLinks = contentFingerprints.value
+  const isDRMFree = !isContentFingerprintsEncrypted.value
 
-  const contentItems: DropdownMenuItem[] = sortedContentURLs.map((contentURL) => {
-    let label: string
+  sortedContentURLs.forEach((contentURL) => {
+    let label = ''
     switch (contentURL.type) {
       case 'epub':
         label = $t('bookshelf_open_in_epub')
@@ -113,24 +117,47 @@ const menuItems = computed<DropdownMenuItem[]>(() => {
         break
     }
 
-    return {
+    contentItems.push({
       label,
       icon: 'i-material-symbols-book-5-outline',
-      onSelect: () => {
-        openContentURL(contentURL)
-      },
+      onSelect: () => openContentURL(contentURL),
+    })
+
+    if (isDRMFree) {
+      const matchedArLink = arLinks.find((ar: string) => contentURL.url.includes(ar.replace('ar://', '')))
+      if (matchedArLink) {
+        downloadItems.push({
+          label: $t('bookshelf_download_file', { type: contentURL.type.toUpperCase() }),
+          icon: 'i-material-symbols-download-rounded',
+          onSelect: () => downloadUrl(contentURL.url),
+        })
+      }
     }
   })
 
-  contentItems.push({
+  const productInfoItem: DropdownMenuItem = {
     label: $t('bookshelf_view_book_product_page'),
     icon: 'i-material-symbols-visibility-outline',
-    to: accountStore.isEVMMode ? bookInfo.productPageRoute.value : getLikerLandV2NFTClassPageURL(props.nftClassId),
+    to: accountStore.isEVMMode
+      ? bookInfo.productPageRoute.value
+      : getLikerLandV2NFTClassPageURL(props.nftClassId),
     external: !accountStore.isEVMMode,
     target: accountStore.isEVMMode ? undefined : '_blank',
-  })
+  }
 
-  return contentItems
+  return [...contentItems, ...downloadItems, productInfoItem]
+})
+
+const contentFingerprints = computed(() => {
+  return nftStore.getISCNDataByNFTClassId(props.nftClassId)?.contentFingerprints || []
+})
+
+const isContentFingerprintsEncrypted = computed(() => {
+  const apiEndpoints = getArweaveApiEndpoints()
+  const arweaveLinkEndpoint = apiEndpoints.API_GET_ARWEAVE_V2_LINK
+  return contentFingerprints.value?.some((fingerprint: string) => {
+    return !!(fingerprint.startsWith(arweaveLinkEndpoint) || fingerprint.includes('?key='))
+  })
 })
 
 useVisibility('lazyLoadTrigger', (visible) => {
