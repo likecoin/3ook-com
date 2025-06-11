@@ -90,7 +90,7 @@
 </template>
 
 <script setup lang="ts">
-import { saveAs } from 'file-saver'
+import saveAs from 'file-saver'
 import type { DropdownMenuItem } from '@nuxt/ui'
 
 const props = defineProps({
