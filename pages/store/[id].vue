@@ -324,6 +324,9 @@ import { FetchError } from 'ofetch'
 import type { TabsItem } from '@nuxt/ui'
 
 const route = useRoute()
+const config = useRuntimeConfig()
+const baseURL = config.public.baseURL
+
 const localeRoute = useLocaleRoute()
 const getRouteBaseName = useRouteBaseName()
 const { t: $t } = useI18n()
@@ -379,6 +382,34 @@ await callOnce(async () => {
 
 const bookInfo = useBookInfo({ nftClassId: nftClassId.value })
 const bookCoverSrc = computed(() => getResizedImageURL(bookInfo.coverSrc.value, { size: 600 }))
+
+const ogTitle = computed(() => {
+  const title = bookInfo.name.value
+  const author = bookInfo.authorName.value
+  return author ? `${title} - ${author}` : title
+})
+const ogDescription = computed(() => {
+  const description = bookInfo.description.value || ''
+  return description.length > 200 ? `${description.substring(0, 197)}...` : description
+})
+const canonicalURL = computed(() => {
+  return `${baseURL}${route.path}`
+})
+
+useHead(() => ({
+  title: ogTitle.value,
+  meta: [
+    { name: 'description', content: ogDescription.value },
+    { property: 'og:title', content: ogTitle.value },
+    { property: 'og:description', content: ogDescription.value },
+    { property: 'og:image', content: bookInfo.coverSrc.value },
+    { property: 'og:type', content: 'product' },
+    { property: 'og:url', content: canonicalURL.value },
+  ],
+  link: [
+    { rel: 'canonical', href: canonicalURL.value },
+  ],
+}))
 
 const infoTabItems = computed(() => {
   const items: TabsItem[] = []
