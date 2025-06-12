@@ -12,8 +12,8 @@ const { t: $t } = useI18n()
 const config = useRuntimeConfig()
 const ogTitle = $t('app_title')
 const ogDescription = $t('app_description')
-const ogUrl = config.public.baseURL
-const ogImage = `${ogUrl}/images/og/default.jpg`
+const ogURL = config.public.baseURL
+const ogImage = `${ogURL}/images/og/default.jpg`
 
 const i18nHead = useLocaleHead()
 useHead({
@@ -49,7 +49,7 @@ useHead({
     },
     {
       property: 'og:url',
-      content: ogUrl,
+      content: ogURL,
     },
     {
       property: 'og:type',
@@ -90,8 +90,8 @@ useHead({
         '@type': 'OnlineStore',
         'name': ogTitle,
         'description': ogDescription,
-        'alternateName': ['3ook.com decentralized book store', 'Liker Land 電子書店', 'Liker Land'],
-        'url': ogUrl,
+        'alternateName': ['3ook.com decentralized bookstore', 'Liker Land 電子書店', 'Liker Land'],
+        'url': ogURL,
         'logo': ogImage,
       }]),
     },
