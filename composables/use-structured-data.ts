@@ -3,7 +3,7 @@ export function useStructuredData({ nftClassId }: { nftClassId: string }) {
 
   function generateBookStructuredData({
     canonicalURL,
-    image, // TODO: we need image because normalizeURIToHTTP is broken in this context
+    image, // TODO: we need image because normalizeURIToHTTP with useRuntimeConfig() is broken in this context
   }: {
     canonicalURL: string
     image?: string
