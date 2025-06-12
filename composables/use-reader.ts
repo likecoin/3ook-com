@@ -33,13 +33,6 @@ export default function (
 
   const bookFileURLWithCORS = computed(() => {
     const url = new URL(`${config.public.likeCoinAPIEndpoint}/ebook-cors/`)
-    if (!nftClassId.value || nftId.value === undefined) {
-      throw createError({
-        statusCode: 400,
-        message: 'Missing required parameters',
-      })
-    }
-
     url.searchParams.set('class_id', nftClassId.value)
     if (nftId.value !== undefined) {
       url.searchParams.set('nft_id', nftId.value)
