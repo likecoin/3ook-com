@@ -195,7 +195,7 @@ async function handleLogout() {
 }
 
 async function handleMagicButtonClick() {
-  useTrackEvent('export_private_key')
+  useLogEvent('export_private_key')
   await accountStore.exportPrivateKey()
 }
 </script>

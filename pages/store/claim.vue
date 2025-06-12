@@ -192,6 +192,13 @@ async function startClaimingItems() {
       throw new Error(data.errors[0].error)
     }
     isClaimed.value = true
+    useLogEvent('purchase', {
+      transaction_id: cartId.value,
+      items: data.classIds.map(classId => ({
+        class_id: classId,
+        nft_id: data.newClaimedNFTs.find(nft => nft.classId === classId)?.nftId || '',
+      })),
+    })
   }
   catch (error) {
     await handleError(error, {

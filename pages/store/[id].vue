@@ -481,6 +481,26 @@ const socialButtons = computed(() => [
   { key: 'x', label: $t('share_button_hint_x'), icon: 'i-simple-icons-x' },
 ])
 
+const formattedLogPayload = computed(() => {
+  const currency = selectedPricingItem.value?.currency || 'USD'
+  const price = selectedPricingItem.value?.price || 0
+  return {
+    currency,
+    value: price,
+    items: [{
+      id: `${nftClassId.value}-${selectedPricingItemIndex.value}`,
+      name: bookName.value,
+      price,
+      currency,
+      quantity: 1,
+    }],
+  }
+})
+
+onMounted(() => {
+  useLogEvent('view_item', formattedLogPayload.value)
+})
+
 async function handleSocialButtonClick(key: string) {
   switch (key) {
     case 'copy-links':
@@ -520,7 +540,7 @@ async function handleSocialButtonClick(key: string) {
 }
 
 function handleAddToCartButtonClick() {
-  useTrackEvent('add_to_cart', { nft_class_id: nftClassId.value })
+  useLogEvent('add_to_cart', formattedLogPayload.value)
   // TODO: Implement add to cart functionality
   wipModal.open({
     title: $t('product_page_add_to_cart_button_label'),
@@ -530,7 +550,7 @@ function handleAddToCartButtonClick() {
 const isPurchasing = ref(false)
 
 async function handlePurchaseButtonClick() {
-  useTrackEvent('add_to_cart', { nft_class_id: nftClassId.value })
+  useLogEvent('add_to_cart', formattedLogPayload.value)
   if (!selectedPricingItem.value) return
   try {
     isPurchasing.value = true
@@ -546,7 +566,10 @@ async function handlePurchaseButtonClick() {
       from: route.query.from as string,
       coupon: route.query.coupon as string,
     })
-    useTrackEvent('begin_checkout', { payment_id: paymentId })
+    useLogEvent('begin_checkout', {
+      ...formattedLogPayload.value,
+      transaction_id: paymentId,
+    })
     await navigateTo(url, { external: true })
   }
   catch (error) {
@@ -556,12 +579,12 @@ async function handlePurchaseButtonClick() {
 }
 
 function handleStickyPurchaseButtonClick() {
-  useTrackEvent('purchase_sticky_button_click', { nft_class_id: nftClassId.value })
+  useLogEvent('purchase_sticky_button_click', { nft_class_id: nftClassId.value })
   handlePurchaseButtonClick()
 }
 
 function handleGiftButtonClick() {
-  useTrackEvent('gift_button_click', { nft_class_id: nftClassId.value })
+  useLogEvent('gift_button_click', { nft_class_id: nftClassId.value })
   // TODO: Implement gift functionality
   wipModal.open({
     title: $t('product_page_gift_button_label'),

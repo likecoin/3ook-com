@@ -319,7 +319,9 @@ const ttsLanguageOptions = [
 const ttsLanguage = ref('zh-HK')
 watch(ttsLanguage, (newLanguage, oldLanguage) => {
   if (newLanguage !== oldLanguage) {
-    useTrackEvent('tts_language_change')
+    useLogEvent('tts_language_change', {
+      nft_class_id: nftClassId,
+    })
   }
 })
 
@@ -535,7 +537,9 @@ function pauseTextToSpeech() {
       audioQueue.value[currentAudioIndex.value].pause()
     }
     isTextToSpeechPlaying.value = false
-    useTrackEvent('tts_pause')
+    useLogEvent('tts_pause', {
+      nft_class_id: nftClassId,
+    })
   }
 }
 
@@ -596,7 +600,9 @@ async function startTextToSpeech() {
     isTextToSpeechPlaying.value = true
     if (audioQueue.value[currentAudioIndex.value]) {
       audioQueue.value[currentAudioIndex.value].play()
-      useTrackEvent('tts_resume')
+      useLogEvent('tts_resume', {
+        nft_class_id: nftClassId,
+      })
     }
     return
   }
@@ -608,7 +614,9 @@ async function startTextToSpeech() {
   audioQueue.value = []
   currentAudioIndex.value = 0
   isTextToSpeechOn.value = true
-  useTrackEvent('tts_start')
+  useLogEvent('tts_start', {
+    nft_class_id: nftClassId,
+  })
 
   try {
     // load up to 2 paragraphs for text-to-speech

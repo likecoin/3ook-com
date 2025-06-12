@@ -144,7 +144,7 @@ function handleBookshelfItemOpen({
   nftClassId?: string
   index?: number
 }) {
-  useTrackEvent('shelf_open_book', {
+  useLogEvent('shelf_open_book', {
     content_type: type,
     nft_class_id: nftClassId,
   })

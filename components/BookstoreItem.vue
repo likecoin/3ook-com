@@ -7,6 +7,7 @@
       :src="bookCoverSrc"
       :to="bookInfo.productPageRoute.value"
       :alt="bookName"
+      @click="onBookCoverClick"
     />
 
     <div class="mt-2 h-[70px]">
@@ -78,4 +79,15 @@ useVisibility('lazyLoadTrigger', (visible) => {
     }
   }
 })
+
+function onBookCoverClick() {
+  useLogEvent('select_item', {
+    items: [{
+      item_id: props.nftClassId,
+      item_name: bookName.value,
+      price: props.price,
+      quantity: 1,
+    }],
+  })
+}
 </script>
