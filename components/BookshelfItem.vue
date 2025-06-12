@@ -121,13 +121,16 @@ const bookCoverSrc = computed(() => getResizedImageURL(bookInfo.coverSrc.value, 
 
 const isLargerScreen = useMediaQuery('(min-width: 1024px)')
 const fileDownloading = ref(false)
+const apiEndpoints = getArweaveApiEndpoints()
+const arweaveLinkEndpoint = apiEndpoints.API_GET_ARWEAVE_V2_LINK
 
 const menuItems = computed<DropdownMenuItem[]>(() => {
   const sortedContentURLs = [...bookInfo.contentURLs.value].sort(compareContentURL)
   const contentItems: DropdownMenuItem[] = []
   const downloadItems: DropdownMenuItem[] = []
-  const arLinks = contentFingerprints.value
-  const isDRMFree = !isContentFingerprintsEncrypted.value
+  const isEncrypted = sortedContentURLs.some((content) => {
+    return !!(content.url.startsWith(arweaveLinkEndpoint) || content.url.includes('?key='))
+  })
 
   sortedContentURLs.forEach((contentURL) => {
     let label = ''
@@ -149,20 +152,17 @@ const menuItems = computed<DropdownMenuItem[]>(() => {
       onSelect: () => openContentURL(contentURL),
     })
 
-    if (isDRMFree) {
-      const matchedArLink = arLinks.find((ar: string) => contentURL.url.includes(ar.replace('ar://', '')))
-      if (matchedArLink) {
-        downloadItems.push({
-          label: $t('bookshelf_download_file', { type: contentURL.type.toUpperCase() }),
-          icon: 'i-material-symbols-download-rounded',
-          onSelect: () =>
-            downloadUrl({
-              url: contentURL.url,
-              name: contentURL.name,
-              type: contentURL.type,
-            }),
-        })
-      }
+    if (!isEncrypted) {
+      downloadItems.push({
+        label: $t('bookshelf_download_file', { type: contentURL.type.toUpperCase() }),
+        icon: 'i-material-symbols-download-rounded',
+        onSelect: () =>
+          downloadUrl({
+            url: contentURL.url,
+            name: contentURL.name,
+            type: contentURL.type,
+          }),
+      })
     }
   })
 
@@ -177,18 +177,6 @@ const menuItems = computed<DropdownMenuItem[]>(() => {
   }
 
   return [...contentItems, ...downloadItems, productInfoItem]
-})
-
-const contentFingerprints = computed(() => {
-  return nftStore.getISCNDataByNFTClassId(props.nftClassId)?.contentFingerprints || []
-})
-
-const isContentFingerprintsEncrypted = computed(() => {
-  const apiEndpoints = getArweaveApiEndpoints()
-  const arweaveLinkEndpoint = apiEndpoints.API_GET_ARWEAVE_V2_LINK
-  return contentFingerprints.value?.some((fingerprint: string) => {
-    return !!(fingerprint.startsWith(arweaveLinkEndpoint) || fingerprint.includes('?key='))
-  })
 })
 
 useVisibility('lazyLoadTrigger', (visible) => {
