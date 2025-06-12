@@ -90,7 +90,6 @@
 </template>
 
 <script setup lang="ts">
-import saveAs from 'file-saver'
 import type { DropdownMenuItem } from '@nuxt/ui'
 
 const props = defineProps({
@@ -113,6 +112,7 @@ const metadataStore = useMetadataStore()
 const { loadFileAsBuffer } = useBookFileLoader()
 const toast = useToast()
 const bookInfo = useBookInfo({ nftClassId: props.nftClassId })
+const { saveAs, getMimeType } = useSaveAs()
 
 const { bookFileURLWithCORS } = useReader({
   nftClassIdInput: props.nftClassId,
@@ -155,7 +155,12 @@ const menuItems = computed<DropdownMenuItem[]>(() => {
         downloadItems.push({
           label: $t('bookshelf_download_file', { type: contentURL.type.toUpperCase() }),
           icon: 'i-material-symbols-download-rounded',
-          onSelect: () => downloadUrl(contentURL.url),
+          onSelect: () =>
+            downloadUrl({
+              url: contentURL.url,
+              name: contentURL.name,
+              type: contentURL.type,
+            }),
         })
       }
     }
@@ -214,7 +219,7 @@ function openContentURL(contentURL: ContentURL) {
   })
 }
 
-async function downloadUrl(url: string) {
+async function downloadUrl({ url, name, type }: { url: string, name: string, type: string }) {
   try {
     fileDownloading.value = true
     const buffer = await loadFileAsBuffer(bookFileURLWithCORS.value)
@@ -222,13 +227,12 @@ async function downloadUrl(url: string) {
       console.error('Failed to load book file as buffer')
       return
     }
-    const filename = extractFilenameFromURL(url)
 
     saveAs(
       new Blob([buffer], {
-        type: 'application/epub+zip',
+        type: getMimeType(type),
       }),
-      filename,
+      name,
     )
   }
   catch (e) {
@@ -246,36 +250,6 @@ async function downloadUrl(url: string) {
       nftClassId: props.nftClassId,
       url,
     })
-  }
-}
-
-function extractFilenameFromURL(url: string): string {
-  try {
-    const parsedUrl = new URL(url)
-    let filename = parsedUrl.searchParams.get('name') || 'download'
-
-    const match = filename.match(/^(.+?)((\.\w+)+)$/)
-    if (match) {
-      const baseName = match[1]
-      const extensions = match[2].split('.').filter(Boolean)
-      if (extensions.length > 1) {
-        const uniqueExtensions = Array.from(new Set(extensions))
-        if (uniqueExtensions.length === 1) {
-          // e.g., all ".epub" → keep one
-          filename = `${baseName}.${uniqueExtensions[0]}`
-        }
-        else {
-          // Preserve distinct extensions (e.g., ".tar.gz")
-          filename = `${baseName}.${uniqueExtensions.join('.')}`
-        }
-      }
-    }
-
-    return filename
-  }
-  catch {
-    console.warn('Invalid URL:', url)
-    return 'download'
   }
 }
 
