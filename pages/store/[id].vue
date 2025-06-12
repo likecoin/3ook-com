@@ -401,7 +401,6 @@ const canonicalURL = computed(() => {
 const structuredData = computed(() => {
   return generateBookStructuredData({
     canonicalURL: canonicalURL.value,
-    selectedPricingItemIndex: selectedPricingItemIndex.value,
     image: bookInfo.coverSrc.value,
   })
 })

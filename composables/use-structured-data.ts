@@ -3,11 +3,9 @@ export function useStructuredData({ nftClassId }: { nftClassId: string }) {
 
   function generateBookStructuredData({
     canonicalURL,
-    selectedPricingItemIndex = 0,
     image, // TODO: we need image because normalizeURIToHTTP is broken in this context
   }: {
     canonicalURL: string
-    selectedPricingItemIndex?: number
     image?: string
   }) {
     const name = bookInfo.name.value
@@ -21,44 +19,48 @@ export function useStructuredData({ nftClassId }: { nftClassId: string }) {
     const inLanguage = bookInfo.inLanguage.value
 
     const pricingItems = bookInfo.pricingItems.value
-    const selectedPricing = pricingItems[selectedPricingItemIndex]
+    const productsStructuredData = pricingItems.map((pricing) => {
+      const productId = `${nftClassId}-${pricing.index}`
+      const skuId = productId
 
-    const productId = `${nftClassId}-${selectedPricingItemIndex}`
-    const skuId = productId
-
-    const productStructuredData = {
-      '@context': 'https://schema.org',
-      '@type': ['Book', 'Product'],
-      '@id': `@${productId}`,
-      'url': `${canonicalURL}?price_index=${selectedPricingItemIndex}`,
-      'name': selectedPricing?.name ? `${name} - ${authorName} - ${selectedPricing.name}` : `${name} - ${authorName}`,
-      image,
-      description,
-      'author': authorName,
-      'sku': skuId,
-      'publisher': publisherName,
-      isbn,
-      inLanguage,
-      datePublished,
-      keywords,
-      'bookFormat': 'https://schema.org/EBook',
-      'bookEdition': selectedPricing?.name,
-      'offers': {
+      return {
         '@context': 'https://schema.org',
-        '@type': 'Offer',
-        'seller': {
+        '@type': ['Book', 'Product'],
+        '@id': `${canonicalURL}?price_index=${pricing.index}`,
+        'url': `${canonicalURL}?price_index=${pricing.index}`,
+        'name': pricing?.name ? `${name} - ${authorName} - ${pricing.name}` : `${name} - ${authorName}`,
+        image,
+        description,
+        'author': authorName,
+        'sku': skuId,
+        'publisher': publisherName,
+        isbn,
+        inLanguage,
+        datePublished,
+        keywords,
+        'bookFormat': 'https://schema.org/EBook',
+        'bookEdition': pricing?.name,
+        'offers': {
           '@context': 'https://schema.org',
-          '@type': 'Person',
-          'identifier': bookInfo.nftClassOwnerWalletAddress.value,
+          '@type': 'Offer',
+          'seller': {
+            '@context': 'https://schema.org',
+            '@type': 'Person',
+            'identifier': bookInfo.nftClassOwnerWalletAddress.value,
+          },
+          'price': pricing?.price || 0,
+          'priceCurrency': 'USD',
+          'availability': pricing?.isSoldOut ? 'SoldOut' : 'LimitedAvailability',
+          'itemCondition': 'https://schema.org/NewCondition',
         },
-        'price': selectedPricing?.price || 0,
-        'priceCurrency': 'USD',
-        'availability': selectedPricing?.isSoldOut ? 'SoldOut' : 'LimitedAvailability',
-        'itemCondition': 'https://schema.org/NewCondition',
-      },
-      productId,
-      'inProductGroupWithID': nftClassId,
-    }
+        productId,
+        'inProductGroupWithID': nftClassId,
+      }
+    })
+
+    const workExamples = productsStructuredData.map(product => ({
+      '@id': product['@id'],
+    }))
 
     const productGroupStructuredData = {
       '@context': 'https://schema.org',
@@ -76,20 +78,12 @@ export function useStructuredData({ nftClassId }: { nftClassId: string }) {
       keywords,
       'bookFormat': 'https://schema.org/EBook',
       'productGroupID': nftClassId,
-      'workExample': [
-        {
-          '@id': `@${productId}`,
-        },
-      ],
-      'hasVariant': [
-        {
-          '@id': `@${productId}`,
-        },
-      ],
+      'workExample': workExamples,
+      'hasVariant': workExamples,
       'variesBy': ['https://schema.org/BookEdition'],
     }
 
-    return [productStructuredData, productGroupStructuredData]
+    return [...productsStructuredData, productGroupStructuredData]
   }
 
   return {
