@@ -228,25 +228,6 @@
               block
               @click="handleSubscribe"
             />
-
-            <i18n-t
-              keypath="pricing_page_subscription_notice"
-              tag="p"
-              class="mt-4 text-sm text-gray-500 text-center"
-            >
-              <template #link>
-                <a
-                  href="/"
-                  target="_blank"
-                  class="
-                    text-primary underline
-                    hover:text-primary-dark transition-colors duration-200
-                  "
-                >
-                  {{ $t('terms_and_conditions') }}
-                </a>
-              </template>
-            </i18n-t>
           </div>
         </div>
       </div>
@@ -259,7 +240,6 @@ import paywallHeaderImg from '~/assets/images/paywall/paywall-header-bg.png'
 import paywallBodyLogo from '~/assets/images/paywall/paywall-body-logo.png'
 import paywallFooterLogo from '~/assets/images/paywall/paywall-footer-bg.png'
 
-const emit = defineEmits(['close'])
 const { t: $t } = useI18n()
 const selectedPlan = ref('yearly')
 const { loggedIn: hasLoggedIn } = useUserSession()
@@ -320,9 +300,8 @@ async function checkLikerPlusStatus() {
   }
 }
 
-onMounted(checkLikerPlusStatus)
-
 async function handleSubscribe() {
+  await checkLikerPlusStatus()
   useTrackEvent('subscription_button_click', { plan: selectedPlan.value })
 
   if (isProcessingSubscription.value) return
