@@ -27,7 +27,7 @@ export function useStructuredData({ nftClassId }: { nftClassId: string }) {
     const skuId = productId
 
     const productStructuredData = {
-      '@context': 'http://www.schema.org',
+      '@context': 'https://schema.org',
       '@type': ['Book', 'Product'],
       '@id': `@${productId}`,
       'url': `${canonicalURL}?price_index=${selectedPricingItemIndex}`,
@@ -42,12 +42,12 @@ export function useStructuredData({ nftClassId }: { nftClassId: string }) {
       datePublished,
       keywords,
       'bookFormat': 'https://schema.org/EBook',
-      'bookEdition': selectedPricing?.name || '',
+      'bookEdition': selectedPricing?.name,
       'offers': {
-        '@context': 'http://www.schema.org',
+        '@context': 'https://schema.org',
         '@type': 'Offer',
         'seller': {
-          '@context': 'http://www.schema.org',
+          '@context': 'https://schema.org',
           '@type': 'Person',
           'identifier': bookInfo.nftClassOwnerWalletAddress.value,
         },
