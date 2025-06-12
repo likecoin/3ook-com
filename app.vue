@@ -13,8 +13,13 @@ const config = useRuntimeConfig()
 const ogTitle = $t('app_title')
 const ogDescription = $t('app_description')
 
+const i18nHead = useLocaleHead()
 useHead({
+  htmlAttrs: {
+    lang: i18nHead.value.htmlAttrs!.lang,
+  },
   meta: [
+    ...(i18nHead.value.meta || []),
     {
       name: 'viewport',
       content:
@@ -47,6 +52,7 @@ useHead({
   ],
   titleTemplate: title => title ? `${title} | ${$t('app_title')}` : $t('app_title'),
   link: [
+    ...(i18nHead.value.link || []),
     {
       rel: 'apple-touch-icon',
       sizes: '180x180',

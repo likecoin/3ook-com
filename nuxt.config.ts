@@ -77,16 +77,19 @@ export default defineNuxtConfig({
   },
 
   i18n: {
+    baseUrl: process.env.BASE_URL,
     locales: [
       {
         code: 'en',
         file: 'en.json',
         name: 'English',
+        language: 'en-US',
       },
       {
         code: 'zh-Hant',
         file: 'zh-Hant.json',
         name: '中文',
+        language: 'zh-HK',
       },
     ],
     lazy: true,
