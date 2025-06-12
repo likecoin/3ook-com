@@ -1,34 +1,48 @@
 <template>
   <UModal
-    :full-screen="props.isFullScreen"
+    :full-screen="props.isFullScreen || isMobileScreen"
     :dismissible="props.dismissible"
-    :ui="{ content: 'rounded-2xl overflow-hidden w-full max-w-[840px]' }"
+    :ui="{ content: 'sm:rounded-2xl overflow-x-hidden sm:w-[90vw] max-w-[840px]' }"
   >
     <template #content>
-      <div class="flex">
+      <div class="flex flex-col sm:flex-row w-full h-full">
         <div class="flex-1 w-full relative bg-[#fbfbfb]">
+          <UIcon
+            v-if="props.dismissible"
+            name="i-material-symbols-close"
+            class="
+              sm:hidden absolute top-4 right-4
+              text-black cursor-pointer
+            "
+            size="24"
+            @click="$emit('close')"
+          />
           <img
             :src="paywallHeaderImg"
             alt="Paywall Header"
-            class="absolute top-0 left-0 w-full object-cover"
+            class="sm:absolute top-0 left-0 w-full object-cover"
           >
           <img
             :src="paywallFooterLogo"
             alt="Paywall Footer"
-            class="absolute bottom-0 left-0 w-full object-cover"
+            class="hidden sm:block absolute bottom-0 left-0 w-full object-cover"
           >
-          <div class="absolute inset-0 flex items-center justify-center px-10">
+
+          <div class="absolute bottom-0 sm:inset-0 flex flex-col items-center justify-center px-10 w-full">
+            <div class="sm:hidden bg-black rounded-full px-6 py-2">
+              <span class="font-bold text-white">{{ $t('pricing_page_subscription') }}</span>
+            </div>
             <img
               :src="paywallBodyLogo"
               alt="3ook Logo"
-              class="max-h-[200px] object-contain"
+              class="w-full max-w-[300px] sm:max-h-[200px] object-contain"
             >
           </div>
         </div>
 
-        <div class="flex-1 flex flex-col justify-center items-start p-12 w-full">
+        <div class="flex-1 flex flex-col justify-center items-start p-5 sm:p-12 w-full">
           <div class="flex flex-col items-start mx-6 gap-2">
-            <div class="bg-black rounded-full px-6 py-2 mb-3">
+            <div class="hidden sm:block bg-black rounded-full px-6 py-2 mb-3">
               <span class="font-bold text-white">{{ $t('pricing_page_subscription') }}</span>
             </div>
             <ul class="space-y-4 text-left">
@@ -65,7 +79,18 @@
 
           <!-- Price Select -->
           <div class="flex flex-col w-full mt-12">
-            <div class="flex flex-col gap-3">
+            <UIcon
+              v-if="props.dismissible"
+              name="i-material-symbols-close"
+              class="
+                hidden sm:block absolute top-4 right-4
+                text-black cursor-pointer hover:text-gray-600
+                transition-colors duration-200
+              "
+              size="24"
+              @click="$emit('close')"
+            />
+            <div class="flex flex-col gap-4">
               <!-- Yearly plan -->
               <label
                 class="
@@ -97,7 +122,7 @@
                       />
                     </div>
                   </div>
-                  <div class="text-lg font-semibold whitespace-nowrap">
+                  <div class="text-md font-semibold whitespace-nowrap">
                     {{ $t('pricing_page_yearly') }}
                   </div>
                 </div>
@@ -109,13 +134,18 @@
                       v-text="`US$${props.originalYearlyPrice}`"
                     />
                   </div>
-                  <div class="flex justify-end items-end gap-2">
-                    <p
-                      class="text-2xl font-bold"
-                      v-text="`US$${props.discountedYearlyPrice}`"
-                    />
-                    <span class="font-semibold">{{ $t('pricing_page_per_year') }}</span>
-                  </div>
+                  <i18n-t
+                    keypath="pricing_page_price_per_year"
+                    tag="div"
+                    class="flex items-baseline text-sm whitespace-nowrap"
+                  >
+                    <template #price>
+                      <p
+                        class="text-2xl font-bold px-1"
+                        v-text="`$${props.discountedYearlyPrice}`"
+                      />
+                    </template>
+                  </i18n-t>
                 </div>
                 <input
                   v-model="selectedPlan"
@@ -150,7 +180,7 @@
                       />
                     </div>
                   </div>
-                  <div class="text-lg font-semibold whitespace-nowrap">
+                  <div class="text-md font-semibold whitespace-nowrap">
                     {{ $t('pricing_page_monthly') }}
                   </div>
                 </div>
@@ -163,13 +193,18 @@
                       v-text="`US$${props.originalMonthlyPrice}`"
                     />
                   </div>
-                  <div class="flex justify-end items-end gap-2">
-                    <p
-                      class="text-2xl font-bold"
-                      v-text="`US$${props.discountedMonthlyPrice}`"
-                    />
-                    <span class="font-semibold">{{ $t('pricing_page_per_year') }}</span>
-                  </div>
+                  <i18n-t
+                    keypath="pricing_page_price_per_month"
+                    tag="div"
+                    class="flex items-baseline text-sm whitespace-nowrap"
+                  >
+                    <template #price>
+                      <p
+                        class="text-2xl font-bold px-1"
+                        v-text="`$${props.discountedMonthlyPrice}`"
+                      />
+                    </template>
+                  </i18n-t>
                 </div>
 
                 <input
@@ -184,7 +219,7 @@
 
             <UButton
               class="
-                w-full mt-4 py-3 text-lg text-[#A6F5EA]
+                w-full mt-4 py-2 sm:py-3 text-lg text-[#A6F5EA]
                 font-semibold rounded-2xl bg-black
                 cursor-pointer hover:bg-[#333333] hover:text-[#A6F5EA]
                 transition-colors duration-200
@@ -203,7 +238,10 @@
                 <a
                   href="/"
                   target="_blank"
-                  class="text-primary underline"
+                  class="
+                    text-primary underline
+                    hover:text-primary-dark transition-colors duration-200
+                  "
                 >
                   {{ $t('terms_and_conditions') }}
                 </a>
@@ -230,6 +268,7 @@ const isProcessingSubscription = ref(false)
 const { handleError } = useErrorHandler()
 const localeRoute = useLocaleRoute()
 const toast = useToast()
+const isMobileScreen = useMediaQuery('(min-width: 640px)')
 
 const props = defineProps({
   isFullScreen: {
