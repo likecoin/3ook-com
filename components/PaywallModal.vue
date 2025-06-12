@@ -2,109 +2,213 @@
   <UModal
     :full-screen="props.isFullScreen"
     :dismissible="props.dismissible"
+    :ui="{ content: 'rounded-2xl overflow-hidden w-full max-w-[840px]' }"
   >
     <template #content>
-      <div class="flex items-stretch w-full h-full max-w-[840px] max-h-[630px]'">
-        <div>image</div>
-        <div class="flex flex-col items-center justify-center w-full h-full p-4">
-          <div class="flex flex-col items-center w-full max-w-lg">
-            <div class="bg-white rounded-full px-6 py-2 shadow-sm mb-3">
-              <span class="font-bold">{{ $t('pricing_page_subscription') }}</span>
+      <div class="flex">
+        <div class="flex-1 w-full relative bg-[#fbfbfb]">
+          <img
+            :src="paywallHeaderImg"
+            alt="Paywall Header"
+            class="absolute top-0 left-0 w-full object-cover"
+          >
+          <img
+            :src="paywallFooterLogo"
+            alt="Paywall Footer"
+            class="absolute bottom-0 left-0 w-full object-cover"
+          >
+          <div class="absolute inset-0 flex items-center justify-center px-10">
+            <img
+              :src="paywallBodyLogo"
+              alt="3ook Logo"
+              class="max-h-[200px] object-contain"
+            >
+          </div>
+        </div>
+
+        <div class="flex-1 flex flex-col justify-center items-start p-12 w-full">
+          <div class="flex flex-col items-start mx-6 gap-2">
+            <div class="bg-black rounded-full px-6 py-2 mb-3">
+              <span class="font-bold text-white">{{ $t('pricing_page_subscription') }}</span>
             </div>
+            <ul class="space-y-4 text-left">
+              <li class="flex items-start">
+                <UIcon
+                  name="i-material-symbols-check"
+                  class="mt-1 mr-2 text-green-500"
+                />
+                <span>{{ $t('pricing_page_feature_1') }}</span>
+              </li>
+              <li class="flex items-start">
+                <UIcon
+                  name="i-material-symbols-check"
+                  class="mt-1 mr-2 text-green-500"
+                />
+                <span>{{ $t('pricing_page_feature_2') }}</span>
+              </li>
+              <li class="flex items-start">
+                <UIcon
+                  name="i-material-symbols-check"
+                  class="mt-1 mr-2 text-green-500"
+                />
+                <span>{{ $t('pricing_page_feature_3') }}</span>
+              </li>
+              <li class="flex items-start">
+                <UIcon
+                  name="i-material-symbols-check"
+                  class="mt-1 mr-2 text-green-500"
+                />
+                <span>{{ $t('pricing_page_feature_4') }}</span>
+              </li>
+            </ul>
+          </div>
 
-            <div class="text-center mb-3">
-              <h1 class="text-4xl font-bold mb-3">
-                {{ $t('pricing_page_membership_title') }}
-              </h1>
-
-              <ul class="space-y-4 text-left">
-                <li class="flex items-start">
-                  <UIcon
-                    name="i-material-symbols-check"
-                    class="mt-1 mr-2 text-green-500"
-                  />
-                  <span>{{ $t('pricing_page_feature_1') }}</span>
-                </li>
-                <li class="flex items-start">
-                  <UIcon
-                    name="i-material-symbols-check"
-                    class="mt-1 mr-2 text-green-500"
-                  />
-                  <span>{{ $t('pricing_page_feature_2') }}</span>
-                </li>
-                <li class="flex items-start">
-                  <UIcon
-                    name="i-material-symbols-check"
-                    class="mt-1 mr-2 text-green-500"
-                  />
-                  <span>{{ $t('pricing_page_feature_3') }}</span>
-                </li>
-              </ul>
-            </div>
-
-            <div class="w-full mt-6">
-              <div class="border border-gray-200 rounded-lg overflow-hidden">
-                <div class="flex relative mt-6">
-                  <div
-                    v-if="selectedPlan === 'yearly'"
-                    class="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-black text-white text-xs px-3 py-1 rounded-full"
-                  >
-                    {{ $t('pricing_page_yearly_discount') }}
-                  </div>
-                  <label class="flex items-center justify-between w-full p-4 cursor-pointer border-b py-3">
-                    <div class="flex items-center">
-                      <div class="w-6 h-6 flex-shrink-0 mr-4">
-                        <div class="w-full h-full rounded-full border border-gray-300 flex items-center justify-center">
-                          <div
-                            v-if="selectedPlan === 'yearly'"
-                            class="w-4 h-4 rounded-full bg-green-500"
-                          />
-                        </div>
-                      </div>
-                      <span class="font-bold">{{ $t('pricing_page_yearly') }}</span>
-                    </div>
-                    <span class="text-xl font-bold">US $69.9 <span class="text-sm text-gray-500">{{ $t('pricing_page_per_year') }}</span></span>
-                    <input
-                      v-model="selectedPlan"
-                      type="radio"
-                      name="plan"
-                      value="yearly"
-                      class="hidden"
-                    >
-                  </label>
-
-                  <label class="flex items-center justify-between w-full p-4 cursor-pointer">
-                    <div class="flex items-center">
-                      <div class="w-6 h-6 flex-shrink-0 mr-4">
-                        <div class="w-full h-full rounded-full border border-gray-300 flex items-center justify-center">
-                          <div
-                            v-if="selectedPlan === 'monthly'"
-                            class="w-4 h-4 rounded-full bg-green-500"
-                          />
-                        </div>
-                      </div>
-                      <span class="font-bold">{{ $t('pricing_page_monthly') }}</span>
-                    </div>
-                    <span class="text-xl font-bold">US $6.9 <span class="text-sm text-gray-500">{{ $t('pricing_page_per_month') }}</span></span>
-                    <input
-                      v-model="selectedPlan"
-                      type="radio"
-                      name="plan"
-                      value="monthly"
-                      class="hidden"
-                    >
-                  </label>
+          <!-- Price Select -->
+          <div class="flex flex-col w-full mt-12">
+            <div class="flex flex-col gap-3">
+              <!-- Yearly plan -->
+              <label
+                class="
+                  relative flex justify-between items-center
+                  border-2 rounded-2xl px-4 py-4 cursor-pointer
+                  transition-all duration-200 ease-in-out
+                  hover:shadow-lg hover:border-gray-400
+                "
+                :class="selectedPlan === 'yearly' ? 'border-black' : 'border-gray-200'"
+              >
+                <div
+                  v-if="selectedPlan === 'yearly'"
+                  class="absolute -top-3 left-1/6 -translate-x-1/2 bg-black text-[#A6F5EA] text-xs font-semibold px-3 py-1 rounded-lg"
+                >
+                  {{ $t('pricing_page_yearly_discount', { discount: discountPercent }) }}
                 </div>
-              </div>
 
-              <UButton
-                class="w-full mt-6 py-4 text-lg cursor-pointer"
-                color="primary"
-                :label="$t('pricing_page_continue_button')"
-                block
-                @click="handleSubscribe"
-              />
+                <div class="flex items-center">
+                  <div class="w-6 h-6 flex-shrink-0 mr-4">
+                    <div
+                      class="w-full h-full rounded-full border flex items-center justify-center bg-black"
+                      :class="selectedPlan === 'yearly' ? 'bg-black' : 'bg-white border-gray-300'"
+                    >
+                      <UIcon
+                        v-if="selectedPlan === 'yearly'"
+                        name="i-material-symbols-check"
+                        class="bg-[#A6F5EA]"
+                        size="16"
+                      />
+                    </div>
+                  </div>
+                  <div class="text-lg font-semibold whitespace-nowrap">
+                    {{ $t('pricing_page_yearly') }}
+                  </div>
+                </div>
+                <div class="text-right">
+                  <div class="flex justify-end items-center gap-2 text-sm text-gray-400">
+                    <p v-text=" $t('pricing_page_original_price')" />
+                    <span
+                      class="line-through text-gray-400"
+                      v-text="`US$${props.originalYearlyPrice}`"
+                    />
+                  </div>
+                  <div class="flex justify-end items-end gap-2">
+                    <p
+                      class="text-2xl font-bold"
+                      v-text="`US$${props.discountedYearlyPrice}`"
+                    />
+                    <span class="font-semibold">{{ $t('pricing_page_per_year') }}</span>
+                  </div>
+                </div>
+                <input
+                  v-model="selectedPlan"
+                  type="radio"
+                  name="plan"
+                  value="yearly"
+                  class="hidden"
+                >
+              </label>
+
+              <!-- Monthly plan -->
+              <label
+                class="
+                  relative flex justify-between items-center
+                  border-2 rounded-2xl px-4 py-4 cursor-pointer
+                  transition-all duration-200 ease-in-out
+                  hover:shadow-lg hover:border-gray-400
+                "
+                :class="selectedPlan === 'monthly' ? 'border-black' : 'border-gray-200'"
+              >
+                <div class="flex items-center">
+                  <div class="w-6 h-6 flex-shrink-0 mr-4">
+                    <div
+                      class="w-full h-full rounded-full border flex items-center justify-center bg-black"
+                      :class="selectedPlan === 'monthly' ? 'bg-black' : 'bg-white border-gray-300'"
+                    >
+                      <UIcon
+                        v-if="selectedPlan === 'monthly'"
+                        name="i-material-symbols-check"
+                        class="bg-[#A6F5EA]"
+                        size="16"
+                      />
+                    </div>
+                  </div>
+                  <div class="text-lg font-semibold whitespace-nowrap">
+                    {{ $t('pricing_page_monthly') }}
+                  </div>
+                </div>
+
+                <div class="text-right">
+                  <div class="flex justify-end items-center gap-2 text-sm text-gray-400">
+                    <p v-text=" $t('pricing_page_original_price')" />
+                    <span
+                      class="line-through text-gray-400"
+                      v-text="`US$${props.originalMonthlyPrice}`"
+                    />
+                  </div>
+                  <div class="flex justify-end items-end gap-2">
+                    <p
+                      class="text-2xl font-bold"
+                      v-text="`US$${props.discountedMonthlyPrice}`"
+                    />
+                    <span class="font-semibold">{{ $t('pricing_page_per_year') }}</span>
+                  </div>
+                </div>
+
+                <input
+                  v-model="selectedPlan"
+                  type="radio"
+                  name="plan"
+                  value="monthly"
+                  class="hidden"
+                >
+              </label>
             </div>
+
+            <UButton
+              class="
+                w-full mt-4 py-3 text-lg text-[#A6F5EA]
+                font-semibold rounded-2xl bg-black
+                cursor-pointer hover:bg-[#333333] hover:text-[#A6F5EA]
+                transition-colors duration-200
+              "
+              :label="$t('pricing_page_continue_button')"
+              block
+              @click="handleSubscribe"
+            />
+
+            <i18n-t
+              keypath="pricing_page_subscription_notice"
+              tag="p"
+              class="mt-4 text-sm text-gray-500 text-center"
+            >
+              <template #link>
+                <a
+                  href="/"
+                  target="_blank"
+                  class="text-primary underline"
+                >
+                  {{ $t('terms_and_conditions') }}
+                </a>
+              </template>
+            </i18n-t>
           </div>
         </div>
       </div>
@@ -113,6 +217,10 @@
 </template>
 
 <script setup lang="ts">
+import paywallHeaderImg from '~/assets/images/paywall/paywall-header-bg.png'
+import paywallBodyLogo from '~/assets/images/paywall/paywall-body-logo.png'
+import paywallFooterLogo from '~/assets/images/paywall/paywall-footer-bg.png'
+
 const emit = defineEmits(['close'])
 const { t: $t } = useI18n()
 const selectedPlan = ref('yearly')
@@ -132,6 +240,29 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
+  originalYearlyPrice: {
+    type: [String, Number],
+    default: '119.88',
+  },
+  originalMonthlyPrice: {
+    type: [String, Number],
+    default: '9.99',
+  },
+  discountedYearlyPrice: {
+    type: [String, Number],
+    default: '69.99',
+  },
+  discountedMonthlyPrice: {
+    type: [String, Number],
+    default: '6.99',
+  },
+})
+
+const discountPercent = computed(() => {
+  const originalYearlyCost = Number(props.discountedMonthlyPrice) * 12
+  const savedAmount = originalYearlyCost
+    - Number(props.discountedYearlyPrice)
+  return Math.round((savedAmount / originalYearlyCost) * 100)
 })
 
 async function checkLikerPlusStatus() {
