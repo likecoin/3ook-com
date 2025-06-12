@@ -2,11 +2,11 @@ export function useStructuredData({ nftClassId }: { nftClassId: string }) {
   const bookInfo = useBookInfo({ nftClassId })
 
   function generateBookStructuredData({
-    canonicalUrl,
+    canonicalURL,
     selectedPricingItemIndex = 0,
     image, // TODO: we need image because normalizeURIToHTTP is broken in this context
   }: {
-    canonicalUrl: string
+    canonicalURL: string
     selectedPricingItemIndex?: number
     image?: string
   }) {
@@ -23,19 +23,19 @@ export function useStructuredData({ nftClassId }: { nftClassId: string }) {
     const pricingItems = bookInfo.pricingItems.value
     const selectedPricing = pricingItems[selectedPricingItemIndex]
 
-    const productID = `${nftClassId}-${selectedPricingItemIndex}`
-    const skuID = productID
+    const productId = `${nftClassId}-${selectedPricingItemIndex}`
+    const skuId = productId
 
     const productStructuredData = {
       '@context': 'http://www.schema.org',
       '@type': ['Book', 'Product'],
-      '@id': `@${productID}`,
-      'url': `${canonicalUrl}?price_index=${selectedPricingItemIndex}`,
+      '@id': `@${productId}`,
+      'url': `${canonicalURL}?price_index=${selectedPricingItemIndex}`,
       'name': selectedPricing?.name ? `${name} - ${authorName} - ${selectedPricing.name}` : `${name} - ${authorName}`,
       image,
       description,
       'author': authorName,
-      'sku': skuID,
+      'sku': skuId,
       'publisher': publisherName,
       isbn,
       inLanguage,
@@ -56,14 +56,14 @@ export function useStructuredData({ nftClassId }: { nftClassId: string }) {
         'availability': selectedPricing?.isSoldOut ? 'SoldOut' : 'LimitedAvailability',
         'itemCondition': 'https://schema.org/NewCondition',
       },
-      productID,
+      productId,
       'inProductGroupWithID': nftClassId,
     }
 
     const productGroupStructuredData = {
       '@context': 'https://schema.org',
       '@type': ['Book', 'ProductGroup'],
-      'url': canonicalUrl,
+      'url': canonicalURL,
       'name': `${name} - ${authorName}`,
       image,
       description,
@@ -78,12 +78,12 @@ export function useStructuredData({ nftClassId }: { nftClassId: string }) {
       'productGroupID': nftClassId,
       'workExample': [
         {
-          '@id': `@${productID}`,
+          '@id': `@${productId}`,
         },
       ],
       'hasVariant': [
         {
-          '@id': `@${productID}`,
+          '@id': `@${productId}`,
         },
       ],
       'variesBy': ['https://schema.org/BookEdition'],
