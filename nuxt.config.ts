@@ -21,6 +21,7 @@ export default defineNuxtConfig({
     'nuxt-gtag',
     '@sentry/nuxt/module',
     '@nuxt/scripts',
+    '@nuxtjs/sitemap',
   ],
 
   devtools: { enabled: true },
@@ -31,6 +32,10 @@ export default defineNuxtConfig({
     },
   },
   css: ['~/assets/css/main.css'],
+  site: {
+    url: process.env.BASE_URL,
+    name: '3ook.com',
+  },
 
   ui: {
     colorMode: false,
@@ -153,5 +158,10 @@ export default defineNuxtConfig({
       org: 'likerland-team',
       project: 'liker-land-v3',
     },
+  },
+  sitemap: {
+    sources: [
+      '/api/__sitemap__/store',
+    ],
   },
 })
