@@ -50,7 +50,7 @@ export function useStructuredData({ nftClassId }: { nftClassId: string }) {
           },
           'price': pricing?.price || 0,
           'priceCurrency': 'USD',
-          'availability': pricing?.isSoldOut ? 'SoldOut' : 'LimitedAvailability',
+          'availability': pricing?.isSoldOut ? 'https://schema.org/SoldOut' : 'https://schema.org/LimitedAvailability',
           'itemCondition': 'https://schema.org/NewCondition',
         },
         productId,
