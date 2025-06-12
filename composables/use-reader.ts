@@ -14,7 +14,7 @@ export default function (
       return queryValue
     }
     else if (nftClassIdInput) {
-      return isRef(nftClassIdInput) ? nftClassIdInput.value : nftClassIdInput
+      return toValue(nftClassIdInput)
     }
     else {
       return ''
