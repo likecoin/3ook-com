@@ -12,6 +12,8 @@ const { t: $t } = useI18n()
 const config = useRuntimeConfig()
 const ogTitle = $t('app_title')
 const ogDescription = $t('app_description')
+const ogUrl = config.public.baseURL
+const ogImage = `${ogUrl}/images/og/default.jpg`
 
 const i18nHead = useLocaleHead()
 useHead({
@@ -43,7 +45,15 @@ useHead({
     },
     {
       property: 'og:image',
-      content: `${config.public.baseURL}/images/og/default.jpg`,
+      content: ogImage,
+    },
+    {
+      property: 'og:url',
+      content: ogUrl,
+    },
+    {
+      property: 'og:type',
+      content: 'website',
     },
     {
       name: 'theme-color',
@@ -71,6 +81,20 @@ useHead({
       href: '/favicon-16x16.png',
     },
     { rel: 'manifest', href: '/site.webmanifest' },
+  ],
+  script: [
+    {
+      type: 'application/ld+json',
+      innerHTML: JSON.stringify([{
+        '@context': 'https://schema.org',
+        '@type': 'OnlineStore',
+        'name': ogTitle,
+        'description': ogDescription,
+        'alternateName': ['3ook.com decentralized book store', 'Liker Land 電子書店', 'Liker Land'],
+        'url': ogUrl,
+        'logo': ogImage,
+      }]),
+    },
   ],
 })
 </script>
