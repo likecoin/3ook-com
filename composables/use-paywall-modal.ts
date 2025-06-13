@@ -43,6 +43,7 @@ export function usePayWall({
       discountedMonthlyPrice,
       handleSubscribe,
       onClose,
+      isProcessingSubscription,
     },
   })
 
@@ -101,6 +102,8 @@ export function usePayWall({
     }
     catch (error) {
       handleError(error)
+    }
+    finally {
       isProcessingSubscription.value = false
     }
   }
@@ -110,6 +113,7 @@ export function usePayWall({
 
     hasLoggedIn,
     isLikerPlus,
+    isProcessingSubscription,
 
     checkLikerPlusStatus,
     handleSubscribe,

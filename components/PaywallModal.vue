@@ -233,6 +233,7 @@
               "
               :label="$t('pricing_page_continue_button')"
               block
+              :loading="props.isProcessingSubscription"
               @click="handleSubscribe"
             />
           </div>
@@ -276,6 +277,10 @@ const props = defineProps({
   discountedMonthlyPrice: {
     type: [String, Number],
     default: '6.99',
+  },
+  isProcessingSubscription: {
+    type: Boolean,
+    default: false,
   },
   handleSubscribe: {
     type: Function as PropType<() => void>,
