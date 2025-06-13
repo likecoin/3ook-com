@@ -12,9 +12,17 @@ const { t: $t } = useI18n()
 const config = useRuntimeConfig()
 const ogTitle = $t('app_title')
 const ogDescription = $t('app_description')
+const ogURL = config.public.baseURL
+const ogImage = `${ogURL}/images/og/default.jpg`
+const isTestnet = !!config.public.isTestnet
 
+const i18nHead = useLocaleHead()
 useHead({
+  htmlAttrs: {
+    lang: i18nHead.value.htmlAttrs!.lang,
+  },
   meta: [
+    ...(i18nHead.value.meta || []),
     {
       name: 'viewport',
       content:
@@ -24,6 +32,14 @@ useHead({
       name: 'description',
       content: ogDescription,
     },
+    ...(isTestnet
+      ? [
+          {
+            name: 'robots',
+            content: 'noindex',
+          },
+        ]
+      : []),
     {
       property: 'og:site_name',
       content: ogTitle,
@@ -38,11 +54,24 @@ useHead({
     },
     {
       property: 'og:image',
-      content: `${config.public.baseURL}/images/og/default.jpg`,
+      content: ogImage,
+    },
+    {
+      property: 'og:url',
+      content: ogURL,
+    },
+    {
+      property: 'og:type',
+      content: 'website',
+    },
+    {
+      name: 'theme-color',
+      content: '#131313',
     },
   ],
   titleTemplate: title => title ? `${title} | ${$t('app_title')}` : $t('app_title'),
   link: [
+    ...(i18nHead.value.link || []),
     {
       rel: 'apple-touch-icon',
       sizes: '180x180',
@@ -61,6 +90,20 @@ useHead({
       href: '/favicon-16x16.png',
     },
     { rel: 'manifest', href: '/site.webmanifest' },
+  ],
+  script: [
+    {
+      type: 'application/ld+json',
+      innerHTML: JSON.stringify([{
+        '@context': 'https://schema.org',
+        '@type': 'OnlineStore',
+        'name': ogTitle,
+        'description': ogDescription,
+        'alternateName': ['3ook.com decentralized bookstore', 'Liker Land 電子書店', 'Liker Land'],
+        'url': ogURL,
+        'logo': ogImage,
+      }]),
+    },
   ],
 })
 </script>

@@ -11,6 +11,7 @@ declare module '#auth-utils' {
     email?: string
     loginMethod?: string
     isEVMModeActive?: boolean
+    isLikerPlus?: boolean
   }
 }
 

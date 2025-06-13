@@ -57,6 +57,12 @@ export default defineEventHandler(async (event) => {
       message: 'UNAUTHORIZED',
     })
   }
+  if (!session.user?.isLikerPlus) {
+    throw createError({
+      status: 402,
+      message: 'UPGRADE_REQUIRED',
+    })
+  }
   const config = useRuntimeConfig()
   const {
     minimaxGroupId,

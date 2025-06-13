@@ -21,6 +21,7 @@ export default defineNuxtConfig({
     'nuxt-gtag',
     '@sentry/nuxt/module',
     '@nuxt/scripts',
+    '@nuxtjs/sitemap',
   ],
 
   devtools: { enabled: true },
@@ -31,6 +32,10 @@ export default defineNuxtConfig({
     },
   },
   css: ['~/assets/css/main.css'],
+  site: {
+    url: process.env.BASE_URL,
+    name: '3ook.com',
+  },
 
   ui: {
     colorMode: false,
@@ -59,6 +64,7 @@ export default defineNuxtConfig({
       magicLinkRPCURL: process.env.MAGIC_LINK_RPC_URL,
       arweaveEndpoint: process.env.ARWEAVE_ENDPOINT,
       ipfsEndpoint: process.env.IPFS_ENDPOINT,
+      isTestnet: process.env.IS_TESTNET,
       pdfViewerOrigin: process.env.PDF_VIEWER_ORIGIN,
       pdfViewerURL: `${process.env.PDF_VIEWER_ORIGIN}${process.env.PDF_VIEWER_PATH}`,
       sentryDsn: process.env.SENTRY_DSN,
@@ -77,16 +83,19 @@ export default defineNuxtConfig({
   },
 
   i18n: {
+    baseUrl: process.env.BASE_URL,
     locales: [
       {
         code: 'en',
         file: 'en.json',
         name: 'English',
+        language: 'en-US',
       },
       {
         code: 'zh-Hant',
         file: 'zh-Hant.json',
         name: '中文',
+        language: 'zh-HK',
       },
     ],
     lazy: true,
@@ -96,6 +105,7 @@ export default defineNuxtConfig({
   scripts: {
     registry: {
       crisp: true,
+      stripe: true,
     },
   },
 
@@ -149,5 +159,10 @@ export default defineNuxtConfig({
       org: 'likerland-team',
       project: 'liker-land-v3',
     },
+  },
+  sitemap: {
+    sources: [
+      '/api/__sitemap__/store',
+    ],
   },
 })

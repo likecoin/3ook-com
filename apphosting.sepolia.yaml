@@ -29,6 +29,8 @@ env:
     secret: MINIMAX_API_KEY
   - variable: ARWEAVE_ENDPOINT
     value: https://gateway.irys.xyz
+  - variable: IS_TESTNET
+    value: TRUE
   - variable: IPFS_ENDPOINT
     value: https://w3s.link/ipfs
   - variable: LIKECOIN_API_ENDPOINT

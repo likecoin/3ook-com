@@ -15,6 +15,9 @@ export function useEVMBookInfo({ nftClassId = '' }: { nftClassId?: string } = {}
 
   const coverSrc = computed(() => normalizeURIToHTTP(contentMetadata.value?.thumbnailUrl || contentMetadata.value?.image))
 
+  const isbn = computed(() => contentMetadata.value?.isbn)
+  const inLanguage = computed(() => contentMetadata.value?.inLanguage)
+
   const publishedDate = computed(() => {
     const datePublished = contentMetadata.value?.datePublished
     return datePublished ? new Date(datePublished) : undefined
@@ -40,6 +43,9 @@ export function useEVMBookInfo({ nftClassId = '' }: { nftClassId?: string } = {}
     nftClassOwnerWalletAddress,
     author,
     publisher,
+
+    isbn,
+    inLanguage,
 
     publishedDate,
     releasedDate,

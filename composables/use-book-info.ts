@@ -29,7 +29,7 @@ export default function ({ nftClassId = '' }: { nftClassId?: string } = {}) {
   })
 
   const authorDescription = computed(() => {
-    return bookstoreInfo.value?.author.description || ''
+    return bookstoreInfo.value?.author?.description || ''
   })
 
   const publisherName = computed(() => bookInfo.publisher.value)
@@ -158,6 +158,8 @@ export default function ({ nftClassId = '' }: { nftClassId?: string } = {}) {
     return nftIds
   })
 
+  const firstUserOwnedNFTId = computed(() => userOwnedNFTIds.value[0])
+
   const productPageRoute = computed(() => localeRoute({
     name: 'store-id',
     params: { id: nftClassId },
@@ -193,6 +195,7 @@ export default function ({ nftClassId = '' }: { nftClassId?: string } = {}) {
     pricingItems,
 
     userOwnedNFTIds,
+    firstUserOwnedNFTId,
 
     productPageRoute,
     getReaderRoute,

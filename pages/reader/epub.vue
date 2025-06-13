@@ -257,7 +257,7 @@ declare interface Rendition extends RenditionBase {
   }
 }
 
-const { loggedIn: hasLoggedIn } = useUserSession()
+const { loggedIn: hasLoggedIn, user } = useUserSession()
 const localeRoute = useLocaleRoute()
 if (!hasLoggedIn.value) {
   await navigateTo(localeRoute({ name: 'account' }))
@@ -272,6 +272,7 @@ const {
   bookFileURLWithCORS,
 } = useReader()
 const { handleError } = useErrorHandler()
+const toast = useToast()
 
 const isReaderLoading = ref(false)
 const isDesktopToCOpen = ref(false)
@@ -318,7 +319,9 @@ const ttsLanguageOptions = [
 const ttsLanguage = ref('zh-HK')
 watch(ttsLanguage, (newLanguage, oldLanguage) => {
   if (newLanguage !== oldLanguage) {
-    useTrackEvent('tts_language_change')
+    useLogEvent('tts_language_change', {
+      nft_class_id: nftClassId,
+    })
   }
 })
 
@@ -534,7 +537,9 @@ function pauseTextToSpeech() {
       audioQueue.value[currentAudioIndex.value].pause()
     }
     isTextToSpeechPlaying.value = false
-    useTrackEvent('tts_pause')
+    useLogEvent('tts_pause', {
+      nft_class_id: nftClassId,
+    })
   }
 }
 
@@ -582,12 +587,22 @@ function createAudio(element: { cfi: string, el: Element, text: string }) {
 }
 
 async function startTextToSpeech() {
+  if (!user.value?.isLikerPlus) {
+    toast.add({
+      title: $t('reader_text_to_speech_not_available'),
+      description: $t('reader_text_to_speech_not_available_description'),
+      color: 'warning',
+    })
+    return
+  }
   isShowTextToSpeechOptions.value = true
   if (!isTextToSpeechPlaying.value) {
     isTextToSpeechPlaying.value = true
     if (audioQueue.value[currentAudioIndex.value]) {
       audioQueue.value[currentAudioIndex.value].play()
-      useTrackEvent('tts_resume')
+      useLogEvent('tts_resume', {
+        nft_class_id: nftClassId,
+      })
     }
     return
   }
@@ -599,7 +614,9 @@ async function startTextToSpeech() {
   audioQueue.value = []
   currentAudioIndex.value = 0
   isTextToSpeechOn.value = true
-  useTrackEvent('tts_start')
+  useLogEvent('tts_start', {
+    nft_class_id: nftClassId,
+  })
 
   try {
     // load up to 2 paragraphs for text-to-speech

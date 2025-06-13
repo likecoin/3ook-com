@@ -126,7 +126,7 @@ const bookCoverSrc = computed(() => getResizedImageURL(bookInfo.coverSrc.value, 
 // TODO: Handle multiple items in the cart
 const isAutoDeliver = ref(bookInfo.getIsAutoDelivery(cartData.value?.classIdsWithPrice?.[0]?.priceIndex))
 
-const receivedNFTId = computed(() => bookInfo.userOwnedNFTIds.value[0])
+const receivedNFTId = computed(() => bookInfo.firstUserOwnedNFTId.value)
 const canStartReading = computed(() => !!receivedNFTId.value)
 
 async function checkItemsDelivery() {
@@ -192,6 +192,13 @@ async function startClaimingItems() {
       throw new Error(data.errors[0].error)
     }
     isClaimed.value = true
+    useLogEvent('purchase', {
+      transaction_id: cartId.value,
+      items: data.classIds.map(classId => ({
+        class_id: classId,
+        nft_id: data.newClaimedNFTs.find(nft => nft.classId === classId)?.nftId || '',
+      })),
+    })
   }
   catch (error) {
     await handleError(error, {

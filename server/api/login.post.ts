@@ -79,17 +79,20 @@ export default defineEventHandler(async (event) => {
     let displayName: string | undefined
     let description: string | undefined
     let avatar: string | undefined
+    let isLikerPlus = false
     try {
       const userInfoRes = await $fetch<{
         user: string
         displayName: string
         description: string
         avatar: string
+        isLikerPlus?: boolean
       }>(`${config.public.likeCoinAPIEndpoint}/users/addr/${body.walletAddress}/min`)
       likerId = userInfoRes.user
       displayName = userInfoRes.displayName
       avatar = userInfoRes.avatar
       description = userInfoRes.description
+      isLikerPlus = userInfoRes.isLikerPlus || false
     }
     catch {
       console.warn('Failed to fetch user info for wallet')
@@ -107,6 +110,7 @@ export default defineEventHandler(async (event) => {
       email: body.email,
       loginMethod: body.loginMethod,
       isEVMModeActive: !likeWallet,
+      isLikerPlus,
     }
     await setUserSession(event, { user: userInfo })
 

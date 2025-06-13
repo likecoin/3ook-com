@@ -40,13 +40,6 @@
                   <div v-text="$t('product_page_publisher_label')" />
                   <EntityItem :name="bookInfo.publisherName.value" />
                 </li>
-                <li v-if="bookInfo.nftClassOwnerWalletAddress.value">
-                  <div v-text="bookInfo.publisherName.value ? $t('product_page_distributor_label') : $t('product_page_publisher_label')" />
-                  <EntityItem
-                    :name="bookInfo.nftClassOwnerName.value"
-                    :wallet-address="bookInfo.nftClassOwnerWalletAddress.value"
-                  />
-                </li>
               </ul>
             </div>
           </div>
@@ -331,6 +324,9 @@ import { FetchError } from 'ofetch'
 import type { TabsItem } from '@nuxt/ui'
 
 const route = useRoute()
+const config = useRuntimeConfig()
+const baseURL = config.public.baseURL
+
 const localeRoute = useLocaleRoute()
 const getRouteBaseName = useRouteBaseName()
 const { t: $t } = useI18n()
@@ -343,6 +339,8 @@ const nftStore = useNFTStore()
 const { handleError } = useErrorHandler()
 
 const nftClassId = computed(() => getRouteParam('id'))
+const { generateBookStructuredData } = useStructuredData({ nftClassId: nftClassId.value })
+
 if (nftClassId.value !== nftClassId.value.toLowerCase()) {
   await navigateTo(localeRoute({
     name: getRouteBaseName(route),
@@ -387,6 +385,46 @@ await callOnce(async () => {
 const bookInfo = useBookInfo({ nftClassId: nftClassId.value })
 const bookCoverSrc = computed(() => getResizedImageURL(bookInfo.coverSrc.value, { size: 600 }))
 
+const ogTitle = computed(() => {
+  const title = bookInfo.name.value
+  const author = bookInfo.authorName.value
+  return author ? `${title} - ${author}` : title
+})
+const ogDescription = computed(() => {
+  const description = bookInfo.description.value || ''
+  return description.length > 200 ? `${description.substring(0, 197)}...` : description
+})
+const canonicalURL = computed(() => {
+  return `${baseURL}${route.path}`
+})
+
+const structuredData = computed(() => {
+  return generateBookStructuredData({
+    canonicalURL: canonicalURL.value,
+    image: bookInfo.coverSrc.value,
+  })
+})
+
+useHead(() => ({
+  title: ogTitle.value,
+  meta: [
+    { name: 'description', content: ogDescription.value },
+    { property: 'og:title', content: ogTitle.value },
+    { property: 'og:description', content: ogDescription.value },
+    { property: 'og:image', content: bookInfo.coverSrc.value },
+    { property: 'og:type', content: 'product' },
+    { property: 'og:url', content: canonicalURL.value },
+  ],
+  link: [
+    { rel: 'canonical', href: canonicalURL.value },
+  ],
+  script: structuredData.value
+    ? [
+        { type: 'application/ld+json', children: JSON.stringify(structuredData.value) },
+      ]
+    : [],
+}))
+
 const infoTabItems = computed(() => {
   const items: TabsItem[] = []
 
@@ -412,7 +450,7 @@ const infoTabItems = computed(() => {
   return items
 })
 
-const selectedPricingItemIndex = ref(0)
+const selectedPricingItemIndex = ref(Number(getRouteQuery('price_index') || 0))
 
 const pricingItemsElement = useTemplateRef<HTMLLIElement>('pricing')
 const isPricingItemsVisible = useElementVisibility(pricingItemsElement)
@@ -442,6 +480,26 @@ const socialButtons = computed(() => [
   { key: 'whatsapp', label: $t('share_button_hint_whatsapp'), icon: 'i-simple-icons-whatsapp' },
   { key: 'x', label: $t('share_button_hint_x'), icon: 'i-simple-icons-x' },
 ])
+
+const formattedLogPayload = computed(() => {
+  const currency = selectedPricingItem.value?.currency || 'USD'
+  const price = selectedPricingItem.value?.price || 0
+  return {
+    currency,
+    value: price,
+    items: [{
+      id: `${nftClassId.value}-${selectedPricingItemIndex.value}`,
+      name: bookName.value,
+      price,
+      currency,
+      quantity: 1,
+    }],
+  }
+})
+
+onMounted(() => {
+  useLogEvent('view_item', formattedLogPayload.value)
+})
 
 async function handleSocialButtonClick(key: string) {
   switch (key) {
@@ -482,7 +540,7 @@ async function handleSocialButtonClick(key: string) {
 }
 
 function handleAddToCartButtonClick() {
-  useTrackEvent('add_to_cart', { nft_class_id: nftClassId.value })
+  useLogEvent('add_to_cart', formattedLogPayload.value)
   // TODO: Implement add to cart functionality
   wipModal.open({
     title: $t('product_page_add_to_cart_button_label'),
@@ -492,7 +550,7 @@ function handleAddToCartButtonClick() {
 const isPurchasing = ref(false)
 
 async function handlePurchaseButtonClick() {
-  useTrackEvent('add_to_cart', { nft_class_id: nftClassId.value })
+  useLogEvent('add_to_cart', formattedLogPayload.value)
   if (!selectedPricingItem.value) return
   try {
     isPurchasing.value = true
@@ -508,7 +566,10 @@ async function handlePurchaseButtonClick() {
       from: route.query.from as string,
       coupon: route.query.coupon as string,
     })
-    useTrackEvent('begin_checkout', { payment_id: paymentId })
+    useLogEvent('begin_checkout', {
+      ...formattedLogPayload.value,
+      transaction_id: paymentId,
+    })
     await navigateTo(url, { external: true })
   }
   catch (error) {
@@ -518,12 +579,12 @@ async function handlePurchaseButtonClick() {
 }
 
 function handleStickyPurchaseButtonClick() {
-  useTrackEvent('purchase_sticky_button_click', { nft_class_id: nftClassId.value })
+  useLogEvent('purchase_sticky_button_click', { nft_class_id: nftClassId.value })
   handlePurchaseButtonClick()
 }
 
 function handleGiftButtonClick() {
-  useTrackEvent('gift_button_click', { nft_class_id: nftClassId.value })
+  useLogEvent('gift_button_click', { nft_class_id: nftClassId.value })
   // TODO: Implement gift functionality
   wipModal.open({
     title: $t('product_page_gift_button_label'),
