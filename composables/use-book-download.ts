@@ -33,11 +33,17 @@ export function useBookDownload() {
   }
 
   const downloadBookFile = async ({
-    bookFileURL,
+    nftClassId,
+    nftId,
+    fileIndex = '0',
+    isCustomMessageEnabled,
     filename,
     type,
   }: {
-    bookFileURL: string
+    nftClassId: string
+    nftId: string
+    fileIndex?: string
+    isCustomMessageEnabled: boolean
     filename: string
     type: string
   }): Promise<void> => {
@@ -49,6 +55,12 @@ export function useBookDownload() {
     })
 
     try {
+      const bookFileURL = getBookFileURLWithCORS({
+        nftClassId,
+        nftId,
+        fileIndex,
+        isCustomMessageEnabled,
+      })
       const buffer = await loadFileAsBuffer(bookFileURL)
       if (!buffer) {
         throw new Error('Failed to load book file as buffer')

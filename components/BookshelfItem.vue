@@ -94,9 +94,6 @@ const metadataStore = useMetadataStore()
 const bookInfo = useBookInfo({ nftClassId: props.nftClassId })
 const { downloadBookFile } = useBookDownload()
 
-const { bookFileURLWithCORS } = useReader({
-  nftClassId: props.nftClassId,
-})
 const bookCoverSrc = computed(() => getResizedImageURL(bookInfo.coverSrc.value, { size: 300 }))
 
 const isLargerScreen = useMediaQuery('(min-width: 1024px)')
@@ -187,7 +184,9 @@ function openContentURL(contentURL: ContentURL) {
 
 async function downloadURL({ name, type }: { name: string, type: string }) {
   await downloadBookFile({
-    bookFileURL: bookFileURLWithCORS.value,
+    nftClassId: props.nftClassId,
+    nftId: props.nftIds?.[0] || bookInfo.userOwnedNFTIds.value?.[0],
+    isCustomMessageEnabled: bookInfo.isCustomMessageEnabled.value,
     filename: name,
     type,
   })

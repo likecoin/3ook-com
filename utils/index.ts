@@ -76,3 +76,23 @@ export function compareContentURL(
     return indexA - indexB
   }
 }
+
+export function getBookFileURLWithCORS({
+  nftClassId,
+  nftId,
+  fileIndex,
+  isCustomMessageEnabled,
+}: {
+  nftClassId: string
+  nftId: string | undefined
+  fileIndex: string
+  isCustomMessageEnabled: boolean
+}): string {
+  const config = useRuntimeConfig()
+  const url = new URL(`${config.public.likeCoinAPIEndpoint}/ebook-cors/`)
+  url.searchParams.set('class_id', nftClassId)
+  if (nftId) url.searchParams.set('nft_id', nftId)
+  url.searchParams.set('index', fileIndex)
+  url.searchParams.set('custom_message', isCustomMessageEnabled && nftId ? '1' : '0')
+  return url.toString()
+}
