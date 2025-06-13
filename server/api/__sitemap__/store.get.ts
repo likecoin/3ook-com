@@ -8,7 +8,7 @@ export default defineSitemapEventHandler(async (event) => {
   const locales = (config.public.i18n.locales as Array<{ code: string }>)
     .map(locale => locale.code)
   try {
-    const result = await fetchAirtableCMSProductsByTagId('all')
+    const result = await fetchAirtableCMSProductsByTagId('latest')
     setHeader(event, 'Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400')
     return result.records.map(record => locales.map((locale) => {
       const localePath = locale === defaultLocale ? '' : `/${locale}`
