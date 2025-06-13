@@ -1,6 +1,3 @@
-import { defineSitemapEventHandler } from '#imports'
-import type { SitemapUrlInput } from '#sitemap/types'
-
 export default defineSitemapEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const baseURL = config.public.baseURL
@@ -23,7 +20,7 @@ export default defineSitemapEventHandler(async (event) => {
           }
         }),
       }
-    })).flat() satisfies SitemapUrlInput[]
+    })).flat()
   }
   catch (error) {
     console.error(error)
