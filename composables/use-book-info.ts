@@ -29,7 +29,7 @@ export default function ({ nftClassId = '' }: { nftClassId?: string } = {}) {
   })
 
   const authorDescription = computed(() => {
-    return bookstoreInfo.value?.author.description || ''
+    return bookstoreInfo.value?.author?.description || ''
   })
 
   const publisherName = computed(() => bookInfo.publisher.value)
