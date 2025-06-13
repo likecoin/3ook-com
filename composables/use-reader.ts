@@ -1,14 +1,10 @@
-export default function (
-  {
-    nftClassIdInput,
-  }: {
-    nftClassIdInput?: Ref<string> | string
-  } = {},
-) {
+export default function (params: {
+  nftClassId?: Ref<string> | string
+} = {}) {
   const config = useRuntimeConfig()
 
   const nftClassId = computed(() =>
-    getRouteQuery('nft_class_id') || toValue(nftClassIdInput) || '',
+    getRouteQuery('nft_class_id') || toValue(params.nftClassId) || '',
   )
 
   const bookInfo = useBookInfo({ nftClassId: nftClassId.value })

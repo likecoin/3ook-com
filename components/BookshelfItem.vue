@@ -40,7 +40,7 @@
           <template #content>
             <UCard :ui="{ header: 'text-center font-bold' }">
               <template #header>
-                {{ $t('bookshelf_more_menu_title') }}
+                {{ $t("bookshelf_more_menu_title") }}
               </template>
               <UButton
                 v-for="item in menuItems"
@@ -95,21 +95,17 @@ const bookInfo = useBookInfo({ nftClassId: props.nftClassId })
 const { downloadBookFile } = useBookDownload()
 
 const { bookFileURLWithCORS } = useReader({
-  nftClassIdInput: props.nftClassId,
+  nftClassId: props.nftClassId,
 })
 const bookCoverSrc = computed(() => getResizedImageURL(bookInfo.coverSrc.value, { size: 300 }))
 
 const isLargerScreen = useMediaQuery('(min-width: 1024px)')
-
-const arweaveLinkEndpoint = getArweaveLinkAPIEndpoint()
+const encryptedArweaveLinkEndpoint = getEncryptedArweaveLinkAPIEndpoint()
 
 const menuItems = computed<DropdownMenuItem[]>(() => {
   const sortedContentURLs = [...bookInfo.contentURLs.value].sort(compareContentURL)
   const contentItems: DropdownMenuItem[] = []
   const downloadItems: DropdownMenuItem[] = []
-  const isEncrypted = sortedContentURLs.some((content) => {
-    return !!(content.url.startsWith(arweaveLinkEndpoint) || content.url.includes('?key='))
-  })
 
   sortedContentURLs.forEach((contentURL) => {
     let label = ''
@@ -131,7 +127,11 @@ const menuItems = computed<DropdownMenuItem[]>(() => {
       onSelect: () => openContentURL(contentURL),
     })
 
-    if (!isEncrypted) {
+    const isContentURLsEncrypted = !!(
+      contentURL.url.startsWith(encryptedArweaveLinkEndpoint)
+      || contentURL.url.includes('?key=')
+    )
+    if (!isContentURLsEncrypted) {
       downloadItems.push({
         label: $t('bookshelf_download_file', { type: contentURL.type.toUpperCase() }),
         icon: 'i-material-symbols-download-rounded',
