@@ -15,7 +15,7 @@
               text-black cursor-pointer
             "
             size="24"
-            @click="$emit('close')"
+            @click="handleOnClose"
           />
           <img
             :src="paywallHeaderImg"
@@ -88,7 +88,7 @@
                 transition-colors duration-200
               "
               size="24"
-              @click="$emit('close')"
+              @click="handleOnClose"
             />
             <div class="flex flex-col gap-4">
               <!-- Yearly plan -->
@@ -240,14 +240,9 @@ import paywallHeaderImg from '~/assets/images/paywall/paywall-header-bg.png'
 import paywallBodyLogo from '~/assets/images/paywall/paywall-body-logo.png'
 import paywallFooterLogo from '~/assets/images/paywall/paywall-footer-bg.png'
 
+const emit = defineEmits(['close'])
 const { t: $t } = useI18n()
 const selectedPlan = ref('yearly')
-const { loggedIn: hasLoggedIn } = useUserSession()
-const accountStore = useAccountStore()
-const isProcessingSubscription = ref(false)
-const { handleError } = useErrorHandler()
-const localeRoute = useLocaleRoute()
-const toast = useToast()
 const isMobileScreen = useMediaQuery('(min-width: 640px)')
 
 const props = defineProps({
@@ -275,6 +270,14 @@ const props = defineProps({
     type: [String, Number],
     default: '6.99',
   },
+  handleSubscribe: {
+    type: Function as PropType<() => void>,
+    required: true,
+  },
+  onClose: {
+    type: Function as PropType<() => void>,
+    required: false,
+  },
 })
 
 const discountPercent = computed(() => {
@@ -284,62 +287,10 @@ const discountPercent = computed(() => {
   return Math.round((savedAmount / originalYearlyCost) * 100)
 })
 
-async function checkLikerPlusStatus() {
-  try {
-    if (!hasLoggedIn.value) {
-      await accountStore.login()
-      if (!hasLoggedIn.value) return
-    }
-    const { user } = useUserSession()
-    if (user.value?.isLikerPlus) {
-      navigateTo(localeRoute({ name: 'account' }))
-    }
+const handleOnClose = () => {
+  if (typeof props.onClose === 'function') {
+    props.onClose()
   }
-  catch (error) {
-    handleError(error)
-  }
-}
-
-async function handleSubscribe() {
-  await checkLikerPlusStatus()
-  useTrackEvent('subscription_button_click', { plan: selectedPlan.value })
-
-  if (isProcessingSubscription.value) return
-
-  try {
-    isProcessingSubscription.value = true
-
-    if (!hasLoggedIn.value) {
-      await accountStore.login()
-      if (!hasLoggedIn.value) {
-        isProcessingSubscription.value = false
-        return
-      }
-    }
-    const { user } = useUserSession()
-    if (user.value?.isLikerPlus) {
-      navigateTo(localeRoute({ name: 'account' }))
-      isProcessingSubscription.value = false
-      return
-    }
-    if (!user.value?.likerId) {
-      toast.add({
-        title: $t ('pricing_page_liker_id_required'),
-        description: $t('pricing_page_liker_id_required_description'),
-        color: 'warning',
-      })
-      isProcessingSubscription.value = false
-      return
-    }
-
-    const { url } = await fetchLikerPlusCheckoutLink({
-      period: selectedPlan.value as 'monthly' | 'yearly',
-    })
-    window.location.href = url
-  }
-  catch (error) {
-    handleError(error)
-    isProcessingSubscription.value = false
-  }
+  emit('close')
 }
 </script>

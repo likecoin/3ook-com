@@ -5,19 +5,29 @@
 </template>
 
 <script setup lang="ts">
-let paywallModal: ReturnType<typeof usePayWall> | null = null
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+const localeRoute = useLocaleRoute()
+
+const paywallModalState = usePayWall({
+  isFullScreen: true,
+  onClose: () => {
+    router.back()
+  },
+})
+
 const hasOpened = ref(false)
 
 onMounted(() => {
+  if (paywallModalState.isLikerPlus.value) {
+    navigateTo(localeRoute({ name: 'account' }))
+    return
+  }
+
   if (!hasOpened.value) {
     hasOpened.value = true
-    if (!paywallModal) {
-      paywallModal = usePayWall({
-        isFullScreen: true,
-        dismissible: false,
-      })
-    }
-    paywallModal.open()
+    paywallModalState.modal.open()
   }
 })
 </script>
