@@ -101,8 +101,7 @@ const bookCoverSrc = computed(() => getResizedImageURL(bookInfo.coverSrc.value, 
 
 const isLargerScreen = useMediaQuery('(min-width: 1024px)')
 
-const apiEndpoints = getArweaveApiEndpoints()
-const arweaveLinkEndpoint = apiEndpoints.API_GET_ARWEAVE_V2_LINK
+const arweaveLinkEndpoint = getArweaveAPIEndpoints()
 
 const menuItems = computed<DropdownMenuItem[]>(() => {
   const sortedContentURLs = [...bookInfo.contentURLs.value].sort(compareContentURL)

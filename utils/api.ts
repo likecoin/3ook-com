@@ -291,10 +291,8 @@ export function fetchBookstoreCMSProductsByTagId(tagId: string, { offset, limit 
   })
 }
 
-export function getArweaveApiEndpoints() {
+export function getArweaveAPIEndpoints() {
   const config = useRuntimeConfig()
   const LIKECOIN_API_ENDPOINT = config.public.likeCoinAPIEndpoint
-  return {
-    API_GET_ARWEAVE_V2_LINK: `${LIKECOIN_API_ENDPOINT}/arweave/v2/link`,
-  }
+  return `${LIKECOIN_API_ENDPOINT}/arweave/v2/link`
 }
