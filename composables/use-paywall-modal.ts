@@ -3,10 +3,10 @@ import { PaywallModal } from '#components'
 export function usePayWall({
   isFullScreen = false,
   dismissible = true,
-  originalYearlyPrice = '119.88',
-  originalMonthlyPrice = '9.99',
-  discountedYearlyPrice = '69.99',
-  discountedMonthlyPrice = '6.99',
+  originalYearlyPrice,
+  originalMonthlyPrice,
+  discountedYearlyPrice,
+  discountedMonthlyPrice,
   onClose,
 }: {
   isFullScreen?: boolean

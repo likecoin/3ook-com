@@ -74,6 +74,13 @@
                 />
                 <span>{{ $t('pricing_page_feature_4') }}</span>
               </li>
+              <li class="flex items-start">
+                <UIcon
+                  name="i-material-symbols-check"
+                  class="mt-1 mr-2 text-green-500"
+                />
+                <span>{{ $t('pricing_page_feature_5') }}</span>
+              </li>
             </ul>
           </div>
 
@@ -256,7 +263,7 @@ const props = defineProps({
   },
   originalYearlyPrice: {
     type: [String, Number],
-    default: '119.88',
+    default: '99.99',
   },
   originalMonthlyPrice: {
     type: [String, Number],
