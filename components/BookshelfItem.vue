@@ -3,29 +3,11 @@
     ref="lazyLoadTrigger"
     class="flex flex-col justify-end"
   >
-    <div class="relative">
-      <BookCover
-        :src="bookCoverSrc"
-        :alt="bookInfo.name.value"
-        @click="handleCoverClick"
-      />
-      <div
-        v-if="fileDownloading"
-        class="absolute inset-0 flex items-end justify-center bg-gray-200/45"
-      >
-        <div class="flex w-full items-center justify-center gap-2 py-[4px] bg-gray-200/80">
-          <UIcon
-            class="animate-spin"
-            name="material-symbols-progress-activity"
-            size="18"
-          />
-          <p
-            class="text-[12px]"
-            v-text="$t('bookshelf_file_downloading')"
-          />
-        </div>
-      </div>
-    </div>
+    <BookCover
+      :src="bookCoverSrc"
+      :alt="bookInfo.name.value"
+      @click="handleCoverClick"
+    />
 
     <div class="mt-2 h-[70px]">
       <div class="flex items-start gap-1">
@@ -109,10 +91,8 @@ const { t: $t } = useI18n()
 const accountStore = useAccountStore()
 const nftStore = useNFTStore()
 const metadataStore = useMetadataStore()
-const { loadFileAsBuffer } = useBookFileLoader()
-const toast = useToast()
 const bookInfo = useBookInfo({ nftClassId: props.nftClassId })
-const { saveAs, getMimeType } = useSaveAs()
+const { downloadBookFile } = useBookDownload()
 
 const { bookFileURLWithCORS } = useReader({
   nftClassIdInput: props.nftClassId,
@@ -120,7 +100,7 @@ const { bookFileURLWithCORS } = useReader({
 const bookCoverSrc = computed(() => getResizedImageURL(bookInfo.coverSrc.value, { size: 300 }))
 
 const isLargerScreen = useMediaQuery('(min-width: 1024px)')
-const fileDownloading = ref(false)
+
 const apiEndpoints = getArweaveApiEndpoints()
 const arweaveLinkEndpoint = apiEndpoints.API_GET_ARWEAVE_V2_LINK
 
@@ -157,8 +137,7 @@ const menuItems = computed<DropdownMenuItem[]>(() => {
         label: $t('bookshelf_download_file', { type: contentURL.type.toUpperCase() }),
         icon: 'i-material-symbols-download-rounded',
         onSelect: () =>
-          downloadUrl({
-            url: contentURL.url,
+          downloadURL({
             name: contentURL.name,
             type: contentURL.type,
           }),
@@ -207,38 +186,15 @@ function openContentURL(contentURL: ContentURL) {
   })
 }
 
-async function downloadUrl({ url, name, type }: { url: string, name: string, type: string }) {
-  try {
-    fileDownloading.value = true
-    const buffer = await loadFileAsBuffer(bookFileURLWithCORS.value)
-    if (!buffer) {
-      console.error('Failed to load book file as buffer')
-      return
-    }
-
-    saveAs(
-      new Blob([buffer], {
-        type: getMimeType(type),
-      }),
-      name,
-    )
-  }
-  catch (e) {
-    toast.add({
-      title: $t('bookshelf_download_error'),
-      duration: 5000,
-      color: 'error',
-    })
-    console.error('Failed to download book file:', e)
-    return
-  }
-  finally {
-    fileDownloading.value = false
-    emit('download', {
-      nftClassId: props.nftClassId,
-      url,
-    })
-  }
+async function downloadURL({ name, type }: { name: string, type: string }) {
+  await downloadBookFile({
+    bookFileURL: bookFileURLWithCORS.value,
+    filename: name,
+    type,
+  })
+  emit('download', {
+    nftClassId: props.nftClassId,
+  })
 }
 
 function handleCoverClick() {
