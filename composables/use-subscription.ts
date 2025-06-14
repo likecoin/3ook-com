@@ -26,12 +26,10 @@ export function useSubscription() {
 
   async function checkLikerPlusStatus() {
     try {
-      if (!hasLoggedIn.value) {
-        await accountStore.login()
-        if (!hasLoggedIn.value) return
-      }
+      if (!hasLoggedIn.value) return false
       if (user.value?.isLikerPlus) {
         navigateTo(localeRoute({ name: 'account' }))
+        return true
       }
     }
     catch (error) {
@@ -40,7 +38,12 @@ export function useSubscription() {
   }
 
   async function startSubscription() {
-    await checkLikerPlusStatus()
+    const isSubscribed = await checkLikerPlusStatus()
+    if (isSubscribed) return
+    if (!hasLoggedIn.value) {
+      await accountStore.login()
+      if (!hasLoggedIn.value) return
+    }
     useTrackEvent('subscription_button_click', { plan: selectedPlan.value })
 
     if (isProcessingSubscription.value) return
@@ -48,19 +51,6 @@ export function useSubscription() {
     try {
       isProcessingSubscription.value = true
 
-      if (!hasLoggedIn.value) {
-        await accountStore.login()
-        if (!hasLoggedIn.value) {
-          isProcessingSubscription.value = false
-          return
-        }
-      }
-      const { user } = useUserSession()
-      if (user.value?.isLikerPlus) {
-        navigateTo(localeRoute({ name: 'account' }))
-        isProcessingSubscription.value = false
-        return
-      }
       if (!user.value?.likerId) {
         toast.add({
           title: $t ('pricing_page_liker_id_required'),

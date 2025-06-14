@@ -10,19 +10,17 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 const localeRoute = useLocaleRoute()
 
-const paywallModalState = useSubscription()
+const subscription = useSubscription()
 
 const hasOpened = ref(false)
 
-onMounted(() => {
-  if (paywallModalState.isLikerPlus.value) {
-    navigateTo(localeRoute({ name: 'account' }))
-    return
-  }
+onMounted(async () => {
+  const isSubscribed = await subscription.checkLikerPlusStatus()
+  if (isSubscribed) return
 
   if (!hasOpened.value) {
     hasOpened.value = true
-    paywallModalState.paywallModal.open({
+    subscription.paywallModal.open({
       isFullScreen: true,
       onClose: () => {
         router.back()
