@@ -12,7 +12,7 @@ const subscription = useSubscription()
 const hasOpened = ref(false)
 
 onMounted(async () => {
-  const isSubscribed = await subscription.checkLikerPlusStatus()
+  const isSubscribed = await subscription.redirectIfSubscribed()
   if (isSubscribed) return
 
   if (!hasOpened.value) {

@@ -28,15 +28,10 @@ export function useSubscription() {
     },
   })
 
-  async function checkLikerPlusStatus() {
-    try {
-      if (isLikerPlus.value) {
-        await navigateTo(localeRoute({ name: 'account' }))
-        return true
-      }
-    }
-    catch (error) {
-      await handleError(error)
+  async function redirectIfSubscribed() {
+    if (isLikerPlus.value) {
+      await navigateTo(localeRoute({ name: 'account' }))
+      return true
     }
     return false
   }
@@ -44,7 +39,7 @@ export function useSubscription() {
   async function startSubscription() {
     useTrackEvent('subscription_button_click', { plan: selectedPlan.value })
 
-    const isSubscribed = await checkLikerPlusStatus()
+    const isSubscribed = await redirectIfSubscribed()
     if (isSubscribed) return
     if (!hasLoggedIn.value) {
       await accountStore.login()
@@ -84,7 +79,7 @@ export function useSubscription() {
     isLikerPlus,
     isProcessingSubscription,
 
-    checkLikerPlusStatus,
+    redirectIfSubscribed,
     startSubscription,
   }
 }
