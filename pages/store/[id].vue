@@ -169,7 +169,7 @@
                       </div>
                       <p
                         v-if="item.description"
-                        class="mt-2 break-words whitespace-pre-line"
+                        class="mt-2 text-left break-words whitespace-pre-line"
                         v-text="item.description"
                       />
                     </div>
