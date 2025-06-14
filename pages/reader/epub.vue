@@ -272,7 +272,7 @@ const {
   bookFileURLWithCORS,
 } = useReader()
 const { handleError } = useErrorHandler()
-const paywallModalState = usePayWall()
+const paywallModalState = useSubscription()
 
 const isReaderLoading = ref(false)
 const isDesktopToCOpen = ref(false)
@@ -584,7 +584,7 @@ function createAudio(element: { cfi: string, el: Element, text: string }) {
 
 async function startTextToSpeech() {
   if (!user.value?.isLikerPlus) {
-    paywallModalState.modal.open()
+    paywallModalState.paywallModal.open()
     return
   }
   isShowTextToSpeechOptions.value = true

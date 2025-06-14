@@ -15,7 +15,7 @@
             "
             variant="link"
             size="md"
-            @click="handleOnClose"
+            @click="handleCloseButtonClick"
           />
           <img
             :src="paywallHeaderImg"
@@ -94,7 +94,7 @@
               "
               variant="link"
               size="md"
-              @click="handleOnClose"
+              @click="handleCloseButtonClick"
             />
             <div class="flex flex-col gap-4">
               <!-- Yearly plan -->
@@ -301,7 +301,7 @@ const discountPercent = computed(() => {
   return Math.round((savedAmount / originalYearlyCost) * 100)
 })
 
-const handleOnClose = () => {
+const handleCloseButtonClick = () => {
   if (typeof props.onClose === 'function') {
     props.onClose()
   }

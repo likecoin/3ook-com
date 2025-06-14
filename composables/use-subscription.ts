@@ -1,23 +1,8 @@
 import { PaywallModal } from '#components'
 
-export function usePayWall({
-  isFullScreen = false,
-  dismissible = true,
-  originalYearlyPrice,
-  originalMonthlyPrice,
-  discountedYearlyPrice,
-  discountedMonthlyPrice,
-  onClose,
-}: {
-  isFullScreen?: boolean
-  dismissible?: boolean
-  originalYearlyPrice?: string | number
-  originalMonthlyPrice?: string | number
-  discountedYearlyPrice?: string | number
-  discountedMonthlyPrice?: string | number
-  onClose?: () => void
-} = {}) {
+export function useSubscription() {
   const { t: $t } = useI18n()
+  const { user } = useUserSession()
   const selectedPlan = ref('yearly')
   const { loggedIn: hasLoggedIn } = useUserSession()
   const accountStore = useAccountStore()
@@ -28,21 +13,13 @@ export function usePayWall({
 
   const isLikerPlus = computed(() => {
     if (!hasLoggedIn.value) return false
-    const { user } = useUserSession()
     return user.value?.isLikerPlus
   })
 
   const overlay = useOverlay()
-  const modal = overlay.create(PaywallModal, {
+  const paywallModal = overlay.create(PaywallModal, {
     props: {
-      isFullScreen,
-      dismissible,
-      originalYearlyPrice,
-      originalMonthlyPrice,
-      discountedYearlyPrice,
-      discountedMonthlyPrice,
-      handleSubscribe,
-      onClose,
+      handleSubscribe: startSubscription,
       isProcessingSubscription,
     },
   })
@@ -53,7 +30,6 @@ export function usePayWall({
         await accountStore.login()
         if (!hasLoggedIn.value) return
       }
-      const { user } = useUserSession()
       if (user.value?.isLikerPlus) {
         navigateTo(localeRoute({ name: 'account' }))
       }
@@ -63,7 +39,7 @@ export function usePayWall({
     }
   }
 
-  async function handleSubscribe() {
+  async function startSubscription() {
     await checkLikerPlusStatus()
     useTrackEvent('subscription_button_click', { plan: selectedPlan.value })
 
@@ -109,13 +85,12 @@ export function usePayWall({
   }
 
   return {
-    modal,
+    paywallModal,
 
-    hasLoggedIn,
     isLikerPlus,
     isProcessingSubscription,
 
     checkLikerPlusStatus,
-    handleSubscribe,
+    startSubscription,
   }
 }

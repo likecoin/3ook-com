@@ -10,12 +10,7 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 const localeRoute = useLocaleRoute()
 
-const paywallModalState = usePayWall({
-  isFullScreen: true,
-  onClose: () => {
-    router.back()
-  },
-})
+const paywallModalState = useSubscription()
 
 const hasOpened = ref(false)
 
@@ -27,7 +22,12 @@ onMounted(() => {
 
   if (!hasOpened.value) {
     hasOpened.value = true
-    paywallModalState.modal.open()
+    paywallModalState.paywallModal.open({
+      isFullScreen: true,
+      onClose: () => {
+        router.back()
+      },
+    })
   }
 })
 </script>
