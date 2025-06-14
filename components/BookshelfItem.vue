@@ -40,7 +40,7 @@
           <template #content>
             <UCard :ui="{ header: 'text-center font-bold' }">
               <template #header>
-                {{ $t("bookshelf_more_menu_title") }}
+                {{ $t('bookshelf_more_menu_title') }}
               </template>
               <UButton
                 v-for="item in menuItems"
@@ -124,11 +124,11 @@ const menuItems = computed<DropdownMenuItem[]>(() => {
       onSelect: () => openContentURL(contentURL),
     })
 
-    const isContentURLsEncrypted = !!(
+    const isContentURLEncrypted = !!(
       contentURL.url.startsWith(encryptedArweaveLinkEndpoint)
       || contentURL.url.includes('?key=')
     )
-    if (!isContentURLsEncrypted) {
+    if (bookInfo.isDownloadable.value && !isContentURLEncrypted) {
       downloadItems.push({
         label: $t('bookshelf_download_file', { type: contentURL.type.toUpperCase() }),
         icon: 'i-material-symbols-download-rounded',

@@ -9,7 +9,7 @@ export default function (params: {
 
   const nftId = computed(() => {
     const id = getRouteQuery('nft_id')
-    return id || bookInfo.userOwnedNFTIds.value[0]
+    return id || bookInfo.firstUserOwnedNFTId.value
   })
   const fileIndex = computed(() => getRouteQuery('index', '0'))
 
