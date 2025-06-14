@@ -1,13 +1,14 @@
 <template>
   <UModal
     :full-screen="props.isFullScreen || isMobileScreen"
-    :dismissible="props.isDismissible"
+    :dismissible="props.isBackdropDismissible"
     :ui="{ content: 'laptop:rounded-2xl overflow-x-hidden laptop:w-[90vw] max-w-[840px]' }"
   >
     <template #content>
       <div class="flex flex-col laptop:flex-row w-full h-full">
         <div class="w-full relative bg-white">
           <UButton
+            v-if="!props.isCloseButtonHidden"
             icon="i-material-symbols-close"
             class="
               laptop:hidden absolute top-4 right-4 cursor-pointer
@@ -92,6 +93,7 @@
           <!-- Price Select -->
           <div class="flex flex-col w-full mt-12">
             <UButton
+              v-if="!props.isCloseButtonHidden"
               icon="i-material-symbols-close"
               class="
                 hidden laptop:block absolute top-4 right-4 cursor-pointer
@@ -255,9 +257,13 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-  isDismissible: {
+  isBackdropDismissible: {
     type: Boolean,
     default: true,
+  },
+  isCloseButtonHidden: {
+    type: Boolean,
+    default: false,
   },
   originalYearlyPrice: {
     type: [String, Number],
