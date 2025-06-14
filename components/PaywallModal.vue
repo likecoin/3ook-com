@@ -6,7 +6,7 @@
   >
     <template #content>
       <div class="flex flex-col phone:flex-row w-full h-full">
-        <div class="w-full relative bg-[#fbfbfb]">
+        <div class="w-full relative bg-white">
           <UButton
             v-if="props.isDismissible"
             icon="i-material-symbols-close"
