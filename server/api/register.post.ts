@@ -1,6 +1,7 @@
 import { FetchError } from 'ofetch'
 
 import { checkIsEVMAddress } from '~/utils'
+import type { LikerInfoResponseData } from '~/utils/api'
 
 export default defineEventHandler(async (event) => {
   let body: {
@@ -81,23 +82,9 @@ export default defineEventHandler(async (event) => {
   }
 
   // Fetch user info
-  let likerId: string | undefined
-  let displayName: string | undefined
-  let description: string | undefined
-  let avatar: string | undefined
+  let userInfoRes: LikerInfoResponseData | undefined = undefined
   try {
-    const userInfoRes = await $fetch<{
-      user: string
-      displayName: string
-      description: string
-      avatar: string
-    }>(`${config.public.likeCoinAPIEndpoint}/users/addr/${body.walletAddress}/min`, {
-      query: { ts: Date.now() },
-    })
-    likerId = userInfoRes.user
-    displayName = userInfoRes.displayName
-    avatar = userInfoRes.avatar
-    description = userInfoRes.description
+    userInfoRes = await fetchLikerPublicInfoByWalletAddress(body.walletAddress, { nocache: true })
   }
   catch (error) {
     console.error(`Failed to fetch user info for wallet ${body.walletAddress} after registration`, error)
@@ -112,13 +99,14 @@ export default defineEventHandler(async (event) => {
 
   const userInfo = {
     evmWallet: body.walletAddress,
-    likerId,
-    displayName,
-    description,
-    avatar,
+    likerId: userInfoRes.user,
+    displayName: userInfoRes.displayName,
+    description: userInfoRes.description,
+    avatar: userInfoRes.avatar,
     email: body.email,
     loginMethod: body.loginMethod,
     isEVMModeActive: true,
+    isLikerPlus: userInfoRes.isLikerPlus || false,
   }
   await setUserSession(event, { user: userInfo })
 

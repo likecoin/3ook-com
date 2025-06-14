@@ -1,6 +1,7 @@
 import { jwtDecode } from 'jwt-decode'
 
 import { checkIsEVMAddress } from '~/utils'
+import type { LikerInfoResponseData } from '~/utils/api'
 
 export default defineEventHandler(async (event) => {
   let body: {
@@ -76,26 +77,9 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    let likerId: string | undefined
-    let displayName: string | undefined
-    let description: string | undefined
-    let avatar: string | undefined
-    let isLikerPlus = false
+    let userInfoRes: LikerInfoResponseData | undefined = undefined
     try {
-      const userInfoRes = await $fetch<{
-        user: string
-        displayName: string
-        description: string
-        avatar: string
-        isLikerPlus?: boolean
-      }>(`${config.public.likeCoinAPIEndpoint}/users/addr/${body.walletAddress}/min`, {
-        query: { ts: Date.now() },
-      })
-      likerId = userInfoRes.user
-      displayName = userInfoRes.displayName
-      avatar = userInfoRes.avatar
-      description = userInfoRes.description
-      isLikerPlus = userInfoRes.isLikerPlus || false
+      userInfoRes = await fetchLikerPublicInfoByWalletAddress(body.walletAddress, { nocache: true })
     }
     catch (error) {
       console.error('Failed to fetch user info for wallet', error)
@@ -110,14 +94,14 @@ export default defineEventHandler(async (event) => {
       likeWallet,
       token,
       jwtId,
-      likerId,
-      displayName,
-      description,
-      avatar,
+      likerId: userInfoRes.user,
+      displayName: userInfoRes.displayName,
+      description: userInfoRes.description,
+      avatar: userInfoRes.avatar,
       email: body.email,
       loginMethod: body.loginMethod,
       isEVMModeActive: !likeWallet,
-      isLikerPlus,
+      isLikerPlus: userInfoRes.isLikerPlus || false,
     }
     await setUserSession(event, { user: userInfo })
 

@@ -1,18 +1,10 @@
-interface LikerInfoResponseData {
-  user: string
-  displayName: string
-  avatar: string
-  cosmosWallet: string
-  likeWallet: string
-  description: string
-}
-
 interface LikerInfo {
   displayName: string
   avatarSrc: string
   cosmosWallet: string
   likeWallet: string
   description: string
+  isLikerPlus: boolean
 }
 
 export const useMetadataStore = defineStore('metadata', () => {
@@ -20,16 +12,15 @@ export const useMetadataStore = defineStore('metadata', () => {
 
   const getLikerInfoByWalletAddress = computed(() => (walletAddress?: string) => walletAddress ? likerInfoByWalletAddressMap.value[walletAddress] : undefined)
 
-  const config = useRuntimeConfig()
-
   async function fetchLikerInfoByWalletAddress(walletAddress: string) {
-    const res = await $fetch<LikerInfoResponseData>(`${config.public.likeCoinAPIEndpoint}/users/addr/${walletAddress}/min`)
+    const res = await fetchLikerPublicInfoByWalletAddress(walletAddress)
     likerInfoByWalletAddressMap.value[walletAddress] = {
       displayName: res.displayName,
       avatarSrc: res.avatar,
       cosmosWallet: res.cosmosWallet,
       likeWallet: res.likeWallet,
       description: res.description,
+      isLikerPlus: res.isLikerPlus || false,
     }
   }
 
