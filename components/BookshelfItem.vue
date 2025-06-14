@@ -101,7 +101,7 @@ const encryptedArweaveLinkEndpoint = getEncryptedArweaveLinkAPIEndpoint()
 
 const menuItems = computed<DropdownMenuItem[]>(() => {
   const sortedContentURLs = [...bookInfo.contentURLs.value].sort(compareContentURL)
-  const contentItems: DropdownMenuItem[] = []
+  const readerItems: DropdownMenuItem[] = []
   const downloadItems: DropdownMenuItem[] = []
 
   sortedContentURLs.forEach((contentURL) => {
@@ -118,7 +118,7 @@ const menuItems = computed<DropdownMenuItem[]>(() => {
         break
     }
 
-    contentItems.push({
+    readerItems.push({
       label,
       icon: 'i-material-symbols-book-5-outline',
       onSelect: () => openContentURL(contentURL),
@@ -151,7 +151,7 @@ const menuItems = computed<DropdownMenuItem[]>(() => {
     target: accountStore.isEVMMode ? undefined : '_blank',
   }
 
-  return [...contentItems, ...downloadItems, productInfoItem]
+  return [...readerItems, ...downloadItems, productInfoItem]
 })
 
 useVisibility('lazyLoadTrigger', (visible) => {
@@ -185,7 +185,7 @@ function openContentURL(contentURL: ContentURL) {
 async function downloadURL({ name, type }: { name: string, type: string }) {
   await downloadBookFile({
     nftClassId: props.nftClassId,
-    nftId: props.nftIds?.[0] || bookInfo.userOwnedNFTIds.value?.[0],
+    nftId: props.nftIds?.[0] || bookInfo.firstUserOwnedNFTId.value,
     isCustomMessageEnabled: bookInfo.isCustomMessageEnabled.value,
     filename: name,
     type,
