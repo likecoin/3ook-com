@@ -152,16 +152,15 @@ function handleBookshelfItemOpen({
 }
 
 function handleBookshelfItemDownload({
-  url,
   nftClassId,
+  type,
 }: {
-  url: string
   nftClassId?: string
+  type: string
 }) {
   useTrackEvent('shelf_download_book', {
-    content_type: 'epub',
+    content_type: type,
     nft_class_id: nftClassId,
-    url,
   })
 }
 </script>

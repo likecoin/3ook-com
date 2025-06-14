@@ -192,6 +192,7 @@ async function downloadURL({ name, type }: { name: string, type: string }) {
   })
   emit('download', {
     nftClassId: props.nftClassId,
+    type,
   })
 }
 
