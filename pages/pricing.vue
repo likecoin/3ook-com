@@ -19,6 +19,7 @@ onMounted(async () => {
     hasOpened.value = true
     subscription.paywallModal.open({
       isFullScreen: true,
+      dismissible: false,
       onClose: () => {
         router.back()
       },

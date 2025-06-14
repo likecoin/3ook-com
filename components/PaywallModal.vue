@@ -2,16 +2,16 @@
   <UModal
     :full-screen="props.isFullScreen || isMobileScreen"
     :dismissible="props.isDismissible"
-    :ui="{ content: 'phone:rounded-2xl overflow-x-hidden phone:w-[90vw] max-w-[840px]' }"
+    :ui="{ content: 'laptop:rounded-2xl overflow-x-hidden laptop:w-[90vw] max-w-[840px]' }"
   >
     <template #content>
-      <div class="flex flex-col phone:flex-row w-full h-full">
+      <div class="flex flex-col laptop:flex-row w-full h-full">
         <div class="w-full relative bg-white">
           <UButton
             v-if="props.isDismissible"
             icon="i-material-symbols-close"
             class="
-              phone:hidden absolute top-4 right-4 cursor-pointer
+              laptop:hidden absolute top-4 right-4 cursor-pointer
             "
             variant="link"
             size="md"
@@ -20,35 +20,38 @@
           <img
             :src="paywallHeaderImg"
             alt="Paywall Header"
-            class="phone:absolute top-0 left-0 w-full object-cover"
+            class="laptop:absolute top-0 left-0 w-full object-cover pointer-events-none"
           >
           <img
             :src="paywallFooterLogo"
             alt="Paywall Footer"
-            class="hidden phone:block absolute bottom-0 left-0 w-full object-cover"
+            class="hidden laptop:block absolute bottom-0 left-0 w-full object-cover pointer-events-none"
           >
 
-          <div class="absolute bottom-0 phone:inset-0 flex flex-col items-center justify-center px-10 w-full">
-            <div class="phone:hidden bg-black rounded-full px-6 py-2">
-              <span class="font-bold text-white">{{ $t('pricing_page_subscription') }}</span>
-            </div>
+          <div class="absolute bottom-0 laptop:inset-0 flex flex-col items-center justify-center px-10 w-full">
+            <div
+              class="laptop:hidden px-6 py-2 text-white text-center font-bold bg-black rounded-full"
+              v-text="$t('pricing_page_subscription')"
+            />
             <img
               :src="paywallBodyLogo"
               alt="3ook Logo"
-              class="w-full max-w-[300px] phone:max-h-[200px] object-contain"
+              class="w-full max-w-[300px] laptop:max-h-[200px] object-contain"
             >
           </div>
         </div>
 
-        <div class="flex flex-col justify-center items-start p-5 phone:p-12 w-full">
+        <div class="flex flex-col justify-center items-start p-5 laptop:p-12 w-full">
           <div class="flex flex-col items-start mx-6 gap-2">
-            <div class="hidden phone:block bg-black rounded-full px-6 py-2 mb-3">
-              <span class="font-bold text-white">{{ $t('pricing_page_subscription') }}</span>
-            </div>
+            <div
+              class="hidden laptop:block mb-3 px-6 py-2 text-white text-center font-bold bg-black rounded-full"
+              v-text="$t('pricing_page_subscription')"
+            />
             <ul
               :class="[
                 'space-y-4 text-left',
                 '*:flex *:items-start',
+                '[&>li>span:first-child]:shrink-0',
                 '[&>li>span:first-child]:mt-1',
                 '[&>li>span:first-child]:mr-2',
                 '[&>li>span:first-child]:text-green-500',
@@ -93,7 +96,7 @@
               v-if="props.isDismissible"
               icon="i-material-symbols-close"
               class="
-                hidden phone:block absolute top-4 right-4 cursor-pointer
+                hidden laptop:block absolute top-4 right-4 cursor-pointer
               "
               variant="link"
               size="md"
@@ -108,7 +111,6 @@
                 ]"
               >
                 <div
-                  v-if="selectedPlan === 'yearly'"
                   class="absolute -top-3 left-1/6 -translate-x-1/2 bg-black text-[#A6F5EA] text-xs font-semibold px-3 py-1 rounded-lg"
                 >
                   {{ $t('pricing_page_yearly_discount', { discount: discountPercent }) }}
@@ -224,7 +226,7 @@
 
             <UButton
               class="
-                w-full mt-4 py-2 phone:py-3 text-lg text-[#A6F5EA]
+                w-full mt-4 py-2 laptop:py-3 text-lg text-[#A6F5EA]
                 font-semibold rounded-2xl bg-black
                 cursor-pointer hover:bg-[#333333] hover:text-[#A6F5EA]
                 transition-colors duration-200
