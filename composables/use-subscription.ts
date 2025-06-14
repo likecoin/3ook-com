@@ -35,9 +35,11 @@ export function useSubscription() {
         navigateTo(localeRoute({ name: 'account' }))
         return true
       }
+      return false
     }
     catch (error) {
       handleError(error)
+      return false
     }
   }
 
