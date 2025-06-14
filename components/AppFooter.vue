@@ -19,7 +19,7 @@
     ]"
   >
     <div
-      class="flex justify-between lg:justify-start items-stretch flex-wrap gap-6 gap-y-1 leading-5"
+      class="flex flex-col phone:flex-row justify-center items-center flex-wrap gap-6 gap-y-4 leading-5"
     >
       <ULink
         class="border-b leading-5"
