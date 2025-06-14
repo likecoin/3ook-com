@@ -1,6 +1,7 @@
 import { jwtDecode } from 'jwt-decode'
 
 import { checkIsEVMAddress } from '~/utils'
+import type { LikerInfoResponseData } from '~/utils/api'
 
 export default defineEventHandler(async (event) => {
   let body: {
@@ -56,9 +57,6 @@ export default defineEventHandler(async (event) => {
         token: string
       }>(`${config.public.likeCoinAPIEndpoint}/wallet/authorize`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: {
           wallet: body.walletAddress,
           signature: body.signature,
@@ -71,31 +69,24 @@ export default defineEventHandler(async (event) => {
       jwtId = authorizeRes.jwtid
       token = authorizeRes.token
     }
-    catch {
-      console.warn('Failed to authorize wallet')
+    catch (error) {
+      console.error('Failed to authorize wallet:', error)
+      throw createError({
+        status: 401,
+        message: 'WALLET_AUTHORIZATION_FAILED',
+      })
     }
 
-    let likerId: string | undefined
-    let displayName: string | undefined
-    let description: string | undefined
-    let avatar: string | undefined
-    let isLikerPlus = false
+    let userInfoRes: LikerInfoResponseData | undefined = undefined
     try {
-      const userInfoRes = await $fetch<{
-        user: string
-        displayName: string
-        description: string
-        avatar: string
-        isLikerPlus?: boolean
-      }>(`${config.public.likeCoinAPIEndpoint}/users/addr/${body.walletAddress}/min`)
-      likerId = userInfoRes.user
-      displayName = userInfoRes.displayName
-      avatar = userInfoRes.avatar
-      description = userInfoRes.description
-      isLikerPlus = userInfoRes.isLikerPlus || false
+      userInfoRes = await fetchLikerPublicInfoByWalletAddress(body.walletAddress, { nocache: true })
     }
-    catch {
-      console.warn('Failed to fetch user info for wallet')
+    catch (error) {
+      console.error('Failed to fetch user info for wallet', error)
+      throw createError({
+        status: 401,
+        message: 'LOGIN_WITHOUT_LIKER_ID',
+      })
     }
 
     const userInfo = {
@@ -103,14 +94,14 @@ export default defineEventHandler(async (event) => {
       likeWallet,
       token,
       jwtId,
-      likerId,
-      displayName,
-      description,
-      avatar,
+      likerId: userInfoRes.user,
+      displayName: userInfoRes.displayName,
+      description: userInfoRes.description,
+      avatar: userInfoRes.avatar,
       email: body.email,
       loginMethod: body.loginMethod,
       isEVMModeActive: !likeWallet,
-      isLikerPlus,
+      isLikerPlus: userInfoRes.isLikerPlus || false,
     }
     await setUserSession(event, { user: userInfo })
 

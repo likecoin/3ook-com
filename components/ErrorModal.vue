@@ -17,7 +17,7 @@
 
       <h2
         class="text-(--ui-text-highlighted) font-semibold"
-        v-text="title"
+        v-text="title || $t('error_modal_title')"
       />
     </template>
     <template #body>
@@ -44,4 +44,6 @@ const props = defineProps({
   description: String,
   rawMessage: String,
 })
+
+const { t: $t } = useI18n()
 </script>

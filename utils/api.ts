@@ -291,6 +291,49 @@ export function fetchBookstoreCMSProductsByTagId(tagId: string, { offset, limit 
   })
 }
 
+export function fetchUserRegisterCheck({
+  accountId,
+  walletAddress,
+  email,
+  magicDIDToken,
+}: {
+  accountId?: string
+  walletAddress?: string
+  email?: string
+  magicDIDToken?: string
+}) {
+  const { fetch } = useLikeCoinAPI()
+  return fetch(`/users/new/check`, {
+    method: 'POST',
+    body: {
+      user: accountId,
+      evmWallet: walletAddress,
+      email,
+      magicDIDToken,
+    },
+  })
+}
+
+export interface LikerInfoResponseData {
+  user: string
+  displayName: string
+  avatar: string
+  cosmosWallet: string
+  likeWallet: string
+  description: string
+  isLikerPlus?: boolean
+}
+
+export function fetchLikerPublicInfoByWalletAddress(
+  walletAddress: string,
+  options: { nocache?: boolean } = {},
+): Promise<LikerInfoResponseData> {
+  const { fetch } = useLikeCoinAPI()
+  const query: Record<string, string> = {}
+  if (options.nocache) query.ts = `${Date.now()}`
+  return fetch<LikerInfoResponseData>(`/users/addr/${walletAddress}/min`, { query })
+}
+
 export function getEncryptedArweaveLinkAPIEndpoint() {
   const config = useRuntimeConfig()
   return `${config.public.likeCoinAPIEndpoint}/arweave/v2/link`

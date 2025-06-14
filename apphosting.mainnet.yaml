@@ -51,6 +51,8 @@ env:
     value: https://mainnet.optimism.io
   - variable: NUXT_PUBLIC_SCRIPTS_CRISP_ID
     value: 5c009125-5863-4059-ba65-43f177ca33f7
+  - variable: NUXT_PUBLIC_SCRIPTS_META_PIXEL_ID
+    value: 1261473308725104
   - variable: NUXT_SESSION_PASSWORD
     secret: V3_NUXT_SESSION_PASSWORD
   - variable: PDF_VIEWER_ORIGIN
@@ -59,6 +61,8 @@ env:
     value: /pdf.js/legacy/web/viewer.html
   - variable: GA_TRACKING_ID
     value: G-WBSJGPMQE2
+  - variable: SENTRY_AUTH_TOKEN
+    secret: SENTRY_AUTH_TOKEN
   - variable: SENTRY_DSN
     value: https://07b4bd03c1d828f7e241ccc9e47a2f80@o149940.ingest.us.sentry.io/4509350693240832
   # Grant access to secrets in Cloud Secret Manager.

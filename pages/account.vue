@@ -45,7 +45,7 @@
           <AccountSettingsItem
             v-if="user?.likerId"
             icon="i-material-symbols:identity-platform-rounded"
-            :label="$t('account_page_liker_id')"
+            :label="$t('account_page_account_id')"
           >
             <div
               class="text-sm font-mono"
