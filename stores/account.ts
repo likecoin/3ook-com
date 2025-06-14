@@ -5,6 +5,8 @@ import type { Magic } from 'magic-sdk'
 
 import { LoginModal, RegistrationModal } from '#components'
 
+const REGISTER_TIME_LIMIT_IN_TS = 15 * 60 * 1000 // 15 minutes
+
 export const useAccountStore = defineStore('account', () => {
   const { address } = useAccount()
   const { connectAsync, connectors, status } = useConnect()
@@ -110,7 +112,7 @@ export const useAccountStore = defineStore('account', () => {
 
   async function register({
     walletAddress,
-    email,
+    email: prefilledEmail,
     loginMethod,
     magicUserId,
     magicDIDToken,
@@ -133,26 +135,37 @@ export const useAccountStore = defineStore('account', () => {
         throw error
       }
     }
-    let payload: { accountId: string, email?: string } | undefined
-    // Loop until registration is successful or user cancels
-    while (true) {
+
+    const startTime = Date.now()
+    let hasError = false
+    let payload = {
+      accountId: tempAccountId,
+      email: prefilledEmail,
+    }
+    // Loop until registration is successful, user cancels or timeout
+    do {
+      // Check if registration time exceeds the limit
+      if (Date.now() - startTime > REGISTER_TIME_LIMIT_IN_TS) {
+        throw createError({
+          statusCode: 408,
+          data: { description: $t('account_register_timeout') },
+        })
+      }
       try {
         // Skip registration modal if email is provided
-        payload = email
-          ? {
-              accountId: tempAccountId,
-              email,
-            }
-          : await registrationFormModal.open({
-            accountId: tempAccountId,
+        if (!payload.email || hasError) {
+          payload = await registrationFormModal.open({
+            accountId: payload?.accountId,
             isAccountIdHidden: true,
             email: payload?.email || '',
             isDisplayNameHidden: true,
           })
+        }
         if (!payload) {
           // User canceled the registration
-          return false
+          break
         }
+        hasError = false
 
         // Prepare signature for registration
         const message = JSON.stringify(
@@ -184,6 +197,7 @@ export const useAccountStore = defineStore('account', () => {
         return true
       }
       catch (error) {
+        hasError = true
         if (error instanceof FetchError) {
           switch (error.data?.message) {
             case 'INVALID_USER_ID': {
@@ -205,7 +219,8 @@ export const useAccountStore = defineStore('account', () => {
         }
         throw error
       }
-    }
+    } while (hasError)
+    return false
   }
 
   async function login(preferredConnectorId?: string) {
