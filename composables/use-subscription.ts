@@ -30,30 +30,28 @@ export function useSubscription() {
 
   async function checkLikerPlusStatus() {
     try {
-      if (!hasLoggedIn.value) return false
-      if (user.value?.isLikerPlus) {
-        navigateTo(localeRoute({ name: 'account' }))
+      if (isLikerPlus.value) {
+        await navigateTo(localeRoute({ name: 'account' }))
         return true
       }
-      return false
     }
     catch (error) {
-      handleError(error)
-      return false
+      await handleError(error)
     }
+    return false
   }
 
   async function startSubscription() {
+    useTrackEvent('subscription_button_click', { plan: selectedPlan.value })
+
     const isSubscribed = await checkLikerPlusStatus()
     if (isSubscribed) return
     if (!hasLoggedIn.value) {
       await accountStore.login()
       if (!hasLoggedIn.value) return
     }
-    useTrackEvent('subscription_button_click', { plan: selectedPlan.value })
 
     if (isProcessingSubscription.value) return
-
     try {
       isProcessingSubscription.value = true
 
@@ -70,7 +68,7 @@ export function useSubscription() {
       const { url } = await fetchLikerPlusCheckoutLink({
         period: selectedPlan.value as 'monthly' | 'yearly',
       })
-      window.location.href = url
+      await navigateTo(url, { external: true })
     }
     catch (error) {
       handleError(error)
