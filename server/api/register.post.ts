@@ -68,7 +68,7 @@ export default defineEventHandler(async (event) => {
   catch (error) {
     let message = 'REGISTER_FAILED'
     if (error instanceof FetchError) {
-      message = error.data
+      message = error.data?.error || error.data || error.message
     }
     else if (error instanceof Error) {
       message = error.message
