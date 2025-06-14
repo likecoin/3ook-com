@@ -45,39 +45,42 @@
             <div class="hidden phone:block bg-black rounded-full px-6 py-2 mb-3">
               <span class="font-bold text-white">{{ $t('pricing_page_subscription') }}</span>
             </div>
-            <ul class="space-y-4 text-left *:flex *:items-start">
+            <ul
+              :class="[
+                'space-y-4 text-left',
+                '*:flex *:items-start',
+                '[&>li>span:first-child]:mt-1',
+                '[&>li>span:first-child]:mr-2',
+                '[&>li>span:first-child]:text-green-500',
+              ]"
+            >
               <li>
                 <UIcon
                   name="i-material-symbols-check"
-                  class="mt-1 mr-2 text-green-500"
                 />
                 <span>{{ $t('pricing_page_feature_1') }}</span>
               </li>
               <li>
                 <UIcon
                   name="i-material-symbols-check"
-                  class="mt-1 mr-2 text-green-500"
                 />
                 <span>{{ $t('pricing_page_feature_2') }}</span>
               </li>
               <li>
                 <UIcon
                   name="i-material-symbols-check"
-                  class="mt-1 mr-2 text-green-500"
                 />
                 <span>{{ $t('pricing_page_feature_3') }}</span>
               </li>
               <li>
                 <UIcon
                   name="i-material-symbols-check"
-                  class="mt-1 mr-2 text-green-500"
                 />
                 <span>{{ $t('pricing_page_feature_4') }}</span>
               </li>
               <li>
                 <UIcon
                   name="i-material-symbols-check"
-                  class="mt-1 mr-2 text-green-500"
                 />
                 <span>{{ $t('pricing_page_feature_5') }}</span>
               </li>
