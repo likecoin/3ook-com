@@ -66,6 +66,8 @@
   "footer_terms": "Terms",
   "login_button": "Login",
   "login_panel_continue_with_email": "Continue with email",
+  "login_panel_migration_notice": "Liker Land users can upgrade their accounts and data {here}",
+  "login_panel_migration_notice_here": "here",
   "login_panel_or_separator": "OR",
   "login_panel_title": "Please login",
   "manual_delivery_warning_label": "Await delivery by the author",
