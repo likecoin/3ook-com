@@ -232,7 +232,7 @@
               :label="$t('pricing_page_continue_button')"
               block
               :loading="props.isProcessingSubscription"
-              @click="handleSubscribe"
+              @click="onSubscribe"
             />
           </div>
         </div>
@@ -280,7 +280,7 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-  handleSubscribe: {
+  onSubscribe: {
     type: Function as PropType<() => void>,
     required: true,
   },

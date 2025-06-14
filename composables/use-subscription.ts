@@ -19,7 +19,7 @@ export function useSubscription() {
   const overlay = useOverlay()
   const paywallModal = overlay.create(PaywallModal, {
     props: {
-      handleSubscribe: startSubscription,
+      onSubscribe: startSubscription,
       isProcessingSubscription,
     },
   })
