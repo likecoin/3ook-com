@@ -1,80 +1,80 @@
 <template>
   <UModal
     :full-screen="props.isFullScreen || isMobileScreen"
-    :dismissible="props.dismissible"
-    :ui="{ content: 'sm:rounded-2xl overflow-x-hidden sm:w-[90vw] max-w-[840px]' }"
+    :dismissible="props.isDismissible"
+    :ui="{ content: 'phone:rounded-2xl overflow-x-hidden phone:w-[90vw] max-w-[840px]' }"
   >
     <template #content>
-      <div class="flex flex-col sm:flex-row w-full h-full">
-        <div class="flex-1 w-full relative bg-[#fbfbfb]">
-          <UIcon
-            v-if="props.dismissible"
-            name="i-material-symbols-close"
+      <div class="flex flex-col phone:flex-row w-full h-full">
+        <div class="w-full relative bg-[#fbfbfb]">
+          <UButton
+            v-if="props.isDismissible"
+            icon="i-material-symbols-close"
             class="
-              sm:hidden absolute top-4 right-4
-              text-black cursor-pointer
+              phone:hidden absolute top-4 right-4 cursor-pointer
             "
-            size="24"
+            variant="link"
+            size="md"
             @click="handleOnClose"
           />
           <img
             :src="paywallHeaderImg"
             alt="Paywall Header"
-            class="sm:absolute top-0 left-0 w-full object-cover"
+            class="phone:absolute top-0 left-0 w-full object-cover"
           >
           <img
             :src="paywallFooterLogo"
             alt="Paywall Footer"
-            class="hidden sm:block absolute bottom-0 left-0 w-full object-cover"
+            class="hidden phone:block absolute bottom-0 left-0 w-full object-cover"
           >
 
-          <div class="absolute bottom-0 sm:inset-0 flex flex-col items-center justify-center px-10 w-full">
-            <div class="sm:hidden bg-black rounded-full px-6 py-2">
+          <div class="absolute bottom-0 phone:inset-0 flex flex-col items-center justify-center px-10 w-full">
+            <div class="phone:hidden bg-black rounded-full px-6 py-2">
               <span class="font-bold text-white">{{ $t('pricing_page_subscription') }}</span>
             </div>
             <img
               :src="paywallBodyLogo"
               alt="3ook Logo"
-              class="w-full max-w-[300px] sm:max-h-[200px] object-contain"
+              class="w-full max-w-[300px] phone:max-h-[200px] object-contain"
             >
           </div>
         </div>
 
-        <div class="flex-1 flex flex-col justify-center items-start p-5 sm:p-12 w-full">
+        <div class="flex flex-col justify-center items-start p-5 phone:p-12 w-full">
           <div class="flex flex-col items-start mx-6 gap-2">
-            <div class="hidden sm:block bg-black rounded-full px-6 py-2 mb-3">
+            <div class="hidden phone:block bg-black rounded-full px-6 py-2 mb-3">
               <span class="font-bold text-white">{{ $t('pricing_page_subscription') }}</span>
             </div>
-            <ul class="space-y-4 text-left">
-              <li class="flex items-start">
+            <ul class="space-y-4 text-left *:flex *:items-start">
+              <li>
                 <UIcon
                   name="i-material-symbols-check"
                   class="mt-1 mr-2 text-green-500"
                 />
                 <span>{{ $t('pricing_page_feature_1') }}</span>
               </li>
-              <li class="flex items-start">
+              <li>
                 <UIcon
                   name="i-material-symbols-check"
                   class="mt-1 mr-2 text-green-500"
                 />
                 <span>{{ $t('pricing_page_feature_2') }}</span>
               </li>
-              <li class="flex items-start">
+              <li>
                 <UIcon
                   name="i-material-symbols-check"
                   class="mt-1 mr-2 text-green-500"
                 />
                 <span>{{ $t('pricing_page_feature_3') }}</span>
               </li>
-              <li class="flex items-start">
+              <li>
                 <UIcon
                   name="i-material-symbols-check"
                   class="mt-1 mr-2 text-green-500"
                 />
                 <span>{{ $t('pricing_page_feature_4') }}</span>
               </li>
-              <li class="flex items-start">
+              <li>
                 <UIcon
                   name="i-material-symbols-check"
                   class="mt-1 mr-2 text-green-500"
@@ -86,27 +86,23 @@
 
           <!-- Price Select -->
           <div class="flex flex-col w-full mt-12">
-            <UIcon
-              v-if="props.dismissible"
-              name="i-material-symbols-close"
+            <UButton
+              v-if="props.isDismissible"
+              icon="i-material-symbols-close"
               class="
-                hidden sm:block absolute top-4 right-4
-                text-black cursor-pointer hover:text-gray-600
-                transition-colors duration-200
+                hidden phone:block absolute top-4 right-4 cursor-pointer
               "
-              size="24"
+              variant="link"
+              size="md"
               @click="handleOnClose"
             />
             <div class="flex flex-col gap-4">
               <!-- Yearly plan -->
               <label
-                class="
-                  relative flex justify-between items-center
-                  border-2 rounded-2xl px-4 py-4 cursor-pointer
-                  transition-all duration-200 ease-in-out
-                  hover:shadow-lg hover:border-gray-400
-                "
-                :class="selectedPlan === 'yearly' ? 'border-black' : 'border-gray-200'"
+                :class="[
+                  ...planLabelBaseClass,
+                  selectedPlan === 'yearly' ? 'border-black' : 'border-gray-200',
+                ]"
               >
                 <div
                   v-if="selectedPlan === 'yearly'"
@@ -118,8 +114,10 @@
                 <div class="flex items-center">
                   <div class="w-6 h-6 flex-shrink-0 mr-4">
                     <div
-                      class="w-full h-full rounded-full border flex items-center justify-center bg-black"
-                      :class="selectedPlan === 'yearly' ? 'bg-black' : 'bg-white border-gray-300'"
+                      :class="[
+                        'w-full h-full rounded-full border flex items-center justify-center',
+                        selectedPlan === 'yearly' ? 'bg-black' : 'bg-white border-gray-300',
+                      ]"
                     >
                       <UIcon
                         v-if="selectedPlan === 'yearly'"
@@ -165,13 +163,10 @@
 
               <!-- Monthly plan -->
               <label
-                class="
-                  relative flex justify-between items-center
-                  border-2 rounded-2xl px-4 py-4 cursor-pointer
-                  transition-all duration-200 ease-in-out
-                  hover:shadow-lg hover:border-gray-400
-                "
-                :class="selectedPlan === 'monthly' ? 'border-black' : 'border-gray-200'"
+                :class="[
+                  ...planLabelBaseClass,
+                  selectedPlan === 'monthly' ? 'border-black' : 'border-gray-200',
+                ]"
               >
                 <div class="flex items-center">
                   <div class="w-6 h-6 flex-shrink-0 mr-4">
@@ -226,7 +221,7 @@
 
             <UButton
               class="
-                w-full mt-4 py-2 sm:py-3 text-lg text-[#A6F5EA]
+                w-full mt-4 py-2 phone:py-3 text-lg text-[#A6F5EA]
                 font-semibold rounded-2xl bg-black
                 cursor-pointer hover:bg-[#333333] hover:text-[#A6F5EA]
                 transition-colors duration-200
@@ -258,7 +253,7 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-  dismissible: {
+  isDismissible: {
     type: Boolean,
     default: true,
   },
@@ -291,6 +286,13 @@ const props = defineProps({
     required: false,
   },
 })
+
+const planLabelBaseClass = [
+  'relative flex justify-between items-center',
+  'px-4 py-4 rounded-2xl border-2 cursor-pointer',
+  'transition-all duration-200 ease-in-out',
+  'hover:shadow-lg hover:border-gray-400',
+]
 
 const discountPercent = computed(() => {
   const originalYearlyCost = Number(props.discountedMonthlyPrice) * 12
