@@ -8,7 +8,6 @@
       <div class="flex flex-col laptop:flex-row w-full h-full">
         <div class="w-full relative bg-white">
           <UButton
-            v-if="props.isDismissible"
             icon="i-material-symbols-close"
             class="
               laptop:hidden absolute top-4 right-4 cursor-pointer
@@ -93,7 +92,6 @@
           <!-- Price Select -->
           <div class="flex flex-col w-full mt-12">
             <UButton
-              v-if="props.isDismissible"
               icon="i-material-symbols-close"
               class="
                 hidden laptop:block absolute top-4 right-4 cursor-pointer
