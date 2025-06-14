@@ -19,7 +19,11 @@ export function useSubscription() {
   const overlay = useOverlay()
   const paywallModal = overlay.create(PaywallModal, {
     props: {
-      onSubscribe: startSubscription,
+      'modelValue': toRef(selectedPlan, 'value'),
+      'onUpdate:modelValue': (val: 'monthly' | 'yearly') => {
+        selectedPlan.value = val
+      },
+      'onSubscribe': startSubscription,
       isProcessingSubscription,
     },
   })

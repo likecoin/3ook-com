@@ -246,9 +246,8 @@ import paywallHeaderImg from '~/assets/images/paywall/paywall-header-bg.png'
 import paywallBodyLogo from '~/assets/images/paywall/paywall-body-logo.png'
 import paywallFooterLogo from '~/assets/images/paywall/paywall-footer-bg.png'
 
-const emit = defineEmits(['close'])
+const emit = defineEmits(['close', 'update:modelValue'])
 const { t: $t } = useI18n()
-const selectedPlan = ref('yearly')
 const isMobileScreen = useMediaQuery('(min-width: 640px)')
 
 const props = defineProps({
@@ -288,6 +287,15 @@ const props = defineProps({
     type: Function as PropType<() => void>,
     required: false,
   },
+  modelValue: {
+    type: String as PropType<'monthly' | 'yearly'>,
+    required: true,
+  },
+})
+
+const selectedPlan = computed({
+  get: () => props.modelValue,
+  set: (val: string) => emit('update:modelValue', val),
 })
 
 const planLabelBaseClass = [
