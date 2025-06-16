@@ -227,7 +227,6 @@ export const useAccountStore = defineStore('account', () => {
   async function login(preferredConnectorId?: string) {
     try {
       isLoggingIn.value = true
-      blockingModal.open({ title: $t('account_logging_in') })
 
       let connectorId: string | undefined = preferredConnectorId
       if (!connectorId || !connectors.some((c: { id: string }) => c.id === connectorId)) {
@@ -247,6 +246,8 @@ export const useAccountStore = defineStore('account', () => {
       if (status.value !== 'success') {
         await connectAsync({ connector })
       }
+
+      blockingModal.open({ title: $t('account_logging_in') })
 
       const walletAddress = address.value
       if (status.value !== 'success' || !walletAddress) {
