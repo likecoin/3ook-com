@@ -120,6 +120,10 @@ export default function ({ nftClassId = '' }: { nftClassId?: string } = {}) {
     return !bookstoreInfo.value?.hideDownload || false
   })
 
+  const isAudioHidden = computed(() => {
+    return bookstoreInfo.value?.hideAudio || false
+  })
+
   const formattedReadingMethods = computed(() => {
     const methods = [$t('reading_method_read_online')]
     if (isDownloadable.value) {
@@ -191,6 +195,7 @@ export default function ({ nftClassId = '' }: { nftClassId?: string } = {}) {
     bookstoreInfo,
     isCustomMessageEnabled,
     isDownloadable,
+    isAudioHidden,
     formattedReadingMethods,
     keywords,
 

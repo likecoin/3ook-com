@@ -57,44 +57,45 @@
               variant="ghost"
               @click="isDesktopToCOpen = !isDesktopToCOpen"
             />
-
-            <template v-if="!isTextToSpeechOn || !isTextToSpeechPlaying">
-              <UButton
-                class="laptop:hidden"
-                icon="i-material-symbols-headphones-rounded"
-                variant="ghost"
-                :disabled="isReaderLoading"
-                @click="startTextToSpeech"
-              />
-              <UButton
-                class="max-laptop:hidden"
-                icon="i-material-symbols-headphones-rounded"
-                :label="$t('reader_text_to_speech_button')"
-                variant="ghost"
-                :disabled="isReaderLoading"
-                @click="startTextToSpeech"
+            <template v-if="!bookInfo.isAudioHidden.value">
+              <template v-if="!isTextToSpeechOn || !isTextToSpeechPlaying">
+                <UButton
+                  class="laptop:hidden"
+                  icon="i-material-symbols-headphones-rounded"
+                  variant="ghost"
+                  :disabled="isReaderLoading"
+                  @click="startTextToSpeech"
+                />
+                <UButton
+                  class="max-laptop:hidden"
+                  icon="i-material-symbols-headphones-rounded"
+                  :label="$t('reader_text_to_speech_button')"
+                  variant="ghost"
+                  :disabled="isReaderLoading"
+                  @click="startTextToSpeech"
+                />
+              </template>
+              <template v-else>
+                <UButton
+                  class="laptop:hidden"
+                  icon="i-material-symbols-pause-rounded"
+                  variant="ghost"
+                  @click="pauseTextToSpeech"
+                />
+                <UButton
+                  class="max-laptop:hidden"
+                  icon="i-material-symbols-pause-rounded"
+                  :label="$t('reader_text_to_speech_button')"
+                  variant="ghost"
+                  @click="pauseTextToSpeech"
+                />
+              </template>
+              <USelect
+                v-if="isShowTextToSpeechOptions"
+                v-model="ttsLanguage"
+                :items="ttsLanguageOptions"
               />
             </template>
-            <template v-else>
-              <UButton
-                class="laptop:hidden"
-                icon="i-material-symbols-pause-rounded"
-                variant="ghost"
-                @click="pauseTextToSpeech"
-              />
-              <UButton
-                class="max-laptop:hidden"
-                icon="i-material-symbols-pause-rounded"
-                :label="$t('reader_text_to_speech_button')"
-                variant="ghost"
-                @click="pauseTextToSpeech"
-              />
-            </template>
-            <USelect
-              v-if="isShowTextToSpeechOptions"
-              v-model="ttsLanguage"
-              :items="ttsLanguageOptions"
-            />
 
             <USlideover
               :title="$t('reader_display_options_button')"
