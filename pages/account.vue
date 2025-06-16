@@ -133,16 +133,33 @@
             <LocaleSwitcher :is-icon-hidden="true" />
           </AccountSettingsItem>
 
+          <ScriptCrisp
+            :id="crispId"
+            @ready="isCrispLoaded = true"
+          >
+            <UButton
+              :label="$t('account_page_contact_support')"
+              to="https://go.crisp.chat/chat/embed/?website_id=5c009125-5863-4059-ba65-43f177ca33f7'"
+              target="_blank"
+              variant="link"
+              leading-icon="i-material-symbols-contact-support"
+              trailing-icon="i-material-symbols-share-windows-rounded"
+              color="neutral"
+              size="lg"
+              block
+              @click="handleCustomerServiceLinkButtonClick"
+            />
+          </ScriptCrisp>
           <UButton
+            v-if="isCrispLoaded"
             :label="$t('account_page_contact_support')"
-            href="https://go.crisp.chat/chat/embed/?website_id=5c009125-5863-4059-ba65-43f177ca33f7"
-            target="_blank"
             variant="link"
             leading-icon="i-material-symbols-contact-support"
-            trailing-icon="i-material-symbols-share-windows-rounded"
+            trailing-icon="i-material-symbols-chat-bubble-outline-rounded"
             color="neutral"
             size="lg"
             block
+            @click="handleCustomerServiceChatButtonClick"
           />
 
           <UButton
@@ -193,10 +210,13 @@ const { loggedIn: hasLoggedIn, user } = useUserSession()
 const accountStore = useAccountStore()
 const localeRoute = useLocaleRoute()
 const { handleError } = useErrorHandler()
+const { instance: crisp, id: crispId } = useScriptCrisp()
 
 useHead({
   title: $t('account_page_title'),
 })
+
+const isCrispLoaded = ref(false)
 
 async function handleLogin() {
   await accountStore.login()
@@ -228,5 +248,16 @@ async function handleLikerPlusButtonClick() {
       title: $t('error_billing_portal_failed'),
     })
   }
+}
+
+async function handleCustomerServiceChatButtonClick() {
+  useLogEvent('customer_service', { method: 'chat' })
+  if (crisp && isCrispLoaded.value) {
+    crisp.do('chat:open')
+  }
+}
+
+async function handleCustomerServiceLinkButtonClick() {
+  useLogEvent('customer_service', { method: 'link' })
 }
 </script>
