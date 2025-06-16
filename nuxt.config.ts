@@ -130,6 +130,7 @@ export default defineNuxtConfig({
           : [
               process.env.PDF_VIEWER_ORIGIN || '',
               'https://auth.magic.link',
+              'https://js.stripe.com',
             ],
         'base-uri': [
           '\'self\'',
@@ -150,6 +151,7 @@ export default defineNuxtConfig({
           '\'self\'',
           'blob:',
           'https://client.crisp.chat',
+          'https://fonts.gstatic.com',
         ],
         // NOTE: Resolve Safari force HTTPS in development
         'upgrade-insecure-requests': isDevelopment ? false : true,
