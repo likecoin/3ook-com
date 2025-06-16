@@ -147,7 +147,7 @@
 
           <UButton
             :label="$t('account_page_faq')"
-            to="https://docs.3ook.com?utm_source=3ookcom&utm_medium=3ookcom_account"
+            to="https://docs.3ook.com?utm_source=3ookcom&utm_medium=referral&utm_campaign=3ookcom_account"
             target="_blank"
             variant="link"
             leading-icon="i-material-symbols-question-mark-rounded"
@@ -159,7 +159,7 @@
 
           <UButton
             :label="$t('account_page_publish_book')"
-            to="https://publish.3ook.com?utm_source=3ookcom&utm_medium=3ookcom_account"
+            to="https://publish.3ook.com?utm_source=3ookcom&utm_medium=referral&utm_campaign=3ookcom_account"
             target="_blank"
             variant="link"
             leading-icon="i-material-symbols-book-4-spark-rounded"
