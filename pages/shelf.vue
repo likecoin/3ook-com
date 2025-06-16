@@ -158,7 +158,7 @@ function handleBookshelfItemDownload({
   nftClassId?: string
   type: string
 }) {
-  useTrackEvent('shelf_download_book', {
+  useLogEvent('shelf_download_book', {
     content_type: type,
     nft_class_id: nftClassId,
   })
