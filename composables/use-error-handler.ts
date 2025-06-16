@@ -34,12 +34,13 @@ export default function () {
     // Generic error handling
     if (!handler) {
       switch (rawErrorMessage) {
+        case 'INSUFFICIENT_PERMISSION':
         case 'TOKEN_EXPIRED':
           handler = {
             description: $t('error_token_expired'),
             onClose: () => {
               accountStore.logout()
-              navigateTo(localeRoute({ name: 'account' }))
+              return navigateTo(localeRoute({ name: 'account' }))
             },
           }
           break
