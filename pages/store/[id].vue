@@ -189,21 +189,21 @@
                   class="hidden cursor-pointer"
                   :label="$t('product_page_add_to_cart_button_label')"
                   size="xl"
-                  :disabled="isSoldOut"
+                  :disabled="isSelectedPricingItemSoldOut"
                   block
                   @click="handleAddToCartButtonClick"
                 />
                 <UButton
                   class="cursor-pointer"
-                  :variant="isSoldOut ? 'subtle' : 'solid'"
+                  :variant="isSelectedPricingItemSoldOut ? 'subtle' : 'solid'"
                   :label="
-                    isSoldOut
+                    isSelectedPricingItemSoldOut
                       ? $t('product_page_sold_out_button_label')
                       : $t('product_page_checkout_button_label')
                   "
                   size="xl"
                   :loading="isPurchasing"
-                  :disabled="isSoldOut || isPurchasing"
+                  :disabled="isSelectedPricingItemSoldOut || isPurchasing"
                   block
                   @click="handlePurchaseButtonClick"
                 />
@@ -323,7 +323,7 @@
           color="primary"
           size="xl"
           :loading="isPurchasing"
-          :disabled="isSoldOut || isPurchasing"
+          :disabled="isSelectedPricingItemSoldOut || isPurchasing"
           block
           @click="handleStickyPurchaseButtonClick"
         />
@@ -514,7 +514,7 @@ const formattedLogPayload = computed(() => {
   }
 })
 
-const isSoldOut = computed(() => {
+const isSelectedPricingItemSoldOut = computed(() => {
   return !!selectedPricingItem.value?.isSoldOut
 })
 
