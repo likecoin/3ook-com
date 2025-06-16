@@ -1,5 +1,9 @@
 {
   "account_export_private_key_not_supported": "不支持匯出私鑰",
+  "account_logged_in": "登入成功",
+  "account_logged_out": "已登出",
+  "account_logging_in": "正在登入",
+  "account_logging_out": "正在登出",
   "account_page_account_id": "帳戶 ID",
   "account_page_account_title": "個人帳戶",
   "account_page_contact_support": "聯絡我們",

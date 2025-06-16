@@ -15,6 +15,7 @@ export const useAccountStore = defineStore('account', () => {
   const { fetch: refreshSession, user } = useUserSession()
   const overlay = useOverlay()
   const { errorModal, handleError } = useErrorHandler()
+  const blockingModal = useBlockingModal()
   const { t: $t } = useI18n()
 
   const loginModal = overlay.create(LoginModal)
@@ -226,6 +227,7 @@ export const useAccountStore = defineStore('account', () => {
   async function login(preferredConnectorId?: string) {
     try {
       isLoggingIn.value = true
+      blockingModal.open({ title: $t('account_logging_in') })
 
       let connectorId: string | undefined = preferredConnectorId
       if (!connectorId || !connectors.some((c: { id: string }) => c.id === connectorId)) {
@@ -331,6 +333,10 @@ export const useAccountStore = defineStore('account', () => {
           method: connector.id,
         })
       }
+
+      blockingModal.patch({ title: $t('account_logged_in') })
+      // Wait for a moment to show the logged in message
+      await sleep(1000)
     }
     catch (error) {
       if (error instanceof UserRejectedRequestError) {
@@ -344,13 +350,23 @@ export const useAccountStore = defineStore('account', () => {
     }
     finally {
       isLoggingIn.value = false
+      blockingModal.close()
     }
   }
 
   async function logout() {
-    await disconnectAsync()
-    await $fetch('/api/logout', { method: 'POST' })
-    await refreshSession()
+    blockingModal.open({ title: $t('account_logging_out') })
+    try {
+      await disconnectAsync()
+      await $fetch('/api/logout', { method: 'POST' })
+      await refreshSession()
+      blockingModal.patch({ title: $t('account_logged_out') })
+      // Wait for a moment to show the logged out message
+      await sleep(500)
+    }
+    finally {
+      blockingModal.close()
+    }
   }
 
   async function updateSettings(params: { isEVMModeActive?: boolean } = {}) {

@@ -38,8 +38,8 @@ export default function () {
         case 'TOKEN_EXPIRED':
           handler = {
             description: $t('error_token_expired'),
-            onClose: () => {
-              accountStore.logout()
+            onClose: async () => {
+              await accountStore.logout()
               return navigateTo(localeRoute({ name: 'account' }))
             },
           }
