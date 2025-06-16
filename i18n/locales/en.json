@@ -1,6 +1,6 @@
 {
   "account_export_private_key_not_supported": "Export private key is not supported.",
-  "account_logged_in": "Login successfully",
+  "account_logged_in": "Login successful",
   "account_logged_out": "Logged out",
   "account_logging_in": "Logging in",
   "account_logging_out": "Logging out",
