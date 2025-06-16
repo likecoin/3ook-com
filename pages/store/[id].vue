@@ -151,7 +151,15 @@
                       class="shrink-0 w-[20px] h-[20px] my-0.5 bg-white rounded-full border border-gray-300"
                     />
                     <div class="grow">
-                      <div class="flex justify-between items-center gap-3 text-green-500">
+                      <div
+                        :class="[
+                          'flex',
+                          'justify-between',
+                          'items-center',
+                          'gap-3',
+                          item.isSoldOut ? 'text-gray-400' : 'text-green-500',
+                        ]"
+                      >
                         <span
                           class="font-semibold"
                           v-text="item.name"
@@ -181,16 +189,21 @@
                   class="hidden cursor-pointer"
                   :label="$t('product_page_add_to_cart_button_label')"
                   size="xl"
-                  :disabled="!!selectedPricingItem?.isSoldOut"
+                  :disabled="isSoldOut"
                   block
                   @click="handleAddToCartButtonClick"
                 />
                 <UButton
                   class="cursor-pointer"
-                  :label="$t('product_page_checkout_button_label')"
+                  :variant="isSoldOut ? 'subtle' : 'solid'"
+                  :label="
+                    isSoldOut
+                      ? $t('product_page_sold_out_button_label')
+                      : $t('product_page_checkout_button_label')
+                  "
                   size="xl"
                   :loading="isPurchasing"
-                  :disabled="!!selectedPricingItem?.isSoldOut || isPurchasing"
+                  :disabled="isSoldOut || isPurchasing"
                   block
                   @click="handlePurchaseButtonClick"
                 />
@@ -310,7 +323,7 @@
           color="primary"
           size="xl"
           :loading="isPurchasing"
-          :disabled="!!selectedPricingItem?.isSoldOut || isPurchasing"
+          :disabled="isSoldOut || isPurchasing"
           block
           @click="handleStickyPurchaseButtonClick"
         />
@@ -499,6 +512,10 @@ const formattedLogPayload = computed(() => {
       quantity: 1,
     }],
   }
+})
+
+const isSoldOut = computed(() => {
+  return !!selectedPricingItem.value?.isSoldOut
 })
 
 onMounted(() => {
