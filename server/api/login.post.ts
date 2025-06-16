@@ -100,7 +100,6 @@ export default defineEventHandler(async (event) => {
       avatar: userInfoRes.avatar,
       email: body.email,
       loginMethod: body.loginMethod,
-      isEVMModeActive: !likeWallet,
       isLikerPlus: userInfoRes.isLikerPlus || false,
     }
     await setUserSession(event, { user: userInfo })

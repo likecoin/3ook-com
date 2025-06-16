@@ -24,7 +24,8 @@ export const useAccountStore = defineStore('account', () => {
   const isLoggingIn = ref(false)
   const isConnectModalOpen = ref(false)
 
-  const isEVMModeActive = ref<boolean>(user.value?.isEVMModeActive ?? false)
+  // TODO: Remove this when legacy mode is fully deprecated
+  const isEVMModeActive = ref(true)
   const isEVMMode = computed({
     get: () => isEVMModeActive.value,
     set: async (value) => {
@@ -46,7 +47,6 @@ export const useAccountStore = defineStore('account', () => {
   watch(
     () => user.value,
     (user) => {
-      isEVMModeActive.value = user?.isEVMModeActive ?? false
       useSetLogUser(user)
     },
     { immediate: true, deep: true },

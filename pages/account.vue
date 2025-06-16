@@ -113,16 +113,6 @@
             <LocaleSwitcher :is-icon-hidden="true" />
           </AccountSettingsItem>
 
-          <AccountSettingsItem
-            icon="i-material-symbols-arrow-split-rounded"
-            :label="$t('account_page_evm_switch')"
-          >
-            <USwitch
-              v-model="accountStore.isEVMMode"
-              :disabled="!user?.likeWallet"
-            />
-          </AccountSettingsItem>
-
           <UButton
             :label="$t('account_page_contact_support')"
             href="https://go.crisp.chat/chat/embed/?website_id=5c009125-5863-4059-ba65-43f177ca33f7"
