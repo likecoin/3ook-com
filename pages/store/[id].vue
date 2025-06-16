@@ -341,7 +341,7 @@ const { handleError } = useErrorHandler()
 const nftClassId = computed(() => getRouteParam('id'))
 const {
   generateBookStructuredData,
-  generateOgMetaTags,
+  generateOGMetaTags,
 } = useStructuredData({ nftClassId: nftClassId.value })
 
 if (nftClassId.value !== nftClassId.value.toLowerCase()) {
@@ -419,7 +419,7 @@ useHead(() => ({
     { property: 'og:image', content: bookInfo.coverSrc.value },
     { property: 'og:type', content: 'product' },
     { property: 'og:url', content: canonicalURL.value },
-    ...generateOgMetaTags({ selectedPricingItemIndex: selectedPricingItemIndex.value }),
+    ...generateOGMetaTags({ selectedPricingItemIndex: selectedPricingItemIndex.value }),
   ],
   link: [
     { rel: 'canonical', href: canonicalURL.value },

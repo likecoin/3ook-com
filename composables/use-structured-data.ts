@@ -1,7 +1,7 @@
 export function useStructuredData({ nftClassId }: { nftClassId: string }) {
   const bookInfo = useBookInfo({ nftClassId })
 
-  function generateOgMetaTags({
+  function generateOGMetaTags({
     selectedPricingItemIndex = 0,
   }) {
     const authorName = bookInfo.authorName.value
@@ -169,7 +169,7 @@ export function useStructuredData({ nftClassId }: { nftClassId: string }) {
   }
 
   return {
-    generateOgMetaTags,
+    generateOGMetaTags,
     generateBookStructuredData,
   }
 }
