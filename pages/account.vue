@@ -133,23 +133,6 @@
             <LocaleSwitcher :is-icon-hidden="true" />
           </AccountSettingsItem>
 
-          <ScriptCrisp
-            :id="crispId"
-            @ready="isCrispLoaded = true"
-          >
-            <UButton
-              :label="$t('account_page_contact_support')"
-              :to="crispChatURL"
-              target="_blank"
-              variant="link"
-              leading-icon="i-material-symbols-contact-support"
-              trailing-icon="i-material-symbols-share-windows-rounded"
-              color="neutral"
-              size="lg"
-              block
-              @click="handleCustomerServiceLinkButtonClick"
-            />
-          </ScriptCrisp>
           <UButton
             v-if="isCrispLoaded"
             :label="$t('account_page_contact_support')"
@@ -160,6 +143,19 @@
             size="lg"
             block
             @click="handleCustomerServiceChatButtonClick"
+          />
+          <UButton
+            v-else
+            :label="$t('account_page_contact_support')"
+            :to="crispChatURL"
+            target="_blank"
+            variant="link"
+            leading-icon="i-material-symbols-contact-support"
+            trailing-icon="i-material-symbols-share-windows-rounded"
+            color="neutral"
+            size="lg"
+            block
+            @click="handleCustomerServiceLinkButtonClick"
           />
 
           <UButton
@@ -211,7 +207,6 @@ const { loggedIn: hasLoggedIn, user } = useUserSession()
 const accountStore = useAccountStore()
 const localeRoute = useLocaleRoute()
 const { handleError } = useErrorHandler()
-const { instance: crisp } = useScriptCrisp()
 
 useHead({
   title: $t('account_page_title'),
@@ -224,6 +219,14 @@ const crispChatURL = computed(() => {
   const url = new URL('https://go.crisp.chat/chat/embed')
   url.searchParams.set('website_id', crispId.value || '5c009125-5863-4059-ba65-43f177ca33f7')
   return url.toString()
+})
+
+const { instance: crisp, onLoaded: listenCrispLoaded } = useScriptCrisp({ id: crispId.value })
+
+onMounted(() => {
+  listenCrispLoaded(() => {
+    isCrispLoaded.value = true
+  })
 })
 
 async function handleLogin() {
