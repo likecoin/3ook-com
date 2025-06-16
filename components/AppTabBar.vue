@@ -1,5 +1,5 @@
 <template>
-  <nav class="lg:hidden bg-white border-t border-[#EBEBEB] fixed bottom-0 left-0 right-0 pb-safe">
+  <nav class="lg:hidden bg-white border-t border-[#EBEBEB] fixed bottom-0 left-0 right-0 pb-safe pr-[68px]">
     <ul class="flex justify-around items-center min-h-14">
       <li
         v-for="item in menuItems"
