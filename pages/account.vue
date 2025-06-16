@@ -139,7 +139,7 @@
           >
             <UButton
               :label="$t('account_page_contact_support')"
-              to="https://go.crisp.chat/chat/embed/?website_id=5c009125-5863-4059-ba65-43f177ca33f7'"
+              :to="crispChatURL"
               target="_blank"
               variant="link"
               leading-icon="i-material-symbols-contact-support"
@@ -205,18 +205,26 @@
 // NOTE: Set `layout` to false for injecting props into `<NuxtLayout/>`.
 definePageMeta({ layout: false })
 
+const config = useRuntimeConfig()
 const { t: $t } = useI18n()
 const { loggedIn: hasLoggedIn, user } = useUserSession()
 const accountStore = useAccountStore()
 const localeRoute = useLocaleRoute()
 const { handleError } = useErrorHandler()
-const { instance: crisp, id: crispId } = useScriptCrisp()
+const { instance: crisp } = useScriptCrisp()
 
 useHead({
   title: $t('account_page_title'),
 })
 
 const isCrispLoaded = ref(false)
+// XXX: `id` in `useScriptCrisp()` is broken, it always returns `'crisp'` even `id` is provided and it is also not reactive 💩
+const crispId = computed(() => config.public.scripts.crisp.id)
+const crispChatURL = computed(() => {
+  const url = new URL('https://go.crisp.chat/chat/embed')
+  url.searchParams.set('website_id', crispId.value || '5c009125-5863-4059-ba65-43f177ca33f7')
+  return url.toString()
+})
 
 async function handleLogin() {
   await accountStore.login()
