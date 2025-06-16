@@ -39,8 +39,15 @@ export default function () {
           handler = {
             description: $t('error_token_expired'),
             onClose: async () => {
-              await accountStore.logout()
-              return navigateTo(localeRoute({ name: 'account' }))
+              try {
+                await accountStore.logout()
+              }
+              catch (error) {
+                console.warn('Failed to logout:', error)
+              }
+              finally {
+                await navigateTo(localeRoute({ name: 'account' }))
+              }
             },
           }
           break
