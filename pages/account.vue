@@ -147,7 +147,7 @@
 
           <UButton
             :label="$t('account_page_faq')"
-            href="https://docs.like.co/zh/depub/ebook"
+            to="https://docs.3ook.com?utm_source=3ookcom&utm_medium=3ookcom_account"
             target="_blank"
             variant="link"
             leading-icon="i-material-symbols-question-mark-rounded"
@@ -159,7 +159,7 @@
 
           <UButton
             :label="$t('account_page_publish_book')"
-            href="https://publish.liker.land"
+            to="https://publish.3ook.com?utm_source=3ookcom&utm_medium=3ookcom_account"
             target="_blank"
             variant="link"
             leading-icon="i-material-symbols-book-4-spark-rounded"
