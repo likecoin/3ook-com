@@ -342,7 +342,7 @@ const baseURL = config.public.baseURL
 
 const localeRoute = useLocaleRoute()
 const getRouteBaseName = useRouteBaseName()
-const { t: $t } = useI18n()
+const { t: $t, locale } = useI18n()
 const toast = useToast()
 const wipModal = useWIPModal()
 const formatPrice = useFormatPrice()
@@ -586,6 +586,7 @@ async function handlePurchaseButtonClick() {
       priceIndex: selectedPricingItem.value.index,
       from: route.query.from as string,
       coupon: route.query.coupon as string,
+      language: locale.value.split('-')[0],
     })
     useLogEvent('begin_checkout', {
       ...formattedLogPayload.value,

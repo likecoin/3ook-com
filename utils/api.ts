@@ -165,6 +165,7 @@ export function createNFTBookPurchase({
   price,
   priceIndex,
   coupon,
+  language,
   referrer,
   utmCampaign,
   utmMedium,
@@ -181,6 +182,7 @@ export function createNFTBookPurchase({
   priceIndex: number
   coupon?: string
   from?: string
+  language?: string
   referrer?: string
   utmCampaign?: string
   utmMedium?: string
@@ -202,6 +204,7 @@ export function createNFTBookPurchase({
       email,
       customPriceInDecimal: Math.floor(price * 100),
       coupon,
+      language,
       referrer,
       utmCampaign,
       utmSource,
