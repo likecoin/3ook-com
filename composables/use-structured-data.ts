@@ -51,25 +51,41 @@ export function useStructuredData({ nftClassId }: { nftClassId: string }) {
       content: 543542, // ebook
     },
     {
-      hid: 'product:condition',
       property: 'product:condition',
       content: 'new',
     },
     {
-      hid: 'product:custom_label_0',
       property: 'product:custom_label_0',
       content: nftClassOwnerWalletAddress,
+    },
+    {
+      property: 'product:brand',
+      content: `3ook`,
+    },
+    {
+      property: 'og:type',
+      content: 'product',
+    },
+    {
+      property: 'og:title',
+      content: bookInfo.name.value,
+    },
+    {
+      property: 'og:description',
+      content: bookInfo.description.value,
+    },
+    {
+      property: 'og:image',
+      content: bookInfo.coverSrc.value,
     }]
     if (isbn) {
       meta.push({
-        hid: 'product:isbn',
         property: 'product:isbn',
         content: isbn,
       })
     }
     if (authorName) {
       meta.push({
-        hid: 'product:custom_label_1',
         property: 'product:custom_label_1',
         content: authorName,
       })
@@ -113,6 +129,11 @@ export function useStructuredData({ nftClassId }: { nftClassId: string }) {
         'name': pricing?.name ? `${name} - ${authorName} - ${pricing.name}` : `${name} - ${authorName}`,
         image,
         description,
+        'brand': {
+          '@context': 'http://www.schema.org',
+          '@type': 'Brand',
+          'name': '3ook',
+        },
         'author': authorName,
         'sku': skuId,
         'publisher': publisherName,
@@ -151,6 +172,11 @@ export function useStructuredData({ nftClassId }: { nftClassId: string }) {
       'name': `${name} - ${authorName}`,
       image,
       description,
+      'brand': {
+        '@context': 'http://www.schema.org',
+        '@type': 'Brand',
+        'name': '3ook',
+      },
       'author': authorName,
       'sku': nftClassId,
       'publisher': publisherName,

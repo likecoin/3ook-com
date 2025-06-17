@@ -100,8 +100,23 @@ useHead({
         'name': ogTitle,
         'description': ogDescription,
         'alternateName': ['3ook.com decentralized bookstore', 'Liker Land 電子書店', 'Liker Land'],
+        'sameAs': [
+          'https://linktr.ee/3ookcom',
+          'https://www.instagram.com/3ookcom',
+          'https://www.facebook.com/3ookcom',
+          'https://review.3ook.com',
+          'https://x.com/3ookcom',
+        ],
         'url': ogURL,
         'logo': ogImage,
+        'brand': [
+          {
+            '@context': 'http://www.schema.org',
+            '@type': 'Brand',
+            'url': ogURL,
+            'name': '3ook',
+          },
+        ],
       }]),
     },
   ],
