@@ -271,6 +271,7 @@ const {
   bookInfo,
   bookCoverSrc,
   bookFileURLWithCORS,
+  bookFileCacheKey,
 } = useReader()
 const { handleError } = useErrorHandler()
 const subscription = useSubscription()
@@ -358,7 +359,7 @@ let cleanUpClickListener: (() => void) | undefined
 const renditionElement = useTemplateRef<HTMLDivElement>('reader')
 
 async function loadEPub() {
-  const buffer = await loadFileAsBuffer(bookFileURLWithCORS.value)
+  const buffer = await loadFileAsBuffer(bookFileURLWithCORS.value, bookFileCacheKey.value)
   if (!buffer) {
     return
   }

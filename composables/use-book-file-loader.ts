@@ -23,27 +23,50 @@ export default function () {
     return `${loadedFilesizeInMB.value} / ${loadingFilesizeInMB.value} MB (${loadingPercentage.value}%)`
   })
 
-  async function loadFileAsBuffer(url: string) {
+  async function loadFileAsBuffer(url: string, cacheKey?: string) {
     loadingFilesize.value = 0
     loadedFilesize.value = 0
 
-    const res = await fetch(url, {
-      headers: {
-        Authorization: user.value?.token
-          ? `Bearer ${user.value.token}`
-          : '',
-      },
-    })
-    if (!res.ok) {
-      const errorText = await res.text()
-      throw createError({
-        statusCode: res.status,
-        message: errorText,
-        data: {
-          url,
-          description: $t('error_book_file_loading_failed'),
+    let res
+    const req = new Request(url)
+    if (cacheKey && window.caches) {
+      try {
+        const cache = await caches.open(cacheKey)
+        res = await cache.match(req)
+      }
+      catch (error) {
+        console.error(error)
+      }
+    }
+    if (!res) {
+      res = await fetch(url, {
+        headers: {
+          Authorization: user.value?.token
+            ? `Bearer ${user.value.token}`
+            : '',
         },
       })
+      if (!res.ok) {
+        const errorText = await res.text()
+        throw createError({
+          statusCode: res.status,
+          message: errorText,
+          data: {
+            url,
+            description: $t('error_book_file_loading_failed'),
+          },
+        })
+      }
+
+      if (cacheKey && window.caches) {
+        try {
+          const cache = await caches.open(cacheKey)
+          cache.put(req, res.clone())
+        }
+        catch (error) {
+          console.error(error)
+        }
+      }
     }
 
     const streamReader = res?.body?.getReader()

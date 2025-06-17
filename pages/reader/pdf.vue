@@ -38,6 +38,7 @@ const {
   bookInfo,
   bookCoverSrc,
   bookFileURLWithCORS,
+  bookFileCacheKey,
 } = useReader()
 const { handleError } = useErrorHandler()
 
@@ -95,7 +96,7 @@ function handlePDFViewerMessage(event: MessageEvent) {
 }
 
 async function loadPDF() {
-  const buffer = await loadFileAsBuffer(bookFileURLWithCORS.value)
+  const buffer = await loadFileAsBuffer(bookFileURLWithCORS.value, bookFileCacheKey.value)
   if (!buffer) {
     return
   }
