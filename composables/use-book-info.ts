@@ -112,6 +112,10 @@ export default function ({ nftClassId = '' }: { nftClassId?: string } = {}) {
     }
   }).join($t('text_separator_comma')))
 
+  const isHidden = computed(() => {
+    return bookstoreInfo.value?.isHidden || false
+  })
+
   const isCustomMessageEnabled = computed(() => {
     return bookstoreInfo.value?.enableCustomMessagePage || false
   })
@@ -194,6 +198,7 @@ export default function ({ nftClassId = '' }: { nftClassId?: string } = {}) {
 
     bookstoreInfo,
     isCustomMessageEnabled,
+    isHidden,
     isDownloadable,
     isAudioHidden,
     formattedReadingMethods,

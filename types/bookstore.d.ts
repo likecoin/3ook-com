@@ -28,6 +28,7 @@ declare interface BookstoreInfo {
   stock: number
   ownerWallet: string
   mustClaimToView: boolean
+  isHidden: boolean
   hideDownload: boolean
   hideAudio: boolean
   enableCustomMessagePage: boolean
