@@ -67,10 +67,30 @@ export interface FetchAirtableCMSProductsByTagIdResponseData {
   offset: string
 }
 
+export interface NormalizedProductRecord {
+  id: string
+  classId?: string
+  classIds?: string[]
+  title?: string
+  titles?: string[]
+  imageUrl?: string
+  imageUrls?: string[]
+  locales?: string[]
+  isDRMFree: boolean
+  isMultiple?: boolean
+  minPrice?: number
+  timestamp?: number
+}
+
+export interface FetchAirtableCMSProductsResponse {
+  records: NormalizedProductRecord[]
+  offset?: string
+}
+
 export async function fetchAirtableCMSProductsByTagId(
   tagId: string,
   { pageSize = 100, offset }: { pageSize?: number, offset?: string } = {},
-) {
+): Promise<FetchAirtableCMSProductsResponse> {
   const config = useRuntimeConfig()
   const results = await $fetch<FetchAirtableCMSProductsByTagIdResponseData>(
     `https://api.airtable.com/v0/${config.public.airtableCMSBaseId}/${config.public.airtableCMSProductsTableId}`,
@@ -87,7 +107,7 @@ export async function fetchAirtableCMSProductsByTagId(
     },
   )
 
-  const normalizedRecords = results.records.map(({ id, fields }) => {
+  const normalizedRecords: NormalizedProductRecord[] = results.records.map(({ id, fields }) => {
     const classId = fields.ID
     const classIds = fields.IDs
     const title = fields.Name

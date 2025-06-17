@@ -1,12 +1,31 @@
+import type { NormalizedProductRecord } from '../../utils/airtable'
+
 export default defineSitemapEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const baseURL = config.public.baseURL
   const defaultLocale = config.public.i18n.defaultLocale
   const locales = config.public.i18n.locales as Array<{ code: string, language: string }>
   try {
-    const result = await fetchAirtableCMSProductsByTagId('latest')
+    let records: NormalizedProductRecord[] = []
+    let offset: string | undefined = undefined
+
+    do {
+      try {
+        const response = await fetchAirtableCMSProductsByTagId(
+          'latest',
+          { offset },
+        )
+
+        records = records.concat(response.records)
+        offset = response.offset
+      }
+      catch (error) {
+        console.error('Error fetching products:', error)
+        break
+      }
+    } while (offset)
     setHeader(event, 'Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400')
-    return result.records.map(record => locales.map((locale) => {
+    return records.map(record => locales.map((locale) => {
       const localePath = locale.code === defaultLocale ? '' : `/${locale.code}`
       return {
         _sitemap: locale.language,
