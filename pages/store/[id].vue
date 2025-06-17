@@ -319,7 +319,12 @@
 
         <UButton
           class="cursor-pointer max-w-[248px]"
-          :label="$t('product_page_sticky_purchase_button_label')"
+          :variant="isSelectedPricingItemSoldOut ? 'subtle' : 'solid'"
+          :label="
+            isSelectedPricingItemSoldOut
+              ? $t('product_page_sold_out_button_label')
+              : $t('product_page_checkout_button_label')
+          "
           color="primary"
           size="xl"
           :loading="isPurchasing"
