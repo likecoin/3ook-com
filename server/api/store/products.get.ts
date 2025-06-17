@@ -10,6 +10,7 @@ export default defineEventHandler(async (event) => {
       pageSize,
       offset,
     })
+    setHeader(event, 'cache-control', 'public, max-age=60')
     return result
   }
   catch (error) {
