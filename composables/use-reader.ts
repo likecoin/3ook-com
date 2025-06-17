@@ -16,8 +16,7 @@ export default function (params: {
   const bookCoverSrc = computed(() => getResizedImageURL(bookInfo.coverSrc.value, { size: 300 }))
 
   const bookFileCacheKey = computed(() =>
-    `book-file-${nftClassId.value}-${nftId.value}-${fileIndex.value
-    }-${bookInfo.isCustomMessageEnabled.value ? '1' : '0'}`,
+    ['book-file', nftClassId.value, nftId.value || '', fileIndex.value, bookInfo.isCustomMessageEnabled.value ? '1' : '0'].join('-'),
   )
 
   const bookFileURLWithCORS = computed(() =>
