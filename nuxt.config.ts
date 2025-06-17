@@ -141,6 +141,7 @@ export default defineNuxtConfig({
           'blob:',
           'https://client.crisp.chat',
           'https://image.crisp.chat',
+          'https://www.facebook.com',
           ...[
             process.env.LIKECOIN_API_ENDPOINT,
             process.env.LIKECOIN_STATIC_ENDPOINT,
