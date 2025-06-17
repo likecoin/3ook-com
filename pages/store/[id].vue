@@ -194,13 +194,8 @@
                   @click="handleAddToCartButtonClick"
                 />
                 <UButton
+                  v-bind="checkoutButtonProps"
                   class="cursor-pointer"
-                  :variant="isSelectedPricingItemSoldOut ? 'subtle' : 'solid'"
-                  :label="
-                    isSelectedPricingItemSoldOut
-                      ? $t('product_page_sold_out_button_label')
-                      : $t('product_page_checkout_button_label')
-                  "
                   size="xl"
                   :loading="isPurchasing"
                   :disabled="isSelectedPricingItemSoldOut || isPurchasing"
@@ -318,13 +313,8 @@
         </span>
 
         <UButton
+          v-bind="checkoutButtonProps"
           class="cursor-pointer max-w-[248px]"
-          :variant="isSelectedPricingItemSoldOut ? 'subtle' : 'solid'"
-          :label="
-            isSelectedPricingItemSoldOut
-              ? $t('product_page_sold_out_button_label')
-              : $t('product_page_checkout_button_label')
-          "
           color="primary"
           size="xl"
           :loading="isPurchasing"
@@ -521,6 +511,18 @@ const formattedLogPayload = computed(() => {
 
 const isSelectedPricingItemSoldOut = computed(() => {
   return !!selectedPricingItem.value?.isSoldOut
+})
+
+const checkoutButtonProps = computed<{
+  variant: 'subtle' | 'solid'
+  label: string
+}>(() => {
+  return {
+    variant: isSelectedPricingItemSoldOut.value ? 'subtle' : 'solid',
+    label: isSelectedPricingItemSoldOut.value
+      ? $t('product_page_sold_out_button_label')
+      : $t('product_page_checkout_button_label'),
+  }
 })
 
 onMounted(() => {
