@@ -111,7 +111,7 @@ useHead({
         'logo': ogImage,
         'brand': [
           {
-            '@context': 'http://www.schema.org',
+            '@context': 'https://schema.org',
             '@type': 'Brand',
             'url': ogURL,
             'name': '3ook',

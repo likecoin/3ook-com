@@ -60,7 +60,7 @@ export function useStructuredData({ nftClassId }: { nftClassId: string }) {
     },
     {
       property: 'product:brand',
-      content: `3ook`,
+      content: '3ook',
     },
     {
       property: 'og:type',
@@ -130,7 +130,7 @@ export function useStructuredData({ nftClassId }: { nftClassId: string }) {
         image,
         description,
         'brand': {
-          '@context': 'http://www.schema.org',
+          '@context': 'https://schema.org',
           '@type': 'Brand',
           'name': '3ook',
         },
@@ -173,7 +173,7 @@ export function useStructuredData({ nftClassId }: { nftClassId: string }) {
       image,
       description,
       'brand': {
-        '@context': 'http://www.schema.org',
+        '@context': 'https://schema.org',
         '@type': 'Brand',
         'name': '3ook',
       },
