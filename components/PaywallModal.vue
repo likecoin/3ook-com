@@ -2,6 +2,7 @@
   <UModal
     :fullscreen="isFullscreenModal"
     :dismissible="props.isBackdropDismissible"
+    :modal="isModalityOn"
     :ui="{ content: modalContentClass }"
   >
     <template #content>
@@ -223,6 +224,10 @@
 import topBg from '~/assets/images/paywall/bg-top.png'
 import bottomBg from '~/assets/images/paywall/bg-bottom.png'
 import plusLogo from '~/assets/images/paywall/plus-logo.png'
+
+// NOTE: When the dialog's modality is set to true, interaction with elements outside the dialog is disabled.
+// Therefore, we set modality to false so input in the Magic login UI remains accessible.
+const isModalityOn = false
 
 const emit = defineEmits(['close', 'update:modelValue'])
 const { t: $t } = useI18n()
