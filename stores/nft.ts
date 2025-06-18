@@ -9,7 +9,10 @@ export const useNFTStore = defineStore('nft', () => {
   const getLegacyNFTClassById = computed(() => (id: string) => legacyNFTClassByIdMap.value[id])
 
   const getNFTClassById = computed(() => (id: string) => nftClassByIdMap.value[id])
-
+  const getNFTClassMetadataById = computed(() => (id: string) => {
+    const nftClass = getNFTClassById.value(id)
+    return nftClass?.metadata
+  })
   const getNFTIdsByNFTClassIdAndOwnerWalletAddress = computed(() => (nftClassId: string, ownerWalletAddress: string) => {
     return nftClassOwnersNFTIdMapByNFTClassIdMap.value[nftClassId]?.[ownerWalletAddress] || []
   })
@@ -51,7 +54,7 @@ export const useNFTStore = defineStore('nft', () => {
 
   function addNFTClassMetadata(nftClassId: string, nftClassMetadata: NFTClassMetadata) {
     nftClassByIdMap.value[nftClassId] = {
-      ...nftClassByIdMap.value[nftClassId],
+      ...(nftClassByIdMap.value[nftClassId] || {}),
       metadata: nftClassMetadata,
     }
   }
@@ -110,6 +113,9 @@ export const useNFTStore = defineStore('nft', () => {
 
   async function lazyFetchNFTClassAggregatedMetadataById(nftClassId: string, { exclude = [] }: FetchLikeCoinNFTClassAggregatedMetadataOptions = {}) {
     const excludedOptions: LikeCoinNFTClassAggregatedMetadataOptionKey[] = exclude
+    if (getNFTClassMetadataById.value(nftClassId)) {
+      excludedOptions.push('class_chain')
+    }
     if (nftClassOwnersNFTIdMapByNFTClassIdMap.value[nftClassId]) {
       excludedOptions.push('owner')
     }
@@ -122,12 +128,26 @@ export const useNFTStore = defineStore('nft', () => {
     return fetchNFTClassAggregatedMetadataById(nftClassId, { exclude: excludedOptions })
   }
 
+  async function fetchNFTClassChainMetadataById(nftClassId: string) {
+    const { metadata } = await fetchLikeCoinNFTClassChainMetadataById(nftClassId)
+    addNFTClassMetadata(nftClassId, metadata)
+    return metadata
+  }
+
+  async function lazyFetchNFTClassChainMetadataById(nftClassId: string) {
+    if (getNFTClassMetadataById.value(nftClassId)) {
+      return getNFTClassMetadataById.value(nftClassId)
+    }
+    return await fetchNFTClassChainMetadataById(nftClassId)
+  }
+
   return {
     nftClassByIdMap,
     legacyNFTClassByIdMap,
     nftClassOwnersNFTIdMapByNFTClassIdMap,
 
     getNFTClassById,
+    getNFTClassMetadataById,
     getLegacyNFTClassById,
     getISCNIdPrefixByNFTClassId,
     getISCNDataByNFTClassId,
@@ -142,5 +162,7 @@ export const useNFTStore = defineStore('nft', () => {
     lazyFetchNFTClassOwnersById,
     fetchNFTClassAggregatedMetadataById,
     lazyFetchNFTClassAggregatedMetadataById,
+    fetchNFTClassChainMetadataById,
+    lazyFetchNFTClassChainMetadataById,
   }
 })

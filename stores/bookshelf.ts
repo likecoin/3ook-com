@@ -14,10 +14,12 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
   })
 
   const items = computed(() => accountStore.isEVMMode
-    ? Object.entries(nftByNFTClassIds.value).map(([nftClassId, nfts]) => ({
-        nftClassId,
-        nftIds: Object.keys(nfts),
-      }))
+    ? Object.entries(nftByNFTClassIds.value)
+        .filter(([nftClassId]) => nftStore.getNFTClassMetadataById(nftClassId)?.['@type'] === 'Book')
+        .map(([nftClassId, nfts]) => ({
+          nftClassId,
+          nftIds: Object.keys(nfts),
+        }))
     : legacyNFTClassIds.value.map(nftClassId => ({ nftClassId, nftIds: [] })),
   )
 
@@ -49,6 +51,8 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
               name: item.name,
               owner_address: item.owner_address,
             })
+
+            nftStore.lazyFetchNFTClassChainMetadataById(nftClassId)
           }
           const nftId = item.token_id
           nftByNFTClassIds.value[nftClassId][nftId] = item

@@ -105,6 +105,15 @@ export function fetchLikeCoinChainNFTs({
   })
 };
 
+export interface FetchLikeCoinNFTClassChainMetadataResponseData {
+  metadata: NFTClassMetadata
+}
+
+export function fetchLikeCoinNFTClassChainMetadataById(nftClassId: string) {
+  const { fetch } = useLikeCoinEVMChainAPI()
+  return fetch<FetchLikeCoinNFTClassChainMetadataResponseData>(`/booknft/${nftClassId}`)
+}
+
 export interface FetchISCNRecordsResponseData {
   latest_version: string
   owner: string

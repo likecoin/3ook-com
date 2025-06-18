@@ -6,7 +6,7 @@ declare interface NFTClassMetadata {
   banner_image: string
   featured_image: string
   external_link: string
-  type: string
+  ['@type']: string
   author: string | { name: string, description: string }
   nft_meta_collection_description: string
   nft_meta_collection_id: string
