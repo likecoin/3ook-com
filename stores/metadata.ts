@@ -4,6 +4,7 @@ interface LikerInfo {
   avatarSrc: string
   cosmosWallet: string
   likeWallet: string
+  evmWallet: string
   description: string
   isLikerPlus: boolean
 }
@@ -15,6 +16,7 @@ function normalizeLikerInfoFromResponseData(data: LikerInfoResponseData): LikerI
     avatarSrc: data.avatar,
     cosmosWallet: data.cosmosWallet,
     likeWallet: data.likeWallet,
+    evmWallet: data.evmWallet,
     description: data.description,
     isLikerPlus: data.isLikerPlus || false,
   }
@@ -36,6 +38,9 @@ export const useMetadataStore = defineStore('metadata', () => {
 
   async function fetchLikerInfoById(likerId: string) {
     const data = await fetchLikerPublicInfoById(likerId)
+    if (data.evmWallet) {
+      likerIdByWalletAddressMap.value[data.evmWallet] = likerId
+    }
     likerInfoByIdMap.value[likerId] = normalizeLikerInfoFromResponseData(data)
   }
 

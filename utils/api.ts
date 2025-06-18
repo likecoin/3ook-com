@@ -323,6 +323,7 @@ export interface LikerInfoResponseData {
   avatar: string
   cosmosWallet: string
   likeWallet: string
+  evmWallet: string
   description: string
   isLikerPlus?: boolean
 }
