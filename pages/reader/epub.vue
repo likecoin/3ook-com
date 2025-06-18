@@ -376,10 +376,11 @@ async function loadEPub() {
         return item
       })
     }),
-    // NOTE: https://github.com/futurepress/epub.js/issues/278
-    // Break sections by 1000 chars for calculating percentage
-    book.locations.generate(1000),
   ])
+
+  // NOTE: https://github.com/futurepress/epub.js/issues/278
+  // Break sections by 1000 chars for calculating percentage
+  book.locations.generate(1000)
 
   const sectionHrefByFilename: Record<string, string> = {}
   book.spine.each((section: Section) => {
