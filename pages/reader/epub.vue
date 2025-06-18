@@ -236,6 +236,7 @@
 </template>
 
 <script setup lang="ts">
+import { useStorage } from '@vueuse/core'
 import ePub, {
   type Rendition as RenditionBase,
   type NavItem,
@@ -346,6 +347,7 @@ const isAtFirstPage = computed(() => {
 })
 const isRightToLeft = ref(false)
 const currentPageEndCfi = ref<string>('')
+const currentCfi = useStorage(`${bookFileCacheKey.value}-cfi`, '')
 
 const FONT_SIZE_OPTIONS = [
   6, 8, 10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 40, 48, 56, 64, 72,
@@ -419,7 +421,7 @@ async function loadEPub() {
   }
   rendition.value.themes.default({ body: bodyCSS })
   rendition.value.themes.fontSize(`${fontSize.value}px`)
-  rendition.value.display()
+  rendition.value.display(currentCfi.value || undefined)
 
   rendition.value.on('rendered', (section: Section, view: EpubView) => {
     currentSectionIndex.value = section.index
@@ -481,6 +483,7 @@ async function loadEPub() {
       activeNavItemHref.value = href
     }
     percentage.value = book.locations.percentageFromCfi(location.start.cfi)
+    currentCfi.value = location.start.cfi
   })
 }
 
