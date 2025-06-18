@@ -382,7 +382,7 @@ async function loadEPub() {
     let isLocationLoaded = false
     const locationCacheKey = `${bookFileCacheKey.value}-locations`
     if (window.localStorage) {
-      const locationCache = localStorage.getItem(locationCacheKey)
+      const locationCache = window.localStorage.getItem(locationCacheKey)
       if (locationCache) {
         book.locations.load(locationCache)
         isLocationLoaded = true
@@ -392,7 +392,14 @@ async function loadEPub() {
       // NOTE: https://github.com/futurepress/epub.js/issues/278
       // Break sections by 1000 chars for calculating percentage
       book.locations.generate(1000).then(() => {
-        localStorage.setItem(locationCacheKey, book.locations.save())
+        try {
+          if (window.localStorage) {
+            window.localStorage.setItem(locationCacheKey, book.locations.save())
+          }
+        }
+        catch (error) {
+          console.warn('Failed to save location cache:', error)
+        }
       })
     }
   }
