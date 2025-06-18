@@ -29,6 +29,7 @@
   "account_register_error_email_already_used_with_like_wallet": "{email} was bound to {likeWallet} and cannot be used to register a new account. Please migrate your account.",
   "account_register_error_invalid_account_id": "Account ID {id} is invalid.",
   "account_register_timeout": "Registration has timed out, please start again.",
+  "affiliate_notice_description": "Recommended by {name} ✨",
   "app_description": "3ook.com is an AI reading companion coupled with a decentralized bookstore on web3, built by Liker Land. In 3ook.com, every book is both readable and audible, narrated by AI in the author's voice.",
   "app_header_shelf": "3ookshelf",
   "app_header_store": "3ookstore",

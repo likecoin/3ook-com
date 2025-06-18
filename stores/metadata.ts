@@ -1,4 +1,5 @@
 interface LikerInfo {
+  likerId: string
   displayName: string
   avatarSrc: string
   cosmosWallet: string
@@ -7,21 +8,47 @@ interface LikerInfo {
   isLikerPlus: boolean
 }
 
-export const useMetadataStore = defineStore('metadata', () => {
-  const likerInfoByWalletAddressMap = ref<Record<string, LikerInfo>>({})
+function normalizeLikerInfoFromResponseData(data: LikerInfoResponseData): LikerInfo {
+  return {
+    likerId: data.user,
+    displayName: data.displayName,
+    avatarSrc: data.avatar,
+    cosmosWallet: data.cosmosWallet,
+    likeWallet: data.likeWallet,
+    description: data.description,
+    isLikerPlus: data.isLikerPlus || false,
+  }
+}
 
-  const getLikerInfoByWalletAddress = computed(() => (walletAddress?: string) => walletAddress ? likerInfoByWalletAddressMap.value[walletAddress] : undefined)
+export const useMetadataStore = defineStore('metadata', () => {
+  const likerInfoByIdMap = ref<Record<string, LikerInfo>>({})
+  const likerIdByWalletAddressMap = ref<Record<string, string>>({})
+
+  const getLikerInfoById = computed(() => (id?: string) => {
+    if (!id) return undefined
+    return likerInfoByIdMap.value[id]
+  })
+
+  const getLikerInfoByWalletAddress = computed(() => (walletAddress?: string) => {
+    if (!walletAddress) return undefined
+    return likerInfoByIdMap.value[likerIdByWalletAddressMap.value[walletAddress]]
+  })
+
+  async function fetchLikerInfoById(likerId: string) {
+    const data = await fetchLikerPublicInfoById(likerId)
+    likerInfoByIdMap.value[likerId] = normalizeLikerInfoFromResponseData(data)
+  }
+
+  async function lazyFetchLikerInfoById(likerId: string) {
+    if (getLikerInfoById.value(likerId)) return
+    await fetchLikerInfoById(likerId)
+  }
 
   async function fetchLikerInfoByWalletAddress(walletAddress: string) {
-    const res = await fetchLikerPublicInfoByWalletAddress(walletAddress)
-    likerInfoByWalletAddressMap.value[walletAddress] = {
-      displayName: res.displayName,
-      avatarSrc: res.avatar,
-      cosmosWallet: res.cosmosWallet,
-      likeWallet: res.likeWallet,
-      description: res.description,
-      isLikerPlus: res.isLikerPlus || false,
-    }
+    const data = await fetchLikerPublicInfoByWalletAddress(walletAddress)
+    const likerId = data.user
+    likerIdByWalletAddressMap.value[walletAddress] = likerId
+    likerInfoByIdMap.value[likerId] = normalizeLikerInfoFromResponseData(data)
   }
 
   async function lazyFetchLikerInfoByWalletAddress(walletAddress: string) {
@@ -30,10 +57,14 @@ export const useMetadataStore = defineStore('metadata', () => {
   }
 
   return {
-    likerInfoByWalletAddressMap,
+    likerInfoByIdMap,
+    likerIdByWalletAddressMap,
 
+    getLikerInfoById,
     getLikerInfoByWalletAddress,
 
+    fetchLikerInfoById,
+    lazyFetchLikerInfoById,
     fetchLikerInfoByWalletAddress,
     lazyFetchLikerInfoByWalletAddress,
   }

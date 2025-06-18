@@ -337,6 +337,16 @@ export function fetchLikerPublicInfoByWalletAddress(
   return fetch<LikerInfoResponseData>(`/users/addr/${walletAddress}/min`, { query })
 }
 
+export function fetchLikerPublicInfoById(
+  id: string,
+  options: { nocache?: boolean } = {},
+): Promise<LikerInfoResponseData> {
+  const { fetch } = useLikeCoinAPI()
+  const query: Record<string, string> = {}
+  if (options.nocache) query.ts = `${Date.now()}`
+  return fetch<LikerInfoResponseData>(`/users/id/${id}/min`, { query })
+}
+
 export function getEncryptedArweaveLinkAPIEndpoint() {
   const config = useRuntimeConfig()
   return `${config.public.likeCoinAPIEndpoint}/arweave/v2/link`
