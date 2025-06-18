@@ -379,19 +379,21 @@ async function loadEPub() {
   ])
 
   try {
+    let isLocationLoaded = false
+    const locationCacheKey = `${bookFileCacheKey.value}-locations`
     if (window.localStorage) {
-      const locationCacheKey = `${bookFileCacheKey}-locations`
       const locationCache = localStorage.getItem(locationCacheKey)
       if (locationCache) {
         book.locations.load(locationCache)
+        isLocationLoaded = true
       }
-      else {
-        // NOTE: https://github.com/futurepress/epub.js/issues/278
-        // Break sections by 1000 chars for calculating percentage
-        book.locations.generate(1000).then(() => {
-          localStorage.setItem(locationCacheKey, book.locations.save())
-        })
-      }
+    }
+    if (!isLocationLoaded) {
+      // NOTE: https://github.com/futurepress/epub.js/issues/278
+      // Break sections by 1000 chars for calculating percentage
+      book.locations.generate(1000).then(() => {
+        localStorage.setItem(locationCacheKey, book.locations.save())
+      })
     }
   }
   catch (error) {
