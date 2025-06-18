@@ -27,16 +27,6 @@ const affiliateId = computed(() => {
   return from.value?.startsWith('@') ? from.value.slice(1) : undefined
 })
 
-const affiliateInfo = computed(() => {
-  return affiliateId.value ? metadataStore.getLikerInfoById(affiliateId.value) : undefined
-})
-
-const affiliateName = computed(() => {
-  return affiliateInfo.value?.displayName || affiliateInfo.value?.likerId || ''
-})
-
-const affiliateAvatarSrc = computed(() => affiliateInfo.value?.avatarSrc)
-
 async function fetchInfo() {
   if (!affiliateId.value) return
   try {
@@ -47,13 +37,21 @@ async function fetchInfo() {
   }
 }
 
-onMounted(async () => {
-  await fetchInfo()
-})
+await callOnce(affiliateId.value, fetchInfo)
 
 watch(affiliateId, async (newId, oldId) => {
   if (newId !== oldId) {
     await fetchInfo()
   }
 })
+
+const affiliateInfo = computed(() => {
+  return affiliateId.value ? metadataStore.getLikerInfoById(affiliateId.value) : undefined
+})
+
+const affiliateName = computed(() => {
+  return affiliateInfo.value?.displayName || affiliateInfo.value?.likerId || ''
+})
+
+const affiliateAvatarSrc = computed(() => affiliateInfo.value?.avatarSrc)
 </script>
