@@ -37,7 +37,9 @@ async function fetchInfo() {
   }
 }
 
-await callOnce(affiliateId.value, fetchInfo)
+if (affiliateId.value) {
+  await callOnce(affiliateId.value, fetchInfo)
+}
 
 watch(affiliateId, async (newId, oldId) => {
   if (newId !== oldId) {
