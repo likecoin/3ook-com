@@ -129,9 +129,12 @@ watch(
 
 watch(
   () => shouldLoadMore.value,
-  (shouldLoadMore) => {
-    if (shouldLoadMore) {
-      bookshelfStore.fetchItems()
+  async (loadMore) => {
+    if (loadMore) {
+      do {
+        await bookshelfStore.fetchItems()
+        await sleep(100)
+      } while (bookshelfStore.nextKey && shouldLoadMore.value)
     }
   },
 )
