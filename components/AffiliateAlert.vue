@@ -3,7 +3,7 @@
     v-if="affiliateId"
     ref="lazyLoadTrigger"
     :class="{ hidden: !affiliateInfo }"
-    :description="affiliateInfo ? $t('affiliate_notice_description', { name: affiliateName }) : ''"
+    :description="affiliateInfo ? $t('affiliate_alert_description', { name: affiliateName }) : ''"
     :avatar="affiliateInfo && affiliateAvatarSrc
       ? { src: affiliateAvatarSrc }
       : { icon: 'i-material-symbols-person-2-rounded' }"

@@ -29,7 +29,7 @@
   "account_register_error_email_already_used_with_like_wallet": "{email} 已綁定至 {likeWallet}，無法用作註冊新帳戶，請先遷移你的帳戶。",
   "account_register_error_invalid_account_id": "不接受 {id} 為帳戶 ID。",
   "account_register_timeout": "註冊帳戶已逾時，請重新開始。",
-  "affiliate_notice_description": "{name} 推薦給你 ✨",
+  "affiliate_alert_description": "{name} 推薦給你 ✨",
   "app_description": "3ook.com AI 書僮由 Liker Land 開發，附設分散式電子書店，每部作品均可讀又能聽，由 AI 以作者的聲線演繹。",
   "app_header_shelf": "書架",
   "app_header_store": "書店",
