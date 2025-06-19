@@ -88,18 +88,37 @@ export const useAccountStore = defineStore('account', () => {
     catch (error) {
       if (error instanceof FetchError) {
         switch (error.data?.error) {
-          case 'EMAIL_ALREADY_USED':
-            throw createError({
-              statusCode: 401,
-              data: {
-                description: getEmailAlreadyUsedErrorMessage({
-                  email: email as string,
-                  evmWallet: error.data?.evmWallet,
-                  likeWallet: error.data?.likeWallet,
-                }),
-              },
+          case 'EMAIL_ALREADY_USED':{
+            const config = useRuntimeConfig()
+            const migrationSiteURL = config.public.likeCoinV3BookMigrationSiteURL
+
+            const description = getEmailAlreadyUsedErrorMessage({
+              email: email as string,
+              evmWallet: error.data?.evmWallet,
+              likeWallet: error.data?.likeWallet,
             })
 
+            const modalOptions = {
+              title: error.data?.evmWallet
+                ? $t('account_register_error_use_default_wallet_title')
+                : $t('account_register_error_email_already_used_title'),
+              description,
+              ...(error.data?.evmWallet
+                ? {}
+                : {
+                    actions: [
+                      {
+                        label: $t('account_register_error_contact_support'),
+                        click: () => window.open(migrationSiteURL, '_blank'),
+                      },
+                    ],
+                  }),
+            }
+
+            errorModal.open(modalOptions)
+            error.data.message = 'EMAIL_ALREADY_USED'
+            throw error
+          }
           case 'EVM_WALLET_ALREADY_EXIST':
             // Already registered
             return true
@@ -341,6 +360,9 @@ export const useAccountStore = defineStore('account', () => {
     }
     catch (error) {
       if (error instanceof UserRejectedRequestError) {
+        return
+      }
+      if (error instanceof FetchError && error.data?.message === 'EMAIL_ALREADY_USED') {
         return
       }
       if (error instanceof FetchError && error.data?.message === 'LIKECOIN_WALLET_ADDRESS_NOT_FOUND') {
