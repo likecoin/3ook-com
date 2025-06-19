@@ -21,7 +21,7 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
     : legacyNFTClassIds.value.map(nftClassId => ({ nftClassId, nftIds: [] })),
   )
 
-  async function fetchItems({ isRefresh: shouldRefresh = false } = {}) {
+  async function fetchItems({ isRefresh: shouldRefresh = false, limit = 100 } = {}) {
     const isRefresh = shouldRefresh || (!items.value.length && !hasFetched.value)
     if (!hasLoggedIn.value || isFetching.value || (!isRefresh && !nextKey.value)) {
       return
@@ -31,7 +31,6 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
       isFetching.value = true
       let res: FetchLikeCoinChainNFTsResponseData | FetchLegacyLikeCoinChainNFTClassesResponseData
       const key = isRefresh ? undefined : nextKey.value?.toString()
-      const limit = 100
       if (accountStore.isEVMMode) {
         res = await fetchLikeCoinChainNFTs({
           nftOwner: user.value?.evmWallet,
