@@ -140,7 +140,6 @@
             leading-icon="i-material-symbols-contact-support"
             trailing-icon="i-material-symbols-chat-bubble-outline-rounded"
             color="neutral"
-            :disabled="!isCrispLoaded"
             size="lg"
             block
             @click="handleCustomerServiceLinkButtonClick"
@@ -205,14 +204,7 @@ const crispChatURL = computed(() => {
   url.searchParams.set('website_id', (crispId || '5c009125-5863-4059-ba65-43f177ca33f7'))
   return url.toString()
 })
-const isCrispLoaded = ref(false)
-const { instance: crisp, onLoaded: listenCrispLoaded } = useScriptCrisp()
-
-onMounted(() => {
-  listenCrispLoaded(() => {
-    isCrispLoaded.value = true
-  })
-})
+const { instance: crisp } = useScriptCrisp()
 
 async function handleLogin() {
   await accountStore.login()
