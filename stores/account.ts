@@ -89,6 +89,7 @@ export const useAccountStore = defineStore('account', () => {
     return {
       statusCode: 401,
       data: {
+        level: 'warning',
         title: shouldMigrate
           ? $t('account_register_error_email_already_used_migrate_title')
           : $t('account_register_error_email_already_used_by_wallet_title'),

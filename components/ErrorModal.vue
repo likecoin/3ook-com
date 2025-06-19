@@ -13,8 +13,8 @@
   >
     <template #title>
       <UIcon
-        class="text-red-500"
-        name="material-symbols-error"
+        :class="iconColorClass"
+        :name="iconName"
         size="24"
       />
 
@@ -83,6 +83,7 @@ import type {
 const emit = defineEmits(['close'])
 
 const props = defineProps<{
+  level?: 'error' | 'warning' | 'info'
   title: string
   description: string
   rawMessage: string
@@ -90,4 +91,28 @@ const props = defineProps<{
   actions?: Array<UButtonProps>
 }>()
 const { t: $t } = useI18n()
+
+const iconColorClass = computed(() => {
+  switch (props.level) {
+    case 'info':
+      return 'text-(--ui-info)'
+    case 'warning':
+      return 'text-(--ui-warning)'
+    case 'error':
+    default:
+      return 'text-(--ui-error)'
+  }
+})
+
+const iconName = computed(() => {
+  switch (props.level) {
+    case 'info':
+      return 'i-material-symbols-info-rounded'
+    case 'warning':
+      return 'i-material-symbols:warning-rounded'
+    case 'error':
+    default:
+      return 'i-material-symbols-error-circle-rounded'
+  }
+})
 </script>
