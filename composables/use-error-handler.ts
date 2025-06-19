@@ -82,6 +82,7 @@ export default function () {
       title: props.title || parseErrorData<string>(error, 'title') || $t('error_modal_title'),
       description,
       rawMessage: !handler ? `${url ? `${url}\n\n` : ''}${rawErrorMessage}` : undefined,
+      tags: parseErrorData(error, 'tags') || [],
       actions: parseErrorData(error, 'actions') || [],
       onClose: (typeof handler !== 'string' ? handler?.onClose : undefined) || props.onClose,
     })

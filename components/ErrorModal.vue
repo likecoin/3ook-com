@@ -35,6 +35,23 @@
         class="block not-first:mt-4 px-2 py-1 text-xs font-mono font-medium rounded-md border border-gray-300 bg-gray-100 break-all whitespace-pre-wrap"
         v-text="rawMessage"
       />
+
+      <ul
+        v-if="props.tags?.length"
+        class="flex flex-wrap mt-4 gap-2"
+      >
+        <li
+          v-for="(tag, index) in props.tags"
+          :key="index"
+        >
+          <UBadge
+            color="neutral"
+            variant="subtle"
+            size="sm"
+            v-bind="tag"
+          />
+        </li>
+      </ul>
     </template>
 
     <template
@@ -58,7 +75,10 @@
 </template>
 
 <script setup lang="ts">
-import type { ButtonProps as UButtonProps } from '@nuxt/ui'
+import type {
+  BadgeProps as UBadgeProps,
+  ButtonProps as UButtonProps,
+} from '@nuxt/ui'
 
 const emit = defineEmits(['close'])
 
@@ -66,6 +86,7 @@ const props = defineProps<{
   title: string
   description: string
   rawMessage: string
+  tags?: Array<UBadgeProps>
   actions?: Array<UButtonProps>
 }>()
 const { t: $t } = useI18n()
