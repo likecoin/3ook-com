@@ -72,7 +72,7 @@ export const useAccountStore = defineStore('account', () => {
     return $t('account_register_error_email_already_used', { email })
   }
 
-  function getErrorDataForEmailAlreadyUsed({
+  function getEmailAlreadyUsedErrorData({
     email,
     boundEVMWallet,
     boundLikeWallet,
@@ -126,7 +126,7 @@ export const useAccountStore = defineStore('account', () => {
       if (error instanceof FetchError) {
         switch (error.data?.error) {
           case 'EMAIL_ALREADY_USED':
-            throw createError(getErrorDataForEmailAlreadyUsed({
+            throw createError(getEmailAlreadyUsedErrorData({
               email: email as string,
               boundEVMWallet: error.data?.evmWallet,
               boundLikeWallet: error.data?.likeWallet,
@@ -238,7 +238,7 @@ export const useAccountStore = defineStore('account', () => {
               continue
             }
             case 'EMAIL_ALREADY_USED': {
-              await errorModal.open(getErrorDataForEmailAlreadyUsed({
+              await errorModal.open(getEmailAlreadyUsedErrorData({
                 email: payload?.email as string,
                 boundEVMWallet: error.data?.evmWallet,
                 boundLikeWallet: error.data?.likeWallet,
