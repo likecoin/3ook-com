@@ -132,6 +132,8 @@ watch(
   async (loadMore) => {
     if (loadMore) {
       do {
+        // HACK: prevent scrollbar stuck at bottom, causing infinite loading
+        window.scrollBy(0, -1)
         await bookshelfStore.fetchItems()
         await sleep(100)
       } while (bookshelfStore.nextKey && shouldLoadMore.value)
