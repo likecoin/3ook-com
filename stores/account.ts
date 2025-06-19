@@ -17,6 +17,7 @@ export const useAccountStore = defineStore('account', () => {
   const { errorModal, handleError } = useErrorHandler()
   const blockingModal = useBlockingModal()
   const { t: $t } = useI18n()
+  const { getLikeCoinV3BookMigrationSiteURL } = useLikeCoinV3MigrationSite()
 
   const loginModal = overlay.create(LoginModal)
   const registrationFormModal = overlay.create(RegistrationModal)
@@ -71,6 +72,42 @@ export const useAccountStore = defineStore('account', () => {
     return $t('account_register_error_email_already_used', { email })
   }
 
+  function getErrorDataForEmailAlreadyUsed({
+    email,
+    boundEVMWallet,
+    boundLikeWallet,
+  }: {
+    email: string
+    boundEVMWallet?: string
+    boundLikeWallet?: string
+  }) {
+    const shouldMigrate = !boundEVMWallet && !!boundLikeWallet
+    return {
+      statusCode: 401,
+      data: {
+        title: shouldMigrate
+          ? $t('account_register_error_email_already_used_migrate_title')
+          : $t('account_register_error_email_already_used_by_wallet_title'),
+        description: getEmailAlreadyUsedErrorMessage({
+          email,
+          evmWallet: boundEVMWallet,
+          likeWallet: boundLikeWallet,
+        }),
+        actions: shouldMigrate
+          ? [{
+              label: $t('account_register_error_contact_support'),
+              onclick: async () => {
+                await navigateTo(getLikeCoinV3BookMigrationSiteURL.value({ utmSource: 'login_email_already_used' }), {
+                  external: true,
+                  open: { target: '_blank' },
+                })
+              },
+            }]
+          : [],
+      },
+    }
+  }
+
   async function checkIsRegistered({
     walletAddress,
     email,
@@ -88,37 +125,13 @@ export const useAccountStore = defineStore('account', () => {
     catch (error) {
       if (error instanceof FetchError) {
         switch (error.data?.error) {
-          case 'EMAIL_ALREADY_USED':{
-            const config = useRuntimeConfig()
-            const migrationSiteURL = config.public.likeCoinV3BookMigrationSiteURL
-
-            const description = getEmailAlreadyUsedErrorMessage({
+          case 'EMAIL_ALREADY_USED':
+            throw createError(getErrorDataForEmailAlreadyUsed({
               email: email as string,
-              evmWallet: error.data?.evmWallet,
-              likeWallet: error.data?.likeWallet,
-            })
+              boundEVMWallet: error.data?.evmWallet,
+              boundLikeWallet: error.data?.likeWallet,
+            }))
 
-            const modalOptions = {
-              title: error.data?.evmWallet
-                ? $t('account_register_error_use_default_wallet_title')
-                : $t('account_register_error_email_already_used_title'),
-              description,
-              ...(error.data?.evmWallet
-                ? {}
-                : {
-                    actions: [
-                      {
-                        label: $t('account_register_error_contact_support'),
-                        click: () => window.open(migrationSiteURL, '_blank'),
-                      },
-                    ],
-                  }),
-            }
-
-            errorModal.open(modalOptions)
-            error.data.message = 'EMAIL_ALREADY_USED'
-            throw error
-          }
           case 'EVM_WALLET_ALREADY_EXIST':
             // Already registered
             return true
@@ -225,13 +238,11 @@ export const useAccountStore = defineStore('account', () => {
               continue
             }
             case 'EMAIL_ALREADY_USED': {
-              await errorModal.open({
-                description: getEmailAlreadyUsedErrorMessage({
-                  email: payload?.email as string,
-                  evmWallet: error.data?.evmWallet,
-                  likeWallet: error.data?.likeWallet,
-                }),
-              })
+              await errorModal.open(getErrorDataForEmailAlreadyUsed({
+                email: payload?.email as string,
+                boundEVMWallet: error.data?.evmWallet,
+                boundLikeWallet: error.data?.likeWallet,
+              }))
               continue
             }
             default:

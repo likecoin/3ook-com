@@ -6,7 +6,10 @@
       class: 'rounded-full',
       onClick: () => emit('close'),
     }"
-    :ui="{ title: 'flex items-center gap-2' }"
+    :ui="{
+      title: 'flex items-center gap-2',
+      footer: 'flex justify-end gap-2',
+    }"
   >
     <template #title>
       <UIcon
@@ -32,31 +35,38 @@
         class="block not-first:mt-4 px-2 py-1 text-xs font-mono font-medium rounded-md border border-gray-300 bg-gray-100 break-all whitespace-pre-wrap"
         v-text="rawMessage"
       />
+    </template>
 
-      <div
-        v-if="props.actions?.length"
-        class="flex justify-end gap-2 pt-4"
-      >
-        <UButton
-          v-for="(action, index) in props.actions"
-          :key="index"
-          :label="action.label"
-          color="neutral"
-          @click="action.click"
-        />
-      </div>
+    <template
+      v-if="props.actions?.length"
+      #footer
+    >
+      <UButton
+        :label="$t('error_modal_footer_cancel')"
+        color="neutral"
+        variant="outline"
+        @click="() => emit('close')"
+      />
+
+      <UButton
+        v-for="(action, index) in props.actions"
+        :key="index"
+        v-bind="action"
+      />
     </template>
   </UModal>
 </template>
 
 <script setup lang="ts">
+import type { ButtonProps as UButtonProps } from '@nuxt/ui'
+
 const emit = defineEmits(['close'])
 
 const props = defineProps<{
   title: string
   description: string
   rawMessage: string
-  actions?: Array<{ label: string, click: () => void }>
+  actions?: Array<UButtonProps>
 }>()
 const { t: $t } = useI18n()
 </script>
