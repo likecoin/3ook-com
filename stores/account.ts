@@ -107,7 +107,7 @@ export const useAccountStore = defineStore('account', () => {
               label: $t('account_register_error_contact_support'),
               color: 'secondary',
               variant: 'subtle',
-              onclick: async () => {
+              onClick: async () => {
                 await navigateTo(getLikeCoinV3BookMigrationSiteURL.value({ utmSource: 'login_email_already_used' }), {
                   external: true,
                   open: { target: '_blank' },
