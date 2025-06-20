@@ -109,7 +109,7 @@ const iconName = computed(() => {
     case 'info':
       return 'i-material-symbols-info-rounded'
     case 'warning':
-      return 'i-material-symbols:warning-rounded'
+      return 'i-material-symbols-warning-rounded'
     case 'error':
     default:
       return 'i-material-symbols-error-circle-rounded'
