@@ -188,7 +188,6 @@
 // NOTE: Set `layout` to false for injecting props into `<NuxtLayout/>`.
 definePageMeta({ layout: false })
 
-const config = useRuntimeConfig()
 const { t: $t } = useI18n()
 const { loggedIn: hasLoggedIn, user } = useUserSession()
 const accountStore = useAccountStore()
@@ -198,13 +197,8 @@ const { handleError } = useErrorHandler()
 useHead({
   title: $t('account_page_title'),
 })
-const crispId = String(config.public.scripts.crisp.id)
-const crispChatURL = computed(() => {
-  const url = new URL('https://go.crisp.chat/chat/embed')
-  url.searchParams.set('website_id', (crispId || '5c009125-5863-4059-ba65-43f177ca33f7'))
-  return url.toString()
-})
-const { instance: crisp } = useScriptCrisp()
+
+const { $crispChatURL: crispChatURL, $crisp: crisp } = useNuxtApp()
 
 async function handleLogin() {
   await accountStore.login()
@@ -240,7 +234,10 @@ async function handleLikerPlusButtonClick() {
 
 async function handleCustomerServiceLinkButtonClick() {
   if (!crisp) {
-    window.open(crispChatURL.value, '_blank')
+    await navigateTo(crispChatURL, {
+      external: true,
+      open: { target: '_blank' },
+    })
     useLogEvent('customer_service', { method: 'link' })
     return
   }

@@ -50,7 +50,7 @@ export function useLogEvent(eventName: string, eventParams: EventParams = {}) {
     console.error(`Failed to track event with Meta Pixel: ${eventName}`, eventParams)
   }
 
-  const { instance: crisp } = useScriptCrisp()
+  const { $crisp: crisp } = useNuxtApp()
   if (crisp) {
     try {
       const { items, ...params } = eventParams
@@ -98,7 +98,7 @@ export function useSetLogUser(user: User | null) {
   }
 
   // Set user info in Crisp
-  const { instance: crisp } = useScriptCrisp()
+  const { $crisp: crisp } = useNuxtApp()
   if (crisp) {
     try {
       if (!user) {
