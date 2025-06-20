@@ -341,7 +341,9 @@ export const useAccountStore = defineStore('account', () => {
     }
     catch (error) {
       // Disconnect any existing connection if error occurs
-      await disconnectAsync()
+      await disconnectAsync().catch(() => {
+        // Ignore disconnect errors
+      })
 
       if (error instanceof UserRejectedRequestError) {
         return
