@@ -13,6 +13,7 @@
         class="absolute z-10 top-4 right-4 cursor-pointer"
         variant="link"
         size="md"
+        @click="handleCloseButtonClick"
       />
 
       <aside class="relative flex items-center max-laptop:shrink-0 w-full bg-white overflow-hidden">
@@ -349,7 +350,10 @@ const onOpenUpdate = (open: boolean) => {
     if (props.onClose) {
       props.onClose()
     }
-    emit('close')
   }
+}
+
+const handleCloseButtonClick = () => {
+  emit('close')
 }
 </script>
