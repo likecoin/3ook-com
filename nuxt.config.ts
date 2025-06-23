@@ -19,6 +19,7 @@ export default defineNuxtConfig({
     'nuxt-auth-utils',
     '@vueuse/nuxt',
     'nuxt-security',
+    'nuxt-svgo',
     'nuxt-gtag',
     '@sentry/nuxt/module',
     '@nuxt/scripts',

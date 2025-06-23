@@ -8,7 +8,6 @@
       >
         <UButton
           class="flex-col gap-0"
-          :label="item.label"
           :icon="item.icon"
           :color="item.isActive ? 'primary' : 'neutral'"
           variant="link"
@@ -16,27 +15,45 @@
           size="xl"
           block
           :ui="{ label: 'text-xs' }"
-        />
+        >
+          <template #default>
+            <component
+              :is="item.labelComponent"
+              v-if="item.labelComponent"
+              class="!h-[12px] !w-auto"
+            />
+            <span
+              v-else
+              class="text-xs"
+            >{{ item.label }}</span>
+          </template>
+        </UButton>
       </li>
     </ul>
   </nav>
 </template>
 
 <script setup lang="ts">
+import StoreZhIcon from '~/assets/images/bookstore-header-zh.svg'
+import ShelfZhIcon from '~/assets/images/bookshelf-header-zh.svg'
+
 const { t: $t } = useI18n()
 const localeRoute = useLocaleRoute()
 const route = useRoute()
 const getRouteBaseName = useRouteBaseName()
+const { locale } = useI18n()
 
 const menuItems = computed(() => [
   {
     label: $t('tab_bar_store'),
+    labelZh: StoreZhIcon,
     to: { name: 'store' },
     icon: 'storefront-outline',
     iconActive: 'storefront',
   },
   {
     label: $t('tab_bar_shelf'),
+    labelZh: ShelfZhIcon,
     to: { name: 'shelf' },
     icon: 'auto-stories-outline',
     iconActive: 'auto-stories',
@@ -54,6 +71,7 @@ const menuItems = computed(() => [
     to: localeRoute(tab.to),
     icon: `i-material-symbols-${isActive ? tab.iconActive : tab.icon}`,
     isActive,
+    labelComponent: locale.value === 'zh-Hant' ? tab.labelZh : null,
   }
 }))
 </script>

@@ -19,7 +19,16 @@
                 { 'border-transparent': !item.isActive },
               ]"
               :to="item.to"
-            >{{ item.label }}</ULink>
+            >
+              <component
+                :is="item.labelZh"
+                v-if="locale === 'zh-Hant'"
+                class="!w-auto !h-[18px]"
+              />
+              <span v-else>
+                {{ item.label }}
+              </span>
+            </ULink>
           </li>
         </ul>
       </div>
@@ -48,6 +57,9 @@
 </template>
 
 <script setup lang="ts">
+import StoreZhIcon from '~/assets/images/bookstore-header-zh.svg'
+import ShelfZhIcon from '~/assets/images/bookshelf-header-zh.svg'
+
 const props = defineProps({
   isConnectHidden: Boolean,
 })
@@ -57,13 +69,25 @@ const { loggedIn: hasLoggedIn, user } = useUserSession()
 const localeRoute = useLocaleRoute()
 const route = useRoute()
 const getRouteBaseName = useRouteBaseName()
+const { locale } = useI18n()
 
-const menuItems = computed(() => [
-  { label: $t('app_header_store'), to: { name: 'store' } },
-  { label: $t('app_header_shelf'), to: { name: 'shelf' } },
-].map(item => ({
-  ...item,
-  to: localeRoute(item.to),
-  isActive: getRouteBaseName(route) === item.to.name,
-})))
+const menuItems = computed(() =>
+  [
+    {
+      label: $t('app_header_store'),
+      to: { name: 'store' },
+      labelZh: StoreZhIcon,
+    },
+    {
+      label: $t('app_header_shelf'),
+      to: { name: 'shelf' },
+      labelZh: ShelfZhIcon,
+    },
+    { label: $t('app_header_user'), to: { name: 'account' } },
+  ].map(item => ({
+    ...item,
+    to: localeRoute(item.to),
+    isActive: getRouteBaseName(route) === item.to.name,
+  })),
+)
 </script>
