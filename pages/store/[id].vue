@@ -601,6 +601,7 @@ async function handlePurchaseButtonClick() {
       from: getRouteQuery('from'),
       coupon: getRouteQuery('coupon'),
       language: locale.value.split('-')[0],
+      referrer: document.referrer,
       utmCampaign: getRouteQuery('utm_campaign'),
       utmMedium: getRouteQuery('utm_medium'),
       utmSource: getRouteQuery('utm_source'),
