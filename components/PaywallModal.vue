@@ -4,6 +4,7 @@
     :dismissible="props.isBackdropDismissible"
     :modal="isModalityOn"
     :ui="{ content: modalContentClass }"
+    @update:open="onOpenUpdate"
   >
     <template #content>
       <UButton
@@ -12,7 +13,6 @@
         class="absolute z-10 top-4 right-4 cursor-pointer"
         variant="link"
         size="md"
-        @click="handleCloseButtonClick"
       />
 
       <aside class="relative flex items-center max-laptop:shrink-0 w-full bg-white overflow-hidden">
@@ -270,6 +270,10 @@ const props = defineProps({
     type: Function as PropType<() => void>,
     required: true,
   },
+  onOpen: {
+    type: Function as PropType<() => void>,
+    required: false,
+  },
   onClose: {
     type: Function as PropType<() => void>,
     required: false,
@@ -329,10 +333,23 @@ const discountPercent = computed(() => {
   return Math.round((discountedAmount / originalYearlyCost) * 100)
 })
 
-const handleCloseButtonClick = () => {
-  if (typeof props.onClose === 'function') {
-    props.onClose()
+onMounted(() => {
+  if (props.onOpen) {
+    props.onOpen()
   }
-  emit('close')
+})
+
+const onOpenUpdate = (open: boolean) => {
+  if (open) {
+    if (props.onOpen) {
+      props.onOpen()
+    }
+  }
+  else {
+    if (props.onClose) {
+      props.onClose()
+    }
+    emit('close')
+  }
 }
 </script>

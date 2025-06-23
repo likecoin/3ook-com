@@ -40,6 +40,13 @@ const { t: $t } = useI18n()
 const localeRoute = useLocaleRoute()
 const accountStore = useAccountStore()
 const { handleError } = useErrorHandler()
+const { currency, yearlyPrice, monthlyPrice } = useSubscription()
+
+const route = useRoute()
+const getRouteBaseName = useRouteBaseName()
+
+const isRedirected = computed(() => !!getRouteQuery('redirect'))
+const isYearly = computed(() => getRouteQuery('period') === 'yearly')
 
 const isRefreshing = ref(true)
 const isRedirecting = ref(false)
@@ -52,6 +59,26 @@ onMounted(async () => {
   try {
     await accountStore.refreshSessionInfo()
     isRefreshing.value = false
+    if (isRedirected.value) {
+      useLogEvent('purchase', {
+        currency: currency.value,
+        value: isYearly.value ? yearlyPrice.value : monthlyPrice.value,
+        items: [{
+          id: `plus-beta-${isYearly.value ? 'yearly' : 'monthly'}`,
+          name: `Plus Beta (${isYearly.value ? 'yearly' : 'monthly'}`,
+          price: isYearly.value ? yearlyPrice.value : monthlyPrice.value,
+          currency: currency.value,
+          quantity: 1,
+        }],
+      })
+      await navigateTo(localeRoute({
+        name: getRouteBaseName(route),
+        query: {
+          ...route.query,
+          redirect: undefined,
+        },
+      }), { replace: true })
+    }
 
     setTimeout(redirectToShelf, 1000)
   }

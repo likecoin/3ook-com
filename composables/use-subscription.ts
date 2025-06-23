@@ -11,10 +11,26 @@ export function useSubscription() {
   const localeRoute = useLocaleRoute()
   const toast = useToast()
 
+  // TODO: Don't hardcode prices here
+  const yearlyPrice = ref(69.99)
+  const monthlyPrice = ref(6.99)
+  const currency = ref('USD')
   const isLikerPlus = computed(() => {
     if (!hasLoggedIn.value) return false
     return user.value?.isLikerPlus
   })
+
+  const eventPayload = computed(() => ({
+    currency: currency.value,
+    value: selectedPlan.value === 'yearly' ? yearlyPrice.value : monthlyPrice.value,
+    items: [{
+      id: `plus-beta-${selectedPlan.value}`,
+      name: `Plus Beta (${selectedPlan.value})`,
+      price: selectedPlan.value === 'yearly' ? yearlyPrice.value : monthlyPrice.value,
+      currency: currency.value,
+      quantity: 1,
+    }],
+  }))
 
   const overlay = useOverlay()
   const paywallModal = overlay.create(PaywallModal, {
@@ -22,8 +38,14 @@ export function useSubscription() {
       'modelValue': toRef(selectedPlan, 'value'),
       'onUpdate:modelValue': (val: 'monthly' | 'yearly') => {
         selectedPlan.value = val
+        useLogEvent('select_item', eventPayload.value)
+      },
+      'onOpen': () => {
+        useLogEvent('view_item', eventPayload.value)
       },
       'onSubscribe': startSubscription,
+      'discountedYearlyPrice': yearlyPrice.value,
+      'discountedMonthlyPrice': monthlyPrice.value,
       isProcessingSubscription,
     },
   })
@@ -37,7 +59,8 @@ export function useSubscription() {
   }
 
   async function startSubscription() {
-    useTrackEvent('subscription_button_click', { plan: selectedPlan.value })
+    useLogEvent('add_to_cart', eventPayload.value)
+    useLogEvent('subscription_button_click', { plan: selectedPlan.value })
 
     const isSubscribed = await redirectIfSubscribed()
     if (isSubscribed) return
@@ -59,6 +82,7 @@ export function useSubscription() {
         isProcessingSubscription.value = false
         return
       }
+      useLogEvent('checkout', eventPayload.value)
 
       const { url } = await fetchLikerPlusCheckoutLink({
         period: selectedPlan.value as 'monthly' | 'yearly',
@@ -75,6 +99,10 @@ export function useSubscription() {
 
   return {
     paywallModal,
+
+    yearlyPrice,
+    monthlyPrice,
+    currency,
 
     isLikerPlus,
     isProcessingSubscription,

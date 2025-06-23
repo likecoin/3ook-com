@@ -10,11 +10,11 @@ const config = useRuntimeConfig()
 const baseURL = config.public.baseURL
 
 const hasOpened = ref(false)
-
-// TODO: Don't hardcode prices here
-const yearlyPrice = ref('69.99')
-const monthlyPrice = ref('6.99')
-const currency = ref('USD')
+const {
+  yearlyPrice,
+  monthlyPrice,
+  currency,
+} = subscription
 
 const structuredData = computed(() => {
   const pageURL = `${baseURL}/pricing`
