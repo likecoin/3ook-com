@@ -207,6 +207,7 @@ async function startClaimingItems() {
           id: `${classId}-${priceIndex}`,
           quantity,
           price,
+          name: bookInfo?.name.value,
           currency: 'USD',
         }
       }),
