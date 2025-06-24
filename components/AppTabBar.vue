@@ -18,8 +18,8 @@
         >
           <template #default>
             <component
-              :is="item.labelComponent"
-              v-if="item.labelComponent"
+              :is="item.labelGraphic"
+              v-if="item.labelGraphic"
               class="!h-[12px] !w-auto"
             />
             <span
@@ -34,44 +34,44 @@
 </template>
 
 <script setup lang="ts">
-import StoreZhIcon from '~/assets/images/bookstore-header-zh.svg'
-import ShelfZhIcon from '~/assets/images/bookshelf-header-zh.svg'
-
 const { t: $t } = useI18n()
 const localeRoute = useLocaleRoute()
 const route = useRoute()
 const getRouteBaseName = useRouteBaseName()
-const { locale } = useI18n()
+const { getLabelComponent } = useGraphicLabel()
 
-const menuItems = computed(() => [
+const rawMenuItems = [
   {
-    label: $t('tab_bar_store'),
-    labelZh: StoreZhIcon,
-    to: { name: 'store' },
+    key: 'store',
+    labelKey: 'tab_bar_store',
     icon: 'storefront-outline',
     iconActive: 'storefront',
   },
   {
-    label: $t('tab_bar_shelf'),
-    labelZh: ShelfZhIcon,
-    to: { name: 'shelf' },
+    key: 'shelf',
+    labelKey: 'tab_bar_shelf',
     icon: 'auto-stories-outline',
     iconActive: 'auto-stories',
   },
   {
-    label: $t('tab_bar_user'),
-    to: { name: 'account' },
+    key: 'account',
+    labelKey: 'tab_bar_user',
     icon: 'person-outline-rounded',
     iconActive: 'person-rounded',
   },
-].map((tab) => {
-  const isActive = getRouteBaseName(route) === tab.to.name
-  return {
-    ...tab,
-    to: localeRoute(tab.to),
-    icon: `i-material-symbols-${isActive ? tab.iconActive : tab.icon}`,
-    isActive,
-    labelComponent: locale.value === 'zh-Hant' ? tab.labelZh : null,
-  }
-}))
+]
+
+const menuItems = computed(() =>
+  rawMenuItems.map((tab) => {
+    const isActive = getRouteBaseName(route) === tab.key
+    const to = localeRoute({ name: tab.key })
+    return {
+      label: $t(tab.labelKey),
+      to,
+      icon: `i-material-symbols-${isActive ? tab.iconActive : tab.icon}`,
+      isActive,
+      labelGraphic: getLabelComponent(tab.key),
+    }
+  }),
+)
 </script>

@@ -21,9 +21,9 @@
               :to="item.to"
             >
               <component
-                :is="item.labelZh"
-                v-if="locale === 'zh-Hant'"
-                class="!w-auto !h-[18px]"
+                :is="item.labelGraphic"
+                v-if="item.labelGraphic"
+                class="!w-auto !h-[16px]"
               />
               <span v-else>
                 {{ item.label }}
@@ -57,9 +57,6 @@
 </template>
 
 <script setup lang="ts">
-import StoreZhIcon from '~/assets/images/bookstore-header-zh.svg'
-import ShelfZhIcon from '~/assets/images/bookshelf-header-zh.svg'
-
 const props = defineProps({
   isConnectHidden: Boolean,
 })
@@ -69,25 +66,22 @@ const { loggedIn: hasLoggedIn, user } = useUserSession()
 const localeRoute = useLocaleRoute()
 const route = useRoute()
 const getRouteBaseName = useRouteBaseName()
-const { locale } = useI18n()
+const { getLabelComponent } = useGraphicLabel()
+
+const rawMenuItems = [
+  { key: 'store', labelKey: 'app_header_store' },
+  { key: 'shelf', labelKey: 'app_header_shelf' },
+]
 
 const menuItems = computed(() =>
-  [
-    {
-      label: $t('app_header_store'),
-      to: { name: 'store' },
-      labelZh: StoreZhIcon,
-    },
-    {
-      label: $t('app_header_shelf'),
-      to: { name: 'shelf' },
-      labelZh: ShelfZhIcon,
-    },
-    { label: $t('app_header_user'), to: { name: 'account' } },
-  ].map(item => ({
-    ...item,
-    to: localeRoute(item.to),
-    isActive: getRouteBaseName(route) === item.to.name,
-  })),
+  rawMenuItems.map((item) => {
+    const to = localeRoute({ name: item.key })
+    return {
+      label: $t(item.labelKey),
+      to,
+      isActive: getRouteBaseName(route) === item.key,
+      labelGraphic: getLabelComponent(item.key),
+    }
+  }),
 )
 </script>
