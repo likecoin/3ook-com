@@ -421,7 +421,7 @@ async function loadEPub() {
       const href = sectionHrefByFilename[item.href]
       return href ? { ...item, href } : null
     })
-    .filter((item: NavItem) => !!item)
+    .filter((item): item is NavItem => item !== null)
   activeNavItemHref.value = book.spine.first().href
   lastSectionIndex.value = book.spine.last().index
 
