@@ -8,6 +8,7 @@
       >
         <UButton
           class="flex-col gap-0"
+          :label="item.label"
           :icon="item.icon"
           :color="item.isActive ? 'primary' : 'neutral'"
           variant="link"
@@ -16,16 +17,14 @@
           block
           :ui="{ label: 'text-xs' }"
         >
-          <template #default>
+          <template
+            v-if="item.labelGraphic"
+            #default
+          >
             <component
               :is="item.labelGraphic"
-              v-if="item.labelGraphic"
               style="width: auto; height: 12px;"
             />
-            <span
-              v-else
-              class="text-xs"
-            >{{ item.label }}</span>
           </template>
         </UButton>
       </li>
