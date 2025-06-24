@@ -66,13 +66,13 @@ const route = useRoute()
 const getRouteBaseName = useRouteBaseName()
 const { getLabelGraphic } = useGraphicLabel()
 
-const rawMenuItems = [
+const rawMenuItems = computed(() => [
   { key: 'store', label: $t('app_header_store') },
   { key: 'shelf', label: $t('app_header_shelf') },
-]
+])
 
 const menuItems = computed(() =>
-  rawMenuItems.map((item) => {
+  rawMenuItems.value.map((item) => {
     const to = localeRoute({ name: item.key })
     return {
       ...item,

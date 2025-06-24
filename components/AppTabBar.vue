@@ -39,7 +39,7 @@ const route = useRoute()
 const getRouteBaseName = useRouteBaseName()
 const { getLabelGraphic } = useGraphicLabel()
 
-const rawMenuItems = [
+const rawMenuItems = computed(() => [
   {
     key: 'store',
     label: $t('tab_bar_store'),
@@ -58,10 +58,10 @@ const rawMenuItems = [
     icon: 'i-material-symbols-person-outline-rounded',
     iconActive: 'i-material-symbols-person-rounded',
   },
-]
+])
 
 const menuItems = computed(() =>
-  rawMenuItems.map((tab) => {
+  rawMenuItems.value.map((tab) => {
     const isActive = getRouteBaseName(route) === tab.key
     const to = localeRoute({ name: tab.key })
     return {
