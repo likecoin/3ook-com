@@ -82,7 +82,7 @@ export function useSubscription() {
         isProcessingSubscription.value = false
         return
       }
-      useLogEvent('checkout', eventPayload.value)
+      useLogEvent('begin_checkout', eventPayload.value)
 
       const { url } = await fetchLikerPlusCheckoutLink({
         period: selectedPlan.value as 'monthly' | 'yearly',
