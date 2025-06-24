@@ -13,7 +13,7 @@ export function useGraphicLabel() {
 
   const getLabelGraphic = (key: string) => {
     const icons = graphicsMap[locale.value as keyof typeof graphicsMap]
-    return icons?.[key] || null
+    return icons?.[key as keyof typeof icons] || null
   }
 
   return { getLabelGraphic }
