@@ -6,7 +6,7 @@ const graphicsMap = {
     store: StoreZhGraphic,
     shelf: ShelfZhGraphic,
   },
-} as const
+}
 
 export function useGraphicLabel() {
   const { locale } = useI18n()
