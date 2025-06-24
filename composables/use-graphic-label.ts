@@ -1,5 +1,5 @@
-import StoreZhIcon from '~/assets/images/bookstore-header-zh.svg'
-import ShelfZhIcon from '~/assets/images/bookshelf-header-zh.svg'
+import StoreZhIcon from '~/assets/images/nav/bookstore-zh.svg'
+import ShelfZhIcon from '~/assets/images/nav/bookshelf-zh.svg'
 
 const graphicsMap = {
   'zh-Hant': {
