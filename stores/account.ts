@@ -316,6 +316,9 @@ export const useAccountStore = defineStore('account', () => {
           // User canceled the registration
           return
         }
+        useLogEvent('sign_up', {
+          method: connector.id,
+        })
       }
 
       // Prepare message for login
