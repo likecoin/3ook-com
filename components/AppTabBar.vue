@@ -20,7 +20,7 @@
             <component
               :is="item.labelGraphic"
               v-if="item.labelGraphic"
-              class="!h-[12px] !w-auto"
+              style="width: auto; height: 12px;"
             />
             <span
               v-else

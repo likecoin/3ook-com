@@ -23,7 +23,7 @@
               <component
                 :is="item.labelGraphic"
                 v-if="item.labelGraphic"
-                class="!w-auto !h-[16px]"
+                style="width: auto; height: 16px;"
               />
               <span v-else>
                 {{ item.label }}
