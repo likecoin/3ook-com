@@ -1,24 +1,20 @@
-import StoreZhIcon from '~/assets/images/nav/bookstore-zh.svg'
-import ShelfZhIcon from '~/assets/images/nav/bookshelf-zh.svg'
+import StoreZhGraphic from '~/assets/images/nav/bookstore-zh.svg'
+import ShelfZhGraphic from '~/assets/images/nav/bookshelf-zh.svg'
 
 const graphicsMap = {
   'zh-Hant': {
-    store: StoreZhIcon,
-    shelf: ShelfZhIcon,
+    store: StoreZhGraphic,
+    shelf: ShelfZhGraphic,
   },
 } as const
 
 export function useGraphicLabel() {
   const { locale } = useI18n()
 
-  const getLabelComponent = (key: string) => {
-    return computed(() => {
-      const icons = graphicsMap[locale.value as keyof typeof graphicsMap]
-      return icons?.[key] || null
-    }).value
+  const getLabelGraphic = (key: string) => {
+    const icons = graphicsMap[locale.value as keyof typeof graphicsMap]
+    return icons?.[key] || null
   }
 
-  return {
-    getLabelComponent,
-  }
+  return { getLabelGraphic }
 }

@@ -38,26 +38,26 @@ const { t: $t } = useI18n()
 const localeRoute = useLocaleRoute()
 const route = useRoute()
 const getRouteBaseName = useRouteBaseName()
-const { getLabelComponent } = useGraphicLabel()
+const { getLabelGraphic } = useGraphicLabel()
 
 const rawMenuItems = [
   {
     key: 'store',
-    labelKey: 'tab_bar_store',
-    icon: 'storefront-outline',
-    iconActive: 'storefront',
+    label: $t('tab_bar_store'),
+    icon: 'i-material-symbols-storefront-outline',
+    iconActive: 'i-material-symbols-storefront',
   },
   {
     key: 'shelf',
-    labelKey: 'tab_bar_shelf',
-    icon: 'auto-stories-outline',
-    iconActive: 'auto-stories',
+    label: $t('tab_bar_shelf'),
+    icon: 'i-material-symbols-auto-stories-outline',
+    iconActive: 'i-material-symbols-auto-stories',
   },
   {
     key: 'account',
-    labelKey: 'tab_bar_user',
-    icon: 'person-outline-rounded',
-    iconActive: 'person-rounded',
+    label: $t('tab_bar_user'),
+    icon: 'i-material-symbols-person-outline-rounded',
+    iconActive: 'i-material-symbols-person-rounded',
   },
 ]
 
@@ -66,11 +66,11 @@ const menuItems = computed(() =>
     const isActive = getRouteBaseName(route) === tab.key
     const to = localeRoute({ name: tab.key })
     return {
-      label: $t(tab.labelKey),
+      label: tab.label,
       to,
-      icon: `i-material-symbols-${isActive ? tab.iconActive : tab.icon}`,
+      icon: isActive ? tab.iconActive : tab.icon,
       isActive,
-      labelGraphic: getLabelComponent(tab.key),
+      labelGraphic: getLabelGraphic(tab.key),
     }
   }),
 )

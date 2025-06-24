@@ -25,9 +25,7 @@
                 v-if="item.labelGraphic"
                 style="width: auto; height: 16px;"
               />
-              <span v-else>
-                {{ item.label }}
-              </span>
+              <span v-else>{{ item.label }}</span>
             </ULink>
           </li>
         </ul>
@@ -66,21 +64,21 @@ const { loggedIn: hasLoggedIn, user } = useUserSession()
 const localeRoute = useLocaleRoute()
 const route = useRoute()
 const getRouteBaseName = useRouteBaseName()
-const { getLabelComponent } = useGraphicLabel()
+const { getLabelGraphic } = useGraphicLabel()
 
 const rawMenuItems = [
-  { key: 'store', labelKey: 'app_header_store' },
-  { key: 'shelf', labelKey: 'app_header_shelf' },
+  { key: 'store', labelKey: $t('app_header_store') },
+  { key: 'shelf', labelKey: $t('app_header_shelf') },
 ]
 
 const menuItems = computed(() =>
   rawMenuItems.map((item) => {
     const to = localeRoute({ name: item.key })
     return {
-      label: $t(item.labelKey),
+      label: item.labelKey,
       to,
       isActive: getRouteBaseName(route) === item.key,
-      labelGraphic: getLabelComponent(item.key),
+      labelGraphic: getLabelGraphic(item.key),
     }
   }),
 )
