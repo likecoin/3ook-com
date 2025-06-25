@@ -2,7 +2,7 @@
   <div>
     <AppHeader />
 
-    <main class="flex flex-col items-center w-full max-w-[1440px] mx-auto px-4 laptop:px-12 grow">
+    <main class="flex flex-col items-center grow w-full max-w-[1440px] mx-auto px-4 laptop:px-12 pb-16">
       <UCard
         v-if="!hasLoggedIn"
         class="w-full max-w-sm mt-8"
@@ -14,7 +14,7 @@
         </template>
       </UCard>
       <div
-        v-else-if="bookshelfStore.items.length === 0 && !bookshelfStore.isFetching && bookshelfStore.hasFetched"
+        v-else-if="itemsCount === 0 && !bookshelfStore.isFetching && bookshelfStore.hasFetched"
         class="flex flex-col items-center m-auto"
       >
         <UIcon
@@ -38,64 +38,34 @@
       <ul
         v-else
         :class="[
-          'grid',
-
-          'grid-cols-3',
-          'tablet:grid-cols-4',
-          'laptop:grid-cols-5',
-          'desktop:grid-cols-6',
-          'widescreen:grid-cols-7',
-
-          'gap-x-3 tablet:gap-x-6',
-          'gap-y-6 tablet:gap-y-11',
+          ...gridClass,
 
           'w-full',
-          'pt-4',
-          'pb-16',
+          'mt-4',
         ]"
       >
         <BookshelfItem
-          v-for="item in bookshelfStore.items"
+          v-for="(item, index) in bookshelfStore.items"
           :id="item.nftClassId"
           :key="item.nftClassId"
+          :class="getGridItemClassesByIndex(index)"
           :nft-class-id="item.nftClassId"
           :nft-ids="item.nftIds"
           @open="handleBookshelfItemOpen"
           @download="handleBookshelfItemDownload"
         />
-
-        <li
-          v-if="bookshelfStore.isFetching || !bookshelfStore.hasFetched"
-          :class="[
-            'flex',
-            'justify-center',
-
-            'col-span-3',
-            'tablet:col-span-4',
-            'laptop:col-span-5',
-            'desktop:col-span-6',
-            'widescreen:col-span-7',
-
-            'pt-16',
-            'py-48',
-          ]"
-        >
-          <UIcon
-            class="animate-spin"
-            name="material-symbols-progress-activity"
-            size="48"
-          />
-        </li>
-        <ClientOnly
-          v-else-if="bookshelfStore.nextKey"
-          fallback-tag="li"
-        >
-          <li
-            ref="infiniteScrollDetector"
-            :key="bookshelfStore.nextKey"
-          />
-        </ClientOnly>
       </ul>
+      <div
+        v-if="hasMoreItems"
+        ref="infiniteScrollDetector"
+        class="flex justify-center py-48"
+      >
+        <UIcon
+          class="animate-spin"
+          name="material-symbols-progress-activity"
+          size="48"
+        />
+      </div>
     </main>
   </div>
 </template>
@@ -110,6 +80,14 @@ const shouldLoadMore = useElementVisibility(infiniteScrollDetectorElement)
 
 useHead({
   title: $t('shelf_page_title'),
+})
+
+const itemsCount = computed(() => bookshelfStore.items.length)
+const hasMoreItems = computed(() => !!bookshelfStore.nextKey)
+
+const { gridClass, getGridItemClassesByIndex } = usePaginatedGrid({
+  itemsCount,
+  hasMore: hasMoreItems,
 })
 
 onMounted(async () => {
