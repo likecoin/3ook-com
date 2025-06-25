@@ -349,7 +349,7 @@ const nftStore = useNFTStore()
 const { handleError } = useErrorHandler()
 const { getAnalyticsParameters } = useAnalytics()
 
-const nftClassId = computed(() => getRouteParam('id'))
+const nftClassId = computed(() => getRouteParam('classId'))
 const {
   generateBookStructuredData,
   generateOGMetaTags,
@@ -358,7 +358,7 @@ const {
 if (nftClassId.value !== nftClassId.value.toLowerCase()) {
   await navigateTo(localeRoute({
     name: getRouteBaseName(route),
-    params: { id: nftClassId.value.toLowerCase() },
+    params: { classId: nftClassId.value.toLowerCase() },
     query: route.query,
   }), { replace: true })
 }

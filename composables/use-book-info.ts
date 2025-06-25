@@ -168,8 +168,8 @@ export default function ({ nftClassId = '' }: { nftClassId?: string } = {}) {
   const firstUserOwnedNFTId = computed(() => userOwnedNFTIds.value[0])
 
   const productPageRoute = computed(() => localeRoute({
-    name: 'store-id',
-    params: { id: nftClassId },
+    name: 'store-classId',
+    params: { classId: nftClassId },
   }))
 
   function getIsAutoDelivery(index?: number) {
