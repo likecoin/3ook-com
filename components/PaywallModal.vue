@@ -49,6 +49,7 @@
             />
             <ul
               :class="[
+                'whitespace-pre-wrap',
                 'space-y-4 text-left',
                 '*:flex *:items-start',
                 '[&>li>span:first-child]:shrink-0',
