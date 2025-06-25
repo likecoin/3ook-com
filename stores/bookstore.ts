@@ -3,6 +3,7 @@ interface BookstoreCMSTagItem {
   isFetching: boolean
   hasFetched: boolean
   offset?: string
+  ts?: number
 }
 
 export const useBookstoreStore = defineStore('bookstore', () => {
@@ -43,11 +44,13 @@ export const useBookstoreStore = defineStore('bookstore', () => {
           isFetching: false,
           hasFetched: false,
           offset: undefined,
+          ts: Date.now(),
         }
       }
       bookstoreCMSTagsByIdMap.value[tagId].isFetching = true
       const result = await fetchBookstoreCMSProductsByTagId(tagId, {
         offset: isRefresh ? undefined : bookstoreCMSTagsByIdMap.value[tagId]?.offset,
+        ts: bookstoreCMSTagsByIdMap.value[tagId].ts,
       })
 
       if (isRefresh) {

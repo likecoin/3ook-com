@@ -209,12 +209,21 @@ export interface FetchBookstoreCMSProductsByTagIdResponseData {
   offset?: string
 }
 
-export function fetchBookstoreCMSProductsByTagId(tagId: string, { offset, limit = 100 }: { offset?: string, limit?: number }) {
+export function fetchBookstoreCMSProductsByTagId(tagId: string, {
+  offset,
+  limit = 100,
+  ts,
+}: {
+  offset?: string
+  limit?: number
+  ts?: number
+} = {}) {
   return $fetch<FetchBookstoreCMSProductsByTagIdResponseData>('/api/store/products', {
     query: {
       tag: tagId,
       offset,
       limit,
+      ts,
     },
   })
 }
