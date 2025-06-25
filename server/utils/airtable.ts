@@ -1,16 +1,5 @@
-function normalizeTagIdForViewName(viewName: string) {
-  switch (viewName) {
-    case 'landing':
-      return 'Landing Page'
-    case 'listing-zh':
-      return 'Listing Page (Chinese)'
-    case 'listing-en':
-      return 'Listing Page (English)'
-    case 'all':
-      return 'All'
-    default:
-      return viewName
-  }
+function normalizeTagIdForViewName(tagId: string) {
+  return `${tagId}-v3`
 }
 
 export interface FetchAirtableCMSProductsByTagIdResponseData {
@@ -99,7 +88,6 @@ export async function fetchAirtableCMSProductsByTagId(
         Authorization: `Bearer ${config.airtableAPISecret}`,
       },
       params: {
-        filterByFormula: 'AND(NOT(Hidden), Chain = "evm")',
         pageSize,
         view: normalizeTagIdForViewName(tagId),
         offset,
