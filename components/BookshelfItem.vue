@@ -135,6 +135,7 @@ const menuItems = computed<DropdownMenuItem[]>(() => {
           downloadURL({
             name: contentURL.name,
             type: contentURL.type,
+            fileIndex: contentURL.index,
           }),
       })
     }
@@ -177,12 +178,13 @@ function openContentURL(contentURL: ContentURL) {
   })
 }
 
-async function downloadURL({ name, type }: { name: string, type: string }) {
+async function downloadURL({ name, type, fileIndex }: { name: string, type: string, fileIndex?: number }) {
   await downloadBookFile({
     nftClassId: props.nftClassId,
     nftId: props.nftIds?.[0] || bookInfo.firstUserOwnedNFTId.value,
     isCustomMessageEnabled: bookInfo.isCustomMessageEnabled.value,
     filename: name,
+    fileIndex,
     type,
   })
   emit('download', {

@@ -35,14 +35,14 @@ export function useBookDownload() {
   const downloadBookFile = async ({
     nftClassId,
     nftId,
-    fileIndex = '0',
+    fileIndex = 0,
     isCustomMessageEnabled,
     filename,
     type,
   }: {
     nftClassId: string
     nftId: string
-    fileIndex?: string
+    fileIndex?: number
     isCustomMessageEnabled: boolean
     filename: string
     type: string
