@@ -7,10 +7,10 @@
 </template>
 
 <script setup lang="ts">
-import cosmostation from '~/assets/images/login-connectors/cosmostation.svg'
-import keplr from '~/assets/images/login-connectors/keplr.svg'
-import metamask from '~/assets/images/login-connectors/metamask.svg'
-import rabby from '~/assets/images/login-connectors/rabby.svg'
+import cosmostation from '~/assets/images/login-connectors/cosmostation.svg?url'
+import keplr from '~/assets/images/login-connectors/keplr.svg?url'
+import metamask from '~/assets/images/login-connectors/metamask.svg?url'
+import rabby from '~/assets/images/login-connectors/rabby.svg?url'
 
 const props = defineProps<{
   connectorId: string
