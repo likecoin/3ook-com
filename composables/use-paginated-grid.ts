@@ -51,10 +51,13 @@ export default function usePaginatedGrid(props: {
 
   function getGridItemClassesByIndex(index: number) {
     const classes: string[] = []
-    if (hasMore.value && index >= itemsCount.value - columnMax.value - 1) {
-      for (let column = columnMin.value; column <= columnMax.value; column++) {
-        if (isInIncompleteRow(index, column)) {
-          classes.push(getColumnClass(column).gridItem)
+    if (hasMore.value) {
+      const isPossiblyLastRow = index >= itemsCount.value - 1 - columnMax.value
+      if (isPossiblyLastRow) {
+        for (let column = columnMin.value; column <= columnMax.value; column++) {
+          if (isInIncompleteRow(index, column)) {
+            classes.push(getColumnClass(column).gridItem)
+          }
         }
       }
     }
