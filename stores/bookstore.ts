@@ -57,10 +57,15 @@ export const useBookstoreStore = defineStore('bookstore', () => {
         bookstoreCMSTagsByIdMap.value[tagId].items.push(...result.records)
       }
       bookstoreCMSTagsByIdMap.value[tagId].offset = result.offset
+      bookstoreCMSTagsByIdMap.value[tagId].hasFetched = true
+    }
+    catch (error) {
+      // HACK: When `hasFetched` is placed inside the finally block, it will execute before `items` are updated.
+      bookstoreCMSTagsByIdMap.value[tagId].hasFetched = true
+      throw error
     }
     finally {
       bookstoreCMSTagsByIdMap.value[tagId].isFetching = false
-      bookstoreCMSTagsByIdMap.value[tagId].hasFetched = true
     }
   }
 
