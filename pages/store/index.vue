@@ -21,7 +21,7 @@
       <ul
         v-else
         :class="[
-          ...gridClass,
+          ...gridClasses,
 
           'w-full',
           'mt-4',
@@ -70,7 +70,7 @@ const tag = computed(() => bookstoreStore.getBookstoreCMSTagById(tagId.value))
 const itemsCount = computed(() => tag.value.items.length)
 const hasMoreItems = computed(() => !!tag.value.nextItemsKey)
 
-const { gridClass, getGridItemClassesByIndex } = usePaginatedGrid({
+const { gridClasses, getGridItemClassesByIndex } = usePaginatedGrid({
   itemsCount,
   hasMore: hasMoreItems,
 })

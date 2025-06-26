@@ -38,7 +38,7 @@
       <ul
         v-else
         :class="[
-          ...gridClass,
+          ...gridClasses,
 
           'w-full',
           'mt-4',
@@ -85,7 +85,7 @@ useHead({
 const itemsCount = computed(() => bookshelfStore.items.length)
 const hasMoreItems = computed(() => !!bookshelfStore.nextKey)
 
-const { gridClass, getGridItemClassesByIndex } = usePaginatedGrid({
+const { gridClasses, getGridItemClassesByIndex } = usePaginatedGrid({
   itemsCount,
   hasMore: hasMoreItems,
 })

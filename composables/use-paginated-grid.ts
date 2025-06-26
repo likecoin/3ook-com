@@ -27,7 +27,7 @@ export default function usePaginatedGrid(props: {
   const itemsCount = computed(() => toValue(props.itemsCount) || 0)
   const hasMore = computed(() => toValue(props.hasMore) || false)
 
-  const gridClass = computed(() => {
+  const gridClasses = computed(() => {
     const classes = ['grid']
     for (let column = columnMin.value; column <= columnMax.value; column++) {
       classes.push(getColumnClass(column).grid)
@@ -62,7 +62,7 @@ export default function usePaginatedGrid(props: {
   }
 
   return {
-    gridClass,
+    gridClasses,
     getGridItemClassesByIndex,
   }
 }
