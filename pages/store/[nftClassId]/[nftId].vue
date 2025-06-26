@@ -1,10 +1,10 @@
 <script setup lang="ts">
 const route = useRoute()
 const localeRoute = useLocaleRoute()
-const classId = computed(() => getRouteParam('classId'))
+const nftClassId = computed(() => getRouteParam('nftClassId'))
 await navigateTo(localeRoute({
-  name: 'store-classId',
-  params: { classId: classId.value },
+  name: 'store-nftClassId',
+  params: { nftClassId: nftClassId.value },
   query: route.query,
 }))
 </script>
