@@ -1,3 +1,13 @@
+export function getAirtableCMSFetch() {
+  const config = useRuntimeConfig()
+  return $fetch.create({
+    baseURL: `https://api.airtable.com/v0/${config.public.airtableCMSBaseId}`,
+    headers: {
+      Authorization: `Bearer ${config.airtableAPISecret}`,
+    },
+  })
+}
+
 function normalizeTagIdForViewName(tagId: string) {
   return `${tagId}-v3`
 }
@@ -61,12 +71,10 @@ export async function fetchAirtableCMSProductsByTagId(
   { pageSize = 100, offset }: { pageSize?: number, offset?: string } = {},
 ): Promise<FetchBookstoreCMSProductsResponseData> {
   const config = useRuntimeConfig()
-  const results = await $fetch<FetchAirtableCMSProductsByTagIdResponseData>(
-    `https://api.airtable.com/v0/${config.public.airtableCMSBaseId}/${config.public.airtableCMSProductsTableId}`,
+  const fetch = getAirtableCMSFetch()
+  const results = await fetch<FetchAirtableCMSProductsByTagIdResponseData>(
+    `/${config.public.airtableCMSProductsTableId}`,
     {
-      headers: {
-        Authorization: `Bearer ${config.airtableAPISecret}`,
-      },
       params: {
         pageSize,
         view: normalizeTagIdForViewName(tagId),
