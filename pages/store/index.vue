@@ -4,7 +4,7 @@
 
     <main class="flex flex-col items-center grow w-full max-w-[1440px] mx-auto px-4 laptop:px-12 pb-16">
       <div
-        v-if="itemsCount === 0 && !tag.isFetchingItems && tag.hasFetchedItems"
+        v-if="itemsCount === 0 && !products.isFetchingItems && products.hasFetchedItems"
         class="flex flex-col items-center m-auto"
       >
         <UIcon
@@ -28,7 +28,7 @@
         ]"
       >
         <BookstoreItem
-          v-for="(item, index) in tag.items"
+          v-for="(item, index) in products.items"
           :id="item.classId"
           :key="item.classId"
           :class="getGridItemClassesByIndex(index)"
@@ -66,9 +66,9 @@ useHead({
 
 const tagId = ref('latest')
 
-const tag = computed(() => bookstoreStore.getBookstoreCMSTagById(tagId.value))
-const itemsCount = computed(() => tag.value.items.length)
-const hasMoreItems = computed(() => !!tag.value.nextItemsKey)
+const products = computed(() => bookstoreStore.getBookstoreCMSProductsByTagId(tagId.value))
+const itemsCount = computed(() => products.value.items.length)
+const hasMoreItems = computed(() => !!products.value.nextItemsKey)
 
 const { gridClasses, getGridItemClassesByIndex } = usePaginatedGrid({
   itemsCount,

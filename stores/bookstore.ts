@@ -1,4 +1,4 @@
-interface BookstoreCMSTagItem {
+interface BookstoreCMSTagProducts {
   items: BookstoreCMSProductItem[]
   isFetching: boolean
   hasFetched: boolean
@@ -19,13 +19,13 @@ export const useBookstoreStore = defineStore('bookstore', () => {
 
   /* Bookstore CMS */
 
-  const bookstoreCMSTagsByIdMap = ref<Record<string, BookstoreCMSTagItem>>({})
-  const getBookstoreCMSTagById = computed(() => (tagId: string) => {
+  const bookstoreCMSProductsByTagIdMap = ref<Record<string, BookstoreCMSTagProducts>>({})
+  const getBookstoreCMSProductsByTagId = computed(() => (tagId: string) => {
     return {
-      items: bookstoreCMSTagsByIdMap.value[tagId]?.items || [],
-      isFetchingItems: bookstoreCMSTagsByIdMap.value[tagId]?.isFetching || false,
-      hasFetchedItems: bookstoreCMSTagsByIdMap.value[tagId]?.hasFetched || false,
-      nextItemsKey: bookstoreCMSTagsByIdMap.value[tagId]?.offset || undefined,
+      items: bookstoreCMSProductsByTagIdMap.value[tagId]?.items || [],
+      isFetchingItems: bookstoreCMSProductsByTagIdMap.value[tagId]?.isFetching || false,
+      hasFetchedItems: bookstoreCMSProductsByTagIdMap.value[tagId]?.hasFetched || false,
+      nextItemsKey: bookstoreCMSProductsByTagIdMap.value[tagId]?.offset || undefined,
     }
   })
 
@@ -34,11 +34,11 @@ export const useBookstoreStore = defineStore('bookstore', () => {
   }: {
     isRefresh?: boolean
   } = {}) {
-    if (bookstoreCMSTagsByIdMap.value[tagId]?.isFetching) {
+    if (bookstoreCMSProductsByTagIdMap.value[tagId]?.isFetching) {
       return
     }
-    if (!bookstoreCMSTagsByIdMap.value[tagId] || isRefresh) {
-      bookstoreCMSTagsByIdMap.value[tagId] = {
+    if (!bookstoreCMSProductsByTagIdMap.value[tagId] || isRefresh) {
+      bookstoreCMSProductsByTagIdMap.value[tagId] = {
         items: [],
         isFetching: false,
         hasFetched: false,
@@ -47,28 +47,28 @@ export const useBookstoreStore = defineStore('bookstore', () => {
       }
     }
     try {
-      bookstoreCMSTagsByIdMap.value[tagId].isFetching = true
+      bookstoreCMSProductsByTagIdMap.value[tagId].isFetching = true
       const result = await fetchBookstoreCMSProductsByTagId(tagId, {
-        offset: isRefresh ? undefined : bookstoreCMSTagsByIdMap.value[tagId]?.offset,
-        ts: bookstoreCMSTagsByIdMap.value[tagId].ts,
+        offset: isRefresh ? undefined : bookstoreCMSProductsByTagIdMap.value[tagId]?.offset,
+        ts: bookstoreCMSProductsByTagIdMap.value[tagId].ts,
       })
 
       if (isRefresh) {
-        bookstoreCMSTagsByIdMap.value[tagId].items = result.records
+        bookstoreCMSProductsByTagIdMap.value[tagId].items = result.records
       }
       else {
-        bookstoreCMSTagsByIdMap.value[tagId].items.push(...result.records)
+        bookstoreCMSProductsByTagIdMap.value[tagId].items.push(...result.records)
       }
-      bookstoreCMSTagsByIdMap.value[tagId].offset = result.offset
-      bookstoreCMSTagsByIdMap.value[tagId].hasFetched = true
+      bookstoreCMSProductsByTagIdMap.value[tagId].offset = result.offset
+      bookstoreCMSProductsByTagIdMap.value[tagId].hasFetched = true
     }
     catch (error) {
       // HACK: When `hasFetched` is placed inside the finally block, it will execute before `items` are updated.
-      bookstoreCMSTagsByIdMap.value[tagId].hasFetched = true
+      bookstoreCMSProductsByTagIdMap.value[tagId].hasFetched = true
       throw error
     }
     finally {
-      bookstoreCMSTagsByIdMap.value[tagId].isFetching = false
+      bookstoreCMSProductsByTagIdMap.value[tagId].isFetching = false
     }
   }
 
@@ -81,9 +81,9 @@ export const useBookstoreStore = defineStore('bookstore', () => {
 
     /* Bookstore CMS */
 
-    bookstoreCMSTagsByIdMap,
+    bookstoreCMSProductsByTagIdMap,
 
-    getBookstoreCMSTagById,
+    getBookstoreCMSProductsByTagId,
 
     fetchCMSProductsByTagId,
   }
