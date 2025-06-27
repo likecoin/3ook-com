@@ -1,15 +1,37 @@
 <template>
-  <div class="flex flex-col grow">
+  <div class="relative flex flex-col grow">
     <AppHeader />
 
-    <header class="flex gap-4 w-full max-w-[1440px] mx-auto py-4 px-4 laptop:px-12">
+    <header
+      :class="[
+        'sticky',
+        'z-1',
+        'top-0',
+
+        ...gridClasses,
+        'gap-4',
+
+        'w-full',
+        'max-w-[1440px]',
+        'mx-auto',
+        'px-4 laptop:px-12',
+        'py-4',
+
+        'bg-linear-to-b from-(--app-bg)/90 to-(--app-bg)/0',
+      ]"
+    >
       <USelect
         v-model="tagId"
-        class="w-48"
+        class="col-span-3 tablet:col-span-2"
         :items="tagItems"
+        icon="i-material-symbols-format-list-bulleted-rounded"
         variant="subtle"
         color="secondary"
         size="lg"
+        :ui="{
+          base: 'rounded-lg shadow-lg',
+          content: 'rounded-lg',
+        }"
         @update:model-value="handleTagSelectChange"
       />
     </header>
