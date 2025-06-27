@@ -1,12 +1,10 @@
-import type { NormalizedProductRecord } from '../../utils/airtable'
-
 export default defineSitemapEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const baseURL = config.public.baseURL
   const defaultLocale = config.public.i18n.defaultLocale
   const locales = config.public.i18n.locales as Array<{ code: string, language: string }>
   try {
-    let records: NormalizedProductRecord[] = []
+    let records: BookstoreCMSProduct[] = []
     let offset: string | undefined = undefined
 
     do {

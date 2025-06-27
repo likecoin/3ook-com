@@ -193,22 +193,6 @@ export function claimCartById({ cartId, token, paymentId, wallet }: { cartId: st
   })
 }
 
-export interface BookstoreCMSProductItem {
-  id: string
-  classId: string
-  title: string
-  imageUrl: string
-  locales: string[]
-  isDRMFree: boolean
-  minPrice: number
-  timestamp: number
-}
-
-export interface FetchBookstoreCMSProductsByTagIdResponseData {
-  records: Array<BookstoreCMSProductItem>
-  offset?: string
-}
-
 export function fetchBookstoreCMSProductsByTagId(tagId: string, {
   offset,
   limit = 100,
@@ -218,7 +202,7 @@ export function fetchBookstoreCMSProductsByTagId(tagId: string, {
   limit?: number
   ts?: number
 } = {}) {
-  return $fetch<FetchBookstoreCMSProductsByTagIdResponseData>('/api/store/products', {
+  return $fetch<FetchBookstoreCMSProductsResponseData>('/api/store/products', {
     query: {
       tag: tagId,
       offset,

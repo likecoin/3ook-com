@@ -1,5 +1,5 @@
 interface BookstoreCMSTagProducts {
-  items: BookstoreCMSProductItem[]
+  items: BookstoreCMSProduct[]
   isFetching: boolean
   hasFetched: boolean
   offset?: string
