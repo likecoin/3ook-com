@@ -17,7 +17,7 @@ export const useBookstoreStore = defineStore('bookstore', () => {
     bookstoreInfoByNFTClassIdMap.value[nftClassId] = data
   }
 
-  /* Bookstore CMS */
+  /* Bookstore CMS Products */
 
   const bookstoreCMSProductsByTagIdMap = ref<Record<string, BookstoreCMSTagProducts>>({})
   const getBookstoreCMSProductsByTagId = computed(() => (tagId: string) => {
@@ -72,6 +72,27 @@ export const useBookstoreStore = defineStore('bookstore', () => {
     }
   }
 
+  /* Bookstore CMS Tags */
+
+  const bookstoreCMSTags = ref<Array<BookstoreCMSTag>>([])
+  const isFetchingBookstoreCMSTags = ref(false)
+
+  const getBookstoreCMSTagById = computed(() => (tagId: string) => {
+    return bookstoreCMSTags.value.find(tag => tag.id === tagId)
+  })
+
+  async function fetchBookstoreCMSTags() {
+    if (isFetchingBookstoreCMSTags.value) return
+    try {
+      isFetchingBookstoreCMSTags.value = true
+      const result = await fetchBookstoreCMSTagsForAll()
+      bookstoreCMSTags.value = result.records
+    }
+    finally {
+      isFetchingBookstoreCMSTags.value = false
+    }
+  }
+
   return {
     bookstoreInfoByNFTClassIdMap,
 
@@ -79,12 +100,21 @@ export const useBookstoreStore = defineStore('bookstore', () => {
 
     addBookstoreInfoByNFTClassId,
 
-    /* Bookstore CMS */
+    /* Bookstore CMS Products */
 
     bookstoreCMSProductsByTagIdMap,
 
     getBookstoreCMSProductsByTagId,
 
     fetchCMSProductsByTagId,
+
+    /* Bookstore CMS Tags */
+
+    bookstoreCMSTags,
+    isFetchingBookstoreCMSTags,
+
+    getBookstoreCMSTagById,
+
+    fetchBookstoreCMSTags,
   }
 })

@@ -159,6 +159,7 @@
   "store_fetch_more_items_error": "無法載入更多書本",
   "store_no_items": "沒有書本",
   "store_page_title": "書店",
+  "store_tag_listing": "精選",
   "subscription_success_continue_button": "前往書架",
   "subscription_success_description": "你的訂閱已成功啟動。現在你可以享受 Plus 的所有優惠。",
   "subscription_success_loading": "處理中...",

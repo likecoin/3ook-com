@@ -2,7 +2,19 @@
   <div class="flex flex-col grow">
     <AppHeader />
 
-    <main class="flex flex-col items-center grow w-full max-w-[1440px] mx-auto px-4 laptop:px-12 pb-16">
+    <header class="flex gap-4 w-full max-w-[1440px] mx-auto py-4 px-4 laptop:px-12">
+      <USelect
+        v-model="tagId"
+        class="w-48"
+        :items="tagItems"
+        variant="subtle"
+        color="secondary"
+        size="lg"
+        @update:model-value="handleTagSelectChange"
+      />
+    </header>
+
+    <main class="flex flex-col items-center grow w-full max-w-[1440px] mx-auto pt-4 px-4 laptop:px-12 pb-16">
       <div
         v-if="itemsCount === 0 && !products.isFetchingItems && products.hasFetchedItems"
         class="flex flex-col items-center m-auto"
@@ -24,7 +36,6 @@
           ...gridClasses,
 
           'w-full',
-          'mt-4',
         ]"
       >
         <BookstoreItem
@@ -54,21 +65,102 @@
 </template>
 
 <script setup lang="ts">
-const { t: $t } = useI18n()
+const { t: $t, locale } = useI18n()
+const localeRoute = useLocaleRoute()
+const route = useRoute()
 const bookstoreStore = useBookstoreStore()
 const infiniteScrollDetectorElement = useTemplateRef<HTMLLIElement>('infiniteScrollDetector')
 const shouldLoadMore = useElementVisibility(infiniteScrollDetectorElement)
 const { handleError } = useErrorHandler()
 
-useHead({
-  title: $t('store_page_title'),
+await callOnce(async () => {
+  await bookstoreStore.fetchBookstoreCMSTags()
 })
 
-const tagId = ref('latest')
+const TAG_LISTING = 'listing'
 
-const products = computed(() => bookstoreStore.getBookstoreCMSProductsByTagId(tagId.value))
+const tagId = computed({
+  get: () => getRouteQuery('tag', TAG_LISTING),
+  set: async (id) => {
+    await navigateTo(localeRoute({
+      name: 'store',
+      query: {
+        ...route.query,
+        // NOTE: Remove the tag query if it is the listing tag
+        tag: id === TAG_LISTING ? undefined : id,
+      },
+    }))
+  },
+})
+
+const normalizedLocale = computed(() => locale.value === 'zh-Hant' ? 'zh' : 'en')
+
+const tagItems = computed(() => {
+  return [
+    // NOTE: Inject the listing tag at first
+    {
+      label: $t('store_tag_listing'),
+      value: TAG_LISTING,
+    },
+    ...bookstoreStore.bookstoreCMSTags
+      .filter((tag) => {
+        // NOTE: Filter out the unlisted tag if it is not selected
+        return !!tag.isPublic || tag.id === tagId.value
+      })
+      .map(tag => ({
+        label: tag.name[normalizedLocale.value],
+        value: tag.id,
+      })),
+  ]
+})
+
+const localizedTagId = computed(() => {
+  // NOTE: Only listing tag is localized
+  return tagId.value === TAG_LISTING ? `${tagId.value}-${normalizedLocale.value}` : tagId.value
+})
+
+const tag = computed(() => {
+  return bookstoreStore.getBookstoreCMSTagById(localizedTagId.value)
+})
+
+const tagName = computed(() => {
+  return tagId.value === TAG_LISTING ? $t('store_tag_listing') : tag.value?.name[normalizedLocale.value] || ''
+})
+
+const tagDescription = computed(() => {
+  return tag.value?.description[normalizedLocale.value] || ''
+})
+
+useHead(() => {
+  const meta = []
+  const description = tagDescription.value
+  if (description) {
+    meta.push(
+      {
+        name: 'description',
+        content: description,
+      },
+      {
+        property: 'og:description',
+        content: description,
+      },
+    )
+  }
+  return {
+    title: [$t('store_page_title'), tagName.value].join('›'),
+    meta,
+  }
+})
+
+watch(localizedTagId, async (value) => {
+  if (value) {
+    await fetchItems({ isRefresh: true })
+  }
+})
+
+const products = computed(() => bookstoreStore.getBookstoreCMSProductsByTagId(localizedTagId.value))
 const itemsCount = computed(() => products.value.items.length)
-const hasMoreItems = computed(() => !!products.value.nextItemsKey)
+const hasMoreItems = computed(() => !!products.value.nextItemsKey || !products.value.hasFetchedItems)
 
 const { gridClasses, getGridItemClassesByIndex } = usePaginatedGrid({
   itemsCount,
@@ -77,7 +169,7 @@ const { gridClasses, getGridItemClassesByIndex } = usePaginatedGrid({
 
 async function fetchItems({ isRefresh = false } = {}) {
   try {
-    await bookstoreStore.fetchCMSProductsByTagId(tagId.value, { isRefresh })
+    await bookstoreStore.fetchCMSProductsByTagId(localizedTagId.value, { isRefresh })
   }
   catch (error) {
     await handleError(error, {
@@ -116,5 +208,9 @@ async function handleFetchItemsErrorRetryButtonClick() {
   useLogEvent('store_fetch_items_error_retry', { tag_id: tagId.value })
   window.scrollTo({ top: 0 })
   await fetchItems({ isRefresh: true })
+}
+
+function handleTagSelectChange(value?: string) {
+  useLogEvent('store_tag_select', { tag_id: value })
 }
 </script>

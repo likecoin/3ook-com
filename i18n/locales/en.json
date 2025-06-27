@@ -159,6 +159,7 @@
   "store_fetch_more_items_error": "Unable to load more books",
   "store_no_items": "No books",
   "store_page_title": "3ookStore",
+  "store_tag_listing": "Featured",
   "subscription_success_continue_button": "Continue to 3ookshelf",
   "subscription_success_description": "Your subscription has been successfully activated. You can now enjoy all the benefits of Plus.",
   "subscription_success_loading": "Processing...",

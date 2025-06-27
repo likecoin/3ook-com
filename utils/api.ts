@@ -212,6 +212,24 @@ export function fetchBookstoreCMSProductsByTagId(tagId: string, {
   })
 }
 
+export function fetchBookstoreCMSTagsForAll({
+  offset,
+  limit,
+  ts,
+}: {
+  offset?: string
+  limit?: number
+  ts?: number
+} = {}) {
+  return $fetch<FetchBookstoreCMSTagsResponseData>('/api/store/tags', {
+    query: {
+      offset,
+      limit,
+      ts,
+    },
+  })
+}
+
 export function fetchUserRegisterCheck({
   accountId,
   walletAddress,
