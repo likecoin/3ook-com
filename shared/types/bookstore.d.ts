@@ -17,3 +17,21 @@ export interface FetchBookstoreCMSProductsResponseData {
   records: Array<BookstoreCMSProduct>
   offset?: string
 }
+
+export interface BookstoreCMSTag {
+  id?: string
+  name: {
+    zh?: string
+    en?: string
+  }
+  description: {
+    zh?: string
+    en?: string
+  }
+  isPublic?: boolean
+}
+
+export interface FetchBookstoreCMSTagsResponseData {
+  records: Array<BookstoreCMSTag>
+  offset?: string
+}

@@ -19,6 +19,8 @@ env:
     value: appFqs8fP9s6ufPEr
   - variable: AIRTABLE_CMS_PRODUCTS_TABLE_ID
     value: tblv1oj3gGQJFlRaw
+  - variable: AIRTABLE_CMS_TAGS_TABLE_ID
+    value: tblSLu7rMASRkTYHK
   - variable: AIRTABLE_API_SECRET
     secret: V3_AIRTABLE_API_SECRET
   - variable: BASE_URL

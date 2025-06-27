@@ -116,3 +116,62 @@ export async function fetchAirtableCMSProductsByTagId(
     offset: results.offset,
   }
 }
+
+export interface FetchAirtableCMSTagsResponseData {
+  records: Array<{
+    id: string
+    createdTime: string
+    fields: {
+      'ID'?: string
+      'Name'?: string
+      'Name (Eng)'?: string
+      'Description'?: string
+      'Description (Eng)'?: string
+      'Public'?: boolean
+    }
+  }>
+  offset: string
+}
+
+export async function fetchAirtableCMSTagsForAll(
+  { pageSize = 100, offset }: { pageSize?: number, offset?: string } = {},
+): Promise<FetchBookstoreCMSTagsResponseData> {
+  const config = useRuntimeConfig()
+  const fetch = getAirtableCMSFetch()
+  const results = await fetch<FetchAirtableCMSTagsResponseData>(
+    `/${config.public.airtableCMSTagsTableId}`,
+    {
+      params: {
+        pageSize,
+        view: 'All',
+        offset,
+      },
+    },
+  )
+
+  const normalizedRecords: BookstoreCMSTag[] = results.records.map(({ fields }) => {
+    const id = fields.ID
+    const nameZh = fields.Name
+    const nameEn = fields['Name (Eng)']
+    const descriptionZh = fields.Description
+    const descriptionEn = fields['Description (Eng)']
+    const isPublic = fields.Public
+    return {
+      id,
+      name: {
+        zh: nameZh,
+        en: nameEn,
+      },
+      description: {
+        zh: descriptionZh,
+        en: descriptionEn,
+      },
+      isPublic,
+    }
+  })
+
+  return {
+    records: normalizedRecords,
+    offset: results.offset,
+  }
+}
