@@ -259,7 +259,7 @@ declare interface Rendition extends RenditionBase {
   }
 }
 
-const { loggedIn: hasLoggedIn, user } = useUserSession()
+const { loggedIn: hasLoggedIn } = useUserSession()
 const localeRoute = useLocaleRoute()
 if (!hasLoggedIn.value) {
   await navigateTo(localeRoute({ name: 'account' }))
@@ -275,7 +275,6 @@ const {
   bookFileCacheKey,
 } = useReader()
 const { handleError } = useErrorHandler()
-const subscription = useSubscription()
 
 const isReaderLoading = ref(false)
 const isDesktopToCOpen = ref(false)
@@ -313,19 +312,46 @@ onMounted(async () => {
 })
 
 const rendition = ref<Rendition>()
-const textContentElements = ref<{ cfi: string, el: Element, text: string }[]>([])
-const ttsLanguageOptions = [
-  { label: '粵', value: 'zh-HK' },
-  { label: '國', value: 'zh-TW' },
-  { label: 'En', value: 'en-US' },
-]
-const ttsLanguage = ref('zh-HK')
-watch(ttsLanguage, (newLanguage, oldLanguage) => {
-  if (newLanguage !== oldLanguage) {
-    useLogEvent('tts_language_change', {
-      nft_class_id: nftClassId,
-    })
-  }
+const textContentElements = ref<{ cfi: string, el: Element, text: string, id: string }[]>([])
+
+const {
+  ttsLanguageOptions,
+  ttsLanguage,
+  isShowTextToSpeechOptions,
+  isTextToSpeechOn,
+  isTextToSpeechPlaying,
+  pauseTextToSpeech,
+  startTextToSpeech,
+  setTextContentElements,
+  restartTextToSpeech,
+} = useTextToSpeech({
+  onPlay: (element) => {
+    const textElement = textContentElements.value.find(el => el.id === element.id)
+    if (textElement) {
+      rendition.value?.display(textElement.cfi)
+      rendition.value?.annotations.remove(textElement.cfi, 'highlight')
+      rendition.value?.annotations.highlight(textElement.cfi, {}, () => {}, '', {
+        fill: '#FFEB3B',
+      })
+    }
+  },
+  onEnd: (element) => {
+    const textElement = textContentElements.value.find(el => el.id === element.id)
+    if (textElement) {
+      rendition.value?.annotations.remove(textElement.cfi, 'highlight')
+    }
+  },
+  onPageChange: () => {
+    nextPage()
+  },
+  checkIfNeedPageChange: (element) => {
+    const textElement = textContentElements.value.find(el => el.id === element.id)
+    if (textElement) {
+      const epubCfi = new EpubCFI(textElement.cfi)
+      return epubCfi.compare(epubCfi, currentPageEndCfi.value) >= 0
+    }
+    return false
+  },
 })
 
 const navItems = ref<NavItem[]>([])
@@ -465,14 +491,21 @@ async function loadEPub() {
       })
 
     textContentElements.value = elements.reduce((acc, element) => {
-      return acc.concat(element.segments.map((text) => {
+      return acc.concat(element.segments.map((text, index) => {
         return ({
           cfi: element.cfi,
           el: element.el,
           text,
+          id: `${element.cfi}-${index}`,
         })
       }))
-    }, [] as { cfi: string, el: Element, text: string }[])
+    }, [] as { cfi: string, el: Element, text: string, id: string }[])
+
+    const textElements = textContentElements.value.map(el => ({
+      id: el.id,
+      text: el.text,
+    }))
+    setTextContentElements(textElements)
     isRightToLeft.value = view.settings.direction === 'rtl'
 
     if (cleanUpClickListener) {
@@ -500,7 +533,7 @@ async function loadEPub() {
     })
 
     if (isTextToSpeechOn.value) {
-      startTextToSpeech()
+      restartTextToSpeech()
     }
   })
 
@@ -557,121 +590,6 @@ function increaseFontSize() {
 
 function decreaseFontSize() {
   adjustFontSize(-1)
-}
-
-const isShowTextToSpeechOptions = ref(false)
-const isTextToSpeechOn = ref(false)
-const isTextToSpeechPlaying = ref(false)
-const audioQueue = ref<HTMLAudioElement[]>([])
-const currentAudioIndex = ref(0)
-
-function pauseTextToSpeech() {
-  if (isTextToSpeechOn.value) {
-    audioQueue.value[currentAudioIndex.value]?.pause()
-    isTextToSpeechPlaying.value = false
-    useLogEvent('tts_pause', {
-      nft_class_id: nftClassId,
-    })
-  }
-}
-
-function createAudio(element: { cfi: string, el: Element, text: string }) {
-  const audio = new Audio()
-  const params = new URLSearchParams({
-    text: element.text,
-    language: ttsLanguage.value,
-  })
-  audio.src = `/api/reader/tts?${params.toString()}`
-
-  audio.onplay = () => {
-    rendition.value?.display(element.cfi)
-    rendition.value?.annotations.remove(element.cfi, 'highlight')
-    rendition.value?.annotations.highlight(element.cfi, {}, () => {}, '', {
-      fill: '#FFEB3B',
-    })
-  }
-  audio.onended = () => {
-    rendition.value?.annotations.remove(element.cfi, 'highlight')
-    if (audioQueue.value.length < textContentElements.value.length) {
-      const textElement = textContentElements.value[audioQueue.value.length]
-      if (textElement) {
-        const nextAudio = createAudio(textElement)
-        audioQueue.value.push(nextAudio)
-      }
-    }
-    if (currentAudioIndex.value < audioQueue.value.length - 1) {
-      currentAudioIndex.value++
-      const element = textContentElements.value[currentAudioIndex.value]
-      const cfi = new EpubCFI(element?.cfi)
-      if (cfi.compare(cfi, currentPageEndCfi.value) >= 0) {
-        nextPage()
-      }
-      setTimeout(() => {
-        audioQueue.value[currentAudioIndex.value]?.play()
-      }, 200) // Add a small delay since some minimax voice doesn't have gap at the end
-    }
-    else {
-      nextPage()
-    }
-  }
-
-  audio.onerror = (e) => {
-    console.warn('Audio playback error:', e)
-  }
-  return audio
-}
-
-async function startTextToSpeech() {
-  if (!user.value?.isLikerPlus) {
-    subscription.paywallModal.open()
-    return
-  }
-  isShowTextToSpeechOptions.value = true
-  if (!isTextToSpeechPlaying.value) {
-    isTextToSpeechPlaying.value = true
-    if (audioQueue.value[currentAudioIndex.value]) {
-      audioQueue.value[currentAudioIndex.value]?.play()
-      useLogEvent('tts_resume', {
-        nft_class_id: nftClassId,
-      })
-    }
-    return
-  }
-
-  audioQueue.value.forEach((audio) => {
-    audio.pause()
-    audio.src = ''
-  })
-  audioQueue.value = []
-  currentAudioIndex.value = 0
-  isTextToSpeechOn.value = true
-  useLogEvent('tts_start', {
-    nft_class_id: nftClassId,
-  })
-
-  try {
-    // load up to 2 paragraphs for text-to-speech
-    for (let i = 0; i < Math.min(2, textContentElements.value.length); i++) {
-      const element = textContentElements.value[i]
-      if (element) {
-        const audio = createAudio(element)
-        audioQueue.value.push(audio)
-      }
-    }
-
-    if (audioQueue.value.length > 0) {
-      audioQueue.value[0]?.play()
-    }
-    else {
-      nextPage()
-    }
-  }
-  catch (error) {
-    isTextToSpeechOn.value = false
-    await handleError(error, {
-      title: $t('error_text_to_speech_failed'),
-    })
-  }
 }
 
 const isShiftPressed = useKeyModifier('Shift')
