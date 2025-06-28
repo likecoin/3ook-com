@@ -75,10 +75,12 @@
 </template>
 
 <script setup lang="ts">
+import { useStorage } from '@vueuse/core'
 import * as pdfjsLib from 'pdfjs-dist'
 
 interface Props {
   pdfBuffer: ArrayBuffer
+  bookFileCacheKey?: string
 }
 
 const props = defineProps<Props>()
@@ -88,12 +90,12 @@ const leftCanvas = useTemplateRef<HTMLCanvasElement>('leftCanvas')
 const rightCanvas = useTemplateRef<HTMLCanvasElement>('rightCanvas')
 const container = useTemplateRef<HTMLDivElement>('container')
 
-const currentPage = ref(1)
+const currentPage = useStorage(`${props.bookFileCacheKey}-current-page`, 1)
 const totalPages = ref(0)
-const scale = ref(1.0)
+const scale = useStorage(`${props.bookFileCacheKey}-scale`, 1.0)
 const pdfDocument = shallowRef<pdfjsLib.PDFDocumentProxy>()
-const isDualPageMode = ref(false)
-const isCanvasOrderSwapped = ref(false)
+const isDualPageMode = useStorage(`${props.bookFileCacheKey}-dual-page-mode`, true)
+const isCanvasOrderSwapped = useStorage(`${props.bookFileCacheKey}-canvas-order-swapped`, false)
 
 const emit = defineEmits<{
   error: [error: Error]
@@ -160,7 +162,6 @@ async function loadPDF() {
 
     pdfDocument.value = await loadingTask.promise
     totalPages.value = pdfDocument.value.numPages
-    currentPage.value = 1
 
     await renderPages()
   }

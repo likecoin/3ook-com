@@ -15,6 +15,7 @@
       <PDFReader
         v-if="fileBuffer"
         :pdf-buffer="fileBuffer"
+        :book-file-cache-key="bookFileCacheKey"
         @error="handlePDFError"
       />
     </div>
