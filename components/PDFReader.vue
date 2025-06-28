@@ -25,6 +25,12 @@
           @click="togglePageMode"
         />
         <UButton
+          v-if="isDualPageMode"
+          icon="i-material-symbols-swap-horiz"
+          variant="ghost"
+          @click="swapCanvasOrder"
+        />
+        <UButton
           icon="i-material-symbols-zoom-out"
           :disabled="scale <= 0.5"
           variant="ghost"
@@ -87,6 +93,7 @@ const totalPages = ref(0)
 const scale = ref(1.0)
 const pdfDocument = shallowRef<pdfjsLib.PDFDocumentProxy>()
 const isDualPageMode = ref(false)
+const isCanvasOrderSwapped = ref(false)
 
 const emit = defineEmits<{
   error: [error: Error]
@@ -210,7 +217,10 @@ async function renderDualPages() {
 
   const renderTasks = []
 
-  const leftPageTask = pdfDocument.value.getPage(leftPageNum).then(async (leftPage) => {
+  const actualLeftPageNum = isCanvasOrderSwapped.value ? rightPageNum : leftPageNum
+  const actualRightPageNum = isCanvasOrderSwapped.value ? leftPageNum : rightPageNum
+
+  const leftPageTask = pdfDocument.value.getPage(actualLeftPageNum).then(async (leftPage) => {
     const leftViewport = leftPage.getViewport({ scale: scale.value })
     if (leftCanvas.value) {
       leftCanvas.value.height = leftViewport.height
@@ -223,8 +233,8 @@ async function renderDualPages() {
   })
   renderTasks.push(leftPageTask)
 
-  if (rightPageNum <= totalPages.value) {
-    const rightPageTask = pdfDocument.value.getPage(rightPageNum).then(async (rightPage) => {
+  if (actualRightPageNum <= totalPages.value) {
+    const rightPageTask = pdfDocument.value.getPage(actualRightPageNum).then(async (rightPage) => {
       const rightViewport = rightPage.getViewport({ scale: scale.value })
       if (rightCanvas.value) {
         rightCanvas.value.height = rightViewport.height
@@ -274,6 +284,11 @@ function zoomOut() {
   if (scale.value > 0.5) {
     scale.value -= 0.25
   }
+}
+
+function swapCanvasOrder() {
+  isCanvasOrderSwapped.value = !isCanvasOrderSwapped.value
+  renderPages()
 }
 
 function handleKeydown(event: KeyboardEvent) {
