@@ -325,6 +325,7 @@ const {
   setTextContentElements,
   restartTextToSpeech,
 } = useTextToSpeech({
+  nftClassId: nftClassId.value,
   onPlay: (element) => {
     const textElement = textContentElements.value.find(el => el.id === element.id)
     if (textElement) {

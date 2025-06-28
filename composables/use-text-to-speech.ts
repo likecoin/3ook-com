@@ -4,6 +4,7 @@ interface TextContentElement {
 }
 
 interface TTSOptions {
+  nftClassId?: string
   onPlay?: (element: TextContentElement) => void
   onEnd?: (element: TextContentElement) => void
   onError?: (error: Event) => void
@@ -14,8 +15,8 @@ interface TTSOptions {
 export function useTextToSpeech(options: TTSOptions = {}) {
   const { user } = useUserSession()
   const subscription = useSubscription()
-  const { nftClassId } = useReader()
 
+  const nftClassId = options.nftClassId
   const ttsLanguageOptions = [
     { label: '粵', value: 'zh-HK' },
     { label: '國', value: 'zh-TW' },
