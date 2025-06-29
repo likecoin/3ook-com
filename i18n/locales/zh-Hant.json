@@ -72,6 +72,7 @@
   "error_likecoin_wallet_address_not_found": "找不到已綁定至 EVM 錢包地址 {address} 的 LikeCoin 錢包地址",
   "error_modal_footer_cancel": "取消",
   "error_modal_title": "錯誤",
+  "error_page_not_found": "找不到此頁",
   "error_reader_fetch_metadata_failed": "讀取書本元資料失敗",
   "error_reader_load_epub_failed": "載入 EPUB 失敗",
   "error_reader_load_pdf_failed": "載入 PDF 失敗",

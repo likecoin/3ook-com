@@ -144,6 +144,12 @@ const localizedTagId = computed(() => {
 const tag = computed(() => {
   return bookstoreStore.getBookstoreCMSTagById(localizedTagId.value)
 })
+if (!tag.value) {
+  throw createError({
+    statusCode: 404,
+    message: $t('error_page_not_found'),
+  })
+}
 
 const tagName = computed(() => {
   return tagId.value === TAG_LISTING ? $t('store_tag_listing') : tag.value?.name[normalizedLocale.value] || ''
