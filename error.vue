@@ -1,8 +1,13 @@
 <template>
-  <main class="flex flex-col items-center justify-center h-svh">
+  <main class="flex flex-col items-center justify-center h-svh px-4">
+    <AppLogo
+      class="mb-16"
+      :height="36"
+    />
+
     <p
       v-if="props.error?.statusCode"
-      class="mb-4 text-8xl font-semibold text-center"
+      class="mb-4 text-8xl font-semibold font-mono text-center"
       v-text="props.error.statusCode"
     />
 
