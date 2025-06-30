@@ -20,20 +20,36 @@
         'bg-linear-to-b from-(--app-bg)/90 to-(--app-bg)/0',
       ]"
     >
-      <USelect
-        v-model="tagId"
-        class="col-span-3 tablet:col-span-2"
-        :items="tagItems"
-        icon="i-material-symbols-format-list-bulleted-rounded"
-        variant="subtle"
-        color="secondary"
-        size="lg"
-        :ui="{
-          base: 'rounded-lg shadow-lg',
-          content: 'rounded-lg',
-        }"
-        @update:model-value="handleTagSelectChange"
-      />
+      <div
+        class="relative col-span-3 tablet:col-span-2"
+      >
+        <span
+          :class="[
+            'absolute',
+            'inset-0',
+            'translate-y-[3px]',
+            'rounded-full',
+            'bg-theme-500',
+            'text-theme-50',
+            'shadow-[inset_3px_7px_4px_0px_#50E3C2E5]',
+          ]"
+        />
+        <USelect
+          v-model="tagId"
+          class="relative w-full ml-[2px]"
+          :items="tagItems"
+          icon="i-material-symbols-format-list-bulleted-rounded"
+          variant="outline"
+          color="primary"
+          size="lg"
+          highlight
+          :ui="{
+            base: 'rounded-full shadow-lg bg-(--app-bg)',
+            content: 'rounded-lg ring-primary ring-2',
+          }"
+          @update:model-value="handleTagSelectChange"
+        />
+      </div>
     </header>
 
     <main class="flex flex-col items-center grow w-full max-w-[1440px] mx-auto pt-4 px-4 laptop:px-12 pb-16">

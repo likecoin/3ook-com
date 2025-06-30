@@ -2,6 +2,8 @@
   <UButton
     leading-icon="i-material-symbols-login-rounded"
     :label="$t('login_button')"
+    variant="outline"
+    size="lg"
     :loading="accountStore.isLoggingIn"
     :disabled="hasLoggedIn"
     @click="handleLogin"
