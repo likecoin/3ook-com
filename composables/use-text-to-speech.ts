@@ -26,8 +26,9 @@ export function useTextToSpeech(options: TTSOptions = {}) {
   const isShowTextToSpeechOptions = ref(false)
   const isTextToSpeechOn = ref(false)
   const isTextToSpeechPlaying = ref(false)
-  const audioQueue = ref<HTMLAudioElement[]>([])
-  const currentAudioIndex = ref(0)
+  const audioBuffers = ref<(HTMLAudioElement | null)[]>([null, null])
+  const currentBufferIndex = ref<0 | 1>(0)
+  const currentElementIndex = ref(0)
   const textContentElements = ref<TextContentElement[]>([])
 
   watch(ttsLanguage, (newLanguage, oldLanguage) => {
@@ -40,9 +41,8 @@ export function useTextToSpeech(options: TTSOptions = {}) {
 
   function pauseTextToSpeech() {
     if (isTextToSpeechOn.value) {
-      if (audioQueue.value[currentAudioIndex.value]) {
-        audioQueue.value[currentAudioIndex.value]?.pause()
-      }
+      const activeAudio = audioBuffers.value[currentBufferIndex.value]
+      activeAudio?.pause()
       isTextToSpeechPlaying.value = false
       useLogEvent('tts_pause', {
         nft_class_id: nftClassId,
@@ -50,7 +50,7 @@ export function useTextToSpeech(options: TTSOptions = {}) {
     }
   }
 
-  function createAudio(element: TextContentElement) {
+  function createAudio(element: TextContentElement, bufferIndex: 0 | 1) {
     const audio = new Audio()
     const params = new URLSearchParams({
       text: element.text,
@@ -64,32 +64,9 @@ export function useTextToSpeech(options: TTSOptions = {}) {
 
     audio.onended = () => {
       options.onEnd?.(element)
-
-      if (audioQueue.value.length < textContentElements.value.length) {
-        const textElement = textContentElements.value[audioQueue.value.length]
-        if (textElement) {
-          const nextAudio = createAudio(textElement)
-          audioQueue.value.push(nextAudio)
-        }
-      }
-
-      if (currentAudioIndex.value < audioQueue.value.length - 1) {
-        currentAudioIndex.value++
-        const nextElement = textContentElements.value[currentAudioIndex.value]
-
-        if (options.checkIfNeedPageChange && nextElement) {
-          if (options.checkIfNeedPageChange(nextElement)) {
-            options.onPageChange?.()
-          }
-        }
-
-        setTimeout(() => {
-          audioQueue.value[currentAudioIndex.value]?.play()
-        }, 200) // Add a small delay since some minimax voice doesn't have gap at the end
-      }
-      else {
-        options.onPageChange?.()
-      }
+      textContentElements.value.shift()
+      currentElementIndex.value = Math.max(0, currentElementIndex.value - 1)
+      playNextElement()
     }
 
     audio.onerror = (e) => {
@@ -99,7 +76,38 @@ export function useTextToSpeech(options: TTSOptions = {}) {
       }
     }
 
+    audioBuffers.value[bufferIndex] = audio
+
     return audio
+  }
+
+  function playNextElement() {
+    if (textContentElements.value.length === 0) {
+      options.onPageChange?.()
+      return
+    }
+
+    const [nextPlayedElement, nextBufferedElement] = textContentElements.value
+    if (!nextPlayedElement) {
+      options.onPageChange?.()
+      return
+    }
+
+    if (options.checkIfNeedPageChange && options.checkIfNeedPageChange(nextPlayedElement)) {
+      options.onPageChange?.()
+    }
+
+    const nextBufferNumber = currentBufferIndex.value
+    if (nextBufferedElement) {
+      createAudio(nextBufferedElement, nextBufferNumber)
+    }
+
+    currentBufferIndex.value = currentBufferIndex.value === 0 ? 1 : 0
+    const nextAudio = audioBuffers.value[currentBufferIndex.value]
+
+    setTimeout(() => {
+      nextAudio?.play()
+    }, 200)
   }
 
   async function startTextToSpeech() {
@@ -112,8 +120,9 @@ export function useTextToSpeech(options: TTSOptions = {}) {
 
     if (!isTextToSpeechPlaying.value) {
       isTextToSpeechPlaying.value = true
-      if (audioQueue.value[currentAudioIndex.value]) {
-        audioQueue.value[currentAudioIndex.value]?.play()
+      const activeAudio = audioBuffers.value[currentBufferIndex.value]
+      if (activeAudio) {
+        activeAudio.play()
         useLogEvent('tts_resume', {
           nft_class_id: nftClassId,
         })
@@ -121,13 +130,9 @@ export function useTextToSpeech(options: TTSOptions = {}) {
       return
     }
 
-    // Clean up existing audio
-    audioQueue.value.forEach((audio) => {
-      audio.pause()
-      audio.src = ''
-    })
-    audioQueue.value = []
-    currentAudioIndex.value = 0
+    cleanupAudio()
+    currentElementIndex.value = 0
+    currentBufferIndex.value = 0
     isTextToSpeechOn.value = true
 
     useLogEvent('tts_start', {
@@ -135,26 +140,38 @@ export function useTextToSpeech(options: TTSOptions = {}) {
     })
 
     try {
-      // Load up to 2 paragraphs for text-to-speech
-      for (let i = 0; i < Math.min(2, textContentElements.value.length); i++) {
-        const element = textContentElements.value[i]
-        if (element) {
-          const audio = createAudio(element)
-          audioQueue.value.push(audio)
-        }
+      if (textContentElements.value.length === 0) {
+        options.onPageChange?.()
+        return
       }
 
-      if (audioQueue.value.length > 0) {
-        audioQueue.value[0]?.play()
+      const firstElement = textContentElements.value[0]
+      const secondElement = textContentElements.value[1]
+
+      if (firstElement) {
+        createAudio(firstElement, 0)
       }
-      else {
-        options.onPageChange?.()
+
+      if (secondElement) {
+        createAudio(secondElement, 1)
       }
+
+      audioBuffers.value[currentBufferIndex.value]?.play()
     }
     catch (error) {
       isTextToSpeechOn.value = false
       throw error
     }
+  }
+
+  function cleanupAudio() {
+    audioBuffers.value.forEach((audio) => {
+      audio?.pause()
+      if (audio) {
+        audio.src = ''
+      }
+    })
+    audioBuffers.value = [null, null]
   }
 
   function setTextContentElements(elements: TextContentElement[]) {
@@ -163,6 +180,7 @@ export function useTextToSpeech(options: TTSOptions = {}) {
 
   function restartTextToSpeech() {
     if (isTextToSpeechOn.value) {
+      cleanupAudio()
       startTextToSpeech()
     }
   }
