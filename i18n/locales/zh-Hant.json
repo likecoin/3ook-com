@@ -67,6 +67,7 @@
   "error_billing_portal_failed": "前往訂閱管理頁時發生錯誤。",
   "error_book_file_loading_failed": "載入檔案失敗。",
   "error_connect_wallet_failed": "未能連接錢包",
+  "error_download_book_failed": "下載書本失敗",
   "error_internal_server_error": "伺服器錯誤。",
   "error_likecoin_wallet_address_not_found": "找不到已綁定至 EVM 錢包地址 {address} 的 LikeCoin 錢包地址",
   "error_modal_footer_cancel": "取消",

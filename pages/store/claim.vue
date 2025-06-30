@@ -172,7 +172,11 @@ async function startClaimingItems() {
     isClaiming.value = true
     const claimingWallet = user.value?.evmWallet
     if (!claimingWallet) {
-      throw new Error($t('claim_page_no_wallet_connected'))
+      throw createError({
+        statusCode: 401,
+        message: $t('claim_page_no_wallet_connected'),
+        fatal: true,
+      })
     }
 
     const data = await claimCartById({
@@ -189,7 +193,11 @@ async function startClaimingItems() {
       && !data.newClaimedNFTs.length
       && data.errors?.length
     ) {
-      throw new Error(data.errors[0]?.error)
+      throw createError({
+        statusCode: 400,
+        message: data.errors[0]?.error,
+        fatal: true,
+      })
     }
     isClaimed.value = true
     useLogEvent('purchase', {

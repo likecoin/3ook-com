@@ -63,7 +63,10 @@ export function useBookDownload() {
       })
       const buffer = await loadFileAsBuffer(bookFileURL)
       if (!buffer) {
-        throw new Error('Failed to load book file as buffer')
+        throw createError({
+          statusCode: 400,
+          message: $t('error_download_book_failed'),
+        })
       }
 
       const blob = new Blob([buffer], { type: getMimeType(type) })
@@ -77,8 +80,7 @@ export function useBookDownload() {
       })
     }
     catch (error) {
-      console.error('Error downloading book file:', error)
-      handleError(error)
+      handleError(error, { logPrefix: 'book_download' })
     }
     finally {
       toast.remove(downloadingToast.id)

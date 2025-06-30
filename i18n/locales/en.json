@@ -67,6 +67,7 @@
   "error_billing_portal_failed": "Error occurs when going to the billing portal",
   "error_book_file_loading_failed": "Failed to load the file.",
   "error_connect_wallet_failed": "Failed to connect wallet",
+  "error_download_book_failed": "Failed to download book",
   "error_internal_server_error": "Internal server error.",
   "error_likecoin_wallet_address_not_found": "The LikeCoin wallet address linked to EVM wallet address {address} cannot be found",
   "error_modal_footer_cancel": "Cancel",
