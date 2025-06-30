@@ -64,8 +64,6 @@ export function useTextToSpeech(options: TTSOptions = {}) {
 
     audio.onended = () => {
       options.onEnd?.(element)
-      textContentElements.value.shift()
-      currentElementIndex.value = Math.max(0, currentElementIndex.value - 1)
       playNextElement()
     }
 
@@ -82,24 +80,22 @@ export function useTextToSpeech(options: TTSOptions = {}) {
   }
 
   function playNextElement() {
-    if (textContentElements.value.length === 0) {
+    currentElementIndex.value += 1
+
+    const nextElement = textContentElements.value[currentElementIndex.value]
+    if (!nextElement) {
       options.onPageChange?.()
       return
     }
 
-    const [nextPlayedElement, nextBufferedElement] = textContentElements.value
-    if (!nextPlayedElement) {
-      options.onPageChange?.()
-      return
-    }
-
-    if (options.checkIfNeedPageChange && options.checkIfNeedPageChange(nextPlayedElement)) {
+    if (options.checkIfNeedPageChange && options.checkIfNeedPageChange(nextElement)) {
       options.onPageChange?.()
     }
 
-    const nextBufferNumber = currentBufferIndex.value
-    if (nextBufferedElement) {
-      createAudio(nextBufferedElement, nextBufferNumber)
+    const nextElementForBuffer = textContentElements.value[currentElementIndex.value + 1]
+
+    if (nextElementForBuffer) {
+      createAudio(nextElementForBuffer, currentBufferIndex.value)
     }
 
     currentBufferIndex.value = currentBufferIndex.value === 0 ? 1 : 0
