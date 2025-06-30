@@ -352,7 +352,8 @@ const currentCfi = useStorage(`${bookFileCacheKey.value}-cfi`, '')
 const FONT_SIZE_OPTIONS = [
   6, 8, 10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 40, 48, 56, 64, 72,
 ]
-const fontSize = ref(FONT_SIZE_OPTIONS[8])
+const DEFAULT_FONT_SIZE_INDEX = 8 // Default to 24px
+const fontSize = ref(FONT_SIZE_OPTIONS[DEFAULT_FONT_SIZE_INDEX])
 watch(fontSize, (size) => {
   rendition.value?.themes.fontSize(`${size}px`)
 })
@@ -546,7 +547,7 @@ function handleRightArrowButtonClick() {
 }
 
 function adjustFontSize(size: number) {
-  const index = fontSize.value ? FONT_SIZE_OPTIONS.indexOf(fontSize.value) : 8
+  const index = fontSize.value ? FONT_SIZE_OPTIONS.indexOf(fontSize.value) : DEFAULT_FONT_SIZE_INDEX
   fontSize.value = FONT_SIZE_OPTIONS[index + size] || fontSize.value
 }
 
