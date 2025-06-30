@@ -96,7 +96,6 @@ const { downloadBookFile } = useBookDownload()
 const bookCoverSrc = computed(() => getResizedImageURL(bookInfo.coverSrc.value, { size: 300 }))
 
 const isLargerScreen = useMediaQuery('(min-width: 1024px)')
-const encryptedArweaveLinkEndpoint = getEncryptedArweaveLinkAPIEndpoint()
 
 const menuItems = computed<DropdownMenuItem[]>(() => {
   const sortedContentURLs = [...bookInfo.contentURLs.value].sort(compareContentURL)
@@ -123,11 +122,7 @@ const menuItems = computed<DropdownMenuItem[]>(() => {
       onSelect: () => openContentURL(contentURL),
     })
 
-    const isContentURLEncrypted = !!(
-      contentURL.url.startsWith(encryptedArweaveLinkEndpoint)
-      || contentURL.url.includes('?key=')
-    )
-    if (bookInfo.isDownloadable.value && !isContentURLEncrypted) {
+    if (bookInfo.isDownloadable.value) {
       downloadItems.push({
         label: $t('bookshelf_download_file', { type: contentURL.type.toUpperCase() }),
         icon: 'i-material-symbols-download-rounded',
