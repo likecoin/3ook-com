@@ -41,7 +41,7 @@ export function useBookDownload() {
     type,
   }: {
     nftClassId: string
-    nftId: string
+    nftId?: string
     fileIndex?: number
     isCustomMessageEnabled: boolean
     filename: string

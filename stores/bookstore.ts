@@ -34,19 +34,19 @@ export const useBookstoreStore = defineStore('bookstore', () => {
   }: {
     isRefresh?: boolean
   } = {}) {
+    if (bookstoreCMSTagsByIdMap.value[tagId]?.isFetching) {
+      return
+    }
+    if (!bookstoreCMSTagsByIdMap.value[tagId] || isRefresh) {
+      bookstoreCMSTagsByIdMap.value[tagId] = {
+        items: [],
+        isFetching: false,
+        hasFetched: false,
+        offset: undefined,
+        ts: Date.now(),
+      }
+    }
     try {
-      if (bookstoreCMSTagsByIdMap.value[tagId]?.isFetching) {
-        return
-      }
-      if (!bookstoreCMSTagsByIdMap.value[tagId] || isRefresh) {
-        bookstoreCMSTagsByIdMap.value[tagId] = {
-          items: [],
-          isFetching: false,
-          hasFetched: false,
-          offset: undefined,
-          ts: Date.now(),
-        }
-      }
       bookstoreCMSTagsByIdMap.value[tagId].isFetching = true
       const result = await fetchBookstoreCMSProductsByTagId(tagId, {
         offset: isRefresh ? undefined : bookstoreCMSTagsByIdMap.value[tagId]?.offset,

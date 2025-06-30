@@ -189,7 +189,7 @@ async function startClaimingItems() {
       && !data.newClaimedNFTs.length
       && data.errors?.length
     ) {
-      throw new Error(data.errors[0].error)
+      throw new Error(data.errors[0]?.error)
     }
     isClaimed.value = true
     useLogEvent('purchase', {

@@ -6,7 +6,7 @@ export function splitTextIntoSegments(text: string): string[] {
 
   let currentSegment = ''
   for (let i = 0; i < segments.length; i++) {
-    const segment = segments[i].trim()
+    const segment = segments[i]?.trim()
     if (!segment) continue
     if (segment.length === 1 || currentSegment.length + segment.length < 100) {
       currentSegment += segment

@@ -30,7 +30,7 @@ function processEventData(eventData: string) {
   const dataMatch = eventData.match(/^data:\s*(.+)$/m)
   if (!dataMatch) return null
 
-  const jsonStr = dataMatch[1].trim()
+  const jsonStr = dataMatch[1]?.trim()
   if (!jsonStr) return null
 
   const parsed: TTSChunk = JSON.parse(jsonStr) // this might throw if the JSON is malformed

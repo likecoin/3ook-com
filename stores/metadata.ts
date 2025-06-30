@@ -33,7 +33,9 @@ export const useMetadataStore = defineStore('metadata', () => {
 
   const getLikerInfoByWalletAddress = computed(() => (walletAddress?: string) => {
     if (!walletAddress) return undefined
-    return likerInfoByIdMap.value[likerIdByWalletAddressMap.value[walletAddress]]
+    const likerId = likerIdByWalletAddressMap.value[walletAddress]
+    if (!likerId) return undefined
+    return likerInfoByIdMap.value[likerId]
   })
 
   async function fetchLikerInfoById(likerId: string) {

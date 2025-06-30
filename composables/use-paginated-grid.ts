@@ -30,7 +30,8 @@ export default function usePaginatedGrid(props: {
   const gridClasses = computed(() => {
     const classes = ['grid']
     for (let column = columnMin.value; column <= columnMax.value; column++) {
-      classes.push(getColumnClass(column).grid)
+      const gridClass = getColumnClass(column).grid
+      if (gridClass) classes.push(gridClass)
     }
     if (props.gapClass) {
       classes.push(props.gapClass)
@@ -56,7 +57,8 @@ export default function usePaginatedGrid(props: {
       if (isPossiblyLastRow) {
         for (let column = columnMin.value; column <= columnMax.value; column++) {
           if (isInIncompleteRow(index, column)) {
-            classes.push(getColumnClass(column).gridItem)
+            const gridItemClass = getColumnClass(column).gridItem
+            if (gridItemClass) classes.push(gridItemClass)
           }
         }
       }

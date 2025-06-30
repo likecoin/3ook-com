@@ -546,7 +546,7 @@ function handleRightArrowButtonClick() {
 }
 
 function adjustFontSize(size: number) {
-  const index = FONT_SIZE_OPTIONS.indexOf(fontSize.value)
+  const index = fontSize.value ? FONT_SIZE_OPTIONS.indexOf(fontSize.value) : 8
   fontSize.value = FONT_SIZE_OPTIONS[index + size] || fontSize.value
 }
 
@@ -566,9 +566,7 @@ const currentAudioIndex = ref(0)
 
 function pauseTextToSpeech() {
   if (isTextToSpeechOn.value) {
-    if (audioQueue.value[currentAudioIndex.value]) {
-      audioQueue.value[currentAudioIndex.value].pause()
-    }
+    audioQueue.value[currentAudioIndex.value]?.pause()
     isTextToSpeechPlaying.value = false
     useLogEvent('tts_pause', {
       nft_class_id: nftClassId,
@@ -594,18 +592,21 @@ function createAudio(element: { cfi: string, el: Element, text: string }) {
   audio.onended = () => {
     rendition.value?.annotations.remove(element.cfi, 'highlight')
     if (audioQueue.value.length < textContentElements.value.length) {
-      const nextAudio = createAudio(textContentElements.value[audioQueue.value.length])
-      audioQueue.value.push(nextAudio)
+      const textElement = textContentElements.value[audioQueue.value.length]
+      if (textElement) {
+        const nextAudio = createAudio(textElement)
+        audioQueue.value.push(nextAudio)
+      }
     }
     if (currentAudioIndex.value < audioQueue.value.length - 1) {
       currentAudioIndex.value++
       const element = textContentElements.value[currentAudioIndex.value]
-      const cfi = new EpubCFI(element.cfi)
+      const cfi = new EpubCFI(element?.cfi)
       if (cfi.compare(cfi, currentPageEndCfi.value) >= 0) {
         nextPage()
       }
       setTimeout(() => {
-        audioQueue.value[currentAudioIndex.value].play()
+        audioQueue.value[currentAudioIndex.value]?.play()
       }, 200) // Add a small delay since some minimax voice doesn't have gap at the end
     }
     else {
@@ -628,7 +629,7 @@ async function startTextToSpeech() {
   if (!isTextToSpeechPlaying.value) {
     isTextToSpeechPlaying.value = true
     if (audioQueue.value[currentAudioIndex.value]) {
-      audioQueue.value[currentAudioIndex.value].play()
+      audioQueue.value[currentAudioIndex.value]?.play()
       useLogEvent('tts_resume', {
         nft_class_id: nftClassId,
       })
@@ -650,12 +651,15 @@ async function startTextToSpeech() {
   try {
     // load up to 2 paragraphs for text-to-speech
     for (let i = 0; i < Math.min(2, textContentElements.value.length); i++) {
-      const audio = createAudio(textContentElements.value[i])
-      audioQueue.value.push(audio)
+      const element = textContentElements.value[i]
+      if (element) {
+        const audio = createAudio(element)
+        audioQueue.value.push(audio)
+      }
     }
 
     if (audioQueue.value.length > 0) {
-      audioQueue.value[0].play()
+      audioQueue.value[0]?.play()
     }
     else {
       nextPage()
