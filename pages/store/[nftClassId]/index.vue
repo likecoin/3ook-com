@@ -264,26 +264,6 @@
         </ul>
       </section>
 
-      <section class="w-full mt-8 overflow-hidden">
-        <div class="relative w-full max-w-[1200px] mx-auto">
-          <h2
-            class="text-green-500 text-lg font-bold"
-            v-text="$t('product_page_related_books_title')"
-          />
-
-          <div class="h-[200px] laptop:h-[300px] mt-6">
-            <ul class="absolute flex gap-x-6 gap-y-10 animate-pulse">
-              <li
-                v-for="i in 4"
-                :key="i"
-              >
-                <BookCover class="w-[120px] laptop:w-[170px]" />
-              </li>
-            </ul>
-          </div>
-        </div>
-      </section>
-
       <aside
         :class="[
           'fixed',
