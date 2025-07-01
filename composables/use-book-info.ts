@@ -18,6 +18,10 @@ export default function ({ nftClassId = '' }: { nftClassId?: string } = {}) {
     return metadataStore.getLikerInfoByWalletAddress(nftClassOwnerWalletAddress.value)?.displayName || ''
   })
 
+  const nftClassOwnerAvatar = computed(() => {
+    return metadataStore.getLikerInfoByWalletAddress(nftClassOwnerWalletAddress.value)?.avatarSrc || ''
+  })
+
   const authorName = computed(() => {
     const author = bookInfo.author.value
     if (typeof author === 'string') return author
@@ -185,6 +189,7 @@ export default function ({ nftClassId = '' }: { nftClassId?: string } = {}) {
     authorDescription,
     publisherName,
     formattedPublishedDate,
+    nftClassOwnerAvatar,
 
     contentURLs,
     defaultContentURL,
