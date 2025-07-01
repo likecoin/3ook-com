@@ -175,5 +175,9 @@
   "tab_bar_user": "帳戶",
   "text_separator_comma": "、",
   "text_separator_slash": "／",
+  "tipping_modal_cancel_button": "不用了",
+  "tipping_modal_description": "款項將會分配給創作者",
+  "tipping_modal_send_tips_button": "繼續",
+  "tipping_modal_title": "想給予額外支持嗎？",
   "work_in_progress": "即將推出"
 }
