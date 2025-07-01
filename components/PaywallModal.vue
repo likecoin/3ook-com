@@ -235,56 +235,36 @@ const emit = defineEmits(['close', 'update:modelValue'])
 const { t: $t } = useI18n()
 const isScreenSmall = useMediaQuery('(max-width: 1023px)')
 
-const props = defineProps({
-  isFullscreen: {
-    type: Boolean,
-    default: false,
+const props = withDefaults(
+  defineProps<{
+    isFullscreen?: boolean
+    isBackdropDismissible?: boolean
+    isCloseButtonHidden?: boolean
+    originalYearlyPrice?: string | number
+    originalMonthlyPrice?: string | number
+    discountedYearlyPrice?: string | number
+    discountedMonthlyPrice?: string | number
+    isProcessingSubscription?: boolean
+    onSubscribe?: () => void
+    onOpen?: () => void
+    onClose?: () => void
+    modelValue?: 'monthly' | 'yearly'
+  }>(),
+  {
+    isFullscreen: false,
+    isBackdropDismissible: true,
+    isCloseButtonHidden: false,
+    originalYearlyPrice: '99.99',
+    originalMonthlyPrice: '9.99',
+    discountedYearlyPrice: '69.99',
+    discountedMonthlyPrice: '6.99',
+    isProcessingSubscription: false,
+    onSubscribe: () => {},
+    onOpen: () => {},
+    onClose: () => {},
+    modelValue: 'yearly',
   },
-  isBackdropDismissible: {
-    type: Boolean,
-    default: true,
-  },
-  isCloseButtonHidden: {
-    type: Boolean,
-    default: false,
-  },
-  originalYearlyPrice: {
-    type: [String, Number],
-    default: '99.99',
-  },
-  originalMonthlyPrice: {
-    type: [String, Number],
-    default: '9.99',
-  },
-  discountedYearlyPrice: {
-    type: [String, Number],
-    default: '69.99',
-  },
-  discountedMonthlyPrice: {
-    type: [String, Number],
-    default: '6.99',
-  },
-  isProcessingSubscription: {
-    type: Boolean,
-    default: false,
-  },
-  onSubscribe: {
-    type: Function as PropType<() => void>,
-    required: true,
-  },
-  onOpen: {
-    type: Function as PropType<() => void>,
-    required: false,
-  },
-  onClose: {
-    type: Function as PropType<() => void>,
-    required: false,
-  },
-  modelValue: {
-    type: String as PropType<'monthly' | 'yearly'>,
-    required: true,
-  },
-})
+)
 
 const isFullscreenModal = computed(() => props.isFullscreen || isScreenSmall.value)
 

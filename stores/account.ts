@@ -187,7 +187,7 @@ export const useAccountStore = defineStore('account', () => {
             isAccountIdHidden: true,
             email: payload?.email || '',
             isDisplayNameHidden: true,
-          })
+          }).result
         }
         if (!payload) {
           // User canceled the registration
@@ -260,7 +260,7 @@ export const useAccountStore = defineStore('account', () => {
 
       let connectorId: string | undefined = preferredConnectorId
       if (!connectorId || !connectors.some((c: { id: string }) => c.id === connectorId)) {
-        connectorId = await loginModal.open()
+        connectorId = await loginModal.open().result
       }
       if (!connectorId) return
 
