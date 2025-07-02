@@ -105,21 +105,17 @@ const metadataStore = useMetadataStore()
 const infiniteScrollDetectorElement = useTemplateRef<HTMLLIElement>('infiniteScrollDetector')
 const shouldLoadMore = useElementVisibility(infiniteScrollDetectorElement)
 
-useHead(() => {
-  const meta = []
-  if (isSomeoneElseBookshelf.value) {
-    meta.push({
+useHead(() => ({
+  title: isSomeoneElseBookshelf.value
+    ? $t('shelf_page_title_someone_else', { name: shelfOwnerDisplayName.value })
+    : $t('shelf_page_title'),
+  meta: [
+    {
       name: 'robots',
       content: 'noindex',
-    })
-  }
-  return {
-    title: isSomeoneElseBookshelf.value
-      ? $t('shelf_page_title_someone_else', { name: shelfOwnerDisplayName.value })
-      : $t('shelf_page_title'),
-    meta,
-  }
-})
+    },
+  ],
+}))
 
 const itemsCount = computed(() => bookshelfStore.items.length)
 const hasMoreItems = computed(() => !!bookshelfStore.nextKey)
