@@ -2,6 +2,9 @@
   "name": "liker-land-v3",
   "version": "0.1.0",
   "private": false,
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "type": "module",
   "scripts": {
     "build": "nuxt build",
