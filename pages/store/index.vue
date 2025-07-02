@@ -125,6 +125,10 @@ const { handleError } = useErrorHandler()
 
 const TAG_LISTING = 'listing'
 
+function getIsDefaultTagId(id: string) {
+  return id === TAG_LISTING
+}
+
 const tagId = computed({
   get: () => getRouteQuery('tag', TAG_LISTING),
   set: async (id) => {
@@ -133,11 +137,12 @@ const tagId = computed({
       query: {
         ...route.query,
         // NOTE: Remove the tag query if it is the listing tag
-        tag: id === TAG_LISTING ? undefined : id,
+        tag: getIsDefaultTagId(id) ? undefined : id,
       },
     }))
   },
 })
+const isDefaultTagId = computed(() => getIsDefaultTagId(tagId.value))
 
 const normalizedLocale = computed(() => locale.value === 'zh-Hant' ? 'zh' : 'en')
 
@@ -161,8 +166,8 @@ const tagItems = computed(() => {
 })
 
 const localizedTagId = computed(() => {
-  // NOTE: Only listing tag is localized
-  return tagId.value === TAG_LISTING ? `${tagId.value}-${normalizedLocale.value}` : tagId.value
+  // NOTE: Only the default tag is localized
+  return isDefaultTagId.value ? `${tagId.value}-${normalizedLocale.value}` : tagId.value
 })
 
 const tag = computed(() => {
@@ -170,7 +175,7 @@ const tag = computed(() => {
 })
 
 const tagName = computed(() => {
-  return tagId.value === TAG_LISTING ? $t('store_tag_listing') : tag.value?.name[normalizedLocale.value] || ''
+  return isDefaultTagId.value ? $t('store_tag_listing') : tag.value?.name[normalizedLocale.value] || ''
 })
 
 const tagDescription = computed(() => {
@@ -255,15 +260,23 @@ async function fetchItems({ isRefresh = false } = {}) {
 }
 
 onMounted(async () => {
-  await fetchTags()
-  if (!tag.value) {
-    throw createError({
-      statusCode: 404,
-      message: $t('error_page_not_found'),
-      fatal: true,
-    })
+  const fetchTagPromise = fetchTags()
+  if (!isDefaultTagId.value) {
+    // NOTE: Need to fetch all tags if not the default tag
+    await fetchTagPromise
+    if (!tag.value) {
+      throw createError({
+        statusCode: 404,
+        message: $t('error_page_not_found'),
+        fatal: true,
+      })
+    }
   }
-  await fetchItems({ isRefresh: true })
+
+  await Promise.all([
+    fetchTagPromise,
+    fetchItems({ isRefresh: true }),
+  ])
 })
 
 watch(
