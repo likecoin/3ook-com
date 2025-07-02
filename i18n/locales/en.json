@@ -158,6 +158,7 @@
   "store_fetch_items_error": "Unable to load books",
   "store_fetch_items_error_retry_button_label": "Reload",
   "store_fetch_more_items_error": "Unable to load more books",
+  "store_fetch_tags_error": "Unable to load tags",
   "store_no_items": "No books",
   "store_page_title": "3ookStore",
   "store_tag_listing": "Featured",

@@ -158,6 +158,7 @@
   "store_fetch_items_error": "無法載入書本",
   "store_fetch_items_error_retry_button_label": "重新載入",
   "store_fetch_more_items_error": "無法載入更多書本",
+  "store_fetch_tags_error": "無法載入分類",
   "store_no_items": "沒有書本",
   "store_page_title": "書店",
   "store_tag_listing": "精選",
