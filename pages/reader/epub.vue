@@ -92,8 +92,8 @@
               </template>
               <USelect
                 v-if="isShowTextToSpeechOptions"
-                v-model="ttsLanguage"
-                :items="ttsLanguageOptions"
+                v-model="ttsLanguageVoice"
+                :items="ttsLanguageVoiceOptions"
               />
             </template>
 
@@ -315,8 +315,8 @@ const rendition = ref<Rendition>()
 const textContentElements = ref<{ cfi: string, el: Element, text: string, id: string }[]>([])
 
 const {
-  ttsLanguageOptions,
-  ttsLanguage,
+  ttsLanguageVoiceOptions,
+  ttsLanguageVoice,
   isShowTextToSpeechOptions,
   isTextToSpeechOn,
   isTextToSpeechPlaying,

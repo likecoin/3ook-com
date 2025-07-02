@@ -17,13 +17,16 @@ export function useTextToSpeech(options: TTSOptions = {}) {
   const subscription = useSubscription()
 
   const nftClassId = options.nftClassId
-  const ttsLanguageOptions = [
-    { label: '粵', value: 'zh-HK' },
-    { label: '國', value: 'zh-TW' },
-    { label: 'En', value: 'en-US' },
+  const ttsLanguageVoiceOptions = [
+    { label: '粵0', value: { language: 'zh-HK', voiceId: '0' } },
+    { label: '粵1', value: { language: 'zh-HK', voiceId: '1' } },
+    { label: '國0', value: { language: 'zh-TW', voiceId: '0' } },
+    { label: '國1', value: { language: 'zh-TW', voiceId: '1' } },
+    { label: 'En0', value: { language: 'en-US', voiceId: '0' } },
+    { label: 'En1', value: { language: 'en-US', voiceId: '1' } },
   ]
 
-  const ttsLanguage = ref('zh-HK')
+  const ttsLanguageVoice = ref({ language: 'zh-HK', voiceId: '0' })
   const isShowTextToSpeechOptions = ref(false)
   const isTextToSpeechOn = ref(false)
   const isTextToSpeechPlaying = ref(false)
@@ -32,8 +35,9 @@ export function useTextToSpeech(options: TTSOptions = {}) {
   const currentElementIndex = ref(0)
   const textContentElements = ref<TextContentElement[]>([])
 
-  watch(ttsLanguage, (newLanguage, oldLanguage) => {
+  watch(ttsLanguageVoice, (newLanguage, oldLanguage) => {
     if (newLanguage !== oldLanguage) {
+      restartTextToSpeech()
       useLogEvent('tts_language_change', {
         nft_class_id: nftClassId,
       })
@@ -55,7 +59,8 @@ export function useTextToSpeech(options: TTSOptions = {}) {
     const audio = new Audio()
     const params = new URLSearchParams({
       text: element.text,
-      language: ttsLanguage.value,
+      language: ttsLanguageVoice.value.language,
+      voice_id: ttsLanguageVoice.value.voiceId,
     })
     audio.src = `/api/reader/tts?${params.toString()}`
 
@@ -183,8 +188,8 @@ export function useTextToSpeech(options: TTSOptions = {}) {
   }
 
   return {
-    ttsLanguageOptions,
-    ttsLanguage,
+    ttsLanguageVoiceOptions,
+    ttsLanguageVoice,
     isShowTextToSpeechOptions,
     isTextToSpeechOn,
     isTextToSpeechPlaying,

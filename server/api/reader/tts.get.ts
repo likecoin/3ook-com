@@ -26,6 +26,11 @@ const LANG_MAPPING = {
   'zh-HK': 'Chinese,Yue',
 }
 
+const VOICE_MAPPING = [
+  'Chinese (Mandarin)_Warm_Bestie',
+  'Boyan_new_platform',
+]
+
 function processEventData(eventData: string) {
   const dataMatch = eventData.match(/^data:\s*(.+)$/m)
   if (!dataMatch) return null
@@ -68,7 +73,7 @@ export default defineEventHandler(async (event) => {
     minimaxGroupId,
     minimaxAPIKey,
   } = config
-  const { text, language: rawLanguage } = getQuery(event)
+  const { text, language: rawLanguage, voice_id: voiceId = '0' } = getQuery(event)
   if (!text || typeof text !== 'string') {
     throw createError({
       status: 400,
@@ -81,6 +86,12 @@ export default defineEventHandler(async (event) => {
       message: 'INVALID_LANGUAGE',
     })
   }
+  if (voiceId && !VOICE_MAPPING[Number(voiceId)]) {
+    throw createError({
+      status: 400,
+      message: 'INVALID_VOICE_ID',
+    })
+  }
   const language = rawLanguage as keyof typeof LANG_MAPPING
   const logText = text.replace(/(\r\n|\n|\r)/gm, ' ')
   console.log(`[Speech] User ${session.user.evmWallet} requested conversion. Language: ${language}, Text: "${logText.substring(0, 50)}${logText.length > 50 ? '...' : ''}"`)
@@ -91,7 +102,7 @@ export default defineEventHandler(async (event) => {
       stream: true,
       model: 'speech-02-hd',
       voice_setting: {
-        voice_id: 'Chinese (Mandarin)_Warm_Bestie',
+        voice_id: VOICE_MAPPING[Number(voiceId)],
         speed: 0.95,
         pitch: -1,
         emotion: 'neutral',
