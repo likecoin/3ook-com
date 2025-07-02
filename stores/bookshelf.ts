@@ -1,6 +1,5 @@
 export const useBookshelfStore = defineStore('bookshelf', () => {
   const nftStore = useNFTStore()
-  const { user } = useUserSession()
 
   const nftByNFTClassIds = ref<Record<string, Record<string, NFT>>>({})
   const isFetching = ref(false)
@@ -21,9 +20,13 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
   })
 
   async function fetchItems({
-    walletAddress = user.value?.evmWallet,
+    walletAddress,
     isRefresh: shouldRefresh = false,
     limit = 100,
+  }: {
+    walletAddress?: string
+    isRefresh?: boolean
+    limit?: number
   } = {}) {
     const isRefresh = shouldRefresh || (!items.value.length && !hasFetched.value)
     if (!walletAddress || isFetching.value || (!isRefresh && !nextKey.value)) {
@@ -64,11 +67,12 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
     }
   }
 
-  watch(user, () => {
+  function reset() {
+    isFetching.value = false
     hasFetched.value = false
     nftByNFTClassIds.value = {}
     nextKey.value = undefined
-  })
+  }
 
   return {
     isFetching,
@@ -79,5 +83,6 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
 
     fetchItems,
     getNFTsByNFTClassId,
+    reset,
   }
 })

@@ -155,6 +155,7 @@
   "share_button_hint_whatsapp": "分享到 WhatsApp",
   "share_button_hint_x": "分享到 X",
   "shelf_page_title": "書架",
+  "shelf_page_title_someone_else": "{name} 的書架",
   "store_fetch_items_error": "無法載入書本",
   "store_fetch_items_error_retry_button_label": "重新載入",
   "store_fetch_more_items_error": "無法載入更多書本",
