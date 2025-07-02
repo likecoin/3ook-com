@@ -53,7 +53,7 @@
           <UInput
             v-model="tippingAmount"
             class="w-full"
-            placeholder="自訂金額"
+            :placeholder="$t('tipping_modal_custom_amount_placeholder')"
           >
             <template #trailing>
               <span class="text-sm">{{ props.currency }}</span>
