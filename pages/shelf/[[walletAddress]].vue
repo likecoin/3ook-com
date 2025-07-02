@@ -3,7 +3,7 @@
     <AppHeader />
 
     <header
-      v-if="isSomeoneElseBookshelf"
+      v-if="!isMyBookshelf"
       class="flex gap-2 w-full max-w-[1440px] mx-auto px-4 laptop:px-12 py-4"
     >
       <div class="flex items-center gap-2 overflow-hidden">
@@ -106,9 +106,9 @@ const infiniteScrollDetectorElement = useTemplateRef<HTMLLIElement>('infiniteScr
 const shouldLoadMore = useElementVisibility(infiniteScrollDetectorElement)
 
 useHead(() => ({
-  title: isSomeoneElseBookshelf.value
-    ? $t('shelf_page_title_someone_else', { name: shelfOwnerDisplayName.value })
-    : $t('shelf_page_title'),
+  title: isMyBookshelf.value
+    ? $t('shelf_page_title')
+    : $t('shelf_page_title_someone_else', { name: shelfOwnerDisplayName.value }),
   meta: [
     {
       name: 'robots',
@@ -124,12 +124,12 @@ const walletAddress = computed(() => {
   return (getRouteParam('walletAddress') || user.value?.evmWallet)?.toLowerCase()
 })
 
-const isSomeoneElseBookshelf = computed(() => {
-  return !!walletAddress.value && walletAddress.value !== user.value?.evmWallet
+const isMyBookshelf = computed(() => {
+  return walletAddress.value === user.value?.evmWallet?.toLowerCase()
 })
 
 await callOnce(async () => {
-  if (isSomeoneElseBookshelf.value && walletAddress.value) {
+  if (!isMyBookshelf.value && walletAddress.value) {
     try {
       await metadataStore.lazyFetchLikerInfoByWalletAddress(walletAddress.value)
     }
