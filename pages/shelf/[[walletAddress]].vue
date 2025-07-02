@@ -204,7 +204,6 @@ function handleBookshelfItemOpen({
   useLogEvent('shelf_open_book', {
     content_type: type,
     nft_class_id: nftClassId,
-    evm_wallet: walletAddress.value,
   })
 }
 
@@ -218,7 +217,6 @@ function handleBookshelfItemDownload({
   useLogEvent('shelf_download_book', {
     content_type: type,
     nft_class_id: nftClassId,
-    evm_wallet: walletAddress.value,
   })
 }
 </script>
