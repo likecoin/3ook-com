@@ -265,6 +265,7 @@
       </section>
 
       <aside
+        v-if="pricingItems.length"
         :class="[
           'fixed',
           'bottom-[56px]',
