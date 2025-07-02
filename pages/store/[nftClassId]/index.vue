@@ -327,7 +327,7 @@ const formatPrice = useFormatPrice()
 const { loggedIn: hasLoggedIn, user } = useUserSession()
 const accountStore = useAccountStore()
 const nftStore = useNFTStore()
-const { openTippingModal } = useTipping()
+const { open: openTippingModal } = useTipping()
 
 const metadataStore = useMetadataStore()
 const { handleError } = useErrorHandler()
@@ -587,13 +587,13 @@ async function handlePurchaseButtonClick() {
     let totalPrice = selectedPricingItem.value.price
 
     if (selectedPricingItem.value.canTip) {
-      const tippingResult = (await openTippingModal({
+      const tippingResult = await openTippingModal({
         // TODO: Check if classOwner is always the book's publisher
         avatar: bookInfo.publisherName.value ? bookInfo.nftClassOwnerAvatar.value : '',
         displayName: bookInfo.publisherName.value || bookInfo.authorName.value,
-      }))
-      const customPrice = tippingResult?.customPrice || 0
-      totalPrice = formatCustomPrice(customPrice, selectedPricingItem.value.price)
+      })
+      const tippingAmount = tippingResult?.tippingAmount || 0
+      totalPrice = calculateCustomPrice(tippingAmount, selectedPricingItem.value.price)
     }
 
     const { url, paymentId } = await createNFTBookPurchase({
@@ -631,9 +631,9 @@ function handleGiftButtonClick() {
   })
 }
 
-function formatCustomPrice(customPrice: number | undefined, editionPrice: number): number {
-  const tip = customPrice ?? 0
-  const base = editionPrice ?? 0
+function calculateCustomPrice(editionPrice: number, tippingAmount: number | undefined): number {
+  const tip = Number(tippingAmount) || 0
+  const base = Number(editionPrice) || 0
   return Number((tip + base).toFixed(2))
 }
 </script>

@@ -36,7 +36,7 @@
             </p>
           </div>
           <URadioGroup
-            v-model="selectedPrice"
+            v-model="tippingAmount"
             :ui="{
               wrapper: 'w-full',
               item: 'w-full flex items-center text-center w-15',
@@ -47,16 +47,13 @@
             orientation="horizontal"
             variant="card"
             indicator="hidden"
-            :default-value="defaultPrice"
             :items="items"
-            @change="handleSelectTipping"
           />
 
           <UInput
-            v-model="inputValue"
+            v-model="tippingAmount"
             class="w-full"
             placeholder="自訂金額"
-            @input="handleInputChange"
           >
             <template #trailing>
               <span class="text-sm">{{ props.currency }}</span>
@@ -82,7 +79,7 @@
 </template>
 
 <script setup lang="ts">
-import type { RadioGroupItem, RadioGroupValue } from '@nuxt/ui'
+import type { RadioGroupItem } from '@nuxt/ui'
 
 const DEFAULT_TIPPING_PRICES_BY_CURRENCY: Record<string, number[]> = {
   USD: [5, 20, 100],
@@ -100,18 +97,15 @@ const props = withDefaults(
 )
 
 const emit = defineEmits<{
-  close: [payload: { customPrice: number }]
+  close: [payload: { tippingAmount: number | undefined }]
   submit: []
 }>()
-
-const inputValue = ref<number>()
-const customPrice = ref(0)
 
 const tippingPrices = computed(() => {
   return DEFAULT_TIPPING_PRICES_BY_CURRENCY[props.currency] || []
 })
 
-const defaultPrice = (getDefaultTipping(props.currency) ?? [])[1]
+const tippingAmount = ref(tippingPrices.value[1])
 
 const items = computed<RadioGroupItem[]>(() =>
   tippingPrices.value.map((price: number) => ({
@@ -121,29 +115,11 @@ const items = computed<RadioGroupItem[]>(() =>
   })),
 )
 
-const selectedPrice = ref<RadioGroupValue>(tippingPrices.value[0] ?? '')
-
-function getDefaultTipping(currency: string) {
-  return DEFAULT_TIPPING_PRICES_BY_CURRENCY[currency]
-}
-
-function handleSelectTipping() {
-  inputValue.value = undefined
-  customPrice.value = selectedPrice.value ? Number(selectedPrice.value) : 0
-}
-
-function handleInputChange(event: Event | number) {
-  const value = typeof event === 'number'
-    ? event
-    : Number((event.target as HTMLInputElement)?.value)
-  customPrice.value = value
-}
-
 function handleSubmit() {
-  emit('close', { customPrice: customPrice.value })
+  emit('close', { tippingAmount: tippingAmount.value })
 }
 
 function handleSkip() {
-  emit('close', { customPrice: 0 })
+  emit('close', { tippingAmount: 0 })
 }
 </script>

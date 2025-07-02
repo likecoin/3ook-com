@@ -4,11 +4,11 @@ export function useTipping() {
   const overlay = useOverlay()
   const modal = overlay.create(TippingModal)
 
-  type TippingResult = { customPrice?: number }
-  const openTippingModal = async (options: { avatar?: string, displayName?: string, currency?: string }) => {
-    const result = await modal.open(options).result
+  type TippingResult = { tippingAmount?: number }
+  const open = async (props: { avatar?: string, displayName?: string, currency?: string }) => {
+    const result = await modal.open(props).result
     return result as TippingResult
   }
 
-  return { modal, openTippingModal }
+  return { modal, open }
 }
