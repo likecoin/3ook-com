@@ -105,18 +105,6 @@ const metadataStore = useMetadataStore()
 const infiniteScrollDetectorElement = useTemplateRef<HTMLLIElement>('infiniteScrollDetector')
 const shouldLoadMore = useElementVisibility(infiniteScrollDetectorElement)
 
-useHead(() => ({
-  title: isMyBookshelf.value
-    ? $t('shelf_page_title')
-    : $t('shelf_page_title_someone_else', { name: shelfOwnerDisplayName.value }),
-  meta: [
-    {
-      name: 'robots',
-      content: 'noindex',
-    },
-  ],
-}))
-
 const itemsCount = computed(() => bookshelfStore.items.length)
 const hasMoreItems = computed(() => !!bookshelfStore.nextKey)
 
@@ -152,6 +140,18 @@ const shelfOwner = computed(() => {
 const shelfOwnerDisplayName = computed(() => {
   return shelfOwner.value?.displayName || shelfOwner.value?.evmWallet
 })
+
+useHead(() => ({
+  title: isMyBookshelf.value
+    ? $t('shelf_page_title')
+    : $t('shelf_page_title_someone_else', { name: shelfOwnerDisplayName.value }),
+  meta: [
+    {
+      name: 'robots',
+      content: 'noindex',
+    },
+  ],
+}))
 
 const { gridClasses, getGridItemClassesByIndex } = usePaginatedGrid({
   itemsCount,
