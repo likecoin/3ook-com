@@ -91,7 +91,7 @@ export default function () {
       tags: handlerProps?.tags || parseErrorData<Array<ErrorHandlerTag>>(error, 'tags') || [],
       actions: handlerProps?.actions || parseErrorData<Array<ErrorHandlerAction>>(error, 'actions') || [],
       onClose: handlerProps?.onClose || props.onClose,
-    })
+    }).result
     return !!handler
   }
 
