@@ -9,7 +9,7 @@ interface TTSOptions {
   onEnd?: (element: TextContentElement) => void
   onError?: (error: Event) => void
   onPageChange?: () => void
-  checkIfNeedPageChange?: (element: TextContentElement) => boolean
+  checkIfNeededPageChange?: (element: TextContentElement) => boolean
 }
 
 export function useTextToSpeech(options: TTSOptions = {}) {
@@ -89,7 +89,7 @@ export function useTextToSpeech(options: TTSOptions = {}) {
       return
     }
 
-    if (options.checkIfNeedPageChange && options.checkIfNeedPageChange(nextElement)) {
+    if (options.checkIfNeededPageChange && options.checkIfNeededPageChange(nextElement)) {
       options.onPageChange?.()
     }
 

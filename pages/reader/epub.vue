@@ -345,7 +345,7 @@ const {
   onPageChange: () => {
     nextPage()
   },
-  checkIfNeedPageChange: (element) => {
+  checkIfNeededPageChange: (element) => {
     const textElement = textContentElements.value.find(el => el.id === element.id)
     if (textElement) {
       const epubCfi = new EpubCFI(textElement.cfi)
