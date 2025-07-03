@@ -425,6 +425,7 @@ useHead(() => ({
   meta,
   link: [
     { rel: 'canonical', href: canonicalURL.value },
+    { rel: 'preload', href: bookCoverSrc.value, as: 'image' },
   ],
   script: structuredData.value
     ? [
