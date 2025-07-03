@@ -166,7 +166,12 @@
                           class="font-semibold"
                           v-text="item.name"
                         />
-                        <span>
+                        <span
+                          v-if="item.isSoldOut"
+                          class="text-sm font-semibold"
+                          v-text="$t('product_page_sold_out_button_label')"
+                        />
+                        <span v-else>
                           <span
                             class="text-xs mr-0.5"
                             v-text="item.currency"
