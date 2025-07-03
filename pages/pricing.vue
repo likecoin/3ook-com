@@ -106,13 +106,11 @@ onMounted(async () => {
 
   if (!hasOpened.value) {
     hasOpened.value = true
-    subscription.paywallModal.open({
+    await subscription.openPaywallModal({
       isFullscreen: true,
       isBackdropDismissible: false,
-      onClose: () => {
-        router.back()
-      },
     })
+    router.back()
   }
 })
 </script>

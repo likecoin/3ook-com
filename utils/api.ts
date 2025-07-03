@@ -307,7 +307,7 @@ export function fetchLikerPlusCheckoutLink({
   gadSource,
   fbClickId,
 }: {
-  period: 'monthly' | 'yearly'
+  period: SubscriptionPlan
   from?: string
   referrer?: string
   utmCampaign?: string

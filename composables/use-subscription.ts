@@ -1,4 +1,5 @@
 import { PaywallModal } from '#components'
+import type { PaywallModalProps } from '~/components/PaywallModal.props'
 
 export function useSubscription() {
   const { t: $t } = useI18n()
@@ -8,7 +9,7 @@ export function useSubscription() {
   const toast = useToast()
   const { getAnalyticsParameters } = useAnalytics()
 
-  const selectedPlan = ref('yearly')
+  const selectedPlan = ref<SubscriptionPlan>('yearly')
   const isProcessingSubscription = ref(false)
 
   const { handleError } = useErrorHandler()
@@ -34,23 +35,38 @@ export function useSubscription() {
     }],
   }))
 
-  const overlay = useOverlay()
-  const paywallModal = overlay.create(PaywallModal, {
-    props: {
-      'modelValue': selectedPlan.value as 'monthly' | 'yearly',
-      'onUpdate:modelValue': (val: 'monthly' | 'yearly') => {
-        selectedPlan.value = val
+  function getPaywallModalProps(): PaywallModalProps {
+    return {
+      'modelValue': selectedPlan.value,
+      'discountedYearlyPrice': yearlyPrice.value,
+      'discountedMonthlyPrice': monthlyPrice.value,
+      'isProcessingSubscription': isProcessingSubscription.value,
+      'onUpdate:modelValue': (value: SubscriptionPlan) => {
+        selectedPlan.value = value
         useLogEvent('select_item', eventPayload.value)
       },
       'onOpen': () => {
         useLogEvent('view_item', eventPayload.value)
       },
       'onSubscribe': startSubscription,
-      'discountedYearlyPrice': yearlyPrice.value,
-      'discountedMonthlyPrice': monthlyPrice.value,
-      'isProcessingSubscription': isProcessingSubscription.value,
-    },
+    }
+  }
+
+  const overlay = useOverlay()
+  const paywallModal = overlay.create(PaywallModal, {
+    props: getPaywallModalProps(),
   })
+
+  async function openPaywallModal(props: PaywallModalProps = {}) {
+    if (paywallModal.isOpen) {
+      paywallModal.close()
+    }
+
+    return paywallModal.open({
+      ...getPaywallModalProps(),
+      ...props,
+    }).result
+  }
 
   async function redirectIfSubscribed() {
     if (isLikerPlus.value) {
@@ -87,7 +103,7 @@ export function useSubscription() {
       useLogEvent('begin_checkout', eventPayload.value)
 
       const { url } = await fetchLikerPlusCheckoutLink({
-        period: selectedPlan.value as 'monthly' | 'yearly',
+        period: selectedPlan.value,
         from: getRouteQuery('from'),
         ...getAnalyticsParameters(),
       })
@@ -102,8 +118,6 @@ export function useSubscription() {
   }
 
   return {
-    paywallModal,
-
     yearlyPrice,
     monthlyPrice,
     currency,
@@ -111,6 +125,7 @@ export function useSubscription() {
     isLikerPlus,
     isProcessingSubscription,
 
+    openPaywallModal,
     redirectIfSubscribed,
     startSubscription,
   }

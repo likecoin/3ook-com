@@ -1,5 +1,7 @@
 <template>
   <UModal
+    :title="$t('pricing_page_subscription')"
+    :description="$t('pricing_page_subscription_description')"
     :fullscreen="isFullscreenModal"
     :dismissible="props.isBackdropDismissible"
     :modal="isModalityOn"
@@ -213,7 +215,7 @@
               size="xl"
               :loading="props.isProcessingSubscription"
               :ui="{ base: 'py-2 laptop:py-3 rounded-2xl cursor-pointer', label: 'font-bold' }"
-              @click="onSubscribe"
+              @click="handleSubscribeButtonClick"
             />
           </div>
         </div>
@@ -223,6 +225,8 @@
 </template>
 
 <script setup lang="ts">
+import type { PaywallModalProps } from './PaywallModal.props'
+
 import topBg from '~/assets/images/paywall/bg-top.png'
 import bottomBg from '~/assets/images/paywall/bg-bottom.png'
 import plusLogo from '~/assets/images/paywall/plus-logo.png'
@@ -231,25 +235,17 @@ import plusLogo from '~/assets/images/paywall/plus-logo.png'
 // Therefore, we set modality to false so input in the Magic login UI remains accessible.
 const isModalityOn = false
 
-const emit = defineEmits(['close', 'update:modelValue'])
+const emit = defineEmits<{
+  'open': []
+  'close': []
+  'subscribe': [plan: SubscriptionPlan]
+  'update:modelValue': [value: SubscriptionPlan]
+}>()
 const { t: $t } = useI18n()
 const isScreenSmall = useMediaQuery('(max-width: 1023px)')
 
 const props = withDefaults(
-  defineProps<{
-    isFullscreen?: boolean
-    isBackdropDismissible?: boolean
-    isCloseButtonHidden?: boolean
-    originalYearlyPrice?: string | number
-    originalMonthlyPrice?: string | number
-    discountedYearlyPrice?: string | number
-    discountedMonthlyPrice?: string | number
-    isProcessingSubscription?: boolean
-    onSubscribe?: () => void
-    onOpen?: () => void
-    onClose?: () => void
-    modelValue?: 'monthly' | 'yearly'
-  }>(),
+  defineProps<PaywallModalProps>(),
   {
     isFullscreen: false,
     isBackdropDismissible: true,
@@ -259,10 +255,6 @@ const props = withDefaults(
     discountedYearlyPrice: '69.99',
     discountedMonthlyPrice: '6.99',
     isProcessingSubscription: false,
-    onSubscribe: () => {},
-    onOpen: () => {},
-    onClose: () => {},
-    modelValue: 'yearly',
   },
 )
 
@@ -287,10 +279,12 @@ const modalContentClass = computed(() => {
   return classes.join(' ')
 })
 
-const selectedPlan = computed({
-  get: () => props.modelValue,
-  set: (val: string) => emit('update:modelValue', val),
-})
+// NOTE: This could be simplified by computed, but props not updated after `open()` in `useOverlay()`
+const selectedPlan = ref(props.modelValue || 'yearly')
+watch(
+  selectedPlan,
+  value => emit('update:modelValue', value),
+)
 
 const planLabelBaseClass = [
   'relative',
@@ -316,25 +310,23 @@ const discountPercent = computed(() => {
 })
 
 onMounted(() => {
-  if (props.onOpen) {
-    props.onOpen()
-  }
+  emit('open')
 })
 
 const onOpenUpdate = (open: boolean) => {
   if (open) {
-    if (props.onOpen) {
-      props.onOpen()
-    }
+    emit('open')
   }
   else {
-    if (props.onClose) {
-      props.onClose()
-    }
+    emit('close')
   }
 }
 
 const handleCloseButtonClick = () => {
   emit('close')
+}
+
+function handleSubscribeButtonClick() {
+  emit('subscribe', selectedPlan.value)
 }
 </script>

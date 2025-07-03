@@ -140,7 +140,7 @@ export function useTextToSpeech(options: TTSOptions = {}) {
 
   async function startTextToSpeech() {
     if (!user.value?.isLikerPlus) {
-      subscription.paywallModal.open()
+      subscription.openPaywallModal()
       return
     }
 
