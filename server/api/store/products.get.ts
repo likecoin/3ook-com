@@ -10,7 +10,7 @@ export default defineEventHandler(async (event) => {
       pageSize,
       offset,
     })
-    setHeader(event, 'cache-control', 'public, max-age=60')
+    setHeader(event, 'cache-control', 'public, max-age=60, stale-while-revalidate=600')
     return result
   }
   catch (error) {

@@ -172,7 +172,7 @@ export default defineEventHandler(async (event) => {
     const decodedStream = response.pipeThrough(new TextDecoderStream())
     decodedStream.pipeThrough(processStream)
     setHeader(event, 'content-type', 'audio/mpeg')
-    setHeader(event, 'cache-control', 'public, max-age=14400')
+    setHeader(event, 'cache-control', 'public, max-age=604800')
     return sendStream(event, processStream.readable)
   }
   catch (error) {
