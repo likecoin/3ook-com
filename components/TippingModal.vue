@@ -1,85 +1,94 @@
 <template>
   <UModal
     :ui="{
-      content: 'max-w-[400px] space-y-8 p-6',
-      footer: 'flex justify-end',
+      content: 'max-w-[320px] space-y-0 pt-6 pb-8 divide-y-0',
     }"
     :close="{ onClick: handleSkip }"
   >
     <template #content>
-      <div class="flex flex-col items-center gap-[38px] w-full">
-        <div class="relative">
-          <img
-            class="object-cover w-full h-[104px]"
-            src="~/assets/images/tipping/avatar-bg.png"
-            alt=""
-          >
-          <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-7 flex flex-col items-center gap-1">
-            <UAvatar
-              class="size-16 mb-2"
-              :alt="displayName"
-              :src="props.avatar"
+      <header>
+        <div
+          class="flex flex-col items-center justify-end bg-cover bg-no-repeat bg-center h-[116px]"
+          :style="{ backgroundImage: `url(${TippingHeaderBackground})` }"
+        >
+          <UAvatar
+            class="size-22 mb-2 bg-white ring-4 ring-[#EBEBEB]"
+            :alt="displayName"
+            :src="props.avatar"
+          />
+        </div>
+        <div
+          class="text-sm font-semibold text-center"
+          v-text="displayName"
+        />
+      </header>
+
+      <div class="flex flex-col items-center mt-6 px-6 text-center">
+        <h3
+          class="text-xl font-semibold"
+          v-text="$t('tipping_modal_title')"
+        />
+        <p
+          class="text-xs mt-2"
+          v-text="$t('tipping_modal_description', { displayName })"
+        />
+
+        <URadioGroup
+          v-model="tippingAmount"
+          class="w-full mt-6"
+          :ui="{
+            item: 'flex items-center w-full text-center',
+            label: 'text-lg font-semibold',
+            description: 'text-xs',
+          }"
+          size="md"
+          orientation="horizontal"
+          variant="card"
+          indicator="hidden"
+          :items="items"
+        />
+
+        <UInput
+          v-model="tippingAmount"
+          class="w-full mt-2"
+          size="xl"
+          :placeholder="$t('tipping_modal_custom_amount_placeholder')"
+        >
+          <template #trailing>
+            <span
+              class="text-sm"
+              v-text="props.currency"
             />
-            <div class="text-sm font-semibold text-center">
-              {{ displayName }}
-            </div>
-          </div>
-        </div>
-
-        <div class="flex flex-col justify-center items-center px-12 gap-4">
-          <div class="flex flex-col text-center gap-1">
-            <h3 class="text-xl font-semibold">
-              {{ $t('tipping_modal_title') }}
-            </h3>
-            <p class="text-xs">
-              {{ $t('tipping_modal_description', { displayName }) }}
-            </p>
-          </div>
-          <URadioGroup
-            v-model="tippingAmount"
-            :ui="{
-              wrapper: 'w-full',
-              item: 'w-full flex items-center text-center w-15',
-              label: 'text-lg font-semibold',
-              description: 'text-xs',
-            }"
-            size="md"
-            orientation="horizontal"
-            variant="card"
-            indicator="hidden"
-            :items="items"
-          />
-
-          <UInput
-            v-model="tippingAmount"
-            class="w-full"
-            :placeholder="$t('tipping_modal_custom_amount_placeholder')"
-          >
-            <template #trailing>
-              <span class="text-sm">{{ props.currency }}</span>
-            </template>
-          </UInput>
-
-          <UButton
-            :label="$t('tipping_modal_send_tips_button')"
-            color="primary"
-            size="xl"
-            @click="handleSubmit"
-          />
-          <UButton
-            :label="$t('tipping_modal_cancel_button')"
-            size="xl"
-            variant="ghost"
-            @click="handleSkip"
-          />
-        </div>
+          </template>
+        </UInput>
       </div>
+
+      <footer class="flex flex-col gap-2 px-6 mt-8">
+        <UButton
+          :label="$t('tipping_modal_send_tips_button')"
+          color="primary"
+          size="xl"
+          block
+          @click="handleSubmit"
+        />
+        <UButton
+          :label="$t('tipping_modal_cancel_button')"
+          variant="ghost"
+          size="xl"
+          block
+          @click="handleSkip"
+        />
+      </footer>
     </template>
   </UModal>
 </template>
 
 <script setup lang="ts">
 import type { RadioGroupItem } from '@nuxt/ui'
+
+import TippingHeaderBackground from '~/assets/images/tipping/avatar-bg.png'
+
+const { t: $t } = useI18n()
 
 const DEFAULT_TIPPING_PRICES_BY_CURRENCY: Record<string, number[]> = {
   USD: [5, 20, 100],
