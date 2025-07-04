@@ -100,6 +100,9 @@ export default defineEventHandler(async (event) => {
     const command = {
       text: text,
       stream: true,
+      stream_options: {
+        exclude_aggregated_audio: false,
+      },
       model: 'speech-02-hd',
       voice_setting: {
         voice_id: VOICE_MAPPING[Number(voiceId)],
