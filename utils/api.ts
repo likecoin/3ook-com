@@ -209,6 +209,8 @@ export function fetchBookstoreCMSProductsByTagId(tagId: string, {
       limit,
       ts,
     },
+    credentials: 'include',
+    mode: 'no-cors',
   })
 }
 
@@ -227,6 +229,8 @@ export function fetchBookstoreCMSTagsForAll({
       limit,
       ts,
     },
+    credentials: 'include',
+    mode: 'no-cors',
   })
 }
 

@@ -43,7 +43,7 @@ export const useBookstoreStore = defineStore('bookstore', () => {
         isFetching: false,
         hasFetched: false,
         offset: undefined,
-        ts: Math.floor(Date.now() / 60000) * 60000, // Round to the nearest minute
+        ts: getTimestampRoundedToMinute(),
       }
     }
     try {

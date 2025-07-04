@@ -198,9 +198,24 @@ useHead(() => {
       },
     )
   }
+
+  const link = [
+    {
+      rel: 'preload',
+      href: '/api/store/tags',
+      as: 'fetch' as const,
+    },
+    {
+      rel: 'preload',
+      href: `/api/store/products?tag=${localizedTagId.value}&limit=100&ts=${getTimestampRoundedToMinute()}`,
+      as: 'fetch' as const,
+    },
+  ]
+
   return {
     title: [$t('store_page_title'), tagName.value].join('›'),
     meta,
+    link,
   }
 })
 

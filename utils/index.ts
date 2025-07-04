@@ -49,6 +49,10 @@ export function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
 
+export function getTimestampRoundedToMinute() {
+  return Math.floor(Date.now() / 60000) * 60
+}
+
 const CONTENT_URL_TYPE_ORDER = ['epub', 'pdf']
 
 export function compareContentURL(
