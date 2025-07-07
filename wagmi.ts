@@ -34,6 +34,7 @@ export function createWagmiConfig({
               customLogo: customLogoURL,
               isDarkMode: false,
               magicSdkConfiguration: {
+                deferPreload: true,
                 network: {
                   rpcUrl: rpcURL,
                   chainId,
