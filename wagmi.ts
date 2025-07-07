@@ -1,7 +1,7 @@
 import { http, createConfig } from '@wagmi/vue'
 import { optimism, optimismSepolia } from '@wagmi/vue/chains'
 import { injected, metaMask } from '@wagmi/vue/connectors'
-import { dedicatedWalletConnector } from '@magiclabs/wagmi-connector'
+import { dedicatedWalletConnector } from '@likecoin/wagmi-connector'
 
 export function createWagmiConfig({
   apiKey,

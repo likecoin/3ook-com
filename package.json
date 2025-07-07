@@ -17,7 +17,7 @@
     "typecheck": "nuxt typecheck"
   },
   "dependencies": {
-    "@magiclabs/wagmi-connector": "2.2.4",
+    "@likecoin/wagmi-connector": "2.2.4",
     "@nuxt/eslint": "^1.2.0",
     "@nuxt/icon": "^1.11.0",
     "@nuxt/scripts": "^0.11.8",
