@@ -41,6 +41,7 @@ const localeRoute = useLocaleRoute()
 const accountStore = useAccountStore()
 const { handleError } = useErrorHandler()
 const { currency, yearlyPrice, monthlyPrice } = useSubscription()
+const { user } = useUserSession()
 
 const route = useRoute()
 const getRouteBaseName = useRouteBaseName()
@@ -50,6 +51,7 @@ const isYearly = computed(() => getRouteQuery('period') === 'yearly')
 
 const isRefreshing = ref(true)
 const isRedirecting = ref(false)
+const isLikerPlus = computed(() => user.value?.isLikerPlus)
 
 useHead({
   title: $t('subscription_success_page_title'),
@@ -57,7 +59,12 @@ useHead({
 
 onMounted(async () => {
   try {
+    isRefreshing.value = true
     await accountStore.refreshSessionInfo()
+    if (!isLikerPlus.value) {
+      await sleep(5000)
+      await accountStore.refreshSessionInfo()
+    }
     isRefreshing.value = false
     if (isRedirected.value) {
       useLogEvent('purchase', {
