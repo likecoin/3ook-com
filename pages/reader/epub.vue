@@ -507,7 +507,7 @@ async function loadEPub() {
 
   rendition.value.on('rendered', (section: Section, view: EpubView) => {
     currentSectionIndex.value = section.index
-    const elements = Array.from(section.contents.querySelectorAll('p, h1, h2, h3, h4, h5, h6'))
+    const elements = Array.from(section.contents?.querySelectorAll('p, h1, h2, h3, h4, h5, h6') || [])
       .filter(element => !!element.textContent?.trim())
       .map((el) => {
         const range = new Range()
