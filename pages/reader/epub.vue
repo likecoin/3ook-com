@@ -349,19 +349,29 @@ const {
 } = useTextToSpeech({
   nftClassId: nftClassId.value,
   onPlay: (element) => {
-    const textElement = textContentElements.value.find(el => el.id === element.id)
-    if (textElement) {
-      rendition.value?.display(textElement.cfi)
-      rendition.value?.annotations.remove(textElement.cfi, 'highlight')
-      rendition.value?.annotations.highlight(textElement.cfi, {}, () => {}, '', {
-        fill: '#FFEB3B',
-      })
+    try {
+      const textElement = textContentElements.value.find(el => el.id === element.id)
+      if (textElement) {
+        rendition.value?.display(textElement.cfi)
+        rendition.value?.annotations.remove(textElement.cfi, 'highlight')
+        rendition.value?.annotations.highlight(textElement.cfi, {}, () => {}, '', {
+          fill: '#FFEB3B',
+        })
+      }
+    }
+    catch (error) {
+      console.warn('Failed to highlight text element:', error)
     }
   },
   onEnd: (element) => {
-    const textElement = textContentElements.value.find(el => el.id === element.id)
-    if (textElement) {
-      rendition.value?.annotations.remove(textElement.cfi, 'highlight')
+    try {
+      const textElement = textContentElements.value.find(el => el.id === element.id)
+      if (textElement) {
+        rendition.value?.annotations.remove(textElement.cfi, 'highlight')
+      }
+    }
+    catch (error) {
+      console.warn('Failed to remove highlight from text element:', error)
     }
   },
   onPageChange: (direction) => {
