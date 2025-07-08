@@ -642,6 +642,6 @@ onKeyStroke('Space', () => isShiftPressed.value ? prevPage() : nextPage())
 /* NOTE: In Safari/Brave Browser, .epub-view could be zero width */
 .epub-view,
 .epub-view > iframe {
-  width: 100% !important
+  min-width: 100%
 }
 </style>
