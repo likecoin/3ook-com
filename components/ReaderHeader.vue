@@ -1,8 +1,8 @@
 <template>
-  <header class="flex justify-between min-h-[56px] px-5 bg-white border-b border-[#C7C7C7]">
-    <div class="flex items-center gap-4">
+  <header class="flex items-center justify-between min-h-[56px] px-5 bg-white border-b border-[#C7C7C7]">
+    <div class="flex items-center gap-4 min-w-0">
       <UButton
-        class="-mx-2"
+        class="-mx-2 shrink-0"
         color="neutral"
         variant="ghost"
         size="xl"
@@ -10,20 +10,22 @@
         :to="localeRoute({ name: 'shelf' })"
       />
 
-      <div>
+      <div class="flex flex-col overflow-hidden min-w-0">
         <div
-          :class="['font-semibold', { 'text-xs': !!props.chapterTitle }]"
+          :class="['font-semibold truncate', { 'text-xs': !!props.chapterTitle }]"
           v-text="props.bookName"
         />
         <div
           v-if="props.chapterTitle"
-          class="text-sm font-semibold"
+          class="text-sm font-semibold truncate"
           v-text="props.chapterTitle"
         />
       </div>
     </div>
 
-    <slot name="trailing" />
+    <div class="shrink-0 flex items-center">
+      <slot name="trailing" />
+    </div>
   </header>
 </template>
 
