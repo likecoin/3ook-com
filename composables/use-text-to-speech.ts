@@ -35,7 +35,7 @@ export function useTextToSpeech(options: TTSOptions = {}) {
   const isShowTextToSpeechOptions = ref(false)
   const isTextToSpeechOn = ref(false)
   const isTextToSpeechPlaying = ref(false)
-  const pendingResetOnStart = ref(false)
+  const isPendingResetOnStart = ref(false)
   const audioBuffers = ref<(HTMLAudioElement | null)[]>([null, null])
   const currentAudioTimeout = ref<ReturnType<typeof setTimeout> | null>(null)
   const currentBufferIndex = ref<0 | 1>(0)
@@ -157,7 +157,7 @@ export function useTextToSpeech(options: TTSOptions = {}) {
 
     isShowTextToSpeechOptions.value = true
 
-    if (isTextToSpeechOn.value && !isTextToSpeechPlaying.value && !pendingResetOnStart.value) {
+    if (isTextToSpeechOn.value && !isTextToSpeechPlaying.value && !isPendingResetOnStart.value) {
       isTextToSpeechPlaying.value = true
       const activeAudio = audioBuffers.value[currentBufferIndex.value]
       if (activeAudio) {
@@ -258,7 +258,7 @@ export function useTextToSpeech(options: TTSOptions = {}) {
       startTextToSpeech()
     }
     else {
-      pendingResetOnStart.value = true
+      isPendingResetOnStart.value = true
     }
   }
 
