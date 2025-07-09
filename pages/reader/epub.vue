@@ -642,6 +642,12 @@ onKeyStroke('Space', () => isShiftPressed.value ? prevPage() : nextPage())
 /* NOTE: In Safari/Brave Browser, .epub-view could be zero width */
 .epub-view,
 .epub-view > iframe {
-  min-width: 100%
+  min-width: 100%;
+}
+
+/* NOTE: For some rtl books, width will be gradually increase */
+.epub-container[dir=rtl] .epub-view,
+.epub-container[dir=rtl] .epub-view > iframe {
+  max-width: 100%;
 }
 </style>
