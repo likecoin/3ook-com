@@ -91,27 +91,46 @@
                 />
               </template>
               <template v-if="isShowTextToSpeechOptions">
-                <UButton
-                  icon="i-material-symbols-skip-previous-rounded"
-                  variant="ghost"
-                  :disabled="!isTextToSpeechOn"
-                  @click="skipBackward"
-                />
-                <USelect
-                  v-model="ttsLanguageVoice"
-                  :items="ttsLanguageVoiceOptions"
-                />
-                <USelect
-                  v-model="ttsPlaybackRate"
-                  icon="i-material-symbols-speed-rounded"
-                  :items="ttsPlaybackRateOptions"
-                />
-                <UButton
-                  icon="i-material-symbols-skip-next-rounded"
-                  variant="ghost"
-                  :disabled="!isTextToSpeechOn"
-                  @click="skipForward"
-                />
+                <USlideover
+                  :title="$t('reader_tts_options_button')"
+                  :close="{
+                    color: 'neutral',
+                    variant: 'outline',
+                    class: 'rounded-full',
+                  }"
+                  side="bottom"
+                >
+                  <UButton
+                    v-if="isShowTextToSpeechOptions"
+                    icon="i-lucide-settings-2"
+                    variant="ghost"
+                  />
+                  <template #body>
+                    <div class="flex items-center gap-2">
+                      <UButton
+                        icon="i-material-symbols-skip-previous-rounded"
+                        variant="ghost"
+                        :disabled="!isTextToSpeechOn"
+                        @click="skipBackward"
+                      />
+                      <USelect
+                        v-model="ttsLanguageVoice"
+                        :items="ttsLanguageVoiceOptions"
+                      />
+                      <USelect
+                        v-model="ttsPlaybackRate"
+                        icon="i-material-symbols-speed-rounded"
+                        :items="ttsPlaybackRateOptions"
+                      />
+                      <UButton
+                        icon="i-material-symbols-skip-next-rounded"
+                        variant="ghost"
+                        :disabled="!isTextToSpeechOn"
+                        @click="skipForward"
+                      />
+                    </div>
+                  </template>
+                </USlideover>
               </template>
             </template>
 

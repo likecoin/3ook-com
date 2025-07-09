@@ -137,6 +137,7 @@
   "reader_title": "Read \"{name}\" - {author}",
   "reader_toc_button": "Table of contents",
   "reader_toc_title": "Table of contents",
+  "reader_tts_options_button": "Playback options",
   "reading_method_download_file": "Download File",
   "reading_method_read_online": "Read Online",
   "registration_modal_account_id_label": "Account ID",
