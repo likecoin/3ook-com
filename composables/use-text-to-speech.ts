@@ -80,7 +80,35 @@ export function useTextToSpeech(options: TTSOptions = {}) {
   }
 
   function createAudio(element: TTSSegment, bufferIndex: 0 | 1) {
-    const audio = new Audio()
+    let audio = audioBuffers.value[bufferIndex]
+
+    if (!audio) {
+      audio = new Audio()
+      audioBuffers.value[bufferIndex] = audio
+
+      audio.onplay = () => {
+        const currentElement = ttsSegments.value[currentTTSSegmentIndex.value]
+        if (currentElement) {
+          options.onPlay?.(currentElement)
+        }
+      }
+
+      audio.onended = () => {
+        const currentElement = ttsSegments.value[currentTTSSegmentIndex.value]
+        if (currentElement) {
+          options.onEnd?.(currentElement)
+        }
+        playNextElement()
+      }
+
+      audio.onerror = (e) => {
+        console.warn('Audio playback error:', e)
+        if (e instanceof Event) {
+          options.onError?.(e)
+        }
+      }
+    }
+
     const params = new URLSearchParams({
       text: element.text,
       language: ttsLanguageVoice.value.split('_')[0] || 'zh-HK',
@@ -88,24 +116,6 @@ export function useTextToSpeech(options: TTSOptions = {}) {
     })
     audio.src = `/api/reader/tts?${params.toString()}`
     audio.playbackRate = ttsPlaybackRate.value
-
-    audio.onplay = () => {
-      options.onPlay?.(element)
-    }
-
-    audio.onended = () => {
-      options.onEnd?.(element)
-      playNextElement()
-    }
-
-    audio.onerror = (e) => {
-      console.warn('Audio playback error:', e)
-      if (e instanceof Event) {
-        options.onError?.(e)
-      }
-    }
-
-    audioBuffers.value[bufferIndex] = audio
 
     return audio
   }
@@ -158,7 +168,7 @@ export function useTextToSpeech(options: TTSOptions = {}) {
       return
     }
 
-    cleanupAudio()
+    resetAudio()
     currentTTSSegmentIndex.value = 0
     currentBufferIndex.value = 0
     isTextToSpeechOn.value = true
@@ -192,14 +202,14 @@ export function useTextToSpeech(options: TTSOptions = {}) {
     }
   }
 
-  function cleanupAudio() {
+  function resetAudio() {
     audioBuffers.value.forEach((audio) => {
-      audio?.pause()
       if (audio) {
+        audio.pause()
+        audio.currentTime = 0
         audio.src = ''
       }
     })
-    audioBuffers.value = [null, null]
   }
 
   function setTTSSegments(elements: TTSSegment[]) {
@@ -243,7 +253,7 @@ export function useTextToSpeech(options: TTSOptions = {}) {
 
   function restartTextToSpeech() {
     if (isTextToSpeechOn.value) {
-      cleanupAudio()
+      resetAudio()
       startTextToSpeech()
     }
   }
@@ -253,7 +263,17 @@ export function useTextToSpeech(options: TTSOptions = {}) {
       clearTimeout(currentAudioTimeout.value)
       currentAudioTimeout.value = null
     }
-    cleanupAudio()
+    audioBuffers.value.forEach((audio) => {
+      if (audio) {
+        audio.pause()
+        audio.src = ''
+        audio.load()
+        audio.onplay = null
+        audio.onended = null
+        audio.onerror = null
+      }
+    })
+    audioBuffers.value = [null, null]
     isTextToSpeechOn.value = false
     isTextToSpeechPlaying.value = false
     isShowTextToSpeechOptions.value = false
