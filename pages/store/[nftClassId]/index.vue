@@ -56,7 +56,7 @@
             <template #description>
               <ExpandableContent>
                 <div
-                  class="prose-markdown"
+                  class="markdown"
                   v-html="bookInfoDescriptionHTML"
                 />
               </ExpandableContent>
@@ -65,7 +65,7 @@
             <template #author>
               <ExpandableContent>
                 <div
-                  class="prose-markdown"
+                  class="markdown"
                   v-html="authorDescriptionHTML"
                 />
               </ExpandableContent>
@@ -187,7 +187,7 @@
                       </div>
                       <div
                         v-if="item.renderedDescription"
-                        class="prose-markdown whitespace-normal text-left mt-2"
+                        class="markdown whitespace-normal text-left mt-2"
                         v-html="item.renderedDescription"
                       />
                     </div>

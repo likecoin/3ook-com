@@ -60,7 +60,7 @@ body {
   opacity: 0;
 }
 
-.prose-markdown ul {
+.markdown ul {
   list-style-type: disc;
   padding-left: 1.25rem;
   margin-left: 1rem;
