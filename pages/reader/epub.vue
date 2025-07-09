@@ -503,8 +503,10 @@ async function loadEPub() {
     spread: 'none',
   })
   const bodyCSS: Record<string, string> = {
-    color: '#333',
-    direction: 'ltr', // Mitigate epubjs mixing up dir & page-progression-direction
+    'color': '#333',
+    '-webkit-text-size-adjust': 'none',
+    'text-size-adjust': 'none',
+    'direction': 'ltr', // Mitigate epubjs mixing up dir & page-progression-direction
   }
   if (metadata.layout === 'pre-paginated' && metadata.spread === 'none') {
     // Make the page centered for book with pre-paginated layout and no spread (single page)
