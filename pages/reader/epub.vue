@@ -69,6 +69,9 @@
                     @click="startTextToSpeech"
                   />
                   <UButton
+                    :ui="{
+                      base: '!rounded-l-md',
+                    }"
                     class="max-laptop:hidden"
                     icon="i-material-symbols-headphones-rounded"
                     :label="$t('reader_text_to_speech_button')"
@@ -95,6 +98,9 @@
                     @click="pauseTextToSpeech"
                   />
                   <UButton
+                    :ui="{
+                      base: '!rounded-l-md',
+                    }"
                     class="max-laptop:hidden"
                     icon="i-material-symbols-pause-rounded"
                     :label="$t('reader_text_to_speech_button')"
