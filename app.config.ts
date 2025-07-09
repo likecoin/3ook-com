@@ -7,6 +7,7 @@ export default defineAppConfig({
       neutral: 'neutral',
     },
     button: {
+      base: 'disabled:opacity-30',
       compoundVariants: [
         {
           color: 'primary',
