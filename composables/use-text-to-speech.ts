@@ -248,6 +248,19 @@ export function useTextToSpeech(options: TTSOptions = {}) {
     }
   }
 
+  function stopTextToSpeech() {
+    if (currentAudioTimeout.value) {
+      clearTimeout(currentAudioTimeout.value)
+      currentAudioTimeout.value = null
+    }
+    cleanupAudio()
+    isTextToSpeechOn.value = false
+    isTextToSpeechPlaying.value = false
+    isShowTextToSpeechOptions.value = false
+    currentTTSSegmentIndex.value = 0
+    currentBufferIndex.value = 0
+  }
+
   return {
     ttsLanguageVoiceOptions,
     ttsLanguageVoice,
@@ -263,5 +276,6 @@ export function useTextToSpeech(options: TTSOptions = {}) {
     skipForward,
     skipBackward,
     restartTextToSpeech,
+    stopTextToSpeech,
   }
 }

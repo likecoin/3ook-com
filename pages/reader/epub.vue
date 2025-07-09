@@ -346,6 +346,7 @@ const {
   skipForward,
   skipBackward,
   restartTextToSpeech,
+  stopTextToSpeech,
 } = useTextToSpeech({
   nftClassId: nftClassId.value,
   onPlay: (element) => {
@@ -636,6 +637,13 @@ onKeyStroke('ArrowLeft', handleLeftArrowButtonClick)
 onKeyStroke('ArrowDown', nextPage)
 onKeyStroke('ArrowUp', prevPage)
 onKeyStroke('Space', () => isShiftPressed.value ? prevPage() : nextPage())
+
+onBeforeUnmount(() => {
+  stopTextToSpeech()
+  if (cleanUpClickListener) {
+    cleanUpClickListener()
+  }
+})
 </script>
 
 <style>
