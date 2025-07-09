@@ -186,9 +186,9 @@
                         </span>
                       </div>
                       <div
-                        v-if="item.description"
+                        v-if="item.renderedDescription"
                         class="prose-markdown whitespace-normal text-left mt-2"
-                        v-html="item.description"
+                        v-html="item.renderedDescription"
                       />
                     </div>
                   </button>
@@ -487,7 +487,7 @@ const pricingItems = computed(() => {
     ...item,
     formattedPrice: formatPrice(item.price),
     isSelected: index === selectedPricingItemIndex.value,
-    description: md.render(item.description || ''),
+    renderedDescription: md.render(item.description || ''),
   }))
 })
 
