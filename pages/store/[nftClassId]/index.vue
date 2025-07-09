@@ -327,7 +327,7 @@ const route = useRoute()
 const config = useRuntimeConfig()
 const baseURL = config.public.baseURL
 const md = new MarkdownIt({
-  html: false,
+  html: false, // Disable raw HTML to prevent XSS attacks from untrusted markdown input
   linkify: true,
   breaks: true,
 })
