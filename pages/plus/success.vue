@@ -73,7 +73,8 @@ onMounted(async () => {
         items: [{
           id: `plus-beta-${isYearly.value ? 'yearly' : 'monthly'}`,
           name: `Plus Beta (${isYearly.value ? 'yearly' : 'monthly'}`,
-          price: isYearly.value ? yearlyPrice.value : monthlyPrice.value,
+          price: 0, // We always start with 3 days free trial, set price to 0
+          // price: isYearly.value ? yearlyPrice.value : monthlyPrice.value,
           currency: currency.value,
           quantity: 1,
         }],

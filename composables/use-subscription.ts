@@ -114,6 +114,8 @@ export function useSubscription() {
       const { url } = await fetchLikerPlusCheckoutLink({
         period: selectedPlan.value,
         from: getRouteQuery('from'),
+        hasFreeTrial: true,
+        mustCollectPaymentMethod: false,
         ...analyticsParams,
         utmCampaign: utmCampaign || analyticsParams.utmCampaign,
         utmMedium: utmMedium || analyticsParams.utmMedium,

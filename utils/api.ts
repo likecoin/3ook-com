@@ -300,6 +300,8 @@ export interface FetchLikerPlusCheckoutLinkResponseData {
 
 export function fetchLikerPlusCheckoutLink({
   period = 'monthly',
+  hasFreeTrial,
+  mustCollectPaymentMethod,
   from,
   referrer,
   utmCampaign,
@@ -312,6 +314,8 @@ export function fetchLikerPlusCheckoutLink({
   fbClickId,
 }: {
   period: SubscriptionPlan
+  hasFreeTrial?: boolean
+  mustCollectPaymentMethod?: boolean
   from?: string
   referrer?: string
   utmCampaign?: string
@@ -328,6 +332,8 @@ export function fetchLikerPlusCheckoutLink({
     method: 'POST',
     query: { period, from },
     body: {
+      hasFreeTrial,
+      mustCollectPaymentMethod,
       referrer,
       utmCampaign,
       utmMedium,
