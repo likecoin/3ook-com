@@ -173,7 +173,7 @@ const rightCanvas = useTemplateRef<HTMLCanvasElement>('rightCanvas')
 const scrollableContainer = useTemplateRef<HTMLDivElement>('scrollableContainer')
 const pagePaddingClasses = ['p-4', 'laptop:px-12', 'laptop:pt-6', 'pb-[64px]']
 
-const currentPage = useStorage(computed(() => `${props.bookFileCacheKey}-current-page`), 1)
+const currentPage = useStorage(computed(() => `${props.bookFileCacheKey}-locations`), 1)
 const totalPages = ref(0)
 const scaleMin = 0.5
 const scaleMax = 3.0

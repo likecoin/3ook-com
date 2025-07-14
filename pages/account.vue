@@ -272,8 +272,15 @@ async function handleClearReaderCacheButtonClick() {
 
         if (window.localStorage) {
           bookKeys.forEach((key) => {
-            // TODO: Refactor locations key
-            window.localStorage.removeItem(`${key}-locations`)
+            // TODO: Refactor keys
+            [
+              'locations',
+              'scale',
+              'dual-page-mode',
+              'right-to-left',
+            ].forEach((suffix) => {
+              window.localStorage.removeItem(`${key}-${suffix}`)
+            })
           })
         }
       }
