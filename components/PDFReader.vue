@@ -155,7 +155,7 @@
 <script setup lang="ts">
 import type { DropdownMenuItem } from '@nuxt/ui'
 import { useStorage } from '@vueuse/core'
-import * as pdfjsLib from 'pdfjs-dist'
+import type { PDFDocumentProxy } from 'pdfjs-dist'
 
 interface Props {
   bookName?: string
@@ -167,6 +167,7 @@ const props = defineProps<Props>()
 
 const { t: $t } = useI18n()
 
+const pdfjsLib = ref<typeof import('pdfjs-dist') | undefined>(undefined)
 const singleCanvas = useTemplateRef<HTMLCanvasElement>('singleCanvas')
 const leftCanvas = useTemplateRef<HTMLCanvasElement>('leftCanvas')
 const rightCanvas = useTemplateRef<HTMLCanvasElement>('rightCanvas')
@@ -193,7 +194,7 @@ const scaleMenuItems = computed<DropdownMenuItem[]>(() => {
     onSelect: () => scale.value = value,
   }))
 })
-const pdfDocument = shallowRef<pdfjsLib.PDFDocumentProxy>()
+const pdfDocument = shallowRef<PDFDocumentProxy>()
 const isDualPageMode = useStorage(computed(() => `${props.bookFileCacheKey}-dual-page-mode`), true)
 const pageMode = computed({
   get: () => isDualPageMode.value ? 'dual' : 'single',
@@ -242,10 +243,12 @@ const isAtLastPage = computed(() => {
 
 onMounted(async () => {
   try {
-    pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+    const pdfjs = await import('pdfjs-dist')
+    pdfjs.GlobalWorkerOptions.workerSrc = new URL(
       'pdfjs-dist/build/pdf.worker.min.mjs',
       import.meta.url,
     ).toString()
+    pdfjsLib.value = pdfjs
     isDualPageMode.value = !isMobile.value
     await loadPDF()
   }
@@ -274,12 +277,12 @@ watch([currentPage, scale, isDualPageMode, isRightToLeft], async () => {
 })
 
 async function loadPDF() {
-  if (!props.pdfBuffer) return
+  if (!props.pdfBuffer || !pdfjsLib.value) return
 
   try {
-    const loadingTask = pdfjsLib.getDocument({
+    const loadingTask = pdfjsLib.value.getDocument({
       data: props.pdfBuffer,
-      cMapUrl: `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/cmaps/`,
+      cMapUrl: `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.value.version}/cmaps/`,
       cMapPacked: true,
     })
 
