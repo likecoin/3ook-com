@@ -6,19 +6,14 @@
       :book-cover-src="bookCoverSrc"
       :loading-label="loadingLabel"
     />
-    <div
-      v-else
-      class="relative flex flex-col w-full grow"
-    >
-      <ReaderHeader :book-name="bookInfo.name.value" />
-
-      <PDFReader
-        v-if="fileBuffer"
-        :pdf-buffer="fileBuffer"
-        :book-file-cache-key="bookFileCacheKey"
-        @error="handlePDFError"
-      />
-    </div>
+    <PDFReader
+      v-else-if="fileBuffer"
+      class="grow w-full"
+      :book-name="bookInfo.name.value"
+      :pdf-buffer="fileBuffer"
+      :book-file-cache-key="bookFileCacheKey"
+      @error="handlePDFError"
+    />
   </main>
 </template>
 

@@ -1,5 +1,19 @@
 <template>
-  <header class="flex items-center justify-between min-h-[56px] px-5 bg-white border-b border-[#C7C7C7]">
+  <header
+    :class="[
+      'flex',
+      'items-center',
+      'justify-between',
+      'gap-4',
+
+      'min-h-[56px]',
+      'px-3', 'phone:px-5',
+
+      'bg-white',
+      'border-b',
+      'border-[#C7C7C7]',
+    ]"
+  >
     <div class="flex items-center gap-4 min-w-0">
       <UButton
         class="-mx-2 shrink-0"
@@ -22,6 +36,8 @@
         />
       </div>
     </div>
+
+    <slot name="center" />
 
     <div class="shrink-0 flex items-center">
       <slot name="trailing" />
