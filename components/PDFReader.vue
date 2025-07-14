@@ -194,6 +194,8 @@ const scaleMenuItems = computed<DropdownMenuItem[]>(() => {
   }))
 })
 const pdfDocument = shallowRef<pdfjsLib.PDFDocumentProxy>()
+const renderQueue = ref<(() => Promise<void>)[]>([])
+const isRendering = ref(false)
 const isDualPageMode = useStorage(computed(() => `${props.bookFileCacheKey}-dual-page-mode`), true)
 const pageMode = computed({
   get: () => isDualPageMode.value ? 'dual' : 'single',
@@ -296,17 +298,36 @@ async function loadPDF() {
 async function renderPages() {
   if (!pdfDocument.value) return
 
-  try {
-    if (isDualPageMode.value && totalPages.value > 1) {
-      await renderDualPages()
+  const newRenderTask = async () => {
+    try {
+      if (isDualPageMode.value && totalPages.value > 1) {
+        await renderDualPages()
+      }
+      else {
+        await renderSinglePage()
+      }
     }
-    else {
-      await renderSinglePage()
+    catch (error) {
+      emit('error', error as Error)
     }
   }
-  catch (error) {
-    emit('error', error as Error)
+
+  // Only latest render task is meaningful
+  renderQueue.value = [newRenderTask]
+  processRenderQueue()
+}
+
+async function processRenderQueue() {
+  if (isRendering.value || renderQueue.value.length === 0) return
+
+  isRendering.value = true
+
+  while (renderQueue.value.length > 0) {
+    const task = renderQueue.value.shift()!
+    await task()
   }
+
+  isRendering.value = false
 }
 
 async function renderSinglePage() {
