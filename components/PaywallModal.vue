@@ -35,7 +35,7 @@
           />
           <img
             :src="plusLogo"
-            alt="3ook+"
+            :alt="$t('pricing_page_title')"
             class="w-full max-w-[300px] laptop:max-h-[200px] object-contain"
           >
         </div>

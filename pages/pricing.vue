@@ -26,7 +26,7 @@ const structuredData = computed(() => {
   return {
     '@context': 'https://schema.org',
     '@type': 'Product',
-    'name': '3ook+',
+    'name': $t('pricing_page_title'),
     'description': $t('pricing_page_subscription_description'),
     'url': pageURL,
     'offers': [
