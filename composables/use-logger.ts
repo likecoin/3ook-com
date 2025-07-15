@@ -58,17 +58,17 @@ export function useLogEvent(eventName: string, eventParams: EventParams = {}) {
     console.error(`Failed to track event with Meta Pixel: ${eventName}`, eventParams)
   }
 
-  const { $crisp: crisp } = useNuxtApp()
-  if (crisp) {
+  const { proxy: intercomProxy } = useScriptIntercom()
+  if (intercomProxy) {
     try {
       const { items, ...params } = eventParams
       if (items) {
         params.items = JSON.stringify(items)
       }
-      crisp.set('session:event', [[[eventName, params]]])
+      intercomProxy.Intercom('trackEvent', eventName, params)
     }
     catch (error) {
-      console.error(`Failed to log event to Crisp: ${eventName}`, error)
+      console.error(`Failed to log event to Intercom: ${eventName}`, error)
     }
   }
 }
@@ -105,30 +105,35 @@ export function useSetLogUser(user: User | null) {
     console.error('Failed to set user ID in Google Analytics', error)
   }
 
-  // Set user info in Crisp
-  const { $crisp: crisp } = useNuxtApp()
-  if (crisp) {
+  // Set user info in Intercom
+  const { proxy: intercomProxy } = useScriptIntercom()
+  if (intercomProxy) {
     try {
+      const intercom = intercomProxy?.Intercom
       if (!user) {
-        crisp.do('session:reset')
+        intercom('shutdown')
         return
       }
       else {
-        if (user.email) crisp.set('user:email', user.email)
-        if (user.evmWallet) crisp.set('session:data', ['evm_wallet', `op:${user.evmWallet}`])
-        if (user.likeWallet) crisp.set('session:data', ['like_wallet', user.likeWallet])
-        if (user.loginMethod) crisp.set('session:data', ['login_method', user.loginMethod])
-        if (user.displayName) {
-          crisp.set('user:nickname', user.displayName)
-        }
-        else if (user.evmWallet || user.likeWallet) {
-          crisp.set('user:nickname', user.evmWallet || user.likeWallet)
-        }
-        if (user.avatar) crisp.set('user:avatar', user.avatar)
+        intercom('update', {
+          user_id: user.likerId,
+          email: user.email,
+          name: user.displayName || user.evmWallet || user.likeWallet,
+          avatar: user.avatar
+            ? {
+                type: 'avatar',
+                image_url: user.avatar,
+              }
+            : undefined,
+          evm_wallet: user.evmWallet,
+          like_wallet: user.likeWallet,
+          login_method: user.loginMethod,
+          is_liker_plus: user.isLikerPlus,
+        })
       }
     }
     catch (error) {
-      console.error('Failed to set user data in Crisp', error)
+      console.error('Failed to set user data in Intercom', error)
     }
   }
 }

@@ -49,8 +49,8 @@ export default defineNuxtConfig({
     minimaxAPIKey: process.env.MINIMAX_API_KEY,
     public: {
       scripts: {
-        crisp: {
-          id: '',
+        intercom: {
+          app_id: '',
         },
         metaPixel: {
           id: '',
@@ -129,7 +129,7 @@ export default defineNuxtConfig({
 
   scripts: {
     registry: {
-      crisp: true,
+      intercom: true,
       metaPixel: true,
       stripe: true,
     },
@@ -144,7 +144,6 @@ export default defineNuxtConfig({
           '\'unsafe-inline\'',
           'https://fonts.googleapis.com',
           'https://fonts.gstatic.com',
-          'https://client.crisp.chat',
         ],
         'frame-src': isDevelopment
           ? ['*']
@@ -162,9 +161,8 @@ export default defineNuxtConfig({
           '\'self\'',
           'data:',
           'blob:',
-          'https://client.crisp.chat',
-          'https://image.crisp.chat',
           'https://www.facebook.com',
+          'https://js.intercomcdn.com',
           ...[
             process.env.LIKECOIN_API_ENDPOINT,
             process.env.LIKECOIN_STATIC_ENDPOINT,
@@ -174,8 +172,8 @@ export default defineNuxtConfig({
         'font-src': [
           '\'self\'',
           'blob:',
-          'https://client.crisp.chat',
           'https://fonts.gstatic.com',
+          'https://fonts.intercomcdn.com',
         ],
         // NOTE: Resolve Safari force HTTPS in development
         'upgrade-insecure-requests': isDevelopment ? false : true,

@@ -211,7 +211,7 @@ useHead({
   title: $t('account_page_title'),
 })
 
-const { $crispChatURL: crispChatURL, $crisp: crisp } = useNuxtApp()
+const { proxy: intercomProxy } = useScriptIntercom()
 
 async function handleLogin() {
   await accountStore.login()
@@ -246,8 +246,8 @@ async function handleLikerPlusButtonClick() {
 }
 
 async function handleCustomerServiceLinkButtonClick() {
-  if (!crisp) {
-    await navigateTo(crispChatURL, {
+  if (!intercomProxy) {
+    await navigateTo('https://cs.3ook.com', {
       external: true,
       open: { target: '_blank' },
     })
@@ -256,8 +256,7 @@ async function handleCustomerServiceLinkButtonClick() {
   }
   useLogEvent('customer_service', { method: 'chat' })
 
-  crisp?.do('chat:show')
-  crisp?.do('chat:open')
+  intercomProxy.Intercom('show')
 }
 
 async function handleClearReaderCacheButtonClick() {

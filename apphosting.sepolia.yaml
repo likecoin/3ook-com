@@ -51,8 +51,8 @@ env:
     value: https://sepolia.3ook.com/android-chrome-512x512.png
   - variable: MAGIC_LINK_RPC_URL
     value: https://sepolia.optimism.io
-  - variable: NUXT_PUBLIC_SCRIPTS_CRISP_ID
-    value: 4e80ff4a-e151-4393-a09b-14e6342ad11d
+  - variable: NUXT_PUBLIC_SCRIPTS_INTERCOM_APP_ID
+    value: j0ryap5a
   - variable: NUXT_SESSION_PASSWORD
     secret: V3_NUXT_SESSION_PASSWORD
   - variable: PDF_VIEWER_ORIGIN

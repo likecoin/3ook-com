@@ -51,8 +51,8 @@ env:
     value: https://3ook.com/android-chrome-512x512.png
   - variable: MAGIC_LINK_RPC_URL
     value: https://mainnet.optimism.io
-  - variable: NUXT_PUBLIC_SCRIPTS_CRISP_ID
-    value: 5c009125-5863-4059-ba65-43f177ca33f7
+  - variable: NUXT_PUBLIC_SCRIPTS_INTERCOM_APP_ID
+    value: eupcse57
   - variable: NUXT_PUBLIC_SCRIPTS_META_PIXEL_ID
     value: 1261473308725104
   - variable: NUXT_SESSION_PASSWORD
