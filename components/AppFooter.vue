@@ -53,6 +53,14 @@
           <li>
             <ULink
               class="block border-y border-t-transparent leading-5"
+              href="https://link.3ook.com/shipping-return-refund"
+              target="_blank"
+              rel="noopener noreferrer"
+            >{{ $t("footer_shipping_return") }}</ULink>
+          </li>
+          <li>
+            <ULink
+              class="block border-y border-t-transparent leading-5"
               href="https://cs.3ook.com"
               target="_blank"
               rel="noopener noreferrer"
