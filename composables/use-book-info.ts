@@ -176,6 +176,12 @@ export default function ({ nftClassId = '' }: { nftClassId?: string } = {}) {
     params: { nftClassId },
   }))
 
+  const authorProfileRoute = computed(() => {
+    return localeRoute({
+      name: 'store-nftClassId',
+      params: { nftClassId: nftClassOwnerWalletAddress.value } })
+  })
+
   const minPrice = computed(() => {
     if (pricingItems.value.length === 0) return 0
     return Math.min(...pricingItems.value.map(item => item.price))
@@ -210,11 +216,13 @@ export default function ({ nftClassId = '' }: { nftClassId?: string } = {}) {
     keywords,
 
     pricingItems,
+    minPrice,
 
     userOwnedNFTIds,
     firstUserOwnedNFTId,
 
     productPageRoute,
+    authorProfileRoute,
     getReaderRoute,
 
     getIsAutoDelivery,

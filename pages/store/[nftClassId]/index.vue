@@ -10,7 +10,7 @@
         :author-wallet-address="authorWalletAddress"
       />
       <section
-        v-else
+        v-else-if="nftClassId"
         class="flex flex-col tablet:flex-row gap-[32px] tablet:gap-[44px] w-full max-w-[1200px]"
       >
         <div class="grow pt-5">
@@ -43,11 +43,19 @@
                   '[&>li>div:first-child]:mb-2',
                 ]"
               >
-                <li v-if="bookInfo.authorName.value">
+                <li
+                  v-if="bookInfo.authorName.value"
+                  :class="{ 'cursor-pointer hover:underline': isClassOwnerAuthor }"
+                  @click="goToAuthorProfile"
+                >
                   <div v-text="$t('product_page_author_name_label')" />
                   <EntityItem :name="bookInfo.authorName.value" />
                 </li>
-                <li v-if="bookInfo.publisherName.value">
+                <li
+                  v-if="bookInfo.publisherName.value"
+                  :class="{ 'cursor-pointer hover:underline': isClassOwnerPublisher }"
+                  @click="goToAuthorProfile"
+                >
                   <div v-text="$t('product_page_publisher_label')" />
                   <EntityItem :name="bookInfo.publisherName.value" />
                 </li>
@@ -371,7 +379,6 @@ if (rawParamId.value !== rawParamId.value) {
 
 await callOnce(async () => {
   const id = rawParamId.value.toLowerCase()
-
   try {
     const [userResult, bookResult] = await Promise.allSettled([
       metadataStore.lazyFetchLikerInfoByWalletAddress(id),
@@ -515,6 +522,8 @@ const infoTabItems = computed(() => {
 
 const pricingItemsElement = useTemplateRef<HTMLLIElement>('pricing')
 const isPricingItemsVisible = useElementVisibility(pricingItemsElement)
+const isClassOwnerPublisher = computed(() => !!bookInfo.publisherName.value)
+const isClassOwnerAuthor = computed(() => !bookInfo.publisherName.value && !!bookInfo.authorName.value)
 
 const pricingItems = computed(() => {
   return bookInfo.pricingItems.value.map((item, index) => ({
@@ -685,5 +694,11 @@ function calculateCustomPrice(editionPrice: number, tippingAmount: number | unde
   const tip = Number(tippingAmount) || 0
   const base = Number(editionPrice) || 0
   return Number((tip + base).toFixed(2))
+}
+
+function goToAuthorProfile() {
+  if (bookInfo.authorProfileRoute.value) {
+    navigateTo(bookInfo.authorProfileRoute.value, { external: true })
+  }
 }
 </script>
