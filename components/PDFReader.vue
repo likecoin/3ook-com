@@ -244,14 +244,21 @@ const isAtLastPage = computed(() => {
   return current >= totalPages.value
 })
 
+async function loadPDFLib() {
+  if (pdfjsLib.value) return pdfjsLib.value
+
+  const pdfjs = await import('pdfjs-dist')
+  pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+    'pdfjs-dist/build/pdf.worker.min.mjs',
+    import.meta.url,
+  ).toString()
+  pdfjsLib.value = pdfjs
+  return pdfjs
+}
+
 onMounted(async () => {
   try {
-    const pdfjs = await import('pdfjs-dist')
-    pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-      'pdfjs-dist/build/pdf.worker.min.mjs',
-      import.meta.url,
-    ).toString()
-    pdfjsLib.value = pdfjs
+    await loadPDFLib()
     isDualPageMode.value = !isMobile.value
     await loadPDF()
   }
@@ -280,7 +287,11 @@ watch([currentPage, scale, isDualPageMode, isRightToLeft], async () => {
 })
 
 async function loadPDF() {
-  if (!props.pdfBuffer || !pdfjsLib.value) return
+  if (!props.pdfBuffer) return
+
+  if (!pdfjsLib.value) {
+    await loadPDFLib()
+  }
 
   try {
     const loadingTask = pdfjsLib.value.getDocument({
