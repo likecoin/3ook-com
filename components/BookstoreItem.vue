@@ -69,7 +69,7 @@ const bookCoverSrc = computed(() => getResizedImageURL(bookInfo.coverSrc.value |
 const bookName = computed(() => bookInfo.name.value || props.bookName)
 const authorName = computed(() => bookInfo.authorName.value)
 
-const formattedPrice = computed(() => formatPrice(props.price))
+const formattedPrice = computed(() => formatPrice(props.price || bookInfo.minPrice.value))
 
 if (!props.lazy) {
   callOnce(`BookstoreItem_${props.nftClassId}`, () => {
@@ -102,7 +102,7 @@ function onBookCoverClick() {
     items: [{
       item_id: props.nftClassId,
       item_name: bookName.value,
-      price: props.price,
+      price: props.price || bookInfo.minPrice.value,
       quantity: 1,
     }],
   })

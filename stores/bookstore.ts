@@ -10,11 +10,11 @@ export const useBookstoreStore = defineStore('bookstore', () => {
   const bookstoreInfoByNFTClassIdMap = ref<Record<string, BookstoreInfo>>({})
 
   const getBookstoreInfoByNFTClassId = computed(() => (nftClassId: string) => {
-    return bookstoreInfoByNFTClassIdMap.value[nftClassId]
+    return bookstoreInfoByNFTClassIdMap.value[nftClassId.toLowerCase()]
   })
 
   function addBookstoreInfoByNFTClassId(nftClassId: string, data: BookstoreInfo) {
-    bookstoreInfoByNFTClassIdMap.value[nftClassId] = data
+    bookstoreInfoByNFTClassIdMap.value[nftClassId.toLowerCase()] = data
   }
 
   /* Bookstore CMS Products */

@@ -176,6 +176,11 @@ export default function ({ nftClassId = '' }: { nftClassId?: string } = {}) {
     params: { nftClassId },
   }))
 
+  const minPrice = computed(() => {
+    if (pricingItems.value.length === 0) return 0
+    return Math.min(...pricingItems.value.map(item => item.price))
+  })
+
   function getIsAutoDelivery(index?: number) {
     return bookstoreInfo.value?.prices.find(item => item.index === index)?.isAutoDeliver || false
   }
