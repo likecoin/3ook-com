@@ -37,7 +37,7 @@ const {
 const { handleError } = useErrorHandler()
 
 const fileBuffer = ref<ArrayBuffer | null>(null)
-const isReaderLoading = ref(false)
+const isReaderLoading = ref(true)
 
 const { loadingLabel, loadFileAsBuffer } = useBookFileLoader()
 

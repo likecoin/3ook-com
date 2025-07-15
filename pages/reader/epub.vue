@@ -314,7 +314,7 @@ const {
 } = useReader()
 const { handleError } = useErrorHandler()
 
-const isReaderLoading = ref(false)
+const isReaderLoading = ref(true)
 const isDesktopTocOpen = ref(false)
 const isMobileTocOpen = ref(false)
 const isOpenTextToSpeechOptions = ref(false)
