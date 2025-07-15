@@ -27,7 +27,7 @@
         target="_blank"
       >{{ $t('footer_license') }}</ULink>
       <nav>
-        <ul class="flex items-center flex-wrap gap-4 gap-y-1">
+        <ul class="flex justify-center items-center flex-wrap gap-4 gap-y-1">
           <li>
             <ULink
               class="block border-y border-t-transparent leading-5"
