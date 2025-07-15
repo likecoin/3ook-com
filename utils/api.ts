@@ -12,7 +12,7 @@ export function getQueryOptions({
   nocache,
 }: QueryOptions = {}) {
   const query: Record<string, string> = {}
-  if (reverse) query['pagination.reverse'] = reverse.toString()
+  if (reverse) query.reverse = reverse.toString()
   if (limit) query['pagination.limit'] = limit.toString()
   if (key) query['pagination.key'] = key
   if (nocache) query.ts = Date.now().toString()
