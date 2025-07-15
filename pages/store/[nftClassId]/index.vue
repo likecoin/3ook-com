@@ -2,8 +2,17 @@
   <div class="flex flex-col grow">
     <AppHeader />
 
-    <main class="flex flex-col items-center grow px-4 laptop:px-12 pb-[100px]">
-      <section class="flex flex-col tablet:flex-row gap-[32px] tablet:gap-[44px] w-full max-w-[1200px]">
+    <main
+      class="flex flex-col items-center grow px-4 laptop:px-12 pb-[100px]"
+    >
+      <OwnerProfile
+        v-if="authorWalletAddress"
+        :author-wallet-address="authorWalletAddress"
+      />
+      <section
+        v-else
+        class="flex flex-col tablet:flex-row gap-[32px] tablet:gap-[44px] w-full max-w-[1200px]"
+      >
         <div class="grow pt-5">
           <AffiliateAlert class="mb-6" />
 
@@ -344,26 +353,46 @@ const nftStore = useNFTStore()
 const { open: openTippingModal } = useTipping()
 
 const metadataStore = useMetadataStore()
+const ownedItemStore = useOwnedItemStore()
 const { handleError } = useErrorHandler()
 const { getAnalyticsParameters } = useAnalytics()
 
-const nftClassId = computed(() => getRouteParam('nftClassId'))
-const {
-  generateBookStructuredData,
-  generateOGMetaTags,
-} = useStructuredData({ nftClassId: nftClassId.value })
+const rawParamId = computed(() => getRouteParam('nftClassId'))
+const nftClassId = ref('')
+const authorWalletAddress = ref('')
 
-if (nftClassId.value !== nftClassId.value.toLowerCase()) {
+if (rawParamId.value !== rawParamId.value) {
   await navigateTo(localeRoute({
     name: getRouteBaseName(route),
-    params: { nftClassId: nftClassId.value.toLowerCase() },
+    params: { nftClassId: rawParamId.value.toLowerCase() },
     query: route.query,
   }), { replace: true })
 }
 
 await callOnce(async () => {
+  const id = rawParamId.value.toLowerCase()
+
   try {
-    await nftStore.lazyFetchNFTClassAggregatedMetadataById(nftClassId.value)
+    const [userResult, bookResult] = await Promise.allSettled([
+      metadataStore.lazyFetchLikerInfoByWalletAddress(id),
+      nftStore.lazyFetchNFTClassAggregatedMetadataById(id),
+    ])
+
+    const likerInfo = metadataStore.getLikerInfoByWalletAddress(id)
+    const nftClass = nftStore.getNFTClassById(id)
+
+    if (userResult.status === 'fulfilled' && likerInfo) {
+      authorWalletAddress.value = id
+      await ownedItemStore.lazyFetchOwnedItems(id)
+      return
+    }
+
+    if (bookResult.status === 'fulfilled' && nftClass) {
+      nftClassId.value = id
+      return
+    }
+
+    throw new FetchError('Not Found', { statusCode: 404 })
   }
   catch (error) {
     let message = $t('error_unknown')
@@ -392,7 +421,12 @@ await callOnce(async () => {
       fatal: true,
     })
   }
-})
+}, { mode: 'navigation' })
+
+const {
+  generateBookStructuredData,
+  generateOGMetaTags,
+} = useStructuredData({ nftClassId: nftClassId.value })
 
 const bookInfo = useBookInfo({ nftClassId: nftClassId.value })
 const bookCoverSrc = computed(() => getResizedImageURL(bookInfo.coverSrc.value, { size: 600 }))
@@ -539,14 +573,6 @@ const checkoutButtonProps = computed<{
     label: isSelectedPricingItemSoldOut.value
       ? $t('product_page_sold_out_button_label')
       : $t('product_page_checkout_button_label'),
-  }
-})
-
-onMounted(() => {
-  useLogEvent('view_item', formattedLogPayload.value)
-  const ownerWalletAddress = bookInfo.nftClassOwnerWalletAddress.value
-  if (ownerWalletAddress) {
-    metadataStore.lazyFetchLikerInfoByWalletAddress(ownerWalletAddress)
   }
 })
 

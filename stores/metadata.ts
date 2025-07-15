@@ -56,6 +56,7 @@ export const useMetadataStore = defineStore('metadata', () => {
     const likerId = data.user
     likerIdByWalletAddressMap.value[walletAddress] = likerId
     likerInfoByIdMap.value[likerId] = normalizeLikerInfoFromResponseData(data)
+    return likerInfoByIdMap.value[likerId]
   }
 
   async function lazyFetchLikerInfoByWalletAddress(walletAddress: string) {

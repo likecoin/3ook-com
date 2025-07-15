@@ -46,6 +46,7 @@ export const useNFTStore = defineStore('nft', () => {
     if (data.bookstoreInfo) {
       bookstoreStore.addBookstoreInfoByNFTClassId(nftClassId, data.bookstoreInfo)
     }
+    return data
   }
 
   async function lazyFetchNFTClassAggregatedMetadataById(nftClassId: string, { exclude = [] }: FetchLikeCoinNFTClassAggregatedMetadataOptions = {}) {
