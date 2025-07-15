@@ -399,7 +399,10 @@ await callOnce(async () => {
       return
     }
 
-    throw new FetchError('Not Found', { statusCode: 404 })
+    throw createError({
+      statusCode: 400,
+      message: $t('error_not_found'),
+    })
   }
   catch (error) {
     let message = $t('error_unknown')

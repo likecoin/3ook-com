@@ -75,6 +75,7 @@
   "error_likecoin_wallet_address_not_found": "The LikeCoin wallet address linked to EVM wallet address {address} cannot be found",
   "error_modal_footer_cancel": "Cancel",
   "error_modal_title": "Error",
+  "error_not_found": "No information found",
   "error_page_not_found": "Page not found",
   "error_reader_fetch_metadata_failed": "Failed to fetch the book metadata",
   "error_reader_load_epub_failed": "Loading EPUB failed",
