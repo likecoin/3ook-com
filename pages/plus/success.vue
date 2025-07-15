@@ -68,14 +68,17 @@ onMounted(async () => {
     }
     isRefreshing.value = false
     if (isRedirected.value) {
+      const isTrial = getRouteQuery('trial') !== '0'
+      const price = isTrial
+        ? 0
+        : isYearly.value ? yearlyPrice.value : monthlyPrice.value
       useLogEvent('purchase', {
         currency: currency.value,
-        value: isYearly.value ? yearlyPrice.value : monthlyPrice.value,
+        value: price,
         items: [{
           id: `plus-beta-${isYearly.value ? 'yearly' : 'monthly'}`,
           name: `Plus Beta (${isYearly.value ? 'yearly' : 'monthly'}`,
-          price: 0, // We always start with 3 days free trial, set price to 0
-          // price: isYearly.value ? yearlyPrice.value : monthlyPrice.value,
+          price,
           currency: currency.value,
           quantity: 1,
         }],
