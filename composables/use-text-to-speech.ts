@@ -17,13 +17,14 @@ export function useTextToSpeech(options: TTSOptions = {}) {
   } = options || {}
 
   const nftClassId = options.nftClassId
+  // hardcoded voice options for now
   const ttsLanguageVoiceOptions = [
-    { label: '粵0', value: 'zh-HK_0' },
-    { label: '粵1', value: 'zh-HK_1' },
-    { label: '國0', value: 'zh-TW_0' },
-    { label: '國1', value: 'zh-TW_1' },
-    { label: 'En0', value: 'en-US_0' },
-    { label: 'En1', value: 'en-US_1' },
+    { label: '雷庭音 - 粵語女聲', value: 'zh-HK_0' },
+    { label: '粵語男聲', value: 'zh-HK_1' },
+    { label: '雷庭音 - 國語女聲', value: 'zh-TW_0' },
+    { label: '國語男聲', value: 'zh-TW_1' },
+    { label: 'English female', value: 'en-US_0' },
+    { label: 'English male', value: 'en-US_1' },
   ]
   const ttsPlaybackRateOptions = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0].map(rate => ({
     label: `${rate}x`,
