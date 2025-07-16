@@ -19,7 +19,7 @@ export function useTextToSpeech(options: TTSOptions = {}) {
   const nftClassId = options.nftClassId
   // hardcoded voice options for now
   const ttsLanguageVoiceOptions = [
-    { label: '雷庭音 - 粵語女聲', value: 'zh-HK_0' },
+    { label: 'Phoebe - 粵語女聲', value: 'zh-HK_phoebe' },
     { label: '粵語男聲', value: 'zh-HK_1' },
     { label: '雷庭音 - 國語女聲', value: 'zh-TW_0' },
     { label: '國語男聲', value: 'zh-TW_1' },
@@ -31,7 +31,7 @@ export function useTextToSpeech(options: TTSOptions = {}) {
     value: rate,
   }))
 
-  const ttsLanguageVoice = ref('zh-HK_0') // Default voice
+  const ttsLanguageVoice = ref('zh-HK_phoebe')
   const ttsPlaybackRate = ref(1.0)
   const isShowTextToSpeechOptions = ref(false)
   const isTextToSpeechOn = ref(false)

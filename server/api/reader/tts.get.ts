@@ -26,10 +26,11 @@ const LANG_MAPPING = {
   'zh-HK': 'Chinese,Yue',
 }
 
-const VOICE_MAPPING = [
-  'Chinese (Mandarin)_Warm_Bestie',
-  'Boyan_new_platform',
-]
+const VOICE_MAPPING = {
+  0: 'Chinese (Mandarin)_Warm_Bestie',
+  1: 'Boyan_new_platform',
+  phoebe: 'phoebe_v0',
+}
 
 function processEventData(eventData: string) {
   const dataMatch = eventData.match(/^data:\s*(.+)$/m)
@@ -86,7 +87,8 @@ export default defineEventHandler(async (event) => {
       message: 'INVALID_LANGUAGE',
     })
   }
-  if (!voiceId || !VOICE_MAPPING[Number(voiceId)]) {
+  const validVoiceId = voiceId as keyof typeof VOICE_MAPPING
+  if (!voiceId || !VOICE_MAPPING[validVoiceId]) {
     throw createError({
       status: 400,
       message: 'INVALID_VOICE_ID',
@@ -105,7 +107,7 @@ export default defineEventHandler(async (event) => {
       },
       model: 'speech-02-hd',
       voice_setting: {
-        voice_id: VOICE_MAPPING[Number(voiceId)],
+        voice_id: VOICE_MAPPING[validVoiceId],
         speed: 0.95,
         pitch: -1,
         emotion: 'neutral',
