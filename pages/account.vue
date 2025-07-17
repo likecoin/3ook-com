@@ -241,9 +241,10 @@ async function handleLikerPlusButtonClick() {
     const { url } = await fetchLikerPlusBillingPortalLink()
     await navigateTo(url, { external: true })
     // NOTE: Keep `isOpeningBillingPortal` true while navigating to the billing portal
+    await sleep(5000)
+    isOpeningBillingPortal.value = false
   }
   catch (error) {
-    // NOTE: Only set `isOpeningBillingPortal` to false if an error occurs
     isOpeningBillingPortal.value = false
     await handleError(error, {
       title: $t('error_billing_portal_failed'),
