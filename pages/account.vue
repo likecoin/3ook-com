@@ -207,6 +207,7 @@ const accountStore = useAccountStore()
 const localeRoute = useLocaleRoute()
 const { handleError } = useErrorHandler()
 const toast = useToast()
+const isWindowFocused = useDocumentVisibility()
 
 useHead({
   title: $t('account_page_title'),
@@ -241,7 +242,9 @@ async function handleLikerPlusButtonClick() {
     const { url } = await fetchLikerPlusBillingPortalLink()
     await navigateTo(url, { external: true })
     // NOTE: Keep `isOpeningBillingPortal` true while navigating to the billing portal
-    await sleep(5000)
+    do {
+      await sleep(3000)
+    } while (!isWindowFocused.value)
     isOpeningBillingPortal.value = false
   }
   catch (error) {
