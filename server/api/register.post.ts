@@ -1,7 +1,6 @@
 import { FetchError } from 'ofetch'
 
 import { checkIsEVMAddress } from '~/utils'
-import type { LikerInfoResponseData } from '~/utils/api'
 
 export default defineEventHandler(async (event) => {
   let body: {
@@ -95,6 +94,12 @@ export default defineEventHandler(async (event) => {
       })
     }
     throw error
+  }
+  if (!userInfoRes) {
+    throw createError({
+      status: 401,
+      message: 'CANNOT_FETCH_USER_INFO',
+    })
   }
 
   const userInfo = {

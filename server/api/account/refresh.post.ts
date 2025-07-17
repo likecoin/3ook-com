@@ -1,5 +1,3 @@
-import type { LikerInfoResponseData } from '~/utils/api'
-
 export default defineEventHandler(async (event) => {
   const session = await requireUserSession(event)
   const walletAddress = session.user.evmWallet || session.user.likeWallet

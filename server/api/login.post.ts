@@ -1,7 +1,6 @@
 import { jwtDecode } from 'jwt-decode'
 
 import { checkIsEVMAddress } from '~/utils'
-import type { LikerInfoResponseData } from '~/utils/api'
 
 export default defineEventHandler(async (event) => {
   let body: {
@@ -86,6 +85,12 @@ export default defineEventHandler(async (event) => {
       throw createError({
         status: 401,
         message: 'LOGIN_WITHOUT_LIKER_ID',
+      })
+    }
+    if (!userInfoRes) {
+      throw createError({
+        status: 401,
+        message: 'CANNOT_FETCH_USER_INFO',
       })
     }
 

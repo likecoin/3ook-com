@@ -322,6 +322,7 @@
 import type { TabsItem } from '@nuxt/ui'
 import MarkdownIt from 'markdown-it'
 
+const likeCoinSessionAPI = useLikeCoinSessionAPI()
 const route = useRoute()
 const config = useRuntimeConfig()
 const baseURL = config.public.baseURL
@@ -608,7 +609,7 @@ async function handlePurchaseButtonClick() {
       totalPrice = calculateCustomPrice(tippingAmount, selectedPricingItem.value.price)
     }
 
-    const { url, paymentId } = await createNFTBookPurchase({
+    const { url, paymentId } = await likeCoinSessionAPI.createNFTBookPurchase({
       email: user.value?.email,
       nftClassId: nftClassId.value,
       price: totalPrice,

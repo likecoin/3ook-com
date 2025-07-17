@@ -2,6 +2,7 @@ import { PaywallModal } from '#components'
 import type { PaywallModalProps } from '~/components/PaywallModal.props'
 
 export function useSubscription() {
+  const likeCoinSessionAPI = useLikeCoinSessionAPI()
   const { t: $t } = useI18n()
   const accountStore = useAccountStore()
   const { user, loggedIn: hasLoggedIn } = useUserSession()
@@ -118,7 +119,7 @@ export function useSubscription() {
       useLogEvent('begin_checkout', eventPayload.value)
 
       const analyticsParams = getAnalyticsParameters()
-      const { url } = await fetchLikerPlusCheckoutLink({
+      const { url } = await likeCoinSessionAPI.fetchLikerPlusCheckoutLink({
         period: selectedPlan.value,
         from: getRouteQuery('from'),
         hasFreeTrial,
