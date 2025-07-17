@@ -240,6 +240,7 @@ async function handleLikerPlusButtonClick() {
   try {
     isOpeningBillingPortal.value = true
     const { url } = await fetchLikerPlusBillingPortalLink()
+    // NOTE: Not using _blank here as some browsers block popups
     await navigateTo(url, { external: true })
     // NOTE: Keep `isOpeningBillingPortal` true while navigating to the billing portal
     do {
