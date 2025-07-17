@@ -112,6 +112,7 @@
                 variant="outline"
                 :color="user?.isLikerPlus ? 'primary' : 'secondary'"
                 size="sm"
+                :loading="isOpeningBillingPortal"
                 @click="handleLikerPlusButtonClick"
               />
             </div>
@@ -224,6 +225,8 @@ async function handleMagicButtonClick() {
   await accountStore.exportPrivateKey()
 }
 
+const isOpeningBillingPortal = ref(false)
+
 async function handleLikerPlusButtonClick() {
   useLogEvent('account_liker_plus_button_click')
 
@@ -232,11 +235,16 @@ async function handleLikerPlusButtonClick() {
     return
   }
 
+  if (isOpeningBillingPortal.value) return
   try {
+    isOpeningBillingPortal.value = true
     const { url } = await fetchLikerPlusBillingPortalLink()
     await navigateTo(url, { external: true })
+    // NOTE: Keep `isOpeningBillingPortal` true while navigating to the billing portal
   }
   catch (error) {
+    // NOTE: Only set `isOpeningBillingPortal` to false if an error occurs
+    isOpeningBillingPortal.value = false
     await handleError(error, {
       title: $t('error_billing_portal_failed'),
     })
