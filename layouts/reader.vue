@@ -4,6 +4,14 @@
   </div>
 </template>
 
+<script setup lang="ts">
+useHead({
+  htmlAttrs: {
+    class: 'reader',
+  },
+})
+</script>
+
 <style>
 .reader-enter-active {
   transition: transform 0.5s cubic-bezier(0.23,1,0.32,1);
@@ -16,5 +24,11 @@
 }
 .reader-leave-to {
   transform: translateX(100%);
+}
+
+html.reader .intercom-lightweight-app,
+html.reader .intercom-frame {
+  /* Hide Intercom in reader */
+  display: none !important;
 }
 </style>
