@@ -49,9 +49,6 @@
                 class="cursor-pointer"
                 :icon="item.icon"
                 :label="item.label"
-                :href="item.href"
-                :target="item.target"
-                :rel="item.rel"
                 variant="link"
                 color="neutral"
                 size="xl"
@@ -144,7 +141,9 @@ const menuItems = computed<DropdownMenuItem[]>(() => {
   const productInfoItem: DropdownMenuItem = {
     label: $t('bookshelf_view_book_product_page'),
     icon: 'i-material-symbols-visibility-outline',
-    to: bookInfo.productPageRoute.value,
+    onSelect: () => {
+      navigateTo(bookInfo.productPageRoute.value)
+    },
   }
 
   return [...readerItems, ...downloadItems, productInfoItem]
