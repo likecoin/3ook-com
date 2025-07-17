@@ -110,7 +110,7 @@
               <UButton
                 :label="user?.isLikerPlus ? $t('account_page_manage_subscription') : $t('account_page_upgrade_to_plus')"
                 variant="outline"
-                :color="user?.isLikerPlus ? 'neutral' : 'secondary'"
+                :color="user?.isLikerPlus ? 'primary' : 'secondary'"
                 size="sm"
                 @click="handleLikerPlusButtonClick"
               />
