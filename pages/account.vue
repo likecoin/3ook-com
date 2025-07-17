@@ -234,7 +234,7 @@ async function handleLikerPlusButtonClick() {
 
   try {
     const { url } = await fetchLikerPlusBillingPortalLink()
-    await navigateTo(url, { external: true, open: { target: '_blank' } })
+    await navigateTo(url, { external: true })
   }
   catch (error) {
     await handleError(error, {
