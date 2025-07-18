@@ -15,6 +15,7 @@ export function useSubscription() {
 
   const { handleError } = useErrorHandler()
 
+  const modalProps = ref<PaywallModalProps>({})
   // TODO: Don't hardcode prices here
   const yearlyPrice = ref(69.99)
   const monthlyPrice = ref(6.99)
@@ -63,10 +64,11 @@ export function useSubscription() {
       paywallModal.close()
     }
 
-    return paywallModal.open({
+    modalProps.value = {
       ...getPaywallModalProps(),
       ...props,
-    }).result
+    }
+    return paywallModal.open(modalProps.value).result
   }
 
   async function redirectIfSubscribed() {
@@ -131,6 +133,13 @@ export function useSubscription() {
       isProcessingSubscription.value = false
     }
   }
+
+  watch(isProcessingSubscription, (newValue) => {
+    paywallModal.patch({
+      ...modalProps.value,
+      isProcessingSubscription: newValue,
+    })
+  })
 
   return {
     yearlyPrice,
