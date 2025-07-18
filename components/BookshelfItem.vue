@@ -39,7 +39,10 @@
             variant="link"
           />
           <template #content>
-            <UCard :ui="{ header: 'text-center font-bold' }">
+            <UCard
+              class="pb-safe"
+              :ui="{ header: 'text-center font-bold' }"
+            >
               <template #header>
                 {{ $t('bookshelf_more_menu_title') }}
               </template>
@@ -49,6 +52,8 @@
                 class="cursor-pointer"
                 :icon="item.icon"
                 :label="item.label"
+                :href="item.href"
+                :to="item.to"
                 variant="link"
                 color="neutral"
                 size="xl"
@@ -141,9 +146,7 @@ const menuItems = computed<DropdownMenuItem[]>(() => {
   const productInfoItem: DropdownMenuItem = {
     label: $t('bookshelf_view_book_product_page'),
     icon: 'i-material-symbols-visibility-outline',
-    onSelect: () => {
-      navigateTo(bookInfo.productPageRoute.value)
-    },
+    to: bookInfo.productPageRoute.value,
   }
 
   return [...readerItems, ...downloadItems, productInfoItem]
