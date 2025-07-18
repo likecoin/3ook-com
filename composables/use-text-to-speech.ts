@@ -296,7 +296,7 @@ export function useTextToSpeech(options: TTSOptions = {}) {
   function restartTextToSpeech() {
     if (isTextToSpeechOn.value && isTextToSpeechPlaying.value) {
       resetAudio()
-      startTextToSpeech()
+      startTextToSpeech(currentTTSSegmentIndex.value)
     }
     else {
       isPendingResetOnStart.value = true
