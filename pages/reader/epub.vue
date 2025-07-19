@@ -458,7 +458,7 @@ async function extractTTSSegments(book: ePub.Book) {
         const chapterTitle = chapter.querySelector('title')?.textContent?.trim() || ''
 
         const elements = Array.from(
-          chapter.querySelectorAll('p, h1, h2, h3, h4, h5, h6'),
+          chapter.querySelectorAll('h1, h2, h3, h4, h5, h6, p, li'),
         ).filter(el => !!el.textContent?.trim())
 
         const segments: TTSSegment[] = []
