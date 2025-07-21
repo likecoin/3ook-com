@@ -174,16 +174,41 @@
                           class="text-sm font-semibold"
                           v-text="$t('product_page_sold_out_button_label')"
                         />
-                        <span v-else>
-                          <span
-                            class="text-xs mr-0.5"
-                            v-text="item.currency"
-                          />
-                          <span
-                            class="font-semibold"
-                            v-text="item.formattedPrice"
-                          />
-                        </span>
+                        <div
+                          v-else
+                          class="flex flex-col items-end text-right"
+                        >
+                          <div v-if="isPlusMember && item.discountedPrice !== item.originalPrice">
+                            <div class="flex flex-nowrap items-center text-green-600 font-semibold ">
+                              <span
+                                class="mr-0.5"
+                                v-text="item.currency"
+                              />
+                              <span v-text="item.discountedPrice" />
+                              <PlusBadgeIcon
+                                style="width: 35px; height: 15px;"
+                                class="inline-block"
+                              />
+                            </div>
+                            <div class="text-xs text-gray-400 line-through">
+                              <span
+                                class="mr-0.5"
+                                v-text="item.currency"
+                              />
+                              <span v-text="item.originalPrice" />
+                            </div>
+                          </div>
+                          <div v-else>
+                            <span
+                              class="text-xs mr-0.5"
+                              v-text="item.currency"
+                            />
+                            <span
+                              class="font-semibold"
+                              v-text="item.originalPrice"
+                            />
+                          </div>
+                        </div>
                       </div>
                       <div
                         v-if="item.renderedDescription"
@@ -298,11 +323,21 @@
             v-text="selectedPricingItem?.currency"
           />
           <span
+            v-if="isPlusMember"
             class="text-2xl font-semibold"
-            v-text="selectedPricingItem?.formattedPrice"
+            v-text="selectedPricingItem?.discountedPrice"
+          />
+          <PlusBadgeIcon
+            v-if="isPlusMember"
+            style="width: 35px; height: 15px;"
+            class="inline-block ml-1 text-gray-400"
+          />
+          <span
+            v-else
+            class="text-2xl font-semibold"
+            v-text="selectedPricingItem?.originalPrice"
           />
         </span>
-
         <UButton
           v-bind="checkoutButtonProps"
           class="cursor-pointer max-w-[248px]"
@@ -322,6 +357,7 @@
 import { FetchError } from 'ofetch'
 import type { TabsItem } from '@nuxt/ui'
 import MarkdownIt from 'markdown-it'
+import PlusBadgeIcon from '~/assets/images/plus-badge.svg'
 
 const route = useRoute()
 const config = useRuntimeConfig()
@@ -487,10 +523,15 @@ const isPricingItemsVisible = useElementVisibility(pricingItemsElement)
 const pricingItems = computed(() => {
   return bookInfo.pricingItems.value.map((item, index) => ({
     ...item,
-    formattedPrice: formatPrice(item.price),
+    originalPrice: formatPrice(item.price),
+    discountedPrice: formatPrice(item.finalPrice),
     isSelected: index === selectedPricingItemIndex.value,
     renderedDescription: md.render(item.description || ''),
   }))
+})
+
+const isPlusMember = computed(() => {
+  return !!user.value?.isLikerPlus
 })
 
 const selectedPricingItem = computed(() => {
