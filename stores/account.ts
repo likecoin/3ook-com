@@ -131,6 +131,10 @@ export const useAccountStore = defineStore('account', () => {
       if (error instanceof FetchError) {
         switch (error.data?.error) {
           case 'EMAIL_ALREADY_USED':
+            if (!error.data?.evmWallet && error.data?.likeWallet) {
+              // NOTE: Don't show the error if the email is already used and not migrated yet
+              return true
+            }
             throw createError(getEmailAlreadyUsedErrorData({
               email: email as string,
               walletAddress,
@@ -241,7 +245,7 @@ export const useAccountStore = defineStore('account', () => {
         if (error instanceof FetchError) {
           switch (error.data?.message) {
             case 'INVALID_USER_ID': {
-              await errorModal.open({ description: $t('account_register_error_invalid_account_id', { id: payload?.accountId }) })
+              await errorModal.open({ description: $t('account_register_error_invalid_account_id', { id: payload?.accountId }) }).result
               continue
             }
             case 'EMAIL_ALREADY_USED': {
@@ -251,7 +255,7 @@ export const useAccountStore = defineStore('account', () => {
                 boundEVMWallet: error.data?.evmWallet,
                 boundLikeWallet: error.data?.likeWallet,
                 loginMethod,
-              }))
+              })).result
               continue
             }
             default:
@@ -341,6 +345,7 @@ export const useAccountStore = defineStore('account', () => {
           ts: Date.now(),
           email,
           loginMethod,
+          magicDIDToken,
           permissions: [
             'profile',
             'read:nftbook',
@@ -365,6 +370,7 @@ export const useAccountStore = defineStore('account', () => {
           message,
           loginMethod,
           email,
+          magicDIDToken,
           expiresIn: '30d',
         },
       })
@@ -394,7 +400,7 @@ export const useAccountStore = defineStore('account', () => {
         return
       }
       if (error instanceof FetchError && error.data?.message === 'LIKECOIN_WALLET_ADDRESS_NOT_FOUND') {
-        await errorModal.open({ description: $t('error_likecoin_wallet_address_not_found', { address: address.value }) })
+        await errorModal.open({ description: $t('error_likecoin_wallet_address_not_found', { address: address.value }) }).result
       }
       await handleError(error)
       return login()

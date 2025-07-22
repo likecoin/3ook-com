@@ -51,10 +51,12 @@ export default defineEventHandler(async (event) => {
     let likeWallet: string | undefined
     let jwtId: string | undefined
     let token: string | undefined
+    let isAutoMigrated = false
     try {
       const authorizeRes = await $fetch<{
         jwtid: string
         token: string
+        isAutoMigrated?: boolean | undefined
       }>(`${config.public.likeCoinAPIEndpoint}/wallet/authorize`, {
         method: 'POST',
         body: {
@@ -68,6 +70,7 @@ export default defineEventHandler(async (event) => {
       ;({ likeWallet } = jwtDecode<{ likeWallet: string }>(authorizeRes.token))
       jwtId = authorizeRes.jwtid
       token = authorizeRes.token
+      isAutoMigrated = authorizeRes.isAutoMigrated || false
     }
     catch (error) {
       console.error('Failed to authorize wallet:', error)
@@ -101,6 +104,7 @@ export default defineEventHandler(async (event) => {
       email: body.email,
       loginMethod: body.loginMethod,
       isLikerPlus: userInfoRes.isLikerPlus || false,
+      isAutoMigrated,
     }
     await setUserSession(event, { user: userInfo })
 
