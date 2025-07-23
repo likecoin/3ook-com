@@ -380,7 +380,7 @@ async function loadEPub() {
   rendition.value = book.renderTo(renditionElement.value, {
     width: '100%',
     height: '100%',
-    allowScriptedContent: true,
+    allowScriptedContent: false,
     spread: 'none',
   })
   const bodyCSS: Record<string, string> = {
