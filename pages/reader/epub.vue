@@ -315,17 +315,14 @@ async function loadEPub() {
 
   const book = ePub(buffer)
   await book.ready
-  const [metadata, toc] = await Promise.all([
-    book.loaded.metadata,
-    book.loaded.navigation.then(async (navigation) => {
-      return navigation.toc.flatMap((item) => {
-        if (item.subitems) {
-          return [item, ...item.subitems]
-        }
-        return item
-      })
-    }),
-  ])
+  const toc = await book.loaded.navigation.then(async (navigation) => {
+    return navigation.toc.flatMap((item) => {
+      if (item.subitems) {
+        return [item, ...item.subitems]
+      }
+      return item
+    })
+  })
 
   try {
     let isLocationLoaded = false
@@ -388,12 +385,6 @@ async function loadEPub() {
     '-webkit-text-size-adjust': 'none',
     'text-size-adjust': 'none',
     'direction': 'ltr', // Mitigate epubjs mixing up dir & page-progression-direction
-  }
-  if (metadata.layout === 'pre-paginated' && metadata.spread === 'none') {
-    // Make the page centered for book with pre-paginated layout and no spread (single page)
-    bodyCSS['transform-origin'] = 'center top !important'
-    bodyCSS['margin-left'] = 'auto'
-    bodyCSS['margin-right'] = 'auto'
   }
   rendition.value.themes.default({ body: bodyCSS })
   rendition.value.themes.fontSize(`${fontSize.value}px`)
