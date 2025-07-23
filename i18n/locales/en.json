@@ -185,10 +185,9 @@
   "tab_bar_user": "Account",
   "text_separator_comma": ", ",
   "text_separator_slash": "/",
-  "tipping_modal_cancel_button": "Skip",
+  "tipping_modal_cancel_button": "Skip, Continue to pay",
   "tipping_modal_custom_amount_placeholder": "Custom amount",
-  "tipping_modal_description": "Your payment will go directly to the creator",
   "tipping_modal_send_tips_button": "Continue",
-  "tipping_modal_title": "Want to show a bit of extra support?",
+  "tipping_modal_title": "Show a bit of extra support?",
   "work_in_progress": "Work in progress"
 }

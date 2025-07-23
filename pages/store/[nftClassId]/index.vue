@@ -612,7 +612,7 @@ async function handlePurchaseButtonClick() {
 
     let totalPrice = selectedPricingItem.value.price
 
-    if (config.public.isTippingEnabled && selectedPricingItem.value.canTip) {
+    if (selectedPricingItem.value.price === 0 && selectedPricingItem.value.canTip) {
       const tippingResult = await openTippingModal({
         // TODO: Check if classOwner is always the book's publisher
         avatar: bookInfo.publisherName.value ? bookInfo.nftClassOwnerAvatar.value : '',
