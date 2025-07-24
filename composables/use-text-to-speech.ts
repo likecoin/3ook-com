@@ -33,7 +33,7 @@ export function useTextToSpeech(options: TTSOptions = {}) {
   // hardcoded voice options for now
   const ttsLanguageVoiceOptions = [
     { label: 'Phoebe - 粵語女聲', value: 'zh-HK_phoebe' },
-    { label: '粵語男聲', value: 'zh-HK_1' },
+    { label: 'Pazu 薯伯伯 - 粵語', value: 'zh-HK_pazu' },
     { label: '雷庭音 - 國語女聲', value: 'zh-TW_0' },
     { label: '國語男聲', value: 'zh-TW_1' },
     { label: 'English female', value: 'en-US_0' },
@@ -59,7 +59,7 @@ export function useTextToSpeech(options: TTSOptions = {}) {
     value: rate,
   }))
 
-  const ttsLanguageVoice = useStorage(getTTSConfigKeyWithSuffix(ttsConfigCacheKey.value, 'voice'), ttsLanguageVoiceValues[0] as string)
+  const ttsLanguageVoice = useStorage(getTTSConfigKeyWithSuffix(ttsConfigCacheKey.value, 'voice'), ttsLanguageVoiceValues[1] as string)
   const ttsPlaybackRate = useStorage(getTTSConfigKeyWithSuffix(ttsConfigCacheKey.value, 'playback-rate'), 1.0)
   const isShowTextToSpeechOptions = ref(false)
   const isTextToSpeechOn = ref(false)
