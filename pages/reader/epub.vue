@@ -225,6 +225,10 @@ const {
 } = useReader()
 const { handleError } = useErrorHandler()
 
+function getCacheKeyWithSuffix(suffix: ReaderCacheKeySuffix) {
+  return getReaderCacheKeyWithSuffix(bookFileCacheKey.value, suffix)
+}
+
 const isReaderLoading = ref(true)
 const isDesktopTocOpen = ref(false)
 const isMobileTocOpen = ref(false)
@@ -269,7 +273,7 @@ const activeNavItemLabel = computed(() => {
 })
 const activeNavItemHref = ref<string | undefined>()
 // TODO: Should hide this index into TTS (player?) composable?
-const activeTTSElementIndex = useStorage(`${bookFileCacheKey.value}-tts-index`, undefined) as Ref<number | undefined>
+const activeTTSElementIndex = useStorage(getCacheKeyWithSuffix('tts-index'), undefined) as Ref<number | undefined>
 
 const { setTTSSegments, openPlayer } = useTTSPlayerModal({
   nftClassId: nftClassId.value,
@@ -294,7 +298,7 @@ const isAtFirstPage = computed(() => {
 const isRightToLeft = ref(false)
 const currentPageEndCfi = ref<string>('')
 const currentPageHref = ref<string>('')
-const currentCfi = useStorage(`${bookFileCacheKey.value}-cfi`, '')
+const currentCfi = useStorage(getCacheKeyWithSuffix('cfi'), '')
 
 const FONT_SIZE_OPTIONS = [
   6, 8, 10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 40, 48, 56, 64, 72,
@@ -327,7 +331,7 @@ async function loadEPub() {
 
   try {
     let isLocationLoaded = false
-    const locationCacheKey = `${bookFileCacheKey.value}-locations`
+    const locationCacheKey = getCacheKeyWithSuffix('locations')
     if (window.localStorage) {
       const locationCache = window.localStorage.getItem(locationCacheKey)
       if (locationCache) {

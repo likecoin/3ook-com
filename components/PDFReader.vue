@@ -160,7 +160,7 @@ import type { PDFDocumentProxy } from 'pdfjs-dist'
 interface Props {
   bookName?: string
   pdfBuffer: ArrayBuffer
-  bookFileCacheKey?: string
+  bookFileCacheKey: string
 }
 
 const props = defineProps<Props>()
@@ -174,12 +174,16 @@ const rightCanvas = useTemplateRef<HTMLCanvasElement>('rightCanvas')
 const scrollableContainer = useTemplateRef<HTMLDivElement>('scrollableContainer')
 const pagePaddingClasses = ['p-4', 'laptop:px-12', 'laptop:pt-6', 'pb-[64px]']
 
-const currentPage = useStorage(computed(() => `${props.bookFileCacheKey}-locations`), 1)
+function getCacheKeyWithSuffix(suffix: ReaderCacheKeySuffix) {
+  return getReaderCacheKeyWithSuffix(props.bookFileCacheKey, suffix)
+}
+
+const currentPage = useStorage(computed(() => getCacheKeyWithSuffix('locations')), 1)
 const totalPages = ref(0)
 const scaleMin = 0.5
 const scaleMax = 3.0
 const scaleStep = 0.25
-const scale = useStorage(computed(() => `${props.bookFileCacheKey}-scale`), 1.0)
+const scale = useStorage(computed(() => getCacheKeyWithSuffix('scale')), 1.0)
 const scaleMenuItems = computed<DropdownMenuItem[]>(() => {
   const items: number[] = []
   let step = scaleStep
@@ -198,7 +202,7 @@ const scaleMenuItems = computed<DropdownMenuItem[]>(() => {
 const pdfDocument = shallowRef<PDFDocumentProxy>()
 const renderQueue = ref<(() => Promise<void>)[]>([])
 const isRendering = ref(false)
-const isDualPageMode = useStorage(computed(() => `${props.bookFileCacheKey}-dual-page-mode`), true)
+const isDualPageMode = useStorage(computed(() => getCacheKeyWithSuffix('dual-page-mode')), true)
 const pageMode = computed({
   get: () => isDualPageMode.value ? 'dual' : 'single',
   set: (value) => {
@@ -217,7 +221,7 @@ const pageModeOptions = computed(() => [
     icon: 'i-material-symbols-splitscreen-landscape-outline-rounded',
   },
 ])
-const isRightToLeft = useStorage(computed(() => `${props.bookFileCacheKey}-right-to-left`), false)
+const isRightToLeft = useStorage(computed(() => getCacheKeyWithSuffix('right-to-left')), false)
 
 const emit = defineEmits<{
   error: [error: Error]

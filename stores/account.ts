@@ -436,15 +436,7 @@ export const useAccountStore = defineStore('account', () => {
       if (!window.localStorage) return
 
       bookKeys.forEach((key) => {
-        // TODO: Refactor keys
-        [
-          'cfi',
-          'dual-page-mode',
-          'locations',
-          'right-to-left',
-          'scale',
-          'tts-index',
-        ].forEach((suffix) => {
+        getReaderCacheKeySuffixes().forEach((suffix) => {
           window.localStorage.removeItem(`${key}-${suffix}`)
         })
       })
