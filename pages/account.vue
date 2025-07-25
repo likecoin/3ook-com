@@ -173,12 +173,14 @@
       </section>
 
       <UButton
+        v-if="hasLoggedIn"
         :label="$t('account_page_reader_cache_clear')"
         icon="i-material-symbols-delete-outline-rounded"
         color="neutral"
         variant="outline"
         size="lg"
         block
+        :loading="accountStore.isClearingCaches"
         @click="handleClearReaderCacheButtonClick"
       />
 
@@ -200,7 +202,6 @@
 // NOTE: Set `layout` to false for injecting props into `<NuxtLayout/>`.
 definePageMeta({ layout: false })
 
-const config = useRuntimeConfig()
 const { t: $t } = useI18n()
 const { loggedIn: hasLoggedIn, user } = useUserSession()
 const accountStore = useAccountStore()
@@ -270,27 +271,7 @@ async function handleClearReaderCacheButtonClick() {
   useLogEvent('clear_reader_cache')
 
   try {
-    if (window.caches) {
-      const keys = await window.caches.keys()
-      if (keys?.length) {
-        const bookKeys = keys.filter(key => key.startsWith(config.public.cacheKeyPrefix))
-        await Promise.all(bookKeys.map(key => caches.delete(key)))
-
-        if (window.localStorage) {
-          bookKeys.forEach((key) => {
-            // TODO: Refactor keys
-            [
-              'locations',
-              'scale',
-              'dual-page-mode',
-              'right-to-left',
-            ].forEach((suffix) => {
-              window.localStorage.removeItem(`${key}-${suffix}`)
-            })
-          })
-        }
-      }
-    }
+    accountStore.clearCaches()
 
     toast.add({
       title: $t('account_page_reader_cache_cleared'),

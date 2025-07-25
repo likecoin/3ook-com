@@ -8,6 +8,7 @@ import { LoginModal, RegistrationModal } from '#components'
 const REGISTER_TIME_LIMIT_IN_TS = 15 * 60 * 1000 // 15 minutes
 
 export const useAccountStore = defineStore('account', () => {
+  const config = useRuntimeConfig()
   const { address } = useAccount()
   const { connectAsync, connectors, status } = useConnect()
   const { disconnectAsync } = useDisconnect()
@@ -25,6 +26,7 @@ export const useAccountStore = defineStore('account', () => {
   const likeWallet = ref<string | null>(null)
   const isLoggingIn = ref(false)
   const isConnectModalOpen = ref(false)
+  const isClearingCaches = ref(false)
 
   watch(
     () => user.value,
@@ -421,12 +423,44 @@ export const useAccountStore = defineStore('account', () => {
     }
   }
 
+  async function clearCaches() {
+    if (!window.caches) return
+    try {
+      isClearingCaches.value = true
+      const keys = await window.caches.keys()
+      if (!keys?.length) return
+
+      const bookKeys = keys.filter(key => key.startsWith(config.public.cacheKeyPrefix))
+      await Promise.all(bookKeys.map(key => caches.delete(key)))
+
+      if (!window.localStorage) return
+
+      bookKeys.forEach((key) => {
+        // TODO: Refactor keys
+        [
+          'cfi',
+          'dual-page-mode',
+          'locations',
+          'right-to-left',
+          'scale',
+          'tts-index',
+        ].forEach((suffix) => {
+          window.localStorage.removeItem(`${key}-${suffix}`)
+        })
+      })
+    }
+    finally {
+      isClearingCaches.value = false
+    }
+  }
+
   async function logout() {
     blockingModal.open({ title: $t('account_logging_out') })
     try {
       await disconnectAsync()
       await $fetch('/api/logout', { method: 'POST' })
       await refreshSession()
+      clearCaches()
       blockingModal.patch({ title: $t('account_logged_out') })
       // Wait for a moment to show the logged out message
       await sleep(500)
@@ -476,10 +510,12 @@ export const useAccountStore = defineStore('account', () => {
     likeWallet,
     isLoggingIn,
     isConnectModalOpen,
+    isClearingCaches,
 
     login,
     logout,
     refreshSessionInfo,
     exportPrivateKey,
+    clearCaches,
   }
 })
