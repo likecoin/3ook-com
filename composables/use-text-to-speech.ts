@@ -1,3 +1,5 @@
+import { useStorage } from '@vueuse/core'
+
 interface TTSOptions {
   nftClassId?: string
   onError?: (error: Event) => void
@@ -42,13 +44,14 @@ export function useTextToSpeech(options: TTSOptions = {}) {
     return ttsLanguageVoiceOptions
   })
 
+  const ttsLanguageVoiceValues = availableTTSLanguageVoiceOptions.value.map(option => option.value)
   const ttsPlaybackRateOptions = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0].map(rate => ({
     label: `${rate}x`,
     value: rate,
   }))
 
-  const ttsLanguageVoice = ref('zh-HK_phoebe')
-  const ttsPlaybackRate = ref(1.0)
+  const ttsLanguageVoice = useStorage('reader-tts-voice', ttsLanguageVoiceValues[0] as string)
+  const ttsPlaybackRate = useStorage('reader-tts-playback-rate', 1.0)
   const isShowTextToSpeechOptions = ref(false)
   const isTextToSpeechOn = ref(false)
   const isTextToSpeechPlaying = ref(false)
@@ -200,6 +203,9 @@ export function useTextToSpeech(options: TTSOptions = {}) {
   }
 
   async function startTextToSpeech(index: number | null = null) {
+    if (!ttsLanguageVoiceValues.includes(ttsLanguageVoice.value)) {
+      ttsLanguageVoice.value = ttsLanguageVoiceValues[0]
+    }
     isShowTextToSpeechOptions.value = true
     if (index !== null) {
       currentTTSSegmentIndex.value = index
