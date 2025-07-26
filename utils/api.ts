@@ -359,6 +359,13 @@ export function fetchLikerPlusBillingPortalLink() {
   })
 }
 
+export interface PostMigrateMagicEmailUserResponseData {
+  isMigratedBookUser: boolean
+  isMigratedBookOwner: boolean
+  isMigratedLikerId: boolean
+  isMigratedLikerLand: boolean
+}
+
 export function postMigrateMagicEmailUser({
   wallet,
   signature,
@@ -369,7 +376,7 @@ export function postMigrateMagicEmailUser({
   message: string
 }) {
   const { fetch } = useLikeCoinAPI()
-  return fetch(`/wallet/evm/migrate/email/magic`, {
+  return fetch<PostMigrateMagicEmailUserResponseData>(`/wallet/evm/migrate/email/magic`, {
     method: 'POST',
     body: {
       wallet,
