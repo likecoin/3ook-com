@@ -448,6 +448,10 @@ export const useAccountStore = defineStore('account', () => {
           window.localStorage.removeItem(`${key}-${suffix}`)
         })
       })
+
+      getTTSConfigKeySuffixes().forEach((suffix) => {
+        window.localStorage.removeItem(getTTSConfigKeyWithSuffix(TTS_CONFIG_KEY, suffix))
+      })
     }
     finally {
       isClearingCaches.value = false

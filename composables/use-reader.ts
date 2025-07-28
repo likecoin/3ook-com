@@ -22,7 +22,7 @@ export default function (params: {
   const bookFileCacheKey = computed(() =>
     [
       config.public.cacheKeyPrefix,
-      'book-file',
+      READER_CACHE_KEY,
       nftClassId.value,
       nftId.value,
       fileIndex.value,

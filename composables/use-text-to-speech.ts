@@ -21,6 +21,15 @@ export function useTextToSpeech(options: TTSOptions = {}) {
   } = options || {}
 
   const nftClassId = options.nftClassId
+
+  const config = useRuntimeConfig()
+  const ttsConfigCacheKey = computed(() =>
+    [
+      config.public.cacheKeyPrefix,
+      TTS_CONFIG_KEY,
+    ].join('-'),
+  )
+
   // hardcoded voice options for now
   const ttsLanguageVoiceOptions = [
     { label: 'Phoebe - 粵語女聲', value: 'zh-HK_phoebe' },
@@ -50,8 +59,8 @@ export function useTextToSpeech(options: TTSOptions = {}) {
     value: rate,
   }))
 
-  const ttsLanguageVoice = useStorage('reader-tts-voice', ttsLanguageVoiceValues[0] as string)
-  const ttsPlaybackRate = useStorage('reader-tts-playback-rate', 1.0)
+  const ttsLanguageVoice = useStorage(getTTSConfigKeyWithSuffix(ttsConfigCacheKey.value, 'voice'), ttsLanguageVoiceValues[0] as string)
+  const ttsPlaybackRate = useStorage(getTTSConfigKeyWithSuffix(ttsConfigCacheKey.value, 'playback-rate'), 1.0)
   const isShowTextToSpeechOptions = ref(false)
   const isTextToSpeechOn = ref(false)
   const isTextToSpeechPlaying = ref(false)

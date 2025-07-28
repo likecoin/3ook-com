@@ -25,3 +25,20 @@ export function splitTextIntoSegments(text: string): string[] {
 
   return result
 }
+
+export const TTS_CONFIG_KEY = 'tts-config'
+
+const TTS_CONFIG_KEY_SUFFIX_LIST = [
+  'voice',
+  'playback-rate',
+] as const
+
+export type TTSConfigKeySuffix = (typeof TTS_CONFIG_KEY_SUFFIX_LIST)[number]
+
+export function getTTSConfigKeySuffixes() {
+  return TTS_CONFIG_KEY_SUFFIX_LIST
+}
+
+export function getTTSConfigKeyWithSuffix(key: string, suffix: TTSConfigKeySuffix) {
+  return `${key}-${suffix}`
+}

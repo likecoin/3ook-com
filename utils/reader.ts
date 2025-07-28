@@ -1,3 +1,5 @@
+export const READER_CACHE_KEY = 'book-file'
+
 const READER_CACHE_KEY_SUFFIX_LIST = [
   'cfi',
   'dual-page-mode',
