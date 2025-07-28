@@ -148,6 +148,10 @@ export default function ({ nftClassId = '' }: { nftClassId?: string } = {}) {
     return methods.join($t('text_separator_slash'))
   })
 
+  const formattedTTSSupportLabel = computed(() => {
+    return isAudioHidden.value ? $t('product_page_tts_disabled') : $t('product_page_tts_enabled')
+  })
+
   const keywords = computed(() => {
     return bookstoreInfo.value?.keywords.filter(keyword => !!keyword) || []
   })
@@ -212,6 +216,7 @@ export default function ({ nftClassId = '' }: { nftClassId?: string } = {}) {
     isHidden,
     isDownloadable,
     isAudioHidden,
+    formattedTTSSupportLabel,
     formattedReadingMethods,
     keywords,
 

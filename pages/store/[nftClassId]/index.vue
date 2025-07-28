@@ -89,6 +89,10 @@
                     <td v-text="$t('product_page_reading_methods_label')" />
                     <td v-text="bookInfo.formattedReadingMethods" />
                   </tr>
+                  <tr>
+                    <td v-text="$t('product_page_support_tts_label')" />
+                    <td v-text="bookInfo.formattedTTSSupportLabel" />
+                  </tr>
                   <tr v-if="bookInfo.formattedPublishedDate">
                     <td v-text="$t('product_page_publish_date_label')" />
                     <td v-text="bookInfo.formattedPublishedDate" />
