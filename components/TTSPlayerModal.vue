@@ -119,7 +119,8 @@
           <div class="mt-4 flex justify-center items-center gap-4">
             <BottomSlideover :title="$t('reader_voice_options_button')">
               <UButton
-                icon="i-material-symbols-account-circle-outline"
+                :ui="{ leadingAvatar: 'size-8' }"
+                :avatar="{ src: ttsLeadingAvatar }"
                 :label="getTTSLanguageVoiceLabel"
                 class="rounded-full"
                 size="lg"
@@ -137,15 +138,27 @@
                     color="primary"
                     variant="table"
                     :default-value="ttsLanguageVoice"
-                    :items="ttsLanguageVoiceOptions"
+                    :items="ttsLanguageVoiceOptionsWithAvatars"
                     indicator="end"
-                  />
+                  >
+                    <template #label="{ item }">
+                      <UAvatar
+                        size="xl"
+                        :src="item.avatar"
+                      />
+                      <span
+                        class="ml-2"
+                        v-text="item.label"
+                      />
+                    </template>
+                  </URadioGroup>
                 </div>
               </template>
             </BottomSlideover>
 
             <BottomSlideover :title="$t('reader_rate_options_button')">
               <UButton
+                :ui="{ leadingIcon: 'size-8' }"
                 icon="i-material-symbols-fast-forward-outline"
                 :label="getTTSPlaybackRateLabel"
                 class="rounded-full"
@@ -210,8 +223,11 @@ const scrollIndicatorClasses = [
   'to-transparent',
   'pointer-events-none',
 ]
-
+const config = useRuntimeConfig()
+const avatarURL = config.public.baseURL
 const BUFFER_SIZE = 10
+const VOICES_WITH_AVATARS = ['phoebe', 'pazu'] // Only certain names are displayed with avatars.
+const defaultVoiceAvatar = 'https://static.like.co/likecoin_de-portrait.jpg'
 const visibleSegmentElements = ref<HTMLElement[]>([])
 const scrollContainer = ref<HTMLElement>()
 
@@ -252,7 +268,22 @@ const visibleSegments = computed(() => {
 
 const getTTSLanguageVoiceLabel = computed(() => {
   const voice = ttsLanguageVoice.value
-  return ttsLanguageVoiceOptions.value.find(option => option.value === voice)?.label || voice
+  return (
+    ttsLanguageVoiceOptions.value.find(
+      (option: { value: string, label: string }) => option.value === voice,
+    )?.label || voice
+  )
+})
+
+const ttsLeadingAvatar = computed(() => {
+  return getVoiceAvatar(ttsLanguageVoice.value)
+})
+
+const ttsLanguageVoiceOptionsWithAvatars = computed(() => {
+  return ttsLanguageVoiceOptions.value.map((option: { value: string, label: string }) => ({
+    ...option,
+    avatar: getVoiceAvatar(option.value),
+  }))
 })
 
 const sectionTitle = computed(() => {
@@ -307,5 +338,13 @@ watch(currentTTSSegment, (newSegment) => {
 function handleModalClose() {
   stopTextToSpeech()
   emit('close')
+}
+
+function getVoiceAvatar(voiceValue: string): string {
+  const voice = voiceValue.split('_')[1]
+  if (voice && VOICES_WITH_AVATARS.includes(voice.toLowerCase())) {
+    return `${avatarURL}/images/voice-avatars/${voice.toLowerCase()}.png`
+  }
+  return defaultVoiceAvatar
 }
 </script>
