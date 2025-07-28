@@ -8,11 +8,15 @@ export interface PaywallModalProps {
   'discountedYearlyPrice'?: string | number
   'discountedMonthlyPrice'?: string | number
   'isProcessingSubscription'?: boolean
+  'hasFreeTrial'?: boolean
+  'mustCollectPaymentMethod'?: boolean
   'utmCampaign'?: string
   'utmMedium'?: string
   'utmSource'?: string
   'onUpdate:modelValue'?: (value: SubscriptionPlan) => void
   'onSubscribe'?: (props: {
+    hasFreeTrial?: boolean
+    mustCollectPaymentMethod?: boolean
     utmCampaign?: string
     utmMedium?: string
     utmSource?: string

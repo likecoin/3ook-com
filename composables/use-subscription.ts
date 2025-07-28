@@ -2,6 +2,7 @@ import { PaywallModal } from '#components'
 import type { PaywallModalProps } from '~/components/PaywallModal.props'
 
 export function useSubscription() {
+  const likeCoinSessionAPI = useLikeCoinSessionAPI()
   const { t: $t } = useI18n()
   const accountStore = useAccountStore()
   const { user, loggedIn: hasLoggedIn } = useUserSession()
@@ -80,10 +81,14 @@ export function useSubscription() {
   }
 
   async function startSubscription({
+    hasFreeTrial = true,
+    mustCollectPaymentMethod = true,
     utmCampaign,
     utmMedium,
     utmSource,
   }: {
+    hasFreeTrial?: boolean
+    mustCollectPaymentMethod?: boolean
     utmCampaign?: string
     utmMedium?: string
     utmSource?: string
@@ -114,11 +119,11 @@ export function useSubscription() {
       useLogEvent('begin_checkout', eventPayload.value)
 
       const analyticsParams = getAnalyticsParameters()
-      const { url } = await fetchLikerPlusCheckoutLink({
+      const { url } = await likeCoinSessionAPI.fetchLikerPlusCheckoutLink({
         period: selectedPlan.value,
         from: getRouteQuery('from'),
-        hasFreeTrial: true,
-        mustCollectPaymentMethod: true,
+        hasFreeTrial,
+        mustCollectPaymentMethod,
         ...analyticsParams,
         utmCampaign: utmCampaign || analyticsParams.utmCampaign,
         utmMedium: utmMedium || analyticsParams.utmMedium,

@@ -202,6 +202,7 @@
 // NOTE: Set `layout` to false for injecting props into `<NuxtLayout/>`.
 definePageMeta({ layout: false })
 
+const likeCoinSessionAPI = useLikeCoinSessionAPI()
 const { t: $t } = useI18n()
 const { loggedIn: hasLoggedIn, user } = useUserSession()
 const accountStore = useAccountStore()
@@ -240,7 +241,7 @@ async function handleLikerPlusButtonClick() {
   if (isOpeningBillingPortal.value) return
   try {
     isOpeningBillingPortal.value = true
-    const { url } = await fetchLikerPlusBillingPortalLink()
+    const { url } = await likeCoinSessionAPI.fetchLikerPlusBillingPortalLink()
     // NOTE: Not using _blank here as some browsers block popups
     await navigateTo(url, { external: true })
     // NOTE: Keep `isOpeningBillingPortal` true while navigating to the billing portal

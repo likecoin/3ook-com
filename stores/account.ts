@@ -19,6 +19,7 @@ export const useAccountStore = defineStore('account', () => {
   const blockingModal = useBlockingModal()
   const { t: $t } = useI18n()
   const { getLikeCoinV3BookMigrationSiteURL } = useLikeCoinV3MigrationSite()
+  const likeCoinSessionAPI = useLikeCoinSessionAPI()
 
   const loginModal = overlay.create(LoginModal)
   const registrationFormModal = overlay.create(RegistrationModal)
@@ -134,20 +135,27 @@ export const useAccountStore = defineStore('account', () => {
         switch (error.data?.error) {
           case 'EMAIL_ALREADY_USED':
             if (!error.data?.evmWallet && error.data?.likeWallet) {
-              const message = JSON.stringify({
-                action: 'migrate',
-                evmWallet: walletAddress,
-                email,
-                magicDIDToken,
-                ts: Date.now(),
-              }, null, 2)
-              const signature = await signMessageAsync({ message })
-              await postMigrateMagicEmailUser({
-                wallet: walletAddress,
-                signature,
-                message,
-              })
-              return true
+              try {
+                const message = JSON.stringify({
+                  action: 'migrate',
+                  evmWallet: walletAddress,
+                  email,
+                  magicDIDToken,
+                  ts: Date.now(),
+                }, null, 2)
+                const signature = await signMessageAsync({ message })
+                const res = await likeCoinSessionAPI.migrateMagicEmailUser({
+                  wallet: walletAddress,
+                  signature,
+                  message,
+                })
+                if (res.isMigratedLikerId) {
+                  return true
+                }
+              }
+              catch (e) {
+                console.warn('Failed to migrate Magic email user', e)
+              }
             }
             throw createError(getEmailAlreadyUsedErrorData({
               email: email as string,
