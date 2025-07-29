@@ -132,7 +132,7 @@
                   <URadioGroup
                     v-model="ttsLanguageVoice"
                     :ui="{
-                      item: '!rounded-none',
+                      item: '!rounded-none !items-center !border-none',
                     }"
                     class="w-full"
                     color="primary"
@@ -158,6 +158,7 @@
 
             <BottomSlideover :title="$t('reader_rate_options_button')">
               <UButton
+                :ui="{ leadingIcon: 'size-8' }"
                 icon="i-material-symbols-fast-forward-outline"
                 :label="getTTSPlaybackRateLabel"
                 class="rounded-full"
@@ -263,7 +264,7 @@ const visibleSegments = computed(() => {
   }))
 })
 
-const getTTSLanguageVoiceLabel = computed(() => {
+const activeTTSLanguageVoiceLabel = computed(() => {
   const voice = ttsLanguageVoice.value
   return (
     ttsLanguageVoiceOptionsWithAvatars.value.find(
