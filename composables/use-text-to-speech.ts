@@ -1,4 +1,8 @@
 import { useStorage } from '@vueuse/core'
+import phoebeAvatar from '@/assets/images/voice-avatars/phoebe.jpg'
+import leiTingYinAvatar from '@/assets/images/voice-avatars/lei-ting-yin.jpg'
+import pazuAvatar from '@/assets/images/voice-avatars/pazu.jpg'
+import defaultAvatar from '@/assets/images/voice-avatars/default.jpg'
 
 interface TTSOptions {
   nftClassId?: string
@@ -76,6 +80,33 @@ export function useTextToSpeech(options: TTSOptions = {}) {
   const currentTTSSegmentText = computed(() => {
     return currentTTSSegment.value?.text || ''
   })
+
+  const activeTTSLanguageVoiceAvatar = computed(() => {
+    return getVoiceAvatar(ttsLanguageVoice.value)
+  })
+
+  const ttsLanguageVoiceOptionsWithAvatars = computed(() => {
+    return availableTTSLanguageVoiceOptions.value.map((option: { value: string, label: string }) => ({
+      ...option,
+      avatar: getVoiceAvatar(option.value),
+    }))
+  })
+
+  function getVoiceAvatar(voiceValue: string): string {
+    switch (voiceValue) {
+      case 'zh-HK_phoebe':
+        return phoebeAvatar
+
+      case 'zh-HK_pazu':
+        return pazuAvatar
+
+      case 'zh-TW_0': // lei-ting-yin
+        return leiTingYinAvatar
+
+      default:
+        return defaultAvatar
+    }
+  }
 
   function setupMediaSession() {
     try {
@@ -348,6 +379,8 @@ export function useTextToSpeech(options: TTSOptions = {}) {
   return {
     ttsLanguageVoiceOptions: availableTTSLanguageVoiceOptions,
     ttsLanguageVoice,
+    activeTTSLanguageVoiceAvatar,
+    ttsLanguageVoiceOptionsWithAvatars,
     ttsPlaybackRateOptions,
     ttsPlaybackRate,
     isShowTextToSpeechOptions,

@@ -119,8 +119,9 @@
           <div class="mt-4 flex justify-center items-center gap-4">
             <BottomSlideover :title="$t('reader_voice_options_button')">
               <UButton
-                icon="i-material-symbols-account-circle-outline"
-                :label="getTTSLanguageVoiceLabel"
+                :ui="{ leadingAvatar: 'size-8' }"
+                :avatar="{ src: activeTTSLanguageVoiceAvatar }"
+                :label="activeTTSLanguageVoiceLabel"
                 class="rounded-full"
                 size="lg"
                 variant="soft"
@@ -137,9 +138,20 @@
                     color="primary"
                     variant="table"
                     :default-value="ttsLanguageVoice"
-                    :items="ttsLanguageVoiceOptions"
+                    :items="ttsLanguageVoiceOptionsWithAvatars"
                     indicator="end"
-                  />
+                  >
+                    <template #label="{ item }">
+                      <UAvatar
+                        size="lg"
+                        :src="item.avatar"
+                      />
+                      <span
+                        class="ml-2"
+                        v-text="item.label"
+                      />
+                    </template>
+                  </URadioGroup>
                 </div>
               </template>
             </BottomSlideover>
@@ -216,8 +228,9 @@ const visibleSegmentElements = ref<HTMLElement[]>([])
 const scrollContainer = ref<HTMLElement>()
 
 const {
-  ttsLanguageVoiceOptions,
+  ttsLanguageVoiceOptionsWithAvatars,
   ttsLanguageVoice,
+  activeTTSLanguageVoiceAvatar,
   ttsPlaybackRateOptions,
   ttsPlaybackRate,
   isTextToSpeechOn,
@@ -252,7 +265,11 @@ const visibleSegments = computed(() => {
 
 const getTTSLanguageVoiceLabel = computed(() => {
   const voice = ttsLanguageVoice.value
-  return ttsLanguageVoiceOptions.value.find(option => option.value === voice)?.label || voice
+  return (
+    ttsLanguageVoiceOptionsWithAvatars.value.find(
+      (option: { value: string, label: string }) => option.value === voice,
+    )?.label || voice
+  )
 })
 
 const sectionTitle = computed(() => {
