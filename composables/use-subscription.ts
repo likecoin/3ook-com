@@ -19,6 +19,7 @@ export function useSubscription() {
   const yearlyPrice = ref(69.99)
   const monthlyPrice = ref(6.99)
   const currency = ref('USD')
+  const PLUS_DISCOUNT_PERCENTAGE = 0.2 // 20% discount
   const isLikerPlus = computed(() => {
     if (!hasLoggedIn.value) return false
     return user.value?.isLikerPlus
@@ -138,6 +139,7 @@ export function useSubscription() {
     currency,
 
     isLikerPlus,
+    plusDiscountRate: PLUS_DISCOUNT_PERCENTAGE,
     isProcessingSubscription,
 
     openPaywallModal,

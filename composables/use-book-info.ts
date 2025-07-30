@@ -8,7 +8,6 @@ export default function ({ nftClassId = '' }: { nftClassId?: string } = {}) {
   const bookstoreStore = useBookstoreStore()
   const bookInfo = useEVMBookInfo({ nftClassId })
   const bookshelfStore = useBookshelfStore()
-  const DISCOUNT_PERCENTAGE = 0.8 // 20% discount for Liker Plus users
 
   const bookstoreInfo = computed(() => {
     return bookstoreStore.getBookstoreInfoByNFTClassId(nftClassId)
@@ -157,19 +156,12 @@ export default function ({ nftClassId = '' }: { nftClassId?: string } = {}) {
     return (bookstoreInfo.value?.prices || [])
       .filter(item => !item.isUnlisted)
       .map((item) => {
-        const originalPrice = item.price
-        const isPlus = user.value?.isLikerPlus === true
-        const discountedPrice = isPlus
-          ? Math.round(originalPrice * DISCOUNT_PERCENTAGE * 100) / 100
-          : originalPrice
-
         return {
           index: item.index,
           name: localeString(item.name),
           description: localeString(item.description),
-          price: originalPrice,
-          finalPrice: discountedPrice,
-          currency: originalPrice > 0 ? 'US' : '',
+          price: item.price,
+          currency: item.price > 0 ? 'US' : '',
           isSoldOut: item.isSoldOut,
           canTip: item.isAllowCustomPrice,
           isPhysicalOnly: item.isPhysicalOnly,
