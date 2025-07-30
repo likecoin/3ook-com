@@ -2,7 +2,7 @@
   <UModal
     :default-open="true"
     :dismissible="false"
-    :ui="{ content: 'flex flex-col justify-center items-center w-auto min-w-[200px] min-h-[200px] divide-y-0 rounded-2xl' }"
+    :ui="{ content: 'flex flex-col justify-center items-center w-auto min-w-[200px] min-h-[200px] px-6 py-4 divide-y-0 rounded-2xl' }"
   >
     <template #content>
       <img

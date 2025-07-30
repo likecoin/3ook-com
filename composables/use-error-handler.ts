@@ -20,6 +20,7 @@ export default function () {
   const errorModal = overlay.create(ErrorModal)
 
   async function handleError(error: unknown, props: {
+    isFatal?: boolean
     title?: string
     description?: string
     customHandlerMap?: Record<string | number, ErrorHandler>
@@ -79,17 +80,33 @@ export default function () {
     else if (rawErrorMessage === 'Internal server error' || statusCode === 500) {
       description = $t('error_internal_server_error')
     }
+    else if (/no response|network error|connection failed|timeout/i.test(rawErrorMessage)) {
+      description = $t('error_network_error')
+    }
     else {
       description = parseErrorData<string>(error, 'description') || $t('error_unknown')
     }
 
-    await errorModal.open({
+    const errorData = {
       level: handlerProps?.level || parseErrorData<ErrorLevel>(error, 'level') || 'error',
       title: props.title || handlerProps?.title || parseErrorData<string>(error, 'title') || $t('error_modal_title'),
       description,
-      rawMessage: !handler ? `${url ? `${url}\n\n` : ''}${rawErrorMessage}` : undefined,
+      rawMessage: !handler ? `${url ? `${url}\n\n` : ''}${rawErrorMessage}` : '',
       tags: handlerProps?.tags || parseErrorData<Array<ErrorHandlerTag>>(error, 'tags') || [],
       actions: handlerProps?.actions || parseErrorData<Array<ErrorHandlerAction>>(error, 'actions') || [],
+    }
+
+    if (props.isFatal) {
+      throw createError({
+        statusCode,
+        message: description,
+        data: errorData,
+        fatal: true,
+      })
+    }
+
+    await errorModal.open({
+      ...errorData,
       onClose: handlerProps?.onClose || props.onClose,
     }).result
     return !!handler

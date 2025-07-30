@@ -73,7 +73,6 @@ export default defineNuxtConfig({
       arweaveEndpoint: process.env.ARWEAVE_ENDPOINT,
       ipfsEndpoint: process.env.IPFS_ENDPOINT,
       isTestnet: process.env.IS_TESTNET,
-      isTippingEnabled: false,
       pdfViewerOrigin: process.env.PDF_VIEWER_ORIGIN,
       pdfViewerURL: `${process.env.PDF_VIEWER_ORIGIN}${process.env.PDF_VIEWER_PATH}`,
       sentryDsn: process.env.SENTRY_DSN,

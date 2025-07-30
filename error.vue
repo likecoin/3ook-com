@@ -16,6 +16,12 @@
       v-text="props.error?.message"
     />
 
+    <code
+      v-if="props.error?.data?.rawMessage"
+      class="block not-first:mt-4 px-2 py-1 text-xs font-mono font-medium rounded-md border border-gray-300 bg-gray-100 break-all whitespace-pre-wrap"
+      v-text="props.error?.data?.rawMessage"
+    />
+
     <UButton
       class="mt-8"
       :label="backButtonLabel"
@@ -33,7 +39,7 @@ const localeRoute = useLocaleRoute()
 const getRouteBaseName = useRouteBaseName()
 const { t: $t } = useI18n()
 const props = defineProps({
-  error: Object as () => NuxtError,
+  error: Object as () => NuxtError<{ rawMessage?: string }>,
 })
 
 const routeBaseName = computed(() => getRouteBaseName(route))

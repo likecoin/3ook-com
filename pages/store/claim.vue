@@ -56,6 +56,7 @@
 definePageMeta({ name: 'claim-page', layout: false })
 
 const { t: $t } = useI18n()
+const likeCoinSessionAPI = useLikeCoinSessionAPI()
 const localeRoute = useLocaleRoute()
 const getRouteQuery = useRouteQuery()
 const { loggedIn: hasLoggedIn, user } = useUserSession()
@@ -77,7 +78,7 @@ if (!cartId.value || !claimingToken.value || !paymentId.value) {
 }
 
 const { data: cartData, error: cartDataError } = await useAsyncData(cartId.value, async () => {
-  const data = await fetchCartStatusById({
+  const data = await likeCoinSessionAPI.fetchCartStatusById({
     cartId: cartId.value,
     token: claimingToken.value,
   })
@@ -148,15 +149,17 @@ async function waitForItemsDelivery({ timeout = 30000, interval = 3000 } = {}) {
   try {
     isCheckingItemsDelivery.value = true
     const start = Date.now()
-    while (!canStartReading.value && (Date.now() - start) < timeout) {
+    while (!canStartReading.value) {
       await checkItemsDeliveryThroughIndexer()
       if (canStartReading.value) break
       await sleep(interval)
-    }
-    // If indexer is not available or the items are not delivered yet, fallback to calling contract functions
-    if (!canStartReading.value) {
-      await bookshelfStore.fetchNFTByNFTClassIdAndOwnerWalletAddressThroughContract(nftClassId.value as string, user.value?.evmWallet as string)
-      hasBypassedIndexer.value = true
+      if ((Date.now() - start) > timeout) {
+        await bookshelfStore.fetchNFTByNFTClassIdAndOwnerWalletAddressThroughContract(nftClassId.value as string, user.value?.evmWallet as string)
+        if (canStartReading.value) {
+          hasBypassedIndexer.value = true
+          break
+        }
+      }
     }
   }
   catch (error) {
@@ -188,7 +191,7 @@ async function startClaimingItems() {
       })
     }
 
-    const data = await claimCartById({
+    const data = await likeCoinSessionAPI.claimCartById({
       cartId: cartId.value,
       token: claimingToken.value,
       paymentId: paymentId.value,

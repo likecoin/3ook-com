@@ -4,6 +4,7 @@ export interface TTSPlayerModalProps {
   segments?: TTSSegment[] | []
   bookCoverSrc?: string
   bookAuthorName?: string | undefined
+  bookLanguage?: string | undefined
   nftClassId?: string
   startIndex?: number
   onOpen?: () => void

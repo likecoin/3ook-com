@@ -70,6 +70,8 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
 
   async function fetchNFTByNFTClassIdAndOwnerWalletAddressThroughContract(nftClassId: string, ownerWalletAddress: string) {
     const nftClassMetadataPromise = likeNFTClassContract.fetchNFTClassMetadataById(nftClassId)
+    const nftBalance = await likeNFTClassContract.fetchNFTBalanceOf(nftClassId, ownerWalletAddress)
+    if (!nftBalance) return
     const nftId = await likeNFTClassContract.fetchNFTIdByNFTClassIdAndWalletAddressAndIndex(nftClassId, ownerWalletAddress, 0)
     const [nftClassMetadata, nftMetadata] = await Promise.all([
       nftClassMetadataPromise,

@@ -186,7 +186,7 @@
 </template>
 
 <script setup lang="ts">
-import { useStorage } from '@vueuse/core'
+import { useStorage, type UseSwipeDirection } from '@vueuse/core'
 import ePub, {
   type Rendition as RenditionBase,
   type NavItem,
@@ -224,6 +224,10 @@ const {
   bookFileCacheKey,
 } = useReader()
 const { handleError } = useErrorHandler()
+
+function getCacheKeyWithSuffix(suffix: ReaderCacheKeySuffix) {
+  return getReaderCacheKeyWithSuffix(bookFileCacheKey.value, suffix)
+}
 
 const isReaderLoading = ref(true)
 const isDesktopTocOpen = ref(false)
@@ -269,7 +273,7 @@ const activeNavItemLabel = computed(() => {
 })
 const activeNavItemHref = ref<string | undefined>()
 // TODO: Should hide this index into TTS (player?) composable?
-const activeTTSElementIndex = useStorage(`${bookFileCacheKey.value}-tts-index`, undefined) as Ref<number | undefined>
+const activeTTSElementIndex = useStorage(getCacheKeyWithSuffix('tts-index'), undefined) as Ref<number | undefined>
 
 const { setTTSSegments, openPlayer } = useTTSPlayerModal({
   nftClassId: nftClassId.value,
@@ -293,7 +297,8 @@ const isAtFirstPage = computed(() => {
 })
 const isRightToLeft = ref(false)
 const currentPageEndCfi = ref<string>('')
-const currentCfi = useStorage(`${bookFileCacheKey.value}-cfi`, '')
+const currentPageHref = ref<string>('')
+const currentCfi = useStorage(getCacheKeyWithSuffix('cfi'), '')
 
 const FONT_SIZE_OPTIONS = [
   6, 8, 10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 40, 48, 56, 64, 72,
@@ -306,6 +311,7 @@ watch(fontSize, (size) => {
 
 let cleanUpClickListener: (() => void) | undefined
 const renditionElement = useTemplateRef<HTMLDivElement>('reader')
+const renditionViewWindow = ref<Window | undefined>(undefined)
 
 async function loadEPub() {
   const buffer = await loadFileAsBuffer(bookFileURLWithCORS.value, bookFileCacheKey.value)
@@ -315,21 +321,18 @@ async function loadEPub() {
 
   const book = ePub(buffer)
   await book.ready
-  const [metadata, toc] = await Promise.all([
-    book.loaded.metadata,
-    book.loaded.navigation.then(async (navigation) => {
-      return navigation.toc.flatMap((item) => {
-        if (item.subitems) {
-          return [item, ...item.subitems]
-        }
-        return item
-      })
-    }),
-  ])
+  const toc = await book.loaded.navigation.then(async (navigation) => {
+    return navigation.toc.flatMap((item) => {
+      if (item.subitems) {
+        return [item, ...item.subitems]
+      }
+      return item
+    })
+  })
 
   try {
     let isLocationLoaded = false
-    const locationCacheKey = `${bookFileCacheKey.value}-locations`
+    const locationCacheKey = getCacheKeyWithSuffix('locations')
     if (window.localStorage) {
       const locationCache = window.localStorage.getItem(locationCacheKey)
       if (locationCache) {
@@ -370,6 +373,7 @@ async function loadEPub() {
     })
     .filter((item): item is NavItem => item !== null)
   activeNavItemHref.value = book.spine.first().href
+  currentPageHref.value = activeNavItemHref.value
   lastSectionIndex.value = book.spine.last().index
 
   if (!renditionElement.value) {
@@ -389,12 +393,6 @@ async function loadEPub() {
     'text-size-adjust': 'none',
     'direction': 'ltr', // Mitigate epubjs mixing up dir & page-progression-direction
   }
-  if (metadata.layout === 'pre-paginated' && metadata.spread === 'none') {
-    // Make the page centered for book with pre-paginated layout and no spread (single page)
-    bodyCSS['transform-origin'] = 'center top !important'
-    bodyCSS['margin-left'] = 'auto'
-    bodyCSS['margin-right'] = 'auto'
-  }
   rendition.value.themes.default({ body: bodyCSS })
   rendition.value.themes.fontSize(`${fontSize.value}px`)
   rendition.value.display(currentCfi.value || undefined)
@@ -402,6 +400,7 @@ async function loadEPub() {
   rendition.value.on('rendered', (section: Section, view: EpubView) => {
     currentSectionIndex.value = section.index
     isRightToLeft.value = view.settings.direction === 'rtl'
+    renditionViewWindow.value = view.window
 
     if (cleanUpClickListener) {
       cleanUpClickListener()
@@ -416,13 +415,15 @@ async function loadEPub() {
 
       if (view.window && window.innerWidth < 1024) {
         const width = rendition.value?.manager?.container.clientWidth || 0
-        const range = width * (1 / 3)
+        const range = width * 0.45
         const x = event.clientX % width // Normalize x to be within the window
         if (x < range) {
-          handleLeftArrowButtonClick()
+          turnPageLeft()
+          useLogEvent('reader_navigate_button_arrow_mobile')
         }
         else if (width - x < range) {
-          handleRightArrowButtonClick()
+          turnPageRight()
+          useLogEvent('reader_navigate_button_arrow_mobile')
         }
       }
     })
@@ -431,6 +432,7 @@ async function loadEPub() {
   rendition.value.on('relocated', (location: Location) => {
     currentPageEndCfi.value = location.end.cfi
     const href = location.start.href
+    currentPageHref.value = href
     if (navItems.value.some(item => item.href === href)) {
       activeNavItemHref.value = href
     }
@@ -458,7 +460,7 @@ async function extractTTSSegments(book: ePub.Book) {
         const chapterTitle = chapter.querySelector('title')?.textContent?.trim() || ''
 
         const elements = Array.from(
-          chapter.querySelectorAll('p, h1, h2, h3, h4, h5, h6'),
+          chapter.querySelectorAll('h1, h2, h3, h4, h5, h6, p, li'),
         ).filter(el => !!el.textContent?.trim())
 
         const segments: TTSSegment[] = []
@@ -505,7 +507,7 @@ function prevPage() {
   rendition.value?.prev()
 }
 
-function handleLeftArrowButtonClick() {
+function turnPageLeft() {
   if (isRightToLeft.value) {
     nextPage()
   }
@@ -514,7 +516,7 @@ function handleLeftArrowButtonClick() {
   }
 }
 
-function handleRightArrowButtonClick() {
+function turnPageRight() {
   if (isRightToLeft.value) {
     prevPage()
   }
@@ -553,16 +555,80 @@ async function handleMobileTocOpen(open: boolean) {
 function onClickTTSPlay() {
   openPlayer({
     index: activeTTSElementIndex.value,
-    href: activeNavItemHref.value,
+    href: currentPageHref.value,
   })
 }
 
+function handleLeftArrowButtonClick() {
+  turnPageLeft()
+  useLogEvent('reader_navigate_button_arrow')
+}
+
+function handleRightArrowButtonClick() {
+  turnPageRight()
+  useLogEvent('reader_navigate_button_arrow')
+}
+
 const isShiftPressed = useKeyModifier('Shift')
-onKeyStroke('ArrowRight', handleRightArrowButtonClick)
-onKeyStroke('ArrowLeft', handleLeftArrowButtonClick)
-onKeyStroke('ArrowDown', nextPage)
-onKeyStroke('ArrowUp', prevPage)
-onKeyStroke('Space', () => isShiftPressed.value ? prevPage() : nextPage())
+onKeyStroke('ArrowRight', () => {
+  turnPageRight()
+  useLogEvent('reader_navigate_key_arrow_horizontal')
+})
+onKeyStroke('ArrowLeft', () => {
+  turnPageLeft()
+  useLogEvent('reader_navigate_key_arrow_horizontal')
+})
+onKeyStroke('ArrowDown', () => {
+  nextPage()
+  useLogEvent('reader_navigate_key_arrow_vertical')
+})
+onKeyStroke('ArrowUp', () => {
+  prevPage()
+  useLogEvent('reader_navigate_key_arrow_vertical')
+})
+onKeyStroke('Space', () => {
+  if (isShiftPressed.value) {
+    prevPage()
+  }
+  else {
+    nextPage()
+  }
+  useLogEvent('reader_navigate_key_space')
+})
+
+useSwipe(
+  renditionViewWindow,
+  {
+    onSwipeEnd: (_: TouchEvent, direction: UseSwipeDirection) => {
+      const selection = renditionViewWindow.value?.getSelection()
+      if (selection && selection.rangeCount > 0) {
+        // Do not navigate when selecting text
+        return
+      }
+
+      switch (direction) {
+        case 'left':
+          turnPageRight()
+          useLogEvent('reader_navigate_swipe_horizontal')
+          break
+        case 'right':
+          turnPageLeft()
+          useLogEvent('reader_navigate_swipe_horizontal')
+          break
+        case 'up':
+          nextPage()
+          useLogEvent('reader_navigate_swipe_vertical')
+          break
+        case 'down':
+          prevPage()
+          useLogEvent('reader_navigate_swipe_vertical')
+          break
+        default:
+          break
+      }
+    },
+  },
+)
 </script>
 
 <style>

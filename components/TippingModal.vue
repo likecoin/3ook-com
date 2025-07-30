@@ -1,60 +1,52 @@
 <template>
   <UModal
     :ui="{
-      content: 'max-w-[320px] space-y-0 pt-6 pb-8 divide-y-0',
+      content: 'max-w-[390px] space-y-0 pt-8 pb-6 divide-y-0 rounded-xl',
     }"
     :close="{ onClick: handleSkip }"
   >
     <template #content>
-      <header>
-        <div
-          class="flex flex-col items-center justify-end bg-cover bg-no-repeat bg-center h-[116px]"
-          :style="{ backgroundImage: `url(${TippingHeaderBackground})` }"
-        >
-          <UAvatar
-            class="size-22 mb-2 bg-white ring-4 ring-[#EBEBEB]"
-            :alt="displayName"
-            :src="props.avatar"
-          />
-        </div>
-        <div
-          class="text-sm font-semibold text-center"
-          v-text="displayName"
-        />
-      </header>
-
-      <div class="flex flex-col items-center mt-6 px-6 text-center">
+      <div class="flex flex-col items-start px-6">
         <h3
-          class="text-xl font-semibold"
+          class="text-xl font-bold"
           v-text="$t('tipping_modal_title')"
-        />
-        <p
-          class="text-xs mt-2"
-          v-text="$t('tipping_modal_description', { displayName })"
         />
 
         <URadioGroup
-          v-model="tippingAmount"
+          v-model="selectedTippingOption"
           class="w-full mt-6"
           :ui="{
-            item: 'flex items-center w-full text-center',
-            label: 'text-lg font-semibold',
-            description: 'text-xs',
+            item: [
+              'flex items-center w-full text-center rounded-full px-2 py-2',
+              'has-data-[state=checked]:bg-theme-500',
+              'has-data-[state=checked]:text-theme-50',
+            ].join(' '),
+            label: 'text-inherit',
           }"
           size="md"
           orientation="horizontal"
           variant="card"
           indicator="hidden"
-          :items="items"
-        />
+          :items="tippingOptionRadioItems"
+        >
+          <template #label="{ item }">
+            <span
+              v-if="'value' in item && item.value !== -1"
+              class="text-xs"
+              v-text="props.currency"
+            />&nbsp;<span class="text-md font-semibold">{{ 'label' in item ? item.label : '' }}</span>
+          </template>
+        </URadioGroup>
 
         <UInput
-          v-model="tippingAmount"
+          v-if="selectedTippingOption === -1"
+          v-model="tippingCustomAmount"
           class="w-full mt-2"
           size="xl"
           :placeholder="$t('tipping_modal_custom_amount_placeholder')"
+          :ui="{ base: 'text-right' }"
         >
-          <template #trailing>
+          <template #leading>
             <span
               class="text-sm"
               v-text="props.currency"
@@ -73,7 +65,7 @@
         />
         <UButton
           :label="$t('tipping_modal_cancel_button')"
-          variant="ghost"
+          variant="outline"
           size="xl"
           block
           @click="handleSkip"
@@ -86,12 +78,10 @@
 <script setup lang="ts">
 import type { RadioGroupItem } from '@nuxt/ui'
 
-import TippingHeaderBackground from '~/assets/images/tipping/avatar-bg.png'
-
 const { t: $t } = useI18n()
 
-const DEFAULT_TIPPING_PRICES_BY_CURRENCY: Record<string, number[]> = {
-  USD: [5, 20, 100],
+const DEFAULT_TIPPING_OPTIONS_BY_CURRENCY: Record<string, number[]> = {
+  US: [5, 20, 100, -1],
 }
 
 const props = withDefaults(
@@ -101,7 +91,7 @@ const props = withDefaults(
     currency?: string
   }>(),
   {
-    currency: 'USD',
+    currency: 'US',
   },
 )
 
@@ -110,16 +100,19 @@ const emit = defineEmits<{
   submit: []
 }>()
 
-const tippingPrices = computed(() => {
-  return DEFAULT_TIPPING_PRICES_BY_CURRENCY[props.currency] || []
+const tippingOptions = computed(() => {
+  return DEFAULT_TIPPING_OPTIONS_BY_CURRENCY[props.currency] || []
 })
 
-const tippingAmount = ref(tippingPrices.value[1])
+const selectedTippingOption = ref(tippingOptions.value[0])
+const tippingCustomAmount = ref(0)
+const tippingAmount = computed(() => {
+  return selectedTippingOption.value === -1 ? tippingCustomAmount.value : selectedTippingOption.value
+})
 
-const items = computed<RadioGroupItem[]>(() =>
-  tippingPrices.value.map((price: number) => ({
-    label: price.toString(),
-    description: props.currency,
+const tippingOptionRadioItems = computed<RadioGroupItem[]>(() =>
+  tippingOptions.value.map((price: number) => ({
+    label: price === -1 ? $t('tipping_modal_custom_amount_placeholder') : `$${price.toLocaleString()}`,
     value: price,
   })),
 )

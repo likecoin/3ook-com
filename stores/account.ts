@@ -8,6 +8,7 @@ import { LoginModal, RegistrationModal } from '#components'
 const REGISTER_TIME_LIMIT_IN_TS = 15 * 60 * 1000 // 15 minutes
 
 export const useAccountStore = defineStore('account', () => {
+  const config = useRuntimeConfig()
   const { address } = useAccount()
   const { connectAsync, connectors, status } = useConnect()
   const { disconnectAsync } = useDisconnect()
@@ -18,6 +19,7 @@ export const useAccountStore = defineStore('account', () => {
   const blockingModal = useBlockingModal()
   const { t: $t } = useI18n()
   const { getLikeCoinV3BookMigrationSiteURL } = useLikeCoinV3MigrationSite()
+  const likeCoinSessionAPI = useLikeCoinSessionAPI()
 
   const loginModal = overlay.create(LoginModal)
   const registrationFormModal = overlay.create(RegistrationModal)
@@ -25,6 +27,7 @@ export const useAccountStore = defineStore('account', () => {
   const likeWallet = ref<string | null>(null)
   const isLoggingIn = ref(false)
   const isConnectModalOpen = ref(false)
+  const isClearingCaches = ref(false)
 
   watch(
     () => user.value,
@@ -131,6 +134,29 @@ export const useAccountStore = defineStore('account', () => {
       if (error instanceof FetchError) {
         switch (error.data?.error) {
           case 'EMAIL_ALREADY_USED':
+            if (!error.data?.evmWallet && error.data?.likeWallet) {
+              try {
+                const message = JSON.stringify({
+                  action: 'migrate',
+                  evmWallet: walletAddress,
+                  email,
+                  magicDIDToken,
+                  ts: Date.now(),
+                }, null, 2)
+                const signature = await signMessageAsync({ message })
+                const res = await likeCoinSessionAPI.migrateMagicEmailUser({
+                  wallet: walletAddress,
+                  signature,
+                  message,
+                })
+                if (res.isMigratedLikerId) {
+                  return true
+                }
+              }
+              catch (e) {
+                console.warn('Failed to migrate Magic email user', e)
+              }
+            }
             throw createError(getEmailAlreadyUsedErrorData({
               email: email as string,
               walletAddress,
@@ -241,7 +267,7 @@ export const useAccountStore = defineStore('account', () => {
         if (error instanceof FetchError) {
           switch (error.data?.message) {
             case 'INVALID_USER_ID': {
-              await errorModal.open({ description: $t('account_register_error_invalid_account_id', { id: payload?.accountId }) })
+              await errorModal.open({ description: $t('account_register_error_invalid_account_id', { id: payload?.accountId }) }).result
               continue
             }
             case 'EMAIL_ALREADY_USED': {
@@ -251,7 +277,7 @@ export const useAccountStore = defineStore('account', () => {
                 boundEVMWallet: error.data?.evmWallet,
                 boundLikeWallet: error.data?.likeWallet,
                 loginMethod,
-              }))
+              })).result
               continue
             }
             default:
@@ -394,7 +420,7 @@ export const useAccountStore = defineStore('account', () => {
         return
       }
       if (error instanceof FetchError && error.data?.message === 'LIKECOIN_WALLET_ADDRESS_NOT_FOUND') {
-        await errorModal.open({ description: $t('error_likecoin_wallet_address_not_found', { address: address.value }) })
+        await errorModal.open({ description: $t('error_likecoin_wallet_address_not_found', { address: address.value }) }).result
       }
       await handleError(error)
       return login()
@@ -405,12 +431,40 @@ export const useAccountStore = defineStore('account', () => {
     }
   }
 
+  async function clearCaches() {
+    if (!window.caches) return
+    try {
+      isClearingCaches.value = true
+      const keys = await window.caches.keys()
+      if (!keys?.length) return
+
+      const bookKeys = keys.filter(key => key.startsWith(config.public.cacheKeyPrefix))
+      await Promise.all(bookKeys.map(key => caches.delete(key)))
+
+      if (!window.localStorage) return
+
+      bookKeys.forEach((key) => {
+        getReaderCacheKeySuffixes().forEach((suffix) => {
+          window.localStorage.removeItem(`${key}-${suffix}`)
+        })
+      })
+
+      getTTSConfigKeySuffixes().forEach((suffix) => {
+        window.localStorage.removeItem(getTTSConfigKeyWithSuffix(TTS_CONFIG_KEY, suffix))
+      })
+    }
+    finally {
+      isClearingCaches.value = false
+    }
+  }
+
   async function logout() {
     blockingModal.open({ title: $t('account_logging_out') })
     try {
       await disconnectAsync()
       await $fetch('/api/logout', { method: 'POST' })
       await refreshSession()
+      clearCaches()
       blockingModal.patch({ title: $t('account_logged_out') })
       // Wait for a moment to show the logged out message
       await sleep(500)
@@ -460,10 +514,12 @@ export const useAccountStore = defineStore('account', () => {
     likeWallet,
     isLoggingIn,
     isConnectModalOpen,
+    isClearingCaches,
 
     login,
     logout,
     refreshSessionInfo,
     exportPrivateKey,
+    clearCaches,
   }
 })

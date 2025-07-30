@@ -119,8 +119,9 @@
           <div class="mt-4 flex justify-center items-center gap-4">
             <BottomSlideover :title="$t('reader_voice_options_button')">
               <UButton
-                icon="i-material-symbols-account-circle-outline"
-                :label="getTTSLanguageVoiceLabel"
+                :ui="{ leadingAvatar: 'size-8' }"
+                :avatar="{ src: activeTTSLanguageVoiceAvatar }"
+                :label="activeTTSLanguageVoiceLabel"
                 class="rounded-full"
                 size="lg"
                 variant="soft"
@@ -131,21 +132,33 @@
                   <URadioGroup
                     v-model="ttsLanguageVoice"
                     :ui="{
-                      item: '!rounded-none',
+                      item: '!rounded-none !items-center !border-none',
                     }"
                     class="w-full"
                     color="primary"
                     variant="table"
                     :default-value="ttsLanguageVoice"
-                    :items="ttsLanguageVoiceOptions"
+                    :items="ttsLanguageVoiceOptionsWithAvatars"
                     indicator="end"
-                  />
+                  >
+                    <template #label="{ item }">
+                      <UAvatar
+                        size="lg"
+                        :src="item.avatar"
+                      />
+                      <span
+                        class="ml-2"
+                        v-text="item.label"
+                      />
+                    </template>
+                  </URadioGroup>
                 </div>
               </template>
             </BottomSlideover>
 
             <BottomSlideover :title="$t('reader_rate_options_button')">
               <UButton
+                :ui="{ leadingIcon: 'size-8' }"
                 icon="i-material-symbols-fast-forward-outline"
                 :label="getTTSPlaybackRateLabel"
                 class="rounded-full"
@@ -191,6 +204,7 @@ const props = withDefaults(
     bookTitle: '',
     bookCoverSrc: '',
     bookAuthorName: '',
+    bookLanguage: '',
     sectionTitle: '',
     nftClassId: '',
     segments: () => [],
@@ -215,8 +229,9 @@ const visibleSegmentElements = ref<HTMLElement[]>([])
 const scrollContainer = ref<HTMLElement>()
 
 const {
-  ttsLanguageVoiceOptions,
+  ttsLanguageVoiceOptionsWithAvatars,
   ttsLanguageVoice,
+  activeTTSLanguageVoiceAvatar,
   ttsPlaybackRateOptions,
   ttsPlaybackRate,
   isTextToSpeechOn,
@@ -234,6 +249,7 @@ const {
   bookName: props.bookTitle,
   bookAuthorName: props.bookAuthorName,
   bookCoverSrc: props.bookCoverSrc,
+  bookLanguage: props.bookLanguage,
   onError: (error: Event) => {
     console.error('TTS Error:', error)
   },
@@ -248,9 +264,13 @@ const visibleSegments = computed(() => {
   }))
 })
 
-const getTTSLanguageVoiceLabel = computed(() => {
+const activeTTSLanguageVoiceLabel = computed(() => {
   const voice = ttsLanguageVoice.value
-  return ttsLanguageVoiceOptions.find(option => option.value === voice)?.label || voice
+  return (
+    ttsLanguageVoiceOptionsWithAvatars.value.find(
+      (option: { value: string, label: string }) => option.value === voice,
+    )?.label || voice
+  )
 })
 
 const sectionTitle = computed(() => {

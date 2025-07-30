@@ -4,6 +4,7 @@
 
 <script setup lang="ts">
 const router = useRouter()
+const getRouteQuery = useRouteQuery()
 const subscription = useSubscription()
 const { t: $t } = useI18n()
 const config = useRuntimeConfig()
@@ -109,6 +110,7 @@ onMounted(async () => {
     await subscription.openPaywallModal({
       isFullscreen: true,
       isBackdropDismissible: false,
+      hasFreeTrial: getRouteQuery('trial') !== '0',
     })
     router.back()
   }

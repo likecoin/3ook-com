@@ -89,6 +89,10 @@
                     <td v-text="$t('product_page_reading_methods_label')" />
                     <td v-text="bookInfo.formattedReadingMethods" />
                   </tr>
+                  <tr>
+                    <td v-text="$t('product_page_support_tts_label')" />
+                    <td v-text="bookInfo.formattedTTSSupportLabel" />
+                  </tr>
                   <tr v-if="bookInfo.formattedPublishedDate">
                     <td v-text="$t('product_page_publish_date_label')" />
                     <td v-text="bookInfo.formattedPublishedDate" />
@@ -354,11 +358,11 @@
 </template>
 
 <script setup lang="ts">
-import { FetchError } from 'ofetch'
 import type { TabsItem } from '@nuxt/ui'
 import MarkdownIt from 'markdown-it'
 import PlusBadgeIcon from '~/assets/images/plus-badge.svg'
 
+const likeCoinSessionAPI = useLikeCoinSessionAPI()
 const route = useRoute()
 const config = useRuntimeConfig()
 const baseURL = config.public.baseURL
@@ -405,30 +409,17 @@ await callOnce(async () => {
     await nftStore.lazyFetchNFTClassAggregatedMetadataById(nftClassId.value)
   }
   catch (error) {
-    let message = $t('error_unknown')
-    let statusCode = 400
-    let isKnownError = false
-    if (error instanceof FetchError) {
-      message = error.message
-      statusCode = error.statusCode ?? statusCode
-      switch (statusCode) {
-        case 404:
-          message = $t('product_page_not_found_error')
-          isKnownError = true
-          break
-        case 500:
-          message = $t('product_page_fetch_metadata_failed_error')
-          break
-        default:
-      }
-    }
-    if (!isKnownError) {
-      console.error(error)
-    }
-    throw createError({
-      statusCode,
-      message,
-      fatal: true,
+    await handleError(error, {
+      isFatal: true,
+      customHandlerMap: {
+        404: {
+          description: $t('product_page_not_found_error'),
+        },
+        500: {
+          description: $t('product_page_fetch_metadata_failed_error'),
+        },
+      },
+      logPrefix: 'Product Page',
     })
   }
 })
@@ -652,7 +643,7 @@ async function handlePurchaseButtonClick() {
 
     let totalPrice = selectedPricingItem.value.price
 
-    if (config.public.isTippingEnabled && selectedPricingItem.value.canTip) {
+    if (selectedPricingItem.value.price === 0 && selectedPricingItem.value.canTip) {
       const tippingResult = await openTippingModal({
         // TODO: Check if classOwner is always the book's publisher
         avatar: bookInfo.publisherName.value ? bookInfo.nftClassOwnerAvatar.value : '',
@@ -662,7 +653,7 @@ async function handlePurchaseButtonClick() {
       totalPrice = calculateCustomPrice(tippingAmount, selectedPricingItem.value.price)
     }
 
-    const { url, paymentId } = await createNFTBookPurchase({
+    const { url, paymentId } = await likeCoinSessionAPI.createNFTBookPurchase({
       email: user.value?.email,
       nftClassId: nftClassId.value,
       price: totalPrice,

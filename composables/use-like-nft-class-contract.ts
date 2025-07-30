@@ -24,6 +24,16 @@ export function useLikeNFTClassContract() {
     return parseURIString<NFT>(nftMetadataURI)
   }
 
+  async function fetchNFTBalanceOf(nftClassId: string, nftOwnerWalletAddress: string) {
+    const balance = await readContract($wagmiConfig, {
+      abi: likeCoinNFTClassABI,
+      address: nftClassId as `0x${string}`,
+      functionName: 'balanceOf',
+      args: [nftOwnerWalletAddress],
+    })
+    return Number(balance)
+  }
+
   async function fetchNFTIdByNFTClassIdAndWalletAddressAndIndex(nftClassId?: string, nftOwnerWalletAddress?: string, index = 0) {
     const nftId = await readContract($wagmiConfig, {
       abi: likeCoinNFTClassABI,
@@ -37,6 +47,7 @@ export function useLikeNFTClassContract() {
   return {
     fetchNFTClassMetadataById,
     fetchNFTMetadataByNFTClassIdAndNFTId,
+    fetchNFTBalanceOf,
     fetchNFTIdByNFTClassIdAndWalletAddressAndIndex,
   }
 }

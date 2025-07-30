@@ -20,6 +20,7 @@ export function useTTSPlayerModal(options: TTSPlayerOptions = {}) {
     bookTitle: bookInfo.name.value,
     bookCoverSrc: bookCoverSrc.value,
     bookAuthorName: bookInfo.authorName.value,
+    bookLanguage: bookInfo.inLanguage.value,
     nftClassId: options.nftClassId,
     segments: ttsSegments.value,
     startIndex: startIndex.value,
