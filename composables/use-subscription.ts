@@ -133,13 +133,20 @@ export function useSubscription() {
     }
   }
 
+  function getPlusDiscountPrice(price: number): number | null {
+    if (isLikerPlus.value && price > 0) {
+      return Math.round(price * (1 - PLUS_DISCOUNT_PERCENTAGE))
+    }
+    return null
+  }
+
   return {
     yearlyPrice,
     monthlyPrice,
     currency,
 
     isLikerPlus,
-    plusDiscountRate: PLUS_DISCOUNT_PERCENTAGE,
+    getPlusDiscountPrice,
     isProcessingSubscription,
 
     openPaywallModal,
