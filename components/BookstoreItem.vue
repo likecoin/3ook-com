@@ -24,26 +24,16 @@
     </div>
 
     <div class="h-5 mt-3 text-sm text-[#1A1A1A] line-clamp-1">
-      <div
-        v-if="shouldApplyPlusDiscount"
-        class="inline-block "
-      >
-        <span
-          v-text="`US ${formatPrice(plusPrice)}`"
-        />
+      <template v-if="formattedDiscountPrice">
+        <span v-text="`US ${formattedDiscountPrice}`" />
         <span
           class="text-xs text-gray-400 ml-1 line-through"
-          v-text="`$${price}`"
+          v-text="formattedPrice"
         />
-      </div>
-      <div v-else>
-        <span
-          v-if="price > 0"
-          class="text-xs mr-0.5"
-          v-text="'US'"
-        />
-        <span v-text="formattedPrice" />
-      </div>
+      </template>
+      <template v-else>
+        <span v-text="`${price > 0 ? `US ${formattedPrice}` : formattedPrice}`" />
+      </template>
     </div>
   </li>
 </template>
@@ -79,25 +69,16 @@ const nftStore = useNFTStore()
 const metadataStore = useMetadataStore()
 const bookInfo = useBookInfo({ nftClassId: props.nftClassId })
 const bookCoverSrc = computed(() => getResizedImageURL(bookInfo.coverSrc.value || props.bookCoverSrc, { size: 300 }))
-const { isLikerPlus, plusDiscountRate } = useSubscription()
+const { getPlusDiscountPrice } = useSubscription()
 
 const bookName = computed(() => bookInfo.name.value || props.bookName)
 const authorName = computed(() => bookInfo.authorName.value)
 
-const plusPrice = computed(() => {
-  const items = bookInfo.pricingItems.value
-  if (!items.length) return -1 // All items are unlisted
-  const minPrice = Math.min(...items.map(item => item.price))
-  return Math.round(minPrice * (1 - plusDiscountRate))
-})
+const formattedPrice = computed(() => formatPrice(props.price))
 
-const shouldApplyPlusDiscount = computed(() => {
-  return !!isLikerPlus.value && plusPrice.value > 0
-})
-
-const formattedPrice = computed(() => {
-  const price = shouldApplyPlusDiscount.value ? plusPrice.value : props.price
-  return formatPrice(price)
+const formattedDiscountPrice = computed(() => {
+  const plusPrice = getPlusDiscountPrice(props.price)
+  return plusPrice ? formatPrice(plusPrice) : null
 })
 
 if (!props.lazy) {

@@ -178,7 +178,7 @@
                           v-else
                           class="flex flex-col items-end text-right"
                         >
-                          <div v-if="isLikerPlus && item.discountedPrice">
+                          <template v-if="item?.discountedPrice">
                             <div class="flex flex-nowrap items-center text-green-600 font-semibold ">
                               <span
                                 class="mx-0.5"
@@ -186,6 +186,7 @@
                               />
                               <span v-text="item.discountedPrice" />
                               <PlusBadgeIcon
+                                v-if="isLikerPlus"
                                 class="inline-bloc !w-[35px] !h-[15px] ml-1"
                               />
                             </div>
@@ -196,8 +197,8 @@
                               />
                               <span v-text="item.originalPrice" />
                             </div>
-                          </div>
-                          <div v-else>
+                          </template>
+                          <template v-else>
                             <span
                               class="text-xs mr-0.5"
                               v-text="item.currency"
@@ -206,7 +207,7 @@
                               class="font-semibold"
                               v-text="item.originalPrice"
                             />
-                          </div>
+                          </template>
                         </div>
                       </div>
                       <div
@@ -322,12 +323,12 @@
             v-text="selectedPricingItem?.currency"
           />
           <span
-            v-if="isLikerPlus"
+            v-if="selectedPricingItem?.discountedPrice"
             class="text-2xl font-semibold"
             v-text="selectedPricingItem?.discountedPrice"
           />
           <PlusBadgeIcon
-            v-if="isLikerPlus"
+            v-if="selectedPricingItem?.discountedPrice"
             style="width: 35px; height: 15px;"
             class="inline-block ml-1 text-gray-400"
           />
@@ -379,7 +380,7 @@ const { loggedIn: hasLoggedIn, user } = useUserSession()
 const accountStore = useAccountStore()
 const nftStore = useNFTStore()
 const { open: openTippingModal } = useTipping()
-const { isLikerPlus, plusDiscountRate } = useSubscription()
+const { isLikerPlus, getPlusDiscountPrice } = useSubscription()
 
 const metadataStore = useMetadataStore()
 const { handleError } = useErrorHandler()
@@ -521,15 +522,15 @@ const pricingItemsElement = useTemplateRef<HTMLLIElement>('pricing')
 const isPricingItemsVisible = useElementVisibility(pricingItemsElement)
 
 const pricingItems = computed(() => {
-  return bookInfo.pricingItems.value.map((item, index) => ({
-    ...item,
-    originalPrice: formatPrice(item.price),
-    discountedPrice: isLikerPlus.value && item.price > 0
-      ? formatPrice(Math.round(item.price * (1 - plusDiscountRate)))
-      : null,
-    isSelected: index === selectedPricingItemIndex.value,
-    renderedDescription: md.render(item.description || ''),
-  }))
+  return bookInfo.pricingItems.value.map((item, index) => {
+    const discountPrice = getPlusDiscountPrice(item.price)
+    return {
+      ...item,
+      originalPrice: formatPrice(item.price),
+      discountedPrice: discountPrice ? formatPrice(discountPrice) : null,
+      isSelected: index === selectedPricingItemIndex.value,
+      renderedDescription: md.render(item.description || '') }
+  })
 })
 
 const selectedPricingItem = computed(() => {
