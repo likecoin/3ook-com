@@ -413,7 +413,7 @@ async function loadEPub() {
         }
       }
 
-      if (view.window && window.innerWidth < 1024) {
+      if (!checkIsSelectingText() && view.window && window.innerWidth < 1024) {
         const width = rendition.value?.manager?.container.clientWidth || 0
         const range = width * 0.45
         const x = event.clientX % width // Normalize x to be within the window
@@ -569,6 +569,11 @@ function handleRightArrowButtonClick() {
   useLogEvent('reader_navigate_button_arrow')
 }
 
+function checkIsSelectingText() {
+  const selection = renditionViewWindow.value?.getSelection()
+  return selection && selection.rangeCount > 0
+}
+
 const isShiftPressed = useKeyModifier('Shift')
 onKeyStroke('ArrowRight', () => {
   turnPageRight()
@@ -600,8 +605,7 @@ useSwipe(
   renditionViewWindow,
   {
     onSwipeEnd: (_: TouchEvent, direction: UseSwipeDirection) => {
-      const selection = renditionViewWindow.value?.getSelection()
-      if (selection && selection.rangeCount > 0) {
+      if (checkIsSelectingText()) {
         // Do not navigate when selecting text
         return
       }
