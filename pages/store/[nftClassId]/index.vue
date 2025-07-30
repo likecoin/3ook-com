@@ -129,7 +129,7 @@
                   <button
                     :class="[
                       'flex',
-                      'items-start',
+                      'items-center',
                       'gap-3',
                       item.isSelected ? 'bg-green-100' : 'bg-gray-100',
                       item.isSelected ? 'hover:bg-green-200/60' : 'hover:bg-gray-200',
@@ -178,16 +178,15 @@
                           v-else
                           class="flex flex-col items-end text-right"
                         >
-                          <div v-if="isPlusMember && item.discountedPrice !== item.originalPrice">
+                          <div v-if="isLikerPlus && item.discountedPrice">
                             <div class="flex flex-nowrap items-center text-green-600 font-semibold ">
                               <span
-                                class="mr-0.5"
+                                class="mx-0.5"
                                 v-text="item.currency"
                               />
                               <span v-text="item.discountedPrice" />
                               <PlusBadgeIcon
-                                style="width: 35px; height: 15px;"
-                                class="inline-block"
+                                class="inline-bloc !w-[35px] !h-[15px] ml-1"
                               />
                             </div>
                             <div class="text-xs text-gray-400 line-through">
@@ -323,12 +322,12 @@
             v-text="selectedPricingItem?.currency"
           />
           <span
-            v-if="isPlusMember"
+            v-if="isLikerPlus"
             class="text-2xl font-semibold"
             v-text="selectedPricingItem?.discountedPrice"
           />
           <PlusBadgeIcon
-            v-if="isPlusMember"
+            v-if="isLikerPlus"
             style="width: 35px; height: 15px;"
             class="inline-block ml-1 text-gray-400"
           />
@@ -380,6 +379,7 @@ const { loggedIn: hasLoggedIn, user } = useUserSession()
 const accountStore = useAccountStore()
 const nftStore = useNFTStore()
 const { open: openTippingModal } = useTipping()
+const { isLikerPlus, plusDiscountRate } = useSubscription()
 
 const metadataStore = useMetadataStore()
 const { handleError } = useErrorHandler()
@@ -524,14 +524,12 @@ const pricingItems = computed(() => {
   return bookInfo.pricingItems.value.map((item, index) => ({
     ...item,
     originalPrice: formatPrice(item.price),
-    discountedPrice: formatPrice(item.finalPrice),
+    discountedPrice: isLikerPlus.value && item.price > 0
+      ? formatPrice(Math.round(item.price * (1 - plusDiscountRate)))
+      : null,
     isSelected: index === selectedPricingItemIndex.value,
     renderedDescription: md.render(item.description || ''),
   }))
-})
-
-const isPlusMember = computed(() => {
-  return !!user.value?.isLikerPlus
 })
 
 const selectedPricingItem = computed(() => {

@@ -24,24 +24,31 @@
     </div>
 
     <div class="h-5 mt-3 text-sm text-[#1A1A1A] line-clamp-1">
-      <span
-        v-if="price > 0 && plusPrice > 0"
-        class="text-xs mr-0.5"
-        v-text="'US'"
-      />
-      <span v-text="formattedPrice" />
-      <PlusBadgeIcon
-        v-if="isPlusMember && plusPrice > 0"
-        style="width: 35px; height: 15px;"
-        class="inline-block ml-1 text-gray-400"
-      />
+      <div
+        v-if="shouldApplyPlusDiscount"
+        class="inline-block "
+      >
+        <span
+          v-text="`US ${formatPrice(plusPrice)}`"
+        />
+        <span
+          class="text-xs text-gray-400 ml-1 line-through"
+          v-text="`$${price}`"
+        />
+      </div>
+      <div v-else>
+        <span
+          v-if="price > 0"
+          class="text-xs mr-0.5"
+          v-text="'US'"
+        />
+        <span v-text="formattedPrice" />
+      </div>
     </div>
   </li>
 </template>
 
 <script setup lang="ts">
-import PlusBadgeIcon from '~/assets/images/plus-badge.svg'
-
 const props = defineProps({
   nftClassId: {
     type: String,
@@ -69,23 +76,27 @@ const emit = defineEmits(['visible', 'open'])
 
 const formatPrice = useFormatPrice()
 const nftStore = useNFTStore()
-const { user } = useUserSession()
 const metadataStore = useMetadataStore()
 const bookInfo = useBookInfo({ nftClassId: props.nftClassId })
 const bookCoverSrc = computed(() => getResizedImageURL(bookInfo.coverSrc.value || props.bookCoverSrc, { size: 300 }))
+const { isLikerPlus, plusDiscountRate } = useSubscription()
 
 const bookName = computed(() => bookInfo.name.value || props.bookName)
 const authorName = computed(() => bookInfo.authorName.value)
-const isPlusMember = computed(() => Boolean(user.value?.isLikerPlus))
 
 const plusPrice = computed(() => {
   const items = bookInfo.pricingItems.value
-  if (!items.length) return props.price // All items are unlisted
-  return Math.min(...items.map(item => item.finalPrice))
+  if (!items.length) return -1 // All items are unlisted
+  const minPrice = Math.min(...items.map(item => item.price))
+  return Math.round(minPrice * (1 - plusDiscountRate))
+})
+
+const shouldApplyPlusDiscount = computed(() => {
+  return !!isLikerPlus.value && plusPrice.value > 0
 })
 
 const formattedPrice = computed(() => {
-  const price = isPlusMember.value ? plusPrice.value : props.price
+  const price = shouldApplyPlusDiscount.value ? plusPrice.value : props.price
   return formatPrice(price)
 })
 
