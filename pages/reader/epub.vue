@@ -571,7 +571,7 @@ function handleRightArrowButtonClick() {
 
 function checkIsSelectingText() {
   const selection = renditionViewWindow.value?.getSelection()
-  return selection && selection.rangeCount > 0
+  return !!selection && selection.toString().length > 0
 }
 
 const isShiftPressed = useKeyModifier('Shift')
