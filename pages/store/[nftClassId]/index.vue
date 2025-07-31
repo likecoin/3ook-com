@@ -178,29 +178,29 @@
                           class="text-sm font-semibold"
                           v-text="$t('product_page_sold_out_button_label')"
                         />
-                        <div
+                        <span
                           v-else
                           class="flex flex-col items-end text-right"
                         >
                           <template v-if="item?.discountedPrice">
-                            <div class="flex flex-nowrap items-center text-green-600 font-semibold ">
+                            <span class="flex flex-nowrap items-center text-green-600 font-semibold ">
                               <span
                                 class="mx-0.5"
                                 v-text="item.currency"
                               />
                               <span v-text="item.discountedPrice" />
-                              <PlusBadgeIcon
+                              <PlusBadge
                                 v-if="isLikerPlus"
-                                class="inline-bloc !w-[35px] !h-[15px] ml-1"
+                                class="ml-1"
                               />
-                            </div>
-                            <div class="text-xs text-gray-400 line-through">
+                            </span>
+                            <span class="text-xs text-gray-400 line-through">
                               <span
                                 class="mr-0.5"
                                 v-text="item.currency"
                               />
                               <span v-text="item.originalPrice" />
-                            </div>
+                            </span>
                           </template>
                           <template v-else>
                             <span
@@ -212,7 +212,7 @@
                               v-text="item.originalPrice"
                             />
                           </template>
-                        </div>
+                        </span>
                       </div>
                       <div
                         v-if="item.renderedDescription"
@@ -331,10 +331,9 @@
             class="text-2xl font-semibold"
             v-text="selectedPricingItem?.discountedPrice"
           />
-          <PlusBadgeIcon
+          <PlusBadge
             v-if="selectedPricingItem?.discountedPrice"
-            style="width: 35px; height: 15px;"
-            class="inline-block ml-1 text-gray-400"
+            class="ml-1"
           />
           <span
             v-else
@@ -360,7 +359,6 @@
 <script setup lang="ts">
 import type { TabsItem } from '@nuxt/ui'
 import MarkdownIt from 'markdown-it'
-import PlusBadgeIcon from '~/assets/images/plus-badge.svg'
 
 const likeCoinSessionAPI = useLikeCoinSessionAPI()
 const route = useRoute()
