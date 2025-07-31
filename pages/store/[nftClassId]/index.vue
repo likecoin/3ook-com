@@ -601,7 +601,7 @@ async function handlePurchaseButtonClick() {
       if (!hasLoggedIn.value) return
     }
 
-    let totalPrice = selectedPricingItem.value.price
+    let customPrice: number | undefined = undefined
 
     if (selectedPricingItem.value.price === 0 && selectedPricingItem.value.canTip) {
       const tippingResult = await openTippingModal({
@@ -610,13 +610,13 @@ async function handlePurchaseButtonClick() {
         displayName: bookInfo.publisherName.value || bookInfo.authorName.value,
       })
       const tippingAmount = tippingResult?.tippingAmount || 0
-      totalPrice = calculateCustomPrice(tippingAmount, selectedPricingItem.value.price)
+      if (tippingAmount) customPrice = calculateCustomPrice(tippingAmount, selectedPricingItem.value.price)
     }
 
     const { url, paymentId } = await likeCoinSessionAPI.createNFTBookPurchase({
       email: user.value?.email,
       nftClassId: nftClassId.value,
-      price: totalPrice,
+      customPrice,
       priceIndex: selectedPricingItem.value.index,
       coupon: getRouteQuery('coupon'),
       language: locale.value.split('-')[0],

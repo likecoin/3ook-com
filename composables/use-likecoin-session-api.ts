@@ -65,7 +65,7 @@ export function useLikeCoinSessionAPI() {
     email,
     nftClassId,
     from = 'liker_land',
-    price,
+    customPrice,
     priceIndex,
     coupon,
     language,
@@ -81,7 +81,7 @@ export function useLikeCoinSessionAPI() {
   }: {
     email?: string
     nftClassId: string
-    price: number
+    customPrice?: number
     priceIndex: number
     coupon?: string
     from?: string
@@ -104,7 +104,7 @@ export function useLikeCoinSessionAPI() {
       },
       body: {
         email,
-        customPriceInDecimal: Math.floor(price * 100),
+        customPriceInDecimal: customPrice !== undefined ? Math.floor(customPrice * 100) : undefined,
         coupon,
         language,
         referrer,
