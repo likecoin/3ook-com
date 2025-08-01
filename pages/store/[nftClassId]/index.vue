@@ -388,6 +388,7 @@ const {
   isLikerPlus,
   likerPlusPeriod,
   isUpSellingPlus,
+  isYearlyGiftBook,
 
   getPlusDiscountPrice,
 
@@ -585,6 +586,12 @@ const checkoutButtonProps = computed<{
   }
 })
 
+const shouldShowMonthlyMemberUpSell = computed(() =>
+  isLikerPlus.value
+  && likerPlusPeriod.value === 'month'
+  && isYearlyGiftBook(nftClassId.value),
+)
+
 onMounted(() => {
   useLogEvent('view_item', formattedLogPayload.value)
   const ownerWalletAddress = bookInfo.nftClassOwnerWalletAddress.value
@@ -663,7 +670,7 @@ async function handlePurchaseButtonClick() {
     if (isLikerPlus.value && !likerPlusPeriod.value) {
       await fetchLikerPlusStatus()
     }
-    if (isLikerPlus.value && likerPlusPeriod.value === 'month') {
+    if (shouldShowMonthlyMemberUpSell.value) {
       isUpSellingPlus.value = true
       await openUpSellPlusModal({
         isMonthlyMember: true,
