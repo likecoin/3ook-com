@@ -12,14 +12,14 @@ interface LikerInfo {
 
 function normalizeLikerInfoFromResponseData(data: LikerInfoResponseData): LikerInfo {
   return {
-    likerId: data.user,
-    displayName: data.displayName,
-    avatarSrc: data.avatar,
-    cosmosWallet: data.cosmosWallet,
-    likeWallet: data.likeWallet,
-    evmWallet: data.evmWallet,
-    description: data.description,
-    isLikerPlus: data.isLikerPlus || false,
+    likerId: data?.user,
+    displayName: data?.displayName,
+    avatarSrc: data?.avatar,
+    cosmosWallet: data?.cosmosWallet,
+    likeWallet: data?.likeWallet,
+    evmWallet: data?.evmWallet,
+    description: data?.description,
+    isLikerPlus: data?.isLikerPlus || false,
   }
 }
 
