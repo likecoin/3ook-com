@@ -1,5 +1,6 @@
-import { PaywallModal } from '#components'
+import { PaywallModal, UpSellPlusModal } from '#components'
 import type { PaywallModalProps } from '~/components/PaywallModal.props'
+import type { UpSellPlusModalProps } from '~/components/UpSellPlusModal.props'
 
 export function useSubscription() {
   const likeCoinSessionAPI = useLikeCoinSessionAPI()
@@ -13,6 +14,7 @@ export function useSubscription() {
 
   const selectedPlan = ref<SubscriptionPlan>('yearly')
   const isProcessingSubscription = ref(false)
+  const isUpSellingPlus = ref(false)
 
   const { handleError } = useErrorHandler()
 
@@ -60,6 +62,7 @@ export function useSubscription() {
   const paywallModal = overlay.create(PaywallModal, {
     props: getPaywallModalProps(),
   })
+  const upSellPlusModal = overlay.create(UpSellPlusModal)
 
   async function openPaywallModal(props: PaywallModalProps = {}) {
     if (paywallModal.isOpen) {
@@ -71,6 +74,18 @@ export function useSubscription() {
       ...props,
     }
     return paywallModal.open(modalProps.value).result
+  }
+
+  async function openUpSellPlusModal(props: UpSellPlusModalProps = {}) {
+    if (upSellPlusModal.isOpen) {
+      upSellPlusModal.close()
+    }
+    const upSellModalProps: UpSellPlusModalProps = {
+      onSubscribe: startSubscription,
+      onClose: () => isUpSellingPlus.value = false,
+      ...props,
+    }
+    return upSellPlusModal.open(upSellModalProps).result
   }
 
   async function redirectIfSubscribed() {
@@ -87,15 +102,18 @@ export function useSubscription() {
     utmCampaign,
     utmMedium,
     utmSource,
+    plan,
   }: {
     hasFreeTrial?: boolean
     mustCollectPaymentMethod?: boolean
     utmCampaign?: string
     utmMedium?: string
     utmSource?: string
+    plan?: SubscriptionPlan
   } = {}) {
+    const subscribePlan = plan || selectedPlan.value
     useLogEvent('add_to_cart', eventPayload.value)
-    useLogEvent('subscription_button_click', { plan: selectedPlan.value })
+    useLogEvent('subscription_button_click', { plan: subscribePlan })
 
     const isSubscribed = await redirectIfSubscribed()
     if (isSubscribed) return
@@ -121,7 +139,7 @@ export function useSubscription() {
 
       const analyticsParams = getAnalyticsParameters()
       const { url } = await likeCoinSessionAPI.fetchLikerPlusCheckoutLink({
-        period: selectedPlan.value,
+        period: subscribePlan,
         from: getRouteQuery('from'),
         hasFreeTrial,
         mustCollectPaymentMethod,
@@ -162,8 +180,10 @@ export function useSubscription() {
     isLikerPlus,
     getPlusDiscountPrice,
     isProcessingSubscription,
+    isUpSellingPlus,
 
     openPaywallModal,
+    openUpSellPlusModal,
     redirectIfSubscribed,
     startSubscription,
   }
