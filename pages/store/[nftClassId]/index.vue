@@ -183,7 +183,7 @@
                           class="flex flex-col items-end text-right"
                         >
                           <template v-if="item?.discountedPrice">
-                            <span class="flex flex-nowrap items-center text-green-600 font-semibold ">
+                            <span class="flex flex-nowrap items-center text-green-600 font-semibold">
                               <span
                                 class="mx-0.5"
                                 v-text="item.currency"
@@ -203,14 +203,16 @@
                             </span>
                           </template>
                           <template v-else>
-                            <span
-                              class="text-xs mr-0.5"
-                              v-text="item.currency"
-                            />
-                            <span
-                              class="font-semibold"
-                              v-text="item.originalPrice"
-                            />
+                            <span class="flex flex-row items-center">
+                              <span
+                                class="text-xs mr-0.5"
+                                v-text="item.currency"
+                              />
+                              <span
+                                class="font-semibold"
+                                v-text="item.originalPrice"
+                              />
+                            </span>
                           </template>
                         </span>
                       </div>
@@ -518,7 +520,8 @@ const pricingItems = computed(() => {
       originalPrice: formatPrice(item.price),
       discountedPrice: discountPrice ? formatPrice(discountPrice) : null,
       isSelected: index === selectedPricingItemIndex.value,
-      renderedDescription: md.render(item.description || '') }
+      renderedDescription: md.render(item.description || ''),
+    }
   })
 })
 
