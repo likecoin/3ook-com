@@ -36,6 +36,23 @@ export function fetchUserRegisterCheck({
   })
 }
 
+export function fetchProfileWithLikerPlus({
+  token,
+}: {
+  token?: string
+}): Promise<ProfileInfoWithLikerPlusResponseData> {
+  const fetch = getLikeCoinAPIFetch()
+  const headers: Record<string, string> = {}
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`
+  }
+  return fetch(`/users/profile`, {
+    method: 'GET',
+    headers,
+  })
+}
+
 export function fetchLikerPublicInfoById(id: string, options: { nocache?: boolean } = {}): Promise<LikerInfoResponseData> {
   const fetch = getLikeCoinAPIFetch()
   const query: Record<string, string> = {}

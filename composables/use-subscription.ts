@@ -6,6 +6,7 @@ export function useSubscription() {
   const likeCoinSessionAPI = useLikeCoinSessionAPI()
   const { t: $t } = useI18n()
   const accountStore = useAccountStore()
+  const metadataStore = useMetadataStore()
   const { user, loggedIn: hasLoggedIn } = useUserSession()
   const localeRoute = useLocaleRoute()
   const getRouteQuery = useRouteQuery()
@@ -27,6 +28,12 @@ export function useSubscription() {
   const isLikerPlus = computed(() => {
     if (!hasLoggedIn.value) return false
     return user.value?.isLikerPlus
+  })
+
+  const likerPlusPeriod = computed(() => {
+    if (!hasLoggedIn.value || !isLikerPlus.value) return undefined
+    const likerInfo = metadataStore.getLikerInfoById(user.value?.likerId)
+    return likerInfo?.likerPlusPeriod
   })
 
   const eventPayload = computed(() => ({
@@ -165,6 +172,16 @@ export function useSubscription() {
     return null
   }
 
+  async function fetchLikerPlusStatus() {
+    if (!hasLoggedIn.value || !isLikerPlus.value || !user.value?.likerId) return
+    try {
+      await metadataStore.lazyFetchLikerPlusStatus(user.value.likerId)
+    }
+    catch (error) {
+      console.error('Failed to fetch liker plus status:', error)
+    }
+  }
+
   watch(isProcessingSubscription, (newValue) => {
     paywallModal.patch({
       ...modalProps.value,
@@ -173,12 +190,15 @@ export function useSubscription() {
   })
 
   return {
+    user,
     yearlyPrice,
     monthlyPrice,
     currency,
 
     isLikerPlus,
+    likerPlusPeriod,
     getPlusDiscountPrice,
+    fetchLikerPlusStatus,
     isProcessingSubscription,
     isUpSellingPlus,
 
