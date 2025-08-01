@@ -65,11 +65,22 @@ export function useSubscription() {
     }
   }
 
+  function getUpSellPlusModalProps(): UpSellPlusModalProps {
+    return {
+      onSubscribe: startSubscription,
+      onClose: () => {
+        isUpSellingPlus.value = false
+      },
+    }
+  }
+
   const overlay = useOverlay()
   const paywallModal = overlay.create(PaywallModal, {
     props: getPaywallModalProps(),
   })
-  const upSellPlusModal = overlay.create(UpSellPlusModal)
+  const upSellPlusModal = overlay.create(UpSellPlusModal, {
+    props: getUpSellPlusModalProps(),
+  })
 
   async function openPaywallModal(props: PaywallModalProps = {}) {
     if (paywallModal.isOpen) {
@@ -88,10 +99,10 @@ export function useSubscription() {
       upSellPlusModal.close()
     }
     const upSellModalProps: UpSellPlusModalProps = {
-      onSubscribe: startSubscription,
-      onClose: () => isUpSellingPlus.value = false,
       ...props,
+      ...getUpSellPlusModalProps(),
     }
+
     return upSellPlusModal.open(upSellModalProps).result
   }
 

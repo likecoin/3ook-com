@@ -14,7 +14,7 @@
         'overflow-x-hidden',
       ],
     }"
-    @close="handleClose"
+    @update:open="onOpenUpdate"
   >
     <template #content>
       <UButton
@@ -129,6 +129,10 @@
                 <UIcon name="i-material-symbols-check" />
                 <span v-text="$t('pricing_page_feature_4')" />
               </li>
+              <li>
+                <UIcon name="i-material-symbols-check" />
+                <span v-text="$t('pricing_page_feature_5')" />
+              </li>
             </ul>
           </div>
 
@@ -163,11 +167,11 @@
           </div>
 
           <UButton
-            class="mt-2"
+            class="mt-4"
             :label="$t('upsell_plus_modal_close_button')"
             block
             size="xl"
-            variant="outline"
+            variant="link"
             :ui="{
               base: 'py-2 laptop:py-3 rounded-2xl cursor-pointer',
               label: 'font-bold',
@@ -226,4 +230,13 @@ function handleClose() {
 onMounted(() => {
   emit('open')
 })
+
+const onOpenUpdate = (open: boolean) => {
+  if (open) {
+    emit('open')
+  }
+  else {
+    emit('close')
+  }
+}
 </script>

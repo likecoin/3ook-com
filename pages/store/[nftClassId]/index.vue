@@ -384,7 +384,16 @@ const { loggedIn: hasLoggedIn, user } = useUserSession()
 const accountStore = useAccountStore()
 const nftStore = useNFTStore()
 const { open: openTippingModal } = useTipping()
-const { isLikerPlus, getPlusDiscountPrice } = useSubscription()
+const {
+  isLikerPlus,
+  likerPlusPeriod,
+  isUpSellingPlus,
+
+  getPlusDiscountPrice,
+
+  fetchLikerPlusStatus,
+  openUpSellPlusModal,
+} = useSubscription()
 
 const metadataStore = useMetadataStore()
 const { handleError } = useErrorHandler()
@@ -633,6 +642,7 @@ function handleAddToCartButtonClick() {
 const isPurchasing = ref(false)
 
 async function handlePurchaseButtonClick() {
+  isUpSellingPlus.value = false
   useLogEvent('add_to_cart', formattedLogPayload.value)
   if (!selectedPricingItem.value) return
   try {
@@ -641,6 +651,28 @@ async function handlePurchaseButtonClick() {
       await accountStore.login()
       if (!hasLoggedIn.value) return
     }
+    if (!isLikerPlus.value) {
+      isUpSellingPlus.value = true
+      await openUpSellPlusModal({
+        isNotMember: true,
+        utmSource: 'product_page',
+        utmCampaign: 'upsell_plus',
+        utmMedium: 'product_page',
+      })
+    }
+    if (isLikerPlus.value && !likerPlusPeriod.value) {
+      await fetchLikerPlusStatus()
+    }
+    if (isLikerPlus.value && likerPlusPeriod.value === 'month') {
+      isUpSellingPlus.value = true
+      await openUpSellPlusModal({
+        isMonthlyMember: true,
+        utmSource: 'product_page',
+        utmCampaign: 'upsell_plus',
+        utmMedium: 'product_page',
+      })
+    }
+    if (isUpSellingPlus.value) return
 
     let customPrice: number | undefined = undefined
 
