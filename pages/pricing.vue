@@ -113,8 +113,8 @@ onMounted(async () => {
       isBackdropDismissible: false,
       hasFreeTrial: getRouteQuery('trial') !== '0',
       utmCampaign: 'pricing_page',
-      utmSource: 'pricing_page',
-      utmMedium: 'pricing_page',
+      utmSource: 'website',
+      utmMedium: 'web',
     })
     router.back()
   }
