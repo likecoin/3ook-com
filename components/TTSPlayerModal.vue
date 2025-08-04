@@ -258,6 +258,7 @@ const {
     if (error instanceof MediaError
       && error.code === MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED
       && !user.value?.isLikerPlus) {
+      stopTextToSpeech()
       subscription.openPaywallModal({
         utmSource: 'epub_reader',
         utmCampaign: props.nftClassId,
