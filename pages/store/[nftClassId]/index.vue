@@ -661,7 +661,7 @@ async function handlePurchaseButtonClick() {
     if (!isLikerPlus.value) {
       isUpsellingPlus.value = true
       await openUpsellPlusModal({
-        isNotMember: true,
+        isLikerPlus: false,
         utmSource: 'product_page',
         utmCampaign: 'upsell_plus',
         utmMedium: 'product_page',
@@ -673,7 +673,8 @@ async function handlePurchaseButtonClick() {
     if (shouldShowMonthlyMemberUpSell.value) {
       isUpsellingPlus.value = true
       await openUpsellPlusModal({
-        isMonthlyMember: true,
+        isLikerPlus: true,
+        likerPlusPeriod: 'month',
         utmSource: 'product_page',
         utmCampaign: 'upsell_plus',
         utmMedium: 'product_page',

@@ -188,8 +188,8 @@
 import type { UpsellPlusModalProps } from './UpsellPlusModal.props'
 
 const props = withDefaults(defineProps<UpsellPlusModalProps>(), {
-  isNotMember: false,
-  isMonthlyMember: false,
+  isLikerPlus: false,
+  likerPlusPeriod: undefined,
   isProcessingSubscription: false,
   hasFreeTrial: false,
   mustCollectPaymentMethod: false,
@@ -211,8 +211,12 @@ const emit = defineEmits<{
 
 const { t: $t } = useI18n()
 
-const showYearlyPlan = computed(() => props.isNotMember || props.isMonthlyMember)
-const showMonthlyPlan = computed(() => props.isNotMember)
+const showYearlyPlan = computed(
+  () =>
+    !props.isLikerPlus
+    || (props.isLikerPlus && props.likerPlusPeriod === 'month'),
+)
+const showMonthlyPlan = computed(() => !props.isLikerPlus)
 
 function handleSubscribe(plan: SubscriptionPlan) {
   emit('subscribe', {

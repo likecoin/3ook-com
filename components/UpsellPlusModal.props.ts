@@ -1,6 +1,6 @@
 export interface UpsellPlusModalProps {
-  isNotMember?: boolean
-  isMonthlyMember?: boolean
+  isLikerPlus?: boolean
+  likerPlusPeriod?: LikerPlusStatus
   isProcessingSubscription?: boolean
   hasFreeTrial?: boolean
   mustCollectPaymentMethod?: boolean
