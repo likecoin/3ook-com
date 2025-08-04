@@ -24,7 +24,7 @@ function normalizeLikerInfoFromResponseData(data: LikerInfoResponseData): LikerI
 }
 
 export const useMetadataStore = defineStore('metadata', () => {
-  const { user } = useUserSession()
+  const likeCoinSessionAPI = useLikeCoinSessionAPI()
   const likerInfoByIdMap = ref<Record<string, LikerInfo>>({})
   const likerIdByWalletAddressMap = ref<Record<string, string>>({})
 
@@ -66,7 +66,7 @@ export const useMetadataStore = defineStore('metadata', () => {
   }
 
   async function fetchLikerPlusStatus(likerId: string) {
-    const data = await fetchProfileWithLikerPlus({ token: user.value?.token })
+    const data = await likeCoinSessionAPI.fetchProfileWithLikerPlus()
     const existingInfo = likerInfoByIdMap.value[likerId]
     if (existingInfo) {
       existingInfo.likerPlusPeriod = data.likerPlusPeriod

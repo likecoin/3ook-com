@@ -204,6 +204,12 @@ export function useLikeCoinSessionAPI() {
     })
   }
 
+  function fetchProfileWithLikerPlus() {
+    return fetch<ProfileInfoWithLikerPlusResponseData>(`/users/profile`, {
+      method: 'GET',
+    })
+  }
+
   return {
     createNFTBookPurchase,
     fetchCartStatusById,
@@ -211,5 +217,6 @@ export function useLikeCoinSessionAPI() {
     fetchLikerPlusCheckoutLink,
     fetchLikerPlusBillingPortalLink,
     migrateMagicEmailUser,
+    fetchProfileWithLikerPlus,
   }
 }
