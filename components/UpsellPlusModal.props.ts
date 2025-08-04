@@ -1,4 +1,4 @@
-export interface UpSellPlusModalProps {
+export interface UpsellPlusModalProps {
   isNotMember?: boolean
   isMonthlyMember?: boolean
   isProcessingSubscription?: boolean

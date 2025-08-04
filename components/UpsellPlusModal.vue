@@ -185,9 +185,9 @@
 </template>
 
 <script setup lang="ts">
-import type { UpSellPlusModalProps } from './UpSellPlusModal.props'
+import type { UpsellPlusModalProps } from './UpsellPlusModal.props'
 
-const props = withDefaults(defineProps<UpSellPlusModalProps>(), {
+const props = withDefaults(defineProps<UpsellPlusModalProps>(), {
   isNotMember: false,
   isMonthlyMember: false,
   isProcessingSubscription: false,

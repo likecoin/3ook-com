@@ -1,6 +1,6 @@
-import { PaywallModal, UpSellPlusModal } from '#components'
+import { PaywallModal, UpsellPlusModal } from '#components'
 import type { PaywallModalProps } from '~/components/PaywallModal.props'
-import type { UpSellPlusModalProps } from '~/components/UpSellPlusModal.props'
+import type { UpsellPlusModalProps } from '~/components/UpsellPlusModal.props'
 
 export function useSubscription() {
   const likeCoinSessionAPI = useLikeCoinSessionAPI()
@@ -21,7 +21,7 @@ export function useSubscription() {
 
   const selectedPlan = ref<SubscriptionPlan>('yearly')
   const isProcessingSubscription = ref(false)
-  const isUpSellingPlus = ref(false)
+  const isUpsellingPlus = ref(false)
 
   const { handleError } = useErrorHandler()
 
@@ -71,11 +71,11 @@ export function useSubscription() {
     }
   }
 
-  function getUpSellPlusModalProps(): UpSellPlusModalProps {
+  function getUpsellPlusModalProps(): UpsellPlusModalProps {
     return {
       onSubscribe: startSubscription,
       onClose: () => {
-        isUpSellingPlus.value = false
+        isUpsellingPlus.value = false
       },
     }
   }
@@ -84,8 +84,8 @@ export function useSubscription() {
   const paywallModal = overlay.create(PaywallModal, {
     props: getPaywallModalProps(),
   })
-  const upSellPlusModal = overlay.create(UpSellPlusModal, {
-    props: getUpSellPlusModalProps(),
+  const upsellPlusModal = overlay.create(UpsellPlusModal, {
+    props: getUpsellPlusModalProps(),
   })
 
   async function openPaywallModal(props: PaywallModalProps = {}) {
@@ -100,16 +100,16 @@ export function useSubscription() {
     return paywallModal.open(modalProps.value).result
   }
 
-  async function openUpSellPlusModal(props: UpSellPlusModalProps = {}) {
-    if (upSellPlusModal.isOpen) {
-      upSellPlusModal.close()
+  async function openUpsellPlusModal(props: UpsellPlusModalProps = {}) {
+    if (upsellPlusModal.isOpen) {
+      upsellPlusModal.close()
     }
-    const upSellModalProps: UpSellPlusModalProps = {
+    const upsellModalProps: UpsellPlusModalProps = {
       ...props,
-      ...getUpSellPlusModalProps(),
+      ...getUpsellPlusModalProps(),
     }
 
-    return upSellPlusModal.open(upSellModalProps).result
+    return upsellPlusModal.open(upsellModalProps).result
   }
 
   async function redirectIfSubscribed() {
@@ -221,11 +221,11 @@ export function useSubscription() {
     getPlusDiscountPrice,
     fetchLikerPlusStatus,
     isProcessingSubscription,
-    isUpSellingPlus,
+    isUpsellingPlus,
     isYearlyGiftBook,
 
     openPaywallModal,
-    openUpSellPlusModal,
+    openUpsellPlusModal,
     redirectIfSubscribed,
     startSubscription,
   }

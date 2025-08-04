@@ -387,13 +387,13 @@ const { open: openTippingModal } = useTipping()
 const {
   isLikerPlus,
   likerPlusPeriod,
-  isUpSellingPlus,
+  isUpsellingPlus,
   isYearlyGiftBook,
 
   getPlusDiscountPrice,
 
   fetchLikerPlusStatus,
-  openUpSellPlusModal,
+  openUpsellPlusModal,
 } = useSubscription()
 
 const metadataStore = useMetadataStore()
@@ -649,7 +649,7 @@ function handleAddToCartButtonClick() {
 const isPurchasing = ref(false)
 
 async function handlePurchaseButtonClick() {
-  isUpSellingPlus.value = false
+  isUpsellingPlus.value = false
   useLogEvent('add_to_cart', formattedLogPayload.value)
   if (!selectedPricingItem.value) return
   try {
@@ -659,8 +659,8 @@ async function handlePurchaseButtonClick() {
       if (!hasLoggedIn.value) return
     }
     if (!isLikerPlus.value) {
-      isUpSellingPlus.value = true
-      await openUpSellPlusModal({
+      isUpsellingPlus.value = true
+      await openUpsellPlusModal({
         isNotMember: true,
         utmSource: 'product_page',
         utmCampaign: 'upsell_plus',
@@ -671,15 +671,15 @@ async function handlePurchaseButtonClick() {
       await fetchLikerPlusStatus()
     }
     if (shouldShowMonthlyMemberUpSell.value) {
-      isUpSellingPlus.value = true
-      await openUpSellPlusModal({
+      isUpsellingPlus.value = true
+      await openUpsellPlusModal({
         isMonthlyMember: true,
         utmSource: 'product_page',
         utmCampaign: 'upsell_plus',
         utmMedium: 'product_page',
       })
     }
-    if (isUpSellingPlus.value) return
+    if (isUpsellingPlus.value) return
 
     let customPrice: number | undefined = undefined
 
