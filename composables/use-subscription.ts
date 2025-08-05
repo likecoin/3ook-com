@@ -13,12 +13,6 @@ export function useSubscription() {
   const toast = useToast()
   const { getAnalyticsParameters } = useAnalytics()
 
-  const YEARLY_GIFT_BOOKS = [
-    // 屋宇平民誌
-    '0x883c0a578412616f6490f345fab83008a3fb79ca',
-    '0x54255b9f281400f8b79c3a9e87dc375072b1c8e0',
-  ]
-
   const selectedPlan = ref<SubscriptionPlan>('yearly')
   const isProcessingSubscription = ref(false)
   const isUpsellingPlus = ref(false)
@@ -199,10 +193,6 @@ export function useSubscription() {
     }
   }
 
-  function isYearlyGiftBook(nftClassId: string): boolean {
-    return YEARLY_GIFT_BOOKS.includes(nftClassId)
-  }
-
   watch(isProcessingSubscription, (newValue) => {
     paywallModal.patch({
       ...modalProps.value,
@@ -222,7 +212,6 @@ export function useSubscription() {
     fetchLikerPlusStatus,
     isProcessingSubscription,
     isUpsellingPlus,
-    isYearlyGiftBook,
 
     openPaywallModal,
     openUpsellPlusModal,

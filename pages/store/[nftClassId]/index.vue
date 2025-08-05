@@ -386,13 +386,9 @@ const nftStore = useNFTStore()
 const { open: openTippingModal } = useTipping()
 const {
   isLikerPlus,
-  likerPlusPeriod,
   isUpsellingPlus,
-  isYearlyGiftBook,
 
   getPlusDiscountPrice,
-
-  fetchLikerPlusStatus,
   openUpsellPlusModal,
 } = useSubscription()
 
@@ -586,12 +582,6 @@ const checkoutButtonProps = computed<{
   }
 })
 
-const shouldShowMonthlyMemberUpSell = computed(() =>
-  isLikerPlus.value
-  && likerPlusPeriod.value === 'month'
-  && isYearlyGiftBook(nftClassId.value),
-)
-
 onMounted(() => {
   useLogEvent('view_item', formattedLogPayload.value)
   const ownerWalletAddress = bookInfo.nftClassOwnerWalletAddress.value
@@ -667,19 +657,7 @@ async function handlePurchaseButtonClick() {
         utmMedium: 'product_page',
       })
     }
-    if (isLikerPlus.value && !likerPlusPeriod.value) {
-      await fetchLikerPlusStatus()
-    }
-    if (shouldShowMonthlyMemberUpSell.value) {
-      isUpsellingPlus.value = true
-      await openUpsellPlusModal({
-        isLikerPlus: true,
-        likerPlusPeriod: 'month',
-        utmSource: 'product_page',
-        utmCampaign: 'upsell_plus',
-        utmMedium: 'product_page',
-      })
-    }
+
     if (isUpsellingPlus.value) return
 
     let customPrice: number | undefined = undefined

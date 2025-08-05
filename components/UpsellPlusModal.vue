@@ -189,11 +189,7 @@ const emit = defineEmits<{
 
 const { t: $t } = useI18n()
 
-const showYearlyPlan = computed(
-  () =>
-    !props.isLikerPlus
-    || (props.isLikerPlus && props.likerPlusPeriod === 'month'),
-)
+const showYearlyPlan = ref(false)
 const showMonthlyPlan = computed(() => !props.isLikerPlus)
 
 function handleSubscribe(plan: SubscriptionPlan) {
