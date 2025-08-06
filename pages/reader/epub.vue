@@ -310,6 +310,7 @@ watch(fontSize, (size) => {
 })
 
 let cleanUpClickListener: (() => void) | undefined
+let removeSwipeListener: (() => void) | undefined
 const renditionElement = useTemplateRef<HTMLDivElement>('reader')
 const renditionViewWindow = ref<Window | undefined>(undefined)
 
@@ -427,6 +428,42 @@ async function loadEPub() {
         }
       }
     })
+
+    if (removeSwipeListener) {
+      removeSwipeListener()
+    }
+    ({ stop: removeSwipeListener } = useSwipe(
+      view.window,
+      {
+        onSwipeEnd: (_: TouchEvent, direction: UseSwipeDirection) => {
+          if (checkIsSelectingText()) {
+            // Do not navigate when selecting text
+            return
+          }
+
+          switch (direction) {
+            case 'left':
+              turnPageRight()
+              useLogEvent('reader_navigate_swipe_horizontal')
+              break
+            case 'right':
+              turnPageLeft()
+              useLogEvent('reader_navigate_swipe_horizontal')
+              break
+            case 'up':
+              nextPage()
+              useLogEvent('reader_navigate_swipe_vertical')
+              break
+            case 'down':
+              prevPage()
+              useLogEvent('reader_navigate_swipe_vertical')
+              break
+            default:
+              break
+          }
+        },
+      },
+    ))
   })
 
   rendition.value.on('relocated', (location: Location) => {
@@ -600,39 +637,6 @@ onKeyStroke('Space', () => {
   }
   useLogEvent('reader_navigate_key_space')
 })
-
-useSwipe(
-  renditionViewWindow,
-  {
-    onSwipeEnd: (_: TouchEvent, direction: UseSwipeDirection) => {
-      if (checkIsSelectingText()) {
-        // Do not navigate when selecting text
-        return
-      }
-
-      switch (direction) {
-        case 'left':
-          turnPageRight()
-          useLogEvent('reader_navigate_swipe_horizontal')
-          break
-        case 'right':
-          turnPageLeft()
-          useLogEvent('reader_navigate_swipe_horizontal')
-          break
-        case 'up':
-          nextPage()
-          useLogEvent('reader_navigate_swipe_vertical')
-          break
-        case 'down':
-          prevPage()
-          useLogEvent('reader_navigate_swipe_vertical')
-          break
-        default:
-          break
-      }
-    },
-  },
-)
 </script>
 
 <style>
