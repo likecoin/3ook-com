@@ -163,6 +163,7 @@
 </template>
 
 <script setup lang="ts">
+import type { _RouteLocationBase } from 'vue-router'
 import type { UpsellPlusModalProps } from './UpsellPlusModal.props'
 
 const props = withDefaults(defineProps<UpsellPlusModalProps>(), {
@@ -171,6 +172,7 @@ const props = withDefaults(defineProps<UpsellPlusModalProps>(), {
   isProcessingSubscription: false,
   hasFreeTrial: false,
   mustCollectPaymentMethod: false,
+  selectedPricingItemIndex: 0,
   utmCampaign: undefined,
   utmMedium: undefined,
   utmSource: undefined,
@@ -184,13 +186,29 @@ const emit = defineEmits<{
     utmCampaign?: string
     utmMedium?: string
     utmSource?: string
+    redirectInfo?: _RouteLocationBase
   }]
 }>()
 
 const { t: $t } = useI18n()
-
+const route = useRoute()
 const showYearlyPlan = ref(false)
 const showMonthlyPlan = computed(() => !props.isLikerPlus)
+
+const redirectInfo = computed((): _RouteLocationBase => (
+  {
+    name: route.name,
+    path: route.path,
+    fullPath: route.fullPath,
+    params: route.params,
+    query: {
+      ...route.query,
+      selectedPricingItemIndex: String(props.selectedPricingItemIndex),
+    },
+    hash: route.hash,
+    meta: route.meta,
+    redirectedFrom: route.redirectedFrom,
+  }))
 
 function handleSubscribe(plan: SubscriptionPlan) {
   emit('subscribe', {
@@ -198,6 +216,7 @@ function handleSubscribe(plan: SubscriptionPlan) {
     utmCampaign: props.utmCampaign,
     utmMedium: props.utmMedium,
     utmSource: props.utmSource,
+    redirectInfo: redirectInfo.value,
   })
 }
 

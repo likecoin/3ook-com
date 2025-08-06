@@ -91,6 +91,13 @@ onMounted(async () => {
         },
       }), { replace: true })
     }
+    const redirectInfo = accountStore.getStoredRedirectInfo()
+
+    if (redirectInfo) {
+      accountStore.clearStoredRedirectInfo()
+      await navigateTo(localeRoute(redirectInfo), { replace: true })
+      return
+    }
 
     setTimeout(redirectToShelf, 1000)
   }

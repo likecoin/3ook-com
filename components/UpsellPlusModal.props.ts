@@ -7,6 +7,7 @@ export interface UpsellPlusModalProps {
   utmCampaign?: string
   utmMedium?: string
   utmSource?: string
+  selectedPricingItemIndex?: number
   onSubscribe?: (props: {
     hasFreeTrial?: boolean
     mustCollectPaymentMethod?: boolean

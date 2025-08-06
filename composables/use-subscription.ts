@@ -1,3 +1,5 @@
+import { useStorage } from '@vueuse/core'
+import type { _RouteLocationBase } from 'vue-router'
 import { PaywallModal, UpsellPlusModal } from '#components'
 import type { PaywallModalProps } from '~/components/PaywallModal.props'
 import type { UpsellPlusModalProps } from '~/components/UpsellPlusModal.props'
@@ -121,6 +123,7 @@ export function useSubscription() {
     utmMedium,
     utmSource,
     plan,
+    redirectInfo,
   }: {
     hasFreeTrial?: boolean
     mustCollectPaymentMethod?: boolean
@@ -128,6 +131,7 @@ export function useSubscription() {
     utmMedium?: string
     utmSource?: string
     plan?: SubscriptionPlan
+    redirectInfo?: _RouteLocationBase
   } = {}) {
     const subscribePlan = plan || selectedPlan.value
     useLogEvent('add_to_cart', eventPayload.value)
@@ -166,6 +170,9 @@ export function useSubscription() {
         utmMedium: utmMedium || analyticsParams.utmMedium,
         utmSource: utmSource || analyticsParams.utmSource,
       })
+      if (redirectInfo && (redirectInfo.name || redirectInfo.path)) {
+        useStorage('redirect_info', redirectInfo)
+      }
       await navigateTo(url, { external: true })
     }
     catch (error) {

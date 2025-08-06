@@ -588,6 +588,10 @@ onMounted(() => {
   if (ownerWalletAddress) {
     metadataStore.lazyFetchLikerInfoByWalletAddress(ownerWalletAddress)
   }
+  const selectedPricingItemIndex = getRouteQuery('selectedPricingItemIndex')
+  if (selectedPricingItemIndex) {
+    handlePurchaseButtonClick()
+  }
 })
 
 async function handleSocialButtonClick(key: string) {
@@ -655,6 +659,7 @@ async function handlePurchaseButtonClick() {
         utmSource: 'product_page',
         utmCampaign: 'upsell_plus',
         utmMedium: 'product_page',
+        selectedPricingItemIndex: selectedPricingItemIndex.value,
       })
     }
 
