@@ -169,7 +169,7 @@ export function useSubscription() {
         utmSource: utmSource || analyticsParams.utmSource,
       })
       if (redirectInfo && (redirectInfo.name || redirectInfo.path)) {
-        useStorage('redirect_info', redirectInfo)
+        useStorage('plus_redirect_route', redirectInfo)
       }
       await navigateTo(url, { external: true })
     }

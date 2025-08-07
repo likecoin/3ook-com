@@ -463,7 +463,7 @@ export const useAccountStore = defineStore('account', () => {
       await $fetch('/api/logout', { method: 'POST' })
       await refreshSession()
       clearCaches()
-      clearStoredRedirectInfo()
+      clearStoredPlusRedirectInfo()
       blockingModal.patch({ title: $t('account_logged_out') })
       // Wait for a moment to show the logged out message
       await sleep(500)
@@ -509,20 +509,20 @@ export const useAccountStore = defineStore('account', () => {
     }
   }
 
-  const getStoredRedirectInfo = () => {
+  const getStoredPlusRedirectInfo = () => {
     try {
-      const stored = localStorage.getItem('redirect_info')
+      const stored = localStorage.getItem('plus_redirect_route')
       return stored ? JSON.parse(stored) : null
     }
     catch (error) {
       console.error('Failed to parse stored redirect info:', error)
-      clearStoredRedirectInfo()
+      clearStoredPlusRedirectInfo()
       return null
     }
   }
 
-  const clearStoredRedirectInfo = () => {
-    localStorage.removeItem('redirect_info')
+  const clearStoredPlusRedirectInfo = () => {
+    localStorage.removeItem('plus_redirect_route')
   }
 
   return {
@@ -536,7 +536,7 @@ export const useAccountStore = defineStore('account', () => {
     refreshSessionInfo,
     exportPrivateKey,
     clearCaches,
-    getStoredRedirectInfo,
-    clearStoredRedirectInfo,
+    getStoredPlusRedirectInfo,
+    clearStoredPlusRedirectInfo,
   }
 })
