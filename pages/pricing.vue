@@ -3,7 +3,7 @@
 </template>
 
 <script setup lang="ts">
-const router = useRouter()
+const localeRoute = useLocaleRoute()
 const getRouteQuery = useRouteQuery()
 const subscription = useSubscription()
 const { t: $t } = useI18n()
@@ -116,7 +116,7 @@ onMounted(async () => {
       utmSource: 'website',
       utmMedium: 'web',
     })
-    router.back()
+    navigateTo(localeRoute({ name: 'store' }))
   }
 })
 </script>
