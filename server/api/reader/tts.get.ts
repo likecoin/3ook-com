@@ -1,3 +1,5 @@
+import type { Writable } from 'node:stream'
+
 interface TTSChunk {
   data: {
     audio: string
@@ -26,7 +28,7 @@ const LANG_MAPPING = {
   'zh-HK': 'Chinese,Yue',
 }
 
-const VOICE_MAPPING = {
+const VOICE_MAPPING: Record<string, string> = {
   0: 'Chinese (Mandarin)_Warm_Bestie',
   1: 'Boyan_new_platform',
   pazu: 'book_pazu_v1',
@@ -82,7 +84,7 @@ export default defineEventHandler(async (event) => {
       message: 'INVALID_LANGUAGE',
     })
   }
-  const validVoiceId = voiceId as keyof typeof VOICE_MAPPING
+  const validVoiceId = voiceId as keyof typeof VOICE_MAPPING as string
   if (!voiceId || !VOICE_MAPPING[validVoiceId]) {
     throw createError({
       status: 400,
@@ -98,6 +100,28 @@ export default defineEventHandler(async (event) => {
       status: 402,
       message: 'REQUIRE_LIKER_PLUS',
     })
+  }
+
+  await updateUserTTSCharacterUsage(session.user.evmWallet, text.length)
+
+  const bucket = getTTSCacheBucket()
+  const isCacheEnabled = !!bucket
+  if (isCacheEnabled) {
+    const cacheKey = generateTTSCacheKey(language, validVoiceId, text)
+    const file = bucket.file(cacheKey)
+
+    try {
+      const [exists] = await file.exists()
+      if (exists) {
+        setHeader(event, 'content-type', 'audio/mpeg')
+        setHeader(event, 'cache-control', 'public, max-age=604800')
+        console.log(`[Speech] Cache hit for user ${session.user.evmWallet}: ${cacheKey}`)
+        return sendStream(event, file.createReadStream())
+      }
+    }
+    catch (error) {
+      console.warn(`[Speech] Cache check failed for user ${session.user.evmWallet}:`, error)
+    }
   }
 
   try {
@@ -125,7 +149,44 @@ export default defineEventHandler(async (event) => {
       body: command,
     })
 
+    let cacheWriteStream: Writable | null = null
+    let cacheKey: string | null = null
+
+    if (isCacheEnabled) {
+      cacheKey = generateTTSCacheKey(language, validVoiceId, text)
+      const cacheFile = bucket.file(cacheKey)
+      // Firebase Storage metadata has a 2KB limit per key
+      const truncatedText = text.length > 1800 ? text.substring(0, 1800) + '...' : text
+      cacheWriteStream = cacheFile.createWriteStream({
+        metadata: {
+          contentType: 'audio/mpeg',
+          customMetadata: {
+            language,
+            voiceId: validVoiceId,
+            text: truncatedText,
+            textLength: text.length.toString(),
+            createdAt: new Date().toISOString(),
+          },
+        },
+      })
+    }
+
     let buffer = ''
+    let hasError = false
+    const audioChunks: Buffer[] = []
+
+    function handleCacheWrite() {
+      if (isCacheEnabled && cacheWriteStream) {
+        if (!hasError && audioChunks.length > 0) {
+          const combinedBuffer = Buffer.concat(audioChunks)
+          cacheWriteStream.end(combinedBuffer)
+        }
+        else {
+          cacheWriteStream.destroy()
+        }
+      }
+    }
+
     const processStream = new TransformStream({
       start() {
         buffer = ''
@@ -141,10 +202,14 @@ export default defineEventHandler(async (event) => {
               try {
                 const audioBuffer = processEventData(event)
                 if (audioBuffer) {
+                  if (isCacheEnabled) {
+                    audioChunks.push(audioBuffer)
+                  }
                   controller.enqueue(audioBuffer)
                 }
               }
               catch (error) {
+                hasError = true
                 console.error(`[Speech] Error processing event for user ${session.user.evmWallet}:`, error)
                 controller.error((error as Error).message || 'TTS_PROCESSING_ERROR')
                 return
@@ -154,6 +219,7 @@ export default defineEventHandler(async (event) => {
           }
         }
         catch (error) {
+          hasError = true
           console.error(`[Speech] Error processing chunk for user ${session.user.evmWallet}:`, error)
           controller.error('TTS_PROCESSING_ERROR: Failed to process text-to-speech data')
           return
@@ -161,16 +227,25 @@ export default defineEventHandler(async (event) => {
       },
       flush(controller) {
         if (!buffer.trim()) {
+          handleCacheWrite()
           return
         }
         try {
           const audioBuffer = processEventData(buffer)
           if (audioBuffer) {
+            if (isCacheEnabled) {
+              audioChunks.push(audioBuffer)
+            }
             controller.enqueue(audioBuffer)
           }
+          handleCacheWrite()
         }
         catch (error) {
+          hasError = true
           console.warn(`[Speech] Error in flush for user ${session.user.evmWallet}:`, error)
+          if (isCacheEnabled && cacheWriteStream) {
+            cacheWriteStream.destroy()
+          }
         }
       },
     })
@@ -179,7 +254,6 @@ export default defineEventHandler(async (event) => {
     decodedStream.pipeThrough(processStream)
     setHeader(event, 'content-type', 'audio/mpeg')
     setHeader(event, 'cache-control', 'public, max-age=604800')
-    await updateUserTTSCharacterUsage(session.user.evmWallet, text.length)
     return sendStream(event, processStream.readable)
   }
   catch (error) {

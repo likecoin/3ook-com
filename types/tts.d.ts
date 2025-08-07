@@ -3,4 +3,5 @@ declare interface TTSSegment {
   text: string
   sectionIndex: number
   chapterTitle?: string
+  cfi?: string
 }

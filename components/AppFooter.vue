@@ -81,18 +81,8 @@
             variant="link"
             size="xs"
             target="_blank"
-            icon="i-simple-icons-facebook"
-            href="https://www.facebook.com/Liker.Land"
-          />
-        </li>
-        <li>
-          <UButton
-            color="neutral"
-            variant="link"
-            size="xs"
-            target="_blank"
             icon="i-simple-icons-instagram"
-            href="https://www.instagram.com/liker.land"
+            href="https://www.instagram.com/3ookcom"
           />
         </li>
         <li>
@@ -101,8 +91,8 @@
             variant="link"
             size="xs"
             target="_blank"
-            icon="i-simple-icons-x"
-            href="https://twitter.com/likecoin"
+            icon="i-simple-icons-facebook"
+            href="https://www.facebook.com/3ookcom"
           />
         </li>
         <li>
@@ -111,8 +101,18 @@
             variant="link"
             size="xs"
             target="_blank"
-            icon="i-simple-icons-medium"
-            href="https://blog.liker.land"
+            icon="i-simple-icons-threads"
+            href="https://www.threads.com/@3ookcom"
+          />
+        </li>
+        <li>
+          <UButton
+            color="neutral"
+            variant="link"
+            size="xs"
+            target="_blank"
+            icon="i-simple-icons-substack"
+            href="https://3ookcom.substack.com"
           />
         </li>
       </ul>

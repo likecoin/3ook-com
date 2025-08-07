@@ -148,6 +148,27 @@
             :class="[
               'absolute',
               'inset-0',
+              'flex',
+              'items-center',
+              'justify-center',
+              'bg-white/75',
+              isPageLoading ? 'opacity-100' : 'opacity-0',
+              'pointer-events-none',
+              'transition-opacity',
+              'duration-300',
+            ]"
+          >
+            <UIcon
+              class="animate-spin size-12"
+              name="i-material-symbols-refresh-rounded"
+            />
+          </div>
+
+          <div
+            v-if="!isReaderLoading"
+            :class="[
+              'absolute',
+              'inset-0',
               'hidden lg:flex',
               'justify-between',
               'items-center',
@@ -177,6 +198,7 @@
         </div>
 
         <span
+          v-if="!isReaderLoading"
           class="absolute bottom-6 right-12 text-xs"
           v-text="percentageLabel"
         />
@@ -232,6 +254,7 @@ function getCacheKeyWithSuffix(suffix: ReaderCacheKeySuffix) {
 const isReaderLoading = ref(true)
 const isDesktopTocOpen = ref(false)
 const isMobileTocOpen = ref(false)
+const isPageLoading = ref(false)
 
 const { loadingLabel, loadFileAsBuffer } = useBookFileLoader()
 
@@ -279,6 +302,7 @@ const { setTTSSegments, openPlayer } = useTTSPlayerModal({
   nftClassId: nftClassId.value,
   onSegmentChange: (segment) => {
     if (segment?.href) {
+      isPageLoading.value = true
       rendition.value?.display(segment.href)
       activeTTSElementIndex.value = segment.index
     }
@@ -296,6 +320,7 @@ const isAtFirstPage = computed(() => {
   return currentSectionIndex.value === 0 && percentage.value === 0
 })
 const isRightToLeft = ref(false)
+const currentPageStartCfi = ref<string>('')
 const currentPageEndCfi = ref<string>('')
 const currentPageHref = ref<string>('')
 const currentCfi = useStorage(getCacheKeyWithSuffix('cfi'), '')
@@ -310,6 +335,7 @@ watch(fontSize, (size) => {
 })
 
 let cleanUpClickListener: (() => void) | undefined
+let removeSwipeListener: (() => void) | undefined
 const renditionElement = useTemplateRef<HTMLDivElement>('reader')
 const renditionViewWindow = ref<Window | undefined>(undefined)
 
@@ -395,12 +421,14 @@ async function loadEPub() {
   }
   rendition.value.themes.default({ body: bodyCSS })
   rendition.value.themes.fontSize(`${fontSize.value}px`)
+  isPageLoading.value = true
   rendition.value.display(currentCfi.value || undefined)
 
   rendition.value.on('rendered', (section: Section, view: EpubView) => {
     currentSectionIndex.value = section.index
     isRightToLeft.value = view.settings.direction === 'rtl'
     renditionViewWindow.value = view.window
+    isPageLoading.value = false
 
     if (cleanUpClickListener) {
       cleanUpClickListener()
@@ -427,9 +455,47 @@ async function loadEPub() {
         }
       }
     })
+
+    if (removeSwipeListener) {
+      removeSwipeListener()
+    }
+    ({ stop: removeSwipeListener } = useSwipe(
+      view.window,
+      {
+        onSwipeEnd: (_: TouchEvent, direction: UseSwipeDirection) => {
+          if (checkIsSelectingText()) {
+            // Do not navigate when selecting text
+            return
+          }
+
+          switch (direction) {
+            case 'left':
+              turnPageRight()
+              useLogEvent('reader_navigate_swipe_horizontal')
+              break
+            case 'right':
+              turnPageLeft()
+              useLogEvent('reader_navigate_swipe_horizontal')
+              break
+            case 'up':
+              nextPage()
+              useLogEvent('reader_navigate_swipe_vertical')
+              break
+            case 'down':
+              prevPage()
+              useLogEvent('reader_navigate_swipe_vertical')
+              break
+            default:
+              break
+          }
+        },
+      },
+    ))
   })
 
   rendition.value.on('relocated', (location: Location) => {
+    isPageLoading.value = false
+    currentPageStartCfi.value = location.start.cfi
     currentPageEndCfi.value = location.end.cfi
     const href = location.start.href
     currentPageHref.value = href
@@ -466,10 +532,12 @@ async function extractTTSSegments(book: ePub.Book) {
         const segments: TTSSegment[] = []
         elements.forEach((el, elIndex) => {
           const text = el.textContent?.trim() || ''
+          const cfi = section.cfiFromElement(el)
           segments.push(
             ...splitTextIntoSegments(text).map((segment, segIndex) => ({
               text: segment,
               id: `${section.index}-${elIndex}-${segIndex}`,
+              cfi,
               sectionIndex: section.index,
               chapterTitle,
             })),
@@ -494,16 +562,19 @@ async function extractTTSSegments(book: ePub.Book) {
 function setActiveNavItemHref(href: string) {
   activeTTSElementIndex.value = undefined
   activeNavItemHref.value = href
+  isPageLoading.value = true
   rendition.value?.display(href)
 }
 
 function nextPage() {
   activeTTSElementIndex.value = undefined
+  isPageLoading.value = true
   rendition.value?.next()
 }
 
 function prevPage() {
   activeTTSElementIndex.value = undefined
+  isPageLoading.value = true
   rendition.value?.prev()
 }
 
@@ -556,6 +627,7 @@ function onClickTTSPlay() {
   openPlayer({
     ttsIndex: activeTTSElementIndex.value,
     sectionIndex: currentSectionIndex.value,
+    cfi: currentPageStartCfi.value,
   })
 }
 
@@ -600,39 +672,6 @@ onKeyStroke('Space', () => {
   }
   useLogEvent('reader_navigate_key_space')
 })
-
-useSwipe(
-  renditionViewWindow,
-  {
-    onSwipeEnd: (_: TouchEvent, direction: UseSwipeDirection) => {
-      if (checkIsSelectingText()) {
-        // Do not navigate when selecting text
-        return
-      }
-
-      switch (direction) {
-        case 'left':
-          turnPageRight()
-          useLogEvent('reader_navigate_swipe_horizontal')
-          break
-        case 'right':
-          turnPageLeft()
-          useLogEvent('reader_navigate_swipe_horizontal')
-          break
-        case 'up':
-          nextPage()
-          useLogEvent('reader_navigate_swipe_vertical')
-          break
-        case 'down':
-          prevPage()
-          useLogEvent('reader_navigate_swipe_vertical')
-          break
-        default:
-          break
-      }
-    },
-  },
-)
 </script>
 
 <style>

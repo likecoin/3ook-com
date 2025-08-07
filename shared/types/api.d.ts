@@ -9,7 +9,6 @@ export interface LikerInfoResponseData {
   isLikerPlus?: boolean
 }
 
-export interface ProfileInfoWithLikerPlusResponseData extends LikerInfoResponseData {
-  likerPlusSince?: number
-  likerPlusPeriod?: LikerPlusStatus
+export interface LikerProfileResponseData extends LikerInfoResponseData {
+  email?: string
 }

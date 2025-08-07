@@ -31,6 +31,8 @@ env:
     secret: MINIMAX_GROUP_ID
   - variable: MINIMAX_API_KEY
     secret: MINIMAX_API_KEY
+  - variable: TTS_CACHE_BUCKET_PREFIX
+    value: tts-cache
   - variable: ARWEAVE_ENDPOINT
     value: https://gateway.irys.xyz
   - variable: IPFS_ENDPOINT

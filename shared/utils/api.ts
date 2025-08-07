@@ -3,6 +3,17 @@ export function getLikeCoinAPIFetch() {
   return $fetch.create({ baseURL: config.public.likeCoinAPIEndpoint })
 }
 
+export function fetchLikerProfileInfo(
+  token: string,
+): Promise<LikerInfoResponseData> {
+  const fetch = getLikeCoinAPIFetch()
+  return fetch<LikerInfoResponseData>(`/users/profile`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+}
+
 export function fetchLikerPublicInfoByWalletAddress(
   walletAddress: string,
   options: { nocache?: boolean } = {},

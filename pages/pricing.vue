@@ -3,7 +3,7 @@
 </template>
 
 <script setup lang="ts">
-const router = useRouter()
+const localeRoute = useLocaleRoute()
 const getRouteQuery = useRouteQuery()
 const subscription = useSubscription()
 const { t: $t } = useI18n()
@@ -30,6 +30,7 @@ const structuredData = computed(() => {
     'name': $t('pricing_page_title'),
     'description': $t('pricing_page_subscription_description'),
     'url': pageURL,
+    'image': `${baseURL}/images/og/plus.jpg`,
     'offers': [
       {
         '@type': 'Offer',
@@ -111,8 +112,11 @@ onMounted(async () => {
       isFullscreen: true,
       isBackdropDismissible: false,
       hasFreeTrial: getRouteQuery('trial') !== '0',
+      utmCampaign: 'pricing_page',
+      utmSource: 'website',
+      utmMedium: 'web',
     })
-    router.back()
+    navigateTo(localeRoute({ name: 'store' }))
   }
 })
 </script>

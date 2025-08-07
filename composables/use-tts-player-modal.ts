@@ -1,3 +1,4 @@
+import { EpubCFI } from '@likecoin/epubjs'
 import { TTSPlayerModal } from '#components'
 import type { TTSPlayerModalProps } from '~/components/TTSPlayerModal.props'
 
@@ -34,15 +35,37 @@ export function useTTSPlayerModal(options: TTSPlayerOptions = {}) {
     ttsSegments.value = elements
   }
 
-  function openPlayer({ ttsIndex, sectionIndex }: { ttsIndex?: number, sectionIndex?: number } = {}) {
+  function openPlayer({
+    ttsIndex,
+    sectionIndex,
+    cfi,
+  }: {
+    ttsIndex?: number
+    sectionIndex?: number
+    cfi?: string
+  } = {}) {
     if (ttsIndex !== undefined) {
       ttsPlayerModalProps.value.startIndex = ttsIndex
     }
-    else if (sectionIndex !== undefined) {
-      const segmentIndex = ttsSegments.value.findIndex(
-        segment => segment.sectionIndex >= sectionIndex,
-      )
-      ttsPlayerModalProps.value.startIndex = segmentIndex >= 0 ? segmentIndex : 0
+    else if (sectionIndex !== undefined || cfi) {
+      let segmentIndex = 0
+      if (sectionIndex !== undefined) {
+        segmentIndex = ttsSegments.value.findIndex(
+          segment => segment.sectionIndex >= sectionIndex,
+        )
+        segmentIndex = Math.max(segmentIndex, 0)
+      }
+      if (cfi) {
+        const epubCFI = new EpubCFI()
+        const cfiIndex = ttsSegments.value
+          .slice(segmentIndex)
+          .findIndex(segment => segment.cfi && epubCFI.compare(segment.cfi, cfi) >= 0)
+        if (cfiIndex >= 1) {
+          // Retrieve the previous segment for better UX, as the segment might span multiple pages
+          segmentIndex += cfiIndex - 1
+        }
+      }
+      ttsPlayerModalProps.value.startIndex = segmentIndex
     }
     else {
       ttsPlayerModalProps.value.startIndex = 0

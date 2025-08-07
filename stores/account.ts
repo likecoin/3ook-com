@@ -369,6 +369,7 @@ export const useAccountStore = defineStore('account', () => {
           loginMethod,
           permissions: [
             'profile',
+            'email',
             'read:nftbook',
             'write:nftbook',
             'read:nftcollection',

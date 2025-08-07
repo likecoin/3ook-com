@@ -78,9 +78,9 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  let userInfoRes: LikerInfoResponseData | undefined = undefined
+  let userInfoRes: LikerProfileResponseData | undefined = undefined
   try {
-    userInfoRes = await fetchLikerPublicInfoByWalletAddress(body.walletAddress, { nocache: true })
+    userInfoRes = await fetchLikerProfileInfo(token)
   }
   catch (error) {
     console.error('Failed to fetch user info for wallet', error)
@@ -105,7 +105,7 @@ export default defineEventHandler(async (event) => {
     displayName: userInfoRes.displayName,
     description: userInfoRes.description,
     avatar: userInfoRes.avatar,
-    email: body.email,
+    email: body.email || userInfoRes.email,
     loginMethod: body.loginMethod,
     isLikerPlus: userInfoRes.isLikerPlus || false,
   }
