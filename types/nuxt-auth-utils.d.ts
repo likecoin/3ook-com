@@ -11,6 +11,7 @@ declare module '#auth-utils' {
     email?: string
     loginMethod?: string
     isLikerPlus?: boolean
+    likerPlusPeriod?: LikerPlusStatus
   }
 }
 

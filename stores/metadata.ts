@@ -7,7 +7,6 @@ interface LikerInfo {
   evmWallet: string
   description: string
   isLikerPlus: boolean
-  likerPlusPeriod?: LikerPlusStatus
 }
 
 function normalizeLikerInfoFromResponseData(data: LikerInfoResponseData): LikerInfo {
@@ -24,7 +23,6 @@ function normalizeLikerInfoFromResponseData(data: LikerInfoResponseData): LikerI
 }
 
 export const useMetadataStore = defineStore('metadata', () => {
-  const likeCoinSessionAPI = useLikeCoinSessionAPI()
   const likerInfoByIdMap = ref<Record<string, LikerInfo>>({})
   const likerIdByWalletAddressMap = ref<Record<string, string>>({})
 
@@ -65,25 +63,6 @@ export const useMetadataStore = defineStore('metadata', () => {
     await fetchLikerInfoByWalletAddress(walletAddress)
   }
 
-  async function fetchLikerPlusStatus(likerId: string) {
-    const data = await likeCoinSessionAPI.fetchProfileWithLikerPlus()
-    const existingInfo = likerInfoByIdMap.value[likerId]
-    if (existingInfo) {
-      existingInfo.likerPlusPeriod = data.likerPlusPeriod
-    }
-    else {
-      likerInfoByIdMap.value[likerId] = {
-        ...normalizeLikerInfoFromResponseData(data),
-        likerPlusPeriod: data.likerPlusPeriod,
-      }
-    }
-  }
-
-  async function lazyFetchLikerPlusStatus(likerId: string) {
-    if (getLikerInfoById.value(likerId)?.likerPlusPeriod) return
-    await fetchLikerPlusStatus(likerId)
-  }
-
   return {
     likerInfoByIdMap,
     likerIdByWalletAddressMap,
@@ -95,6 +74,5 @@ export const useMetadataStore = defineStore('metadata', () => {
     lazyFetchLikerInfoById,
     fetchLikerInfoByWalletAddress,
     lazyFetchLikerInfoByWalletAddress,
-    lazyFetchLikerPlusStatus,
   }
 })

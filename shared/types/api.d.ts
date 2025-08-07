@@ -11,4 +11,5 @@ export interface LikerInfoResponseData {
 
 export interface LikerProfileResponseData extends LikerInfoResponseData {
   email?: string
+  likerPlusPeriod?: LikerPlusStatus
 }
