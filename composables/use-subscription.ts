@@ -33,7 +33,7 @@ export function useSubscription() {
 
   const likerPlusPeriod = computed(() => {
     if (!hasLoggedIn.value || !isLikerPlus.value) return undefined
-    return user.value?.likerPlusPeriod || null
+    return user.value?.likerPlusPeriod || undefined
   })
 
   const eventPayload = computed(() => ({
