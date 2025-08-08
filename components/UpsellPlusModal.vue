@@ -2,162 +2,154 @@
   <UModal
     :title="$t('upsell_plus_modal_title')"
     :ui="{
-      title: 'text-lg laptop:text-xl font-bold text-center',
+      title: 'text-sm laptop:text-base font-bold text-center',
+      footer: 'flex flex-col items-center w-full',
+      body: 'w-full flex flex-col items-start mx-0 laptop:mx-6 gap-2 text-sm laptop:text-base',
     }"
     @update:open="onOpenUpdate"
   >
     <template #body>
-      <div class="w-full max-w-[420px] max-laptop:mx-auto">
-        <!-- Introduction -->
-        <div class="flex flex-col items-start mx-0 laptop:mx-6 gap-2 text-sm laptop:text-base">
-          <span
-            v-if="showYearlyPlan"
-            class="flex items-center gap-2 laptop:text-lg"
-          >
-            <UIcon
-              name="i-material-symbols-celebration-outline"
-              class="text-theme-400"
+      <span
+        v-if="showYearlyPlan"
+        class="flex items-center gap-2 laptop:text-lg"
+      >
+        <UIcon
+          name="i-material-symbols-celebration-outline"
+          class="text-theme-400"
+        />
+        <i18n-t
+          class="text-theme-500 text-center font-bold"
+          keypath="upsell_plus_yearly_notice"
+          tag="span"
+        >
+          <template #year>
+            <span
+              class="text-theme-400 font-semibold text-lg"
+              v-text="$t('upsell_plus_yearly_member')"
             />
-            <i18n-t
-              class="text-theme-500 text-center font-bold"
-              keypath="upsell_plus_yearly_notice"
-              tag="span"
-            >
-              <template #year>
-                <span
-                  class="text-theme-400 font-semibold text-lg"
-                  v-text="$t('upsell_plus_yearly_member')"
-                />
-              </template>
-              <template #gift>
-                <span
-                  class="text-theme-400 font-semibold text-lg"
-                  v-text="$t('upsell_plus_yearly_gift')"
-                />
-              </template>
-            </i18n-t>
-            <UTooltip
-              :delay-duration="0"
-              :text="$t('upsell_plus_yearly_tooltip')"
-            >
-              <UIcon
-                name="i-material-symbols-info-outline"
-                class="text-gray-500 cursor-pointer"
-              />
-            </UTooltip>
-          </span>
-          <span
-            v-if="showMonthlyPlan"
-            class="flex items-center gap-2 laptop:text-lg"
-          >
-            <UIcon
-              name="i-material-symbols-celebration-outline"
-              class="text-theme-400"
+          </template>
+          <template #gift>
+            <span
+              class="text-theme-400 font-semibold text-lg"
+              v-text="$t('upsell_plus_yearly_gift')"
             />
-            <i18n-t
-              class="text-theme-500 text-center font-bold"
-              keypath="upsell_plus_monthly_notice"
-              tag="span"
-            >
-              <template #month>
-                <span
-                  class="text-theme-400 font-semibold text-lg"
-                  v-text="$t('upsell_plus_monthly_member')"
-                />
-              </template>
-              <template #discount>
-                <span
-                  class="text-theme-400 font-semibold text-lg"
-                  v-text="$t('upsell_plus_monthly_discount')"
-                />
-              </template>
-            </i18n-t>
-          </span>
-          <span
-            class="text-sm !text-gray-500 mt-5 mb-1"
-            v-text="$t('upsell_plus_modal_other_benefits')"
+          </template>
+        </i18n-t>
+        <UTooltip
+          :delay-duration="0"
+          :text="$t('upsell_plus_yearly_tooltip')"
+        >
+          <UIcon
+            name="i-material-symbols-info-outline"
+            class="text-gray-500 cursor-pointer"
           />
-          <ul
-            :class="[
-              'whitespace-pre-wrap',
-              'space-y-3 text-left',
-              '*:flex *:items-start',
-              '[&>li>span:first-child]:shrink-0',
-              '[&>li>span:first-child]:mt-1',
-              '[&>li>span:first-child]:mr-2',
-              '[&>li>span:first-child]:text-green-500',
-            ]"
-          >
-            <li>
-              <UIcon name="i-material-symbols-check" />
-              <span v-text="$t('pricing_page_feature_1')" />
-            </li>
-            <li>
-              <UIcon name="i-material-symbols-check" />
-              <span v-text="$t('pricing_page_feature_2')" />
-            </li>
-            <li>
-              <UIcon name="i-material-symbols-check" />
-              <span v-text="$t('pricing_page_feature_3')" />
-            </li>
-            <li>
-              <UIcon name="i-material-symbols-check" />
-              <span v-text="$t('pricing_page_feature_4')" />
-            </li>
-            <li>
-              <UIcon name="i-material-symbols-check" />
-              <span v-text="$t('pricing_page_feature_5')" />
-            </li>
-          </ul>
-        </div>
-
-        <!-- Subscription Buttons -->
-      </div>
+        </UTooltip>
+      </span>
+      <span
+        v-if="showMonthlyPlan"
+        class="w-full py-[12px] flex justify-center items-center gap-2 text-[16px] laptop:text-[20px]"
+      >
+        <UIcon
+          name="i-material-symbols-celebration-outline"
+          class="text-theme-400"
+        />
+        <i18n-t
+          class="text-theme-500 text-center font-bold"
+          keypath="upsell_plus_monthly_notice"
+          tag="span"
+        >
+          <template #month>
+            <span
+              class="text-theme-400 font-semibold"
+              v-text="$t('upsell_plus_monthly_member')"
+            />
+          </template>
+          <template #discount>
+            <span
+              class="text-theme-400 font-semibold"
+              v-text="$t('upsell_plus_monthly_discount')"
+            />
+          </template>
+        </i18n-t>
+      </span>
+      <div class=" self-center border-t border-gray-200 my-2 h-1 w-[24px]" />
+      <span
+        class="text-sm !text-gray-500 mb-1"
+        v-text="$t('upsell_plus_modal_other_benefits')"
+      />
+      <ul
+        :class="[
+          'whitespace-pre-wrap',
+          'space-y-3 text-left',
+          '*:flex *:items-start',
+          '[&>li>span:first-child]:shrink-0',
+          '[&>li>span:first-child]:mt-1',
+          '[&>li>span:first-child]:mr-2',
+          '[&>li>span:first-child]:text-green-500',
+        ]"
+      >
+        <li>
+          <UIcon name="i-material-symbols-check" />
+          <span v-text="$t('pricing_page_feature_1')" />
+        </li>
+        <li>
+          <UIcon name="i-material-symbols-check" />
+          <span v-text="$t('pricing_page_feature_2')" />
+        </li>
+        <li>
+          <UIcon name="i-material-symbols-check" />
+          <span v-text="$t('pricing_page_feature_3')" />
+        </li>
+        <li>
+          <UIcon name="i-material-symbols-check" />
+          <span v-text="$t('pricing_page_feature_4')" />
+        </li>
+        <li>
+          <UIcon name="i-material-symbols-check" />
+          <span v-text="$t('pricing_page_feature_5')" />
+        </li>
+      </ul>
     </template>
     <template #footer>
-      <div class="flex flex-col items-center w-full">
-        <div class="w-full flex items-center gap-2">
-          <UButton
-            v-if="showYearlyPlan"
-            class="w-full"
-            :label="$t('upsell_plus_yearly_button')"
-            block
-            size="xl"
-            color="primary"
-            :ui="{
-              base: 'py-2 laptop:py-3 rounded-2xl cursor-pointer',
-              label: 'font-bold',
-            }"
-            @click="() => handleSubscribe('yearly')"
-          />
-          <UButton
-            v-if="showMonthlyPlan"
-            class="w-full"
-            :label="$t('upsell_plus_monthly_button')"
-            block
-            size="xl"
-            color="primary"
-            :ui="{
-              base: 'py-2 laptop:py-3 rounded-2xl cursor-pointer',
-              label: 'font-bold',
-            }"
-            @click="() => handleSubscribe('monthly')"
-          />
-        </div>
-
+      <div class="w-full flex items-center gap-2">
         <UButton
-          class="mt-4"
-          :label="$t('upsell_plus_modal_close_button')"
+          v-if="showYearlyPlan"
+          class="w-full"
+          :label="$t('upsell_plus_yearly_button')"
           block
           size="xl"
-          variant="link"
+          color="primary"
           :ui="{
-            base: 'rounded-2xl cursor-pointer',
+            base: 'py-2 laptop:py-3 rounded-2xl cursor-pointer',
             label: 'font-bold',
           }"
-          @click="handleClose"
+          @click="() => handleSubscribe('yearly')"
+        />
+        <UButton
+          v-if="showMonthlyPlan"
+          class="w-full"
+          :label="$t('upsell_plus_monthly_button')"
+          block
+          size="xl"
+          color="primary"
+          :ui="{
+            base: 'py-2 laptop:py-3 rounded-2xl cursor-pointer',
+            label: 'font-bold',
+          }"
+          @click="() => handleSubscribe('monthly')"
         />
       </div>
+
+      <UButton
+        :label="$t('upsell_plus_modal_close_button')"
+        block
+        size="xl"
+        variant="link"
+        :ui="{
+          base: 'rounded-2xl cursor-pointer',
+        }"
+        @click="handleClose"
+      />
     </template>
   </UModal>
 </template>
