@@ -1,12 +1,12 @@
 interface LikerInfo {
-  likerId: string
-  displayName: string
-  avatarSrc: string
-  cosmosWallet: string
-  likeWallet: string
-  evmWallet: string
-  description: string
-  isLikerPlus: boolean
+  likerId?: string
+  displayName?: string
+  avatarSrc?: string
+  cosmosWallet?: string
+  likeWallet?: string
+  evmWallet?: string
+  description?: string
+  isLikerPlus?: boolean
 }
 
 function normalizeLikerInfoFromResponseData(data?: LikerInfoResponseData): LikerInfo {
