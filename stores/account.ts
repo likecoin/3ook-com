@@ -1,6 +1,7 @@
 import { useAccount, useConnect, useDisconnect, useSignMessage } from '@wagmi/vue'
 import { UserRejectedRequestError } from 'viem'
 import { FetchError } from 'ofetch'
+import { useStorage, StorageSerializers } from '@vueuse/core'
 import type { Magic } from 'magic-sdk'
 
 import { LoginModal, RegistrationModal } from '#components'
@@ -28,6 +29,7 @@ export const useAccountStore = defineStore('account', () => {
   const isLoggingIn = ref(false)
   const isConnectModalOpen = ref(false)
   const isClearingCaches = ref(false)
+  const plusRedirectRoute = useStorage('plus_redirect_route', {}, undefined, { serializer: StorageSerializers.object })
 
   watch(
     () => user.value,
@@ -463,7 +465,7 @@ export const useAccountStore = defineStore('account', () => {
       await $fetch('/api/logout', { method: 'POST' })
       await refreshSession()
       clearCaches()
-      clearStoredPlusRedirectInfo()
+      clearPlusRedirectRoute()
       blockingModal.patch({ title: $t('account_logged_out') })
       // Wait for a moment to show the logged out message
       await sleep(500)
@@ -509,20 +511,17 @@ export const useAccountStore = defineStore('account', () => {
     }
   }
 
-  const getStoredPlusRedirectInfo = () => {
-    try {
-      const stored = localStorage.getItem('plus_redirect_route')
-      return stored ? JSON.parse(stored) : null
-    }
-    catch (error) {
-      console.error('Failed to parse stored redirect info:', error)
-      clearStoredPlusRedirectInfo()
-      return null
-    }
+  const savePlusRedirectRoute = (route: {
+    name: string
+    params: Record<string, string>
+    query: Record<string, string>
+    hash: string
+  }) => {
+    plusRedirectRoute.value = route
   }
 
-  const clearStoredPlusRedirectInfo = () => {
-    localStorage.removeItem('plus_redirect_route')
+  const clearPlusRedirectRoute = () => {
+    plusRedirectRoute.value = null
   }
 
   return {
@@ -530,13 +529,14 @@ export const useAccountStore = defineStore('account', () => {
     isLoggingIn,
     isConnectModalOpen,
     isClearingCaches,
+    plusRedirectRoute,
 
     login,
     logout,
     refreshSessionInfo,
     exportPrivateKey,
     clearCaches,
-    getStoredPlusRedirectInfo,
-    clearStoredPlusRedirectInfo,
+    clearPlusRedirectRoute,
+    savePlusRedirectRoute,
   }
 })
