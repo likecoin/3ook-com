@@ -386,7 +386,6 @@ const nftStore = useNFTStore()
 const { open: openTippingModal } = useTipping()
 const {
   isLikerPlus,
-  isUpsellingPlus,
 
   getPlusDiscountPrice,
   openUpsellPlusModal,
@@ -643,7 +642,6 @@ function handleAddToCartButtonClick() {
 const isPurchasing = ref(false)
 
 async function handlePurchaseButtonClick() {
-  isUpsellingPlus.value = false
   useLogEvent('add_to_cart', formattedLogPayload.value)
   if (!selectedPricingItem.value) return
   try {
@@ -653,17 +651,15 @@ async function handlePurchaseButtonClick() {
       if (!hasLoggedIn.value) return
     }
     if (!isLikerPlus.value) {
-      isUpsellingPlus.value = true
-      await openUpsellPlusModal({
+      const isStartSubscription = await openUpsellPlusModal({
         isLikerPlus: false,
         utmSource: 'product_page',
         utmCampaign: 'upsell_plus',
         utmMedium: 'product_page',
         selectedPricingItemIndex: selectedPricingItemIndex.value,
       })
+      if (isStartSubscription) return
     }
-
-    if (isUpsellingPlus.value) return
 
     let customPrice: number | undefined = undefined
 

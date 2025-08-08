@@ -14,7 +14,6 @@ export function useSubscription() {
 
   const selectedPlan = ref<SubscriptionPlan>('yearly')
   const isProcessingSubscription = ref(false)
-  const isUpsellingPlus = ref(false)
 
   const { handleError } = useErrorHandler()
 
@@ -66,9 +65,6 @@ export function useSubscription() {
   function getUpsellPlusModalProps(): UpsellPlusModalProps {
     return {
       onSubscribe: startSubscription,
-      onClose: () => {
-        isUpsellingPlus.value = false
-      },
     }
   }
 
@@ -207,7 +203,6 @@ export function useSubscription() {
     likerPlusPeriod,
     getPlusDiscountPrice,
     isProcessingSubscription,
-    isUpsellingPlus,
 
     openPaywallModal,
     openUpsellPlusModal,

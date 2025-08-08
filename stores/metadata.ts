@@ -9,7 +9,7 @@ interface LikerInfo {
   isLikerPlus: boolean
 }
 
-function normalizeLikerInfoFromResponseData(data: LikerInfoResponseData): LikerInfo {
+function normalizeLikerInfoFromResponseData(data?: LikerInfoResponseData): LikerInfo {
   return {
     likerId: data?.user,
     displayName: data?.displayName,
