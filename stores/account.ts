@@ -511,16 +511,16 @@ export const useAccountStore = defineStore('account', () => {
     }
   }
 
-  const savePlusRedirectRoute = (route: {
+  function savePlusRedirectRoute(route: {
     name: string
     params: Record<string, string>
     query: Record<string, string>
     hash: string
-  }) => {
+  }) {
     plusRedirectRoute.value = route
   }
 
-  const clearPlusRedirectRoute = () => {
+  function clearPlusRedirectRoute() {
     plusRedirectRoute.value = null
   }
 
