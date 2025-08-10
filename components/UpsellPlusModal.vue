@@ -178,7 +178,7 @@ const emit = defineEmits<{
     utmCampaign?: string
     utmMedium?: string
     utmSource?: string
-    redirectInfo?: {
+    redirectRoute?: {
       name: string
       params: RouteParamsGeneric
       query: Record<string, string>
@@ -192,24 +192,21 @@ const route = useRoute()
 const showYearlyPlan = ref(false)
 const showMonthlyPlan = computed(() => !props.isLikerPlus)
 
-const redirectInfo = computed(() => (
-  {
-    name: route.name as string,
-    params: route.params,
-    query: {
-      ...route.query,
-      selectedPricingItemIndex: String(props.selectedPricingItemIndex),
-    },
-    hash: route.hash,
-  }))
-
 function handleSubscribe(plan: SubscriptionPlan) {
   emit('subscribe', {
     plan,
     utmCampaign: props.utmCampaign,
     utmMedium: props.utmMedium,
     utmSource: props.utmSource,
-    redirectInfo: redirectInfo.value,
+    redirectRoute: {
+      name: route.name as string,
+      params: route.params,
+      query: {
+        ...route.query,
+        edition: String(props.selectedPricingItemIndex),
+      },
+      hash: route.hash,
+    },
   })
 }
 

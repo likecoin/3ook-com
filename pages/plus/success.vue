@@ -91,11 +91,11 @@ onMounted(async () => {
         },
       }), { replace: true })
     }
-    const redirectInfo = accountStore.plusRedirectRoute
+    const redirectRoute = accountStore.plusRedirectRoute
 
-    if (redirectInfo && (redirectInfo.name)) {
+    if (redirectRoute && redirectRoute.name) {
       accountStore.clearPlusRedirectRoute()
-      await navigateTo(localeRoute(redirectInfo), { replace: true })
+      await navigateTo(localeRoute(redirectRoute), { replace: true })
       return
     }
 

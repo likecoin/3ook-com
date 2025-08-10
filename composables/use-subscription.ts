@@ -115,7 +115,7 @@ export function useSubscription() {
     utmMedium,
     utmSource,
     plan,
-    redirectInfo,
+    redirectRoute,
   }: {
     hasFreeTrial?: boolean
     mustCollectPaymentMethod?: boolean
@@ -123,7 +123,7 @@ export function useSubscription() {
     utmMedium?: string
     utmSource?: string
     plan?: SubscriptionPlan
-    redirectInfo?: {
+    redirectRoute?: {
       name: string
       params: Record<string, string>
       query: Record<string, string>
@@ -167,8 +167,8 @@ export function useSubscription() {
         utmMedium: utmMedium || analyticsParams.utmMedium,
         utmSource: utmSource || analyticsParams.utmSource,
       })
-      if (redirectInfo && (redirectInfo.name)) {
-        accountStore.savePlusRedirectRoute(redirectInfo)
+      if (redirectRoute && redirectRoute?.name) {
+        accountStore.savePlusRedirectRoute(redirectRoute)
       }
       await navigateTo(url, { external: true })
     }
