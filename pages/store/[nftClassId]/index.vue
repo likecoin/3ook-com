@@ -587,7 +587,7 @@ onMounted(() => {
   if (ownerWalletAddress) {
     metadataStore.lazyFetchLikerInfoByWalletAddress(ownerWalletAddress)
   }
-  const selectedPricingItemIndex = getRouteQuery('selectedPricingItemIndex')
+  const selectedPricingItemIndex = getRouteQuery('edition')
   if (selectedPricingItemIndex) {
     handlePurchaseButtonClick()
   }
