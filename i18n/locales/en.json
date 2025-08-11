@@ -204,5 +204,18 @@
   "upsell_plus_yearly_member": "Yearly",
   "upsell_plus_yearly_notice": "Become a Plus {year} member and you will {gift}",
   "upsell_plus_yearly_tooltip": "Once you become a member, the books will be delivered to your bookshelf immediately.",
-  "work_in_progress": "Work in progress"
+  "work_in_progress": "Work in progress",
+  "checkout_page_title": "Checkout",
+  "checkout_cart_items_title": "Cart Items ({count})",
+  "checkout_cart_empty_title": "Your cart is empty",
+  "checkout_cart_empty_description": "Add some books to get started",
+  "checkout_cart_empty_browse_button": "Browse Books",
+  "checkout_preparing_title": "Preparing Checkout...",
+  "checkout_loading_cart_items": "Loading cart items...",
+  "checkout_coupon_applied": "Coupon Applied: {code}",
+  "checkout_total_label": "Total:",
+  "checkout_quantity_label": "Qty: {quantity}",
+  "checkout_processing_button": "Processing...",
+  "checkout_complete_purchase_button": "Complete Purchase",
+  "checkout_by_author": "by {author}"
 }

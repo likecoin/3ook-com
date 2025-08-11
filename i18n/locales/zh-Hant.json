@@ -204,5 +204,18 @@
   "upsell_plus_yearly_member": "年費",
   "upsell_plus_yearly_notice": "成為 Plus {year} 會員，將即時{gift}",
   "upsell_plus_yearly_tooltip": "成為會員後，書籍將立即送達您的書架。",
-  "work_in_progress": "即將推出"
+  "work_in_progress": "即將推出",
+  "checkout_page_title": "結帳",
+  "checkout_cart_items_title": "購物車商品 ({count})",
+  "checkout_cart_empty_title": "購物車是空的",
+  "checkout_cart_empty_description": "添加一些書籍開始",
+  "checkout_cart_empty_browse_button": "瀏覽書籍",
+  "checkout_preparing_title": "準備結帳中...",
+  "checkout_loading_cart_items": "載入購物車商品...",
+  "checkout_coupon_applied": "已套用優惠券：{code}",
+  "checkout_total_label": "總計：",
+  "checkout_quantity_label": "數量：{quantity}",
+  "checkout_processing_button": "處理中...",
+  "checkout_complete_purchase_button": "完成購買",
+  "checkout_by_author": "作者 {author}"
 }

@@ -124,6 +124,74 @@ export function useLikeCoinSessionAPI() {
     })
   }
 
+  interface CartItem {
+    nftClassId: string
+    priceIndex: number
+    customPrice?: number
+    quantity?: number
+  }
+
+  function createBookCartPurchase(
+    items: CartItem[],
+    {
+      email,
+      from = 'liker_land',
+      coupon,
+      language,
+      referrer,
+      utmCampaign,
+      utmMedium,
+      utmSource,
+      gaClientId,
+      gaSessionId,
+      gadClickId,
+      gadSource,
+      fbClickId,
+    }: {
+      email?: string
+      coupon?: string
+      from?: string
+      language?: string
+      referrer?: string
+      utmCampaign?: string
+      utmMedium?: string
+      utmSource?: string
+      gaClientId?: string
+      gaSessionId?: string
+      gadClickId?: string
+      gadSource?: string
+      fbClickId?: string
+    },
+  ) {
+    return fetch.value<{ url: string, paymentId: string }>(`/likernft/book/purchase/cart/new`, {
+      method: 'POST',
+      query: {
+        from,
+      },
+      body: {
+        email,
+        items: items.map(item => ({
+          classId: item.nftClassId,
+          priceIndex: item.priceIndex,
+          customPriceInDecimal: item.customPrice !== undefined ? Math.floor(item.customPrice * 100) : undefined,
+          quantity: item.quantity,
+        })),
+        coupon,
+        language,
+        referrer,
+        utmCampaign,
+        utmSource,
+        utmMedium,
+        gaClientId,
+        gaSessionId,
+        gadClickId,
+        gadSource,
+        fbClickId,
+        site: '3ook.com',
+      },
+    })
+  }
+
   function fetchCartStatusById({ cartId, token }: { cartId: string, token: string }) {
     return fetch.value<FetchCartStatusByIdResponseData>(`/likernft/book/purchase/cart/${cartId}/status`, { query: { token } })
   }
@@ -209,6 +277,7 @@ export function useLikeCoinSessionAPI() {
 
   return {
     createNFTBookPurchase,
+    createBookCartPurchase,
     fetchCartStatusById,
     claimCartById,
     fetchLikerPlusCheckoutLink,
