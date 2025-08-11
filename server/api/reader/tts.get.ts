@@ -31,7 +31,7 @@ const LANG_MAPPING = {
 const VOICE_MAPPING: Record<string, string> = {
   0: 'Chinese (Mandarin)_Warm_Bestie',
   1: 'Boyan_new_platform',
-  pazu: 'book_pazu_v1',
+  pazu: 'book_pazu_v2',
   phoebe: 'phoebe_v1',
 }
 
