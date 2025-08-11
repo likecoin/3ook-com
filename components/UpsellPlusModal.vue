@@ -120,7 +120,7 @@
           size="xl"
           color="primary"
           :ui="{
-            base: 'py-2 laptop:py-3 rounded-2xl cursor-pointer',
+            base: 'py-2 laptop:py-3 cursor-pointer',
             label: 'font-bold',
           }"
           @click="() => handleSubscribe('yearly')"
@@ -133,7 +133,7 @@
           size="xl"
           color="primary"
           :ui="{
-            base: 'py-2 laptop:py-3 rounded-2xl cursor-pointer',
+            base: 'py-2 laptop:py-3 cursor-pointer',
             label: 'font-bold',
           }"
           @click="() => handleSubscribe('monthly')"
@@ -146,7 +146,7 @@
         size="xl"
         variant="link"
         :ui="{
-          base: 'rounded-2xl cursor-pointer',
+          base: 'cursor-pointer',
         }"
         @click="handleClose"
       />
