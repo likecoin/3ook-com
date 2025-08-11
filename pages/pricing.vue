@@ -17,28 +17,32 @@ const {
   currency,
 } = subscription
 
-const structuredData = computed(() => {
-  const pageURL = `${baseURL}/pricing`
-  const currentDate = new Date()
-  const oneYearLater = new Date(currentDate)
-  oneYearLater.setFullYear(currentDate.getFullYear() + 1)
-  const priceValidUntil = oneYearLater.toISOString().split('T')[0]
+const productGroup = '3ook-plus'
+const productId = '3ook-plus-beta'
 
+const structuredData = computed(() => {
   return {
     '@context': 'https://schema.org',
     '@type': 'Product',
     'name': $t('pricing_page_title'),
+    'brand': {
+      '@context': 'https://schema.org',
+      '@type': 'Brand',
+      'name': '3ook plus',
+      'url': canonicalURL.value,
+    },
     'description': $t('pricing_page_subscription_description'),
-    'url': pageURL,
+    'url': canonicalURL.value,
     'image': `${baseURL}/images/og/plus.jpg`,
+    'productID': productId,
     'offers': [
       {
         '@type': 'Offer',
         'price': yearlyPrice.value,
         'priceCurrency': currency.value,
         'availability': 'https://schema.org/InStock',
-        'priceValidUntil': priceValidUntil,
-        'url': pageURL,
+        'itemCondition': 'https://schema.org/NewCondition',
+        'url': canonicalURL.value,
         'offeredBy': {
           '@type': 'Organization',
           'name': '3ook.com',
@@ -59,8 +63,8 @@ const structuredData = computed(() => {
         'price': monthlyPrice.value,
         'priceCurrency': currency.value,
         'availability': 'https://schema.org/InStock',
-        'priceValidUntil': priceValidUntil,
-        'url': pageURL,
+        'itemCondition': 'https://schema.org/NewCondition',
+        'url': canonicalURL.value,
         'offeredBy': {
           '@type': 'Organization',
           'name': '3ook.com',
@@ -93,6 +97,17 @@ useHead({
     { property: 'og:image', content: `${baseURL}/images/og/plus.jpg` },
     { property: 'og:url', content: canonicalURL.value },
     { property: 'og:type', content: 'product' },
+    { property: 'og:price:amount', content: monthlyPrice.value },
+    { property: 'og:price:currency', content: currency.value },
+    { property: 'product:price:amount', content: monthlyPrice.value },
+    { property: 'product:price:currency', content: currency.value },
+    { property: 'product:brand', content: '3ook plus' },
+    { property: 'product:availability', content: 'in stock' },
+    { property: 'product:condition', content: 'new' },
+    { property: 'product:catalog_id', content: productId },
+    { property: 'product:retailer_item_id', content: productId },
+    { property: 'product:item_group_id', content: productGroup },
+    { property: 'product:category', content: 6028 }, // Media Viewing Software
   ],
   link: [
     { rel: 'canonical', href: canonicalURL.value },
