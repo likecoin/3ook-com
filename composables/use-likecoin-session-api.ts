@@ -53,13 +53,16 @@ export interface MigrateMagicEmailUserResponseData {
 export function useLikeCoinSessionAPI() {
   const config = useRuntimeConfig()
   const { loggedIn: hasLoggedIn, user } = useUserSession()
-  const fetchOptions: FetchOptions = {
-    baseURL: config.public.likeCoinAPIEndpoint,
-  }
-  if (hasLoggedIn && user.value?.token) {
-    fetchOptions.headers = { Authorization: `Bearer ${user.value?.token}` }
-  }
-  const fetch = $fetch.create(fetchOptions)
+
+  const fetch = computed(() => {
+    const fetchOptions: FetchOptions = {
+      baseURL: config.public.likeCoinAPIEndpoint,
+    }
+    if (hasLoggedIn && user.value?.token) {
+      fetchOptions.headers = { Authorization: `Bearer ${user.value?.token}` }
+    }
+    return $fetch.create(fetchOptions)
+  })
 
   function createNFTBookPurchase({
     email,
@@ -96,7 +99,7 @@ export function useLikeCoinSessionAPI() {
     gadSource?: string
     fbClickId?: string
   }) {
-    return fetch<{ url: string, paymentId: string }>(`/likernft/book/purchase/${nftClassId}/new`, {
+    return fetch.value<{ url: string, paymentId: string }>(`/likernft/book/purchase/${nftClassId}/new`, {
       method: 'POST',
       query: {
         price_index: priceIndex,
@@ -122,11 +125,11 @@ export function useLikeCoinSessionAPI() {
   }
 
   function fetchCartStatusById({ cartId, token }: { cartId: string, token: string }) {
-    return fetch<FetchCartStatusByIdResponseData>(`/likernft/book/purchase/cart/${cartId}/status`, { query: { token } })
+    return fetch.value<FetchCartStatusByIdResponseData>(`/likernft/book/purchase/cart/${cartId}/status`, { query: { token } })
   }
 
   function claimCartById({ cartId, token, paymentId, wallet }: { cartId: string, token: string, paymentId: string, wallet: string }) {
-    return fetch<ClaimCartByIdResponseData>(`/likernft/book/purchase/cart/${cartId}/claim`, {
+    return fetch.value<ClaimCartByIdResponseData>(`/likernft/book/purchase/cart/${cartId}/claim`, {
       method: 'POST',
       query: { token },
       body: { wallet, paymentId },
@@ -162,7 +165,7 @@ export function useLikeCoinSessionAPI() {
     gadSource?: string
     fbClickId?: string
   }) {
-    return fetch<FetchLikerPlusCheckoutLinkResponseData>(`/plus/new`, {
+    return fetch.value<FetchLikerPlusCheckoutLinkResponseData>(`/plus/new`, {
       method: 'POST',
       query: { period, from },
       body: {
@@ -182,7 +185,7 @@ export function useLikeCoinSessionAPI() {
   }
 
   function fetchLikerPlusBillingPortalLink() {
-    return fetch<FetchLikerPlusBillingPortalLinkResponseData>(`/plus/portal`, { method: 'POST' })
+    return fetch.value<FetchLikerPlusBillingPortalLinkResponseData>(`/plus/portal`, { method: 'POST' })
   }
 
   async function migrateMagicEmailUser({
@@ -194,7 +197,7 @@ export function useLikeCoinSessionAPI() {
     signature: string
     message: string
   }) {
-    return fetch<MigrateMagicEmailUserResponseData>(`/wallet/evm/migrate/email/magic`, {
+    return fetch.value<MigrateMagicEmailUserResponseData>(`/wallet/evm/migrate/email/magic`, {
       method: 'POST',
       body: {
         wallet,
