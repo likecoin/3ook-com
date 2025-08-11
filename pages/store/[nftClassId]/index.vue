@@ -476,7 +476,7 @@ useHead(() => ({
   ],
   script: structuredData.value
     ? [
-        { type: 'application/ld+json', children: JSON.stringify(structuredData.value) },
+        { type: 'application/ld+json', innerHTML: JSON.stringify(structuredData.value) },
       ]
     : [],
 }))

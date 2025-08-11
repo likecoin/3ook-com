@@ -1,5 +1,6 @@
 export function useStructuredData({ nftClassId }: { nftClassId: string }) {
   const bookInfo = useBookInfo({ nftClassId })
+  const config = useRuntimeConfig()
 
   function generateOGMetaTags({
     selectedPricingItemIndex = 0,
@@ -31,7 +32,7 @@ export function useStructuredData({ nftClassId }: { nftClassId: string }) {
       content: 'USD',
     },
     {
-      property: 'og:availability',
+      property: 'product:availability',
       content: pricingItem.isSoldOut ? 'out of stock' : 'in stock',
     },
     {
@@ -45,6 +46,10 @@ export function useStructuredData({ nftClassId }: { nftClassId: string }) {
     {
       property: 'product:retailer_item_id',
       content: `${nftClassId}-${pricingItem.index}`,
+    },
+    {
+      property: 'item_group_id',
+      content: nftClassId,
     },
     {
       property: 'product:category',
@@ -67,6 +72,10 @@ export function useStructuredData({ nftClassId }: { nftClassId: string }) {
       content: 'product',
     }]
     if (isbn) {
+      meta.push({
+        property: 'product:gtin',
+        content: isbn,
+      })
       meta.push({
         property: 'product:isbn',
         content: isbn,
@@ -142,12 +151,61 @@ export function useStructuredData({ nftClassId }: { nftClassId: string }) {
             '@type': 'Person',
             'identifier': bookInfo.nftClassOwnerWalletAddress.value,
           },
+          'url': `${canonicalURL}?price_index=${pricing.index}`,
           'price': pricing?.price || 0,
           'priceCurrency': 'USD',
           'availability': pricing?.isSoldOut ? 'https://schema.org/SoldOut' : 'https://schema.org/LimitedAvailability',
           'itemCondition': 'https://schema.org/NewCondition',
+          'checkoutPageURLTemplate': `${config.public.apiBaseURL}/likernft/book/purchase/${nftClassId}/new?price_index=${pricing.index}&utm_medium=structured-data`,
+          'shippingDetails': {
+            '@type': 'OfferShippingDetails',
+            'shippingRate': pricing.hasShipping
+              ? {
+                  '@type': 'MonetaryAmount',
+                  'value': 10,
+                  'currency': 'USD',
+                }
+              : {
+                  '@type': 'MonetaryAmount',
+                  'value': 0,
+                  'currency': 'USD',
+                },
+            'deliveryTime': {
+              '@type': 'ShippingDeliveryTime',
+              'handlingTime': pricing.hasShipping
+                ? {
+                    '@type': 'QuantitativeValue',
+                    'minValue': 1,
+                    'maxValue': 7,
+                    'unitCode': 'DAY',
+                  }
+                : {
+                    '@type': 'QuantitativeValue',
+                    'minValue': 0,
+                    'maxValue': 0,
+                    'unitCode': 'DAY',
+                  },
+              'transitTime': (pricing.hasShipping || pricing.isAutoDeliver)
+                ? {
+                    '@type': 'QuantitativeValue',
+                    'minValue': 1,
+                    'maxValue': 7,
+                    'unitCode': 'DAY',
+                  }
+                : {
+                    '@type': 'QuantitativeValue',
+                    'minValue': 0,
+                    'maxValue': 0,
+                    'unitCode': 'DAY',
+                  },
+            },
+          },
+          'hasMerchantReturnPolicy': {
+            '@type': 'MerchantReturnPolicy',
+            'returnPolicyCategory': 'https://schema.org/MerchantReturnNotPermitted',
+          },
         },
-        productId,
+        'productID': productId,
         'inProductGroupWithID': nftClassId,
       }
     })

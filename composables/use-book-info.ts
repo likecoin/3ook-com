@@ -170,6 +170,7 @@ export default function ({ nftClassId = '' }: { nftClassId?: string } = {}) {
           canTip: item.isAllowCustomPrice,
           isPhysicalOnly: item.isPhysicalOnly,
           isAutoDeliver: item.isAutoDeliver,
+          hasShipping: item.hasShipping,
         }
       })
   })
