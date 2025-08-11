@@ -90,7 +90,7 @@ onMounted(async () => {
         },
       }), { replace: true })
     }
-    const redirectRoute = accountStore.getStoredPlusRedirectInfo()
+    const redirectRoute = accountStore.getPlusRedirectRoute()
 
     if (redirectRoute && redirectRoute.name) {
       accountStore.clearPlusRedirectRoute()

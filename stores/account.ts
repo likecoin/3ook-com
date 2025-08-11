@@ -518,13 +518,13 @@ export const useAccountStore = defineStore('account', () => {
     localStorage.setItem('plus_redirect_route', JSON.stringify(route))
   }
 
-  const getStoredPlusRedirectInfo = () => {
+  function getPlusRedirectRoute() {
     try {
-      const stored = localStorage.getItem('plus_redirect_route')
-      return stored ? JSON.parse(stored) : null
+      const strRoute = localStorage.getItem('plus_redirect_route')
+      return strRoute ? JSON.parse(strRoute) : null
     }
     catch (error) {
-      console.error('Failed to parse stored redirect info:', error)
+      console.error('Failed to parse stored redirect route:', error)
       clearPlusRedirectRoute()
       return null
     }
@@ -546,7 +546,7 @@ export const useAccountStore = defineStore('account', () => {
     exportPrivateKey,
     clearCaches,
     clearPlusRedirectRoute,
-    getStoredPlusRedirectInfo,
+    getPlusRedirectRoute,
     savePlusRedirectRoute,
   }
 })
