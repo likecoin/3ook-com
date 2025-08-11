@@ -4,7 +4,7 @@
     :ui="{
       title: 'text-sm laptop:text-base font-bold text-center',
       footer: 'flex flex-col items-center w-full',
-      body: 'w-full flex flex-col items-start mx-0 laptop:mx-6 gap-2 text-sm laptop:text-base',
+      body: 'flex flex-col items-start gap-2 max-laptop:text-sm',
     }"
     @update:open="onOpenUpdate"
   >
