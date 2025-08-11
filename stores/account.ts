@@ -515,10 +515,17 @@ export const useAccountStore = defineStore('account', () => {
     query: Record<string, string>
     hash: string
   }) {
-    localStorage.setItem('plus_redirect_route', JSON.stringify(route))
+    if (!window.localStorage) return
+    try {
+      localStorage.setItem('plus_redirect_route', JSON.stringify(route))
+    }
+    catch (error) {
+      console.warn('Failed to store redirect route:', error)
+    }
   }
 
   function getPlusRedirectRoute() {
+    if (!window.localStorage) return null
     try {
       const strRoute = localStorage.getItem('plus_redirect_route')
       return strRoute ? JSON.parse(strRoute) : null
@@ -531,7 +538,13 @@ export const useAccountStore = defineStore('account', () => {
   }
 
   function clearPlusRedirectRoute() {
-    localStorage.removeItem('plus_redirect_route')
+    if (!window.localStorage) return
+    try {
+      localStorage.removeItem('plus_redirect_route')
+    }
+    catch (error) {
+      console.warn('Failed to clear stored redirect route:', error)
+    }
   }
 
   return {
