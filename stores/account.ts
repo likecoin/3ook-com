@@ -1,7 +1,7 @@
 import { useAccount, useConnect, useDisconnect, useSignMessage } from '@wagmi/vue'
 import { UserRejectedRequestError } from 'viem'
 import { FetchError } from 'ofetch'
-import { useStorage, StorageSerializers } from '@vueuse/core'
+import { useStorage } from '@vueuse/core'
 import type { Magic } from 'magic-sdk'
 
 import { LoginModal, RegistrationModal } from '#components'
@@ -29,7 +29,6 @@ export const useAccountStore = defineStore('account', () => {
   const isLoggingIn = ref(false)
   const isConnectModalOpen = ref(false)
   const isClearingCaches = ref(false)
-  const plusRedirectRoute = useStorage('plus_redirect_route', {}, undefined, { serializer: StorageSerializers.object })
 
   watch(
     () => user.value,
@@ -517,11 +516,23 @@ export const useAccountStore = defineStore('account', () => {
     query: Record<string, string>
     hash: string
   }) {
-    plusRedirectRoute.value = route
+    useStorage('plus_redirect_route', route)
+  }
+
+  const getStoredPlusRedirectInfo = () => {
+    try {
+      const stored = localStorage.getItem('plus_redirect_route')
+      return stored ? JSON.parse(stored) : null
+    }
+    catch (error) {
+      console.error('Failed to parse stored redirect info:', error)
+      clearPlusRedirectRoute()
+      return null
+    }
   }
 
   function clearPlusRedirectRoute() {
-    plusRedirectRoute.value = null
+    useStorage('plus_redirect_route', null)
   }
 
   return {
@@ -529,7 +540,6 @@ export const useAccountStore = defineStore('account', () => {
     isLoggingIn,
     isConnectModalOpen,
     isClearingCaches,
-    plusRedirectRoute,
 
     login,
     logout,
@@ -537,6 +547,7 @@ export const useAccountStore = defineStore('account', () => {
     exportPrivateKey,
     clearCaches,
     clearPlusRedirectRoute,
+    getStoredPlusRedirectInfo,
     savePlusRedirectRoute,
   }
 })
