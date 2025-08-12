@@ -82,7 +82,7 @@
                       <span class="text-green-600 font-semibold">
                         <span
                           class="text-xs mr-0.5"
-                          v-text="'USD'"
+                          v-text="totalCurrency"
                         />
                         <span v-text="formatPrice((item.pricingItem?.price || 0) * item.quantity)" />
                       </span>
@@ -243,32 +243,29 @@ onMounted(async () => {
   if (products.value.length > 0) {
     isLoading.value = true
     loadingProgress.value = 10
-
-    for (let i = 0; i < products.value.length; i++) {
-      const product = products.value[i]
-      if (!product) continue
-
-      loadingProgress.value = 10 + (i / products.value.length) * 80
-
-      try {
-        await nftStore.lazyFetchNFTClassAggregatedMetadataById(product.classId)
-      }
-      catch (error) {
-        console.error(`Failed to load metadata for ${product.classId}:`, error)
-      }
-    }
-
+    await Promise.all(
+      products.value.map(async (product) => {
+        if (!product) return
+        try {
+          await nftStore.lazyFetchNFTClassAggregatedMetadataById(product.classId)
+          loadingProgress.value += (90 / products.value.length)
+        }
+        catch (error) {
+          console.error(`Failed to load metadata for ${product.classId}:`, error)
+        }
+      }),
+    )
     loadingProgress.value = 100
 
     if (cartItems.value.length > 0) {
       useLogEvent('add_to_cart', {
-        currency: 'USD',
+        currency: totalCurrency.value,
         value: totalPrice.value,
         items: cartItems.value.map(item => ({
           id: `${item.classId}-${item.priceIndex}`,
           name: item.bookInfo?.name || '',
           price: item.pricingItem?.price || 0,
-          currency: 'USD',
+          currency: totalCurrency.value,
           quantity: item.quantity,
           google_business_vertical: 'retail',
         })),
@@ -342,7 +339,7 @@ function parseProducts(productsString: string): Array<{ classId: string, priceIn
     })
   }
   catch (error) {
-    console.error('Error parsing products:', error)
+    handleError(error)
     return []
   }
 }
@@ -375,7 +372,7 @@ async function handleCheckout() {
         id: `${item.classId}-${item.priceIndex}`,
         name: item.bookInfo?.name || '',
         price: item.pricingItem?.price || 0,
-        currency: 'USD',
+        currency: totalCurrency.value,
         quantity: item.quantity,
         google_business_vertical: 'retail',
       })),
@@ -391,7 +388,7 @@ async function handleCheckout() {
 }
 
 useHead(() => ({
-  title: `${$t('checkout_page_title')} - ${$t('app_title')}`,
+  title: [$t('checkout_page_title'), $t('app_title')].join(' - '),
   meta: [
     { name: 'robots', content: 'noindex, nofollow' },
   ],
