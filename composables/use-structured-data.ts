@@ -175,7 +175,7 @@ export function useStructuredData({ nftClassId }: { nftClassId: string }) {
                 },
             'deliveryTime': {
               '@type': 'ShippingDeliveryTime',
-              'handlingTime': pricing.hasShipping
+              'handlingTime': (pricing.hasShipping || !pricing.isAutoDeliver)
                 ? {
                     '@type': 'QuantitativeValue',
                     'minValue': 1,
@@ -188,7 +188,7 @@ export function useStructuredData({ nftClassId }: { nftClassId: string }) {
                     'maxValue': 0,
                     'unitCode': 'DAY',
                   },
-              'transitTime': (pricing.hasShipping || pricing.isAutoDeliver)
+              'transitTime': pricing.hasShipping
                 ? {
                     '@type': 'QuantitativeValue',
                     'minValue': 1,
