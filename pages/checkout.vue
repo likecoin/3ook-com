@@ -168,7 +168,7 @@
 </template>
 
 <script setup lang="ts">
-interface CartItem {
+interface CheckoutItem {
   classId: string
   priceIndex: number
   quantity: number
@@ -198,7 +198,7 @@ const couponCode = getRouteQuery('coupon', '')
 
 const products = computed(() => parseProducts(productsQuery))
 
-const cartItems = computed<CartItem[]>(() => {
+const cartItems = computed<CheckoutItem[]>(() => {
   return products.value.map((product) => {
     const nftClass = nftStore.getNFTClassMetadataById(product.classId)
     const bookstoreInfo = bookstoreStore.getBookstoreInfoByNFTClassId(product.classId)
@@ -233,7 +233,7 @@ const cartItems = computed<CartItem[]>(() => {
       bookInfo,
       pricingItem,
     }
-  }).filter(Boolean) as CartItem[]
+  }).filter(Boolean) as CheckoutItem[]
 })
 const isLoading = ref(true)
 const isPurchasing = ref(false)
@@ -305,7 +305,10 @@ function parseProducts(productsString: string): Array<{ classId: string, priceIn
       const quantity = quantityStr ? parseInt(quantityStr, 10) || 1 : 1
 
       if (!productId) {
-        throw new Error(`Invalid product format: empty classId in "${productString}"`)
+        throw createError({
+          statusCode: 400,
+          message: `Invalid product format: "${productString}"`,
+        })
       }
 
       const lastDashIndex = productId.lastIndexOf('-')
