@@ -38,7 +38,7 @@ export function useLogEvent(eventName: string, eventParams: EventParams = {}) {
         currency,
         items,
       } = eventParams
-      const eventId = paymentId ? `${eventName}_${paymentId}` : undefined
+      const eventId = paymentId ? `${eventNameMapping[eventName]}_${paymentId}` : undefined
       proxy.fbq('track', eventNameMapping[eventName], {
         currency,
         value,
