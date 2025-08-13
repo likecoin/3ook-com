@@ -106,6 +106,9 @@ export function useStructuredData({ nftClassId }: { nftClassId: string }) {
     if (bookInfo.isHidden.value) {
       return []
     }
+
+    const baseURL = config.public.baseURL
+
     const name = bookInfo.name.value
     const description = bookInfo.description.value
     const authorName = bookInfo.authorName.value
@@ -156,7 +159,7 @@ export function useStructuredData({ nftClassId }: { nftClassId: string }) {
           'priceCurrency': 'USD',
           'availability': pricing?.isSoldOut ? 'https://schema.org/SoldOut' : 'https://schema.org/LimitedAvailability',
           'itemCondition': 'https://schema.org/NewCondition',
-          'checkoutPageURLTemplate': `${config.public.apiBaseURL}/likernft/book/purchase/${nftClassId}/new?price_index=${pricing.index}&utm_medium=structured-data`,
+          'checkoutPageURLTemplate': `${baseURL}/checkout?products=${productId}&utm_medium=structured-data`,
           'shippingDetails': {
             '@type': 'OfferShippingDetails',
             'shippingRate': pricing.hasShipping
