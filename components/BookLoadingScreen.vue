@@ -1,28 +1,15 @@
 <template>
   <div class="flex flex-col justify-center items-center py-[56px]">
-    <NuxtLink :to="$localeRoute({ name: 'shelf' })">
-      <AppLogo
-        class="text-green-500 shrink-0"
-        :height="24"
-      />
-    </NuxtLink>
-
     <BookCover
       class="relative max-w-[164px] w-full max-h-[25vh] mt-[8vh] shrink-0"
       :src="props.bookCoverSrc"
       :alt="props.bookName"
       :has-shadow="true"
     />
-    <img
-      class="w-full max-w-[432px] h-[78px] -mt-[10px] object-cover pointer-events-none"
-      src="~/assets/images/bookshelf.png"
-    >
-
     <span
       :class="[
         'h-[1em]',
         'mt-4',
-        'text-green-500',
         'text-[40px]',
       ]"
     >
@@ -32,7 +19,7 @@
       />
     </span>
     <span
-      class="min-h-9 mt-1 text-green-500 text-xl font-bold leading-9"
+      class="min-h-9 mt-1 text-xl font-bold leading-9 text-center whitespace-pre-wrap"
       v-text="iconLabel"
     />
 
