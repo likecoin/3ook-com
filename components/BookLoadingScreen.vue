@@ -19,12 +19,12 @@
       />
     </span>
     <span
-      class="min-h-9 mt-1 text-xl font-bold leading-9 text-center whitespace-pre-wrap"
+      class="min-h-9 mt-1 text-xl font-bold leading-9 text-center"
       v-text="iconLabel"
     />
 
     <span
-      class="text-sm laptop:text-base text-[#949494] font-semibold"
+      class="text-sm laptop:text-base text-[#949494] font-semibold text-center"
       v-text="props.bookName"
     />
 
