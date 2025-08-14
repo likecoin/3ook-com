@@ -16,7 +16,7 @@
       :book-cover-src="bookCoverSrc"
       icon="i-material-symbols-check-circle-rounded"
       :icon-label="$t('claim_page_purchase_successful_label')"
-      :loading-label="$t('claim_page_loading_label')"
+      :loading-label="dynamicLoadingLabel"
     >
       <template
         v-if="canStartReading"
@@ -69,6 +69,16 @@ const cartId = computed(() => getRouteQuery('cart_id'))
 const claimingToken = computed(() => getRouteQuery('claiming_token'))
 const paymentId = computed(() => getRouteQuery('payment_id'))
 
+const loadingLabels = [
+  $t('claim_page_loading_step_1'),
+  $t('claim_page_loading_step_2'),
+  $t('claim_page_loading_step_3'),
+]
+const loadingLabelInterval = ref<ReturnType<typeof setInterval> | null>(null)
+const currentLoadingLabelIndex = ref(0)
+const dynamicLoadingLabel = computed(() =>
+  loadingLabels[currentLoadingLabelIndex.value] || $t('claim_page_loading_label'),
+)
 if (!cartId.value || !claimingToken.value || !paymentId.value) {
   throw createError({
     statusCode: 400,
@@ -148,6 +158,11 @@ async function waitForItemsDelivery({ timeout = 30000, interval = 3000 } = {}) {
   if (isCheckingItemsDelivery.value || !isAutoDeliver.value) return
   try {
     isCheckingItemsDelivery.value = true
+
+    if (!loadingLabelInterval.value) {
+      startLoadingLabelAnimation()
+    }
+
     const start = Date.now()
     while (!canStartReading.value) {
       await checkItemsDeliveryThroughIndexer()
@@ -172,6 +187,10 @@ async function waitForItemsDelivery({ timeout = 30000, interval = 3000 } = {}) {
   }
   finally {
     isCheckingItemsDelivery.value = false
+
+    if (canStartReading.value) {
+      stopLoadingLabelAnimation()
+    }
   }
 }
 
@@ -182,6 +201,9 @@ async function startClaimingItems() {
 
   try {
     isClaiming.value = true
+
+    startLoadingLabelAnimation()
+
     const claimingWallet = user.value?.evmWallet
     if (!claimingWallet) {
       throw createError({
@@ -265,6 +287,7 @@ async function startClaimingItems() {
   }
   finally {
     isClaiming.value = false
+    stopLoadingLabelAnimation()
   }
 
   if (isClaimed.value) {
@@ -288,7 +311,7 @@ onMounted(() => {
   }
 })
 
-watch(hasLoggedIn, (value) => {
+watch(hasLoggedIn, (value: boolean) => {
   if (value) {
     startClaimFlow()
   }
@@ -314,4 +337,33 @@ function handleStartReadingButtonClick() {
     })
   }
 }
+
+function startLoadingLabelAnimation() {
+  if (loadingLabelInterval.value) {
+    clearInterval(loadingLabelInterval.value)
+  }
+
+  currentLoadingLabelIndex.value = 0
+  loadingLabelInterval.value = setInterval(() => {
+    currentLoadingLabelIndex.value++
+
+    if (currentLoadingLabelIndex.value >= loadingLabels.length - 1) {
+      if (loadingLabelInterval.value) {
+        clearInterval(loadingLabelInterval.value)
+        loadingLabelInterval.value = null
+      }
+    }
+  }, 5000)
+}
+
+function stopLoadingLabelAnimation() {
+  if (loadingLabelInterval.value) {
+    clearInterval(loadingLabelInterval.value)
+    loadingLabelInterval.value = null
+  }
+}
+
+onUnmounted(() => {
+  stopLoadingLabelAnimation()
+})
 </script>
