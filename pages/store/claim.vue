@@ -1,5 +1,7 @@
 <template>
-  <main class="flex flex-col justify-center items-center min-h-svh mb-safe py-[56px]">
+  <main
+    class="flex flex-col justify-center items-center min-h-svh mb-safe py-[48px] px-[24px]"
+  >
     <template v-if="!hasLoggedIn">
       <p
         class="text-center text-gray-500 mb-4"
@@ -15,7 +17,7 @@
       :book-name="bookInfo?.name.value"
       :book-cover-src="bookCoverSrc"
       icon="i-material-symbols-check-circle-rounded"
-      :icon-label="$t('claim_page_purchase_successful_label')"
+      :icon-label="claimTitle"
       :loading-label="$t('claim_page_loading_label')"
     >
       <template
@@ -24,12 +26,18 @@
       >
         <UButton
           v-if="canStartReading"
-          class="max-w-[348px]"
           :to="readerRoute"
           :label="$t('claim_page_start_reading_button_label')"
           size="xl"
           block
           @click="handleStartReadingButtonClick"
+        />
+        <UButton
+          :label="$t('claim_page_back_to_bookstore_button_label')"
+          size="xl"
+          variant="ghost"
+          block
+          :to="localeRoute({ name: 'store' })"
         />
       </template>
       <template
@@ -69,6 +77,16 @@ const cartId = computed(() => getRouteQuery('cart_id'))
 const claimingToken = computed(() => getRouteQuery('claiming_token'))
 const paymentId = computed(() => getRouteQuery('payment_id'))
 
+const claimTitle = computed(() => {
+  if (canStartReading.value) {
+    return $t('claim_page_start_reading_footer_label')
+  }
+  if (!isAutoDeliver.value) {
+    return $t('claim_page_wait_for_delivery')
+  }
+  return $t('claim_page_title')
+})
+
 if (!cartId.value || !claimingToken.value || !paymentId.value) {
   throw createError({
     statusCode: 400,
@@ -84,6 +102,15 @@ const { data: cartData, error: cartDataError } = await useAsyncData(cartId.value
   })
   return data
 })
+// TODO: Handle multiple items in the cart
+const nftClassId = computed(() => cartData.value?.classIds[0])
+
+const { open: openCollectorMessageModal } = useCollectorMessage({
+  classId: nftClassId.value as string,
+  paymentId: paymentId.value as string,
+  claimingToken: claimingToken.value as string,
+})
+
 if (cartDataError.value) {
   console.error('Error fetching cart data:', cartDataError.value)
   const { statusCode, message } = parseError(cartDataError.value)
@@ -93,9 +120,6 @@ if (cartDataError.value) {
     fatal: true,
   })
 }
-
-// TODO: Handle multiple items in the cart
-const nftClassId = computed(() => cartData.value?.classIds[0])
 
 await callOnce(nftClassId.value, async () => {
   if (!nftClassId.value) {
@@ -143,6 +167,26 @@ async function checkItemsDeliveryThroughIndexer() {
 
 const isCheckingItemsDelivery = ref(false)
 const hasBypassedIndexer = ref(false)
+
+onMounted(() => {
+  if (hasLoggedIn.value) {
+    startClaimFlow()
+
+    setTimeout(() => {
+      openCollectorMessageModal({
+        bookCoverSrc: bookCoverSrc.value,
+        bookName: bookInfo.name.value,
+        bookAuthor: bookInfo.authorName.value,
+      })
+    }, 3000)
+  }
+})
+
+watch(hasLoggedIn, (value) => {
+  if (value) {
+    startClaimFlow()
+  }
+})
 
 async function waitForItemsDelivery({ timeout = 30000, interval = 3000 } = {}) {
   if (isCheckingItemsDelivery.value || !isAutoDeliver.value) return
@@ -281,18 +325,6 @@ function startClaimFlow() {
     startClaimingItems()
   }
 }
-
-onMounted(() => {
-  if (hasLoggedIn.value) {
-    startClaimFlow()
-  }
-})
-
-watch(hasLoggedIn, (value) => {
-  if (value) {
-    startClaimFlow()
-  }
-})
 
 async function handleLogin(connectorId: string) {
   if (hasLoggedIn.value) return
