@@ -275,6 +275,25 @@ export function useLikeCoinSessionAPI() {
     })
   }
 
+  async function sendCollectorMessage({
+    classId,
+    paymentId,
+    message,
+    wallet,
+    claimToken,
+  }: {
+    classId: string
+    paymentId: string
+    message: string
+    wallet: string
+    claimToken: string
+  }) {
+    return fetch.value<string>(`/likernft/book/purchase/class/${classId}/memo/${paymentId}?token=${claimToken}`, {
+      method: 'POST',
+      body: { message, wallet },
+    })
+  }
+
   return {
     createNFTBookPurchase,
     createBookCartPurchase,
@@ -283,5 +302,6 @@ export function useLikeCoinSessionAPI() {
     fetchLikerPlusCheckoutLink,
     fetchLikerPlusBillingPortalLink,
     migrateMagicEmailUser,
+    sendCollectorMessage,
   }
 }
