@@ -69,15 +69,15 @@ const cartId = computed(() => getRouteQuery('cart_id'))
 const claimingToken = computed(() => getRouteQuery('claiming_token'))
 const paymentId = computed(() => getRouteQuery('payment_id'))
 
-const loadingLabels = [
+const loadingLabels = computed(() => [
   $t('claim_page_loading_step_1'),
   $t('claim_page_loading_step_2'),
   $t('claim_page_loading_step_3'),
-]
+])
 
 const currentLoadingLabelIndex = ref(0)
 const dynamicLoadingLabel = computed(() =>
-  loadingLabels[currentLoadingLabelIndex.value] || $t('claim_page_loading_label'),
+  loadingLabels.value[currentLoadingLabelIndex.value] || $t('claim_page_loading_label'),
 )
 
 const {
@@ -87,7 +87,7 @@ const {
 } = useIntervalFn(() => {
   currentLoadingLabelIndex.value++
 
-  if (currentLoadingLabelIndex.value >= loadingLabels.length - 1) {
+  if (currentLoadingLabelIndex.value >= loadingLabels.value.length - 1) {
     pauseLoadingAnimation()
   }
 }, 5000, { immediate: false })
@@ -359,8 +359,4 @@ function startLoadingLabelAnimation() {
 function stopLoadingLabelAnimation() {
   pauseLoadingAnimation()
 }
-
-onUnmounted(() => {
-  stopLoadingLabelAnimation()
-})
 </script>
