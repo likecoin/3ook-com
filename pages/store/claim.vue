@@ -16,7 +16,7 @@
       :book-cover-src="bookCoverSrc"
       icon="i-material-symbols-check-circle-rounded"
       :icon-label="$t('claim_page_purchase_successful_label')"
-      :loading-label="dynamicLoadingLabel"
+      :loading-label="currentLoadingLabel"
     >
       <template
         v-if="canStartReading"
@@ -69,28 +69,51 @@ const cartId = computed(() => getRouteQuery('cart_id'))
 const claimingToken = computed(() => getRouteQuery('claiming_token'))
 const paymentId = computed(() => getRouteQuery('payment_id'))
 
-const loadingLabels = computed(() => [
+const baseLoadingLabels = computed(() => [
   $t('claim_page_loading_step_1'),
   $t('claim_page_loading_step_2'),
-  $t('claim_page_loading_step_3'),
 ])
 
-const currentLoadingLabelIndex = ref(0)
-const dynamicLoadingLabel = computed(() =>
-  loadingLabels.value[currentLoadingLabelIndex.value] || $t('claim_page_loading_label'),
-)
+const finalLoadingVariants = computed(() => [
+  $t('claim_page_loading_step_3'),
+  $t('claim_page_loading_step_3_alt_1'),
+  $t('claim_page_loading_step_3_alt_2'),
+  $t('claim_page_loading_step_3_alt_3'),
+  $t('claim_page_loading_step_3_alt_4'),
+  $t('claim_page_loading_step_3_alt_5'),
+  $t('claim_page_loading_step_3_alt_6'),
+  $t('claim_page_loading_step_3_alt_7'),
+  $t('claim_page_loading_step_3_alt_8'),
+  $t('claim_page_loading_step_3_alt_9'),
+])
+
+const currentLoadingLabel = ref($t('claim_page_loading_label'))
+const step = ref(0)
 
 const {
   pause: pauseLoadingLabelAnimation,
   resume: resumeLoadingLabelAnimation,
   isActive: isLoadingLabelAnimationActive,
 } = useIntervalFn(() => {
-  currentLoadingLabelIndex.value++
-
-  if (currentLoadingLabelIndex.value >= loadingLabels.value.length - 1) {
-    pauseLoadingLabelAnimation()
+  if (step.value < baseLoadingLabels.value.length - 1) {
+    step.value++
+    currentLoadingLabel.value = baseLoadingLabels.value[step.value] || $t('claim_page_loading_label')
+  }
+  else {
+    const i = Math.floor(Math.random() * finalLoadingVariants.value.length)
+    currentLoadingLabel.value = finalLoadingVariants.value[i] || $t('claim_page_loading_label')
   }
 }, 5000, { immediate: false })
+
+function startLoadingLabelAnimation() {
+  step.value = 0
+  currentLoadingLabel.value = baseLoadingLabels.value[0] || $t('claim_page_loading_label')
+  resumeLoadingLabelAnimation()
+}
+
+function stopLoadingLabelAnimation() {
+  pauseLoadingLabelAnimation()
+}
 
 if (!cartId.value || !claimingToken.value || !paymentId.value) {
   throw createError({
@@ -349,14 +372,5 @@ function handleStartReadingButtonClick() {
       },
     })
   }
-}
-
-function startLoadingLabelAnimation() {
-  currentLoadingLabelIndex.value = 0
-  resumeLoadingLabelAnimation()
-}
-
-function stopLoadingLabelAnimation() {
-  pauseLoadingLabelAnimation()
 }
 </script>
