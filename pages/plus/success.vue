@@ -132,7 +132,7 @@ onMounted(async () => {
           payment_id: giftPaymentId,
           claiming_token: giftClaimToken,
           cart_id: giftCartId,
-          class_id: giftNFTClassId,
+          nft_class_id: giftNFTClassId,
         },
       }), { replace: true })
     }

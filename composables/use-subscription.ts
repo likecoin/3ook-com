@@ -1,6 +1,6 @@
 import { PaywallModal, UpsellPlusModal } from '#components'
 import type { PaywallModalProps } from '~/components/PaywallModal.props'
-import type { UpsellPlusModalProps } from '~/components/UpsellPlusModal.props'
+import type { UpsellPlusModalProps, UpsellPlusModalSubscribeEventPayload } from '~/components/UpsellPlusModal.props'
 
 export function useSubscription() {
   const likeCoinSessionAPI = useLikeCoinSessionAPI()
@@ -90,7 +90,7 @@ export function useSubscription() {
     return paywallModal.open(modalProps.value).result
   }
 
-  async function checkAndOpenUpsellPlusModal(props: UpsellPlusModalProps = {}) {
+  async function openUpsellPlusModalIfEligible(props: UpsellPlusModalProps = {}) {
     if (upsellPlusModal.isOpen) {
       upsellPlusModal.close()
     }
@@ -119,23 +119,9 @@ export function useSubscription() {
     utmMedium,
     utmSource,
     plan,
-    classId,
+    nftClassId,
     redirectRoute,
-  }: {
-    hasFreeTrial?: boolean
-    mustCollectPaymentMethod?: boolean
-    utmCampaign?: string
-    utmMedium?: string
-    utmSource?: string
-    plan?: SubscriptionPlan
-    classId?: string
-    redirectRoute?: {
-      name: string
-      params: Record<string, string>
-      query: Record<string, string>
-      hash: string
-    }
-  } = {}) {
+  }: UpsellPlusModalSubscribeEventPayload = {}) {
     const subscribePlan = plan || selectedPlan.value
     const isYearly = subscribePlan === 'yearly'
     useLogEvent('add_to_cart', eventPayload.value)
@@ -169,7 +155,7 @@ export function useSubscription() {
         from: getRouteQuery('from'),
         hasFreeTrial,
         mustCollectPaymentMethod,
-        giftClassId: isYearly ? classId : undefined,
+        giftNFTClassId: isYearly ? nftClassId : undefined,
         ...analyticsParams,
         utmCampaign: analyticsParams.utmCampaign || utmCampaign,
         utmMedium: analyticsParams.utmMedium || utmMedium,
@@ -213,7 +199,7 @@ export function useSubscription() {
     isProcessingSubscription,
 
     openPaywallModal,
-    checkAndOpenUpsellPlusModal,
+    openUpsellPlusModalIfEligible,
     redirectIfSubscribed,
     startSubscription,
   }

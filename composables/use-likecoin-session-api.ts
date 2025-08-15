@@ -215,7 +215,7 @@ export function useLikeCoinSessionAPI() {
     period = 'monthly',
     hasFreeTrial,
     mustCollectPaymentMethod,
-    giftClassId,
+    giftNFTClassId,
     from,
     referrer,
     utmCampaign,
@@ -230,7 +230,7 @@ export function useLikeCoinSessionAPI() {
     period: SubscriptionPlan
     hasFreeTrial?: boolean
     mustCollectPaymentMethod?: boolean
-    giftClassId?: string
+    giftNFTClassId?: string
     from?: string
     referrer?: string
     utmCampaign?: string
@@ -248,7 +248,7 @@ export function useLikeCoinSessionAPI() {
       body: {
         hasFreeTrial,
         mustCollectPaymentMethod,
-        giftClassId,
+        giftClassId: giftNFTClassId,
         referrer,
         utmCampaign,
         utmMedium,

@@ -2,6 +2,7 @@ import { useAccount, useConnect, useDisconnect, useSignMessage } from '@wagmi/vu
 import { UserRejectedRequestError } from 'viem'
 import { FetchError } from 'ofetch'
 import type { Magic } from 'magic-sdk'
+import type { RouteLocationAsRelativeGeneric } from 'vue-router'
 
 import { LoginModal, RegistrationModal } from '#components'
 
@@ -509,12 +510,7 @@ export const useAccountStore = defineStore('account', () => {
     }
   }
 
-  function savePlusRedirectRoute(route: {
-    name: string
-    params: Record<string, string>
-    query: Record<string, string>
-    hash: string
-  }) {
+  function savePlusRedirectRoute(route: RouteLocationAsRelativeGeneric) {
     if (!window.localStorage) return
     try {
       localStorage.setItem('plus_redirect_route', JSON.stringify(route))

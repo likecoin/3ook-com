@@ -193,8 +193,7 @@
 </template>
 
 <script setup lang="ts">
-import type { RouteParamsGeneric } from 'vue-router'
-import type { UpsellPlusModalProps } from './UpsellPlusModal.props'
+import type { UpsellPlusModalProps, UpsellPlusModalSubscribeEventPayload } from './UpsellPlusModal.props'
 
 const props = withDefaults(defineProps<UpsellPlusModalProps>(), {
   isLikerPlus: false,
@@ -222,29 +221,16 @@ const subscriptionPrices = {
 const emit = defineEmits<{
   open: []
   close: []
-  subscribe: [payload: {
-    plan: SubscriptionPlan
-    classId?: string
-    utmCampaign?: string
-    utmMedium?: string
-    utmSource?: string
-    redirectRoute?: {
-      name: string
-      params: RouteParamsGeneric
-      query: Record<string, string>
-      hash: string
-    }
-  }]
+  subscribe: [payload: UpsellPlusModalSubscribeEventPayload]
 }>()
 
 const { t: $t } = useI18n()
 const route = useRoute()
-const showYearlyPlan = computed(
-  () =>
-    !props.isLikerPlus
-    || (props.isLikerPlus && props.likerPlusPeriod === 'month'),
-)
 const showMonthlyPlan = computed(() => !props.isLikerPlus)
+const showYearlyPlan = computed(() => (
+  showMonthlyPlan.value
+  || (props.isLikerPlus && props.likerPlusPeriod === 'month')
+))
 
 function handleSubscribe(plan: SubscriptionPlan) {
   emit('subscribe', {
@@ -252,9 +238,9 @@ function handleSubscribe(plan: SubscriptionPlan) {
     utmCampaign: props.utmCampaign,
     utmMedium: props.utmMedium,
     utmSource: props.utmSource,
-    classId: plan === 'yearly' ? props.classId : undefined,
+    nftClassId: plan === 'yearly' ? props.nftClassId : undefined,
     redirectRoute: {
-      name: route.name as string,
+      name: route.name,
       params: route.params,
       query: {
         ...route.query,
