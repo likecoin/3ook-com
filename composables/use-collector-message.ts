@@ -20,24 +20,26 @@ export function useCollectorMessage({
 
   const isLoading = ref(false)
   const hasSubmittedCollectorMessage = ref(false)
-  const bookCoverSrc = ref('')
-  const bookName = ref('')
-  const bookAuthor = ref('')
+  const bookInfoProps = ref<CollectorMessageModalProps>({
+    bookCoverSrc: '',
+    bookName: '',
+    bookAuthor: '',
+  })
 
-  const modalProps = computed(() => ({
-    isLoading: isLoading.value,
-    hasSubmitted: hasSubmittedCollectorMessage.value,
-    bookCoverSrc: bookCoverSrc.value,
-    bookName: bookName.value,
-    bookAuthor: bookAuthor.value,
-    handleSubmit,
-  }))
+  function getModalProps() {
+    return {
+      ...bookInfoProps.value,
+      isLoading: isLoading.value,
+      hasSubmitted: hasSubmittedCollectorMessage.value,
+      handleSubmit,
+    }
+  }
 
   const open = async (props: CollectorMessageModalProps) => {
-    bookCoverSrc.value = props.bookCoverSrc
-    bookName.value = props.bookName
-    bookAuthor.value = props.bookAuthor
-    return await modal.open(modalProps.value).result
+    bookInfoProps.value = props
+    const modalProps = getModalProps()
+
+    return await modal.open(modalProps).result
   }
 
   async function handleSubmit({ message }: { message: string }) {
@@ -77,7 +79,7 @@ export function useCollectorMessage({
   }
 
   function updateModal() {
-    modal.patch(modalProps.value)
+    modal.patch(getModalProps())
   }
 
   function reset() {
