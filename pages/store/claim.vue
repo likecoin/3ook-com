@@ -167,26 +167,40 @@ async function checkItemsDeliveryThroughIndexer() {
 
 const isCheckingItemsDelivery = ref(false)
 const hasBypassedIndexer = ref(false)
+const hasCollectorMessageModalOpened = ref(false)
+let stopTimeout: (() => void) | null = null
 
 onMounted(() => {
   if (hasLoggedIn.value) {
     startClaimFlow()
-
-    setTimeout(() => {
-      openCollectorMessageModal({
-        bookCoverSrc: bookCoverSrc.value,
-        bookName: bookInfo.name.value,
-        bookAuthor: bookInfo.authorName.value,
-      })
-    }, 3000)
   }
 })
+
+watch([hasLoggedIn, canStartReading], () => {
+  if (!hasLoggedIn.value || hasCollectorMessageModalOpened.value) return
+
+  if (canStartReading.value) {
+    openCollectorModal()
+  }
+  else {
+    stopTimeout = useTimeoutFn(openCollectorModal, 3000).stop
+  }
+}, { immediate: true })
 
 watch(hasLoggedIn, (value) => {
-  if (value) {
-    startClaimFlow()
-  }
-})
+  if (value) startClaimFlow()
+}, { immediate: true })
+
+function openCollectorModal() {
+  if (hasCollectorMessageModalOpened.value) return
+  hasCollectorMessageModalOpened.value = true
+  stopTimeout?.()
+  openCollectorMessageModal({
+    bookCoverSrc: bookCoverSrc.value,
+    bookName: bookInfo.name.value,
+    bookAuthor: bookInfo.authorName.value,
+  })
+}
 
 async function waitForItemsDelivery({ timeout = 30000, interval = 3000 } = {}) {
   if (isCheckingItemsDelivery.value || !isAutoDeliver.value) return
