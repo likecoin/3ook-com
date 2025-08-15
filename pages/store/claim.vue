@@ -74,11 +74,24 @@ const loadingLabels = [
   $t('claim_page_loading_step_2'),
   $t('claim_page_loading_step_3'),
 ]
-const loadingLabelInterval = ref<ReturnType<typeof setInterval> | null>(null)
+
 const currentLoadingLabelIndex = ref(0)
 const dynamicLoadingLabel = computed(() =>
   loadingLabels[currentLoadingLabelIndex.value] || $t('claim_page_loading_label'),
 )
+
+const {
+  pause: pauseLoadingAnimation,
+  resume: resumeLoadingAnimation,
+  isActive: isLoadingAnimationActive,
+} = useIntervalFn(() => {
+  currentLoadingLabelIndex.value++
+
+  if (currentLoadingLabelIndex.value >= loadingLabels.length - 1) {
+    pauseLoadingAnimation()
+  }
+}, 5000, { immediate: false })
+
 if (!cartId.value || !claimingToken.value || !paymentId.value) {
   throw createError({
     statusCode: 400,
@@ -159,7 +172,7 @@ async function waitForItemsDelivery({ timeout = 30000, interval = 3000 } = {}) {
   try {
     isCheckingItemsDelivery.value = true
 
-    if (!loadingLabelInterval.value) {
+    if (!isLoadingAnimationActive.value) {
       startLoadingLabelAnimation()
     }
 
@@ -311,7 +324,7 @@ onMounted(() => {
   }
 })
 
-watch(hasLoggedIn, (value: boolean) => {
+watch(hasLoggedIn, (value) => {
   if (value) {
     startClaimFlow()
   }
@@ -339,28 +352,12 @@ function handleStartReadingButtonClick() {
 }
 
 function startLoadingLabelAnimation() {
-  if (loadingLabelInterval.value) {
-    clearInterval(loadingLabelInterval.value)
-  }
-
   currentLoadingLabelIndex.value = 0
-  loadingLabelInterval.value = setInterval(() => {
-    currentLoadingLabelIndex.value++
-
-    if (currentLoadingLabelIndex.value >= loadingLabels.length - 1) {
-      if (loadingLabelInterval.value) {
-        clearInterval(loadingLabelInterval.value)
-        loadingLabelInterval.value = null
-      }
-    }
-  }, 5000)
+  resumeLoadingAnimation()
 }
 
 function stopLoadingLabelAnimation() {
-  if (loadingLabelInterval.value) {
-    clearInterval(loadingLabelInterval.value)
-    loadingLabelInterval.value = null
-  }
+  pauseLoadingAnimation()
 }
 
 onUnmounted(() => {
