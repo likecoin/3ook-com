@@ -288,7 +288,7 @@ export function useLikeCoinSessionAPI() {
     wallet: string
     claimToken: string
   }) {
-    return fetch.value<string>(`/likernft/book/purchase/class/${classId}/memo/${paymentId}?token=${claimToken}`, {
+    return fetch.value<string>(`/likernft/book/purchase/class/${classId}/message/${paymentId}?token=${claimToken}`, {
       method: 'POST',
       body: { message, wallet },
     })
