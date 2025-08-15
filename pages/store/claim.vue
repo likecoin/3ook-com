@@ -81,14 +81,14 @@ const dynamicLoadingLabel = computed(() =>
 )
 
 const {
-  pause: pauseLoadingAnimation,
-  resume: resumeLoadingAnimation,
-  isActive: isLoadingAnimationActive,
+  pause: pauseLoadingLabelAnimation,
+  resume: resumeLoadingLabelAnimation,
+  isActive: isLoadingLabelAnimationActive,
 } = useIntervalFn(() => {
   currentLoadingLabelIndex.value++
 
   if (currentLoadingLabelIndex.value >= loadingLabels.value.length - 1) {
-    pauseLoadingAnimation()
+    pauseLoadingLabelAnimation()
   }
 }, 5000, { immediate: false })
 
@@ -172,7 +172,7 @@ async function waitForItemsDelivery({ timeout = 30000, interval = 3000 } = {}) {
   try {
     isCheckingItemsDelivery.value = true
 
-    if (!isLoadingAnimationActive.value) {
+    if (!isLoadingLabelAnimationActive.value) {
       startLoadingLabelAnimation()
     }
 
@@ -353,10 +353,10 @@ function handleStartReadingButtonClick() {
 
 function startLoadingLabelAnimation() {
   currentLoadingLabelIndex.value = 0
-  resumeLoadingAnimation()
+  resumeLoadingLabelAnimation()
 }
 
 function stopLoadingLabelAnimation() {
-  pauseLoadingAnimation()
+  pauseLoadingLabelAnimation()
 }
 </script>
