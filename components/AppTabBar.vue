@@ -62,7 +62,7 @@ const rawMenuItems = computed(() => [
 
 const menuItems = computed(() =>
   rawMenuItems.value.map((tab) => {
-    const isActive = getRouteBaseName(route) === tab.key
+    const isActive = getRouteBaseName(route)?.startsWith(tab.key)
     const to = localeRoute({ name: tab.key })
     return {
       label: tab.label,

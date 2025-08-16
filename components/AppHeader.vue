@@ -81,7 +81,7 @@ const menuItems = computed(() =>
     return {
       ...item,
       to,
-      isActive: getRouteBaseName(route) === item.key,
+      isActive: getRouteBaseName(route)?.startsWith(item.key),
       labelGraphic: getLabelGraphic(item.key),
     }
   }),
