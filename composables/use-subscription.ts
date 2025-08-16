@@ -95,7 +95,7 @@ export function useSubscription() {
       upsellPlusModal.close()
     }
 
-    if ((isLikerPlus.value && likerPlusPeriod.value === 'month') || !likerPlusPeriod.value) {
+    if (!isLikerPlus.value || (isLikerPlus.value && likerPlusPeriod.value === 'month')) {
       const upsellModalProps: UpsellPlusModalProps = {
         ...props,
         ...getUpsellPlusModalProps(),
