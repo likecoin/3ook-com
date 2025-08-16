@@ -379,6 +379,7 @@ watch(fontSize, (size) => {
 
 let cleanUpClickListener: (() => void) | undefined
 let removeSwipeListener: (() => void) | undefined
+let removeSelectAllByHotkeyListener: (() => void) | undefined
 const renditionElement = useTemplateRef<HTMLDivElement>('reader')
 const renditionViewWindow = ref<Window | undefined>(undefined)
 
@@ -534,6 +535,16 @@ async function loadEPub() {
         },
       },
     ))
+
+    if (removeSelectAllByHotkeyListener) {
+      removeSelectAllByHotkeyListener()
+    }
+    removeSelectAllByHotkeyListener = onKeyStroke(['a', 'A'], (event) => {
+      // Prevent selecting all texts by Ctrl/Cmd + A
+      if (event.ctrlKey || event.metaKey) {
+        event.preventDefault()
+      }
+    }, { target: view.window })
   })
 
   rendition.value.on('relocated', (location: Location) => {
