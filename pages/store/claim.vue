@@ -74,7 +74,7 @@ const baseLoadingLabels = computed(() => [
   $t('claim_page_loading_step_2'),
 ])
 
-const finalLoadingVariants = computed(() => [
+const finalLoadingLabelVariants = computed(() => [
   $t('claim_page_loading_step_3'),
   $t('claim_page_loading_step_3_alt_1'),
   $t('claim_page_loading_step_3_alt_2'),
@@ -88,25 +88,25 @@ const finalLoadingVariants = computed(() => [
 ])
 
 const currentLoadingLabel = ref($t('claim_page_loading_label'))
-const step = ref(0)
+const loadingLabelIndex = ref(0)
 
 const {
   pause: pauseLoadingLabelAnimation,
   resume: resumeLoadingLabelAnimation,
   isActive: isLoadingLabelAnimationActive,
 } = useIntervalFn(() => {
-  if (step.value < baseLoadingLabels.value.length - 1) {
-    step.value++
-    currentLoadingLabel.value = baseLoadingLabels.value[step.value] || $t('claim_page_loading_label')
+  if (loadingLabelIndex.value < baseLoadingLabels.value.length - 1) {
+    loadingLabelIndex.value++
+    currentLoadingLabel.value = baseLoadingLabels.value[loadingLabelIndex.value] || $t('claim_page_loading_label')
   }
   else {
-    const i = Math.floor(Math.random() * finalLoadingVariants.value.length)
-    currentLoadingLabel.value = finalLoadingVariants.value[i] || $t('claim_page_loading_label')
+    const i = Math.floor(Math.random() * finalLoadingLabelVariants.value.length)
+    currentLoadingLabel.value = finalLoadingLabelVariants.value[i] || $t('claim_page_loading_label')
   }
 }, 5000, { immediate: false })
 
 function startLoadingLabelAnimation() {
-  step.value = 0
+  loadingLabelIndex.value = 0
   currentLoadingLabel.value = baseLoadingLabels.value[0] || $t('claim_page_loading_label')
   resumeLoadingLabelAnimation()
 }
