@@ -137,6 +137,7 @@ export default defineEventHandler(async (event) => {
         speed: 0.95,
         emotion: 'neutral',
       },
+      pronunciation_dict: getTTSPronunciationDictionary(language),
       language_boost: LANG_MAPPING[language],
     }
 

@@ -9,3 +9,26 @@ export async function getUserTTSAvailable(event: H3Event): Promise<boolean> {
   if (!userDoc || !userDoc.ttsCharactersUsed || userDoc.ttsCharactersUsed as number < 300) return true
   return false
 }
+
+export function getTTSPronunciationDictionary(language: string) {
+  switch (language) {
+    case 'zh-TW':
+      return {
+        tone: [
+          '乾/(gan1)',
+        ],
+      }
+    case 'zh-HK':
+      return {
+        tone: [
+          '掬/(谷)',
+          '驥/(冀)',
+          '頰/(甲)',
+        ],
+      }
+    case 'en-US':
+      return undefined
+    default:
+      return undefined
+  }
+}
