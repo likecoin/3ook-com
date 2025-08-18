@@ -116,7 +116,7 @@
             />
             <UTooltip
               :disabled="!bookInfo.isAudioHidden.value"
-              :text="$t('reader_text_to_speech_button_tooltip')"
+              :text="$t('reader_text_to_speech_button_disabled_tooltip')"
             >
               <UButton
                 :ui="{
@@ -713,7 +713,7 @@ function onClickTTSPlay() {
 function handleMobileTTSClick() {
   if (bookInfo.isAudioHidden.value) {
     toast.add({
-      title: $t('reader_text_to_speech_button_tooltip'),
+      title: $t('reader_text_to_speech_button_disabled_tooltip'),
       duration: 3000,
       progress: false,
     })

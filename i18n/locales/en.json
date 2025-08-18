@@ -191,7 +191,7 @@
   "reader_rate_options_button": "Playback speed",
   "reader_right_to_left": "Right-to-Left layout",
   "reader_text_to_speech_button": "Listen",
-  "reader_text_to_speech_button_tooltip": "This work has no authorization to read",
+  "reader_text_to_speech_button_disabled_tooltip": "This work cannot be read due to license issue",
   "reader_text_to_speech_not_available": "Text-to-speech not available",
   "reader_text_to_speech_not_available_description": "Upgrade to Plus to unlock AI voice reading feature",
   "reader_title": "Read \"{name}\" - {author}",
