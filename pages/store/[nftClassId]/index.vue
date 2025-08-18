@@ -399,7 +399,7 @@ const nftClassId = computed(() => getRouteParam('nftClassId'))
 const {
   generateBookStructuredData,
   generateOGMetaTags,
-} = useStructuredData({ nftClassId: nftClassId.value })
+} = useStructuredData({ nftClassId })
 
 if (nftClassId.value !== nftClassId.value.toLowerCase()) {
   await navigateTo(localeRoute({
