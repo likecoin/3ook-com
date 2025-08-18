@@ -24,7 +24,7 @@ const { t: $t } = useI18n()
 
 const nftClassId = computed(() => getRouteQuery('nft_class_id'))
 const nftId = computed(() => getRouteQuery('nft_id'))
-const bookInfo = useBookInfo({ nftClassId: nftClassId.value })
+const bookInfo = useBookInfo({ nftClassId })
 
 if (!nftClassId.value) {
   await navigateTo(localeRoute({ name: 'shelf', query: route.query }))

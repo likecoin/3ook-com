@@ -8,7 +8,7 @@ export default function (params: {
     getRouteQuery('nft_class_id') || toValue(params.nftClassId) || '',
   )
 
-  const bookInfo = useBookInfo({ nftClassId: nftClassId.value })
+  const bookInfo = useBookInfo({ nftClassId })
 
   const nftId = computed(() => {
     const id = getRouteQuery('nft_id')

@@ -3,11 +3,11 @@ import { TTSPlayerModal } from '#components'
 import type { TTSPlayerModalProps } from '~/components/TTSPlayerModal.props'
 
 interface TTSPlayerOptions {
-  nftClassId?: string
+  nftClassId: string
   onSegmentChange?: (segment: TTSSegment & { index?: number } | undefined) => void
 }
 
-export function useTTSPlayerModal(options: TTSPlayerOptions = {}) {
+export function useTTSPlayerModal(options: TTSPlayerOptions) {
   const ttsSegments = ref<TTSSegment[]>([])
   const chapterTitlesBySection = ref<Record<number, string>>({})
   const startIndex = ref(0)

@@ -1,7 +1,9 @@
-export function useEVMBookInfo({ nftClassId = '' }: { nftClassId?: string } = {}) {
+export function useEVMBookInfo(
+  { nftClassId }: { nftClassId: string | Ref<string> | ComputedRef<string> },
+) {
   const nftStore = useNFTStore()
 
-  const nftClass = computed(() => nftStore.getNFTClassById(nftClassId))
+  const nftClass = computed(() => nftStore.getNFTClassById(toValue(nftClassId)))
 
   const nftClassOwnerWalletAddress = computed(() => nftClass.value?.owner_address || '')
 

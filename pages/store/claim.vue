@@ -148,7 +148,7 @@ if (cartDataError.value) {
 }
 
 // TODO: Handle multiple items in the cart
-const nftClassId = computed(() => cartData.value?.classIds[0])
+const nftClassId = computed(() => cartData.value?.classIds[0] || '')
 
 await callOnce(nftClassId.value, async () => {
   if (!nftClassId.value) {
@@ -175,7 +175,7 @@ await callOnce(nftClassId.value, async () => {
 const status = computed(() => cartData.value?.status)
 const isClaimed = ref(!!status.value && ['completed', 'done', 'pending', 'pendingNFT'].includes(status.value))
 
-const bookInfo = useBookInfo({ nftClassId: nftClassId.value })
+const bookInfo = useBookInfo({ nftClassId })
 const bookCoverSrc = computed(() => getResizedImageURL(bookInfo.coverSrc.value, { size: 400 }))
 
 // TODO: Handle multiple items in the cart
