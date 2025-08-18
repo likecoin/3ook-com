@@ -191,6 +191,7 @@
   "reader_rate_options_button": "語速",
   "reader_right_to_left": "從右至左排列",
   "reader_text_to_speech_button": "朗讀",
+  "reader_text_to_speech_button_tooltip": "本作品無朗讀授權",
   "reader_text_to_speech_not_available": "朗讀功能不可用",
   "reader_text_to_speech_not_available_description": "升級至 Liker+ 即可解鎖 AI 朗讀功能",
   "reader_title": "閱讀 《{name}》 - {author}",

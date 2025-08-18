@@ -104,16 +104,20 @@
                 </ul>
               </template>
             </USlideover>
-
-            <template v-if="!bookInfo.isAudioHidden.value">
-              <UButton
-                class="laptop:hidden"
-                icon="i-material-symbols-play-arrow-rounded"
-                variant="ghost"
-                color="neutral"
-                :disabled="isReaderLoading"
-                @click="onClickTTSPlay"
-              />
+            <UButton
+              :class="[
+                'laptop:hidden',
+                { 'opacity-50 cursor-not-allowed': isReaderLoading || bookInfo.isAudioHidden.value },
+              ]"
+              icon="i-material-symbols-play-arrow-rounded"
+              variant="ghost"
+              color="neutral"
+              @click="handleMobileTTSClick"
+            />
+            <UTooltip
+              :disabled="!bookInfo.isAudioHidden.value"
+              :text="$t('reader_text_to_speech_button_tooltip')"
+            >
               <UButton
                 :ui="{
                   base: '!rounded-l-md',
@@ -123,10 +127,10 @@
                 :label="$t('reader_text_to_speech_button')"
                 variant="ghost"
                 color="neutral"
-                :disabled="isReaderLoading"
+                :disabled="isReaderLoading || bookInfo.isAudioHidden.value"
                 @click="onClickTTSPlay"
               />
-            </template>
+            </UTooltip>
 
             <BottomSlideover :title="$t('reader_display_options_button')">
               <UButton
@@ -260,6 +264,7 @@ const localeRoute = useLocaleRoute()
 if (!hasLoggedIn.value) {
   await navigateTo(localeRoute({ name: 'account', query: route.query }))
 }
+const toast = useToast()
 
 const { t: $t } = useI18n()
 const nftStore = useNFTStore()
@@ -705,6 +710,18 @@ function onClickTTSPlay() {
   })
 }
 
+function handleMobileTTSClick() {
+  if (bookInfo.isAudioHidden.value) {
+    toast.add({
+      title: $t('reader_text_to_speech_button_tooltip'),
+      duration: 3000,
+      progress: false,
+    })
+    useLogEvent('reader_tts_button_disabled', { nft_class_id: nftClassId.value })
+    return
+  }
+  onClickTTSPlay()
+}
 function handleLeftArrowButtonClick() {
   turnPageLeft()
   useLogEvent('reader_navigate_button_arrow')
