@@ -110,7 +110,7 @@ const {
   else {
     randomVariantIndex.value = Math.floor(Math.random() * finalLoadingLabelVariants.value.length)
   }
-}, 5000, { immediate: false })
+}, 3000, { immediate: false })
 
 function startLoadingLabelAnimation() {
   loadingLabelIndex.value = 0
