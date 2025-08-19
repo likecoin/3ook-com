@@ -34,9 +34,7 @@
         </div>
       </template>
       <template v-else>
-        <div
-          class="flex items-center gap-6"
-        >
+        <div class="flex items-center gap-6">
           <BookCover
             class="w-[80px] flex-shrink-0"
             :src="props.bookCoverSrc"
@@ -85,7 +83,7 @@
 </template>
 
 <script setup lang="ts">
-const emit = defineEmits(['close'])
+const emit = defineEmits(['close', 'submit'])
 const { t: $t } = useI18n()
 
 const props = defineProps({
@@ -109,10 +107,6 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-  handleSubmit: {
-    type: Function,
-    required: true,
-  },
 })
 
 const collectorMessage = ref('')
@@ -122,8 +116,8 @@ function handleClose() {
 }
 
 async function handleSubmitMessage() {
-  if (props.handleSubmit && collectorMessage.value.trim()) {
-    await props.handleSubmit({ message: collectorMessage.value })
+  if (collectorMessage.value.trim()) {
+    emit('submit', { message: collectorMessage.value.trim() })
   }
 }
 </script>
