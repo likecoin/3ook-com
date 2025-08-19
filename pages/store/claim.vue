@@ -57,6 +57,16 @@
         />
       </template>
     </BookLoadingScreen>
+    <CollectorMessageModal
+      v-model:open="openCollectorMessageModal"
+      :book-cover-src="bookCoverSrc"
+      :book-name="bookInfo.name.value"
+      :book-author="bookInfo.authorName.value"
+      :payment-id="paymentId"
+      :claiming-token="claimingToken"
+      :nft-class-id="nftClassId"
+      @close="openCollectorMessageModal = false"
+    />
   </main>
 </template>
 
@@ -78,6 +88,7 @@ const claimingToken = computed(() => getRouteQuery('claiming_token'))
 const paymentId = computed(() => getRouteQuery('payment_id'))
 
 const isLoading = ref(true)
+const openCollectorMessageModal = ref(false)
 
 const baseLoadingLabels = computed(() => [
   $t('claim_page_loading_step_1'),
@@ -199,12 +210,6 @@ onMounted(async () => {
 
 const nftClassId = computed(() => cartData.value?.classIds[0] || '')
 
-const { open: openCollectorMessageModal } = useCollectorMessage({
-  nftClassId: nftClassId,
-  paymentId: paymentId.value as string,
-  claimingToken: claimingToken.value as string,
-})
-
 const status = computed(() => cartData.value?.status)
 const isClaimed = ref(!!status.value && ['completed', 'done', 'pending', 'pendingNFT'].includes(status.value))
 
@@ -244,7 +249,6 @@ async function checkItemsDeliveryThroughIndexer() {
 
 const isCheckingItemsDelivery = ref(false)
 const hasBypassedIndexer = ref(false)
-const hasCollectorMessageModalOpened = ref(false)
 let stopCollectorMessageModalTimer: (() => void) | null = null
 
 onMounted(() => {
@@ -254,7 +258,7 @@ onMounted(() => {
 })
 
 watch([hasLoggedIn, canStartReading], () => {
-  if (!hasLoggedIn.value || hasCollectorMessageModalOpened.value) return
+  if (!hasLoggedIn.value || openCollectorMessageModal.value) return
 
   if (canStartReading.value) {
     openCollectorModal()
@@ -269,14 +273,9 @@ watch(hasLoggedIn, (value) => {
 }, { immediate: true })
 
 function openCollectorModal() {
-  if (hasCollectorMessageModalOpened.value) return
-  hasCollectorMessageModalOpened.value = true
+  if (openCollectorMessageModal.value) return
   stopCollectorMessageModalTimer?.()
-  openCollectorMessageModal({
-    bookCoverSrc: bookCoverSrc.value,
-    bookName: bookInfo.name.value,
-    bookAuthor: bookInfo.authorName.value,
-  })
+  openCollectorMessageModal.value = true
 }
 
 async function waitForItemsDelivery({ timeout = 30000, interval = 3000 } = {}) {

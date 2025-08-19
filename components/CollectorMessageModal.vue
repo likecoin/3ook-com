@@ -20,7 +20,7 @@
     @close="handleClose"
   >
     <template #body>
-      <template v-if="props.hasSubmitted">
+      <template v-if="hasSubmittedCollectorMessage">
         <div class="flex items-center justify-center w-full gap-2 mt-2">
           <UIcon
             name="i-material-symbols-check-circle-rounded"
@@ -74,7 +74,7 @@
           trailing-icon="i-material-symbols-send-rounded"
           color="neutral"
           variant="outline"
-          :loading="props.isLoading"
+          :loading="isLoading"
           @click="handleSubmitMessage"
         />
       </template>
@@ -85,6 +85,9 @@
 <script setup lang="ts">
 const emit = defineEmits(['close', 'submit'])
 const { t: $t } = useI18n()
+const { user } = useUserSession()
+const likeCoinSessionAPI = useLikeCoinSessionAPI()
+const { handleError } = useErrorHandler()
 
 const props = defineProps({
   bookCoverSrc: {
@@ -99,25 +102,63 @@ const props = defineProps({
     type: String,
     required: true,
   },
-  hasSubmitted: {
-    type: Boolean,
-    default: false,
+  paymentId: {
+    type: String,
+    required: true,
   },
-  isLoading: {
-    type: Boolean,
-    default: false,
+  claimingToken: {
+    type: String,
+    required: true,
+  },
+  nftClassId: {
+    type: String,
+    required: true,
   },
 })
 
 const collectorMessage = ref('')
+const isLoading = ref(false)
+const hasSubmittedCollectorMessage = ref(false)
 
 function handleClose() {
   emit('close')
 }
 
 async function handleSubmitMessage() {
-  if (collectorMessage.value.trim()) {
-    emit('submit', { message: collectorMessage.value.trim() })
+  if (!user.value?.evmWallet) {
+    throw new Error('User wallet not found')
+  }
+  const message = collectorMessage.value.trim()
+  if (!message) {
+    return
+  }
+
+  isLoading.value = true
+
+  try {
+    const result = await likeCoinSessionAPI.sendCollectorMessage({
+      message,
+      nftClassId: props.nftClassId,
+      wallet: user.value.evmWallet,
+      paymentId: props.paymentId,
+      claimToken: props.claimingToken,
+    })
+
+    hasSubmittedCollectorMessage.value = !!result
+  }
+  catch (error) {
+    handleError(error, {
+      title: $t('claim_page_collector_message_error'),
+      logPrefix: 'Send Collector Message',
+    })
+    throw error
+  }
+  finally {
+    isLoading.value = false
+    if (hasSubmittedCollectorMessage.value) {
+      await sleep(2000)
+      handleClose()
+    }
   }
 }
 </script>
