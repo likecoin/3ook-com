@@ -65,6 +65,7 @@ export function useSubscription() {
   function getUpsellPlusModalProps(): UpsellPlusModalProps {
     return {
       onSubscribe: startSubscription,
+      onClose: () => useLogEvent('subscription_button_click_skip'),
       isLikerPlus: isLikerPlus.value,
       likerPlusPeriod: likerPlusPeriod.value,
     }
@@ -125,7 +126,7 @@ export function useSubscription() {
     const subscribePlan = plan || selectedPlan.value
     const isYearly = subscribePlan === 'yearly'
     useLogEvent('add_to_cart', eventPayload.value)
-    useLogEvent('subscription_button_click', { plan: subscribePlan })
+    useLogEvent(`subscription_button_click_${subscribePlan}`)
 
     const isSubscribed = await redirectIfSubscribed()
     if (isSubscribed) return
