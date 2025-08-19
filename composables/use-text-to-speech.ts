@@ -58,8 +58,8 @@ export function useTextToSpeech(options: TTSOptions = {}) {
   })
 
   const ttsLanguageVoiceValues = availableTTSLanguageVoiceOptions.value.map(option => option.value)
-  const ttsPlaybackRateOptions = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0].map(rate => ({
-    label: `${rate}x`,
+  const ttsPlaybackRateOptions = [0.5, 0.75, 1.0, 1.25, 1.5].map(rate => ({
+    label: rate === 1.0 ? '正常(Normal)' : `${rate}x`,
     value: rate,
   }))
 
