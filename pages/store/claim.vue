@@ -106,7 +106,7 @@ const { data: cartData, error: cartDataError } = await useAsyncData(cartId.value
 const nftClassId = computed(() => cartData.value?.classIds[0])
 
 const { open: openCollectorMessageModal } = useCollectorMessage({
-  classId: nftClassId.value as string,
+  nftClassId: nftClassId.value as string,
   paymentId: paymentId.value as string,
   claimingToken: claimingToken.value as string,
 })
@@ -168,7 +168,7 @@ async function checkItemsDeliveryThroughIndexer() {
 const isCheckingItemsDelivery = ref(false)
 const hasBypassedIndexer = ref(false)
 const hasCollectorMessageModalOpened = ref(false)
-let stopTimeout: (() => void) | null = null
+let stopCollectorMessageModalTimer: (() => void) | null = null
 
 onMounted(() => {
   if (hasLoggedIn.value) {
@@ -183,7 +183,7 @@ watch([hasLoggedIn, canStartReading], () => {
     openCollectorModal()
   }
   else {
-    stopTimeout = useTimeoutFn(openCollectorModal, 3000).stop
+    stopCollectorMessageModalTimer = useTimeoutFn(openCollectorModal, 3000).stop
   }
 }, { immediate: true })
 
@@ -194,7 +194,7 @@ watch(hasLoggedIn, (value) => {
 function openCollectorModal() {
   if (hasCollectorMessageModalOpened.value) return
   hasCollectorMessageModalOpened.value = true
-  stopTimeout?.()
+  stopCollectorMessageModalTimer?.()
   openCollectorMessageModal({
     bookCoverSrc: bookCoverSrc.value,
     bookName: bookInfo.name.value,
