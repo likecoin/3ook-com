@@ -144,6 +144,7 @@ onMounted(async () => {
         token: claimingToken.value,
       })
       cartData.value = data
+      isClaimed.value = !!status.value && ['completed', 'done', 'pending', 'pendingNFT'].includes(status.value)
       break
     }
     catch (error) {
