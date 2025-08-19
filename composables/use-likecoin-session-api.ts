@@ -276,20 +276,21 @@ export function useLikeCoinSessionAPI() {
   }
 
   async function sendCollectorMessage({
-    classId,
+    nftClassId,
     paymentId,
     message,
     wallet,
     claimToken,
   }: {
-    classId: string
+    nftClassId: string
     paymentId: string
     message: string
     wallet: string
     claimToken: string
   }) {
-    return fetch.value<string>(`/likernft/book/purchase/class/${classId}/message/${paymentId}?token=${claimToken}`, {
+    return fetch.value<string>(`/likernft/book/purchase/class/${nftClassId}/message/${paymentId}`, {
       method: 'POST',
+      query: { token: claimToken },
       body: { message, wallet },
     })
   }
