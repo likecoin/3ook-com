@@ -177,7 +177,7 @@ export function useSubscription() {
 
   function getPlusDiscountPrice(price: number): number | null {
     if (isLikerPlus.value && price > 0) {
-      return Math.round(price * (1 - PLUS_DISCOUNT_PERCENTAGE))
+      return Math.round(price * (1 - PLUS_DISCOUNT_PERCENTAGE) * 100) / 100
     }
     return null
   }
