@@ -48,7 +48,6 @@ export function useCollectorMessage({
     }
 
     isLoading.value = true
-    updateModal()
 
     try {
       const result = await likeCoinSessionAPI.sendCollectorMessage({
@@ -70,7 +69,6 @@ export function useCollectorMessage({
     }
     finally {
       isLoading.value = false
-      updateModal()
       if (hasSubmittedCollectorMessage.value) {
         await sleep(2000)
         modal.close()
@@ -78,9 +76,9 @@ export function useCollectorMessage({
     }
   }
 
-  function updateModal() {
+  watch(() => isLoading.value, () => {
     modal.patch(getModalProps())
-  }
+  })
 
   function reset() {
     isLoading.value = false
