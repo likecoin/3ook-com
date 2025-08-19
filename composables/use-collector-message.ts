@@ -2,11 +2,11 @@ import { CollectorMessageModal } from '#components'
 import type { CollectorMessageModalProps } from '~/components/CollectorMessageModal.props'
 
 export function useCollectorMessage({
-  classId,
+  nftClassId,
   paymentId,
   claimingToken,
 }: {
-  classId: string
+  nftClassId: string
   paymentId: string
   claimingToken: string
 }) {
@@ -31,7 +31,7 @@ export function useCollectorMessage({
       ...bookInfoProps.value,
       isLoading: isLoading.value,
       hasSubmitted: hasSubmittedCollectorMessage.value,
-      handleSubmit,
+      onSubmit: handleSubmit,
     }
   }
 
@@ -53,7 +53,7 @@ export function useCollectorMessage({
     try {
       const result = await likeCoinSessionAPI.sendCollectorMessage({
         message,
-        classId,
+        nftClassId,
         wallet: user.value.evmWallet,
         paymentId,
         claimToken: claimingToken,
@@ -88,7 +88,6 @@ export function useCollectorMessage({
   }
 
   return {
-    modal,
     open,
     isLoading: readonly(isLoading),
     hasSubmittedCollectorMessage: readonly(hasSubmittedCollectorMessage),
