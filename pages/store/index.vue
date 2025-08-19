@@ -1,7 +1,5 @@
 <template>
   <div class="relative flex flex-col grow">
-    <AppHeader />
-
     <header
       :class="[
         'sticky',

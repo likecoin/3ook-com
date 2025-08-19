@@ -1,7 +1,5 @@
 <template>
   <div class="flex flex-col grow">
-    <AppHeader />
-
     <main class="flex flex-col items-center grow px-4 laptop:px-12 pb-[100px]">
       <section class="flex flex-col tablet:flex-row gap-[32px] tablet:gap-[44px] w-full max-w-[1200px]">
         <div class="grow pt-5">

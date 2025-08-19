@@ -1,7 +1,5 @@
 <template>
   <div class="flex flex-col grow">
-    <AppHeader />
-
     <main class="flex flex-col items-center grow px-4 laptop:px-12 pb-[100px]">
       <template v-if="isLoading">
         <BookLoadingScreen

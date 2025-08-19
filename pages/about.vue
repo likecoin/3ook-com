@@ -3,8 +3,6 @@
     name="default"
     :is-footer-visible-in-mobile="true"
   >
-    <AppHeader :is-connect-hidden="false" />
-
     <!-- Hero Section with Banner -->
     <section
       class="flex flex-col justify-center items-center text-center space-y-16 min-h-[70vh] px-8 py-20 bg-cover bg-center"

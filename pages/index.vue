@@ -1,7 +1,5 @@
 <template>
   <div class="flex flex-col grow">
-    <AppHeader />
-
     <main class="flex flex-col justify-center items-center grow w-full max-w-[1440px] mx-auto px-12 opacity-20">
       <UIcon
         class="animate-spin"

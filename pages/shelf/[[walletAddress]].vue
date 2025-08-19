@@ -1,7 +1,5 @@
 <template>
   <div>
-    <AppHeader />
-
     <header
       v-if="!isMyBookshelf"
       class="flex gap-2 w-full max-w-[1440px] mx-auto px-4 laptop:px-12 py-4"

@@ -3,8 +3,6 @@
     name="default"
     :is-footer-visible-in-mobile="true"
   >
-    <AppHeader :is-connect-hidden="false" />
-
     <main class="w-full max-w-xl mx-auto p-4 space-y-4 phone:grow">
       <div
         v-if="hasLoggedIn"
