@@ -2,7 +2,7 @@
   <footer
     :class="[
       'flex',
-      'max-sm:flex-col',
+      'max-laptop:flex-col',
       'items-stretch',
       'justify-between',
       'gap-4',
@@ -28,6 +28,12 @@
       >{{ $t('footer_license') }}</ULink>
       <nav>
         <ul class="flex justify-center items-center flex-wrap gap-4 gap-y-1">
+          <li>
+            <ULink
+              class="block border-y border-t-transparent leading-5"
+              :to="localeRoute({ name: 'about' })"
+            >{{ $t("footer_about") }}</ULink>
+          </li>
           <li>
             <ULink
               class="block border-y border-t-transparent leading-5"

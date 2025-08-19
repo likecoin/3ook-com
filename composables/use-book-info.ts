@@ -1,4 +1,6 @@
-export default function ({ nftClassId = '' }: { nftClassId?: string } = {}) {
+export default function (
+  { nftClassId }: { nftClassId: string | Ref<string> | ComputedRef<string> },
+) {
   const { user } = useUserSession()
   const { t: $t } = useI18n()
   const localeRoute = useLocaleRoute()
@@ -10,7 +12,7 @@ export default function ({ nftClassId = '' }: { nftClassId?: string } = {}) {
   const bookshelfStore = useBookshelfStore()
 
   const bookstoreInfo = computed(() => {
-    return bookstoreStore.getBookstoreInfoByNFTClassId(nftClassId)
+    return bookstoreStore.getBookstoreInfoByNFTClassId(toValue(nftClassId))
   })
 
   const nftClassOwnerWalletAddress = computed(() => bookstoreInfo.value?.ownerWallet || '')
@@ -92,7 +94,7 @@ export default function ({ nftClassId = '' }: { nftClassId?: string } = {}) {
 
     const { type, index } = contentURL
     const query: Record<string, string | number> = {
-      nft_class_id: nftClassId.toLowerCase(),
+      nft_class_id: toValue(nftClassId).toLowerCase(),
       index: index,
     }
     if (nftId !== undefined) {
@@ -178,11 +180,11 @@ export default function ({ nftClassId = '' }: { nftClassId?: string } = {}) {
   const userOwnedNFTIds = computed(() => {
     // TODO: Merge bookshelfStore.getNFTsByNFTClassId and nftStore.getNFTIdsByNFTClassIdAndOwnerWalletAddress to avoid confusion
     // Find the NFT Ids from the user bookshelf by the NFT class Id
-    let nftIds = bookshelfStore.getNFTsByNFTClassId(nftClassId).map(nft => nft.token_id)
+    let nftIds = bookshelfStore.getNFTsByNFTClassId(toValue(nftClassId)).map(nft => nft.token_id)
     if (!nftIds.length) {
       // Find the NFT Ids owned by the user by the NFT class Id
       const userWallet = user.value?.evmWallet
-      nftIds = nftStore.getNFTIdsByNFTClassIdAndOwnerWalletAddress(nftClassId, userWallet || '')
+      nftIds = nftStore.getNFTIdsByNFTClassIdAndOwnerWalletAddress(toValue(nftClassId), userWallet || '')
     }
     return nftIds
   })
@@ -191,7 +193,7 @@ export default function ({ nftClassId = '' }: { nftClassId?: string } = {}) {
 
   const productPageRoute = computed(() => localeRoute({
     name: 'store-nftClassId',
-    params: { nftClassId },
+    params: { nftClassId: toValue(nftClassId) },
   }))
 
   function getIsAutoDelivery(index?: number) {

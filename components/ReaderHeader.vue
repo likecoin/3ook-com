@@ -11,7 +11,7 @@
 
       'bg-white',
       'border-b',
-      'border-[#C7C7C7]',
+      'border-gray-500',
     ]"
   >
     <div class="flex items-center gap-4 min-w-0">

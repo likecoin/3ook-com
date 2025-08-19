@@ -36,8 +36,8 @@ export function useTextToSpeech(options: TTSOptions = {}) {
 
   // hardcoded voice options for now
   const ttsLanguageVoiceOptions = [
-    { label: 'Phoebe - 粵語', value: 'zh-HK_phoebe' },
     { label: 'Pazu 薯伯伯 - 粵語', value: 'zh-HK_pazu' },
+    { label: 'Phoebe - 粵語', value: 'zh-HK_phoebe' },
     { label: '雷庭音 - 國語', value: 'zh-TW_0' },
     { label: '國語男聲', value: 'zh-TW_1' },
     { label: 'English female', value: 'en-US_0' },
@@ -63,7 +63,26 @@ export function useTextToSpeech(options: TTSOptions = {}) {
     value: rate,
   }))
 
-  const ttsLanguageVoice = useStorage(getTTSConfigKeyWithSuffix(ttsConfigCacheKey.value, 'voice'), ttsLanguageVoiceValues[1] as string)
+  function getDefaultTTSVoiceByLocale(): string {
+    let voice: string = ttsLanguageVoiceValues[0] as string
+
+    if (import.meta.client && typeof navigator !== 'undefined') {
+      const locales = Array.isArray(navigator.languages) && navigator.languages.length > 0
+        ? navigator.languages.map(l => l.toLowerCase())
+        : [navigator.language?.toLowerCase()].filter(Boolean)
+
+      if (locales.some(locale => locale.includes('-hk'))) {
+        voice = ttsLanguageVoiceValues.find(value => value.startsWith('zh-HK')) || voice
+      }
+      else if (locales.some(locale => locale.startsWith('zh') && !locale.includes('-hk'))) {
+        voice = ttsLanguageVoiceValues.find(value => value.startsWith('zh-TW')) || voice
+      }
+    }
+
+    return voice
+  }
+
+  const ttsLanguageVoice = useStorage(getTTSConfigKeyWithSuffix(ttsConfigCacheKey.value, 'voice'), getDefaultTTSVoiceByLocale())
   const ttsPlaybackRate = useStorage(getTTSConfigKeyWithSuffix(ttsConfigCacheKey.value, 'playback-rate'), 1.0)
   const isShowTextToSpeechOptions = ref(false)
   const isTextToSpeechOn = ref(false)

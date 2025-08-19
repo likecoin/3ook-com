@@ -388,7 +388,7 @@ const {
   isLikerPlus,
 
   getPlusDiscountPrice,
-  openUpsellPlusModal,
+  openUpsellPlusModalIfEligible,
 } = useSubscription()
 
 const metadataStore = useMetadataStore()
@@ -399,7 +399,7 @@ const nftClassId = computed(() => getRouteParam('nftClassId'))
 const {
   generateBookStructuredData,
   generateOGMetaTags,
-} = useStructuredData({ nftClassId: nftClassId.value })
+} = useStructuredData({ nftClassId })
 
 if (nftClassId.value !== nftClassId.value.toLowerCase()) {
   await navigateTo(localeRoute({
@@ -429,7 +429,7 @@ await callOnce(async () => {
   }
 })
 
-const bookInfo = useBookInfo({ nftClassId: nftClassId.value })
+const bookInfo = useBookInfo({ nftClassId })
 const bookCoverSrc = computed(() => getResizedImageURL(bookInfo.coverSrc.value, { size: 600 }))
 
 const selectedPricingItemIndex = ref(Number(getRouteQuery('price_index') || 0))
@@ -585,7 +585,12 @@ onMounted(() => {
   useLogEvent('view_item', formattedLogPayload.value)
   const ownerWalletAddress = bookInfo.nftClassOwnerWalletAddress.value
   if (ownerWalletAddress) {
-    metadataStore.lazyFetchLikerInfoByWalletAddress(ownerWalletAddress)
+    try {
+      metadataStore.lazyFetchLikerInfoByWalletAddress(ownerWalletAddress)
+    }
+    catch (error) {
+      console.error(`Failed to fetch owner liker info for wallet address ${ownerWalletAddress}:`, error)
+    }
   }
   const selectedPricingItemIndex = getRouteQuery('edition')
   if (selectedPricingItemIndex) {
@@ -650,13 +655,13 @@ async function handlePurchaseButtonClick() {
       await accountStore.login()
       if (!hasLoggedIn.value) return
     }
-    if (!isLikerPlus.value) {
-      const isStartSubscription = await openUpsellPlusModal({
-        isLikerPlus: false,
-        utmSource: 'product_page',
-        utmCampaign: 'upsell_plus',
-        utmMedium: 'product_page',
+    if (selectedPricingItem.value.price) {
+      const isStartSubscription = await openUpsellPlusModalIfEligible({
+        nftClassId: nftClassId.value,
         selectedPricingItemIndex: selectedPricingItemIndex.value,
+        utmSource: 'upsell_plus',
+        utmCampaign: `upsell_plus_${nftClassId.value}`,
+        utmMedium: 'product_page',
       })
       if (isStartSubscription) return
     }

@@ -35,13 +35,13 @@
                   >
                     <UButton
                       :label="item.label"
-                      :disabled="item.href === activeNavItemHref"
                       variant="link"
-                      color="neutral"
+                      :color="item.href === activeNavItemHref ? 'primary' : 'neutral'"
+                      :trailing-icon="item.href === activeNavItemHref ? 'i-material-symbols-visibility-rounded' : undefined"
                       block
                       :ui="{
                         label: 'text-left leading-[44px]',
-                        base: 'justify-start px-4 py-0',
+                        base: 'justify-start pl-6 pr-5.5 py-0',
                       }"
                       @click="() => {
                         isMobileTocOpen = false
@@ -52,23 +52,72 @@
                 </ul>
               </template>
             </BottomSlideover>
-            <UButton
-              class="max-laptop:hidden"
-              icon="i-material-symbols-format-list-bulleted"
-              :label="$t('reader_toc_button')"
-              :disabled="!navItems.length"
-              variant="ghost"
-              @click="isDesktopTocOpen = !isDesktopTocOpen"
-            />
-            <template v-if="!bookInfo.isAudioHidden.value">
+            <USlideover
+              v-model:open="isDesktopTocOpen"
+              :title="$t('reader_toc_title')"
+              side="left"
+              :close="{
+                color: 'neutral',
+                variant: 'soft',
+                class: 'rounded-full',
+              }"
+              :overlay="false"
+              :ui="{
+                header: 'py-3 min-h-14',
+                close: 'top-3',
+                body: 'p-0 sm:p-0',
+                content: 'divide-gray-500 ring-gray-500',
+              }"
+              @update:open="handleDesktopTocOpen"
+            >
               <UButton
-                class="laptop:hidden"
-                icon="i-material-symbols-play-arrow-rounded"
+                class="max-laptop:hidden"
+                icon="i-material-symbols-format-list-bulleted"
+                :label="$t('reader_toc_button')"
+                :disabled="!navItems.length"
                 variant="ghost"
-                color="neutral"
-                :disabled="isReaderLoading"
-                @click="onClickTTSPlay"
               />
+
+              <template #body>
+                <ul class="pb-[64px] divide-gray-500 divide-y">
+                  <li
+                    v-for="item in navItems"
+                    :ref="item.href === activeNavItemHref ? 'desktopActiveNavItemElements' : undefined"
+                    :key="item.href"
+                  >
+                    <UButton
+                      :label="item.label"
+                      variant="link"
+                      :color="item.href === activeNavItemHref ? 'primary' : 'neutral'"
+                      :ui="{
+                        label: 'text-left leading-[44px]',
+                        base: 'justify-start pl-6 pr-5.5 py-0',
+                      }"
+                      :trailing-icon="item.href === activeNavItemHref ? 'i-material-symbols-visibility-rounded' : undefined"
+                      block
+                      @click="() => {
+                        isDesktopTocOpen = false
+                        setActiveNavItemHref(item.href)
+                      }"
+                    />
+                  </li>
+                </ul>
+              </template>
+            </USlideover>
+            <UButton
+              :class="[
+                'laptop:hidden',
+                { 'opacity-50 cursor-not-allowed': isReaderLoading || bookInfo.isAudioHidden.value },
+              ]"
+              icon="i-material-symbols-play-arrow-rounded"
+              variant="ghost"
+              color="neutral"
+              @click="handleMobileTTSClick"
+            />
+            <UTooltip
+              :disabled="!bookInfo.isAudioHidden.value"
+              :text="$t('reader_text_to_speech_button_disabled_tooltip')"
+            >
               <UButton
                 :ui="{
                   base: '!rounded-l-md',
@@ -78,10 +127,10 @@
                 :label="$t('reader_text_to_speech_button')"
                 variant="ghost"
                 color="neutral"
-                :disabled="isReaderLoading"
+                :disabled="isReaderLoading || bookInfo.isAudioHidden.value"
                 @click="onClickTTSPlay"
               />
-            </template>
+            </UTooltip>
 
             <BottomSlideover :title="$t('reader_display_options_button')">
               <UButton
@@ -114,27 +163,6 @@
       </ReaderHeader>
 
       <div class="relative flex grow gap-6">
-        <nav
-          v-if="isDesktopTocOpen"
-          class="relative max-laptop:hidden w-[312px]"
-        >
-          <ul class="absolute inset-0 overflow-y-auto pl-12 pr-6 laptop:pt-6 pb-[64px]">
-            <li
-              v-for="item in navItems"
-              :key="item.href"
-            >
-              <UButton
-                class="w-full"
-                :label="item.label"
-                variant="link"
-                color="neutral"
-                :ui="{ label: item.href === activeNavItemHref ? 'text-[#1A1A1A]' : '' }"
-                @click="setActiveNavItemHref(item.href)"
-              />
-            </li>
-          </ul>
-        </nav>
-
         <div class="relative flex flex-col grow laptop:px-12 laptop:pt-6 pb-[64px]">
           <div class="relative grow w-full max-w-[768px] mx-auto">
             <div
@@ -236,6 +264,7 @@ const localeRoute = useLocaleRoute()
 if (!hasLoggedIn.value) {
   await navigateTo(localeRoute({ name: 'account', query: route.query }))
 }
+const toast = useToast()
 
 const { t: $t } = useI18n()
 const nftStore = useNFTStore()
@@ -253,8 +282,26 @@ function getCacheKeyWithSuffix(suffix: ReaderCacheKeySuffix) {
 }
 
 const isReaderLoading = ref(true)
-const isDesktopTocOpen = ref(false)
-const isMobileTocOpen = ref(false)
+
+const isTocOpen = ref(false)
+const isDesktop = useMediaQuery('(min-width: 1024px)')
+watch(isDesktop, async () => {
+  // Close the TOC when switching to desktop/mobile
+  isTocOpen.value = false
+})
+const isDesktopTocOpen = computed({
+  get: () => isDesktop.value && isTocOpen.value,
+  set: (open) => {
+    isTocOpen.value = open
+  },
+})
+const isMobileTocOpen = computed({
+  get: () => !isDesktop.value && isTocOpen.value,
+  set: (open) => {
+    isTocOpen.value = open
+  },
+})
+
 const isPageLoading = ref(false)
 
 const { loadingLabel, loadFileAsBuffer } = useBookFileLoader()
@@ -302,9 +349,9 @@ const activeTTSElementIndex = useStorage(getCacheKeyWithSuffix('tts-index'), und
 const { setTTSSegments, setChapterTitles, openPlayer } = useTTSPlayerModal({
   nftClassId: nftClassId.value,
   onSegmentChange: (segment) => {
-    if (segment?.href) {
+    if (segment?.cfi) {
       isPageLoading.value = true
-      rendition.value?.display(segment.href)
+      rendition.value?.display(segment.cfi)
       activeTTSElementIndex.value = segment.index
     }
   },
@@ -337,6 +384,7 @@ watch(fontSize, (size) => {
 
 let cleanUpClickListener: (() => void) | undefined
 let removeSwipeListener: (() => void) | undefined
+let removeSelectAllByHotkeyListener: (() => void) | undefined
 const renditionElement = useTemplateRef<HTMLDivElement>('reader')
 const renditionViewWindow = ref<Window | undefined>(undefined)
 
@@ -492,6 +540,16 @@ async function loadEPub() {
         },
       },
     ))
+
+    if (removeSelectAllByHotkeyListener) {
+      removeSelectAllByHotkeyListener()
+    }
+    removeSelectAllByHotkeyListener = onKeyStroke(['a', 'A'], (event) => {
+      // Prevent selecting all texts by Ctrl/Cmd + A
+      if (event.ctrlKey || event.metaKey) {
+        event.preventDefault()
+      }
+    }, { target: view.window })
   })
 
   rendition.value.on('relocated', (location: Location) => {
@@ -616,6 +674,20 @@ function decreaseFontSize() {
   adjustFontSize(-1)
 }
 
+const desktopActiveNavItemElements = useTemplateRef<HTMLLIElement[]>('desktopActiveNavItemElements')
+
+async function handleDesktopTocOpen(open: boolean) {
+  if (open) {
+    useLogEvent('reader_toc_open', { nft_class_id: nftClassId.value })
+    await nextTick()
+    const element = desktopActiveNavItemElements.value?.[0]
+    if (element) {
+      // Scroll the active nav item to the center of the desktop screen
+      element.scrollIntoView({ block: 'center', inline: 'center' })
+    }
+  }
+}
+
 const mobileActiveNavItemElements = useTemplateRef<HTMLLIElement[]>('mobileActiveNavItemElements')
 
 async function handleMobileTocOpen(open: boolean) {
@@ -638,6 +710,18 @@ function onClickTTSPlay() {
   })
 }
 
+function handleMobileTTSClick() {
+  if (bookInfo.isAudioHidden.value) {
+    toast.add({
+      title: $t('reader_text_to_speech_button_disabled_tooltip'),
+      duration: 3000,
+      progress: false,
+    })
+    useLogEvent('reader_tts_button_disabled', { nft_class_id: nftClassId.value })
+    return
+  }
+  onClickTTSPlay()
+}
 function handleLeftArrowButtonClick() {
   turnPageLeft()
   useLogEvent('reader_navigate_button_arrow')

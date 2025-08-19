@@ -6,7 +6,7 @@ export function splitTextIntoSegments(text: string): string[] {
 
   let currentSegment = ''
   for (let i = 0; i < segments.length; i++) {
-    const segment = segments[i]?.trim().replace(/[*＊]/g, '')
+    const segment = sanitizeTTSText(segments[i]?.trim() || '')
     if (!segment) continue
     if (segment.length === 1 || currentSegment.length + segment.length < 100) {
       currentSegment += segment
@@ -41,4 +41,16 @@ export function getTTSConfigKeySuffixes() {
 
 export function getTTSConfigKeyWithSuffix(key: string, suffix: TTSConfigKeySuffix) {
   return `${key}-${suffix}`
+}
+
+export function sanitizeTTSText(text: string): string {
+  if (!text) return ''
+  return text
+    .replace(/[*＊]/g, '')
+    .replace(/[⋯︙]+/g, '。')
+    .replace(/[—─―︱⸺]+/g, '，')
+    .replace('﹁', '「')
+    .replace('﹂', '」')
+    .replace(/﹃/g, '『')
+    .replace(/﹄/g, '』')
 }

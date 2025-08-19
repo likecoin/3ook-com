@@ -43,6 +43,13 @@ export interface FetchLikerPlusBillingPortalLinkResponseData {
   url: string
 }
 
+export interface FetchLikerPlusGiftStatusResponseData {
+  giftClassId?: string
+  giftCartId?: string
+  giftPaymentId?: string
+  giftClaimToken?: string
+}
+
 export interface MigrateMagicEmailUserResponseData {
   isMigratedBookUser: boolean
   isMigratedBookOwner: boolean
@@ -208,6 +215,7 @@ export function useLikeCoinSessionAPI() {
     period = 'monthly',
     hasFreeTrial,
     mustCollectPaymentMethod,
+    giftNFTClassId,
     from,
     referrer,
     utmCampaign,
@@ -222,6 +230,7 @@ export function useLikeCoinSessionAPI() {
     period: SubscriptionPlan
     hasFreeTrial?: boolean
     mustCollectPaymentMethod?: boolean
+    giftNFTClassId?: string
     from?: string
     referrer?: string
     utmCampaign?: string
@@ -239,6 +248,7 @@ export function useLikeCoinSessionAPI() {
       body: {
         hasFreeTrial,
         mustCollectPaymentMethod,
+        giftClassId: giftNFTClassId,
         referrer,
         utmCampaign,
         utmMedium,
@@ -250,6 +260,10 @@ export function useLikeCoinSessionAPI() {
         fbClickId,
       },
     })
+  }
+
+  function fetchLikerPlusGiftStatus() {
+    return fetch.value<FetchLikerPlusGiftStatusResponseData>(`/plus/gift`)
   }
 
   function fetchLikerPlusBillingPortalLink() {
@@ -301,6 +315,7 @@ export function useLikeCoinSessionAPI() {
     fetchCartStatusById,
     claimCartById,
     fetchLikerPlusCheckoutLink,
+    fetchLikerPlusGiftStatus,
     fetchLikerPlusBillingPortalLink,
     migrateMagicEmailUser,
     sendCollectorMessage,

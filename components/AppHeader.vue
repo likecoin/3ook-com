@@ -2,7 +2,11 @@
   <header class="w-full max-w-[1440px] mx-auto">
     <nav class="flex justify-between items-stretch min-h-[56px] px-5 2xl:px-14">
       <div class="flex justify-start items-center flex-1 text-(--ui-primary) gap-12">
-        <AppLogo :height="16" />
+        <ULink
+          :to="localeRoute({ name: 'about' })"
+        >
+          <AppLogo :height="16" />
+        </ULink>
 
         <ul class="hidden laptop:flex items-center flex-wrap gap-10 gap-y-1 font-semibold">
           <li
@@ -77,7 +81,7 @@ const menuItems = computed(() =>
     return {
       ...item,
       to,
-      isActive: getRouteBaseName(route) === item.key,
+      isActive: getRouteBaseName(route)?.startsWith(item.key),
       labelGraphic: getLabelGraphic(item.key),
     }
   }),

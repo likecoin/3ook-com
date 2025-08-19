@@ -42,6 +42,7 @@ const accountStore = useAccountStore()
 const { handleError } = useErrorHandler()
 const { currency, yearlyPrice, monthlyPrice } = useSubscription()
 const { user } = useUserSession()
+const likeCoinSessionAPI = useLikeCoinSessionAPI()
 
 const route = useRoute()
 const getRouteQuery = useRouteQuery()
@@ -58,14 +59,46 @@ useHead({
   title: $t('subscription_success_page_title'),
 })
 
+async function fetchPlusGiftStatus() {
+  try {
+    const {
+      giftClassId: giftNFTClassId,
+      giftCartId,
+      giftPaymentId,
+      giftClaimToken,
+    } = await likeCoinSessionAPI.fetchLikerPlusGiftStatus()
+    return {
+      giftNFTClassId,
+      giftCartId,
+      giftPaymentId,
+      giftClaimToken,
+    }
+  }
+  catch (error) {
+    await handleError(error, {
+      title: $t('subscription_success_fetch_gift_error'),
+      description: $t('subscription_success_fetch_gift_error_description'),
+    })
+    return {}
+  }
+}
+
 onMounted(async () => {
   try {
     isRefreshing.value = true
     await accountStore.refreshSessionInfo()
-    if (!isLikerPlus.value) {
+    let retry = 0
+    while (!isLikerPlus.value && retry < 4) {
       await sleep(5000)
       await accountStore.refreshSessionInfo()
+      retry++
     }
+    const {
+      giftNFTClassId,
+      giftCartId,
+      giftPaymentId,
+      giftClaimToken,
+    } = await fetchPlusGiftStatus()
     if (isRedirected.value) {
       const isTrial = getRouteQuery('trial') !== '0'
       const price = isTrial
@@ -90,15 +123,31 @@ onMounted(async () => {
         },
       }), { replace: true })
     }
-    const redirectRoute = accountStore.getPlusRedirectRoute()
 
-    if (redirectRoute && redirectRoute.name) {
+    if (giftNFTClassId && giftCartId && giftPaymentId && giftClaimToken) {
       accountStore.clearPlusRedirectRoute()
-      await navigateTo(localeRoute(redirectRoute), { replace: true })
-      return
+      await navigateTo(localeRoute({
+        name: 'claim-page',
+        query: {
+          payment_id: giftPaymentId,
+          claiming_token: giftClaimToken,
+          cart_id: giftCartId,
+          nft_class_id: giftNFTClassId,
+        },
+      }), { replace: true })
     }
-    isRefreshing.value = false
-    setTimeout(redirectToShelf, 1000)
+    else {
+      const redirectRoute = accountStore.getPlusRedirectRoute()
+
+      if (redirectRoute && redirectRoute.name) {
+        accountStore.clearPlusRedirectRoute()
+        await navigateTo(localeRoute(redirectRoute), { replace: true })
+      }
+      else {
+        isRefreshing.value = false
+        setTimeout(redirectToShelf, 1000)
+      }
+    }
   }
   catch (error) {
     await handleError(error, {

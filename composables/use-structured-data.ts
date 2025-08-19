@@ -1,10 +1,13 @@
-export function useStructuredData({ nftClassId }: { nftClassId: string }) {
+export function useStructuredData(
+  { nftClassId }: { nftClassId: string | Ref<string> | ComputedRef<string> },
+) {
   const bookInfo = useBookInfo({ nftClassId })
   const config = useRuntimeConfig()
 
   function generateOGMetaTags({
     selectedPricingItemIndex = 0,
   }) {
+    const nftClassIdValue = toValue(nftClassId)
     const authorName = bookInfo.authorName.value
     const isbn = bookInfo.isbn.value
     const inLanguage = bookInfo.inLanguage.value
@@ -41,15 +44,15 @@ export function useStructuredData({ nftClassId }: { nftClassId: string }) {
     },
     {
       property: 'product:catalog_id',
-      content: `${nftClassId}-${pricingItem.index}`,
+      content: `${nftClassIdValue}-${pricingItem.index}`,
     },
     {
       property: 'product:retailer_item_id',
-      content: `${nftClassId}-${pricingItem.index}`,
+      content: `${nftClassIdValue}-${pricingItem.index}`,
     },
     {
       property: 'item_group_id',
-      content: nftClassId,
+      content: nftClassIdValue,
     },
     {
       property: 'product:category',
@@ -103,6 +106,7 @@ export function useStructuredData({ nftClassId }: { nftClassId: string }) {
     canonicalURL: string
     image?: string
   }) {
+    const nftClassIdValue = toValue(nftClassId)
     if (bookInfo.isHidden.value) {
       return []
     }
@@ -121,7 +125,7 @@ export function useStructuredData({ nftClassId }: { nftClassId: string }) {
 
     const pricingItems = bookInfo.pricingItems.value
     const productsStructuredData = pricingItems.map((pricing) => {
-      const productId = `${nftClassId}-${pricing.index}`
+      const productId = `${nftClassIdValue}-${pricing.index}`
       const skuId = productId
 
       return {
@@ -209,7 +213,7 @@ export function useStructuredData({ nftClassId }: { nftClassId: string }) {
           },
         },
         'productID': productId,
-        'inProductGroupWithID': nftClassId,
+        'inProductGroupWithID': nftClassIdValue,
       }
     })
 
@@ -230,14 +234,14 @@ export function useStructuredData({ nftClassId }: { nftClassId: string }) {
         'name': '3ook',
       },
       'author': authorName,
-      'sku': nftClassId,
+      'sku': nftClassIdValue,
       'publisher': publisherName,
       isbn,
       inLanguage,
       datePublished,
       keywords,
       'bookFormat': 'https://schema.org/EBook',
-      'productGroupID': nftClassId,
+      'productGroupID': nftClassIdValue,
       'workExample': workExamples,
       'hasVariant': workExamples,
       'variesBy': ['https://schema.org/BookEdition'],

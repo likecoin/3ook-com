@@ -1,6 +1,6 @@
 import { PaywallModal, UpsellPlusModal } from '#components'
 import type { PaywallModalProps } from '~/components/PaywallModal.props'
-import type { UpsellPlusModalProps } from '~/components/UpsellPlusModal.props'
+import type { UpsellPlusModalProps, UpsellPlusModalSubscribeEventPayload } from '~/components/UpsellPlusModal.props'
 
 export function useSubscription() {
   const likeCoinSessionAPI = useLikeCoinSessionAPI()
@@ -65,6 +65,8 @@ export function useSubscription() {
   function getUpsellPlusModalProps(): UpsellPlusModalProps {
     return {
       onSubscribe: startSubscription,
+      isLikerPlus: isLikerPlus.value,
+      likerPlusPeriod: likerPlusPeriod.value,
     }
   }
 
@@ -88,16 +90,18 @@ export function useSubscription() {
     return paywallModal.open(modalProps.value).result
   }
 
-  async function openUpsellPlusModal(props: UpsellPlusModalProps = {}) {
+  async function openUpsellPlusModalIfEligible(props: UpsellPlusModalProps = {}) {
     if (upsellPlusModal.isOpen) {
       upsellPlusModal.close()
     }
-    const upsellModalProps: UpsellPlusModalProps = {
-      ...props,
-      ...getUpsellPlusModalProps(),
-    }
 
-    return upsellPlusModal.open(upsellModalProps).result
+    if (!isLikerPlus.value || likerPlusPeriod.value === 'month') {
+      const upsellModalProps: UpsellPlusModalProps = {
+        ...props,
+        ...getUpsellPlusModalProps(),
+      }
+      return upsellPlusModal.open(upsellModalProps).result
+    }
   }
 
   async function redirectIfSubscribed() {
@@ -115,22 +119,11 @@ export function useSubscription() {
     utmMedium,
     utmSource,
     plan,
+    nftClassId,
     redirectRoute,
-  }: {
-    hasFreeTrial?: boolean
-    mustCollectPaymentMethod?: boolean
-    utmCampaign?: string
-    utmMedium?: string
-    utmSource?: string
-    plan?: SubscriptionPlan
-    redirectRoute?: {
-      name: string
-      params: Record<string, string>
-      query: Record<string, string>
-      hash: string
-    }
-  } = {}) {
+  }: UpsellPlusModalSubscribeEventPayload = {}) {
     const subscribePlan = plan || selectedPlan.value
+    const isYearly = subscribePlan === 'yearly'
     useLogEvent('add_to_cart', eventPayload.value)
     useLogEvent('subscription_button_click', { plan: subscribePlan })
 
@@ -162,10 +155,11 @@ export function useSubscription() {
         from: getRouteQuery('from'),
         hasFreeTrial,
         mustCollectPaymentMethod,
+        giftNFTClassId: isYearly ? nftClassId : undefined,
         ...analyticsParams,
-        utmCampaign: utmCampaign || analyticsParams.utmCampaign,
-        utmMedium: utmMedium || analyticsParams.utmMedium,
-        utmSource: utmSource || analyticsParams.utmSource,
+        utmCampaign: analyticsParams.utmCampaign || utmCampaign,
+        utmMedium: analyticsParams.utmMedium || utmMedium,
+        utmSource: analyticsParams.utmSource || utmSource,
       })
       if (redirectRoute && redirectRoute?.name) {
         accountStore.savePlusRedirectRoute(redirectRoute)
@@ -205,7 +199,7 @@ export function useSubscription() {
     isProcessingSubscription,
 
     openPaywallModal,
-    openUpsellPlusModal,
+    openUpsellPlusModalIfEligible,
     redirectIfSubscribed,
     startSubscription,
   }

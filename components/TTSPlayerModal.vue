@@ -336,8 +336,8 @@ function getSegmentClass(index: number) {
   return `${baseClasses} ${index === currentTTSSegmentIndex.value ? activeClasses : inactiveClasses}`
 }
 
-watch(currentTTSSegment, (newSegment) => {
-  if (props.onSegmentChange) {
+watch(currentTTSSegment, (newSegment: TTSSegment | undefined) => {
+  if (props.onSegmentChange && newSegment) {
     props.onSegmentChange({ index: currentTTSSegmentIndex.value, ...newSegment })
   }
 })
