@@ -200,7 +200,7 @@ onMounted(async () => {
 const nftClassId = computed(() => cartData.value?.classIds[0] || '')
 
 const { open: openCollectorMessageModal } = useCollectorMessage({
-  nftClassId: nftClassId.value as string,
+  nftClassId: nftClassId,
   paymentId: paymentId.value as string,
   claimingToken: claimingToken.value as string,
 })

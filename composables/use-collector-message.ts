@@ -6,7 +6,7 @@ export function useCollectorMessage({
   paymentId,
   claimingToken,
 }: {
-  nftClassId: string
+  nftClassId: Ref<string>
   paymentId: string
   claimingToken: string
 }) {
@@ -53,7 +53,7 @@ export function useCollectorMessage({
     try {
       const result = await likeCoinSessionAPI.sendCollectorMessage({
         message,
-        nftClassId,
+        nftClassId: nftClassId.value,
         wallet: user.value.evmWallet,
         paymentId,
         claimToken: claimingToken,
