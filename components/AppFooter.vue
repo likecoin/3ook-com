@@ -2,7 +2,7 @@
   <footer
     :class="[
       'flex',
-      'max-laptop:flex-col',
+      'flex-col',
       'items-stretch',
       'justify-between',
       'gap-4',
@@ -19,7 +19,7 @@
     ]"
   >
     <div
-      class="flex flex-col phone:flex-row justify-center items-center flex-wrap gap-6 gap-y-4 leading-5"
+      class="flex flex-col justify-center items-center flex-wrap gap-6 gap-y-4 leading-5"
     >
       <ULink
         class="border-b leading-5"
@@ -77,7 +77,7 @@
       </nav>
     </div>
 
-    <div class="flex justify-center lg:justify-end gap-6">
+    <div class="flex justify-center gap-6">
       <ul
         class="flex justify-center flex-wrap items-center gap-1.5"
       >

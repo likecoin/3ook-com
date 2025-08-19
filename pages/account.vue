@@ -1,7 +1,7 @@
 <template>
   <NuxtLayout
     name="default"
-    :is-footer-visible-in-mobile="true"
+    :is-footer-visible="true"
   >
     <main class="w-full max-w-xl mx-auto p-4 space-y-4 phone:grow">
       <div

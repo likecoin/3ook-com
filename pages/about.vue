@@ -1,7 +1,7 @@
 <template>
   <NuxtLayout
     name="default"
-    :is-footer-visible-in-mobile="true"
+    :is-footer-visible="true"
   >
     <!-- Hero Section with Banner -->
     <section

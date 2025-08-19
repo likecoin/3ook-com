@@ -2,7 +2,7 @@
   <div class="flex flex-col min-h-svh max-lg:pb-14 mb-safe">
     <slot />
 
-    <AppFooter :class="{ 'max-laptop:hidden': !props.isFooterVisibleInMobile }" />
+    <AppFooter :class="{ hidden: !props.isFooterVisible }" />
 
     <AppTabBar />
   </div>
@@ -10,7 +10,7 @@
 
 <script setup lang="ts">
 const props = defineProps({
-  isFooterVisibleInMobile: {
+  isFooterVisible: {
     type: Boolean,
     default: false,
   },
