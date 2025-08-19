@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col min-h-svh max-lg:pb-14 mb-safe">
+  <div class="flex flex-col min-h-svh pb-14">
     <slot />
 
     <AppFooter :class="{ hidden: !props.isFooterVisible }" />
