@@ -77,15 +77,6 @@ const cartId = computed(() => getRouteQuery('cart_id'))
 const claimingToken = computed(() => getRouteQuery('claiming_token'))
 const paymentId = computed(() => getRouteQuery('payment_id'))
 
-const claimTitle = computed(() => {
-  if (canStartReading.value) {
-    return $t('claim_page_start_reading_footer_label')
-  }
-  if (!isAutoDeliver.value) {
-    return $t('claim_page_wait_for_delivery')
-  }
-  return $t('claim_page_title')
-})
 const isLoading = ref(true)
 
 const baseLoadingLabels = computed(() => [
@@ -224,6 +215,19 @@ const bookCoverSrc = computed(() => getResizedImageURL(bookInfo.coverSrc.value, 
 const isAutoDeliver = computed(() => isItemAutoDeliver.value || allItemsDelivered.value)
 const isItemAutoDeliver = computed(() => bookInfo.getIsAutoDelivery(cartData.value?.classIdsWithPrice?.[0]?.priceIndex))
 const allItemsDelivered = ref(false)
+
+const claimTitle = computed(() => {
+  if (isLoading.value) {
+    return $t('claim_page_title')
+  }
+  if (canStartReading.value) {
+    return $t('claim_page_start_reading_footer_label')
+  }
+  if (!isAutoDeliver.value) {
+    return $t('claim_page_wait_for_delivery')
+  }
+  return $t('claim_page_title')
+})
 
 const receivedNFTId = computed(() => bookInfo.firstUserOwnedNFTId.value)
 const canStartReading = computed(() => !!receivedNFTId.value)
