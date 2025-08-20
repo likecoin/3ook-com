@@ -3,7 +3,7 @@
     <nav class="flex justify-between items-stretch min-h-[56px] px-5 2xl:px-14">
       <div class="flex justify-start items-center flex-1 text-(--ui-primary) gap-12">
         <ULink
-          :to="localeRoute({ name: 'about' })"
+          :to="localeRoute({ name: 'pricing' })"
         >
           <AppLogo :height="16" />
         </ULink>
