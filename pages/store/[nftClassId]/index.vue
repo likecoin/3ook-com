@@ -135,13 +135,12 @@
                       'flex',
                       'items-center',
                       'gap-3',
-                      item.isSelected ? 'bg-green-100' : 'bg-gray-100',
-                      item.isSelected ? 'hover:bg-green-200/60' : 'hover:bg-gray-200',
+                      'hover:bg-gray-200',
                       'rounded-lg',
                       'w-full',
                       'p-4',
-                      'border',
-                      item.isSelected ? 'border-green-500' : 'border-gray-300',
+                      'border-2',
+                      item.isSelected ? 'border-gray-900' : 'border-gray-300',
                       'transition-[background-color, border-color]',
                       'duration-200',
                       'ease-in-out',
@@ -149,16 +148,25 @@
                     ]"
                     @click="handlePricingItemClick(index)"
                   >
-                    <UIcon
-                      v-if="item.isSelected"
-                      class="shrink-0 text-green-500 -mx-0.5"
-                      name="i-material-symbols-check-circle"
-                      size="24"
-                    />
-                    <span
-                      v-else
-                      class="shrink-0 w-[20px] h-[20px] my-0.5 bg-white rounded-full border border-gray-300"
-                    />
+                    <div class="relative shrink-0 w-[24px] h-[24px] flex items-center justify-center">
+                      <span
+                        :class="[
+                          'absolute',
+                          'w-[20px]',
+                          'h-[20px]',
+                          item.isSelected ? 'bg-[#AAF1E7]' : 'bg-white',
+                          'rounded-full',
+                          'border',
+                          'border-gray-300',
+                        ]"
+                      />
+                      <UIcon
+                        v-if="item.isSelected"
+                        class="absolute text-gray-900 z-10"
+                        name="i-material-symbols-check-circle"
+                        size="24"
+                      />
+                    </div>
                     <div class="grow">
                       <div
                         :class="[
@@ -166,7 +174,7 @@
                           'justify-between',
                           'items-center',
                           'gap-3',
-                          item.isSoldOut ? 'text-gray-400' : 'text-green-500',
+                          item.isSoldOut ? 'text-gray-400' : 'text-gray-900',
                         ]"
                       >
                         <span
@@ -183,7 +191,7 @@
                           class="flex flex-col items-end text-right"
                         >
                           <template v-if="item?.discountedPrice">
-                            <span class="flex flex-nowrap items-center text-green-600 font-semibold">
+                            <span class="flex flex-nowrap items-center text-gray-900 font-semibold">
                               <span
                                 class="mx-0.5"
                                 v-text="item.currency"
