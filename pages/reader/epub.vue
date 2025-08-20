@@ -162,13 +162,53 @@
         </template>
       </ReaderHeader>
 
-      <div class="relative flex grow gap-6">
-        <div class="relative flex flex-col grow laptop:px-12 laptop:pt-6 pb-[64px]">
-          <div class="relative grow w-full max-w-[768px] mx-auto">
+      <div class="relative flex grow gap-4">
+        <div class="relative w-full flex flex-col grow laptop:pt-6 pb-[64px]">
+          <div class="relative grow w-full flex items-center">
             <div
-              ref="reader"
-              class="absolute inset-0"
-            />
+              v-if="!isReaderLoading"
+              :class="[
+                'hidden lg:flex',
+                'items-center',
+                'justify-center',
+                'flex-1',
+                'h-full',
+                'cursor-pointer',
+                { 'opacity-0 pointer-events-none': isRightToLeft ? isAtLastPage : isAtFirstPage },
+              ]"
+              @click="handleLeftArrowButtonClick"
+            >
+              <UIcon
+                size="24"
+                name="i-material-symbols-arrow-back-ios-new-rounded"
+              />
+            </div>
+
+            <div class="relative w-full max-w-[768px] h-full mx-auto">
+              <div
+                ref="reader"
+                class="absolute inset-0"
+              />
+            </div>
+
+            <div
+              v-if="!isReaderLoading"
+              :class="[
+                'hidden lg:flex',
+                'items-center',
+                'justify-center',
+                'flex-1',
+                'h-full',
+                'cursor-pointer',
+                { 'opacity-0 pointer-events-none': isRightToLeft ? isAtFirstPage : isAtLastPage },
+              ]"
+              @click="handleRightArrowButtonClick"
+            >
+              <UIcon
+                size="24"
+                name="i-material-symbols-arrow-forward-ios-rounded"
+              />
+            </div>
           </div>
 
           <div
@@ -189,38 +229,6 @@
             <UIcon
               class="animate-spin size-12"
               name="i-material-symbols-refresh-rounded"
-            />
-          </div>
-
-          <div
-            v-if="!isReaderLoading"
-            :class="[
-              'absolute',
-              'inset-0',
-              'hidden lg:flex',
-              'justify-between',
-              'items-center',
-              'px-[48px]',
-              'pointer-events-none',
-            ]"
-          >
-            <UButton
-              :class="[
-                'pointer-events-auto',
-                { 'opacity-0': isRightToLeft ? isAtLastPage : isAtFirstPage },
-              ]"
-              icon="i-material-symbols-arrow-back-ios-new-rounded"
-              variant="ghost"
-              @click="handleLeftArrowButtonClick"
-            />
-            <UButton
-              :class="[
-                'pointer-events-auto',
-                { 'opacity-0': isRightToLeft ? isAtFirstPage : isAtLastPage },
-              ]"
-              icon="i-material-symbols-arrow-forward-ios-rounded"
-              variant="ghost"
-              @click="handleRightArrowButtonClick"
             />
           </div>
         </div>
