@@ -32,11 +32,11 @@
         <!-- Book Cover -->
         <div class="flex justify-center mt-4 laptop:mt-8 laptop:mb-10 z-20">
           <BookCover
-            class="w-[150px] tablet:w-[120px] laptop:w-[220px] shrink-0"
+            class="w-[120px] tablet:w-[150px] shrink-0"
             :src="bookCoverSrc"
             :alt="bookTitle"
             :is-vertical-center="true"
-            :has-shadow="true"
+            :has-shadow="false"
           />
         </div>
 
