@@ -40,6 +40,7 @@
             :src="props.bookCoverSrc"
             :alt="props.bookName"
             :has-shadow="false"
+            :is-vertical-center="true"
           />
           <div class="flex flex-col">
             <span

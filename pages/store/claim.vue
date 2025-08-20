@@ -58,14 +58,14 @@
       </template>
     </BookLoadingScreen>
     <CollectorMessageModal
-      v-model:open="openCollectorMessageModal"
+      v-model:open="isOpenCollectorMessageModal"
       :book-cover-src="bookCoverSrc"
       :book-name="bookInfo.name.value"
       :book-author="bookInfo.authorName.value"
       :payment-id="paymentId"
       :claiming-token="claimingToken"
       :nft-class-id="nftClassId"
-      @close="openCollectorMessageModal = false"
+      @close="isOpenCollectorMessageModal = false"
     />
   </main>
 </template>
@@ -88,7 +88,7 @@ const claimingToken = computed(() => getRouteQuery('claiming_token'))
 const paymentId = computed(() => getRouteQuery('payment_id'))
 
 const isLoading = ref(true)
-const openCollectorMessageModal = ref(false)
+const isOpenCollectorMessageModal = ref(false)
 
 const baseLoadingLabels = computed(() => [
   $t('claim_page_loading_step_1'),
@@ -258,7 +258,7 @@ onMounted(() => {
 })
 
 watch([hasLoggedIn, canStartReading], () => {
-  if (!hasLoggedIn.value || openCollectorMessageModal.value) return
+  if (!hasLoggedIn.value || isOpenCollectorMessageModal.value) return
 
   if (canStartReading.value) {
     openCollectorModal()
@@ -273,9 +273,9 @@ watch(hasLoggedIn, (value) => {
 }, { immediate: true })
 
 function openCollectorModal() {
-  if (openCollectorMessageModal.value) return
+  if (isOpenCollectorMessageModal.value) return
   stopCollectorMessageModalTimer?.()
-  openCollectorMessageModal.value = true
+  isOpenCollectorMessageModal.value = true
 }
 
 async function waitForItemsDelivery({ timeout = 30000, interval = 3000 } = {}) {
