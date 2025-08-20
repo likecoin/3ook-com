@@ -1,5 +1,6 @@
 <template>
   <UModal
+    v-model:open="open"
     class="max-w-[400px]"
     :ui="{
       body: [
@@ -16,8 +17,7 @@
     }"
     :dismissible="false"
     :title="$t('claim_page_collector_message_title')"
-    :default-open="true"
-    @close="handleClose"
+    @update:open="emit('update:open', $event)"
   >
     <template #body>
       <template v-if="hasSubmittedCollectorMessage">
@@ -84,7 +84,8 @@
 </template>
 
 <script setup lang="ts">
-const emit = defineEmits(['close', 'submit'])
+const emit = defineEmits(['submit', 'update:open'])
+const open = defineModel<boolean>('open')
 const { t: $t } = useI18n()
 const { user } = useUserSession()
 const likeCoinSessionAPI = useLikeCoinSessionAPI()
@@ -122,7 +123,7 @@ const isLoading = ref(false)
 const hasSubmittedCollectorMessage = ref(false)
 
 function handleClose() {
-  emit('close')
+  open.value = false
 }
 
 async function handleSubmitMessage() {

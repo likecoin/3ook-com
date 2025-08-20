@@ -65,7 +65,6 @@
       :payment-id="paymentId"
       :claiming-token="claimingToken"
       :nft-class-id="nftClassId"
-      @close="isOpenCollectorMessageModal = false"
     />
   </main>
 </template>
