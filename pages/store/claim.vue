@@ -250,12 +250,6 @@ const isCheckingItemsDelivery = ref(false)
 const hasBypassedIndexer = ref(false)
 let stopCollectorMessageModalTimer: (() => void) | null = null
 
-onMounted(() => {
-  if (hasLoggedIn.value) {
-    startClaimFlow()
-  }
-})
-
 watch([hasLoggedIn, canStartReading], () => {
   if (!hasLoggedIn.value || isOpenCollectorMessageModal.value) return
 
