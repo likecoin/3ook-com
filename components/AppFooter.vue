@@ -10,6 +10,7 @@
       'w-full',
       'max-w-[1440px]',
       'mx-auto',
+      'mb-safe',
       'px-5',
       'pt-5',
       'py-10',

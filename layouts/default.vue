@@ -2,7 +2,7 @@
   <div class="flex flex-col min-h-svh pb-14">
     <slot />
 
-    <AppFooter :class="{ hidden: !props.isFooterVisible }" />
+    <AppFooter :class="['mb-safe', { hidden: !props.isFooterVisible }]" />
 
     <AppTabBar />
   </div>
