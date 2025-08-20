@@ -5,7 +5,25 @@
         v-for="item in menuItems"
         :key="item.label"
       >
+        <NuxtLink
+          v-if="item.key === 'account' && hasLoggedIn"
+          class="flex items-center"
+          :to="item.to"
+        >
+          <UAvatar
+            :class="[
+              'bg-white',
+              item.isActive ? 'border-2' : 'border',
+              item.isActive ? 'bg-theme-500' : 'border-muted',
+            ]"
+            :src="user?.avatar"
+            :alt="user?.displayName"
+            icon="i-material-symbols-person-2-rounded"
+            size="lg"
+          />
+        </NuxtLink>
         <UButton
+          v-else
           class="flex-col gap-0"
           :label="item.label"
           :icon="item.icon"
@@ -27,20 +45,6 @@
           </template>
         </UButton>
       </li>
-      <li v-if="hasLoggedIn">
-        <NuxtLink
-          :to="localeRoute({ name: 'account' })"
-          class="flex items-center"
-        >
-          <UAvatar
-            class="bg-white border-[#EBEBEB]"
-            :src="user?.avatar"
-            :alt="user?.displayName"
-            icon="i-material-symbols-person-2-rounded"
-            size="lg"
-          />
-        </NuxtLink>
-      </li>
     </ul>
   </nav>
 </template>
@@ -53,15 +57,8 @@ const getRouteBaseName = useRouteBaseName()
 const { getLabelGraphic } = useGraphicLabel()
 const { loggedIn: hasLoggedIn, user } = useUserSession()
 
-type MenuItemType = {
-  key: string
-  label: string
-  icon: string
-  iconActive: string
-}
-
-const rawMenuItems = computed((): MenuItemType[] => {
-  const items: MenuItemType[] = [
+const menuItems = computed(() =>
+  [
     {
       key: 'store',
       label: $t('tab_bar_store'),
@@ -74,25 +71,17 @@ const rawMenuItems = computed((): MenuItemType[] => {
       icon: 'i-material-symbols-auto-stories-outline',
       iconActive: 'i-material-symbols-auto-stories',
     },
-  ]
-
-  if (!hasLoggedIn.value) {
-    items.push({
+    {
       key: 'account',
       label: $t('tab_bar_user'),
       icon: 'i-material-symbols-person-outline-rounded',
       iconActive: 'i-material-symbols-person-rounded',
-    })
-  }
-
-  return items
-})
-
-const menuItems = computed(() =>
-  rawMenuItems.value.map((tab: MenuItemType) => {
+    },
+  ].map((tab) => {
     const isActive = getRouteBaseName(route)?.startsWith(tab.key)
     const to = localeRoute({ name: tab.key })
     return {
+      key: tab.key,
       label: tab.label,
       to,
       icon: isActive ? tab.iconActive : tab.icon,
