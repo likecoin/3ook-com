@@ -168,7 +168,7 @@
             <div
               v-if="!isReaderLoading"
               :class="[
-                'hidden lg:flex',
+                'hidden md:flex',
                 'items-center',
                 'justify-center',
                 'flex-1',
@@ -194,7 +194,7 @@
             <div
               v-if="!isReaderLoading"
               :class="[
-                'hidden lg:flex',
+                'hidden md:flex',
                 'items-center',
                 'justify-center',
                 'flex-1',
