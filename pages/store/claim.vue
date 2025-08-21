@@ -45,8 +45,8 @@
         #footer
       >
         <span
-          class="px-6"
-          v-text="$t('claim_page_wait_for_delivery')"
+          class="px-6 text-xs text-gray-600"
+          v-text="$t('claim_page_description_await_for_delivery')"
         />
         <UButton
           class="max-w-[348px] mt-2"
@@ -229,7 +229,7 @@ const claimTitle = computed(() => {
     return $t('claim_page_start_reading_footer_label')
   }
   if (!isAutoDeliver.value) {
-    return $t('claim_page_wait_for_delivery')
+    return $t('claim_page_title_await_for_delivery')
   }
   return $t('claim_page_title')
 })
