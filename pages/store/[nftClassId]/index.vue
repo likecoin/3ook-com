@@ -154,7 +154,7 @@
                           'absolute',
                           'w-[20px]',
                           'h-[20px]',
-                          item.isSelected ? 'bg-[#AAF1E7]' : 'bg-white',
+                          item.isSelected ? 'bg-theme-50' : 'bg-white',
                           'rounded-full',
                           'border',
                           'border-gray-300',
