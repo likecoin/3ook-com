@@ -27,12 +27,16 @@ export function useTextToSpeech(options: TTSOptions = {}) {
   const nftClassId = options.nftClassId
 
   const config = useRuntimeConfig()
+  const { t: $t } = useI18n()
   const ttsConfigCacheKey = computed(() =>
     [
       config.public.cacheKeyPrefix,
       TTS_CONFIG_KEY,
     ].join('-'),
   )
+  const defaultSpeedLabel = computed(() => {
+    return $t('reader_text_to_speech_normal_speed')
+  })
 
   // hardcoded voice options for now
   const ttsLanguageVoiceOptions = [
@@ -59,7 +63,7 @@ export function useTextToSpeech(options: TTSOptions = {}) {
 
   const ttsLanguageVoiceValues = availableTTSLanguageVoiceOptions.value.map(option => option.value)
   const ttsPlaybackRateOptions = [0.5, 0.75, 1.0, 1.25, 1.5].map(rate => ({
-    label: rate === 1.0 ? '正常(Normal)' : `${rate}x`,
+    label: rate === 1.0 ? defaultSpeedLabel.value : `${rate}x`,
     value: rate,
   }))
 
