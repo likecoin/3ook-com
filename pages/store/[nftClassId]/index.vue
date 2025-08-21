@@ -384,8 +384,8 @@ const nftStore = useNFTStore()
 const { open: openTippingModal } = useTipping()
 const {
   isLikerPlus,
-
   getPlusDiscountPrice,
+  getPlusDiscountRate,
   openUpsellPlusModalIfEligible,
 } = useSubscription()
 
@@ -673,7 +673,12 @@ async function handlePurchaseButtonClick() {
         displayName: bookInfo.publisherName.value || bookInfo.authorName.value,
       })
       const tippingAmount = tippingResult?.tippingAmount || 0
-      if (tippingAmount) customPrice = calculateCustomPrice(tippingAmount, selectedPricingItem.value.price)
+      if (tippingAmount) {
+        customPrice = calculateCustomPrice(tippingAmount, selectedPricingItem.value.price)
+        if (getPlusDiscountRate()) {
+          customPrice = Math.round(customPrice * (1 / getPlusDiscountRate()) * 100) / 100
+        }
+      }
     }
 
     const { url, paymentId } = await likeCoinSessionAPI.createNFTBookPurchase({

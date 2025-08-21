@@ -182,6 +182,13 @@ export function useSubscription() {
     return null
   }
 
+  function getPlusDiscountRate(): number {
+    if (isLikerPlus.value) {
+      return (1 - PLUS_DISCOUNT_PERCENTAGE)
+    }
+    return 0
+  }
+
   watch(isProcessingSubscription, (newValue) => {
     paywallModal.patch({
       ...modalProps.value,
@@ -197,6 +204,7 @@ export function useSubscription() {
     isLikerPlus,
     likerPlusPeriod,
     getPlusDiscountPrice,
+    getPlusDiscountRate,
     isProcessingSubscription,
 
     openPaywallModal,
