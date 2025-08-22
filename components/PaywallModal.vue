@@ -12,13 +12,47 @@
       <UButton
         v-if="!props.isCloseButtonHidden"
         icon="i-material-symbols-close"
-        class="absolute z-10 top-4 right-4 cursor-pointer"
+        :class="[
+          'absolute',
+          'z-10',
+          'top-4',
+          'right-4',
+          { 'max-laptop:text-white': isShowPlusEarlyBirdBanner },
+          'cursor-pointer',
+        ]"
         variant="link"
         size="md"
         @click="handleCloseButtonClick"
       />
 
-      <aside class="relative flex items-center max-laptop:shrink-0 w-full bg-white overflow-hidden">
+      <aside
+        v-if="isShowPlusEarlyBirdBanner"
+        class="relative flex items-center max-laptop:shrink-0 w-full bg-white overflow-hidden bg-cover bg-center"
+        :style="{
+          backgroundImage: `url(${plusEarlyBirdBannerBg})`,
+        }"
+      >
+        <picture class="max-laptop:mx-auto laptop:ml-auto">
+          <source
+            media="(min-width: 1024px)"
+            :srcset="plusEarlyBirdBannerForDesktop"
+          >
+          <img
+            :src="plusEarlyBirdBannerForMobile"
+            :alt="$t('pricing_page_plus_early_bird_banner_alt')"
+            class="w-full object-contain max-h-[70vh]"
+          >
+        </picture>
+
+        <div
+          class="absolute inset-0 bg-repeat bg-size-[20px_20px] opacity-50 pointer-events-none"
+          :style="{ backgroundImage: `url(${plusEarlyBirdBannerNoise})` }"
+        />
+      </aside>
+      <aside
+        v-else
+        class="relative flex items-center max-laptop:shrink-0 w-full bg-white overflow-hidden"
+      >
         <img
           class="laptop:absolute top-0 w-full max-h-[320px] object-cover pointer-events-none mix-blend-multiply"
           :src="topBg"
@@ -44,9 +78,18 @@
       <div class="flex flex-col justify-center items-start w-full p-5 laptop:p-12">
         <div class="w-full max-w-[420px] max-laptop:mx-auto">
           <!-- Introduction -->
-          <div class="flex flex-col items-start mx-6 gap-2">
+          <div class="flex flex-col items-start gap-5">
             <div
-              class="hidden laptop:block mb-3 px-6 py-2 text-white text-center font-bold bg-black rounded-full"
+              :class="[
+                { 'max-laptop:hidden': !isShowPlusEarlyBirdBanner },
+                'px-6',
+                'py-2',
+                'text-white',
+                'text-center',
+                'font-bold',
+                'bg-black',
+                'rounded-full',
+              ]"
               v-text="$t('pricing_page_subscription')"
             />
             <ul
@@ -230,10 +273,16 @@ import type { PaywallModalProps } from './PaywallModal.props'
 import topBg from '~/assets/images/paywall/bg-top.png'
 import bottomBg from '~/assets/images/paywall/bg-bottom.png'
 import plusLogo from '~/assets/images/paywall/plus-logo.png'
+import plusEarlyBirdBannerBg from '~/assets/images/paywall/plus-early-bird-banner-bg.jpg'
+import plusEarlyBirdBannerNoise from '~/assets/images/paywall/plus-early-bird-banner-noise.png'
+import plusEarlyBirdBannerForDesktop from '~/assets/images/paywall/plus-early-bird-banner-desktop.png'
+import plusEarlyBirdBannerForMobile from '~/assets/images/paywall/plus-early-bird-banner-mobile.png'
 
 // NOTE: When the dialog's modality is set to true, interaction with elements outside the dialog is disabled.
 // Therefore, we set modality to false so input in the Magic login UI remains accessible.
 const isModalityOn = false
+
+const isShowPlusEarlyBirdBanner = true
 
 const emit = defineEmits<{
   'open': []
