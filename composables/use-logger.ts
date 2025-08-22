@@ -98,6 +98,10 @@ export function useSetLogUser(user: User | null) {
         user_id: sha256(user.evmWallet as `0x${string}`),
         user_data: { email: user.email || undefined },
       })
+      gtag('set', 'user_properties', {
+        is_liker_plus: !!user.isLikerPlus,
+        login_method: user.loginMethod,
+      })
     }
   }
   catch (error) {
@@ -140,7 +144,7 @@ export function useSetLogUser(user: User | null) {
           evm_wallet: user.evmWallet,
           like_wallet: user.likeWallet,
           login_method: user.loginMethod,
-          is_liker_plus: user.isLikerPlus,
+          is_liker_plus: !!user.isLikerPlus,
         })
       }
     }
