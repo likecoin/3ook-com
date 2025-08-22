@@ -101,6 +101,7 @@ export function useSubscription() {
         ...props,
         ...getUpsellPlusModalProps(),
       }
+      useLogEvent('upsell_plus_modal_open')
       return upsellPlusModal.open(upsellModalProps).result
     }
   }
