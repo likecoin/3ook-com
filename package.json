@@ -44,6 +44,7 @@
     "nuxt-svgo": "^4.2.2",
     "pdfjs-dist": "^5.3.31",
     "pinia": "^3.0.1",
+    "v-gsap-nuxt": "^1.4.4",
     "viem": "^2.23.12",
     "vue": "^3.5.13",
     "vue-router": "^4.5.0"

@@ -25,30 +25,10 @@
         @click="handleCloseButtonClick"
       />
 
-      <aside
+      <PlusEarlyBirdBanner
         v-if="isShowPlusEarlyBirdBanner"
-        class="relative flex items-center max-laptop:shrink-0 w-full bg-white overflow-hidden bg-cover bg-center"
-        :style="{
-          backgroundImage: `url(${plusEarlyBirdBannerBg})`,
-        }"
-      >
-        <picture class="max-laptop:mx-auto laptop:ml-auto">
-          <source
-            media="(min-width: 1024px)"
-            :srcset="plusEarlyBirdBannerForDesktop"
-          >
-          <img
-            :src="plusEarlyBirdBannerForMobile"
-            :alt="$t('pricing_page_plus_early_bird_banner_alt')"
-            class="w-full object-contain max-h-[70vh]"
-          >
-        </picture>
-
-        <div
-          class="absolute inset-0 bg-repeat bg-size-[20px_20px] opacity-50 pointer-events-none"
-          :style="{ backgroundImage: `url(${plusEarlyBirdBannerNoise})` }"
-        />
-      </aside>
+        class="max-laptop:shrink-0 w-full"
+      />
       <aside
         v-else
         class="relative flex items-center max-laptop:shrink-0 w-full bg-white overflow-hidden"
@@ -273,10 +253,6 @@ import type { PaywallModalProps } from './PaywallModal.props'
 import topBg from '~/assets/images/paywall/bg-top.png'
 import bottomBg from '~/assets/images/paywall/bg-bottom.png'
 import plusLogo from '~/assets/images/paywall/plus-logo.png'
-import plusEarlyBirdBannerBg from '~/assets/images/paywall/plus-early-bird-banner-bg.jpg'
-import plusEarlyBirdBannerNoise from '~/assets/images/paywall/plus-early-bird-banner-noise.png'
-import plusEarlyBirdBannerForDesktop from '~/assets/images/paywall/plus-early-bird-banner-desktop.png'
-import plusEarlyBirdBannerForMobile from '~/assets/images/paywall/plus-early-bird-banner-mobile.png'
 
 // NOTE: When the dialog's modality is set to true, interaction with elements outside the dialog is disabled.
 // Therefore, we set modality to false so input in the Magic login UI remains accessible.

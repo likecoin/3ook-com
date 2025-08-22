@@ -24,6 +24,7 @@ export default defineNuxtConfig({
     '@sentry/nuxt/module',
     '@nuxt/scripts',
     '@nuxtjs/sitemap',
+    'v-gsap-nuxt',
   ],
 
   devtools: { enabled: true },
