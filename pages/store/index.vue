@@ -24,7 +24,7 @@
           class="flex items-center gap-2"
         >
           <button
-            class="flex items-center justify-center w-8 h-8 rounded-full border-[1px] border-[#d0cec8] hover:bg-[#d0cec8] transition-colors cursor-pointer"
+            class="flex items-center justify-center w-8 h-8 rounded-full border-[1px] border-gray-600 hover:bg-[#d0cec8] transition-colors cursor-pointer"
             @click="handleCloseClick"
           >
             <UIcon
@@ -33,27 +33,22 @@
             />
           </button>
 
-          <UDropdownMenu
-            :items="allTagDropdownItems"
+          <USelect
+            v-model="tagId"
+            :items="allTagItems"
             :content="{
-              align: 'start',
+              align: 'center',
               side: 'bottom',
               sideOffset: 8,
             }"
+            class="w-32"
+            arrow
+            size="md"
             :ui="{
-              content: 'w-48',
+              base: 'rounded-full bg-black !ring-gray-600 justify-center text-white text-sm laptop:text-base',
+              content: 'rounded-lg',
             }"
-          >
-            <button
-              class="flex items-center text-sm laptop:text-base px-[12px] laptop:px-[16px] py-[4px] laptop:py-[6px] bg-primary text-white rounded-full transition-colors whitespace-nowrap cursor-pointer"
-            >
-              {{ currentTagLabel }}
-              <UIcon
-                name="i-material-symbols-keyboard-arrow-down-rounded"
-                size="24"
-              />
-            </button>
-          </UDropdownMenu>
+          />
         </div>
 
         <div
@@ -67,32 +62,29 @@
               'bg-primary text-white': tagId === fixedTag.value,
               'text-gray-900 hover:bg-[#d0cec8]': tagId !== fixedTag.value,
             }"
-            class="text-sm px-[12px] py-[4px] laptop:text-base laptop:px-[16px] laptop:py-[6px] rounded-full border-[1px] border-[#d0cec8] transition-colors whitespace-nowrap cursor-pointer"
+            class="text-sm px-[12px] py-[2px] laptop:text-base laptop:px-[16px] laptop:py-[2px] rounded-full border-[2px] border-gray-600 bg-(--app-bg) transition-colors whitespace-nowrap cursor-pointer"
             @click="handleTagClick(fixedTag.value)"
             v-text="fixedTag.label"
           />
 
-          <UDropdownMenu
+          <USelect
+            v-model="tagId"
+            :placeholder="$t('store_tag_more_categories')"
             :items="selectorTagItems"
             :content="{
-              align: 'start',
+              align: 'center',
               side: 'bottom',
               sideOffset: 8,
             }"
+            class="w-32"
+            arrow
+            size="md"
             :ui="{
-              content: 'w-48',
+              base: 'rounded-full bg-(--app-bg) !ring-gray-600 justify-center text-sm laptop:text-base',
+              content: 'rounded-lg',
+              placeholder: '!text-black text-sm laptop:text-base',
             }"
-          >
-            <button
-              class="flex items-center text-sm laptop:text-base px-[12px] laptop:px-[16px] py-[4px] laptop:py-[6px] text-gray-900 hover:bg-[#d0cec8] rounded-full border-[1px] border-[#d0cec8] transition-colors whitespace-nowrap cursor-pointer"
-            >
-              {{ $t('store_tag_more_categories') }}
-              <UIcon
-                name="i-material-symbols-keyboard-arrow-down-rounded"
-                size="24"
-              />
-            </button>
-          </UDropdownMenu>
+          />
         </div>
       </div>
     </header>
@@ -194,13 +186,6 @@ const allTagItems = computed(() => {
     }))
 })
 
-const allTagDropdownItems = computed(() => {
-  return allTagItems.value.map(tag => ({
-    label: tag.label,
-    onSelect: () => handleTagClick(tag.value),
-  }))
-})
-
 const tagsSliceIndex = computed(() => {
   if (locale.value === 'zh-Hant') {
     return isMobile.value ? 3 : 4
@@ -217,7 +202,7 @@ const selectorTagItems = computed(() => {
 
   return remainingTags.map(tag => ({
     label: tag.label,
-    onSelect: () => handleTagClick(tag.value),
+    value: tag.value,
   }))
 })
 
@@ -236,11 +221,6 @@ const tagName = computed(() => {
 
 const tagDescription = computed(() => {
   return tag.value?.description[normalizedLocale.value] || ''
-})
-
-const currentTagLabel = computed(() => {
-  const currentTag = allTagItems.value.find(tag => tag.value === tagId.value)
-  return currentTag?.label || ''
 })
 
 useHead(() => {
