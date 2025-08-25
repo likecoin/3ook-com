@@ -27,6 +27,8 @@ env:
     secret: V3_AIRTABLE_API_SECRET
   - variable: BASE_URL
     value: https://sepolia.3ook.com
+  - variable: COZY_AUTH_TOKEN
+    secret: COZY_AUTH_TOKEN
   - variable: MINIMAX_GROUP_ID
     secret: MINIMAX_GROUP_ID
   - variable: MINIMAX_API_KEY

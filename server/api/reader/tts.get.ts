@@ -15,6 +15,9 @@ const VOICE_PROVIDER_MAPPING: Record<string, TTSProvider> = {
   pazu: TTSProvider.MINIMAX,
   phoebe: TTSProvider.MINIMAX,
   xiaochen: TTSProvider.AZURE,
+  cozy_m: TTSProvider.COZY,
+  cozy_f: TTSProvider.COZY,
+  cozy_pazu: TTSProvider.COZY,
 }
 
 // Provider factory
@@ -32,6 +35,8 @@ function getTTSProvider(voiceId: string): BaseTTSProvider {
       return new MinimaxTTSProvider()
     case TTSProvider.AZURE:
       return new AzureTTSProvider()
+    case TTSProvider.COZY:
+      return new CozyTTSProvider()
     default:
       throw createError({
         status: 500,

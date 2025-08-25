@@ -3,6 +3,7 @@ import type { H3Event } from 'h3'
 const TTS_TRIAL_CHARACTER_LIMIT = 1000
 
 export enum TTSProvider {
+  COZY = 'cozy',
   MINIMAX = 'minimax',
   AZURE = 'azure',
 }

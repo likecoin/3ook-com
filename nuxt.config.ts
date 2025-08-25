@@ -49,6 +49,7 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     airtableAPISecret: process.env.AIRTABLE_API_SECRET,
+    cozyAuthToken: process.env.COZY_AUTH_TOKEN,
     minimaxGroupId: process.env.MINIMAX_GROUP_ID,
     minimaxAPIKey: process.env.MINIMAX_API_KEY,
     azureSubscriptionKey: process.env.AZURE_SUBSCRIPTION_KEY,

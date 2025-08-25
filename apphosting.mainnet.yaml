@@ -29,6 +29,8 @@ env:
     value: AW-16835227339/iIO2CLmDtJoaEMvd1Ns-
   - variable: BASE_URL
     value: https://3ook.com
+  - variable: COZY_AUTH_TOKEN
+    secret: COZY_AUTH_TOKEN
   - variable: MINIMAX_GROUP_ID
     secret: MINIMAX_GROUP_ID
   - variable: MINIMAX_API_KEY
