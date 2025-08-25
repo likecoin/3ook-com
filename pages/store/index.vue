@@ -211,7 +211,7 @@ const allTagItems = computed(() => {
       const isVisible = !!tag.isPublic || tag.id === tagId.value
 
       const hardcodedValues = hardcodedTags.map(t => t.value)
-      const isNotDuplicate = !hardcodedValues.includes(tag.id)
+      const isNotDuplicate = tag.id && !hardcodedValues.includes(tag.id)
 
       return isVisible && isNotDuplicate
     })
@@ -410,7 +410,10 @@ async function handleFetchItemsErrorRetryButtonClick() {
   await fetchItems({ isRefresh: true })
 }
 
-async function handleTagClick(tagValue: string) {
+async function handleTagClick(tagValue?: string) {
+  if (!tagValue || tagValue === tagId.value) {
+    return
+  }
   useLogEvent('store_tag_click', { tag_id: tagValue })
   tagId.value = tagValue
 }
