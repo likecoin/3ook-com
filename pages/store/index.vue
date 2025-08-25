@@ -18,47 +18,82 @@
         'bg-linear-to-b from-(--app-bg)/90 to-(--app-bg)/0',
       ]"
     >
-      <div
-        class="relative col-span-3 tablet:col-span-2"
-      >
-        <span
-          :class="[
-            'absolute',
-            'inset-0',
-            'translate-y-[3px]',
-            'rounded-full',
-            'bg-theme-500',
-            'text-theme-50',
-            'shadow-[inset_3px_7px_4px_0px_#50E3C2E5]',
-            { 'opacity-75': isFetchingTags },
-          ]"
-        />
-        <span
-          :class="[
-            'absolute',
-            'inset-0',
-            'translate-x-[2px]',
-            'bg-(--app-bg)',
-            'rounded-full',
-          ]"
-        />
-        <USelect
-          v-model="tagId"
-          class="relative w-full ml-[2px]"
-          :items="tagItems"
-          icon="i-material-symbols-format-list-bulleted-rounded"
-          variant="outline"
-          color="primary"
-          size="lg"
-          :loading="isFetchingTags"
-          :disabled="isFetchingTags"
-          highlight
-          :ui="{
-            base: 'rounded-full shadow-lg bg-(--app-bg)',
-            content: 'rounded-lg ring-primary ring-2',
-          }"
-          @update:model-value="handleTagSelectChange"
-        />
+      <div class="flex items-center gap-2 w-full">
+        <div
+          v-if="!isDefaultTagId"
+          class="flex items-center gap-2"
+        >
+          <button
+            class="flex items-center justify-center w-8 h-8 rounded-full border-[1px] border-[#d0cec8] hover:bg-[#d0cec8] transition-colors cursor-pointer"
+            @click="handleCloseClick"
+          >
+            <UIcon
+              name="i-material-symbols-close-rounded"
+              size="20"
+            />
+          </button>
+
+          <UDropdownMenu
+            :items="allTagDropdownItems"
+            :content="{
+              align: 'start',
+              side: 'bottom',
+              sideOffset: 8,
+            }"
+            :ui="{
+              content: 'w-48',
+            }"
+          >
+            <button
+              class="flex items-center text-sm laptop:text-base px-[12px] laptop:px-[16px] py-[4px] laptop:py-[6px] bg-primary text-white rounded-full transition-colors whitespace-nowrap cursor-pointer"
+            >
+              {{ currentTagLabel }}
+              <UIcon
+                name="i-material-symbols-keyboard-arrow-down-rounded"
+                size="24"
+              />
+            </button>
+          </UDropdownMenu>
+        </div>
+
+        <div
+          v-else
+          class="flex gap-2"
+        >
+          <button
+            v-for="fixedTag in fixedTags"
+            :key="fixedTag.value"
+            :class="{
+              'bg-primary text-white': tagId === fixedTag.value,
+              'text-gray-900 hover:bg-[#d0cec8]': tagId !== fixedTag.value,
+            }"
+            class="text-sm px-[12px] py-[4px] laptop:text-base laptop:px-[16px] laptop:py-[6px] rounded-full border-[1px] border-[#d0cec8] transition-colors whitespace-nowrap cursor-pointer"
+            @click="handleTagClick(fixedTag.value)"
+            v-text="fixedTag.label"
+          />
+
+          <UDropdownMenu
+            :items="selectorTagItems"
+            :content="{
+              align: 'start',
+              side: 'bottom',
+              sideOffset: 8,
+            }"
+            :ui="{
+              content: 'w-48',
+            }"
+          >
+            <button
+              class="flex items-center text-sm laptop:text-base px-[12px] laptop:px-[16px] py-[4px] laptop:py-[6px] text-gray-900 hover:bg-[#d0cec8] rounded-full border-[1px] border-[#d0cec8] transition-colors whitespace-nowrap cursor-pointer"
+            >
+              {{ $t('store_tag_more_categories') }}
+              <UIcon
+                name="i-material-symbols-keyboard-arrow-down-rounded"
+                size="24"
+              />
+            </button>
+          </UDropdownMenu>
+        </div>
       </div>
     </header>
 
@@ -122,6 +157,7 @@ const bookstoreStore = useBookstoreStore()
 const infiniteScrollDetectorElement = useTemplateRef<HTMLLIElement>('infiniteScrollDetector')
 const shouldLoadMore = useElementVisibility(infiniteScrollDetectorElement)
 const { handleError } = useErrorHandler()
+const isMobile = useMediaQuery('(max-width: 768px)')
 
 const TAG_LISTING = 'listing'
 
@@ -147,23 +183,73 @@ const isDefaultTagId = computed(() => getIsDefaultTagId(tagId.value))
 
 const normalizedLocale = computed(() => locale.value === 'zh-Hant' ? 'zh' : 'en')
 
-const tagItems = computed(() => {
-  return [
-    // NOTE: Inject the listing tag at first
+const allTagItems = computed(() => {
+  const hardcodedTags = [
     {
-      label: $t('store_tag_listing'),
-      value: TAG_LISTING,
+      // 暢銷書
+      label: $t('store_tag_best_sellers'),
+      value: 'bestselling',
     },
-    ...bookstoreStore.bookstoreCMSTags
-      .filter((tag) => {
-        // NOTE: Filter out the unlisted tag if it is not selected
-        return !!tag.isPublic || tag.id === tagId.value
-      })
-      .map(tag => ({
-        label: tag.name[normalizedLocale.value],
-        value: tag.id,
-      })),
-  ]
+    {
+      // 最新上架
+      label: $t('store_tag_latest'),
+      value: 'latest',
+    },
+    {
+      // 免費
+      label: $t('store_tag_free'),
+      value: 'free',
+    },
+    {
+      // 支援 TTS
+      label: $t('store_tag_tts'),
+      value: 'tts',
+    }]
+
+  const cmsTagItems = bookstoreStore.bookstoreCMSTags
+    .filter((tag) => {
+      const isVisible = !!tag.isPublic || tag.id === tagId.value
+
+      const hardcodedValues = hardcodedTags.map(t => t.value)
+      const isNotDuplicate = !hardcodedValues.includes(tag.id)
+
+      return isVisible && isNotDuplicate
+    })
+    .map(tag => ({
+      label: tag.name[normalizedLocale.value],
+      value: tag.id,
+    }))
+
+  return [...hardcodedTags, ...cmsTagItems]
+})
+
+const allTagDropdownItems = computed(() => {
+  return allTagItems.value.map(tag => ({
+    label: tag.label,
+    onSelect: () => handleTagClick(tag.value),
+  }))
+})
+
+const fixedTags = computed(() => {
+  if (locale.value === 'zh-Hant') {
+    return isMobile.value ? allTagItems.value.slice(0, 3) : allTagItems.value.slice(0, 4)
+  }
+  return isMobile.value ? allTagItems.value.slice(0, 2) : allTagItems.value.slice(0, 3)
+})
+
+const selectorTagItems = computed(() => {
+  let remainingTags
+  if (locale.value === 'zh-Hant') {
+    remainingTags = isMobile.value ? allTagItems.value.slice(3) : allTagItems.value.slice(4)
+  }
+  else {
+    remainingTags = isMobile.value ? allTagItems.value.slice(2) : allTagItems.value.slice(3)
+  }
+
+  return remainingTags.map(tag => ({
+    label: tag.label,
+    onSelect: () => handleTagClick(tag.value),
+  }))
 })
 
 const localizedTagId = computed(() => {
@@ -181,6 +267,11 @@ const tagName = computed(() => {
 
 const tagDescription = computed(() => {
   return tag.value?.description[normalizedLocale.value] || ''
+})
+
+const currentTagLabel = computed(() => {
+  const currentTag = allTagItems.value.find(tag => tag.value === tagId.value)
+  return currentTag?.label || ''
 })
 
 useHead(() => {
@@ -319,7 +410,13 @@ async function handleFetchItemsErrorRetryButtonClick() {
   await fetchItems({ isRefresh: true })
 }
 
-function handleTagSelectChange(value?: string) {
-  useLogEvent('store_tag_select', { tag_id: value })
+async function handleTagClick(tagValue: string) {
+  useLogEvent('store_tag_click', { tag_id: tagValue })
+  tagId.value = tagValue
+}
+
+async function handleCloseClick() {
+  useLogEvent('store_tag_close_click', { tag_id: tagId.value })
+  tagId.value = TAG_LISTING
 }
 </script>
