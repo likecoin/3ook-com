@@ -247,7 +247,7 @@ export function useTextToSpeech(options: TTSOptions = {}) {
     return audio
   }
 
-  function playNextElement() {
+  function playNextElement({ reset = false } = {}) {
     currentTTSSegmentIndex.value += 1
 
     const nextElementForBuffer = ttsSegments.value[currentTTSSegmentIndex.value + 1]
@@ -261,8 +261,10 @@ export function useTextToSpeech(options: TTSOptions = {}) {
 
     if (currentAudioTimeout.value) clearTimeout(currentAudioTimeout.value)
     currentAudioTimeout.value = setTimeout(() => {
-      nextAudio?.pause()
-      nextAudio?.load()
+      if (reset) {
+        nextAudio?.pause()
+        nextAudio?.load()
+      }
       nextAudio?.play()
     }, 200)
   }
@@ -356,7 +358,7 @@ export function useTextToSpeech(options: TTSOptions = {}) {
     })
     const activeAudio = audioBuffers.value[currentBufferIndex.value]
     activeAudio?.pause()
-    playNextElement()
+    playNextElement({ reset: true })
   }
 
   function skipBackward() {
