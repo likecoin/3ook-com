@@ -101,7 +101,17 @@
               </li>
               <li>
                 <UIcon name="i-material-symbols-check" />
-                <span v-text="$t('pricing_page_feature_5')" />
+                <i18n-t
+                  keypath="pricing_page_feature_5"
+                  tag="p"
+                >
+                  <template #highlight>
+                    <strong
+                      class="font-bold"
+                      v-text="$t('pricing_page_feature_5_highlight')"
+                    />
+                  </template>
+                </i18n-t>
               </li>
             </ul>
           </div>
