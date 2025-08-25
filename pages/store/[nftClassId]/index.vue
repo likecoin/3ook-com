@@ -54,7 +54,7 @@
             <template #description>
               <ExpandableContent>
                 <div
-                  class="markdown whitespace-pre-line"
+                  class="markdown"
                   v-html="bookInfoDescriptionHTML"
                 />
               </ExpandableContent>
@@ -63,7 +63,7 @@
             <template #author>
               <ExpandableContent>
                 <div
-                  class="markdown whitespace-pre-line"
+                  class="markdown"
                   v-html="authorDescriptionHTML"
                 />
               </ExpandableContent>

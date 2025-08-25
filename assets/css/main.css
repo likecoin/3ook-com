@@ -69,6 +69,10 @@ body {
   margin-left: 1rem;
 }
 
+.markdown p:not(:last-child) {
+  margin-bottom: 1em;
+}
+
 .hide-scrollbar {
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE 10+ */
