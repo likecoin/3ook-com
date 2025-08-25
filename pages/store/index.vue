@@ -184,43 +184,14 @@ const isDefaultTagId = computed(() => getIsDefaultTagId(tagId.value))
 const normalizedLocale = computed(() => locale.value === 'zh-Hant' ? 'zh' : 'en')
 
 const allTagItems = computed(() => {
-  const hardcodedTags = [
-    {
-      // 暢銷書
-      label: $t('store_tag_best_sellers'),
-      value: 'bestselling',
-    },
-    {
-      // 最新上架
-      label: $t('store_tag_latest'),
-      value: 'latest',
-    },
-    {
-      // 免費
-      label: $t('store_tag_free'),
-      value: 'free',
-    },
-    {
-      // 支援 TTS
-      label: $t('store_tag_tts'),
-      value: 'tts',
-    }]
-
-  const cmsTagItems = bookstoreStore.bookstoreCMSTags
+  return bookstoreStore.bookstoreCMSTags
     .filter((tag) => {
-      const isVisible = !!tag.isPublic || tag.id === tagId.value
-
-      const hardcodedValues = hardcodedTags.map(t => t.value)
-      const isNotDuplicate = tag.id && !hardcodedValues.includes(tag.id)
-
-      return isVisible && isNotDuplicate
+      return !!tag.isPublic || tag.id === tagId.value
     })
     .map(tag => ({
       label: tag.name[normalizedLocale.value],
       value: tag.id,
     }))
-
-  return [...hardcodedTags, ...cmsTagItems]
 })
 
 const allTagDropdownItems = computed(() => {
@@ -230,21 +201,19 @@ const allTagDropdownItems = computed(() => {
   }))
 })
 
-const fixedTags = computed(() => {
+const tagsSliceIndex = computed(() => {
   if (locale.value === 'zh-Hant') {
-    return isMobile.value ? allTagItems.value.slice(0, 3) : allTagItems.value.slice(0, 4)
+    return isMobile.value ? 3 : 4
   }
-  return isMobile.value ? allTagItems.value.slice(0, 2) : allTagItems.value.slice(0, 3)
+  return isMobile.value ? 2 : 3
+})
+
+const fixedTags = computed(() => {
+  return allTagItems.value.slice(0, tagsSliceIndex.value)
 })
 
 const selectorTagItems = computed(() => {
-  let remainingTags
-  if (locale.value === 'zh-Hant') {
-    remainingTags = isMobile.value ? allTagItems.value.slice(3) : allTagItems.value.slice(4)
-  }
-  else {
-    remainingTags = isMobile.value ? allTagItems.value.slice(2) : allTagItems.value.slice(3)
-  }
+  const remainingTags = allTagItems.value.slice(tagsSliceIndex.value)
 
   return remainingTags.map(tag => ({
     label: tag.label,
