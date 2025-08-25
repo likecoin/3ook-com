@@ -34,9 +34,6 @@ export function useTextToSpeech(options: TTSOptions = {}) {
       TTS_CONFIG_KEY,
     ].join('-'),
   )
-  const defaultSpeedLabel = computed(() => {
-    return $t('reader_text_to_speech_normal_speed')
-  })
 
   // hardcoded voice options for now
   const ttsLanguageVoiceOptions = [
@@ -62,10 +59,10 @@ export function useTextToSpeech(options: TTSOptions = {}) {
   })
 
   const ttsLanguageVoiceValues = availableTTSLanguageVoiceOptions.value.map(option => option.value)
-  const ttsPlaybackRateOptions = [0.5, 0.75, 1.0, 1.25, 1.5].map(rate => ({
-    label: rate === 1.0 ? defaultSpeedLabel.value : `${rate}x`,
+  const ttsPlaybackRateOptions = computed(() => [0.5, 0.75, 1.0, 1.25, 1.5].map(rate => ({
+    label: rate === 1.0 ? $t('reader_text_to_speech_normal_speed') : `${rate}x`,
     value: rate,
-  }))
+  })))
 
   function getDefaultTTSVoiceByLocale(): string {
     let voice: string = ttsLanguageVoiceValues[0] as string

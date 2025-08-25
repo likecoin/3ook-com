@@ -299,7 +299,7 @@ const sectionTitle = computed(() => {
 
 const getTTSPlaybackRateLabel = computed(() => {
   const rate = ttsPlaybackRate.value
-  return ttsPlaybackRateOptions.find(option => option.value === rate)?.label || ''
+  return ttsPlaybackRateOptions.value.find(option => option.value === rate)?.label || ''
 })
 
 watch(currentTTSSegmentIndex, async (newIndex: number) => {
