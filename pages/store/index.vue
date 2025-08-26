@@ -19,19 +19,16 @@
       ]"
     >
       <div class="flex items-center gap-2 w-full">
-        <div
+        <template
           v-if="!isDefaultTagId"
-          class="flex items-center gap-2"
         >
-          <button
-            class="flex items-center justify-center w-8 h-8 rounded-full border-[1px] border-gray-600 hover:bg-[#d0cec8] transition-colors cursor-pointer"
+          <UButton
+            icon="i-material-symbols-close-rounded"
+            variant="outline"
+            rounded-full
+            :ui="{ base: 'rounded-full bg-(--app-bg)' }"
             @click="handleCloseClick"
-          >
-            <UIcon
-              name="i-material-symbols-close-rounded"
-              size="20"
-            />
-          </button>
+          />
 
           <USelect
             v-model="tagId"
@@ -41,30 +38,27 @@
               side: 'bottom',
               sideOffset: 8,
             }"
-            class="w-32"
             arrow
             size="md"
             :ui="{
-              base: 'rounded-full bg-black !ring-gray-600 justify-center text-white text-sm laptop:text-base',
+              base: 'rounded-full bg-black !ring-gray-600 justify-center text-white text-sm laptop:text-base hover:bg-[#d0cec8]',
               content: 'rounded-lg',
             }"
           />
-        </div>
+        </template>
 
-        <div
+        <template
           v-else
-          class="flex gap-2"
         >
-          <button
+          <UButton
             v-for="fixedTag in fixedTags"
             :key="fixedTag.value"
-            :class="{
-              'bg-primary text-white': tagId === fixedTag.value,
-              'text-gray-900 hover:bg-[#d0cec8]': tagId !== fixedTag.value,
+            :label="fixedTag.label"
+            variant="outline"
+            :ui="{ base: 'rounded-full bg-(--app-bg) !ring-gray-600 px-4',
+                   label: 'text-sm laptop:text-base',
             }"
-            class="text-sm px-[12px] py-[2px] laptop:text-base laptop:px-[16px] laptop:py-[2px] rounded-full border-[2px] border-gray-600 bg-(--app-bg) transition-colors whitespace-nowrap cursor-pointer"
             @click="handleTagClick(fixedTag.value)"
-            v-text="fixedTag.label"
           />
 
           <USelect
@@ -76,16 +70,15 @@
               side: 'bottom',
               sideOffset: 8,
             }"
-            class="w-32"
             arrow
             size="md"
             :ui="{
-              base: 'rounded-full bg-(--app-bg) !ring-gray-600 justify-center text-sm laptop:text-base',
+              base: 'rounded-full bg-(--app-bg) !ring-gray-600 justify-center text-sm laptop:text-base hover:bg-[#d0cec8]',
               content: 'rounded-lg',
               placeholder: '!text-black text-sm laptop:text-base',
             }"
           />
-        </div>
+        </template>
       </div>
     </header>
 
