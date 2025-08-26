@@ -29,22 +29,6 @@
             :ui="{ base: 'rounded-full bg-(--app-bg)' }"
             @click="handleCloseClick"
           />
-
-          <USelect
-            v-model="tagId"
-            :items="allTagItems"
-            :content="{
-              align: 'center',
-              side: 'bottom',
-              sideOffset: 8,
-            }"
-            arrow
-            size="md"
-            :ui="{
-              base: 'rounded-full bg-black !ring-gray-600 justify-center text-white text-sm laptop:text-base hover:bg-[#d0cec8]',
-              content: 'rounded-lg',
-            }"
-          />
         </template>
 
         <template
@@ -60,25 +44,30 @@
             }"
             @click="handleTagClick(fixedTag.value)"
           />
-
-          <USelect
-            v-model="tagId"
-            :placeholder="$t('store_tag_more_categories')"
-            :items="selectorTagItems"
-            :content="{
-              align: 'center',
-              side: 'bottom',
-              sideOffset: 8,
-            }"
-            arrow
-            size="md"
-            :ui="{
-              base: 'rounded-full bg-(--app-bg) !ring-gray-600 justify-center text-sm laptop:text-base hover:bg-[#d0cec8]',
-              content: 'rounded-lg',
-              placeholder: '!text-black text-sm laptop:text-base',
-            }"
-          />
         </template>
+
+        <USelect
+          v-model="tagId"
+          :placeholder="isDefaultTagId ? $t('store_tag_more_categories') : undefined"
+          :items="isDefaultTagId ? selectorTagItems : allTagItems"
+          :content="{
+            align: 'center',
+            side: 'bottom',
+            sideOffset: 8,
+          }"
+          arrow
+          size="md"
+          :ui="{
+            base: [
+              'rounded-full !ring-gray-600 justify-center text-sm laptop:text-base',
+              isDefaultTagId
+                ? 'bg-(--app-bg) hover:bg-[#d0cec8]'
+                : 'bg-black text-white hover:bg-[#d0cec8]',
+            ],
+            content: 'rounded-lg',
+            placeholder: isDefaultTagId ? '!text-black text-sm laptop:text-base' : undefined,
+          }"
+        />
       </div>
     </header>
 
