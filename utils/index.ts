@@ -19,6 +19,12 @@ export function getResizedImageURL(imageURL: string, { size }: { size?: number }
   return `${config.public.likeCoinStaticEndpoint}/thumbnail/?${params.toString()}`
 }
 
+export function getResizedNormalizedImageURL(imageURL: string, { size }: { size?: number } = {}) {
+  const normalizedURL = normalizeURIToHTTP(imageURL)
+  const resizedURL = getResizedImageURL(normalizedURL, { size })
+  return resizedURL
+}
+
 export function extractContentTypeFromURL(url: string) {
   if (url?.includes('epub')) return 'epub'
   if (url?.includes('pdf')) return 'pdf'

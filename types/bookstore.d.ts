@@ -42,5 +42,6 @@ declare interface BookstoreInfo {
   keywords: string[]
   thumbnailUrl: string
   usageInfo: string
+  recommendedClassIds?: string[]
   timestamp: number
 }

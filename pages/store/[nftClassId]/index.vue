@@ -309,7 +309,10 @@
         </ul>
       </section>
 
-      <section class="w-full mt-8 overflow-hidden">
+      <section
+        v-if="recommendedItemInfos.length"
+        class="w-full mt-8 overflow-hidden"
+      >
         <div class="relative w-full max-w-[1200px] mx-auto">
           <h2
             class="text-green-500 text-lg font-bold"
@@ -317,12 +320,23 @@
           />
 
           <div class="h-[200px] laptop:h-[300px] mt-6">
-            <ul class="absolute flex gap-x-6 gap-y-10 animate-pulse">
+            <ul class="absolute flex gap-x-6 gap-y-10">
               <li
-                v-for="i in 4"
-                :key="i"
+                v-for="item in recommendedItemInfos"
+                :key="item.classId"
+                class="flex flex-col justify-center items-center w-[120px] laptop:w-[170px"
               >
-                <BookCover class="w-[120px] laptop:w-[170px]" />
+                <BookCover
+                  :src="getResizedNormalizedImageURL(item.image || '', { size: 300 })"
+                  :alt="item.name"
+                  :lazy="true"
+                  :to="localeRoute({ name: 'store-nftClassId', params: { nftClassId: item.classId } })"
+                  @click="handleRecommendedBookCoverClick(item.classId)"
+                />
+                <span
+                  class="mt-0.5 text-sm text-[#949494] font-semibold break-words line-clamp-2"
+                  v-text="item.name"
+                />
               </li>
             </ul>
           </div>
@@ -387,6 +401,7 @@
 <script setup lang="ts">
 import type { TabsItem } from '@nuxt/ui'
 import MarkdownIt from 'markdown-it'
+import { useAuthorStore } from '~/stores/author'
 
 const likeCoinSessionAPI = useLikeCoinSessionAPI()
 const route = useRoute()
@@ -456,6 +471,7 @@ await callOnce(async () => {
 })
 
 const bookInfo = useBookInfo({ nftClassId })
+const authorStore = useAuthorStore()
 const bookCoverSrc = computed(() => getResizedImageURL(bookInfo.coverSrc.value, { size: 600 }))
 
 const selectedPricingItemIndex = ref(Number(getRouteQuery('price_index') || 0))
@@ -607,6 +623,34 @@ const checkoutButtonProps = computed<{
   }
 })
 
+const recommendedClassIds = computed(() => {
+  let items: string[] = []
+  if (bookInfo.bookstoreInfo.value?.recommendedClassIds) {
+    items = items.concat(bookInfo.bookstoreInfo.value.recommendedClassIds)
+  }
+  const ownedClassIds = authorStore.getOwnedClass(bookInfo.nftClassOwnerWalletAddress.value).map(item => item.classId)
+  return items.concat(ownedClassIds).filter(id => id !== nftClassId.value).slice(0, 10)
+})
+
+const recommendedItemInfos = computed(() => {
+  return recommendedClassIds.value.map((classId) => {
+    return {
+      classId,
+      ...(nftStore.getNFTClassMetadataById(classId) || {}),
+    }
+  })
+})
+
+watch(() => recommendedClassIds.value, (newItems) => {
+  if (newItems.length) {
+    newItems.forEach((classId) => {
+      nftStore.lazyFetchNFTClassAggregatedMetadataById(classId).catch(() => {
+        console.warn(`Failed to fetch aggregated metadata for the NFT class [${classId}]`)
+      })
+    })
+  }
+})
+
 onMounted(() => {
   useLogEvent('view_item', formattedLogPayload.value)
   const ownerWalletAddress = bookInfo.nftClassOwnerWalletAddress.value
@@ -616,6 +660,12 @@ onMounted(() => {
     }
     catch (error) {
       console.error(`Failed to fetch owner liker info for wallet address ${ownerWalletAddress}:`, error)
+    }
+    try {
+      authorStore.lazyFetchOwnedClass(ownerWalletAddress)
+    }
+    catch (error) {
+      console.error(`Failed to fetch author owned class for wallet address ${ownerWalletAddress}:`, error)
     }
   }
   const selectedPricingItemIndex = getRouteQuery('edition')
@@ -741,6 +791,12 @@ function handleGiftButtonClick() {
   // TODO: Implement gift functionality
   wipModal.open({
     title: $t('product_page_gift_button_label'),
+  })
+}
+
+function handleRecommendedBookCoverClick(classId: string) {
+  useLogEvent('recommend_book_click', {
+    nft_class_id: classId,
   })
 }
 
