@@ -96,7 +96,7 @@ export function useSubscription() {
       upsellPlusModal.close()
     }
 
-    if (!isLikerPlus.value) {
+    if (!isLikerPlus.value || likerPlusPeriod.value === 'month') {
       const upsellModalProps: UpsellPlusModalProps = {
         ...props,
         ...getUpsellPlusModalProps(),
@@ -152,21 +152,31 @@ export function useSubscription() {
       useLogEvent('begin_checkout', eventPayload.value)
 
       const analyticsParams = getAnalyticsParameters()
-      const { url } = await likeCoinSessionAPI.fetchLikerPlusCheckoutLink({
-        period: subscribePlan,
-        from: getRouteQuery('from'),
-        hasFreeTrial,
-        mustCollectPaymentMethod,
-        giftNFTClassId: isYearly ? nftClassId : undefined,
-        ...analyticsParams,
-        utmCampaign: analyticsParams.utmCampaign || utmCampaign,
-        utmMedium: analyticsParams.utmMedium || utmMedium,
-        utmSource: analyticsParams.utmSource || utmSource,
-      })
-      if (redirectRoute && redirectRoute?.name) {
-        accountStore.savePlusRedirectRoute(redirectRoute)
+      if (isLikerPlus.value) {
+        await likeCoinSessionAPI.fetchLikerPlusPriceUpdate({
+          period: subscribePlan,
+          giftNFTClassId: isYearly ? nftClassId : undefined,
+        })
+        await sleep(3000)
+        await navigateTo(localeRoute({ name: 'plus-success' }))
       }
-      await navigateTo(url, { external: true })
+      else {
+        const { url } = await likeCoinSessionAPI.fetchLikerPlusCheckoutLink({
+          period: subscribePlan,
+          from: getRouteQuery('from'),
+          hasFreeTrial,
+          mustCollectPaymentMethod,
+          giftNFTClassId: isYearly ? nftClassId : undefined,
+          ...analyticsParams,
+          utmCampaign: analyticsParams.utmCampaign || utmCampaign,
+          utmMedium: analyticsParams.utmMedium || utmMedium,
+          utmSource: analyticsParams.utmSource || utmSource,
+        })
+        if (redirectRoute && redirectRoute?.name) {
+          accountStore.savePlusRedirectRoute(redirectRoute)
+        }
+        await navigateTo(url, { external: true })
+      }
     }
     catch (error) {
       handleError(error)

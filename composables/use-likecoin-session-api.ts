@@ -262,6 +262,25 @@ export function useLikeCoinSessionAPI() {
     })
   }
 
+  function fetchLikerPlusPriceUpdate({
+    period,
+    giftNFTClassId,
+    giftPriceIndex,
+  }: {
+    period: SubscriptionPlan
+    giftNFTClassId?: string
+    giftPriceIndex?: number
+  }) {
+    return fetch.value(`/plus/price`, {
+      method: 'POST',
+      body: {
+        period,
+        giftClassId: giftNFTClassId,
+        giftPriceIndex,
+      },
+    })
+  }
+
   function fetchLikerPlusGiftStatus() {
     return fetch.value<FetchLikerPlusGiftStatusResponseData>(`/plus/gift`)
   }
@@ -315,6 +334,7 @@ export function useLikeCoinSessionAPI() {
     fetchCartStatusById,
     claimCartById,
     fetchLikerPlusCheckoutLink,
+    fetchLikerPlusPriceUpdate,
     fetchLikerPlusGiftStatus,
     fetchLikerPlusBillingPortalLink,
     migrateMagicEmailUser,
