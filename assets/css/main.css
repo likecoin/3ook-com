@@ -80,3 +80,8 @@ body {
 .hide-scrollbar::-webkit-scrollbar {
   display: none; /* Chrome, Safari, Opera */
 }
+
+.intercom-launcher {
+  /* NOTE: vertical_padding is ignored on mobile devices */
+  bottom: calc(env(safe-area-inset-bottom) + 56px + 20px) !important;
+}
