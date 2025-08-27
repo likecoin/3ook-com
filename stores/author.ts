@@ -4,44 +4,44 @@ interface OwnedClassMapType {
 }
 
 export const useAuthorStore = defineStore('AuthorStore', () => {
-  const ownedClassByWalletMap = ref<Record<string, NFTClass[]>>({})
-  const isFetchingItems = ref(false)
-  const hasFetchedItems = ref(false)
+  const nftClassesByOwner = ref<Record<string, NFTClass[]>>({})
+  const isFetchingItems = ref<Record<string, boolean>>({})
+  const hasFetchedItems = ref<Record<string, boolean>>({})
 
-  async function lazyFetchOwnedClass(walletAddress: string): Promise<NFTClass[] | undefined> {
+  async function lazyFetchNFTClassesByOwnerWallet(walletAddress: string): Promise<NFTClass[] | undefined> {
     try {
-      if (ownedClassByWalletMap.value[walletAddress]) {
-        return ownedClassByWalletMap.value[walletAddress]
+      if (nftClassesByOwner.value[walletAddress]) {
+        return nftClassesByOwner.value[walletAddress]
       }
-      if (isFetchingItems.value) {
+      if (isFetchingItems.value[walletAddress]) {
         return
       }
 
-      isFetchingItems.value = true
+      isFetchingItems.value[walletAddress] = true
       const result = await fetchNFTClassesByOwnerWalletAddress(walletAddress, {})
 
-      ownedClassByWalletMap.value[walletAddress] = result.data.map((item) => {
+      nftClassesByOwner.value[walletAddress] = result.data.map((item) => {
         return {
           ...item,
           address: item.address.toLowerCase() as `0x${string}`, // ensure address is lowercase
         }
       })
-      hasFetchedItems.value = true
-      return ownedClassByWalletMap.value[walletAddress]
+      hasFetchedItems.value[walletAddress] = true
+      return nftClassesByOwner.value[walletAddress]
     }
     catch (error) {
       console.warn(`Failed to fetch owned items for ${walletAddress}:`, error)
       return undefined
     }
     finally {
-      isFetchingItems.value = false
+      isFetchingItems.value[walletAddress] = false
     }
   }
 
   const getOwnedClass = computed(
     () =>
       (walletAddress: string): OwnedClassMapType[] => {
-        const walletData = ownedClassByWalletMap.value[walletAddress]
+        const walletData = nftClassesByOwner.value[walletAddress]
         if (!walletData) {
           return []
         }
@@ -59,12 +59,12 @@ export const useAuthorStore = defineStore('AuthorStore', () => {
   )
 
   return {
-    ownedClassByWalletMap: readonly(ownedClassByWalletMap),
-    isFetchingItems: readonly(isFetchingItems),
-    hasFetchedItems: readonly(hasFetchedItems),
+    nftClassesByOwner: readonly(nftClassesByOwner),
+    isFetchingItemsByOwner: (walletAddress: string) => computed(() => isFetchingItems.value[walletAddress] || false),
+    hasFetchedItemsByOwner: (walletAddress: string) => computed(() => hasFetchedItems.value[walletAddress] || false),
 
     getOwnedClass,
 
-    lazyFetchOwnedClass,
+    lazyFetchOwnedClass: lazyFetchNFTClassesByOwnerWallet,
   }
 })
