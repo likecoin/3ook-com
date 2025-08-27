@@ -18,7 +18,7 @@
         'bg-linear-to-b from-(--app-bg)/90 to-(--app-bg)/0',
       ]"
     >
-      <div class="flex items-center gap-2 w-full">
+      <div class="flex items-center max-phone:gap-1 gap-2 w-full">
         <UButton
           v-if="!isDefaultTagId"
           icon="i-material-symbols-close-rounded"
@@ -34,7 +34,7 @@
           :key="fixedTag.value"
           :label="fixedTag.label"
           variant="outline"
-          :ui="{ base: 'rounded-full bg-(--app-bg) !ring-gray-600 px-4',
+          :ui="{ base: 'rounded-full bg-(--app-bg) !ring-gray-600 max-phone:px-[10px] px-4',
                  label: 'text-sm laptop:text-base',
           }"
           @click="handleTagClick(fixedTag.value)"
@@ -53,7 +53,7 @@
           size="md"
           :ui="{
             base: [
-              'rounded-full !ring-gray-600 justify-center text-sm laptop:text-base font-medium !pl-[16px]',
+              'rounded-full !ring-gray-600 justify-center text-sm laptop:text-base font-medium  max-phone:!pl-[10px] !pl-[16px]',
               isDefaultTagId
                 ? 'bg-(--app-bg) hover:bg-[#d0cec8]'
                 : 'bg-black text-white hover:bg-[#d0cec8] hover:text-black',
