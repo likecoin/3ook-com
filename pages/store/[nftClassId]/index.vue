@@ -310,36 +310,34 @@
       </section>
 
       <section
-        v-if="recommendedItemInfos.length"
-        class="w-full mt-8 overflow-hidden"
+        v-if="recommendedClassIds.length"
+        class="w-full max-w-[1200px] mx-auto mt-16 laptop:mt-20"
       >
-        <div class="relative w-full max-w-[1200px] mx-auto">
-          <h2
-            class="text-green-500 text-lg font-bold"
-            v-text="$t('product_page_related_books_title')"
-          />
+        <h2
+          class="text-green-500 text-lg font-bold"
+          v-text="$t('product_page_related_books_title')"
+        />
 
-          <div class="mt-6">
-            <ul
-              :class="[
-                ...gridClasses,
-                'flex-wrap', 'flex', 'gap-x-6', 'gap-y-10',
-              ]"
-            >
-              <BookstoreItem
-                v-for="(item, index) in recommendedItemInfos"
-                :id="item.classId"
-                :key="item.classId"
-                :class="getGridItemClassesByIndex(index)"
-                :nft-class-id="item.classId"
-                :book-name="item.name"
-                :book-cover-src="getResizedNormalizedImageURL(item.image || '', { size: 300 })"
-                :lazy="true"
-                @open="handleRecommendedBookCoverClick"
-              />
-            </ul>
-          </div>
-        </div>
+        <ul
+          :class="[
+            ...gridClasses,
+            'flex-wrap',
+            'flex',
+            'gap-x-6',
+            'gap-y-10',
+            'mt-6',
+          ]"
+        >
+          <BookstoreItem
+            v-for="(classId, index) in recommendedClassIds"
+            :id="classId"
+            :key="classId"
+            :class="getGridItemClassesByIndex(index)"
+            :nft-class-id="classId"
+            :lazy="true"
+            @open="handleRecommendedBookCoverClick"
+          />
+        </ul>
       </section>
 
       <aside
@@ -400,7 +398,6 @@
 <script setup lang="ts">
 import type { TabsItem } from '@nuxt/ui'
 import MarkdownIt from 'markdown-it'
-import { useAuthorStore } from '~/stores/author'
 
 const likeCoinSessionAPI = useLikeCoinSessionAPI()
 const route = useRoute()
@@ -627,27 +624,8 @@ const recommendedClassIds = computed(() => {
   if (bookInfo.bookstoreInfo.value?.recommendedClassIds) {
     items = items.concat(bookInfo.bookstoreInfo.value.recommendedClassIds)
   }
-  const ownedClassIds = authorStore.getOwnedClass(bookInfo.nftClassOwnerWalletAddress.value).map(item => item.classId)
+  const ownedClassIds = authorStore.getOwnedBookClassIds(bookInfo.nftClassOwnerWalletAddress.value)
   return items.concat(ownedClassIds).filter(id => id !== nftClassId.value).slice(0, 10)
-})
-
-const recommendedItemInfos = computed(() => {
-  return recommendedClassIds.value.map((classId) => {
-    return {
-      classId,
-      ...(nftStore.getNFTClassMetadataById(classId) || {}),
-    }
-  })
-})
-
-watch(() => recommendedClassIds.value, (newItems) => {
-  if (newItems.length) {
-    newItems.forEach((classId) => {
-      nftStore.lazyFetchNFTClassAggregatedMetadataById(classId).catch(() => {
-        console.warn(`Failed to fetch aggregated metadata for the NFT class [${classId}]`)
-      })
-    })
-  }
 })
 
 const { gridClasses, getGridItemClassesByIndex } = usePaginatedGrid({
@@ -666,7 +644,7 @@ onMounted(() => {
       console.error(`Failed to fetch owner liker info for wallet address ${ownerWalletAddress}:`, error)
     }
     try {
-      authorStore.lazyFetchOwnedClass(ownerWalletAddress)
+      authorStore.lazyFetchBookClassByOwnerWallet(ownerWalletAddress)
     }
     catch (error) {
       console.error(`Failed to fetch author owned class for wallet address ${ownerWalletAddress}:`, error)
