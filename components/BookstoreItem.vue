@@ -116,5 +116,6 @@ function onBookCoverClick() {
       quantity: 1,
     }],
   })
+  emit('open', props.nftClassId)
 }
 </script>

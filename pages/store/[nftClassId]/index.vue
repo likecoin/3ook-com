@@ -319,25 +319,24 @@
             v-text="$t('product_page_related_books_title')"
           />
 
-          <div class="h-[200px] laptop:h-[300px] mt-6">
-            <ul class="absolute flex gap-x-6 gap-y-10">
-              <li
-                v-for="item in recommendedItemInfos"
+          <div class="mt-6">
+            <ul
+              :class="[
+                ...gridClasses,
+                'flex-wrap', 'flex', 'gap-x-6', 'gap-y-10',
+              ]"
+            >
+              <BookstoreItem
+                v-for="(item, index) in recommendedItemInfos"
+                :id="item.classId"
                 :key="item.classId"
-                class="flex flex-col justify-center items-center w-[120px] laptop:w-[170px"
-              >
-                <BookCover
-                  :src="getResizedNormalizedImageURL(item.image || '', { size: 300 })"
-                  :alt="item.name"
-                  :lazy="true"
-                  :to="localeRoute({ name: 'store-nftClassId', params: { nftClassId: item.classId } })"
-                  @click="handleRecommendedBookCoverClick(item.classId)"
-                />
-                <span
-                  class="mt-0.5 text-sm text-[#949494] font-semibold break-words line-clamp-2"
-                  v-text="item.name"
-                />
-              </li>
+                :class="getGridItemClassesByIndex(index)"
+                :nft-class-id="item.classId"
+                :book-name="item.name"
+                :book-cover-src="getResizedNormalizedImageURL(item.image || '', { size: 300 })"
+                :lazy="true"
+                @open="handleRecommendedBookCoverClick"
+              />
             </ul>
           </div>
         </div>
@@ -649,6 +648,11 @@ watch(() => recommendedClassIds.value, (newItems) => {
       })
     })
   }
+})
+
+const { gridClasses, getGridItemClassesByIndex } = usePaginatedGrid({
+  itemsCount: recommendedClassIds.value.length,
+  hasMore: false,
 })
 
 onMounted(() => {
