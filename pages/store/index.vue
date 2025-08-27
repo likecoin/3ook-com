@@ -19,32 +19,26 @@
       ]"
     >
       <div class="flex items-center gap-2 w-full">
-        <template
+        <UButton
           v-if="!isDefaultTagId"
-        >
-          <UButton
-            icon="i-material-symbols-close-rounded"
-            variant="outline"
-            rounded-full
-            :ui="{ base: 'rounded-full bg-(--app-bg)' }"
-            @click="handleCloseClick"
-          />
-        </template>
+          icon="i-material-symbols-close-rounded"
+          variant="outline"
+          rounded-full
+          :ui="{ base: 'rounded-full bg-(--app-bg)' }"
+          @click="handleCloseClick"
+        />
 
-        <template
+        <UButton
+          v-for="fixedTag in fixedTags"
           v-else
-        >
-          <UButton
-            v-for="fixedTag in fixedTags"
-            :key="fixedTag.value"
-            :label="fixedTag.label"
-            variant="outline"
-            :ui="{ base: 'rounded-full bg-(--app-bg) !ring-gray-600 px-4',
-                   label: 'text-sm laptop:text-base',
-            }"
-            @click="handleTagClick(fixedTag.value)"
-          />
-        </template>
+          :key="fixedTag.value"
+          :label="fixedTag.label"
+          variant="outline"
+          :ui="{ base: 'rounded-full bg-(--app-bg) !ring-gray-600 px-4',
+                 label: 'text-sm laptop:text-base',
+          }"
+          @click="handleTagClick(fixedTag.value)"
+        />
 
         <USelect
           v-model="tagId"
@@ -59,10 +53,10 @@
           size="md"
           :ui="{
             base: [
-              'rounded-full !ring-gray-600 justify-center text-sm laptop:text-base',
+              'rounded-full !ring-gray-600 justify-center text-sm laptop:text-base font-medium !pl-[16px]',
               isDefaultTagId
                 ? 'bg-(--app-bg) hover:bg-[#d0cec8]'
-                : 'bg-black text-white hover:bg-[#d0cec8]',
+                : 'bg-black text-white hover:bg-[#d0cec8] hover:text-black',
             ],
             content: 'rounded-lg',
             placeholder: isDefaultTagId ? '!text-black text-sm laptop:text-base' : undefined,
@@ -71,7 +65,9 @@
       </div>
     </header>
 
-    <main class="flex flex-col items-center grow w-full max-w-[1440px] mx-auto pt-4 px-4 laptop:px-12 pb-16">
+    <main
+      class="flex flex-col items-center grow w-full max-w-[1440px] mx-auto pt-4 px-4 laptop:px-12 pb-16"
+    >
       <div
         v-if="itemsCount === 0 && !products.isFetchingItems && products.hasFetchedItems"
         class="flex flex-col items-center m-auto"
