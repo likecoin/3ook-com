@@ -1,12 +1,12 @@
 export const useAuthorStore = defineStore('AuthorStore', () => {
-  const nftBookClassesByOwner = ref<Record<string, string[]>>({})
+  const nftBookClassIdsByOwner = ref<Record<string, string[]>>({})
   const isFetchingItems = ref<Record<string, boolean>>({})
   const hasFetchedItems = ref<Record<string, boolean>>({})
 
   async function lazyFetchBookClassByOwnerWallet(walletAddress: string): Promise<string[] | undefined> {
     try {
-      if (nftBookClassesByOwner.value[walletAddress]) {
-        return nftBookClassesByOwner.value[walletAddress]
+      if (nftBookClassIdsByOwner.value[walletAddress]) {
+        return nftBookClassIdsByOwner.value[walletAddress]
       }
       if (isFetchingItems.value[walletAddress]) {
         return
@@ -15,7 +15,7 @@ export const useAuthorStore = defineStore('AuthorStore', () => {
       isFetchingItems.value[walletAddress] = true
       const result = await fetchNFTClassesByOwnerWalletAddress(walletAddress, {})
 
-      nftBookClassesByOwner.value[walletAddress] = result.data
+      nftBookClassIdsByOwner.value[walletAddress] = result.data
         .filter((nftClass: NFTClass) => {
           const metadata = nftClass.metadata
           return metadata?.['@type'] === 'Book'
@@ -24,11 +24,11 @@ export const useAuthorStore = defineStore('AuthorStore', () => {
           return item.address.toLowerCase() as `0x${string}` // ensure address is lowercase
         })
       hasFetchedItems.value[walletAddress] = true
-      return nftBookClassesByOwner.value[walletAddress]
+      return nftBookClassIdsByOwner.value[walletAddress]
     }
     catch (error) {
       console.warn(`Failed to fetch owned items for ${walletAddress}:`, error)
-      return undefined
+      return
     }
     finally {
       isFetchingItems.value[walletAddress] = false
@@ -38,7 +38,7 @@ export const useAuthorStore = defineStore('AuthorStore', () => {
   const getOwnedBookClassIds = computed(
     () =>
       (walletAddress: string): string[] => {
-        const walletData = nftBookClassesByOwner.value[walletAddress]
+        const walletData = nftBookClassIdsByOwner.value[walletAddress]
         if (!walletData) {
           return []
         }
