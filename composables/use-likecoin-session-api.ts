@@ -262,7 +262,7 @@ export function useLikeCoinSessionAPI() {
     })
   }
 
-  function fetchLikerPlusPriceUpdate({
+  function updateLikerPlusSubscription({
     period,
     giftNFTClassId,
     giftPriceIndex,
@@ -334,7 +334,7 @@ export function useLikeCoinSessionAPI() {
     fetchCartStatusById,
     claimCartById,
     fetchLikerPlusCheckoutLink,
-    fetchLikerPlusPriceUpdate,
+    updateLikerPlusSubscription,
     fetchLikerPlusGiftStatus,
     fetchLikerPlusBillingPortalLink,
     migrateMagicEmailUser,

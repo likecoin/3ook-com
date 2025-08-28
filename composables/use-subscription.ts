@@ -153,7 +153,7 @@ export function useSubscription() {
 
       const analyticsParams = getAnalyticsParameters()
       if (isLikerPlus.value) {
-        await likeCoinSessionAPI.fetchLikerPlusPriceUpdate({
+        await likeCoinSessionAPI.updateLikerPlusSubscription({
           period: subscribePlan,
           giftNFTClassId: isYearly ? nftClassId : undefined,
         })
