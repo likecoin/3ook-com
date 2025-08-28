@@ -1,8 +1,8 @@
 <template>
-  <div class="flex flex-col min-h-svh pb-14">
+  <div class="flex flex-col min-h-svh pb-17 mb-(--intercom-launcher-offset)">
     <slot />
 
-    <AppFooter :class="['mb-safe', { hidden: !props.isFooterVisible }]" />
+    <AppFooter :class="{ hidden: !props.isFooterVisible }" />
 
     <AppTabBar />
   </div>
