@@ -1,304 +1,107 @@
 <template>
-  <div class="flex flex-col grow">
-    <main class="flex flex-col items-center grow px-4 laptop:px-12 pb-[100px]">
-      <section class="flex flex-col tablet:flex-row gap-[32px] tablet:gap-[44px] w-full max-w-[1200px]">
-        <div class="grow pt-5">
-          <AffiliateAlert class="mb-6" />
+  <main class="items-center px-4 laptop:px-12 pb-[100px]">
+    <section class="flex flex-col tablet:flex-row gap-[32px] tablet:gap-[44px] w-full max-w-[1200px]">
+      <div class="grow pt-5">
+        <AffiliateAlert class="mb-6" />
 
-          <div class="flex flex-col laptop:flex-row gap-6 laptop:gap-8">
-            <BookCover
-              class="w-[150px] tablet:w-[130px] laptop:w-[220px] shrink-0"
-              :src="bookCoverSrc"
-              :alt="bookName"
-              :is-vertical-center="true"
-              :has-shadow="true"
+        <div class="flex flex-col laptop:flex-row gap-6 laptop:gap-8">
+          <BookCover
+            class="w-[150px] tablet:w-[130px] laptop:w-[220px] shrink-0"
+            :src="bookCoverSrc"
+            :alt="bookName"
+            :is-vertical-center="true"
+            :has-shadow="true"
+          />
+
+          <div class="flex flex-col justify-center">
+            <h1
+              class="text-[24px] text-black laptop:text-[32px] desktop:text-[40px] font-bold leading-[1.2]"
+              v-text="bookName"
             />
 
-            <div class="flex flex-col justify-center">
-              <h1
-                class="text-[24px] text-black laptop:text-[32px] desktop:text-[40px] font-bold leading-[1.2]"
-                v-text="bookName"
-              />
-
-              <ul
-                :class="[
-                  'flex',
-                  'flex-wrap',
-                  'gap-x-[64px]',
-                  'gap-y-6',
-                  'mt-6 tablet:mt-8',
-                  '[&>li>div:first-child]:text-gray-600',
-                  '[&>li>div:first-child]:text-sm',
-                  '[&>li>div:first-child]:mb-2',
-                ]"
-              >
-                <li v-if="bookInfo.authorName.value">
-                  <div v-text="$t('product_page_author_name_label')" />
-                  <EntityItem :name="bookInfo.authorName.value" />
-                </li>
-                <li v-if="bookInfo.publisherName.value">
-                  <div v-text="$t('product_page_publisher_label')" />
-                  <EntityItem :name="bookInfo.publisherName.value" />
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          <UTabs
-            v-if="infoTabItems.length"
-            :items="infoTabItems"
-            variant="link"
-            class="gap-6 w-full mt-[52px] tablet:mt-[80px]"
-            :ui="{ list: 'gap-6 border-0', trigger: 'text-lg font-bold pb-0 px-0', indicator: 'border-1' }"
-          >
-            <template #description>
-              <ExpandableContent>
-                <div
-                  class="markdown"
-                  v-html="bookInfoDescriptionHTML"
-                />
-              </ExpandableContent>
-            </template>
-
-            <template #author>
-              <ExpandableContent>
-                <div
-                  class="markdown"
-                  v-html="authorDescriptionHTML"
-                />
-              </ExpandableContent>
-            </template>
-
-            <template #file-info>
-              <table class="border-separate border-spacing-2">
-                <tbody
-                  :class="[
-                    '[&>tr>td:first-child]:pr-4',
-                    'text-sm',
-                    '[&>tr>td:first-child]:text-gray-400',
-                    '[&>tr>td:last-child]:text-gray-900',
-                  ]"
-                >
-                  <tr v-if="bookInfo.formattedContentTypes">
-                    <td v-text="$t('product_page_file_format_label')" />
-                    <td v-text="bookInfo.formattedContentTypes" />
-                  </tr>
-                  <tr v-if="bookInfo.formattedReadingMethods">
-                    <td v-text="$t('product_page_reading_methods_label')" />
-                    <td v-text="bookInfo.formattedReadingMethods" />
-                  </tr>
-                  <tr>
-                    <td v-text="$t('product_page_support_tts_label')" />
-                    <td v-text="bookInfo.formattedTTSSupportLabel" />
-                  </tr>
-                  <tr v-if="bookInfo.formattedPublishedDate">
-                    <td v-text="$t('product_page_publish_date_label')" />
-                    <td v-text="bookInfo.formattedPublishedDate" />
-                  </tr>
-                </tbody>
-              </table>
-            </template>
-          </UTabs>
-
-          <ul
-            v-if="bookInfo.keywords.value"
-            class="hidden tablet:flex flex-wrap gap-x-2 gap-y-4 mt-[48px]"
-          >
-            <li
-              v-for="tag in bookInfo.keywords.value"
-              :key="tag"
+            <ul
+              :class="[
+                'flex',
+                'flex-wrap',
+                'gap-x-[64px]',
+                'gap-y-6',
+                'mt-6 tablet:mt-8',
+                '[&>li>div:first-child]:text-gray-600',
+                '[&>li>div:first-child]:text-sm',
+                '[&>li>div:first-child]:mb-2',
+              ]"
             >
-              <TagItem :label="tag" />
-            </li>
-          </ul>
-        </div>
-
-        <div class="relative w-full tablet:max-w-[300px] laptop:max-w-[380px] shrink-0">
-          <div class="sticky top-0 pt-5">
-            <div
-              v-if="pricingItems.length"
-              class="bg-white p-4 pb-8 rounded-lg shadow-[0px_10px_20px_0px_rgba(0,0,0,0.04)]"
-            >
-              <h2 v-text="$t('product_page_pricing_title')" />
-              <ul
-                ref="pricing"
-                class="mt-2 space-y-2"
-              >
-                <li
-                  v-for="(item, index) in pricingItems"
-                  :key="item.name"
-                >
-                  <button
-                    :class="[
-                      'flex',
-                      'items-center',
-                      'gap-3',
-                      'hover:bg-gray-200',
-                      'rounded-lg',
-                      'w-full',
-                      'p-4',
-                      'border-2',
-                      item.isSelected ? 'border-gray-900' : 'border-gray-300',
-                      'transition-[background-color, border-color]',
-                      'duration-200',
-                      'ease-in-out',
-                      { 'cursor-pointer': !item.isSoldOut },
-                    ]"
-                    @click="handlePricingItemClick(index)"
-                  >
-                    <div class="relative shrink-0 w-[24px] h-[24px] flex items-center justify-center">
-                      <span
-                        :class="[
-                          'absolute',
-                          'w-[20px]',
-                          'h-[20px]',
-                          item.isSelected ? 'bg-theme-50' : 'bg-white',
-                          'rounded-full',
-                          'border',
-                          'border-gray-300',
-                        ]"
-                      />
-                      <UIcon
-                        v-if="item.isSelected"
-                        class="absolute text-gray-900 z-10"
-                        name="i-material-symbols-check-circle"
-                        size="24"
-                      />
-                    </div>
-                    <div class="grow">
-                      <div
-                        :class="[
-                          'flex',
-                          'justify-between',
-                          'items-center',
-                          'gap-3',
-                          item.isSoldOut ? 'text-gray-400' : 'text-gray-900',
-                        ]"
-                      >
-                        <span
-                          class="font-semibold"
-                          v-text="item.name"
-                        />
-                        <span
-                          v-if="item.isSoldOut"
-                          class="text-sm font-semibold"
-                          v-text="$t('product_page_sold_out_button_label')"
-                        />
-                        <span
-                          v-else
-                          class="flex flex-col items-end text-right"
-                        >
-                          <template v-if="item?.discountedPrice">
-                            <span class="flex flex-nowrap items-center text-gray-900 font-semibold">
-                              <span
-                                class="mx-0.5"
-                                v-text="item.currency"
-                              />
-                              <span v-text="item.discountedPrice" />
-                              <PlusBadge
-                                v-if="isLikerPlus"
-                                class="ml-1"
-                              />
-                            </span>
-                            <span class="text-xs text-gray-400 line-through">
-                              <span
-                                class="mr-0.5"
-                                v-text="item.currency"
-                              />
-                              <span v-text="item.originalPrice" />
-                            </span>
-                          </template>
-                          <template v-else>
-                            <span class="flex flex-row items-center">
-                              <span
-                                class="text-xs mr-0.5"
-                                v-text="item.currency"
-                              />
-                              <span
-                                class="font-semibold"
-                                v-text="item.originalPrice"
-                              />
-                            </span>
-                          </template>
-                        </span>
-                      </div>
-                      <div
-                        v-if="item.renderedDescription"
-                        class="markdown whitespace-normal text-left mt-2"
-                        v-html="item.renderedDescription"
-                      />
-                    </div>
-                  </button>
-                </li>
-              </ul>
-              <footer class="flex flex-col mt-6 gap-3">
-                <UButton
-                  class="hidden cursor-pointer"
-                  :label="$t('product_page_add_to_cart_button_label')"
-                  size="xl"
-                  :disabled="isSelectedPricingItemSoldOut"
-                  block
-                  @click="handleAddToCartButtonClick"
-                />
-                <UButton
-                  v-bind="checkoutButtonProps"
-                  class="cursor-pointer"
-                  size="xl"
-                  :loading="isPurchasing"
-                  :disabled="isSelectedPricingItemSoldOut || isPurchasing"
-                  block
-                  @click="handlePurchaseButtonClick"
-                />
-
-                <UBadge
-                  v-if="!selectedPricingItem?.isAutoDeliver"
-                  class="self-center font-bold rounded-full pr-3"
-                  icon="i-material-symbols-warning-outline"
-                  variant="subtle"
-                  color="warning"
-                  :label="$t('manual_delivery_warning_label')"
-                />
-              </footer>
-            </div>
-
-            <div
-              v-if="pricingItems.length"
-              class="hidden mt-6"
-            >
-              <GiftButton
-                class="w-full"
-                :label="$t('product_page_gift_button_label')"
-                @click="handleGiftButtonClick"
-              />
-            </div>
-
-            <ul class="flex justify-center items-center gap-2 mt-4">
-              <li
-                v-for="button in socialButtons"
-                :key="button.icon"
-              >
-                <UTooltip
-                  :delay-duration="0"
-                  :text="button.label"
-                >
-                  <UButton
-                    color="neutral"
-                    variant="outline"
-                    size="xs"
-                    :icon="button.icon"
-                    :disabled="!button.isEnabled"
-                    :ui="{ base: 'p-2 rounded-full' }"
-                    @click="handleSocialButtonClick(button.key)"
-                  />
-                </UTooltip>
+              <li v-if="bookInfo.authorName.value">
+                <div v-text="$t('product_page_author_name_label')" />
+                <EntityItem :name="bookInfo.authorName.value" />
+              </li>
+              <li v-if="bookInfo.publisherName.value">
+                <div v-text="$t('product_page_publisher_label')" />
+                <EntityItem :name="bookInfo.publisherName.value" />
               </li>
             </ul>
           </div>
         </div>
 
+        <UTabs
+          v-if="infoTabItems.length"
+          :items="infoTabItems"
+          variant="link"
+          class="gap-6 w-full mt-[52px] tablet:mt-[80px]"
+          :ui="{ list: 'gap-6 border-0', trigger: 'text-lg font-bold pb-0 px-0', indicator: 'border-1' }"
+        >
+          <template #description>
+            <ExpandableContent>
+              <div
+                class="markdown"
+                v-html="bookInfoDescriptionHTML"
+              />
+            </ExpandableContent>
+          </template>
+
+          <template #author>
+            <ExpandableContent>
+              <div
+                class="markdown"
+                v-html="authorDescriptionHTML"
+              />
+            </ExpandableContent>
+          </template>
+
+          <template #file-info>
+            <table class="border-separate border-spacing-2">
+              <tbody
+                :class="[
+                  '[&>tr>td:first-child]:pr-4',
+                  'text-sm',
+                  '[&>tr>td:first-child]:text-gray-400',
+                  '[&>tr>td:last-child]:text-gray-900',
+                ]"
+              >
+                <tr v-if="bookInfo.formattedContentTypes">
+                  <td v-text="$t('product_page_file_format_label')" />
+                  <td v-text="bookInfo.formattedContentTypes" />
+                </tr>
+                <tr v-if="bookInfo.formattedReadingMethods">
+                  <td v-text="$t('product_page_reading_methods_label')" />
+                  <td v-text="bookInfo.formattedReadingMethods" />
+                </tr>
+                <tr>
+                  <td v-text="$t('product_page_support_tts_label')" />
+                  <td v-text="bookInfo.formattedTTSSupportLabel" />
+                </tr>
+                <tr v-if="bookInfo.formattedPublishedDate">
+                  <td v-text="$t('product_page_publish_date_label')" />
+                  <td v-text="bookInfo.formattedPublishedDate" />
+                </tr>
+              </tbody>
+            </table>
+          </template>
+        </UTabs>
+
         <ul
           v-if="bookInfo.keywords.value"
-          class="flex tablet:hidden flex-wrap gap-x-2 gap-y-3"
+          class="hidden tablet:flex flex-wrap gap-x-2 gap-y-4 mt-[48px]"
         >
           <li
             v-for="tag in bookInfo.keywords.value"
@@ -307,90 +110,285 @@
             <TagItem :label="tag" />
           </li>
         </ul>
-      </section>
+      </div>
 
-      <section
-        v-if="filteredRecommendedClassIds.length"
-        class="w-full max-w-[1200px] mx-auto mt-16 laptop:mt-20"
+      <div class="relative w-full tablet:max-w-[300px] laptop:max-w-[380px] shrink-0">
+        <div class="sticky top-0 pt-5">
+          <div
+            v-if="pricingItems.length"
+            class="bg-white p-4 pb-8 rounded-lg shadow-[0px_10px_20px_0px_rgba(0,0,0,0.04)]"
+          >
+            <h2 v-text="$t('product_page_pricing_title')" />
+            <ul
+              ref="pricing"
+              class="mt-2 space-y-2"
+            >
+              <li
+                v-for="(item, index) in pricingItems"
+                :key="item.name"
+              >
+                <button
+                  :class="[
+                    'flex',
+                    'items-center',
+                    'gap-3',
+                    'hover:bg-gray-200',
+                    'rounded-lg',
+                    'w-full',
+                    'p-4',
+                    'border-2',
+                    item.isSelected ? 'border-gray-900' : 'border-gray-300',
+                    'transition-[background-color, border-color]',
+                    'duration-200',
+                    'ease-in-out',
+                    { 'cursor-pointer': !item.isSoldOut },
+                  ]"
+                  @click="handlePricingItemClick(index)"
+                >
+                  <div class="relative shrink-0 w-[24px] h-[24px] flex items-center justify-center">
+                    <span
+                      :class="[
+                        'absolute',
+                        'w-[20px]',
+                        'h-[20px]',
+                        item.isSelected ? 'bg-theme-50' : 'bg-white',
+                        'rounded-full',
+                        'border',
+                        'border-gray-300',
+                      ]"
+                    />
+                    <UIcon
+                      v-if="item.isSelected"
+                      class="absolute text-gray-900 z-10"
+                      name="i-material-symbols-check-circle"
+                      size="24"
+                    />
+                  </div>
+                  <div class="grow">
+                    <div
+                      :class="[
+                        'flex',
+                        'justify-between',
+                        'items-center',
+                        'gap-3',
+                        item.isSoldOut ? 'text-gray-400' : 'text-gray-900',
+                      ]"
+                    >
+                      <span
+                        class="font-semibold"
+                        v-text="item.name"
+                      />
+                      <span
+                        v-if="item.isSoldOut"
+                        class="text-sm font-semibold"
+                        v-text="$t('product_page_sold_out_button_label')"
+                      />
+                      <span
+                        v-else
+                        class="flex flex-col items-end text-right"
+                      >
+                        <template v-if="item?.discountedPrice">
+                          <span class="flex flex-nowrap items-center text-gray-900 font-semibold">
+                            <span
+                              class="mx-0.5"
+                              v-text="item.currency"
+                            />
+                            <span v-text="item.discountedPrice" />
+                            <PlusBadge
+                              v-if="isLikerPlus"
+                              class="ml-1"
+                            />
+                          </span>
+                          <span class="text-xs text-gray-400 line-through">
+                            <span
+                              class="mr-0.5"
+                              v-text="item.currency"
+                            />
+                            <span v-text="item.originalPrice" />
+                          </span>
+                        </template>
+                        <template v-else>
+                          <span class="flex flex-row items-center">
+                            <span
+                              class="text-xs mr-0.5"
+                              v-text="item.currency"
+                            />
+                            <span
+                              class="font-semibold"
+                              v-text="item.originalPrice"
+                            />
+                          </span>
+                        </template>
+                      </span>
+                    </div>
+                    <div
+                      v-if="item.renderedDescription"
+                      class="markdown whitespace-normal text-left mt-2"
+                      v-html="item.renderedDescription"
+                    />
+                  </div>
+                </button>
+              </li>
+            </ul>
+            <footer class="flex flex-col mt-6 gap-3">
+              <UButton
+                class="hidden cursor-pointer"
+                :label="$t('product_page_add_to_cart_button_label')"
+                size="xl"
+                :disabled="isSelectedPricingItemSoldOut"
+                block
+                @click="handleAddToCartButtonClick"
+              />
+              <UButton
+                v-bind="checkoutButtonProps"
+                class="cursor-pointer"
+                size="xl"
+                :loading="isPurchasing"
+                :disabled="isSelectedPricingItemSoldOut || isPurchasing"
+                block
+                @click="handlePurchaseButtonClick"
+              />
+
+              <UBadge
+                v-if="!selectedPricingItem?.isAutoDeliver"
+                class="self-center font-bold rounded-full pr-3"
+                icon="i-material-symbols-warning-outline"
+                variant="subtle"
+                color="warning"
+                :label="$t('manual_delivery_warning_label')"
+              />
+            </footer>
+          </div>
+
+          <div
+            v-if="pricingItems.length"
+            class="hidden mt-6"
+          >
+            <GiftButton
+              class="w-full"
+              :label="$t('product_page_gift_button_label')"
+              @click="handleGiftButtonClick"
+            />
+          </div>
+
+          <ul class="flex justify-center items-center gap-2 mt-4">
+            <li
+              v-for="button in socialButtons"
+              :key="button.icon"
+            >
+              <UTooltip
+                :delay-duration="0"
+                :text="button.label"
+              >
+                <UButton
+                  color="neutral"
+                  variant="outline"
+                  size="xs"
+                  :icon="button.icon"
+                  :disabled="!button.isEnabled"
+                  :ui="{ base: 'p-2 rounded-full' }"
+                  @click="handleSocialButtonClick(button.key)"
+                />
+              </UTooltip>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <ul
+        v-if="bookInfo.keywords.value"
+        class="flex tablet:hidden flex-wrap gap-x-2 gap-y-3"
       >
-        <h2
-          class="text-green-500 text-lg font-bold"
-          v-text="$t('product_page_related_books_title')"
-        />
-
-        <ul
-          :class="[
-            ...gridClasses,
-            'flex-wrap',
-            'flex',
-            'mt-6',
-          ]"
+        <li
+          v-for="tag in bookInfo.keywords.value"
+          :key="tag"
         >
-          <BookstoreItem
-            v-for="(classId, index) in filteredRecommendedClassIds"
-            :id="classId"
-            :key="classId"
-            :class="getGridItemClassesByIndex(index)"
-            :nft-class-id="classId"
-            :lazy="true"
-            @open="handleRecommendedBookCoverClick"
-          />
-        </ul>
-      </section>
+          <TagItem :label="tag" />
+        </li>
+      </ul>
+    </section>
 
-      <aside
-        v-if="pricingItems.length"
+    <section
+      v-if="filteredRecommendedClassIds.length"
+      class="w-full max-w-[1200px] mx-auto mt-16 laptop:mt-20"
+    >
+      <h2
+        class="text-green-500 text-lg font-bold"
+        v-text="$t('product_page_related_books_title')"
+      />
+
+      <ul
         :class="[
-          'fixed',
-          'bottom-[56px]',
-          'inset-x-4',
-          isPricingItemsVisible ? 'hidden' : 'flex',
-          'tablet:hidden',
-          'gap-4',
-          'justify-between',
-          'items-center',
-          'mb-3',
-          'px-5',
-          'py-3',
-          'rounded-xl',
-          'bg-white',
-          'shadow-[0px_10px_30px_0px_rgba(0,0,0,0.12)]',
-          'z-10',
+          ...gridClasses,
+          'flex-wrap',
+          'flex',
+          'mt-6',
         ]"
       >
-        <span class="text-green-500">
-          <span
-            class="text-xs mr-0.5"
-            v-text="selectedPricingItem?.currency"
-          />
-          <span
-            v-if="selectedPricingItem?.discountedPrice"
-            class="text-2xl font-semibold"
-            v-text="selectedPricingItem?.discountedPrice"
-          />
-          <PlusBadge
-            v-if="selectedPricingItem?.discountedPrice"
-            class="ml-1"
-          />
-          <span
-            v-else
-            class="text-2xl font-semibold"
-            v-text="selectedPricingItem?.originalPrice"
-          />
-        </span>
-        <UButton
-          v-bind="checkoutButtonProps"
-          class="cursor-pointer max-w-[248px]"
-          color="primary"
-          size="xl"
-          :loading="isPurchasing"
-          :disabled="isSelectedPricingItemSoldOut || isPurchasing"
-          block
-          @click="handleStickyPurchaseButtonClick"
+        <BookstoreItem
+          v-for="(classId, index) in filteredRecommendedClassIds"
+          :id="classId"
+          :key="classId"
+          :class="getGridItemClassesByIndex(index)"
+          :nft-class-id="classId"
+          :lazy="true"
+          @open="handleRecommendedBookCoverClick"
         />
-      </aside>
-    </main>
-  </div>
+      </ul>
+    </section>
+
+    <aside
+      v-if="pricingItems.length"
+      :class="[
+        'fixed',
+        'bottom-[56px]',
+        'inset-x-4',
+        isPricingItemsVisible ? 'hidden' : 'flex',
+        'tablet:hidden',
+        'gap-4',
+        'justify-between',
+        'items-center',
+        'mb-3',
+        'px-5',
+        'py-3',
+        'rounded-xl',
+        'bg-white',
+        'shadow-[0px_10px_30px_0px_rgba(0,0,0,0.12)]',
+        'z-10',
+      ]"
+    >
+      <span class="text-green-500">
+        <span
+          class="text-xs mr-0.5"
+          v-text="selectedPricingItem?.currency"
+        />
+        <span
+          v-if="selectedPricingItem?.discountedPrice"
+          class="text-2xl font-semibold"
+          v-text="selectedPricingItem?.discountedPrice"
+        />
+        <PlusBadge
+          v-if="selectedPricingItem?.discountedPrice"
+          class="ml-1"
+        />
+        <span
+          v-else
+          class="text-2xl font-semibold"
+          v-text="selectedPricingItem?.originalPrice"
+        />
+      </span>
+      <UButton
+        v-bind="checkoutButtonProps"
+        class="cursor-pointer max-w-[248px]"
+        color="primary"
+        size="xl"
+        :loading="isPurchasing"
+        :disabled="isSelectedPricingItemSoldOut || isPurchasing"
+        block
+        @click="handleStickyPurchaseButtonClick"
+      />
+    </aside>
+  </main>
 </template>
 
 <script setup lang="ts">

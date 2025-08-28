@@ -1,5 +1,5 @@
 <template>
-  <NuxtPage class="flex flex-col justify-center items-center grow w-full" />
+  <NuxtPage class="justify-center items-center w-full" />
 </template>
 
 <script setup lang="ts">

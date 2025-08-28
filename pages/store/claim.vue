@@ -1,7 +1,5 @@
 <template>
-  <main
-    class="flex flex-col justify-center items-center min-h-svh mb-safe py-[48px] px-[24px]"
-  >
+  <main class="justify-center items-center min-h-svh mb-safe py-[48px] px-[24px]">
     <template v-if="!hasLoggedIn">
       <p
         class="text-center text-gray-500 mb-4"

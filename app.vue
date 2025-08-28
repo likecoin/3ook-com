@@ -2,7 +2,7 @@
   <NuxtLoadingIndicator />
   <UApp>
     <NuxtLayout>
-      <NuxtPage class="grow flex flex-col" />
+      <NuxtPage class="flex flex-col grow" />
     </NuxtLayout>
   </UApp>
 </template>

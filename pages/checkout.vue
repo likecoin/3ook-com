@@ -1,168 +1,166 @@
 <template>
-  <div class="flex flex-col grow">
-    <main class="flex flex-col items-center grow px-4 laptop:px-12 pb-[100px]">
-      <template v-if="isLoading">
-        <BookLoadingScreen
-          v-if="cartItems.length === 1"
-          :book-cover-src="cartItems[0]?.bookInfo?.coverSrc"
-          :book-name="cartItems[0]?.bookInfo?.name"
-          icon="i-material-symbols-shopping-cart"
-          :icon-label="$t('checkout_preparing_title')"
-          :loading-label="$t('checkout_loading_cart_items')"
-          :loading-progress="loadingProgress"
+  <main class="items-center px-4 laptop:px-12 pb-[100px]">
+    <template v-if="isLoading">
+      <BookLoadingScreen
+        v-if="cartItems.length === 1"
+        :book-cover-src="cartItems[0]?.bookInfo?.coverSrc"
+        :book-name="cartItems[0]?.bookInfo?.name"
+        icon="i-material-symbols-shopping-cart"
+        :icon-label="$t('checkout_preparing_title')"
+        :loading-label="$t('checkout_loading_cart_items')"
+        :loading-progress="loadingProgress"
+      />
+      <div
+        v-else
+        class="flex flex-col items-center justify-center py-[56px]"
+      >
+        <UIcon
+          class="text-green-500 text-[40px] mb-4"
+          name="i-material-symbols-shopping-cart"
         />
-        <div
-          v-else
-          class="flex flex-col items-center justify-center py-[56px]"
-        >
-          <UIcon
-            class="text-green-500 text-[40px] mb-4"
-            name="i-material-symbols-shopping-cart"
-          />
-          <h1
-            class="text-green-500 text-xl font-bold mb-4"
-            v-text="$t('checkout_preparing_title')"
-          />
-          <UProgress
-            class="mt-2 max-w-[160px]"
-            size="sm"
-            :value="loadingProgress"
-          />
-        </div>
-      </template>
+        <h1
+          class="text-green-500 text-xl font-bold mb-4"
+          v-text="$t('checkout_preparing_title')"
+        />
+        <UProgress
+          class="mt-2 max-w-[160px]"
+          size="sm"
+          :value="loadingProgress"
+        />
+      </div>
+    </template>
 
-      <template v-else-if="cartItems.length > 0">
-        <section class="flex flex-col w-full max-w-[800px] mt-8">
-          <h1
-            class="text-[32px] font-bold text-black mb-8"
-            v-text="$t('checkout_page_title')"
+    <template v-else-if="cartItems.length > 0">
+      <section class="flex flex-col w-full max-w-[800px] mt-8">
+        <h1
+          class="text-[32px] font-bold text-black mb-8"
+          v-text="$t('checkout_page_title')"
+        />
+
+        <div class="bg-white p-6 rounded-lg shadow-[0px_10px_20px_0px_rgba(0,0,0,0.04)] mb-6">
+          <h2
+            class="text-lg font-semibold mb-4"
+            v-text="$t('checkout_cart_items_title', { count: cartItems.length })"
           />
 
-          <div class="bg-white p-6 rounded-lg shadow-[0px_10px_20px_0px_rgba(0,0,0,0.04)] mb-6">
-            <h2
-              class="text-lg font-semibold mb-4"
-              v-text="$t('checkout_cart_items_title', { count: cartItems.length })"
-            />
+          <ul class="space-y-4">
+            <li
+              v-for="item in cartItems"
+              :key="`${item.classId}-${item.priceIndex}`"
+              class="flex gap-4 p-4 border border-gray-200 rounded-lg"
+            >
+              <BookCover
+                class="w-[80px] shrink-0"
+                :src="item.bookInfo?.coverSrc"
+                :alt="item.bookInfo?.name"
+                :has-shadow="true"
+              />
 
-            <ul class="space-y-4">
-              <li
-                v-for="item in cartItems"
-                :key="`${item.classId}-${item.priceIndex}`"
-                class="flex gap-4 p-4 border border-gray-200 rounded-lg"
-              >
-                <BookCover
-                  class="w-[80px] shrink-0"
-                  :src="item.bookInfo?.coverSrc"
-                  :alt="item.bookInfo?.name"
-                  :has-shadow="true"
+              <div class="flex-1">
+                <h3
+                  class="font-semibold text-black mb-1"
+                  v-text="item.bookInfo?.name"
                 />
-
-                <div class="flex-1">
-                  <h3
-                    class="font-semibold text-black mb-1"
-                    v-text="item.bookInfo?.name"
+                <p
+                  v-if="item.bookInfo?.authorName"
+                  class="text-sm text-gray-600 mb-2"
+                  v-text="$t('checkout_by_author', { author: item.bookInfo.authorName })"
+                />
+                <div class="flex items-center justify-between">
+                  <span
+                    class="text-sm text-gray-500"
+                    v-text="localeString(item.pricingItem?.name || '')"
                   />
-                  <p
-                    v-if="item.bookInfo?.authorName"
-                    class="text-sm text-gray-600 mb-2"
-                    v-text="$t('checkout_by_author', { author: item.bookInfo.authorName })"
-                  />
-                  <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
                     <span
-                      class="text-sm text-gray-500"
-                      v-text="localeString(item.pricingItem?.name || '')"
+                      class="text-xs text-gray-500"
+                      v-text="$t('checkout_quantity_label', { quantity: item.quantity })"
                     />
-                    <div class="flex items-center gap-2">
+                    <span class="text-green-600 font-semibold">
                       <span
-                        class="text-xs text-gray-500"
-                        v-text="$t('checkout_quantity_label', { quantity: item.quantity })"
+                        class="text-xs mr-0.5"
+                        v-text="totalCurrency"
                       />
-                      <span class="text-green-600 font-semibold">
-                        <span
-                          class="text-xs mr-0.5"
-                          v-text="totalCurrency"
-                        />
-                        <span v-text="formatPrice((item.pricingItem?.price || 0) * item.quantity)" />
-                      </span>
-                    </div>
+                      <span v-text="formatPrice((item.pricingItem?.price || 0) * item.quantity)" />
+                    </span>
                   </div>
                 </div>
-              </li>
-            </ul>
-          </div>
-
-          <div
-            v-if="couponCode"
-            class="bg-green-50 border border-green-200 p-4 rounded-lg mb-6"
-          >
-            <div class="flex items-center gap-2">
-              <UIcon
-                name="i-material-symbols-local-offer"
-                class="text-green-600"
-              />
-              <span
-                class="font-semibold text-green-800"
-                v-text="$t('checkout_coupon_applied', { code: couponCode })"
-              />
-            </div>
-          </div>
-
-          <div class="bg-gray-50 p-6 rounded-lg mb-6">
-            <div class="flex justify-between items-center text-xl font-bold">
-              <span v-text="$t('checkout_total_label')" />
-              <span class="text-green-600">
-                <span
-                  class="text-sm mr-0.5"
-                  v-text="totalCurrency"
-                />
-                <span v-text="formatPrice(totalPrice)" />
-              </span>
-            </div>
-          </div>
-
-          <UButton
-            class="cursor-pointer self-center max-w-[400px]"
-            color="primary"
-            size="xl"
-            :loading="isPurchasing"
-            :disabled="isPurchasing || cartItems.length === 0"
-            block
-            @click="handleCheckout"
-          >
-            <template v-if="isPurchasing">
-              {{ $t('checkout_processing_button') }}
-            </template>
-            <template v-else>
-              {{ $t('checkout_complete_purchase_button') }}
-            </template>
-          </UButton>
-        </section>
-      </template>
-
-      <template v-else>
-        <div class="flex flex-col items-center justify-center py-[100px]">
-          <UIcon
-            class="text-gray-400 text-[64px] mb-4"
-            name="i-material-symbols-shopping-cart-off"
-          />
-          <h1
-            class="text-gray-600 text-xl font-bold mb-2"
-            v-text="$t('checkout_cart_empty_title')"
-          />
-          <p
-            class="text-gray-500 mb-6"
-            v-text="$t('checkout_cart_empty_description')"
-          />
-          <UButton
-            :to="$localeRoute({ name: 'store' })"
-            color="primary"
-            size="lg"
-            :label="$t('checkout_cart_empty_browse_button')"
-          />
+              </div>
+            </li>
+          </ul>
         </div>
-      </template>
-    </main>
-  </div>
+
+        <div
+          v-if="couponCode"
+          class="bg-green-50 border border-green-200 p-4 rounded-lg mb-6"
+        >
+          <div class="flex items-center gap-2">
+            <UIcon
+              name="i-material-symbols-local-offer"
+              class="text-green-600"
+            />
+            <span
+              class="font-semibold text-green-800"
+              v-text="$t('checkout_coupon_applied', { code: couponCode })"
+            />
+          </div>
+        </div>
+
+        <div class="bg-gray-50 p-6 rounded-lg mb-6">
+          <div class="flex justify-between items-center text-xl font-bold">
+            <span v-text="$t('checkout_total_label')" />
+            <span class="text-green-600">
+              <span
+                class="text-sm mr-0.5"
+                v-text="totalCurrency"
+              />
+              <span v-text="formatPrice(totalPrice)" />
+            </span>
+          </div>
+        </div>
+
+        <UButton
+          class="cursor-pointer self-center max-w-[400px]"
+          color="primary"
+          size="xl"
+          :loading="isPurchasing"
+          :disabled="isPurchasing || cartItems.length === 0"
+          block
+          @click="handleCheckout"
+        >
+          <template v-if="isPurchasing">
+            {{ $t('checkout_processing_button') }}
+          </template>
+          <template v-else>
+            {{ $t('checkout_complete_purchase_button') }}
+          </template>
+        </UButton>
+      </section>
+    </template>
+
+    <template v-else>
+      <div class="flex flex-col items-center justify-center py-[100px]">
+        <UIcon
+          class="text-gray-400 text-[64px] mb-4"
+          name="i-material-symbols-shopping-cart-off"
+        />
+        <h1
+          class="text-gray-600 text-xl font-bold mb-2"
+          v-text="$t('checkout_cart_empty_title')"
+        />
+        <p
+          class="text-gray-500 mb-6"
+          v-text="$t('checkout_cart_empty_description')"
+        />
+        <UButton
+          :to="$localeRoute({ name: 'store' })"
+          color="primary"
+          size="lg"
+          :label="$t('checkout_cart_empty_browse_button')"
+        />
+      </div>
+    </template>
+  </main>
 </template>
 
 <script setup lang="ts">

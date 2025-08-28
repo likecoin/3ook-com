@@ -1,36 +1,34 @@
 <template>
-  <div class="flex flex-col grow">
-    <main class="flex flex-col items-center justify-center w-full max-w-xl mx-auto p-4 space-y-4 grow text-center">
-      <UIcon
-        name="i-material-symbols-check-circle-rounded"
-        class="text-green-500 mb-4"
-        size="64"
-      />
+  <main class="items-center justify-center w-full max-w-xl mx-auto p-4 space-y-4 text-center">
+    <UIcon
+      name="i-material-symbols-check-circle-rounded"
+      class="text-green-500 mb-4"
+      size="64"
+    />
 
-      <h1
-        class="mb-2 text-2xl font-bold"
-        v-text="$t('subscription_success_title')"
-      />
-      <p
-        class="mb-6 text-gray-600"
-        v-text="$t('subscription_success_description')"
-      />
+    <h1
+      class="mb-2 text-2xl font-bold"
+      v-text="$t('subscription_success_title')"
+    />
+    <p
+      class="mb-6 text-gray-600"
+      v-text="$t('subscription_success_description')"
+    />
 
-      <UButton
-        v-if="!isRefreshing"
-        :label="$t('subscription_success_continue_button')"
-        color="primary"
-        :loading="isRedirecting"
-        @click="redirectToShelf"
-      />
-      <UButton
-        v-else
-        :label="$t('subscription_success_loading')"
-        color="primary"
-        :loading="true"
-      />
-    </main>
-  </div>
+    <UButton
+      v-if="!isRefreshing"
+      :label="$t('subscription_success_continue_button')"
+      color="primary"
+      :loading="isRedirecting"
+      @click="redirectToShelf"
+    />
+    <UButton
+      v-else
+      :label="$t('subscription_success_loading')"
+      color="primary"
+      :loading="true"
+    />
+  </main>
 </template>
 
 <script setup lang="ts">
