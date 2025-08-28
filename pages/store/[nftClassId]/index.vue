@@ -637,18 +637,12 @@ onMounted(() => {
   useLogEvent('view_item', formattedLogPayload.value)
   const ownerWalletAddress = bookInfo.nftClassOwnerWalletAddress.value
   if (ownerWalletAddress) {
-    try {
-      metadataStore.lazyFetchLikerInfoByWalletAddress(ownerWalletAddress)
-    }
-    catch (error) {
+    metadataStore.lazyFetchLikerInfoByWalletAddress(ownerWalletAddress).catch((error) => {
       console.error(`Failed to fetch owner liker info for wallet address ${ownerWalletAddress}:`, error)
-    }
-    try {
-      authorStore.lazyFetchBookClassByOwnerWallet(ownerWalletAddress)
-    }
-    catch (error) {
+    })
+    authorStore.lazyFetchBookClassByOwnerWallet(ownerWalletAddress).catch((error) => {
       console.error(`Failed to fetch author owned class for wallet address ${ownerWalletAddress}:`, error)
-    }
+    })
   }
   const selectedPricingItemIndex = getRouteQuery('edition')
   if (selectedPricingItemIndex) {
