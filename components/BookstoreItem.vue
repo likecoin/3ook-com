@@ -23,17 +23,19 @@
       />
     </div>
 
-    <div class="h-5 mt-3 text-sm text-[#1A1A1A] line-clamp-1">
-      <template v-if="formattedDiscountPrice">
-        <span v-text="`US ${formattedDiscountPrice}`" />
-        <span
-          class="text-xs text-gray-400 ml-1 line-through"
-          v-text="formattedPrice"
-        />
-      </template>
-      <template v-else>
-        <span v-text="`${price > 0 ? `US ${formattedPrice}` : formattedPrice}`" />
-      </template>
+    <div class="h-5 mt-3 text-sm text-theme-500">
+      <span
+        v-if="price > 0"
+        class="mr-0.5"
+      >US</span>
+      <span
+        v-if="formattedDiscountPrice"
+        v-text="formattedDiscountPrice"
+      />
+      <span
+        :class="{ 'text-xs text-dimmed ml-0.5 line-through': formattedDiscountPrice }"
+        v-text="formattedPrice"
+      />
     </div>
   </li>
 </template>

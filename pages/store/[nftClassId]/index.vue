@@ -323,8 +323,6 @@
             ...gridClasses,
             'flex-wrap',
             'flex',
-            'gap-x-6',
-            'gap-y-10',
             'mt-6',
           ]"
         >
