@@ -176,12 +176,7 @@ const fixedTags = computed(() => {
 })
 
 const selectorTagItems = computed(() => {
-  const remainingTags = allTagItems.value.slice(tagsSliceIndex.value)
-
-  return remainingTags.map(tag => ({
-    label: tag.label,
-    value: tag.value,
-  }))
+  return allTagItems.value.slice(tagsSliceIndex.value)
 })
 
 const localizedTagId = computed(() => {
