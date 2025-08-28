@@ -629,7 +629,7 @@ const recommendedClassIds = computed(() => {
 })
 
 const { gridClasses, getGridItemClassesByIndex } = usePaginatedGrid({
-  itemsCount: recommendedClassIds.value.length,
+  itemsCount: computed(() => recommendedClassIds.value.length),
   hasMore: false,
 })
 
