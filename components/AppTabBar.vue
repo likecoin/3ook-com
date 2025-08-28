@@ -1,9 +1,10 @@
 <template>
   <nav class="bg-white border-t border-[#EBEBEB] fixed bottom-0 left-0 right-0 pb-safe">
-    <ul class="flex justify-around items-center min-h-14">
+    <ul class="flex justify-around items-center w-full max-w-md min-h-14 mx-auto">
       <li
         v-for="item in menuItems"
         :key="item.label"
+        class="flex-1"
       >
         <NuxtLink
           v-if="item.key === 'account' && hasLoggedIn"
