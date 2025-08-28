@@ -1,6 +1,6 @@
 <template>
   <NuxtLoadingIndicator />
-  <UApp>
+  <UApp :toaster="{ position: 'top-right' }">
     <NuxtLayout>
       <NuxtPwaManifest />
       <NuxtPage class="flex flex-col grow" />

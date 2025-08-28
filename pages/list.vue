@@ -1,0 +1,174 @@
+<template>
+  <main class="flex flex-col grow px-4 laptop:px-12 pb-4">
+    <div class="flex flex-col grow w-full max-w-[1200px] mx-auto">
+      <h1
+        class="mt-4 laptop:mt-10 mb-6 text-green-500 text-xl laptop:text-3xl font-bold"
+        v-text="$t('book_list_title')"
+      />
+      <UCard
+        v-if="!hasLoggedIn"
+        class="w-full max-w-sm mt-8 mx-auto"
+        :ui="{ footer: 'flex justify-end' }"
+      >
+        <p v-text="$t('book_list_please_login')" />
+        <template #footer>
+          <LoginButton />
+        </template>
+      </UCard>
+      <div
+        v-else-if="bookListStore.count > 0"
+        class="relative"
+      >
+        <header class="sticky top-0 z-10 grid grid-cols-12 items-center py-2 text-muted bg-(--app-bg) leading-none border-b border-black/10">
+          <div class="col-span-1">
+            <UCheckbox
+              :model-value="hasSelectedItems"
+              @update:model-value="handleSelectAllUpdate"
+            />
+          </div>
+          <div class="flex items-center justify-between col-start-2 col-span-11">
+            <span v-text="$t('book_list_header_item_label')" />
+
+            <UButton
+              :label="$t('book_list_checkout_button_label')"
+              :loading="isCheckingOut"
+              :disabled="!hasSelectedItems"
+              @click="handleCheckoutButtonClick"
+            />
+          </div>
+        </header>
+
+        <ul class="divide-y divide-black/10">
+          <BookListItem
+            v-for="item in bookListStore.items"
+            :key="item.nftClassId"
+            :nft-class-id="item.nftClassId"
+            :price-index="item.priceIndex"
+            :is-selected="selectedItemIds.has(getBookListItemId(item.nftClassId, item.priceIndex))"
+            @click-cover="handleBookListItemCoverClick"
+            @remove="handleBookListItemRemove"
+            @select="handleItemSelect"
+            @unselect="handleItemDeselect"
+          />
+        </ul>
+      </div>
+      <div
+        v-else
+        class="flex flex-col items-center grow py-12"
+      >
+        <div class="flex flex-col justify-center items-center gap-2 py-4 grow text-muted">
+          <UIcon
+            name="i-material-symbols-favorite-outline-rounded"
+            size="48"
+          />
+          <span
+            class="font-semibold leading-none"
+            v-text="$t('book_list_empty_description')"
+          />
+        </div>
+        <UButton
+          class="max-w-[348px] laptop:mt-12"
+          leading-icon="i-material-symbols-storefront-outline"
+          :label="$t('book_list_empty_cta_button_label')"
+          size="xl"
+          block
+          :to="localeRoute({ name: 'store' })"
+        />
+      </div>
+    </div>
+  </main>
+</template>
+
+<script setup lang="ts">
+import { UCheckbox } from '#components'
+
+const { t: $t } = useI18n()
+const localeRoute = useLocaleRoute()
+const { loggedIn: hasLoggedIn, user } = useUserSession()
+const accountStore = useAccountStore()
+const bookListStore = useBookListStore()
+const { handleError } = useErrorHandler()
+const likeCoinSessionAPI = useLikeCoinSessionAPI()
+
+useHead({ title: $t('book_list_title') })
+
+const selectedItemIds = ref<Set<string>>(new Set())
+const hasSelectedItems = computed(() => selectedItemIds.value.size > 0)
+
+function handleSelectAllUpdate(isSelected: 'indeterminate' | boolean) {
+  if (isSelected) {
+    selectedItemIds.value = new Set(bookListStore.items.map(item => getBookListItemId(item.nftClassId, item.priceIndex)))
+  }
+  else {
+    selectedItemIds.value.clear()
+  }
+}
+
+function handleBookListItemCoverClick({ nftClassId, priceIndex }: BookListItem) {
+  useTrackEvent('view_item', { nftClassId, priceIndex })
+}
+
+function handleBookListItemRemove({ nftClassId, priceIndex }: BookListItem) {
+  useTrackEvent('remove_from_cart', { nftClassId, priceIndex })
+  bookListStore.removeItem(nftClassId, priceIndex)
+}
+
+const isCheckingOut = ref(false)
+
+async function handleCheckoutButtonClick() {
+  if (!bookListStore.count) return
+  try {
+    isCheckingOut.value = true
+    if (!hasLoggedIn.value) {
+      await accountStore.login()
+      if (!hasLoggedIn.value) return
+    }
+    const { url, paymentId } = await likeCoinSessionAPI.createNFTBookCartPurchase(
+      bookListStore.items.filter(
+        item => selectedItemIds.value.has(getBookListItemId(item.nftClassId, item.priceIndex)),
+      ),
+      { email: user.value?.email },
+    )
+    useTrackEvent('begin_checkout', { payment_id: paymentId })
+    await navigateTo(url, { external: true })
+  }
+  catch (error) {
+    isCheckingOut.value = false
+    await handleError(error)
+  }
+}
+
+function handleItemSelect({ nftClassId, priceIndex }: BookListItem) {
+  selectedItemIds.value.add(getBookListItemId(nftClassId, priceIndex))
+  useTrackEvent('book_list_item_select', { nftClassId, priceIndex })
+}
+
+function handleItemDeselect({ nftClassId, priceIndex }: BookListItem) {
+  selectedItemIds.value.delete(getBookListItemId(nftClassId, priceIndex))
+  useTrackEvent('book_list_item_deselect', { nftClassId, priceIndex })
+}
+
+async function fetchBookList() {
+  try {
+    await bookListStore.loadItems()
+  }
+  catch (error) {
+    await handleError(error, {
+      title: $t('error_book_list_load'),
+      logPrefix: 'book_list_load',
+    })
+  }
+}
+
+onMounted(async () => {
+  if (hasLoggedIn.value) {
+    await fetchBookList()
+  }
+})
+
+watch(hasLoggedIn, async (isLoggedIn) => {
+  if (isLoggedIn) {
+    await fetchBookList()
+  }
+})
+</script>

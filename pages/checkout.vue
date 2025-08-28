@@ -181,7 +181,7 @@ const getRouteQuery = useRouteQuery()
 const { user } = useUserSession()
 const nftStore = useNFTStore()
 const bookstoreStore = useBookstoreStore()
-const formatPrice = useFormatPrice()
+const { formatPrice } = useCurrency()
 const { handleError } = useErrorHandler()
 const { getAnalyticsParameters } = useAnalytics()
 const { t: $t, locale } = useI18n()
@@ -349,7 +349,7 @@ async function handleCheckout() {
   try {
     isPurchasing.value = true
 
-    const { url, paymentId } = await likeCoinSessionAPI.createBookCartPurchase(
+    const { url, paymentId } = await likeCoinSessionAPI.createNFTBookCartPurchase(
       cartItems.value.map(item => ({
         nftClassId: item.classId,
         priceIndex: item.priceIndex,

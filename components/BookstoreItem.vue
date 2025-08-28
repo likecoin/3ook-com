@@ -77,7 +77,7 @@ const props = defineProps({
 
 const emit = defineEmits(['visible', 'open'])
 
-const formatPrice = useFormatPrice()
+const { formatPrice } = useCurrency()
 const nftStore = useNFTStore()
 const metadataStore = useMetadataStore()
 const bookInfo = useBookInfo({ nftClassId: props.nftClassId })

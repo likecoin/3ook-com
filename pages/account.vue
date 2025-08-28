@@ -115,6 +115,19 @@
               />
             </div>
           </AccountSettingsItem>
+
+          <UButton
+            class="-mt-6 cursor-pointer"
+            :to="localeRoute({ name: 'list' })"
+            :label="$t('account_page_book_list')"
+            leading-icon="i-material-symbols-favorite-outline-rounded"
+            trailing-icon="i-material-symbols-arrow-forward-ios-rounded"
+            variant="link"
+            color="neutral"
+            size="lg"
+            block
+            :ui="{ base: 'justify-start' }"
+          />
         </UCard>
       </section>
 
