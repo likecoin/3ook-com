@@ -181,6 +181,11 @@ export default function (
       })
   })
 
+  const minPrice = computed(() => {
+    if (!pricingItems.value.length) return 0
+    return Math.min(...pricingItems.value.map(item => item.price))
+  })
+
   const userOwnedNFTIds = computed(() => {
     // TODO: Merge bookshelfStore.getNFTsByNFTClassId and nftStore.getNFTIdsByNFTClassIdAndOwnerWalletAddress to avoid confusion
     // Find the NFT Ids from the user bookshelf by the NFT class Id
@@ -231,6 +236,7 @@ export default function (
     keywords,
 
     pricingItems,
+    minPrice,
 
     userOwnedNFTIds,
     firstUserOwnedNFTId,

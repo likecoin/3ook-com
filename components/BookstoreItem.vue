@@ -74,10 +74,11 @@ const { getPlusDiscountPrice } = useSubscription()
 const bookName = computed(() => bookInfo.name.value || props.bookName)
 const authorName = computed(() => bookInfo.authorName.value)
 
-const formattedPrice = computed(() => formatPrice(props.price))
+const price = computed(() => props.price || bookInfo.minPrice.value)
+const formattedPrice = computed(() => formatPrice(price.value))
 
 const formattedDiscountPrice = computed(() => {
-  const plusPrice = getPlusDiscountPrice(props.price)
+  const plusPrice = getPlusDiscountPrice(price.value)
   return plusPrice ? formatPrice(plusPrice) : null
 })
 
@@ -112,7 +113,7 @@ function onBookCoverClick() {
     items: [{
       item_id: props.nftClassId,
       item_name: bookName.value,
-      price: props.price,
+      price: price.value,
       quantity: 1,
     }],
   })
