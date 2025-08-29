@@ -2,6 +2,7 @@ import type { H3Event } from 'h3'
 
 export enum TTSProvider {
   MINIMAX = 'minimax',
+  AZURE = 'azure',
 }
 export interface TTSRequestParams {
   text: string

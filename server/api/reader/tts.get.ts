@@ -1,4 +1,5 @@
 import type { Writable } from 'node:stream'
+import { AzureTTSProvider } from '~/server/utils/tts-azure'
 
 const LANG_MAPPING = {
   'en-US': 'English',
@@ -13,6 +14,7 @@ const VOICE_PROVIDER_MAPPING: Record<string, TTSProvider> = {
   1: TTSProvider.MINIMAX,
   pazu: TTSProvider.MINIMAX,
   phoebe: TTSProvider.MINIMAX,
+  xiaochen: TTSProvider.AZURE,
 }
 
 // Provider factory
@@ -28,6 +30,8 @@ function getTTSProvider(voiceId: string): BaseTTSProvider {
   switch (voiceProvider) {
     case TTSProvider.MINIMAX:
       return new MinimaxTTSProvider()
+    case TTSProvider.AZURE:
+      return new AzureTTSProvider()
     default:
       throw createError({
         status: 500,

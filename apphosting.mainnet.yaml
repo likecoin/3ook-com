@@ -35,6 +35,10 @@ env:
     value: tts-cache
   - variable: ARWEAVE_ENDPOINT
     value: https://gateway.irys.xyz
+  - variable: AZURE_SERVICE_REGION
+    value: southeastasia
+  - variable: AZURE_SUBSCRIPTION_KEY
+    secret: AZURE_SUBSCRIPTION_KEY
   - variable: IPFS_ENDPOINT
     value: https://w3s.link/ipfs
   - variable: LIKECOIN_API_ENDPOINT

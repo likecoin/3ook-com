@@ -48,6 +48,8 @@ export default defineNuxtConfig({
     airtableAPISecret: process.env.AIRTABLE_API_SECRET,
     minimaxGroupId: process.env.MINIMAX_GROUP_ID,
     minimaxAPIKey: process.env.MINIMAX_API_KEY,
+    azureSubscriptionKey: process.env.AZURE_SUBSCRIPTION_KEY,
+    azureServiceRegion: process.env.AZURE_SERVICE_REGION || 'southeastasia',
     ttsCacheBucketPrefix: process.env.TTS_CACHE_BUCKET_PREFIX,
     public: {
       scripts: {

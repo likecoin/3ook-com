@@ -33,6 +33,10 @@ env:
     value: tts-cache
   - variable: ARWEAVE_ENDPOINT
     value: https://gateway.irys.xyz
+  - variable: AZURE_SERVICE_REGION
+    value: southeastasia
+  - variable: AZURE_SUBSCRIPTION_KEY
+    secret: AZURE_SUBSCRIPTION_KEY
   - variable: IS_TESTNET
     value: TRUE
   - variable: IPFS_ENDPOINT
