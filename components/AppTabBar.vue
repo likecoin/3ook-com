@@ -8,7 +8,7 @@
       >
         <NuxtLink
           v-if="item.key === 'account' && hasLoggedIn"
-          class="flex items-center"
+          class="flex justify-center items-center"
           :to="item.to"
         >
           <UAvatar
