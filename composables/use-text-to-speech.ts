@@ -233,7 +233,7 @@ export function useTextToSpeech(options: TTSOptions = {}) {
           if (isTextToSpeechOn.value && isTextToSpeechPlaying.value) {
             playNextElement()
           }
-        }, 500)
+        }, 1000) // Try next element after 1 second
       }
     }
 
@@ -250,6 +250,9 @@ export function useTextToSpeech(options: TTSOptions = {}) {
   }
 
   function playNextElement({ reset = false } = {}) {
+    if (currentTTSSegmentIndex.value + 1 >= ttsSegments.value.length) {
+      return
+    }
     currentTTSSegmentIndex.value += 1
 
     const nextElementForBuffer = ttsSegments.value[currentTTSSegmentIndex.value + 1]
@@ -277,7 +280,7 @@ export function useTextToSpeech(options: TTSOptions = {}) {
     }
     isShowTextToSpeechOptions.value = true
     if (index !== null) {
-      currentTTSSegmentIndex.value = index
+      currentTTSSegmentIndex.value = Math.max(Math.min(index, ttsSegments.value.length - 1), 0)
     }
 
     if (isTextToSpeechOn.value && !isTextToSpeechPlaying.value && !isPendingResetOnStart.value) {
