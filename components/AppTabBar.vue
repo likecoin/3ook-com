@@ -14,8 +14,7 @@
           <UAvatar
             :class="[
               'bg-white',
-              item.isActive ? 'border-2' : 'border',
-              item.isActive ? 'bg-theme-500' : 'border-muted',
+              item.isActive ? 'border-2 border-theme-500' : 'border border-muted',
             ]"
             :src="user?.avatar"
             :alt="user?.displayName"
