@@ -32,7 +32,16 @@ function speakTextAsync(synthesizer: sdk.SpeechSynthesizer, text: string, voiceN
     synthesizer.speakSsmlAsync(ssml,
       function (result) {
         synthesizer.close()
-        resolve(result)
+        if (result.reason === sdk.ResultReason.Canceled) {
+          const cancellation = sdk.CancellationDetails.fromResult(result)
+          reject(createError({
+            status: 500,
+            message: cancellation.errorDetails,
+          }))
+        }
+        else {
+          resolve(result)
+        }
       },
       function (err) {
         synthesizer.close()
@@ -79,13 +88,6 @@ export class AzureTTSProvider implements BaseTTSProvider {
     speechConfig.speechSynthesisOutputFormat = outputFormat
 
     const synthesizer = new sdk.SpeechSynthesizer(speechConfig, audioConfig)
-    synthesizer.SynthesisCanceled = (_, e) => {
-      console.error('[Speech] Synthesis canceled:', e)
-      throw createError({
-        status: 500,
-        message: e.result.errorDetails,
-      })
-    }
     await speakTextAsync(synthesizer, text, voiceName, language)
 
     const readableStream = new ReadableStream({
@@ -140,19 +142,12 @@ export class AzureTTSProvider implements BaseTTSProvider {
 
     return new TransformStream({
       transform(chunk, controller) {
-        try {
-          const audioBuffer = Buffer.from(chunk)
-          if (audioBuffer) {
-            if (isCacheEnabled) {
-              audioChunks.push(audioBuffer)
-            }
-            controller.enqueue(audioBuffer)
+        const audioBuffer = chunk
+        if (audioBuffer) {
+          if (isCacheEnabled) {
+            audioChunks.push(audioBuffer)
           }
-        }
-        catch (error) {
-          console.error('[Speech] Error processing Azure chunk:', error)
-          controller.error('TTS_PROCESSING_ERROR: Failed to process Azure TTS data')
-          return
+          controller.enqueue(audioBuffer)
         }
       },
       flush() {
