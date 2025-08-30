@@ -39,7 +39,7 @@ export function useTextToSpeech(options: TTSOptions = {}) {
   const ttsLanguageVoiceOptions = [
     { label: 'Pazu 薯伯伯 - 粵語', value: 'zh-HK_pazu' },
     { label: 'Phoebe - 粵語', value: 'zh-HK_phoebe' },
-    { label: '書面女聲 - 粵語', value: 'zh-HK_xiaochen' },
+    { label: 'XiaoChen - 粵語', value: 'zh-HK_xiaochen' },
     { label: '雷庭音 - 國語', value: 'zh-TW_0' },
     { label: '國語男聲', value: 'zh-TW_1' },
     { label: 'English female', value: 'en-US_0' },
