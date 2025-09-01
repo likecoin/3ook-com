@@ -268,7 +268,7 @@ import plusLogo from '~/assets/images/paywall/plus-logo.png'
 // Therefore, we set modality to false so input in the Magic login UI remains accessible.
 const isModalityOn = false
 
-const isShowPlusEarlyBirdBanner = true
+const isShowPlusEarlyBirdBanner = false
 
 const emit = defineEmits<{
   'open': []
