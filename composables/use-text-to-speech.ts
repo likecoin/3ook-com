@@ -1,4 +1,4 @@
-import { useStorage } from '@vueuse/core'
+import { useStorage, useDebounceFn } from '@vueuse/core'
 import phoebeAvatar from '@/assets/images/voice-avatars/phoebe.jpg'
 import leiTingYinAvatar from '@/assets/images/voice-avatars/lei-ting-yin.jpg'
 import pazuAvatar from '@/assets/images/voice-avatars/pazu.jpg'
@@ -212,6 +212,9 @@ export function useTextToSpeech(options: TTSOptions = {}) {
 
   function createAudio(element: TTSSegment, bufferIndex: 0 | 1) {
     let audio = audioBuffers.value[bufferIndex]
+    if (audio?.getAttribute('data-text') === element.text) {
+      return audio
+    }
 
     if (!audio) {
       audio = new Audio()
@@ -246,33 +249,44 @@ export function useTextToSpeech(options: TTSOptions = {}) {
     })
     audio.src = `/api/reader/tts?${params.toString()}`
     audio.playbackRate = ttsPlaybackRate.value
+    audio.setAttribute('data-text', element.text)
 
     return audio
   }
 
-  function playNextElement({ reset = false } = {}) {
+  function playCurrentElement(delay = 0) {
+    const currentElement = ttsSegments.value[currentTTSSegmentIndex.value]
+    if (!currentElement) return
+
+    currentBufferIndex.value = currentBufferIndex.value === 0 ? 1 : 0
+    createAudio(currentElement, currentBufferIndex.value)
+
+    const nextElementForBuffer = ttsSegments.value[currentTTSSegmentIndex.value + 1]
+
+    const nextIndex = currentBufferIndex.value === 0 ? 1 : 0
+
+    if (nextElementForBuffer) {
+      createAudio(nextElementForBuffer, nextIndex)
+    }
+
+    if (currentAudioTimeout.value) clearTimeout(currentAudioTimeout.value)
+
+    currentAudioTimeout.value = setTimeout(() => {
+      const currentAudio = audioBuffers.value[currentBufferIndex.value]
+      if (currentAudio && isTextToSpeechPlaying.value) {
+        currentAudio.pause()
+        currentAudio.currentTime = 0
+        currentAudio.play()
+      }
+    }, delay)
+  }
+
+  function playNextElement() {
     if (currentTTSSegmentIndex.value + 1 >= ttsSegments.value.length) {
       return
     }
     currentTTSSegmentIndex.value += 1
-
-    const nextElementForBuffer = ttsSegments.value[currentTTSSegmentIndex.value + 1]
-
-    if (nextElementForBuffer) {
-      createAudio(nextElementForBuffer, currentBufferIndex.value)
-    }
-
-    currentBufferIndex.value = currentBufferIndex.value === 0 ? 1 : 0
-    const nextAudio = audioBuffers.value[currentBufferIndex.value]
-
-    if (currentAudioTimeout.value) clearTimeout(currentAudioTimeout.value)
-    currentAudioTimeout.value = setTimeout(() => {
-      if (reset) {
-        nextAudio?.pause()
-        nextAudio?.load()
-      }
-      nextAudio?.play()
-    }, 200)
+    playCurrentElement(200)
   }
 
   async function startTextToSpeech(index: number | null = null) {
@@ -363,9 +377,20 @@ export function useTextToSpeech(options: TTSOptions = {}) {
       nft_class_id: nftClassId,
     })
     const activeAudio = audioBuffers.value[currentBufferIndex.value]
-    activeAudio?.pause()
-    playNextElement({ reset: true })
+    if (activeAudio) {
+      activeAudio.pause()
+      activeAudio.currentTime = 0
+    }
+
+    if (currentTTSSegmentIndex.value + 1 < ttsSegments.value.length) {
+      currentTTSSegmentIndex.value += 1
+    }
+    debouncedPlayback()
   }
+
+  const debouncedPlayback = useDebounceFn(() => {
+    playCurrentElement()
+  }, 500)
 
   function skipBackward() {
     if (!isTextToSpeechOn.value) return
@@ -373,21 +398,15 @@ export function useTextToSpeech(options: TTSOptions = {}) {
       nft_class_id: nftClassId,
     })
     const activeAudio = audioBuffers.value[currentBufferIndex.value]
-    activeAudio?.pause()
+    if (activeAudio) {
+      activeAudio.pause()
+      activeAudio.currentTime = 0
+    }
 
     if (currentTTSSegmentIndex.value > 0) {
       currentTTSSegmentIndex.value -= 1
-      currentBufferIndex.value = currentBufferIndex.value === 0 ? 1 : 0
-      const currentElement = ttsSegments.value[currentTTSSegmentIndex.value]
-      if (currentElement) {
-        createAudio(currentElement, currentBufferIndex.value)
-      }
-      if (isTextToSpeechPlaying.value) {
-        audioBuffers.value[currentBufferIndex.value]?.pause()
-        audioBuffers.value[currentBufferIndex.value]?.load()
-        audioBuffers.value[currentBufferIndex.value]?.play()
-      }
     }
+    debouncedPlayback()
   }
 
   function restartTextToSpeech() {
