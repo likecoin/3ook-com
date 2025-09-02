@@ -254,7 +254,7 @@ export function useTextToSpeech(options: TTSOptions = {}) {
     return audio
   }
 
-  function playCurrentElement(delay = 0) {
+  function playCurrentElement({ delay = 0 } = {}) {
     const currentElement = ttsSegments.value[currentTTSSegmentIndex.value]
     if (!currentElement) return
 
@@ -286,7 +286,7 @@ export function useTextToSpeech(options: TTSOptions = {}) {
       return
     }
     currentTTSSegmentIndex.value += 1
-    playCurrentElement(200)
+    playCurrentElement({ delay: 200 })
   }
 
   async function startTextToSpeech(index: number | null = null) {
@@ -385,10 +385,10 @@ export function useTextToSpeech(options: TTSOptions = {}) {
     if (currentTTSSegmentIndex.value + 1 < ttsSegments.value.length) {
       currentTTSSegmentIndex.value += 1
     }
-    debouncedPlayback()
+    playCurrentElementDebounced()
   }
 
-  const debouncedPlayback = useDebounceFn(() => {
+  const playCurrentElementDebounced = useDebounceFn(() => {
     playCurrentElement()
   }, 500)
 
@@ -406,7 +406,7 @@ export function useTextToSpeech(options: TTSOptions = {}) {
     if (currentTTSSegmentIndex.value > 0) {
       currentTTSSegmentIndex.value -= 1
     }
-    debouncedPlayback()
+    playCurrentElementDebounced()
   }
 
   function restartTextToSpeech() {
