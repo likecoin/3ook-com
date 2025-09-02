@@ -328,19 +328,7 @@ export function useTextToSpeech(options: TTSOptions = {}) {
       if (ttsSegments.value.length === 0) {
         return
       }
-
-      const firstElement = ttsSegments.value[currentTTSSegmentIndex.value]
-      const secondElement = ttsSegments.value[currentTTSSegmentIndex.value + 1]
-
-      if (firstElement) {
-        createAudio(firstElement, 0)
-      }
-
-      if (secondElement) {
-        createAudio(secondElement, 1)
-      }
-
-      audioBuffers.value[currentBufferIndex.value]?.play()
+      playCurrentElement()
     }
     catch (error) {
       isTextToSpeechOn.value = false
