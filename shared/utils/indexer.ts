@@ -27,6 +27,7 @@ export interface IndexerQueryOptions {
   limit?: number
   key?: string
   nocache?: boolean
+  isBooksOnly?: boolean
 }
 
 export function getIndexerQueryOptions({
@@ -34,12 +35,18 @@ export function getIndexerQueryOptions({
   limit = 30,
   key,
   nocache,
+  isBooksOnly = true,
 }: IndexerQueryOptions = {}) {
   const query: Record<string, string> = {}
   if (reverse) query.reverse = reverse.toString()
   if (limit) query['pagination.limit'] = limit.toString()
   if (key) query['pagination.key'] = key
   if (nocache) query.ts = Date.now().toString()
+  const contractFilter: string[] = []
+  if (isBooksOnly) contractFilter.push('@type', 'Book')
+  if (contractFilter.length > 0) {
+    query['contract_level_metadata_eq'] = contractFilter.join(',')
+  }
   return query
 }
 
