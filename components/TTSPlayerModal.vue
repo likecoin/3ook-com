@@ -55,7 +55,7 @@
 
                 v-memo="[currentTTSSegmentIndex === item.index]"
                 :class="getSegmentClass(item.index)"
-                @click="startTextToSpeech(item.index)"
+                @click="skipToIndex(item.index)"
               >
                 {{ item.text }}
               </li>
@@ -247,6 +247,7 @@ const {
   startTextToSpeech,
   setTTSSegments,
   skipForward,
+  skipToIndex,
   skipBackward,
   stopTextToSpeech,
   currentTTSSegmentIndex,

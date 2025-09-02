@@ -371,6 +371,10 @@ export function useTextToSpeech(options: TTSOptions = {}) {
     ttsSegments.value = elements
   }
 
+  const playCurrentElementDebounced = useDebounceFn(() => {
+    playCurrentElement()
+  }, 500)
+
   function skipForward() {
     if (!isTextToSpeechOn.value) return
     useLogEvent('tts_skip_forward', {
@@ -388,9 +392,20 @@ export function useTextToSpeech(options: TTSOptions = {}) {
     playCurrentElementDebounced()
   }
 
-  const playCurrentElementDebounced = useDebounceFn(() => {
-    playCurrentElement()
-  }, 500)
+  function skipToIndex(segmentIndex: number) {
+    if (!isTextToSpeechOn.value) return
+    useLogEvent('tts_skip_to_index', {
+      nft_class_id: nftClassId,
+    })
+    const activeAudio = audioBuffers.value[currentBufferIndex.value]
+    if (activeAudio) {
+      activeAudio.pause()
+      activeAudio.currentTime = 0
+    }
+
+    currentTTSSegmentIndex.value = Math.max(Math.min(segmentIndex, ttsSegments.value.length - 1), 0)
+    playCurrentElementDebounced()
+  }
 
   function skipBackward() {
     if (!isTextToSpeechOn.value) return
@@ -447,6 +462,7 @@ export function useTextToSpeech(options: TTSOptions = {}) {
     startTextToSpeech,
     setTTSSegments,
     skipForward,
+    skipToIndex,
     skipBackward,
     restartTextToSpeech,
     stopTextToSpeech,
