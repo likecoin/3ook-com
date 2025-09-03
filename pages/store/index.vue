@@ -18,7 +18,22 @@
         'bg-linear-to-b from-(--app-bg)/90 to-(--app-bg)/0',
       ]"
     >
-      <div class="flex items-center max-phone:gap-1 gap-2 w-full">
+      <!-- Search mode header -->
+      <div
+        v-if="isSearchMode"
+        class="flex items-center gap-2 w-full"
+      >
+        <h1 class="text-xl laptop:text-2xl font-bold text-gray-900">
+          <span v-if="authorName">{{ authorName }}</span>
+          <span v-else-if="publisherName">{{ publisherName }}</span>
+        </h1>
+      </div>
+
+      <!-- Normal tag selector -->
+      <div
+        v-else
+        class="flex items-center max-phone:gap-1 gap-2 w-full"
+      >
         <UButton
           v-if="!isDefaultTagId"
           icon="i-material-symbols-close-rounded"
@@ -132,6 +147,18 @@ const shouldLoadMore = useElementVisibility(infiniteScrollDetectorElement)
 const { handleError } = useErrorHandler()
 const isMobile = useMediaQuery('(max-width: 768px)')
 
+const authorName = computed(() => getRouteQuery('author', ''))
+const publisherName = computed(() => getRouteQuery('publisher', ''))
+
+const isSearchMode = computed(() => !!searchQuery.value)
+
+// Search query key for bookstore store
+const searchQuery = computed(() => {
+  if (authorName.value) return `author:${authorName.value}`
+  if (publisherName.value) return `publisher:${publisherName.value}`
+  return ''
+})
+
 const TAG_LISTING = 'listing'
 
 function getIsDefaultTagId(id: string) {
@@ -209,6 +236,13 @@ const canonicalURL = computed(() => {
     canonicalParams.set('tag', tagId.value)
   }
 
+  if (authorName.value) {
+    canonicalParams.set('author', authorName.value)
+  }
+  if (publisherName.value) {
+    canonicalParams.set('publisher', publisherName.value)
+  }
+
   const queryString = canonicalParams.toString()
   return `${baseURL}${path}${queryString ? `?${queryString}` : ''}`
 })
@@ -259,7 +293,19 @@ watch(localizedTagId, async (value) => {
   }
 })
 
-const products = computed(() => bookstoreStore.getBookstoreCMSProductsByTagId(localizedTagId.value))
+// Watch for changes in search parameters
+watch([authorName, publisherName], async () => {
+  if (isSearchMode.value) {
+    await fetchItems({ isRefresh: true })
+  }
+})
+
+const products = computed(() => {
+  if (isSearchMode.value) {
+    return bookstoreStore.getBookstoreSearchResultsByQuery(searchQuery.value)
+  }
+  return bookstoreStore.getBookstoreCMSProductsByTagId(localizedTagId.value)
+})
 const itemsCount = computed(() => products.value.items.length)
 const hasMoreItems = computed(() => !!products.value.nextItemsKey || !products.value.hasFetchedItems)
 
@@ -286,6 +332,21 @@ async function fetchTags() {
 }
 
 async function fetchItems({ isRefresh = false } = {}) {
+  if (isSearchMode.value) {
+    try {
+      const [type, searchTerm] = searchQuery.value.split(':', 2)
+      if (type && searchTerm) {
+        await bookstoreStore.fetchSearchResults(type as 'author' | 'publisher', searchTerm, { isRefresh })
+      }
+    }
+    catch (error) {
+      await handleError(error, {
+        title: isRefresh ? $t('store_fetch_items_error') : $t('store_fetch_more_items_error'),
+      })
+    }
+    return
+  }
+
   try {
     await bookstoreStore.fetchCMSProductsByTagId(localizedTagId.value, { isRefresh })
   }
@@ -310,6 +371,12 @@ async function fetchItems({ isRefresh = false } = {}) {
 }
 
 onMounted(async () => {
+  if (isSearchMode.value) {
+    // In search mode, skip tag fetching and just fetch search results
+    await fetchItems({ isRefresh: true })
+    return
+  }
+
   const fetchTagPromise = fetchTags()
   if (!isDefaultTagId.value) {
     // NOTE: Need to fetch all tags if not the default tag
@@ -341,7 +408,7 @@ watch(
 watch(
   () => shouldLoadMore.value,
   async (shouldLoadMore) => {
-    if (shouldLoadMore && tag.value) {
+    if (shouldLoadMore && (tag.value || isSearchMode.value)) {
       await fetchItems()
     }
   },

@@ -6,7 +6,21 @@ interface BookstoreCMSTagProducts {
   ts?: number
 }
 
+interface BookstoreSearchResults {
+  items: Array<{
+    classId: string
+    title: string
+    imageUrl: string
+    minPrice?: number
+  }>
+  isFetching: boolean
+  hasFetched: boolean
+  nextKey?: string
+}
+
 export const useBookstoreStore = defineStore('bookstore', () => {
+  const nftStore = useNFTStore()
+
   const bookstoreInfoByNFTClassIdMap = ref<Record<string, BookstoreInfo>>({})
 
   const getBookstoreInfoByNFTClassId = computed(() => (nftClassId: string) => {
@@ -93,6 +107,89 @@ export const useBookstoreStore = defineStore('bookstore', () => {
     }
   }
 
+  /* Bookstore Search Results */
+
+  const bookstoreSearchResultsByQueryMap = ref<Record<string, BookstoreSearchResults>>({})
+
+  const getBookstoreSearchResultsByQuery = computed(() => (query: string) => {
+    const items
+      = (bookstoreSearchResultsByQueryMap.value[query]?.items || [])
+        .filter(item => !!getBookstoreInfoByNFTClassId.value(item.classId))
+    return {
+      items,
+      isFetchingItems: bookstoreSearchResultsByQueryMap.value[query]?.isFetching || false,
+      hasFetchedItems: bookstoreSearchResultsByQueryMap.value[query]?.hasFetched || false,
+      nextItemsKey: bookstoreSearchResultsByQueryMap.value[query]?.nextKey || undefined,
+    }
+  })
+
+  async function fetchSearchResults(type: 'author' | 'publisher', searchTerm: string, {
+    isRefresh = false,
+  }: {
+    isRefresh?: boolean
+  } = {}) {
+    const { fetchNFTClassesByAuthorName, fetchNFTClassesByPublisherName } = await import('~/shared/utils/indexer')
+
+    const queryKey = `${type}:${searchTerm}`
+
+    if (bookstoreSearchResultsByQueryMap.value[queryKey]?.isFetching) {
+      return
+    }
+
+    if (!bookstoreSearchResultsByQueryMap.value[queryKey] || isRefresh) {
+      bookstoreSearchResultsByQueryMap.value[queryKey] = {
+        items: [],
+        isFetching: false,
+        hasFetched: false,
+      }
+    }
+
+    try {
+      bookstoreSearchResultsByQueryMap.value[queryKey].isFetching = true
+
+      const options = {
+        limit: 100,
+        key: isRefresh ? undefined : bookstoreSearchResultsByQueryMap.value[queryKey]?.nextKey,
+      }
+
+      let result
+      if (type === 'author') {
+        result = await fetchNFTClassesByAuthorName(searchTerm, options)
+      }
+      else {
+        result = await fetchNFTClassesByPublisherName(searchTerm, options)
+      }
+
+      if (result) {
+        const nftClasses = result.data
+        const mappedItems = nftClasses
+          .map(nftClass => ({
+            classId: nftClass.address.toLowerCase(),
+            title: nftClass.name || '',
+            imageUrl: nftClass.metadata?.image || '',
+            minPrice: undefined,
+          }))
+
+        nftClasses.forEach((nftClass) => {
+          nftStore.lazyFetchNFTClassAggregatedMetadataById(nftClass.address)
+        })
+
+        if (isRefresh) {
+          bookstoreSearchResultsByQueryMap.value[queryKey].items = mappedItems
+        }
+        else {
+          bookstoreSearchResultsByQueryMap.value[queryKey].items.push(...mappedItems)
+        }
+
+        bookstoreSearchResultsByQueryMap.value[queryKey].nextKey = result.pagination?.next_key?.toString()
+      }
+    }
+    finally {
+      bookstoreSearchResultsByQueryMap.value[queryKey].hasFetched = true
+      bookstoreSearchResultsByQueryMap.value[queryKey].isFetching = false
+    }
+  }
+
   return {
     bookstoreInfoByNFTClassIdMap,
 
@@ -116,5 +213,13 @@ export const useBookstoreStore = defineStore('bookstore', () => {
     getBookstoreCMSTagById,
 
     fetchBookstoreCMSTags,
+
+    /* Bookstore Search Results */
+
+    bookstoreSearchResultsByQueryMap,
+
+    getBookstoreSearchResultsByQuery,
+
+    fetchSearchResults,
   }
 })

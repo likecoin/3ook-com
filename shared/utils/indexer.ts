@@ -28,6 +28,7 @@ export interface IndexerQueryOptions {
   key?: string
   nocache?: boolean
   isBooksOnly?: boolean
+  filter?: Record<string, string>
 }
 
 export function getIndexerQueryOptions({
@@ -36,6 +37,7 @@ export function getIndexerQueryOptions({
   key,
   nocache,
   isBooksOnly = true,
+  filter = {},
 }: IndexerQueryOptions = {}) {
   const query: Record<string, string> = {}
   if (reverse) query.reverse = reverse.toString()
@@ -44,6 +46,11 @@ export function getIndexerQueryOptions({
   if (nocache) query.ts = Date.now().toString()
   const contractFilter: string[] = []
   if (isBooksOnly) contractFilter.push('@type', 'Book')
+  if (filter) {
+    for (const [key, value] of Object.entries(filter)) {
+      contractFilter.push(key, encodeURIComponent(value))
+    }
+  }
   if (contractFilter.length > 0) {
     query['contract_level_metadata_eq'] = contractFilter.join(',')
   }
@@ -53,6 +60,26 @@ export function getIndexerQueryOptions({
 export function fetchNFTClassesByOwnerWalletAddress(walletAddress: string, options: IndexerQueryOptions) {
   const fetch = getIndexerAPIFetch()
   return fetch<FetchNFTClassesByOwnerWalletAddressResponseData>(`/account/${walletAddress}/booknfts`, {
+    query: getIndexerQueryOptions(options),
+  })
+};
+
+export function fetchNFTClassesByAuthorName(authorName: string, options: IndexerQueryOptions = {}) {
+  const fetch = getIndexerAPIFetch()
+  if (!options.filter) {
+    options.filter = { 'author.name': authorName }
+  }
+  return fetch<FetchNFTClassesByOwnerWalletAddressResponseData>(`/booknfts`, {
+    query: getIndexerQueryOptions(options),
+  })
+};
+
+export function fetchNFTClassesByPublisherName(publisherName: string, options: IndexerQueryOptions = {}) {
+  const fetch = getIndexerAPIFetch()
+  if (!options.filter) {
+    options.filter = { publisher: publisherName }
+  }
+  return fetch<FetchNFTClassesByOwnerWalletAddressResponseData>(`/booknfts`, {
     query: getIndexerQueryOptions(options),
   })
 };
