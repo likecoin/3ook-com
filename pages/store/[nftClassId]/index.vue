@@ -632,10 +632,10 @@ const filteredRecommendedClassIds = computed(() => {
     .map(item => item?.id)
 })
 
-watch(recommendedClassIds, (newIds, oldIds) => {
+watch(recommendedClassIds, (newIds, oldIds = []) => {
   const addedIds = newIds.filter(id => !oldIds.includes(id))
   addedIds.forEach(id => nftStore.lazyFetchNFTClassAggregatedMetadataById(id))
-})
+}, { immediate: true })
 
 const { gridClasses, getGridItemClassesByIndex } = usePaginatedGrid({
   itemsCount: computed(() => filteredRecommendedClassIds.value.length),
