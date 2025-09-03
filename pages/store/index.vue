@@ -124,6 +124,7 @@ const { t: $t, locale } = useI18n()
 const localeRoute = useLocaleRoute()
 const route = useRoute()
 const getRouteQuery = useRouteQuery()
+const runtimeConfig = useRuntimeConfig()
 const bookstoreStore = useBookstoreStore()
 const infiniteScrollDetectorElement = useTemplateRef<HTMLLIElement>('infiniteScrollDetector')
 const shouldLoadMore = useElementVisibility(infiniteScrollDetectorElement)
@@ -197,6 +198,20 @@ const tagDescription = computed(() => {
   return tag.value?.description[normalizedLocale.value] || ''
 })
 
+const canonicalURL = computed(() => {
+  const baseURL = runtimeConfig.public.baseURL
+  const path = route.path
+
+  const canonicalParams = new URLSearchParams()
+
+  if (!isDefaultTagId.value && tagId.value) {
+    canonicalParams.set('tag', tagId.value)
+  }
+
+  const queryString = canonicalParams.toString()
+  return `${baseURL}${path}${queryString ? `?${queryString}` : ''}`
+})
+
 useHead(() => {
   const meta = []
   const description = tagDescription.value
@@ -214,6 +229,10 @@ useHead(() => {
   }
 
   const link = [
+    {
+      rel: 'canonical',
+      href: canonicalURL.value,
+    },
     {
       rel: 'preload',
       href: '/api/store/tags',
