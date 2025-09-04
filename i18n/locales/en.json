@@ -74,6 +74,7 @@
   "book_list_item_added_toast_description": "Added to 3ookList",
   "book_list_item_remove_tooltip_text": "Remove item",
   "book_list_item_sold_out": "Sold out",
+  "book_list_loading_description": "Loading 3ookList",
   "book_list_please_login": "Please login to view your 3ookList",
   "book_list_title": "3ookList",
   "book_list_total_label": "Total",

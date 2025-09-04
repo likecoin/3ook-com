@@ -76,6 +76,7 @@
   "book_list_item_remove_tooltip_text": "删除項目",
   "book_list_item_removed_toast_description": "已從書單移除",
   "book_list_item_sold_out": "已售罄",
+  "book_list_loading_description": "書單載入中",
   "book_list_please_login": "請登入以查看書單",
   "book_list_title": "書單",
   "book_list_total_label": "總金額",

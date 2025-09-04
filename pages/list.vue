@@ -57,17 +57,34 @@
         class="flex flex-col items-center grow py-12"
       >
         <div class="flex flex-col justify-center items-center gap-2 py-4 grow text-muted">
-          <UIcon
-            name="i-material-symbols-favorite-outline-rounded"
-            size="48"
-          />
-          <span
-            class="font-semibold leading-none"
-            v-text="$t('book_list_empty_description')"
-          />
+          <template v-if="bookListStore.isLoading">
+            <UIcon
+              class="animate-spin"
+              name="i-material-symbols-progress-activity"
+              size="48"
+            />
+            <span
+              class="font-semibold leading-none"
+              v-text="$t('book_list_loading_description')"
+            />
+          </template>
+          <template v-else>
+            <UIcon
+              name="i-material-symbols-favorite-outline-rounded"
+              size="48"
+            />
+            <span
+              class="font-semibold leading-none"
+              v-text="$t('book_list_empty_description')"
+            />
+          </template>
         </div>
         <UButton
-          class="max-w-[348px] laptop:mt-12"
+          :class="[
+            'max-w-[348px]',
+            'laptop:mt-12',
+            { 'opacity-0 pointer-events-none': bookListStore.isLoading },
+          ]"
           leading-icon="i-material-symbols-storefront-outline"
           :label="$t('book_list_empty_cta_button_label')"
           size="xl"
