@@ -280,9 +280,9 @@
                 color="primary"
                 size="xl"
                 :leading-icon="isInBookList ? 'i-material-symbols-favorite-rounded' : 'i-material-symbols-favorite-outline-rounded'"
-                :loading="isCheckingBookList"
+                :loading="isCheckingBookList || isUpdatingBookList"
                 block
-                @click="handleBookListButtonClick"
+                @click="handleBookListButtonClickDebounced"
               />
 
               <GiftButton
@@ -543,6 +543,7 @@ const bookCoverSrc = computed(() => getResizedImageURL(bookInfo.coverSrc.value, 
 const selectedPricingItemIndex = ref(Number(getRouteQuery('price_index') || 0))
 const isInBookList = ref(false)
 const isCheckingBookList = ref(false)
+const isUpdatingBookList = ref(false)
 
 const ogTitle = computed(() => {
   const title = bookInfo.name.value
@@ -814,6 +815,12 @@ async function handleBookListButtonClick() {
     if (!hasLoggedIn.value) return
   }
 
+  if (isUpdatingBookList.value) {
+    return // Prevent multiple simultaneous calls
+  }
+
+  isUpdatingBookList.value = true
+
   try {
     if (isInBookList.value) {
       // Remove from book list
@@ -859,7 +866,12 @@ async function handleBookListButtonClick() {
   catch (error) {
     await handleError(error)
   }
+  finally {
+    isUpdatingBookList.value = false
+  }
 }
+
+const handleBookListButtonClickDebounced = useDebounceFn(handleBookListButtonClick, 300)
 
 const isPurchasing = ref(false)
 const isReadBookDrawerOpen = ref(false)
