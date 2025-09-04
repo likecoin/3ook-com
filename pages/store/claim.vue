@@ -78,6 +78,7 @@ const { loggedIn: hasLoggedIn, user } = useUserSession()
 const accountStore = useAccountStore()
 const nftStore = useNFTStore()
 const bookshelfStore = useBookshelfStore()
+const bookListStore = useBookListStore()
 const { errorModal, handleError } = useErrorHandler()
 
 const cartId = computed(() => getRouteQuery('cart_id'))
@@ -200,6 +201,10 @@ onMounted(async () => {
       fatal: true,
     })
   }
+
+  // Check and remove items from book list if they match the cart data
+  checkAndRemoveBookListItems()
+
   isLoading.value = false
   if (hasLoggedIn.value) {
     startClaimFlow()
@@ -446,6 +451,35 @@ const readerRoute = computed(() => bookInfo.getReaderRoute.value({
   nftId: receivedNFTId.value,
   shouldCustomMessageDisabled: hasBypassedIndexer.value,
 }))
+
+async function checkAndRemoveBookListItems() {
+  const checkoutBookListItems = getCheckoutBookListItems()
+  if (!checkoutBookListItems) return
+
+  try {
+    const cartItems = cartData.value?.classIdsWithPrice
+    const toBeRemovedItems = checkoutBookListItems
+      .filter(
+        item => cartItems?.find(cartItem => (
+          cartItem.classId.toLowerCase() === item.nftClassId.toLowerCase()
+          && cartItem.priceIndex === item.priceIndex
+        )),
+      )
+
+    await Promise.all(
+      toBeRemovedItems.map(async (item) => {
+        await bookListStore.removeItem(item.nftClassId, item.priceIndex)
+      }),
+    )
+  }
+  catch (error) {
+    console.error('Error processing checkout book list:', error)
+  }
+  finally {
+    // Clear the session storage after processing (or on error)
+    clearCheckoutBookList()
+  }
+}
 
 function handleStartReadingButtonClick() {
   if (!readerRoute.value) {
