@@ -178,9 +178,7 @@ export default function (
           currency: item.price > 0 ? 'US' : '',
           isSoldOut: item.isSoldOut,
           canTip: item.isAllowCustomPrice,
-          isPhysicalOnly: item.isPhysicalOnly,
           isAutoDeliver: item.isAutoDeliver,
-          hasShipping: item.hasShipping,
         }
       })
   })

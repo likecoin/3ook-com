@@ -166,20 +166,14 @@ export function useStructuredData(
           'checkoutPageURLTemplate': `${baseURL}/checkout?products=${productId}&utm_medium=structured-data`,
           'shippingDetails': {
             '@type': 'OfferShippingDetails',
-            'shippingRate': pricing.hasShipping
-              ? {
-                  '@type': 'MonetaryAmount',
-                  'value': 10,
-                  'currency': 'USD',
-                }
-              : {
-                  '@type': 'MonetaryAmount',
-                  'value': 0,
-                  'currency': 'USD',
-                },
+            'shippingRate': {
+              '@type': 'MonetaryAmount',
+              'value': 0,
+              'currency': 'USD',
+            },
             'deliveryTime': {
               '@type': 'ShippingDeliveryTime',
-              'handlingTime': (pricing.hasShipping || !pricing.isAutoDeliver)
+              'handlingTime': !pricing.isAutoDeliver
                 ? {
                     '@type': 'QuantitativeValue',
                     'minValue': 1,
@@ -192,19 +186,12 @@ export function useStructuredData(
                     'maxValue': 0,
                     'unitCode': 'DAY',
                   },
-              'transitTime': pricing.hasShipping
-                ? {
-                    '@type': 'QuantitativeValue',
-                    'minValue': 1,
-                    'maxValue': 7,
-                    'unitCode': 'DAY',
-                  }
-                : {
-                    '@type': 'QuantitativeValue',
-                    'minValue': 0,
-                    'maxValue': 0,
-                    'unitCode': 'DAY',
-                  },
+              'transitTime': {
+                '@type': 'QuantitativeValue',
+                'minValue': 0,
+                'maxValue': 0,
+                'unitCode': 'DAY',
+              },
             },
           },
           'hasMerchantReturnPolicy': {

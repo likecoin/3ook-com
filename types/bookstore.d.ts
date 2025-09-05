@@ -14,8 +14,6 @@ declare interface BookstorePrice {
   isAutoDeliver: boolean
   isUnlisted: boolean
   autoMemo: string
-  hasShipping: boolean
-  isPhysicalOnly: boolean
   isAllowCustomPrice: boolean
   order: number
 }
