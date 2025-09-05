@@ -1,5 +1,3 @@
-import { addUserBookListItem } from '~/server/utils/book-list'
-
 export default defineEventHandler(async (event) => {
   const session = await requireUserSession(event)
   const userWallet = session.user.evmWallet
@@ -8,25 +6,16 @@ export default defineEventHandler(async (event) => {
   if (!nftClassId) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'nftClassId is required',
+      statusMessage: 'nftClassId is required in body',
     })
   }
   if (priceIndex === undefined) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'priceIndex is required',
+      statusMessage: 'priceIndex is required in body',
     })
   }
 
-  try {
-    const bookListItem = await addUserBookListItem(userWallet, nftClassId, priceIndex)
-    return bookListItem
-  }
-  catch (error) {
-    console.error(error)
-    throw createError({
-      statusCode: 500,
-      statusMessage: 'Failed to add book list item',
-    })
-  }
+  const bookListItem = await addUserBookListItem(userWallet, nftClassId, priceIndex)
+  return bookListItem
 })

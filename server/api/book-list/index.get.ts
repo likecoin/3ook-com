@@ -5,13 +5,22 @@ export default defineEventHandler(async (event) => {
   const userWallet = session.user.evmWallet
   const query = getQuery(event)
   const nftClassId = query.nft_class_id as string
-  const priceIndex = Number(query.price_index) || 0
-
   if (!nftClassId) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'nftClassId is required',
+      statusMessage: 'nft_class_id is required in query',
     })
+  }
+
+  let priceIndex = 0
+  if (typeof query.price_index !== 'undefined') {
+    priceIndex = Number(query.price_index)
+    if (isNaN(priceIndex)) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Invalid price_index value in query',
+      })
+    }
   }
 
   try {

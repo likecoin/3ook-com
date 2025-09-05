@@ -61,18 +61,27 @@ export async function addUserBookListItem(
   if (doc.exists) {
     throw createError({
       statusCode: 409,
-      statusMessage: 'BOOK_LIST_ITEM_EXISTS',
+      statusMessage: 'Book list item already exists',
     })
   }
 
-  await bookListCollection.doc(docId).set({
-    nftClassId: checksumAddress(nftClassId as `0x${string}`),
-    priceIndex,
-    timestamp: FieldValue.serverTimestamp(),
-  })
+  try {
+    await bookListCollection.doc(docId).create({
+      nftClassId: checksumAddress(nftClassId as `0x${string}`),
+      priceIndex,
+      timestamp: FieldValue.serverTimestamp(),
+    })
 
-  const newDoc = await bookListCollection.doc(docId).get()
-  return normalizeBookListItemData(newDoc.data() as BookListItemData)
+    const newDoc = await bookListCollection.doc(docId).get()
+    return normalizeBookListItemData(newDoc.data() as BookListItemData)
+  }
+  catch (error) {
+    console.error(error)
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'Failed to add book list item',
+    })
+  }
 }
 
 export async function deleteUserBookListItem(
@@ -88,9 +97,18 @@ export async function deleteUserBookListItem(
   if (!doc.exists) {
     throw createError({
       statusCode: 404,
-      statusMessage: 'BOOK_LIST_ITEM_NOT_FOUND',
+      statusMessage: 'Book list item not found',
     })
   }
 
-  await docRef.delete()
+  try {
+    await docRef.delete()
+  }
+  catch (error) {
+    console.error(error)
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'Failed to remove book from list',
+    })
+  }
 }

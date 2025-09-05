@@ -125,9 +125,17 @@ function handleBookListItemCoverClick({ nftClassId, priceIndex }: BookListItem) 
   useTrackEvent('view_item', { nftClassId, priceIndex })
 }
 
-function handleBookListItemRemove({ nftClassId, priceIndex }: BookListItem) {
+async function handleBookListItemRemove({ nftClassId, priceIndex }: BookListItem) {
   useTrackEvent('remove_from_cart', { nftClassId, priceIndex })
-  bookListStore.removeItem(nftClassId, priceIndex)
+  try {
+    await bookListStore.removeItem(nftClassId, priceIndex)
+  }
+  catch (error) {
+    await handleError(error, {
+      title: $t('error_book_list_remove'),
+      logPrefix: 'book_list_remove',
+    })
+  }
 }
 
 const isCheckingOut = ref(false)
@@ -161,7 +169,10 @@ async function handleCheckoutButtonClick() {
   }
   catch (error) {
     isCheckingOut.value = false
-    await handleError(error)
+    await handleError(error, {
+      title: $t('error_book_list_checkout'),
+      logPrefix: 'book_list_checkout',
+    })
   }
 }
 

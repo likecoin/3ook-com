@@ -64,42 +64,30 @@ export const useBookListStore = defineStore('book-list', () => {
     const existingItem = itemsMap.value.get(itemId)
     if (existingItem) return
 
-    try {
-      const item = await $fetch<BookListItem>('/api/book-list', {
-        method: 'POST',
-        body: {
-          nftClassId,
-          priceIndex,
-        },
-      })
+    const item = await $fetch<BookListItem>('/api/book-list', {
+      method: 'POST',
+      body: {
+        nftClassId,
+        priceIndex,
+      },
+    })
 
-      // Add to local state after successful API call
-      itemsMap.value.set(itemId, item)
-    }
-    catch (error) {
-      console.error('Failed to add book list item to Firestore', error)
-      throw error
-    }
+    // Add to local state after successful API call
+    itemsMap.value.set(itemId, item)
   }
 
   async function removeItem(nftClassId: string, priceIndex: number) {
-    try {
-      await $fetch('/api/book-list', {
-        method: 'DELETE',
-        body: {
-          nftClassId,
-          priceIndex,
-        },
-      })
+    await $fetch('/api/book-list', {
+      method: 'DELETE',
+      body: {
+        nftClassId,
+        priceIndex,
+      },
+    })
 
-      // Remove from local state after successful API call
-      const itemId = getBookListItemId(nftClassId, priceIndex)
-      itemsMap.value.delete(itemId)
-    }
-    catch (error) {
-      console.error('Failed to remove book list item from Firestore', error)
-      throw error
-    }
+    // Remove from local state after successful API call
+    const itemId = getBookListItemId(nftClassId, priceIndex)
+    itemsMap.value.delete(itemId)
   }
 
   function clearItems() {

@@ -664,8 +664,8 @@ async function checkBookListStatus() {
     )
   }
   catch (error) {
-    isInBookList.value = false
-    await handleError(error)
+    // Silent error
+    console.error(error)
   }
   finally {
     isCheckingBookList.value = false
@@ -769,6 +769,8 @@ onMounted(() => {
   if (selectedPricingItemIndex) {
     handlePurchaseButtonClick()
   }
+
+  checkBookListStatus()
 })
 
 async function handleSocialButtonClick(key: string) {
@@ -821,10 +823,10 @@ async function handleBookListButtonClick() {
 
   isUpdatingBookList.value = true
 
-  try {
-    if (isInBookList.value) {
-      // Remove from book list
-      useLogEvent('remove_from_cart', formattedLogPayload.value)
+  if (isInBookList.value) {
+    // Remove from book list
+    useLogEvent('remove_from_cart', formattedLogPayload.value)
+    try {
       await bookListStore.removeItem(
         nftClassId.value,
         selectedPricingItem.value?.index || 0,
@@ -837,9 +839,17 @@ async function handleBookListButtonClick() {
         color: 'secondary',
       })
     }
-    else {
-      // Add to book list
-      useLogEvent('add_to_cart', formattedLogPayload.value)
+    catch (error) {
+      await handleError(error, {
+        title: $t('error_book_list_remove'),
+        logPrefix: 'product_page_book_list_remove',
+      })
+    }
+  }
+  else {
+    // Add to book list
+    useLogEvent('add_to_cart', formattedLogPayload.value)
+    try {
       await bookListStore.addItem(
         nftClassId.value,
         selectedPricingItem.value?.index || 0,
@@ -862,13 +872,15 @@ async function handleBookListButtonClick() {
         ],
       })
     }
+    catch (error) {
+      await handleError(error, {
+        title: $t('error_book_list_add'),
+        logPrefix: 'product_page_book_list_add',
+      })
+    }
   }
-  catch (error) {
-    await handleError(error)
-  }
-  finally {
-    isUpdatingBookList.value = false
-  }
+
+  isUpdatingBookList.value = false
 }
 
 const handleBookListButtonClickDebounced = useDebounceFn(handleBookListButtonClick, 300)

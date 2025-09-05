@@ -16,14 +16,5 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  try {
-    await deleteUserBookListItem(userWallet, nftClassId, priceIndex)
-  }
-  catch (error) {
-    console.error(error)
-    throw createError({
-      statusCode: 500,
-      statusMessage: 'Failed to remove book from list',
-    })
-  }
+  await deleteUserBookListItem(userWallet, nftClassId, priceIndex)
 })
