@@ -161,7 +161,7 @@ export function useStructuredData(
           'url': `${canonicalURL}?price_index=${pricing.index}`,
           'price': pricing?.price || 0,
           'priceCurrency': 'USD',
-          'availability': pricing?.isSoldOut ? 'https://schema.org/SoldOut' : 'https://schema.org/LimitedAvailability',
+          'availability': (!pricing?.isAutoDeliver && pricing?.isSoldOut) ? 'https://schema.org/SoldOut' : 'https://schema.org/LimitedAvailability',
           'itemCondition': 'https://schema.org/NewCondition',
           'checkoutPageURLTemplate': `${baseURL}/checkout?products=${productId}&utm_medium=structured-data`,
           'shippingDetails': {

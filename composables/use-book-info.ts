@@ -176,7 +176,7 @@ export default function (
           description: localeString(item.description),
           price: item.price,
           currency: item.price > 0 ? 'US' : '',
-          isSoldOut: item.isSoldOut,
+          isSoldOut: !item.isAutoDeliver && item.isSoldOut,
           canTip: item.isAllowCustomPrice,
           isPhysicalOnly: item.isPhysicalOnly,
           isAutoDeliver: item.isAutoDeliver,
