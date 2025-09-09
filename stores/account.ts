@@ -1,12 +1,41 @@
 import { useAccount, useConnect, useDisconnect, useSignMessage } from '@wagmi/vue'
 import { UserRejectedRequestError } from 'viem'
 import { FetchError } from 'ofetch'
+import { jwtDecode } from 'jwt-decode'
 import type { Magic } from 'magic-sdk'
 import type { RouteLocationAsRelativeGeneric } from 'vue-router'
 
 import { LoginModal, RegistrationModal } from '#components'
 
 const REGISTER_TIME_LIMIT_IN_TS = 15 * 60 * 1000 // 15 minutes
+
+const JWT_PERMISSIONS = [
+  'profile',
+  'email',
+  'read:nftbook',
+  'write:nftbook',
+  'read:nftcollection',
+  'write:nftcollection',
+  'read:plus',
+  'write:plus',
+]
+
+function verifyTokenPermissions(token: string): boolean {
+  try {
+    const decoded = jwtDecode<{ permissions?: string[] }>(token)
+    if (!decoded.permissions || !Array.isArray(decoded.permissions)) {
+      return false
+    }
+
+    return JWT_PERMISSIONS.every(permission =>
+      decoded.permissions!.includes(permission),
+    )
+  }
+  catch (error) {
+    console.error('Failed to decode token for permission verification:', error)
+    return false
+  }
+}
 
 export const useAccountStore = defineStore('account', () => {
   const config = useRuntimeConfig()
@@ -32,8 +61,14 @@ export const useAccountStore = defineStore('account', () => {
 
   watch(
     () => user.value,
-    (user) => {
+    async (user) => {
       useSetLogUser(user)
+      if (user?.token) {
+        const hasValidPermissions = verifyTokenPermissions(user.token)
+        if (!hasValidPermissions) {
+          await logout()
+        }
+      }
     },
     { immediate: true, deep: true },
   )
@@ -368,16 +403,7 @@ export const useAccountStore = defineStore('account', () => {
           ts: Date.now(),
           email,
           loginMethod,
-          permissions: [
-            'profile',
-            'email',
-            'read:nftbook',
-            'write:nftbook',
-            'read:nftcollection',
-            'write:nftcollection',
-            'read:plus',
-            'write:plus',
-          ],
+          permissions: JWT_PERMISSIONS,
         },
         null,
         2,
