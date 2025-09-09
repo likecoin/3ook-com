@@ -3,18 +3,24 @@
     :text="props.walletAddress"
     :disabled="!props.walletAddress || !!displayName"
   >
-    <TagItem
-      ref="lazyLoadTrigger"
-      :label="label"
+    <NuxtLink
+      :to="linkRoute"
+      :class="linkRoute ? 'inline-block' : 'inline'"
     >
-      <template #prepend>
-        <UAvatar
-          :alt="name"
-          size="xs"
-          icon="i-material-symbols-person-2-rounded"
-        />
-      </template>
-    </TagItem>
+      <TagItem
+        ref="lazyLoadTrigger"
+        :label="label"
+        :class="linkRoute ? 'hover:bg-gray-100 transition-colors cursor-pointer' : ''"
+      >
+        <template #prepend>
+          <UAvatar
+            :alt="name"
+            size="xs"
+            icon="i-material-symbols-person-2-rounded"
+          />
+        </template>
+      </TagItem>
+    </NuxtLink>
   </UTooltip>
 </template>
 
@@ -28,8 +34,13 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  entityType: {
+    type: String as PropType<'author' | 'publisher'>,
+    default: 'author',
+  },
 })
 
+const localeRoute = useLocaleRoute()
 const metadataStore = useMetadataStore()
 
 useVisibility('lazyLoadTrigger', (visible) => {
@@ -50,5 +61,16 @@ const displayName = computed(() => {
 const label = computed(() => {
   if (displayName.value) return displayName.value
   return `${props.walletAddress.slice(0, 10)}...${props.walletAddress.slice(-9)}`
+})
+
+const linkRoute = computed(() => {
+  const query = props.entityType === 'author'
+    ? { author: props.name }
+    : { publisher: props.name }
+
+  return localeRoute({
+    name: 'store',
+    query,
+  })
 })
 </script>

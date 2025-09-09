@@ -33,27 +33,17 @@
             >
               <li v-if="bookInfo.authorName.value">
                 <div v-text="$t('product_page_author_name_label')" />
-                <NuxtLink
-                  :to="localeRoute({
-                    name: 'store',
-                    query: { author: bookInfo.authorName.value },
-                  })"
-                  class="inline-block"
-                >
-                  <EntityItem :name="bookInfo.authorName.value" />
-                </NuxtLink>
+                <EntityItem
+                  :name="bookInfo.authorName.value"
+                  entity-type="author"
+                />
               </li>
               <li v-if="bookInfo.publisherName.value">
                 <div v-text="$t('product_page_publisher_label')" />
-                <NuxtLink
-                  :to="localeRoute({
-                    name: 'store',
-                    query: { publisher: bookInfo.publisherName.value },
-                  })"
-                  class="inline-block"
-                >
-                  <EntityItem :name="bookInfo.publisherName.value" />
-                </NuxtLink>
+                <EntityItem
+                  :name="bookInfo.publisherName.value"
+                  entity-type="publisher"
+                />
               </li>
             </ul>
           </div>

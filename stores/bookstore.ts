@@ -128,8 +128,6 @@ export const useBookstoreStore = defineStore('bookstore', () => {
   }: {
     isRefresh?: boolean
   } = {}) {
-    const { fetchNFTClassesByAuthorName, fetchNFTClassesByPublisherName } = await import('~/shared/utils/indexer')
-
     const queryKey = `${type}:${searchTerm}`
 
     if (bookstoreSearchResultsByQueryMap.value[queryKey]?.isFetching) {
@@ -152,13 +150,7 @@ export const useBookstoreStore = defineStore('bookstore', () => {
         key: isRefresh ? undefined : bookstoreSearchResultsByQueryMap.value[queryKey]?.nextKey,
       }
 
-      let result
-      if (type === 'author') {
-        result = await fetchNFTClassesByAuthorName(searchTerm, options)
-      }
-      else {
-        result = await fetchNFTClassesByPublisherName(searchTerm, options)
-      }
+      const result = await fetchNFTClassesByMetadata(type, searchTerm, options)
 
       if (result) {
         const nftClasses = result.data

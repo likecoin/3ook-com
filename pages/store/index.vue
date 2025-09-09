@@ -24,8 +24,8 @@
         class="flex items-center gap-2 w-full"
       >
         <h1 class="text-xl laptop:text-2xl font-bold text-gray-900">
-          <span v-if="authorName">{{ authorName }}</span>
-          <span v-else-if="publisherName">{{ publisherName }}</span>
+          <span v-if="queryAuthorName">{{ queryAuthorName }}</span>
+          <span v-else-if="queryPublisherName">{{ queryPublisherName }}</span>
         </h1>
       </div>
 
@@ -147,17 +147,17 @@ const shouldLoadMore = useElementVisibility(infiniteScrollDetectorElement)
 const { handleError } = useErrorHandler()
 const isMobile = useMediaQuery('(max-width: 768px)')
 
-const authorName = computed(() => getRouteQuery('author', ''))
-const publisherName = computed(() => getRouteQuery('publisher', ''))
-
-const isSearchMode = computed(() => !!searchQuery.value)
+const queryAuthorName = computed(() => getRouteQuery('author', ''))
+const queryPublisherName = computed(() => getRouteQuery('publisher', ''))
 
 // Search query key for bookstore store
 const searchQuery = computed(() => {
-  if (authorName.value) return `author:${authorName.value}`
-  if (publisherName.value) return `publisher:${publisherName.value}`
+  if (queryAuthorName.value) return `author:${queryAuthorName.value}`
+  if (queryPublisherName.value) return `publisher:${queryPublisherName.value}`
   return ''
 })
+
+const isSearchMode = computed(() => !!searchQuery.value)
 
 const TAG_LISTING = 'listing'
 
@@ -236,11 +236,11 @@ const canonicalURL = computed(() => {
     canonicalParams.set('tag', tagId.value)
   }
 
-  if (authorName.value) {
-    canonicalParams.set('author', authorName.value)
+  if (queryAuthorName.value) {
+    canonicalParams.set('author', queryAuthorName.value)
   }
-  if (publisherName.value) {
-    canonicalParams.set('publisher', publisherName.value)
+  if (queryPublisherName.value) {
+    canonicalParams.set('publisher', queryPublisherName.value)
   }
 
   const queryString = canonicalParams.toString()
@@ -294,7 +294,7 @@ watch(localizedTagId, async (value) => {
 })
 
 // Watch for changes in search parameters
-watch([authorName, publisherName], async () => {
+watch([queryAuthorName, queryPublisherName], async () => {
   if (isSearchMode.value) {
     await fetchItems({ isRefresh: true })
   }

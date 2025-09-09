@@ -64,25 +64,28 @@ export function fetchNFTClassesByOwnerWalletAddress(walletAddress: string, optio
   })
 };
 
-export function fetchNFTClassesByAuthorName(authorName: string, options: IndexerQueryOptions = {}) {
+export function fetchNFTClassesByMetadata(
+  filterType: 'author' | 'publisher',
+  filterValue: string,
+  options: IndexerQueryOptions = {},
+) {
   const fetch = getIndexerAPIFetch()
   if (!options.filter) {
-    options.filter = { 'author.name': authorName }
+    options.filter = {}
   }
-  return fetch<FetchNFTClassesByOwnerWalletAddressResponseData>(`/booknfts`, {
-    query: getIndexerQueryOptions(options),
-  })
-};
 
-export function fetchNFTClassesByPublisherName(publisherName: string, options: IndexerQueryOptions = {}) {
-  const fetch = getIndexerAPIFetch()
-  if (!options.filter) {
-    options.filter = { publisher: publisherName }
+  // Add the appropriate filter based on type
+  if (filterType === 'author') {
+    options.filter['author.name'] = filterValue
   }
+  else if (filterType === 'publisher') {
+    options.filter.publisher = filterValue
+  }
+
   return fetch<FetchNFTClassesByOwnerWalletAddressResponseData>(`/booknfts`, {
     query: getIndexerQueryOptions(options),
   })
-};
+}
 
 export function fetchNFTsByOwnerWalletAddress(walletAddress: string, options: IndexerQueryOptions) {
   const fetch = getIndexerAPIFetch()
