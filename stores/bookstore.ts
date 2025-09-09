@@ -19,15 +19,13 @@ interface BookstoreSearchResults {
 }
 
 export const useBookstoreStore = defineStore('bookstore', () => {
-  const nftStore = useNFTStore()
-
-  const bookstoreInfoByNFTClassIdMap = ref<Record<string, BookstoreInfo>>({})
+  const bookstoreInfoByNFTClassIdMap = ref<Record<string, BookstoreInfo | null>>({})
 
   const getBookstoreInfoByNFTClassId = computed(() => (nftClassId: string) => {
     return bookstoreInfoByNFTClassIdMap.value[nftClassId]
   })
 
-  function addBookstoreInfoByNFTClassId(nftClassId: string, data: BookstoreInfo) {
+  function addBookstoreInfoByNFTClassId(nftClassId: string, data: BookstoreInfo | null) {
     bookstoreInfoByNFTClassIdMap.value[nftClassId] = data
   }
 
@@ -116,7 +114,7 @@ export const useBookstoreStore = defineStore('bookstore', () => {
       = (bookstoreSearchResultsByQueryMap.value[query]?.items || [])
         .filter((item) => {
           const bookstoreInfo = getBookstoreInfoByNFTClassId.value(item.classId)
-          return !!bookstoreInfo && !bookstoreInfo.isHidden
+          return bookstoreInfo !== null && !bookstoreInfo?.isHidden
         })
     return {
       items,
@@ -167,10 +165,6 @@ export const useBookstoreStore = defineStore('bookstore', () => {
             imageUrl: nftClass.metadata?.image || '',
             minPrice: undefined,
           }))
-
-        nftClasses.forEach((nftClass) => {
-          nftStore.lazyFetchNFTClassAggregatedMetadataById(nftClass.address)
-        })
 
         if (isRefresh) {
           bookstoreSearchResultsByQueryMap.value[queryKey].items = mappedItems

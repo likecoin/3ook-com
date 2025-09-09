@@ -633,15 +633,11 @@ const recommendedClassIds = computed(() => {
 
 const filteredRecommendedClassIds = computed(() => {
   return recommendedClassIds.value
-    .map(classId => bookstoreStore.getBookstoreInfoByNFTClassId(classId))
-    .filter(item => item && item?.prices.length && !item.isHidden)
-    .map(item => item?.id)
+    .filter((classId) => {
+      const bookstoreInfo = bookstoreStore.getBookstoreInfoByNFTClassId(classId)
+      return bookstoreInfo !== null && !bookstoreInfo?.isHidden
+    })
 })
-
-watch(recommendedClassIds, (newIds, oldIds = []) => {
-  const addedIds = newIds.filter(id => !oldIds.includes(id))
-  addedIds.forEach(id => nftStore.lazyFetchNFTClassAggregatedMetadataById(id))
-}, { immediate: true })
 
 const { gridClasses, getGridItemClassesByIndex } = usePaginatedGrid({
   itemsCount: computed(() => filteredRecommendedClassIds.value.length),

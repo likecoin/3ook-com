@@ -43,7 +43,7 @@ export const useNFTStore = defineStore('nft', () => {
     if (data.ownerInfo) {
       nftClassOwnersNFTIdMapByNFTClassIdMap.value[nftClassId] = data.ownerInfo
     }
-    if (data.bookstoreInfo) {
+    if (data.bookstoreInfo !== undefined) {
       bookstoreStore.addBookstoreInfoByNFTClassId(nftClassId, data.bookstoreInfo)
     }
   }
