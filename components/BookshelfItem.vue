@@ -66,10 +66,10 @@
         </UDrawer>
       </div>
 
-      <div
+      <NuxtLink
+        :to="bookInfo.authorPageRoute.value"
         class="mt-0.5 text-xs laptop:text-sm text-[#9B9B9B] line-clamp-1"
-        v-text="bookInfo.authorName"
-      />
+      >{{ bookInfo.authorName }}</NuxtLink>
     </div>
   </li>
 </template>

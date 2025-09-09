@@ -202,6 +202,13 @@ export default function (
 
   const firstUserOwnedNFTId = computed(() => userOwnedNFTIds.value[0])
 
+  const authorPageRoute = computed(() => {
+    return localeRoute({
+      name: 'store',
+      query: { author: authorName.value },
+    })
+  })
+
   const productPageRoute = computed(() => localeRoute({
     name: 'store-nftClassId',
     params: { nftClassId: toValue(nftClassId) },
@@ -244,6 +251,7 @@ export default function (
     userOwnedNFTIds,
     firstUserOwnedNFTId,
 
+    authorPageRoute,
     productPageRoute,
     getReaderRoute,
 

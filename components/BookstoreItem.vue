@@ -17,10 +17,10 @@
         v-text="bookName"
       />
 
-      <div
+      <NuxtLink
+        :to="bookInfo.authorPageRoute.value"
         class="h-4 laptop:h-5 mt-0.5 text-xs laptop:text-sm text-[#9B9B9B] line-clamp-1"
-        v-text="authorName"
-      />
+      >{{ authorName }}</NuxtLink>
     </div>
 
     <div class="h-5 mt-3 text-sm text-theme-500">
