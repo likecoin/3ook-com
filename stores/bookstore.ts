@@ -114,7 +114,10 @@ export const useBookstoreStore = defineStore('bookstore', () => {
   const getBookstoreSearchResultsByQuery = computed(() => (query: string) => {
     const items
       = (bookstoreSearchResultsByQueryMap.value[query]?.items || [])
-        .filter(item => !!getBookstoreInfoByNFTClassId.value(item.classId))
+        .filter((item) => {
+          const bookstoreInfo = getBookstoreInfoByNFTClassId.value(item.classId)
+          return !!bookstoreInfo && !bookstoreInfo.isHidden
+        })
     return {
       items,
       isFetchingItems: bookstoreSearchResultsByQueryMap.value[query]?.isFetching || false,
@@ -153,7 +156,10 @@ export const useBookstoreStore = defineStore('bookstore', () => {
       const result = await fetchNFTClassesByMetadata(type, searchTerm, options)
 
       if (result) {
-        const nftClasses = result.data
+        const nftClasses = result.data.map(item => ({
+          ...item,
+          address: item.address.toLowerCase(),
+        }))
         const mappedItems = nftClasses
           .map(nftClass => ({
             classId: nftClass.address.toLowerCase(),
@@ -173,7 +179,7 @@ export const useBookstoreStore = defineStore('bookstore', () => {
           bookstoreSearchResultsByQueryMap.value[queryKey].items.push(...mappedItems)
         }
 
-        bookstoreSearchResultsByQueryMap.value[queryKey].nextKey = result.pagination?.next_key?.toString()
+        bookstoreSearchResultsByQueryMap.value[queryKey].nextKey = result.pagination.count === options.limit ? result.pagination?.next_key?.toString() : undefined
       }
     }
     finally {
