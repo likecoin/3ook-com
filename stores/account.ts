@@ -14,8 +14,6 @@ const JWT_PERMISSIONS = [
   'email',
   'read:nftbook',
   'write:nftbook',
-  'read:nftcollection',
-  'write:nftcollection',
   'read:plus',
   'write:plus',
 ]
