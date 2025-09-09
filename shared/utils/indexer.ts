@@ -48,7 +48,7 @@ export function getIndexerQueryOptions({
   if (isBooksOnly) contractFilter.push('@type', 'Book')
   if (filter) {
     for (const [key, value] of Object.entries(filter)) {
-      contractFilter.push(key, encodeURIComponent(value))
+      contractFilter.push(key, value)
     }
   }
   if (contractFilter.length > 0) {
@@ -76,7 +76,7 @@ export function fetchNFTClassesByMetadata(
 
   // Add the appropriate filter based on type
   if (filterType === 'author') {
-    options.filter['author.name'] = filterValue
+    options.filter['author.name'] = filterValue.replaceAll(',', '%2C')
   }
   else if (filterType === 'publisher') {
     options.filter.publisher = filterValue
