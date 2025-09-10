@@ -177,7 +177,7 @@ export default function (
           price: item.price,
           currency: item.price > 0 ? 'US' : '',
           isSoldOut: item.isSoldOut,
-          canTip: item.isAllowCustomPrice,
+          canTip: item.isAllowCustomPrice && item.isTippingEnabled,
           isAutoDeliver: item.isAutoDeliver,
         }
       })

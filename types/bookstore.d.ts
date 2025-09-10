@@ -15,6 +15,7 @@ declare interface BookstorePrice {
   isUnlisted: boolean
   autoMemo: string
   isAllowCustomPrice: boolean
+  isTippingEnabled: boolean
   order: number
 }
 

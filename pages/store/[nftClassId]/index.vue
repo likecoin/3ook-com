@@ -729,7 +729,7 @@ async function handlePurchaseButtonClick() {
 
     let customPrice: number | undefined = undefined
 
-    if (selectedPricingItem.value.price === 0 && selectedPricingItem.value.canTip) {
+    if (selectedPricingItem.value.canTip) {
       const tippingResult = await openTippingModal({
         // TODO: Check if classOwner is always the book's publisher
         avatar: bookInfo.publisherName.value ? bookInfo.nftClassOwnerAvatar.value : '',
