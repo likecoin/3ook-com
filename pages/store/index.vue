@@ -6,7 +6,7 @@
         'z-1',
         'top-0',
 
-        ...gridClasses,
+        ...(isSearchMode ? [] : gridClasses),
         'gap-4',
 
         'w-full',
@@ -21,7 +21,7 @@
       <!-- Search mode header -->
       <div
         v-if="isSearchMode"
-        class="flex items-center gap-2 w-full"
+        class="flex items-center w-full"
       >
         <h1 class="text-xl laptop:text-2xl font-bold text-gray-900">
           <span v-if="queryAuthorName">{{ queryAuthorName }}</span>

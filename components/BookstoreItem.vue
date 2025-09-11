@@ -19,7 +19,7 @@
 
       <NuxtLink
         :to="bookInfo.authorPageRoute.value"
-        class="h-4 laptop:h-5 mt-0.5 text-xs laptop:text-sm text-[#9B9B9B] line-clamp-1"
+        class="inline-block h-4 laptop:h-5 mt-0.5 text-xs laptop:text-sm text-[#9B9B9B] line-clamp-1 hover:text-theme-500 hover:underline"
       >{{ authorName }}</NuxtLink>
     </div>
 
