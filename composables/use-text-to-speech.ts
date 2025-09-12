@@ -44,7 +44,7 @@ export function useTextToSpeech(options: TTSOptions = {}) {
     ].join('-'),
   )
 
-  const ttsPlaybackRateOptions = computed(() => [0.5, 0.75, 1.0, 1.25, 1.5].map(rate => ({
+  const ttsPlaybackRateOptions = computed(() => [0.75, 0.9, 1.0, 1.1, 1.25, 1.5].map(rate => ({
     label: rate === 1.0 ? $t('reader_text_to_speech_normal_speed') : `${rate}x`,
     value: rate,
   })))
