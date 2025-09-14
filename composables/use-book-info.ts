@@ -202,12 +202,26 @@ export default function (
 
   const firstUserOwnedNFTId = computed(() => userOwnedNFTIds.value[0])
 
-  const authorPageRoute = computed(() => {
+  const authorPageRoute = computed(() => getAuthorPageRoute())
+
+  function getAuthorPageRoute(options?: { llMedium?: string, llSource?: string }) {
+    const query: Record<string, string> = {
+      author: authorName.value,
+    }
+
+    if (options?.llMedium) {
+      query.ll_medium = options.llMedium
+    }
+
+    if (options?.llSource) {
+      query.ll_source = options.llSource
+    }
+
     return localeRoute({
       name: 'store',
-      query: { author: authorName.value },
+      query,
     })
-  })
+  }
 
   const productPageRoute = computed(() => getProductPageRoute())
 
@@ -267,6 +281,7 @@ export default function (
     firstUserOwnedNFTId,
 
     authorPageRoute,
+    getAuthorPageRoute,
     productPageRoute,
     getProductPageRoute,
     getReaderRoute,
