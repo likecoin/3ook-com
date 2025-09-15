@@ -46,11 +46,13 @@ export function getTTSConfigKeyWithSuffix(key: string, suffix: TTSConfigKeySuffi
 export function sanitizeTTSText(text: string): string {
   if (!text) return ''
   return text
+    .replace(/^\s*-{2,}\s*$/gm, '')
+    .replace(/^\s*\.+\s*$/gm, '')
     .replace(/[*＊]/g, '')
     .replace(/[⋯︙]+/g, '。')
     .replace(/[—─―︱⸺]+/g, '，')
-    .replace('﹁', '「')
-    .replace('﹂', '」')
+    .replace(/﹁/g, '「')
+    .replace(/﹂/g, '」')
     .replace(/﹃/g, '『')
     .replace(/﹄/g, '』')
 }
