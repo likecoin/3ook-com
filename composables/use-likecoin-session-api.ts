@@ -57,6 +57,15 @@ export interface MigrateMagicEmailUserResponseData {
   isMigratedLikerLand: boolean
 }
 
+export type FetchFreeClaimableBooksResponseData = string[]
+
+export interface ClaimFreeBookResponseData {
+  paymentId: string
+  classIds: string
+  cartId: string
+  claimToken: string
+}
+
 export function useLikeCoinSessionAPI() {
   const config = useRuntimeConfig()
   const { loggedIn: hasLoggedIn, user } = useUserSession()
@@ -328,6 +337,17 @@ export function useLikeCoinSessionAPI() {
     })
   }
 
+  function fetchClaimableFreeBooks() {
+    return fetch.value<FetchFreeClaimableBooksResponseData>(`/likernft/book/purchase/free`)
+  }
+
+  function claimFreeBook(nftClassId: string) {
+    return fetch.value<ClaimFreeBookResponseData>(`/likernft/book/purchase/free`, {
+      method: 'POST',
+      body: { classId: nftClassId },
+    })
+  }
+
   return {
     createNFTBookPurchase,
     createBookCartPurchase,
@@ -339,5 +359,7 @@ export function useLikeCoinSessionAPI() {
     fetchLikerPlusBillingPortalLink,
     migrateMagicEmailUser,
     sendCollectorMessage,
+    fetchClaimableFreeBooks,
+    claimFreeBook,
   }
 }
