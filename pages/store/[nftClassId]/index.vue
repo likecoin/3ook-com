@@ -865,7 +865,6 @@ async function handleBookListButtonClick() {
             label: $t('book_list_added_toast_view_button_label'),
             variant: 'outline',
             onClick: () => {
-              useTrackEvent('view_cart')
               navigateTo(localeRoute({ name: 'list' }))
             },
           },

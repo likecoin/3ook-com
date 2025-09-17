@@ -45,7 +45,6 @@
             :nft-class-id="item.nftClassId"
             :price-index="item.priceIndex"
             :is-selected="selectedItemIds.has(getBookListItemId(item.nftClassId, item.priceIndex))"
-            @click-cover="handleBookListItemCoverClick"
             @remove="handleBookListItemRemove"
             @select="handleItemSelect"
             @unselect="handleItemDeselect"
@@ -121,12 +120,8 @@ function handleSelectAllUpdate(isSelected: 'indeterminate' | boolean) {
   }
 }
 
-function handleBookListItemCoverClick({ nftClassId, priceIndex }: BookListItem) {
-  useTrackEvent('view_item', { nftClassId, priceIndex })
-}
-
 async function handleBookListItemRemove({ nftClassId, priceIndex }: BookListItem) {
-  useTrackEvent('remove_from_cart', { nftClassId, priceIndex })
+  useLogEvent('remove_from_cart', { nftClassId, priceIndex })
   try {
     await bookListStore.removeItem(nftClassId, priceIndex)
   }
@@ -164,7 +159,7 @@ async function handleCheckoutButtonClick() {
       selectedItems,
       { email: user.value?.email },
     )
-    useTrackEvent('begin_checkout', { payment_id: paymentId })
+    useLogEvent('begin_checkout', { payment_id: paymentId })
     await navigateTo(url, { external: true })
   }
   catch (error) {
@@ -178,12 +173,12 @@ async function handleCheckoutButtonClick() {
 
 function handleItemSelect({ nftClassId, priceIndex }: BookListItem) {
   selectedItemIds.value.add(getBookListItemId(nftClassId, priceIndex))
-  useTrackEvent('book_list_item_select', { nftClassId, priceIndex })
+  useLogEvent('book_list_item_select', { nftClassId, priceIndex })
 }
 
 function handleItemDeselect({ nftClassId, priceIndex }: BookListItem) {
   selectedItemIds.value.delete(getBookListItemId(nftClassId, priceIndex))
-  useTrackEvent('book_list_item_deselect', { nftClassId, priceIndex })
+  useLogEvent('book_list_item_deselect', { nftClassId, priceIndex })
 }
 
 async function fetchBookList() {
@@ -199,6 +194,7 @@ async function fetchBookList() {
 }
 
 onMounted(async () => {
+  useLogEvent('view_cart')
   if (hasLoggedIn.value) {
     await fetchBookList()
   }
