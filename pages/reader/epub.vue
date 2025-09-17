@@ -467,7 +467,7 @@ async function loadEPub() {
   navItems.value = toc
     .map((item: NavItem) => {
       // Extract filename by removing anchor part from href
-      const filename = item.href.split('#')[0] || item.href
+      const filename = item.href.split('#')[0] as string
       const spineHref = sectionHrefByFilename[filename]
       // Replace toc's href with spine's href
       return spineHref ? { ...item, href: spineHref } : null
