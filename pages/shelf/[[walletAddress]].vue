@@ -34,6 +34,11 @@
       </div>
     </header>
 
+    <ClaimableBooksSection
+      v-if="isMyBookshelf && walletAddress && hasLoggedIn"
+      class="w-full"
+    />
+
     <main class="flex flex-col items-center grow w-full max-w-[1440px] mx-auto px-4 laptop:px-12 pb-16">
       <UCard
         v-if="!walletAddress && !hasLoggedIn"
@@ -47,7 +52,7 @@
       </UCard>
       <div
         v-else-if="itemsCount === 0 && !bookshelfStore.isFetching && bookshelfStore.hasFetched"
-        class="flex flex-col items-center m-auto"
+        class="flex flex-col items-center m-auto py-12"
       >
         <UIcon
           class="opacity-20"

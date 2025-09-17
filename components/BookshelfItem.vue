@@ -93,9 +93,13 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  isClaimable: {
+    type: Boolean,
+    default: false,
+  },
 })
 
-const emit = defineEmits(['visible', 'open', 'download'])
+const emit = defineEmits(['visible', 'open', 'download', 'claim'])
 
 const { t: $t } = useI18n()
 const nftStore = useNFTStore()
@@ -109,39 +113,53 @@ const bookCoverSrc = computed(() => getResizedImageURL(bookInfo.coverSrc.value, 
 const isDesktopScreen = useDesktopScreen()
 
 const menuItems = computed<DropdownMenuItem[]>(() => {
+  const genericItems: DropdownMenuItem[] = []
   const readerItems: DropdownMenuItem[] = []
   const downloadItems: DropdownMenuItem[] = []
 
-  bookInfo.sortedContentURLs.value.forEach((contentURL) => {
-    const label = getContentTypeLabel(contentURL.type)
-
-    readerItems.push({
-      label,
-      icon: 'i-material-symbols-book-5-outline',
-      onSelect: () => openContentURL(contentURL),
+  if (props.isClaimable) {
+    genericItems.push({
+      label: $t('bookshelf_claim_book'),
+      icon: 'i-material-symbols-add-circle-outline-rounded',
+      onSelect: claimBook,
     })
+  }
+  else {
+    bookInfo.sortedContentURLs.value.forEach((contentURL) => {
+      const label = getContentTypeLabel(contentURL.type)
 
-    if (bookInfo.isDownloadable.value) {
-      downloadItems.push({
-        label: $t('bookshelf_download_file', { type: contentURL.type.toUpperCase() }),
-        icon: 'i-material-symbols-download-rounded',
-        onSelect: () =>
-          downloadURL({
-            name: contentURL.name,
-            type: contentURL.type,
-            fileIndex: contentURL.index,
-          }),
+      readerItems.push({
+        label,
+        icon: 'i-material-symbols-book-5-outline',
+        onSelect: () => openContentURL(contentURL),
       })
-    }
-  })
 
-  const productInfoItem: DropdownMenuItem = {
+      if (bookInfo.isDownloadable.value) {
+        downloadItems.push({
+          label: $t('bookshelf_download_file', { type: contentURL.type.toUpperCase() }),
+          icon: 'i-material-symbols-download-rounded',
+          onSelect: () =>
+            downloadURL({
+              name: contentURL.name,
+              type: contentURL.type,
+              fileIndex: contentURL.index,
+            }),
+        })
+      }
+    })
+  }
+
+  genericItems.push({
     label: $t('bookshelf_view_book_product_page'),
     icon: 'i-material-symbols-visibility-outline',
     to: bookInfo.productPageRoute.value,
-  }
+  })
 
-  return [...readerItems, ...downloadItems, productInfoItem]
+  return [
+    ...readerItems,
+    ...downloadItems,
+    ...genericItems,
+  ]
 })
 
 if (!props.lazy) {
@@ -199,7 +217,16 @@ async function downloadURL({ name, type, fileIndex }: { name: string, type: stri
   })
 }
 
+function claimBook() {
+  emit('claim', props.nftClassId)
+}
+
 function handleCoverClick() {
+  if (props.isClaimable) {
+    claimBook()
+    return
+  }
+
   const contentURL = bookInfo.defaultContentURL.value
   if (contentURL) {
     openContentURL(contentURL)
