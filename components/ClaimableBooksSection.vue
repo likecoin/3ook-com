@@ -57,8 +57,9 @@
             'w-full',
             'max-w-[1440px]',
             'mx-auto',
-            'px-4 laptop:px-12',
-            'py-8',
+            'p-4',
+            'laptop:px-12',
+            'laptop:py-8',
           ]"
         >
           <BookshelfItem
