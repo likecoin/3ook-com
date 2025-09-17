@@ -1,26 +1,21 @@
-import type { Timestamp } from 'firebase-admin/firestore'
+import type { CollectionReference, DocumentSnapshot, Timestamp } from 'firebase-admin/firestore'
 import { FieldValue } from 'firebase-admin/firestore'
-import { checksumAddress } from 'viem'
 
 function getBookListCollection(userWallet: string) {
-  return getUserCollection().doc(userWallet).collection('bookList')
+  return getUserCollection().doc(userWallet).collection('bookList') as CollectionReference<BookListItemData, BookListItemData>
 }
 
 interface BookListItemData {
-  nftClassId: string
-  priceIndex: number
   timestamp: Timestamp
 }
 
-function normalizeBookListItemData({
-  nftClassId,
-  priceIndex,
-  timestamp,
-}: BookListItemData): BookListItem {
+function normalizeBookListItemData(doc: DocumentSnapshot<BookListItemData>): BookListItem {
+  const [nftClassId, priceIndex] = doc.id.split('-')
+  const data = doc.data()
   return {
-    nftClassId,
-    priceIndex,
-    timestamp: timestamp.toMillis(),
+    nftClassId: nftClassId as string,
+    priceIndex: Number(priceIndex),
+    timestamp: data?.timestamp.toMillis(),
   }
 }
 
@@ -30,7 +25,7 @@ export async function fetchUserBookList(
   const bookListCollection = getBookListCollection(userWallet)
   const snapshot = await bookListCollection.orderBy('timestamp', 'desc').get()
 
-  return snapshot.docs.map(doc => normalizeBookListItemData(doc.data() as BookListItemData))
+  return snapshot.docs.map(doc => normalizeBookListItemData(doc))
 }
 
 export async function fetchUserBookListItem(
@@ -46,7 +41,7 @@ export async function fetchUserBookListItem(
     return null
   }
 
-  return normalizeBookListItemData(doc.data() as BookListItemData)
+  return normalizeBookListItemData(doc)
 }
 
 export async function addUserBookListItem(
@@ -67,13 +62,11 @@ export async function addUserBookListItem(
 
   try {
     await bookListCollection.doc(docId).create({
-      nftClassId: checksumAddress(nftClassId as `0x${string}`),
-      priceIndex,
       timestamp: FieldValue.serverTimestamp(),
     })
 
     const newDoc = await bookListCollection.doc(docId).get()
-    return normalizeBookListItemData(newDoc.data() as BookListItemData)
+    return normalizeBookListItemData(newDoc)
   }
   catch (error) {
     console.error(error)

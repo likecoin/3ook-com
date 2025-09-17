@@ -1,7 +1,5 @@
-import { checksumAddress } from 'viem'
-
 export function getBookListItemId(nftClassId: string, priceIndex: number): string {
-  return `${checksumAddress(nftClassId as `0x${string}`)}-${priceIndex}`
+  return `${nftClassId.toLowerCase()}-${priceIndex || 0}`
 }
 
 const CHECKOUT_BOOK_LIST_KEY = '3ook_list_checkout'

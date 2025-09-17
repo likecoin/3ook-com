@@ -96,11 +96,7 @@ const props = defineProps({
 const emit = defineEmits(['click-cover', 'remove', 'select', 'unselect'])
 
 const nftStore = useNFTStore()
-const normalizedNFTClassId = computed(() => {
-  // NOTE: The API only supports lowercase NFT class IDs for bookstore info.
-  return props.nftClassId.toLowerCase()
-})
-const bookInfo = useBookInfo({ nftClassId: normalizedNFTClassId.value })
+const bookInfo = useBookInfo({ nftClassId: props.nftClassId })
 const { getPlusDiscountPrice } = useSubscription()
 
 const bookCoverSrc = computed(() => getResizedImageURL(bookInfo.coverSrc.value, { size: 300 }))
@@ -109,7 +105,7 @@ const { t: $t } = useI18n()
 
 useVisibility('lazyLoadTrigger', (isVisible) => {
   if (isVisible) {
-    nftStore.lazyFetchNFTClassAggregatedMetadataById(normalizedNFTClassId.value).catch(() => {
+    nftStore.lazyFetchNFTClassAggregatedMetadataById(props.nftClassId).catch(() => {
       console.warn(`Failed to fetch aggregated metadata for the NFT class [${props.nftClassId}]`)
     })
   }
