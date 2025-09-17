@@ -1,7 +1,7 @@
 <template>
   <aside class="bg-primary/5">
     <UCollapsible
-      v-if="claimableNFTClassIds.length > 0"
+      v-if="claimableNFTClassIdsCount > 0"
       :default-open="true"
       :ui="{ content: 'border-b border-accented' }"
     >
@@ -33,7 +33,7 @@
             />
 
             <UChip
-              :text="claimableNFTClassIds.length"
+              :text="claimableNFTClassIdsCount"
               color="primary"
               size="3xl"
               :standalone="true"
@@ -81,11 +81,12 @@ const { t: $t } = useI18n()
 const { loggedIn: hasLoggedIn } = useUserSession()
 const {
   nftClassIds: claimableNFTClassIds,
+  count: claimableNFTClassIdsCount,
   fetchClaimableFreeBooks,
   claimFreeBook,
 } = useClaimableBooks()
 const { gridClasses, getGridItemClassesByIndex, columnMax } = usePaginatedGrid({
-  itemsCount: claimableNFTClassIds.value.length,
+  itemsCount: claimableNFTClassIdsCount,
   hasMore: false,
 })
 

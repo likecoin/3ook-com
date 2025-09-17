@@ -8,6 +8,8 @@ export function useClaimableBooks() {
   const nftClassIds = ref<string[]>([])
   const isLoading = ref(false)
 
+  const count = computed(() => nftClassIds.value.length)
+
   async function fetchClaimableFreeBooks() {
     if (isLoading.value) return
     try {
@@ -52,6 +54,7 @@ export function useClaimableBooks() {
   return {
     nftClassIds: readonly(nftClassIds),
     isLoading: readonly(isLoading),
+    count: readonly(count),
     fetchClaimableFreeBooks,
     claimFreeBook,
   }
