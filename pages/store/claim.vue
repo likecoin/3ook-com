@@ -453,31 +453,20 @@ const readerRoute = computed(() => bookInfo.getReaderRoute.value({
 }))
 
 async function checkAndRemoveBookListItems() {
-  const checkoutBookListItems = getCheckoutBookListItems()
-  if (!checkoutBookListItems) return
-
   try {
-    const cartItems = cartData.value?.classIdsWithPrice
-    const toBeRemovedItems = checkoutBookListItems
-      .filter(
-        item => cartItems?.find(cartItem => (
-          cartItem.classId.toLowerCase() === item.nftClassId.toLowerCase()
-          && cartItem.priceIndex === item.priceIndex
-        )),
+    const cartItems = cartData.value?.classIdsWithPrice || []
+    const removeItemPromises: Promise<void>[] = []
+    for (const item of cartItems) {
+      removeItemPromises.push(
+        bookListStore.checkItemExists(item.classId, item.priceIndex).then((isExistingItem) => {
+          if (isExistingItem) return bookListStore.removeItem(item.classId, item.priceIndex)
+        }),
       )
-
-    await Promise.all(
-      toBeRemovedItems.map(async (item) => {
-        await bookListStore.removeItem(item.nftClassId, item.priceIndex)
-      }),
-    )
+    }
+    await Promise.all(removeItemPromises)
   }
   catch (error) {
     console.error('Error processing checkout book list:', error)
-  }
-  finally {
-    // Clear the session storage after processing (or on error)
-    clearCheckoutBookList()
   }
 }
 

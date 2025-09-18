@@ -144,16 +144,14 @@ async function handleCheckoutButtonClick() {
       if (!hasLoggedIn.value) return
     }
 
-    const selectedItems = bookListStore.items.filter(
-      item => selectedItemIds.value.has(getBookListItemId(item.nftClassId, item.priceIndex)),
-    )
-
-    // Save selected items to session storage before checkout
-    const checkoutBookListItems = selectedItems.map(item => ({
-      nftClassId: item.nftClassId,
-      priceIndex: item.priceIndex,
-    }))
-    saveCheckoutBookList(checkoutBookListItems)
+    const selectedItems = bookListStore.items
+      .filter(
+        item => selectedItemIds.value.has(getBookListItemId(item.nftClassId, item.priceIndex)),
+      )
+      .map(item => ({
+        nftClassId: item.nftClassId,
+        priceIndex: item.priceIndex,
+      }))
 
     const { url, paymentId } = await likeCoinSessionAPI.createNFTBookCartPurchase(
       selectedItems,
