@@ -98,13 +98,14 @@
 <script setup lang="ts">
 import { UCheckbox } from '#components'
 
-const { t: $t } = useI18n()
+const { t: $t, locale } = useI18n()
 const localeRoute = useLocaleRoute()
 const { loggedIn: hasLoggedIn, user } = useUserSession()
 const accountStore = useAccountStore()
 const bookListStore = useBookListStore()
 const { handleError } = useErrorHandler()
 const likeCoinSessionAPI = useLikeCoinSessionAPI()
+const { getAnalyticsParameters } = useAnalytics()
 
 useHead({ title: $t('book_list_title') })
 
@@ -155,7 +156,12 @@ async function handleCheckoutButtonClick() {
 
     const { url, paymentId } = await likeCoinSessionAPI.createNFTBookCartPurchase(
       selectedItems,
-      { email: user.value?.email },
+      {
+        email: user.value?.email,
+        cancelPage: 'list',
+        language: locale.value.split('-')[0],
+        ...getAnalyticsParameters({ utmSource: '3ook-list' }),
+      },
     )
     useLogEvent('begin_checkout', { payment_id: paymentId })
     await navigateTo(url, { external: true })

@@ -358,9 +358,9 @@ async function handleCheckout() {
       {
         email: user.value?.email || undefined,
         coupon: couponCode || undefined,
+        cancelPage: 'checkout',
         language: locale.value.split('-')[0],
-        from: 'checkout_page',
-        ...getAnalyticsParameters(),
+        ...getAnalyticsParameters({ utmSource: 'checkout' }),
       },
     )
 

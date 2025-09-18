@@ -137,6 +137,7 @@ export function useLikeCoinSessionAPI() {
       email,
       from = 'liker_land',
       coupon,
+      cancelPage = 'list',
       language,
       referrer,
       utmCampaign,
@@ -150,6 +151,7 @@ export function useLikeCoinSessionAPI() {
     }: {
       email?: string
       coupon?: string
+      cancelPage?: 'list' | 'checkout'
       from?: string
       language?: string
       referrer?: string
@@ -178,6 +180,7 @@ export function useLikeCoinSessionAPI() {
           quantity: item.quantity,
         })),
         coupon,
+        cancelPage,
         language,
         referrer,
         utmCampaign,

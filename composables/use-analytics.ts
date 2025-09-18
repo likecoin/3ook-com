@@ -18,14 +18,20 @@ export function useAnalytics() {
     }
   })
 
-  function getAnalyticsParameters() {
+  function getAnalyticsParameters({
+    utmSource,
+    utmMedium,
+  }: {
+    utmSource?: string
+    utmMedium?: string
+  } = {}) {
     return {
       gaClientId: gaClientId.value,
       gaSessionId: gaSessionId.value,
       referrer: referrer.value,
       utmCampaign: getRouteQuery('utm_campaign'),
-      utmMedium: getRouteQuery('utm_medium') || getRouteQuery('ll_medium'),
-      utmSource: getRouteQuery('utm_source') || getRouteQuery('ll_source'),
+      utmMedium: getRouteQuery('utm_medium') || getRouteQuery('ll_medium') || utmMedium,
+      utmSource: getRouteQuery('utm_source') || getRouteQuery('ll_source') || utmSource,
       gadClickId: getRouteQuery('gclid'),
       gadSource: getRouteQuery('gad_source'),
       fbClickId: getRouteQuery('fbclid'),
