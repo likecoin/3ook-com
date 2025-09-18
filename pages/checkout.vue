@@ -184,7 +184,7 @@ const bookstoreStore = useBookstoreStore()
 const formatPrice = useFormatPrice()
 const { handleError } = useErrorHandler()
 const { getAnalyticsParameters } = useAnalytics()
-const { getResizedImageURL, normalizeURIToHTTP } = useURIParser()
+const { getResizedNormalizedImageURL } = useImageResize()
 const { t: $t, locale } = useI18n()
 const localeString = useLocaleString()
 
@@ -218,7 +218,7 @@ const cartItems = computed<CheckoutItem[]>(() => {
     const bookInfo = {
       name: localeString(bookstoreInfo.name || nftClass.name) || '',
       authorName,
-      coverSrc: getResizedImageURL(normalizeURIToHTTP(nftClass.image), { size: 600 }),
+      coverSrc: getResizedNormalizedImageURL(nftClass.image, { size: 600 }),
     }
 
     const pricingItem = bookstoreInfo.prices.find(p => p.index === product.priceIndex)

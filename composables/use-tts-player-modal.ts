@@ -12,7 +12,7 @@ export function useTTSPlayerModal(options: TTSPlayerOptions) {
   const chapterTitlesBySection = ref<Record<number, string>>({})
   const startIndex = ref(0)
   const bookInfo = useBookInfo({ nftClassId: options.nftClassId })
-  const { getResizedImageURL } = useURIParser()
+  const { getResizedImageURL } = useImageResize()
   const bookCoverSrc = computed(() =>
     getResizedImageURL(bookInfo.coverSrc.value, { size: 300 }),
   )
