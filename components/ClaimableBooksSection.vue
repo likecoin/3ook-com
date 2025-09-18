@@ -17,6 +17,7 @@
           :class="[
             'flex',
             'justify-between',
+            'items-center',
             'gap-4',
             'w-full',
             'max-w-[1440px]',
