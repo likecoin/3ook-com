@@ -549,10 +549,7 @@ const canonicalURL = computed(() => {
 })
 
 const structuredData = computed(() => {
-  return generateBookStructuredData({
-    canonicalURL: canonicalURL.value,
-    image: bookInfo.coverSrc.value,
-  })
+  return generateBookStructuredData({ canonicalURL: canonicalURL.value })
 })
 
 const meta = [

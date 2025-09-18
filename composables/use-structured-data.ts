@@ -99,13 +99,7 @@ export function useStructuredData(
     return meta
   }
 
-  function generateBookStructuredData({
-    canonicalURL,
-    image, // TODO: we need image because normalizeURIToHTTP with useRuntimeConfig() is broken in this context
-  }: {
-    canonicalURL: string
-    image?: string
-  }) {
+  function generateBookStructuredData({ canonicalURL }: { canonicalURL: string }) {
     const nftClassIdValue = toValue(nftClassId)
     if (bookInfo.isHidden.value) {
       return []
@@ -115,6 +109,7 @@ export function useStructuredData(
 
     const name = bookInfo.name.value
     const description = bookInfo.description.value
+    const image = bookInfo.coverSrc.value
     const authorName = bookInfo.authorName.value
     const publisherName = bookInfo.publisherName.value
     const datePublished = bookInfo.formattedPublishedDate.value
