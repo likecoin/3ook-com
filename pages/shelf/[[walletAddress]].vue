@@ -252,6 +252,6 @@ function handleBookshelfItemDownload({
 async function handleBookClaim(nftClassId: string) {
   useLogEvent('shelf_claim_free_book', { nft_class_id: nftClassId })
   await claimFreeBook(nftClassId)
-  await bookshelfStore.fetchItems({ walletAddress: walletAddress.value, isRefresh: true })
+  await bookshelfStore.fetchItems({ walletAddress: walletAddress.value as string, isRefresh: true })
 }
 </script>
