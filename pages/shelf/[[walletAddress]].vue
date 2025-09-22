@@ -165,9 +165,16 @@ const shelfOwnerWalletAddress = computed(() => {
   return shelfOwner.value?.evmWallet || walletAddress.value
 })
 
+const totalItemsCount = computed(() => {
+  return claimableFreeBooksCount.value + itemsCount.value
+})
+
 const isEmpty = computed(() => {
   return (
-    itemsCount.value === 0 && claimableFreeBooksCount.value === 0 && !bookshelfStore.isFetching && bookshelfStore.hasFetched && !isLoadingClaimableFreeBooks
+    totalItemsCount.value === 0
+    && !bookshelfStore.isFetching
+    && bookshelfStore.hasFetched
+    && !isLoadingClaimableFreeBooks
   )
 })
 
@@ -190,7 +197,9 @@ const { gridClasses, getGridItemClassesByIndex, columnMax } = usePaginatedGrid({
 
 onMounted(async () => {
   if (walletAddress.value) {
-    await fetchClaimableFreeBooks()
+    if (isMyBookshelf.value) {
+      await fetchClaimableFreeBooks()
+    }
     await bookshelfStore.fetchItems({ walletAddress: walletAddress.value })
   }
 })
@@ -201,7 +210,9 @@ watch(
     bookshelfStore.reset()
     resetClaimableBooks()
     if (value) {
-      await fetchClaimableFreeBooks()
+      if (isMyBookshelf.value) {
+        await fetchClaimableFreeBooks()
+      }
       await bookshelfStore.fetchItems({ walletAddress: value, isRefresh: true })
     }
   },
