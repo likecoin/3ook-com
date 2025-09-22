@@ -33,7 +33,7 @@ export function useClaimableBooks() {
       const response = await likeCoinSessionAPI.claimFreeBook(nftClassId)
 
       await navigateTo(localeRoute({
-        name: 'store-claim',
+        name: 'claim-page',
         query: {
           cart_id: response.cartId,
           payment_id: response.paymentId,
