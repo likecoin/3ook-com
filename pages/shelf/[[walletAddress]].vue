@@ -34,11 +34,6 @@
       </div>
     </header>
 
-    <ClaimableBooksSection
-      v-if="isMyBookshelf && walletAddress && hasLoggedIn"
-      class="w-full"
-    />
-
     <main class="flex flex-col items-center grow w-full max-w-[1440px] mx-auto px-4 laptop:px-12 pb-16">
       <UCard
         v-if="!walletAddress && !hasLoggedIn"
@@ -51,7 +46,7 @@
         </template>
       </UCard>
       <div
-        v-else-if="itemsCount === 0 && !bookshelfStore.isFetching && bookshelfStore.hasFetched"
+        v-else-if="isEmpty"
         class="flex flex-col items-center m-auto py-12"
       >
         <UIcon
@@ -81,6 +76,18 @@
           'mt-4',
         ]"
       >
+        <template v-if="isMyBookshelf">
+          <BookshelfItem
+            v-for="(nftClassId, index) in claimableNFTClassIds"
+            :id="nftClassId"
+            :key="nftClassId"
+            :class="getGridItemClassesByIndex(index)"
+            :nft-class-id="nftClassId"
+            :lazy="index >= columnMax"
+            :is-claimable="true"
+            @claim="handleBookClaim"
+          />
+        </template>
         <BookshelfItem
           v-for="(item, index) in bookshelfStore.items"
           :id="item.nftClassId"
@@ -115,6 +122,14 @@ const localeRoute = useLocaleRoute()
 const getRouteParam = useRouteParam()
 const bookshelfStore = useBookshelfStore()
 const metadataStore = useMetadataStore()
+const {
+  isLoading: isLoadingClaimableFreeBooks,
+  nftClassIds: claimableNFTClassIds,
+  count: claimableFreeBooksCount,
+  fetchClaimableFreeBooks,
+  claimFreeBook,
+  reset: resetClaimableBooks,
+} = useClaimableBooks()
 const infiniteScrollDetectorElement = useTemplateRef<HTMLLIElement>('infiniteScrollDetector')
 const shouldLoadMore = useElementVisibility(infiniteScrollDetectorElement)
 
@@ -150,6 +165,12 @@ const shelfOwnerWalletAddress = computed(() => {
   return shelfOwner.value?.evmWallet || walletAddress.value
 })
 
+const isEmpty = computed(() => {
+  return (
+    itemsCount.value === 0 && claimableFreeBooksCount.value === 0 && !bookshelfStore.isFetching && bookshelfStore.hasFetched && !isLoadingClaimableFreeBooks
+  )
+})
+
 useHead(() => ({
   title: isMyBookshelf.value
     ? $t('shelf_page_title')
@@ -169,6 +190,7 @@ const { gridClasses, getGridItemClassesByIndex, columnMax } = usePaginatedGrid({
 
 onMounted(async () => {
   if (walletAddress.value) {
+    await fetchClaimableFreeBooks()
     await bookshelfStore.fetchItems({ walletAddress: walletAddress.value })
   }
 })
@@ -177,7 +199,9 @@ watch(
   walletAddress,
   async (value) => {
     bookshelfStore.reset()
+    resetClaimableBooks()
     if (value) {
+      await fetchClaimableFreeBooks()
       await bookshelfStore.fetchItems({ walletAddress: value, isRefresh: true })
     }
   },
@@ -223,5 +247,11 @@ function handleBookshelfItemDownload({
     content_type: type,
     nft_class_id: nftClassId,
   })
+}
+
+async function handleBookClaim(nftClassId: string) {
+  useLogEvent('shelf_claim_free_book', { nft_class_id: nftClassId })
+  await claimFreeBook(nftClassId)
+  await bookshelfStore.fetchItems({ walletAddress: walletAddress.value, isRefresh: true })
 }
 </script>

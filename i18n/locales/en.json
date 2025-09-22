@@ -63,7 +63,7 @@
   "app_header_store": "3ookStore",
   "app_title": "3ook.com",
   "bookshelf_claim_book": "Get Book",
-  "bookshelf_claimable_books_title": "Books Available to Claim",
+  "bookshelf_claimable_label": "Claimable",
   "bookshelf_download_file": "Download {type}",
   "bookshelf_file_downloaded": "{filename} Download completed!",
   "bookshelf_file_downloading": "Downloading {filename} ...",

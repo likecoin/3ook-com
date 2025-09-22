@@ -7,6 +7,7 @@
       :src="bookCoverSrc"
       :alt="bookInfo.name.value"
       :lazy="props.lazy"
+      :is-claimable="isClaimable"
       @click="handleCoverClick"
     />
 

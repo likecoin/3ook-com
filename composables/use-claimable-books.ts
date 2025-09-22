@@ -51,11 +51,17 @@ export function useClaimableBooks() {
     }
   }
 
+  function reset() {
+    nftClassIds.value = []
+    isLoading.value = false
+  }
+
   return {
     nftClassIds: readonly(nftClassIds),
     isLoading: readonly(isLoading),
     count: readonly(count),
     fetchClaimableFreeBooks,
     claimFreeBook,
+    reset,
   }
 }

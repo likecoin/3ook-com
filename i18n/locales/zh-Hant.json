@@ -63,7 +63,7 @@
   "app_header_store": "書店",
   "app_title": "3ook.com",
   "bookshelf_claim_book": "領取書籍",
-  "bookshelf_claimable_books_title": "可領取的書籍",
+  "bookshelf_claimable_label": "可領取",
   "bookshelf_download_file": "下載 {type}",
   "bookshelf_file_downloaded": "{filename} 下載完成！",
   "bookshelf_file_downloading": "正在下載 {filename} ...",

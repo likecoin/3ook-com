@@ -12,7 +12,7 @@
         'group',
         {
           'cursor-pointer': isClickable,
-          'relative': isShowPlaceholder || (hasShadow && hasLoaded),
+          'relative': isShowPlaceholder || (hasShadow && hasLoaded) || isClaimable,
           'w-full h-full': isShowPlaceholder,
         },
       ]"
@@ -45,9 +45,6 @@
           !isShowPlaceholder ? 'opacity-100' : 'opacity-0',
           { 'blur-xl': !hasLoaded },
           { 'pointer-events-none': isShowPlaceholder },
-          'transition-all',
-          'duration-300',
-          'ease-out',
         ]"
         :src="props.src"
         :alt="props.alt"
@@ -79,6 +76,40 @@
           ]"
           name="i-material-symbols-book-2-outline-rounded"
           size="100"
+        />
+      </div>
+
+      <div
+        v-if="isClaimable"
+        :class="[
+          'pointer-events-none',
+          'absolute',
+          'inset-0',
+          'overflow-hidden',
+          ...(isClickable ? coverHoverScaleAnimationClass : []),
+        ]"
+      >
+        <div
+          :class="[
+            'absolute',
+            'top-0',
+            'right-[-50%]',
+            'translate-x-[-36px]',
+            'translate-y-[18px]',
+            'rotate-45',
+            'origin-center',
+            'w-full',
+            'p-2',
+            'text-white',
+            'text-center',
+            'text-sm',
+            'font-bold',
+            'bg-theme-500',
+            'outline-4',
+            'outline-[#50E3C2]',
+            'shadow-2xl',
+          ]"
+          v-text="$t('bookshelf_claimable_label')"
         />
       </div>
     </component>
@@ -115,6 +146,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  isClaimable: {
+    type: Boolean,
+    default: false,
+  },
 })
 const emit = defineEmits(['click'])
 
@@ -127,6 +162,14 @@ const borderRadiusClass = 'rounded-lg'
 
 const isClickable = computed(() => !!props.to || !!getCurrentInstance()?.vnode.props?.onClick)
 
+const coverHoverScaleAnimationClass = [
+  'group-hover:scale-105',
+  'transition-all',
+  'origin-bottom',
+  'duration-300',
+  'ease-out',
+]
+
 const coverClass = computed(() => {
   const classes = [
     'border',
@@ -137,11 +180,7 @@ const coverClass = computed(() => {
   if (isClickable.value) {
     classes.push(
       'group-hover:shadow-xl',
-      'group-hover:scale-105',
-      'group-hover:transition-all',
-      'group-hover:duration-200',
-      'group-hover:ease-in-out',
-      'origin-bottom',
+      ...coverHoverScaleAnimationClass,
     )
   }
   return classes
