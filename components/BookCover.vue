@@ -79,6 +79,7 @@
         />
       </div>
 
+      <!-- Claimable ribbon -->
       <div
         v-if="isClaimable"
         :class="[
@@ -87,27 +88,27 @@
           'inset-0',
           'overflow-hidden',
           ...(isClickable ? coverHoverScaleAnimationClass : []),
+          'drop-shadow-md',
         ]"
       >
         <div
           :class="[
             'absolute',
             'top-0',
-            'right-[-50%]',
-            'translate-x-[-36px]',
-            'translate-y-[18px]',
+            'right-0',
+            'translate-x-1/2',
+            '-translate-y-1/2',
             'rotate-45',
             'origin-center',
             'w-full',
-            'p-2',
-            'text-white',
+            'mt-8',
+            'mr-8',
+            'p-1',
+            'text-primary',
             'text-center',
             'text-sm',
             'font-bold',
-            'bg-theme-500',
-            'outline-4',
-            'outline-[#50E3C2]',
-            'shadow-2xl',
+            'bg-[#50E3C2]',
           ]"
           v-text="$t('bookshelf_claimable_label')"
         />
