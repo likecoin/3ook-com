@@ -25,6 +25,20 @@ export default defineAppConfig({
         },
       ],
     },
+    checkbox: {
+      slots: {
+        base: 'ring-2 ring-theme-500',
+      },
+      variants: {
+        disabled: {
+          true: {
+            base: 'opacity-30',
+            label: 'opacity-30',
+            description: 'opacity-30',
+          },
+        },
+      },
+    },
     icons: {
       close: 'i-material-symbols-close-rounded',
     },

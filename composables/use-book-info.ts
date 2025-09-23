@@ -1,15 +1,14 @@
 export default function (
   { nftClassId }: { nftClassId: string | Ref<string> | ComputedRef<string> },
 ) {
-  const { user } = useUserSession()
   const { t: $t } = useI18n()
   const localeRoute = useLocaleRoute()
   const localeString = useLocaleString()
-  const nftStore = useNFTStore()
   const metadataStore = useMetadataStore()
   const bookstoreStore = useBookstoreStore()
   const bookInfo = useEVMBookInfo({ nftClassId })
   const bookshelfStore = useBookshelfStore()
+  const { normalizeURIToHTTP } = useURIParser()
 
   const bookstoreInfo = computed(() => {
     return bookstoreStore.getBookstoreInfoByNFTClassId(toValue(nftClassId))
@@ -193,14 +192,7 @@ export default function (
   })
 
   const userOwnedNFTIds = computed(() => {
-    // TODO: Merge bookshelfStore.getNFTsByNFTClassId and nftStore.getNFTIdsByNFTClassIdAndOwnerWalletAddress to avoid confusion
-    // Find the NFT Ids from the user bookshelf by the NFT class Id
-    let nftIds = bookshelfStore.getNFTsByNFTClassId(toValue(nftClassId)).map(nft => nft.token_id)
-    if (!nftIds.length) {
-      // Find the NFT Ids owned by the user by the NFT class Id
-      const userWallet = user.value?.evmWallet
-      nftIds = nftStore.getNFTIdsByNFTClassIdAndOwnerWalletAddress(toValue(nftClassId), userWallet || '')
-    }
+    const nftIds = bookshelfStore.getNFTsByNFTClassId(toValue(nftClassId)).map(nft => nft.token_id)
     return nftIds
   })
 

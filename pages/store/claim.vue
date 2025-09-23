@@ -78,6 +78,7 @@ const { loggedIn: hasLoggedIn, user } = useUserSession()
 const accountStore = useAccountStore()
 const nftStore = useNFTStore()
 const bookshelfStore = useBookshelfStore()
+const bookListStore = useBookListStore()
 const { errorModal, handleError } = useErrorHandler()
 
 const cartId = computed(() => getRouteQuery('cart_id'))
@@ -200,6 +201,10 @@ onMounted(async () => {
       fatal: true,
     })
   }
+
+  // Check and remove items from book list if they match the cart data
+  checkAndRemoveBookListItems()
+
   isLoading.value = false
   if (hasLoggedIn.value) {
     startClaimFlow()
@@ -212,6 +217,7 @@ const status = computed(() => cartData.value?.status)
 const isClaimed = ref(!!status.value && ['completed', 'done', 'pending', 'pendingNFT'].includes(status.value))
 
 const bookInfo = useBookInfo({ nftClassId })
+const { getResizedImageURL } = useImageResize()
 const bookCoverSrc = computed(() => getResizedImageURL(bookInfo.coverSrc.value, { size: 400 }))
 
 // TODO: Handle multiple items in the cart
@@ -237,12 +243,11 @@ const canStartReading = computed(() => !!receivedNFTId.value)
 
 async function checkItemsDeliveryThroughIndexer() {
   // TODO: Handle multiple items
-  await Promise.all([
-    // Check if the NFT class is already on the bookshelf
-    bookshelfStore.fetchItems({ isRefresh: true }),
-    // Check if the NFT class owners include the user
-    nftStore.fetchNFTClassAggregatedMetadataById(nftClassId.value as string, { include: ['owner'], nocache: true }),
-  ])
+  // Check if the NFT class is already on the bookshelf
+  await bookshelfStore.fetchItems({
+    isRefresh: true,
+    walletAddress: claimingWallet.value as string,
+  })
 }
 
 const isCheckingItemsDelivery = ref(false)
@@ -291,7 +296,7 @@ async function waitForItemsDelivery({ timeout = 30000, interval = 3000 } = {}) {
       await sleep(interval)
       if ((Date.now() - start) > timeout) {
         try {
-          await bookshelfStore.fetchNFTByNFTClassIdAndOwnerWalletAddressThroughContract(nftClassId.value as string, user.value?.evmWallet as string)
+          await bookshelfStore.fetchNFTByNFTClassIdAndOwnerWalletAddressThroughContract(nftClassId.value as string, claimingWallet.value as string)
         }
         catch (error) {
           console.error('Error fetching NFT by class ID and owner wallet address:', error)
@@ -322,16 +327,16 @@ async function waitForItemsDelivery({ timeout = 30000, interval = 3000 } = {}) {
 
 const isClaiming = ref(false)
 
+const claimingWallet = computed(() => user.value?.evmWallet)
+
 async function startClaimingItems() {
   if (isClaiming.value) return
 
   try {
     isClaiming.value = true
-
     startLoadingLabelAnimation()
 
-    const claimingWallet = user.value?.evmWallet
-    if (!claimingWallet) {
+    if (!claimingWallet.value) {
       throw createError({
         statusCode: 401,
         message: $t('claim_page_no_wallet_connected'),
@@ -343,7 +348,7 @@ async function startClaimingItems() {
       cartId: cartId.value,
       token: claimingToken.value,
       paymentId: paymentId.value,
-      wallet: claimingWallet,
+      wallet: claimingWallet.value,
     })
     if (data.allItemsAutoClaimed) {
       allItemsDelivered.value = true
@@ -446,6 +451,24 @@ const readerRoute = computed(() => bookInfo.getReaderRoute.value({
   nftId: receivedNFTId.value,
   shouldCustomMessageDisabled: hasBypassedIndexer.value,
 }))
+
+async function checkAndRemoveBookListItems() {
+  try {
+    const cartItems = cartData.value?.classIdsWithPrice || []
+    const removeItemPromises: Promise<void>[] = []
+    for (const item of cartItems) {
+      removeItemPromises.push(
+        bookListStore.checkItemExists(item.classId, item.priceIndex).then((isExistingItem) => {
+          if (isExistingItem) return bookListStore.removeItem(item.classId, item.priceIndex)
+        }),
+      )
+    }
+    await Promise.all(removeItemPromises)
+  }
+  catch (error) {
+    console.error('Error processing checkout book list:', error)
+  }
+}
 
 function handleStartReadingButtonClick() {
   if (!readerRoute.value) {

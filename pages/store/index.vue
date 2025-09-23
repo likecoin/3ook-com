@@ -289,14 +289,14 @@ useHead(() => {
 
 watch(localizedTagId, async (value) => {
   if (value) {
-    await fetchItems({ isRefresh: true })
+    await fetchItems({ lazy: true })
   }
 })
 
 // Watch for changes in search parameters
 watch([queryAuthorName, queryPublisherName], async () => {
   if (isSearchMode.value) {
-    await fetchItems({ isRefresh: true })
+    await fetchItems({ lazy: true })
   }
 })
 
@@ -331,7 +331,10 @@ async function fetchTags() {
   }
 }
 
-async function fetchItems({ isRefresh = false } = {}) {
+async function fetchItems({ lazy = false, isRefresh = false } = {}) {
+  if (lazy && products.value.items.length > 0) {
+    return
+  }
   if (isSearchMode.value) {
     try {
       const [type, searchTerm] = searchQuery.value.split(':', 2)
@@ -373,7 +376,7 @@ async function fetchItems({ isRefresh = false } = {}) {
 onMounted(async () => {
   if (isSearchMode.value) {
     // In search mode, skip tag fetching and just fetch search results
-    await fetchItems({ isRefresh: true })
+    await fetchItems({ lazy: true })
     return
   }
 
@@ -392,7 +395,7 @@ onMounted(async () => {
 
   await Promise.all([
     fetchTagPromise,
-    fetchItems({ isRefresh: true }),
+    fetchItems({ lazy: true }),
   ])
 })
 
@@ -400,7 +403,7 @@ watch(
   tag,
   async (tag) => {
     if (tag) {
-      await fetchItems({ isRefresh: true })
+      await fetchItems({ lazy: true })
     }
   },
 )

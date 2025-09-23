@@ -108,6 +108,7 @@ const metadataStore = useMetadataStore()
 const bookInfo = useBookInfo({ nftClassId: props.nftClassId })
 const { downloadBookFile } = useBookDownload()
 const getContentTypeLabel = useContentTypeLabel()
+const { getResizedImageURL } = useImageResize()
 
 const bookCoverSrc = computed(() => getResizedImageURL(bookInfo.coverSrc.value, { size: 300 }))
 

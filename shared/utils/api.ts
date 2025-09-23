@@ -58,7 +58,6 @@ export const likeCoinNFTClassAggregatedMetadataOptions = [
   'class_chain',
   'class_api',
   'iscn',
-  'owner',
   'purchase',
   'bookstore',
 ] as const

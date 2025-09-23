@@ -35,3 +35,9 @@ export interface FetchBookstoreCMSTagsResponseData {
   records: Array<BookstoreCMSTag>
   offset?: string
 }
+
+export interface BookListItem {
+  nftClassId: string
+  priceIndex: number
+  timestamp?: number
+}

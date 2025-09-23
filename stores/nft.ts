@@ -2,15 +2,11 @@ export const useNFTStore = defineStore('nft', () => {
   const bookstoreStore = useBookstoreStore()
 
   const nftClassByIdMap = ref<Record<string, Partial<NFTClass>>>({})
-  const nftClassOwnersNFTIdMapByNFTClassIdMap = ref<Record<string, Record<string, NFTIdList>>>({})
 
   const getNFTClassById = computed(() => (id: string) => nftClassByIdMap.value[id])
   const getNFTClassMetadataById = computed(() => (id: string) => {
     const nftClass = getNFTClassById.value(id)
     return nftClass?.metadata
-  })
-  const getNFTIdsByNFTClassIdAndOwnerWalletAddress = computed(() => (nftClassId: string, ownerWalletAddress: string) => {
-    return nftClassOwnersNFTIdMapByNFTClassIdMap.value[nftClassId]?.[ownerWalletAddress] || []
   })
 
   function addNFTClass(nftClass: Partial<NFTClass>) {
@@ -40,9 +36,6 @@ export const useNFTStore = defineStore('nft', () => {
     if (data.classData) {
       addNFTClassMetadata(nftClassId, data.classData as NFTClassMetadata)
     }
-    if (data.ownerInfo) {
-      nftClassOwnersNFTIdMapByNFTClassIdMap.value[nftClassId] = data.ownerInfo
-    }
     if (data.bookstoreInfo !== undefined) {
       bookstoreStore.addBookstoreInfoByNFTClassId(nftClassId, data.bookstoreInfo)
     }
@@ -52,9 +45,6 @@ export const useNFTStore = defineStore('nft', () => {
     const excludedOptions: LikeCoinNFTClassAggregatedMetadataOptionKey[] = exclude
     if (getNFTClassMetadataById.value(nftClassId)) {
       excludedOptions.push('class_chain')
-    }
-    if (nftClassOwnersNFTIdMapByNFTClassIdMap.value[nftClassId]) {
-      excludedOptions.push('owner')
     }
     if (bookstoreStore.getBookstoreInfoByNFTClassId(nftClassId)) {
       excludedOptions.push('bookstore')
@@ -77,11 +67,9 @@ export const useNFTStore = defineStore('nft', () => {
 
   return {
     nftClassByIdMap,
-    nftClassOwnersNFTIdMapByNFTClassIdMap,
 
     getNFTClassById,
     getNFTClassMetadataById,
-    getNFTIdsByNFTClassIdAndOwnerWalletAddress,
 
     addNFTClass,
     addNFTClasses,

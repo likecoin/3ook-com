@@ -46,3 +46,10 @@ declare interface BookstoreInfo {
   recommendedClassIds?: string[]
   timestamp: number
 }
+
+interface CartItem {
+  nftClassId: string
+  priceIndex: number
+  customPrice?: number
+  quantity?: number
+}

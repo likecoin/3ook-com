@@ -30,10 +30,10 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
     isRefresh: shouldRefresh = false,
     limit = 100,
   }: {
-    walletAddress?: string
+    walletAddress: string
     isRefresh?: boolean
     limit?: number
-  } = {}) {
+  }) {
     const isRefresh = shouldRefresh || (!items.value.length && !hasFetched.value)
     if (!walletAddress || isFetching.value || (!isRefresh && !nextKey.value)) {
       return

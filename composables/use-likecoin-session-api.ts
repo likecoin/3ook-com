@@ -140,19 +140,13 @@ export function useLikeCoinSessionAPI() {
     })
   }
 
-  interface CartItem {
-    nftClassId: string
-    priceIndex: number
-    customPrice?: number
-    quantity?: number
-  }
-
-  function createBookCartPurchase(
+  function createNFTBookCartPurchase(
     items: CartItem[],
     {
       email,
       from = 'liker_land',
       coupon,
+      cancelPage = 'list',
       language,
       referrer,
       utmCampaign,
@@ -166,6 +160,7 @@ export function useLikeCoinSessionAPI() {
     }: {
       email?: string
       coupon?: string
+      cancelPage?: 'list' | 'checkout'
       from?: string
       language?: string
       referrer?: string
@@ -187,12 +182,14 @@ export function useLikeCoinSessionAPI() {
       body: {
         email,
         items: items.map(item => ({
-          classId: item.nftClassId,
+          // NOTE: The API only supports lowercase NFT class IDs
+          classId: item.nftClassId.toLowerCase(),
           priceIndex: item.priceIndex,
           customPriceInDecimal: item.customPrice !== undefined ? Math.floor(item.customPrice * 100) : undefined,
           quantity: item.quantity,
         })),
         coupon,
+        cancelPage,
         language,
         referrer,
         utmCampaign,
@@ -350,7 +347,7 @@ export function useLikeCoinSessionAPI() {
 
   return {
     createNFTBookPurchase,
-    createBookCartPurchase,
+    createNFTBookCartPurchase,
     fetchCartStatusById,
     claimCartById,
     fetchLikerPlusCheckoutLink,

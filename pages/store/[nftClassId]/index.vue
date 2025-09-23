@@ -249,14 +249,6 @@
               </ul>
               <footer class="flex flex-col mt-6 gap-3">
                 <UButton
-                  class="hidden cursor-pointer"
-                  :label="$t('product_page_add_to_cart_button_label')"
-                  size="xl"
-                  :disabled="isSelectedPricingItemSoldOut"
-                  block
-                  @click="handleAddToCartButtonClick"
-                />
-                <UButton
                   v-bind="checkoutButtonProps"
                   class="cursor-pointer"
                   size="xl"
@@ -277,36 +269,51 @@
               </footer>
             </div>
 
-            <div class="hidden mt-6">
+            <div
+              v-if="pricingItems.length"
+              class="flex flex-col gap-4 mt-6"
+            >
+              <UButton
+                class="cursor-pointer"
+                :label="isInBookList ? $t('product_page_remove_from_book_list_button_label') : $t('product_page_add_to_book_list_button_label')"
+                variant="outline"
+                color="primary"
+                size="xl"
+                :leading-icon="isInBookList ? 'i-material-symbols-favorite-rounded' : 'i-material-symbols-favorite-outline-rounded'"
+                :loading="isCheckingBookList || isUpdatingBookList"
+                block
+                @click="handleBookListButtonClickDebounced"
+              />
+
               <GiftButton
-                class="w-full"
+                class="hidden w-full"
                 :label="$t('product_page_gift_button_label')"
                 @click="handleGiftButtonClick"
               />
             </div>
-          </template>
 
-          <ul class="flex justify-center items-center gap-2">
-            <li
-              v-for="button in socialButtons"
-              :key="button.icon"
-            >
-              <UTooltip
-                :delay-duration="0"
-                :text="button.label"
+            <ul class="flex justify-center items-center gap-2">
+              <li
+                v-for="button in socialButtons"
+                :key="button.icon"
               >
-                <UButton
-                  color="neutral"
-                  variant="outline"
-                  size="xs"
-                  :icon="button.icon"
-                  :disabled="!button.isEnabled"
-                  :ui="{ base: 'p-2 rounded-full' }"
-                  @click="handleSocialButtonClick(button.key)"
-                />
-              </UTooltip>
-            </li>
-          </ul>
+                <UTooltip
+                  :delay-duration="0"
+                  :text="button.label"
+                >
+                  <UButton
+                    color="neutral"
+                    variant="outline"
+                    size="xs"
+                    :icon="button.icon"
+                    :disabled="!button.isEnabled"
+                    :ui="{ base: 'p-2 rounded-full' }"
+                    @click="handleSocialButtonClick(button.key)"
+                  />
+                </UTooltip>
+              </li>
+            </ul>
+          </template>
         </div>
       </div>
     </section>
@@ -466,7 +473,7 @@ const getRouteQuery = useRouteQuery()
 const { t: $t, locale } = useI18n()
 const toast = useToast()
 const wipModal = useWIPModal()
-const formatPrice = useFormatPrice()
+const { formatPrice } = useCurrency()
 const { loggedIn: hasLoggedIn, user } = useUserSession()
 const accountStore = useAccountStore()
 const nftStore = useNFTStore()
@@ -481,6 +488,7 @@ const {
 } = useSubscription()
 
 const metadataStore = useMetadataStore()
+const bookListStore = useBookListStore()
 const { handleError } = useErrorHandler()
 const { getAnalyticsParameters } = useAnalytics()
 
@@ -530,9 +538,13 @@ await callOnce(async () => {
 })
 
 const authorStore = useAuthorStore()
+const { getResizedImageURL } = useImageResize()
 const bookCoverSrc = computed(() => getResizedImageURL(bookInfo.coverSrc.value, { size: 600 }))
 
 const selectedPricingItemIndex = ref(Number(getRouteQuery('price_index') || 0))
+const isInBookList = ref(false)
+const isCheckingBookList = ref(false)
+const isUpdatingBookList = ref(false)
 
 const ogTitle = computed(() => {
   const title = bookInfo.name.value
@@ -548,10 +560,7 @@ const canonicalURL = computed(() => {
 })
 
 const structuredData = computed(() => {
-  return generateBookStructuredData({
-    canonicalURL: canonicalURL.value,
-    image: bookInfo.coverSrc.value,
-  })
+  return generateBookStructuredData({ canonicalURL: canonicalURL.value })
 })
 
 const meta = [
@@ -636,9 +645,39 @@ const selectedPricingItem = computed(() => {
 
 const bookName = computed(() => bookInfo.name.value)
 
+async function checkBookListStatus() {
+  if (!hasLoggedIn.value) {
+    isInBookList.value = false
+    return
+  }
+
+  if (isCheckingBookList.value) return
+
+  isCheckingBookList.value = true
+  try {
+    const priceIndex = selectedPricingItem.value?.index || 0
+    isInBookList.value = await bookListStore.checkItemExists(
+      nftClassId.value,
+      priceIndex,
+    )
+  }
+  catch (error) {
+    // Silent error
+    console.error(error)
+  }
+  finally {
+    isCheckingBookList.value = false
+  }
+}
+
+const checkBookListStatusDebounced = useDebounceFn(checkBookListStatus, 100)
+
 function handlePricingItemClick(index: number) {
   selectedPricingItemIndex.value = index
 }
+
+// Watch for login status and selected pricing item index changes
+watch([hasLoggedIn, selectedPricingItemIndex], checkBookListStatusDebounced)
 
 const socialButtons = computed(() => [
   { key: 'copy-links', label: $t('share_button_hint_copy_link'), icon: 'i-material-symbols-link-rounded', isEnabled: true },
@@ -728,6 +767,8 @@ onMounted(() => {
   if (selectedPricingItemIndex) {
     handlePurchaseButtonClick()
   }
+
+  checkBookListStatus()
 })
 
 async function handleSocialButtonClick(key: string) {
@@ -768,13 +809,78 @@ async function handleSocialButtonClick(key: string) {
   }
 }
 
-function handleAddToCartButtonClick() {
-  useLogEvent('add_to_cart', formattedLogPayload.value)
-  // TODO: Implement add to cart functionality
-  wipModal.open({
-    title: $t('product_page_add_to_cart_button_label'),
-  })
+async function handleBookListButtonClick() {
+  if (!hasLoggedIn.value) {
+    await accountStore.login()
+    if (!hasLoggedIn.value) return
+  }
+
+  if (isUpdatingBookList.value) {
+    return // Prevent multiple simultaneous calls
+  }
+
+  isUpdatingBookList.value = true
+
+  if (isInBookList.value) {
+    // Remove from book list
+    useLogEvent('remove_from_cart', formattedLogPayload.value)
+    try {
+      await bookListStore.removeItem(
+        nftClassId.value,
+        selectedPricingItem.value?.index || 0,
+      )
+      isInBookList.value = false
+      toast.add({
+        title: $t('book_list_item_removed_toast_description'),
+        description: bookInfo.name.value,
+        icon: 'i-material-symbols-heart-broken',
+        color: 'secondary',
+      })
+    }
+    catch (error) {
+      await handleError(error, {
+        title: $t('error_book_list_remove'),
+        logPrefix: 'product_page_book_list_remove',
+      })
+    }
+  }
+  else {
+    // Add to book list
+    useLogEvent('add_to_cart', formattedLogPayload.value)
+    try {
+      await bookListStore.addItem(
+        nftClassId.value,
+        selectedPricingItem.value?.index || 0,
+      )
+      isInBookList.value = true
+      toast.add({
+        title: $t('book_list_item_added_toast_description'),
+        description: bookInfo.name.value,
+        icon: 'i-material-symbols-shopping-bag',
+        color: 'success',
+        actions: [
+          {
+            label: $t('book_list_added_toast_view_button_label'),
+            variant: 'outline',
+            onClick: () => {
+              navigateTo(localeRoute({ name: 'list' }))
+            },
+          },
+        ],
+      })
+    }
+    catch (error) {
+      await handleError(error, {
+        title: $t('error_book_list_add'),
+        logPrefix: 'product_page_book_list_add',
+      })
+    }
+  }
+
+  isUpdatingBookList.value = false
 }
+
+const handleBookListButtonClickDebounced = useDebounceFn(handleBookListButtonClick, 300)
 
 const isPurchasing = ref(false)
 const isReadBookDrawerOpen = ref(false)
