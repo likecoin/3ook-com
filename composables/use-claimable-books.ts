@@ -43,7 +43,23 @@ export function useClaimableBooks() {
       }))
     }
     catch (error) {
-      await handleError(error)
+      await handleError(error, {
+        customHandlerMap: {
+          'User email not set': {
+            description: $t('error_claim_free_book_email_not_set'),
+            actions: [
+              {
+                label: $t('contact_cs'),
+                onClick: async () => {
+                  if (window.Intercom) {
+                    window.Intercom('show')
+                  }
+                },
+              },
+            ],
+          },
+        },
+      })
     }
     finally {
       blockingModal.close()
