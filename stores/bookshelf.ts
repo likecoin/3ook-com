@@ -1,4 +1,5 @@
 export const useBookshelfStore = defineStore('bookshelf', () => {
+  const { loggedIn: hasLoggedIn } = useUserSession()
   const nftStore = useNFTStore()
   const likeNFTClassContract = useLikeNFTClassContract()
 
@@ -101,6 +102,13 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
     nftByNFTClassIds.value = {}
     nextKey.value = undefined
   }
+
+  watch(hasLoggedIn, (value, oldValue) => {
+    // NOTE: Reset the store when user logs out
+    if (oldValue && !value) {
+      reset()
+    }
+  })
 
   return {
     isFetching,
