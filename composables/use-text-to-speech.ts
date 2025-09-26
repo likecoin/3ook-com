@@ -3,6 +3,7 @@ import { useDebounceFn, isIOS, useStorage } from '@vueuse/core'
 interface TTSOptions {
   nftClassId?: string
   onError?: (error: string | Event | MediaError) => void
+  onAllSegmentsPlayed?: () => void
   checkIfNeededPageChange?: (element: TTSSegment) => boolean
   bookName?: string | Ref<string> | ComputedRef<string>
   bookChapterName?: string | Ref<string> | ComputedRef<string>
@@ -220,6 +221,7 @@ export function useTextToSpeech(options: TTSOptions = {}) {
 
   function playNextElement() {
     if (currentTTSSegmentIndex.value + 1 >= ttsSegments.value.length) {
+      options.onAllSegmentsPlayed?.()
       return
     }
     currentTTSSegmentIndex.value += 1

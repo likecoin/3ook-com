@@ -9,6 +9,7 @@ export interface TTSPlayerModalProps {
   nftClassId?: string
   startIndex?: number
   specificLanguageVoice?: string
+  isAutoClose?: boolean
   onOpen?: () => void
   onClose?: () => void
   onSegmentChange?: (segment: TTSSegment & { index?: number } | undefined) => void

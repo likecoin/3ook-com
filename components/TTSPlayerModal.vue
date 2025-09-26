@@ -222,6 +222,7 @@ const props = withDefaults(
     segments: () => [],
     chapterTitlesBySection: () => ({}),
     startIndex: 0,
+    isAutoClose: false,
   },
 )
 
@@ -279,6 +280,11 @@ const {
       return
     }
     handleError(error)
+  },
+  onAllSegmentsPlayed: () => {
+    if (props.isAutoClose) {
+      handleModalClose()
+    }
   },
 })
 
