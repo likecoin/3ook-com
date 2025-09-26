@@ -102,6 +102,7 @@ function handleSampleClick(sample: TTSSample) {
     startIndex: 0,
     specificLanguageVoice: sample.languageVoice,
     isAutoClose: true,
+    isFullscreen: false,
   })
 }
 </script>

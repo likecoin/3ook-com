@@ -1,8 +1,8 @@
 <template>
   <UModal
-    :fullscreen="true"
+    :fullscreen="isFullscreen"
     :ui="{ content: 'bg-white divide-none' }"
-    @close="handleModalClose"
+    @update:open="handleModalUpdateOpen"
   >
     <template #content>
       <div class="flex flex-col h-full w-full max-w-[670px] mx-auto py-6 px-8 laptop:px-4">
@@ -223,8 +223,15 @@ const props = withDefaults(
     chapterTitlesBySection: () => ({}),
     startIndex: 0,
     isAutoClose: false,
+    isFullscreen: true,
   },
 )
+
+const isDesktopScreen = useDesktopScreen()
+
+const isFullscreen = computed(() => {
+  return props.isFullscreen || !isDesktopScreen.value
+})
 
 const scrollIndicatorClasses = [
   'absolute',
@@ -352,5 +359,11 @@ watch(currentTTSSegment, (newSegment: TTSSegment | undefined) => {
 function handleModalClose() {
   stopTextToSpeech()
   emit('close')
+}
+
+function handleModalUpdateOpen(isOpen: boolean) {
+  if (!isOpen) {
+    handleModalClose()
+  }
 }
 </script>

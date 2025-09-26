@@ -10,6 +10,7 @@ export interface TTSPlayerModalProps {
   startIndex?: number
   specificLanguageVoice?: string
   isAutoClose?: boolean
+  isFullscreen?: boolean
   onOpen?: () => void
   onClose?: () => void
   onSegmentChange?: (segment: TTSSegment & { index?: number } | undefined) => void
