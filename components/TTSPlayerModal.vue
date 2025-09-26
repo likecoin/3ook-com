@@ -30,7 +30,10 @@
         />
 
         <!-- Book Cover -->
-        <div class="flex justify-center mt-4 laptop:mt-8 laptop:mb-10 z-20">
+        <div
+          v-if="bookCoverSrc"
+          class="flex justify-center mt-4 laptop:mt-8 laptop:mb-10 z-20"
+        >
           <BookCover
             class="w-[120px] tablet:w-[150px] shrink-0"
             :src="bookCoverSrc"
@@ -52,13 +55,11 @@
                 v-for="item in visibleSegments"
                 :key="item.id"
                 :ref="(el) => setSegmentRef(el, item.index)"
-
                 v-memo="[currentTTSSegmentIndex === item.index]"
                 :class="getSegmentClass(item.index)"
                 @click="skipToIndex(item.index)"
-              >
-                {{ item.text }}
-              </li>
+                v-text="item.text"
+              />
             </ul>
           </div>
           <div
@@ -118,12 +119,18 @@
 
           <!-- Player Options -->
           <div class="mt-4 flex justify-center items-center gap-4">
-            <BottomSlideover :title="$t('reader_voice_options_button')">
+            <BottomSlideover
+              :title="$t('reader_voice_options_button')"
+              :is-disabled="!!props.specificLanguageVoice"
+            >
               <UButton
+                :class="[
+                  'rounded-full',
+                  { 'pointer-events-none': !!props.specificLanguageVoice },
+                ]"
                 :ui="{ leadingAvatar: 'size-8' }"
                 :avatar="{ src: activeTTSLanguageVoiceAvatar }"
                 :label="activeTTSLanguageVoiceLabel"
-                class="rounded-full"
                 size="lg"
                 variant="soft"
               />
@@ -237,6 +244,7 @@ const scrollContainer = ref<HTMLElement>()
 const {
   ttsLanguageVoiceOptionsWithAvatars,
   ttsLanguageVoice,
+  setTTSLanguageVoice,
   activeTTSLanguageVoiceAvatar,
   activeTTSLanguageVoiceLabel,
   ttsPlaybackRateOptions,
@@ -308,24 +316,23 @@ watch(currentTTSSegmentIndex, async (newIndex: number) => {
 onMounted(() => {
   setTTSSegments(props.segments)
   startTextToSpeech(props.startIndex || 0)
+  setTTSLanguageVoice(props.specificLanguageVoice)
 })
 
 function setSegmentRef(
   el: Element | ComponentPublicInstance | null,
   index: number,
 ) {
-  {
-    const htmlEl = el as ComponentPublicInstance
-    if (htmlEl instanceof HTMLElement) {
-      visibleSegmentElements.value[index] = htmlEl
-    }
+  const htmlEl = el as ComponentPublicInstance
+  if (htmlEl instanceof HTMLElement) {
+    visibleSegmentElements.value[index] = htmlEl
   }
 }
 
 function getSegmentClass(index: number) {
-  const baseClasses = 'inline-block text-sm laptop:text-lg transition-opacity duration-300'
+  const baseClasses = 'inline-block text-sm laptop:text-lg transition-opacity duration-300 cursor-pointer'
   const activeClasses = 'text-gray-700 opacity-100 font-bold'
-  const inactiveClasses = 'opacity-40 text-gray-500'
+  const inactiveClasses = 'opacity-40 text-gray-500 hover:opacity-90'
 
   return `${baseClasses} ${index === currentTTSSegmentIndex.value ? activeClasses : inactiveClasses}`
 }

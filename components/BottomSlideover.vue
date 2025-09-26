@@ -1,5 +1,7 @@
 <template>
+  <slot v-if="isDisabled" />
   <USlideover
+    v-else
     v-bind="props"
     v-model:open="open"
     side="bottom"
@@ -47,6 +49,7 @@
 <script setup lang="ts">
 const props = defineProps<{
   title?: string
+  isDisabled?: boolean
 }>()
 
 const open = defineModel<boolean>('open')

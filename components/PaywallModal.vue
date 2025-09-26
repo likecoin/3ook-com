@@ -113,6 +113,8 @@
             </ul>
           </div>
 
+          <TTSSamplesSection />
+
           <!-- Price Select -->
           <div class="flex flex-col w-full mt-12">
             <div class="flex flex-col gap-4">
@@ -155,9 +157,7 @@
                     v-if="hasYearlyDiscount"
                     class="flex justify-end items-center gap-2 text-sm text-gray-400"
                   >
-                    <p
-                      v-text=" $t('pricing_page_original_price')"
-                    />
+                    <p v-text="$t('pricing_page_original_price')" />
                     <span
                       class="line-through text-gray-400"
                       v-text="`US$${originalYearlyPrice}`"
@@ -217,7 +217,7 @@
                     v-if="hasMonthlyDiscount"
                     class="flex justify-end items-center gap-2 text-sm text-gray-400"
                   >
-                    <p v-text=" $t('pricing_page_original_price')" />
+                    <p v-text="$t('pricing_page_original_price')" />
                     <span
                       class="line-through text-gray-400"
                       v-text="`US$${originalMonthlyPrice}`"

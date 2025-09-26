@@ -3,7 +3,7 @@ import { TTSPlayerModal } from '#components'
 import type { TTSPlayerModalProps } from '~/components/TTSPlayerModal.props'
 
 interface TTSPlayerOptions {
-  nftClassId: string
+  nftClassId: MaybeRef<string>
   onSegmentChange?: (segment: TTSSegment & { index?: number } | undefined) => void
 }
 
@@ -22,7 +22,7 @@ export function useTTSPlayerModal(options: TTSPlayerOptions) {
     bookCoverSrc: bookCoverSrc.value,
     bookAuthorName: bookInfo.authorName.value,
     bookLanguage: bookInfo.inLanguage.value,
-    nftClassId: options.nftClassId,
+    nftClassId: toValue(options.nftClassId),
     segments: ttsSegments.value,
     chapterTitlesBySection: chapterTitlesBySection.value,
     startIndex: startIndex.value,
@@ -46,11 +46,12 @@ export function useTTSPlayerModal(options: TTSPlayerOptions) {
     ttsIndex,
     sectionIndex,
     cfi,
+    ...props
   }: {
     ttsIndex?: number
     sectionIndex?: number
     cfi?: string
-  } = {}) {
+  } & TTSPlayerModalProps = {}) {
     if (ttsIndex !== undefined) {
       ttsPlayerModalProps.value.startIndex = ttsIndex
     }
@@ -77,7 +78,7 @@ export function useTTSPlayerModal(options: TTSPlayerOptions) {
     else {
       ttsPlayerModalProps.value.startIndex = 0
     }
-    modal.open(ttsPlayerModalProps.value)
+    modal.open({ ...ttsPlayerModalProps.value, ...props })
   }
 
   function updateTTSPlayerModalProps(

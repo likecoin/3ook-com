@@ -67,6 +67,12 @@ export function useTTSVoice(options: TTSVoiceOptions = {}) {
 
   const ttsLanguageVoice = useStorage(getTTSConfigKeyWithSuffix(ttsConfigCacheKey.value, 'voice'), getDefaultTTSVoiceByLocale())
 
+  const setTTSLanguageVoice = (languageVoice?: string) => {
+    if (languageVoice) {
+      ttsLanguageVoice.value = languageVoice
+    }
+  }
+
   const activeTTSLanguageVoiceAvatar = computed(() => {
     return getVoiceAvatar(ttsLanguageVoice.value)
   })
@@ -87,8 +93,8 @@ export function useTTSVoice(options: TTSVoiceOptions = {}) {
     }))
   })
 
-  function getVoiceAvatar(voiceValue: string): string {
-    switch (voiceValue) {
+  function getVoiceAvatar(languageVoice: string): string {
+    switch (languageVoice) {
       case 'zh-HK_phoebe':
         return phoebeAvatar
 
@@ -111,5 +117,6 @@ export function useTTSVoice(options: TTSVoiceOptions = {}) {
     ttsLanguageVoiceOptionsWithAvatars,
     ttsLanguageVoiceValues,
     getVoiceAvatar,
+    setTTSLanguageVoice,
   }
 }

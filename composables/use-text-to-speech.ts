@@ -34,6 +34,7 @@ export function useTextToSpeech(options: TTSOptions = {}) {
     activeTTSLanguageVoiceLabel,
     ttsLanguageVoiceOptionsWithAvatars,
     ttsLanguageVoiceValues,
+    setTTSLanguageVoice,
   } = useTTSVoice({ bookLanguage })
 
   // Playback rate options and storage
@@ -177,13 +178,19 @@ export function useTextToSpeech(options: TTSOptions = {}) {
       }
     }
 
-    const [language, ...voiceIdParts] = ttsLanguageVoice.value.split('_')
-    const params = new URLSearchParams({
-      text: element.text,
-      language: language || 'zh-HK',
-      voice_id: voiceIdParts.join('_') || '0',
-    })
-    audio.src = `/api/reader/tts?${params.toString()}`
+    if (element.audioSrc) {
+      audio.src = element.audioSrc
+    }
+    else {
+      const [language, ...voiceIdParts] = ttsLanguageVoice.value.split('_')
+      const params = new URLSearchParams({
+        text: element.text,
+        language: language || 'zh-HK',
+        voice_id: voiceIdParts.join('_') || '0',
+      })
+      audio.src = `/api/reader/tts?${params.toString()}`
+    }
+
     audio.playbackRate = ttsPlaybackRate.value
     audio.setAttribute('data-text', element.text)
 
@@ -368,6 +375,7 @@ export function useTextToSpeech(options: TTSOptions = {}) {
     ttsLanguageVoiceOptionsWithAvatars,
     ttsPlaybackRateOptions,
     ttsPlaybackRate,
+    setTTSLanguageVoice,
     // Player-related properties
     isShowTextToSpeechOptions,
     isTextToSpeechOn,
