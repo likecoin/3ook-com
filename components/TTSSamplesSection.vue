@@ -19,10 +19,21 @@
     <ul class="flex flex-col gap-3 w-full flex-wrap mt-4">
       <li
         v-for="sample in ttsSamples"
+        v-show="!isPlaying || activeTTSSampleId === sample.id"
         :key="sample.id"
+        class="space-y-2"
       >
         <UButton
-          class="w-full justify-start text-left p-4 group focus:ring-2 focus:ring-theme-500 focus:ring-offset-2 rounded-xl cursor-pointer"
+          :class="[
+            'w-full',
+            'justify-start',
+            'p-4',
+            'group',
+            'text-left',
+            { 'ring-[#50E3C2]': activeTTSSampleId === sample.id },
+            'rounded-xl',
+            'cursor-pointer',
+          ]"
           variant="outline"
           size="md"
           :ui="{ base: 'gap-3 bg-white hover:bg-white hover:border-gray-400 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 ease-in-out' }"
@@ -45,7 +56,7 @@
               ]"
             >
               <UIcon
-                name="i-material-symbols-play-arrow-rounded"
+                :name="getPlayButtonIcon(sample.id)"
                 class="text-gray-600 group-hover:text-gray-800 transition-colors duration-200"
                 size="20"
               />
@@ -72,6 +83,26 @@
             >
           </template>
         </UButton>
+
+        <UCard
+          v-if="activeTTSSampleId === sample.id && isPlaying && currentSegmentText"
+          class="text-sm font-medium text-gray-900 rounded-xl"
+        >
+          <div class="relative">
+            <!-- Spacer for text -->
+            <span
+              class="opacity-0 pointer-events-none"
+              v-text="longestSegmentText"
+            />
+            <Transition name="fade">
+              <span
+                :key="`segment-${currentSegmentIndex}`"
+                class="absolute inset-0"
+                v-text="currentSegmentText"
+              />
+            </Transition>
+          </div>
+        </UCard>
       </li>
     </ul>
 
@@ -83,26 +114,47 @@
 </template>
 
 <script setup lang="ts">
-const ttsSamples = useTTSSamples()
-const activeTTSSampleNFTClassId = ref(ttsSamples.value[0]?.nftClassId || 'tts-sample')
-const ttsPlayerModal = useTTSPlayerModal({ nftClassId: activeTTSSampleNFTClassId })
+const { handleError } = useErrorHandler()
+
+const {
+  samples: ttsSamples,
+  activeSampleId: activeTTSSampleId,
+  currentSegmentText,
+  currentSegmentIndex,
+  longestSegmentText,
+  isPlaying,
+  play,
+  stop,
+} = useTTSSamplesPlayer({
+  onError: (error: unknown) => handleError(error),
+  onEnd: () => {
+    useLogEvent('tts_sample_play_complete', { sample: activeTTSSampleId.value })
+  },
+})
+
+function getPlayButtonIcon(sampleId: string): string {
+  return activeTTSSampleId.value === sampleId && isPlaying.value
+    ? 'i-material-symbols-stop-rounded'
+    : 'i-material-symbols-play-arrow-rounded'
+}
+
+async function handlePlay(sample: TTSSample) {
+  useLogEvent('tts_sample_play', { sample: sample.id })
+  play(sample.id)
+}
+
+function handleStop() {
+  useLogEvent('tts_sample_stop', { sample: activeTTSSampleId.value })
+  stop()
+}
 
 function handleSampleClick(sample: TTSSample) {
   useLogEvent('tts_sample_click', { sample: sample.id })
-  activeTTSSampleNFTClassId.value = sample.nftClassId
-  ttsPlayerModal.openPlayer({
-    bookTitle: sample.title,
-    bookAuthorName: '',
-    bookLanguage: sample.language,
-    nftClassId: sample.nftClassId,
-    segments: sample.segments,
-    chapterTitlesBySection: {},
-    ttsIndex: 0,
-    sectionIndex: 0,
-    startIndex: 0,
-    specificLanguageVoice: sample.languageVoice,
-    isAutoClose: true,
-    isFullscreen: false,
-  })
+
+  if (activeTTSSampleId.value === sample.id && isPlaying.value) {
+    handleStop()
+    return
+  }
+  handlePlay(sample)
 }
 </script>

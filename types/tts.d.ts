@@ -10,7 +10,6 @@ declare interface TTSSample {
   id: string
   title: string
   description: string
-  nftClassId: string // Mock NFT Class ID
   segments: TTSSegment[]
   language: string
   languageVoice: string
