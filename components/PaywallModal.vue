@@ -278,6 +278,8 @@ const emit = defineEmits<{
   'open': []
   'close': []
   'subscribe': [payload: {
+    trialPeriodDays?: number
+    mustCollectPaymentMethod?: boolean
     selectedPlan: SubscriptionPlan
     utmCampaign?: string
     utmMedium?: string
@@ -379,6 +381,8 @@ const handleCloseButtonClick = () => {
 function handleSubscribeButtonClick() {
   emit('subscribe', {
     selectedPlan: selectedPlan.value,
+    mustCollectPaymentMethod: props.mustCollectPaymentMethod,
+    trialPeriodDays: props.trialPeriodDays,
     utmCampaign: props.utmCampaign,
     utmMedium: props.utmMedium,
     utmSource: props.utmSource,

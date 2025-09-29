@@ -193,7 +193,7 @@ const props = withDefaults(defineProps<UpsellPlusModalProps>(), {
   isLikerPlus: false,
   likerPlusPeriod: undefined,
   isProcessingSubscription: false,
-  hasFreeTrial: false,
+  trialPeriodDays: 7,
   mustCollectPaymentMethod: false,
   selectedPricingItemIndex: 0,
   utmCampaign: undefined,

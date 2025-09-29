@@ -5,14 +5,14 @@ export interface PaywallModalProps {
   'hasTransition'?: boolean
   'isCloseButtonHidden'?: boolean
   'isProcessingSubscription'?: boolean
-  'hasFreeTrial'?: boolean
+  'trialPeriodDays'?: number
   'mustCollectPaymentMethod'?: boolean
   'utmCampaign'?: string
   'utmMedium'?: string
   'utmSource'?: string
   'onUpdate:modelValue'?: (value: SubscriptionPlan) => void
   'onSubscribe'?: (props: {
-    hasFreeTrial?: boolean
+    trialPeriodDays?: number
     mustCollectPaymentMethod?: boolean
     utmCampaign?: string
     utmMedium?: string

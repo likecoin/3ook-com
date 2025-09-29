@@ -117,6 +117,18 @@ useHead({
   ],
 })
 
+const trialPeriodDays = computed(() => {
+  switch (getRouteQuery('trial')) {
+    case '0':
+    case '0d': return 0
+    case '1d': return 1
+    case '3d': return 3
+    case '5d': return 5
+    case '7d': return 7
+    default: return 7
+  }
+})
+
 onMounted(async () => {
   const isSubscribed = await subscription.redirectIfSubscribed()
   if (isSubscribed) return
@@ -127,7 +139,7 @@ onMounted(async () => {
       isFullscreen: true,
       isBackdropDismissible: false,
       hasTransition: false,
-      hasFreeTrial: getRouteQuery('trial') !== '0',
+      trialPeriodDays: trialPeriodDays.value,
       utmCampaign: 'pricing_page',
       utmSource: 'website',
       utmMedium: 'web',

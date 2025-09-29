@@ -115,7 +115,7 @@ export function useSubscription() {
   }
 
   async function startSubscription({
-    hasFreeTrial = false,
+    trialPeriodDays = 0,
     mustCollectPaymentMethod = true,
     utmCampaign,
     utmMedium,
@@ -164,7 +164,7 @@ export function useSubscription() {
         const { url } = await likeCoinSessionAPI.fetchLikerPlusCheckoutLink({
           period: subscribePlan,
           from: getRouteQuery('from'),
-          hasFreeTrial,
+          trialPeriodDays,
           mustCollectPaymentMethod,
           giftNFTClassId: isYearly ? nftClassId : undefined,
           ...analyticsParams,

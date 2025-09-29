@@ -219,7 +219,7 @@ export function useLikeCoinSessionAPI() {
 
   function fetchLikerPlusCheckoutLink({
     period = 'monthly',
-    hasFreeTrial,
+    trialPeriodDays,
     mustCollectPaymentMethod,
     giftNFTClassId,
     from,
@@ -234,7 +234,7 @@ export function useLikeCoinSessionAPI() {
     fbClickId,
   }: {
     period: SubscriptionPlan
-    hasFreeTrial?: boolean
+    trialPeriodDays?: number
     mustCollectPaymentMethod?: boolean
     giftNFTClassId?: string
     from?: string
@@ -252,7 +252,7 @@ export function useLikeCoinSessionAPI() {
       method: 'POST',
       query: { period, from },
       body: {
-        hasFreeTrial,
+        trialPeriodDays,
         mustCollectPaymentMethod,
         giftClassId: giftNFTClassId,
         referrer,
