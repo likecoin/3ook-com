@@ -27,7 +27,7 @@
     <template #body>
       <i18n-t
         v-if="showYearlyPlan"
-        class="self-center text-theme-500 text-center font-bold whitespace-nowrap text-[16px] laptop:text-[20px]"
+        class="self-center text-theme-500 text-center font-bold text-[16px] laptop:text-[20px]"
         keypath="upsell_plus_yearly_notice"
         tag="p"
       >
@@ -51,7 +51,7 @@
       />
       <i18n-t
         v-if="showMonthlyPlan"
-        class="self-center text-theme-500 text-center font-bold whitespace-nowrap text-[16px] laptop:text-[20px]"
+        class="self-center text-theme-500 text-center font-bold text-[16px] laptop:text-[20px]"
         keypath="upsell_plus_monthly_notice"
         tag="p"
       >
