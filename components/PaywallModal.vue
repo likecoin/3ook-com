@@ -113,7 +113,7 @@
             </ul>
           </div>
 
-          <TTSSamplesSection />
+          <TTSSamplesSection v-if="isShowTTSSamples" />
 
           <!-- Price Select -->
           <div class="flex flex-col w-full mt-12">
@@ -309,6 +309,19 @@ const {
   hasYearlyDiscount,
 } = useSubscriptionPricing()
 const getRouteQuery = useRouteQuery()
+
+const shouldShowTTSSamples = computed(() => {
+  return getRouteQuery('samples') === '1'
+})
+
+const abTest = shouldShowTTSSamples.value
+  ? undefined
+  : useABTest({
+      testName: 'tts-sample',
+      variants: ['show', 'hidden'],
+    })
+
+const isShowTTSSamples = computed(() => shouldShowTTSSamples.value || abTest?.isVariant('show'))
 
 const isShowBlocktrendBundleBanner = computed(() => {
   return getRouteQuery('utm_campaign') === 'blocktrend-plus'
