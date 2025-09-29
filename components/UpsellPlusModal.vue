@@ -68,7 +68,7 @@
           />
         </template>
       </i18n-t>
-      <div class="hidden laptop:block self-center border-t border-gray-200 h-1 w-[24px] my-[12px]" />
+      <div class="self-center border-t border-gray-200 h-1 w-[24px] my-[12px]" />
       <span
         class="text-sm !text-gray-500 mb-1"
         v-text="$t('upsell_plus_modal_other_benefits')"
