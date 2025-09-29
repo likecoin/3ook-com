@@ -134,11 +134,11 @@
             <span
               v-if="hasYearlyDiscount"
               class="text-gray-500 line-through"
-              v-text="`$${originalYearlyPrice}`"
+              v-text="`US$${originalYearlyPrice}`"
             />
             <span
               class="text-theme-50 font-bold"
-              v-text="`$${yearlyPrice}`"
+              v-text="`US$${yearlyPrice}`"
             />
           </div>
         </UButton>
@@ -161,11 +161,11 @@
             <span
               v-if="hasMonthlyDiscount"
               class="text-gray-500 line-through"
-              v-text="`$${originalMonthlyPrice}`"
+              v-text="`US$${originalMonthlyPrice}`"
             />
             <span
               class="text-theme-500"
-              v-text="`$${monthlyPrice}`"
+              v-text="`US$${monthlyPrice}`"
             />
           </div>
         </UButton>

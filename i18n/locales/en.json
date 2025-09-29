@@ -190,7 +190,7 @@
   "pricing_page_feature_2": "20% off all book purchases, no limit",
   "pricing_page_feature_3": "Early access to new features",
   "pricing_page_feature_4": "Live reply to customer service messages",
-  "pricing_page_feature_5": "${monthlyPrice}/month or ${yearlyPrice}/year",
+  "pricing_page_feature_5": "US${monthlyPrice}/month or US${yearlyPrice}/year",
   "pricing_page_liker_id_required": "Register Required",
   "pricing_page_liker_id_required_description": "You need to register in order to subscribe. Please contact support for assistance.",
   "pricing_page_monthly": "Monthly",

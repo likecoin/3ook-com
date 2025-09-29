@@ -190,7 +190,7 @@
   "pricing_page_feature_2": "購書八折，不設上限",
   "pricing_page_feature_3": "優先使用新功能",
   "pricing_page_feature_4": "真人回覆客服訊息",
-  "pricing_page_feature_5": "${monthlyPrice} /月或 ${yearlyPrice}/年",
+  "pricing_page_feature_5": "US${monthlyPrice} /月或 US${yearlyPrice}/年",
   "pricing_page_liker_id_required": "需要註冊帳戶",
   "pricing_page_liker_id_required_description": "你需要註冊帳戶才能訂閱。請聯絡客服獲取協助。",
   "pricing_page_monthly": "月費",
