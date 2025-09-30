@@ -138,11 +138,11 @@
             <span
               v-if="hasYearlyDiscount"
               class="text-gray-500 line-through"
-              v-text="`US$${originalYearlyPrice}`"
+              v-text="$t('upsell_plus_yearly_price_full', { price: originalYearlyPrice })"
             />
             <span
               class="text-theme-50 font-bold"
-              v-text="`US$${yearlyPrice}`"
+              v-text="$t('upsell_plus_yearly_price_full', { price: yearlyPrice })"
             />
           </div>
         </UButton>
@@ -167,11 +167,11 @@
             <span
               v-if="hasMonthlyDiscount"
               class="text-gray-500 line-through"
-              v-text="`US$${originalMonthlyPrice}`"
+              v-text="$t('upsell_plus_monthly_price_full', { price: originalMonthlyPrice })"
             />
             <span
               class="text-theme-500"
-              v-text="`US$${monthlyPrice}`"
+              v-text="$t('upsell_plus_monthly_price_full', { price: monthlyPrice })"
             />
           </div>
         </UButton>
