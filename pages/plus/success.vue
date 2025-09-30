@@ -46,7 +46,8 @@ const getRouteBaseName = useRouteBaseName()
 
 const isRedirected = computed(() => !!getRouteQuery('redirect'))
 const isYearly = computed(() => getRouteQuery('period') === 'yearly')
-const paymentId = computed(() => getRouteQuery('payment_id'))
+// Unused now but `payment_id` is set in the redirect URL
+// const paymentId = computed(() => getRouteQuery('payment_id'))
 
 const isRefreshing = ref(true)
 const isRedirecting = ref(false)
@@ -108,21 +109,21 @@ onMounted(async () => {
     } = await fetchPlusGiftStatus()
     if (isRedirected.value) {
       const isTrial = getRouteQuery('trial') !== '0'
-      const price = isTrial
-        ? 0
-        : isYearly.value ? yearlyPrice.value : monthlyPrice.value
-      useLogEvent('purchase', {
-        transaction_id: paymentId.value,
-        currency: currency.value,
-        value: price,
-        items: [{
-          id: `plus-${isYearly.value ? 'yearly' : 'monthly'}`,
-          name: `Plus (${isYearly.value ? 'yearly' : 'monthly'}`,
-          price,
+      const subscriptionPrice = isYearly.value ? yearlyPrice.value : monthlyPrice.value
+
+      if (isTrial) {
+        useLogEvent('StartTrial', {
           currency: currency.value,
-          quantity: 1,
-        }],
-      })
+          value: 0,
+        })
+      }
+      else {
+        useLogEvent('Subscribe', {
+          currency: currency.value,
+          value: subscriptionPrice,
+        })
+      }
+
       await navigateTo(localeRoute({
         name: getRouteBaseName(route),
         query: {
