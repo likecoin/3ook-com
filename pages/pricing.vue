@@ -129,6 +129,13 @@ const trialPeriodDays = computed(() => {
   }
 })
 
+const mustCollectPaymentMethod = computed(() => {
+  const value = getRouteQuery('collect_payment_method')
+  if (value === '0') return false
+  if (value === '1') return true
+  return undefined
+})
+
 onMounted(async () => {
   const isSubscribed = await subscription.redirectIfSubscribed()
   if (isSubscribed) return
@@ -140,6 +147,7 @@ onMounted(async () => {
       isBackdropDismissible: false,
       hasTransition: false,
       trialPeriodDays: trialPeriodDays.value,
+      mustCollectPaymentMethod: mustCollectPaymentMethod.value,
       utmCampaign: 'pricing_page',
       utmSource: 'website',
       utmMedium: 'web',
