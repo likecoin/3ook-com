@@ -249,7 +249,9 @@
 
             <UButton
               class="mt-4"
-              :label="$t('pricing_page_continue_button')"
+              :label="props.trialPeriodDays
+                ? $t('pricing_page_start_trial_button', { days: props.trialPeriodDays })
+                : $t('pricing_page_continue_button')"
               block
               size="xl"
               :loading="props.isProcessingSubscription"

@@ -128,7 +128,11 @@
         >
           <span
             class="font-bold"
-            v-text="$t('upsell_plus_yearly_button')"
+            v-text="props.nftClassId
+              ? $t('upsell_plus_yearly_gift_cta')
+              : (props.trialPeriodDays && allowYearlyTrial
+                ? $t('upsell_plus_yearly_trial_cta', { days: props.trialPeriodDays })
+                : $t('upsell_plus_yearly_button'))"
           />
           <div class="flex items-center justify-center gap-1">
             <span
@@ -155,7 +159,9 @@
           @click="() => handleSubscribe('monthly')"
         >
           <span
-            v-text="$t('upsell_plus_monthly_button')"
+            v-text="props.trialPeriodDays
+              ? $t('upsell_plus_monthly_trial_cta', { days: props.trialPeriodDays })
+              : $t('upsell_plus_monthly_button')"
           />
           <div class="flex items-center justify-center gap-1">
             <span
@@ -224,9 +230,13 @@ const showYearlyPlan = computed(() => (
   || (props.isLikerPlus && props.likerPlusPeriod === 'month')
 ))
 
+const allowYearlyTrial = computed(() => !props.nftClassId)
+
 function handleSubscribe(plan: SubscriptionPlan) {
+  const shouldApplyTrial = plan === 'monthly' || allowYearlyTrial.value
   emit('subscribe', {
     plan,
+    trialPeriodDays: shouldApplyTrial ? props.trialPeriodDays : undefined,
     utmCampaign: props.utmCampaign,
     utmMedium: props.utmMedium,
     utmSource: props.utmSource,
