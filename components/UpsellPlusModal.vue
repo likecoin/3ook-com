@@ -128,11 +128,7 @@
         >
           <span
             class="font-bold"
-            v-text="props.nftClassId
-              ? $t('upsell_plus_yearly_gift_cta')
-              : (props.trialPeriodDays && allowYearlyTrial
-                ? $t('upsell_plus_yearly_trial_cta', { days: props.trialPeriodDays })
-                : $t('upsell_plus_yearly_button'))"
+            v-text="yearlyButtonCta"
           />
           <div class="flex items-center justify-center gap-1">
             <span
@@ -158,11 +154,7 @@
           }"
           @click="() => handleSubscribe('monthly')"
         >
-          <span
-            v-text="props.trialPeriodDays
-              ? $t('upsell_plus_monthly_trial_cta', { days: props.trialPeriodDays })
-              : $t('upsell_plus_monthly_button')"
-          />
+          <span v-text="monthlyButtonCta" />
           <div class="flex items-center justify-center gap-1">
             <span
               v-if="hasMonthlyDiscount"
@@ -231,6 +223,23 @@ const showYearlyPlan = computed(() => (
 ))
 
 const allowYearlyTrial = computed(() => !props.nftClassId)
+
+const yearlyButtonCta = computed(() => {
+  if (props.nftClassId) {
+    return $t('upsell_plus_yearly_gift_cta')
+  }
+  if (props.trialPeriodDays && allowYearlyTrial.value) {
+    return $t('upsell_plus_yearly_trial_cta', { days: props.trialPeriodDays })
+  }
+  return $t('upsell_plus_yearly_button')
+})
+
+const monthlyButtonCta = computed(() => {
+  if (props.trialPeriodDays) {
+    return $t('upsell_plus_monthly_trial_cta', { days: props.trialPeriodDays })
+  }
+  return $t('upsell_plus_monthly_button')
+})
 
 function handleSubscribe(plan: SubscriptionPlan) {
   const shouldApplyTrial = plan === 'monthly' || allowYearlyTrial.value
