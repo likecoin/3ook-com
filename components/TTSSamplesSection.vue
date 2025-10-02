@@ -2,7 +2,7 @@
   <UCard
     v-if="ttsSamples.length > 0"
     variant="subtle"
-    :ui="{ root: 'mt-8 rounded-2xl' }"
+    :ui="{ root: 'rounded-2xl' }"
   >
     <div class="flex items-center gap-1">
       <UIcon

@@ -19,100 +19,76 @@
           'top-0 phone:top-4',
           'right-0 phone:right-4',
           'max-phone:scale-75',
-          { 'max-laptop:text-white': isShowBlocktrendBundleBanner },
+          'max-laptop:text-white',
           'cursor-pointer',
         ]"
         variant="link"
         size="md"
         @click="handleCloseButtonClick"
       />
+      <template v-if="isDesktopScreen && isShowTTSSamples">
+        <aside class="relative flex justify-end w-full bg-[#50E3C2] min-h-max">
+          <div class="flex flex-col items-center relative w-full max-w-[512px] min-h-max bg-theme-500">
+            <PlusBlocktrendBundleBanner
+              v-if="isShowBlocktrendBundleBanner"
+              class="w-full shrink-0"
+              :is-force-landscape="true"
+              :is-dark-background="true"
+            />
+            <div :class="['p-12', { 'pt-30': !isShowBlocktrendBundleBanner }]">
+              <img
+                v-if="!isShowBlocktrendBundleBanner"
+                :src="plusLogo"
+                :alt="$t('pricing_page_title')"
+                class="w-full max-w-[300px] laptop:max-h-[200px] mb-12 object-contain"
+              >
 
-      <PlusBlocktrendBundleBanner
-        v-if="isShowBlocktrendBundleBanner"
-        class="max-laptop:shrink-0 w-full"
-      />
-      <aside
-        v-else
-        class="relative flex items-center max-laptop:shrink-0 w-full bg-white overflow-hidden"
-      >
-        <img
-          class="laptop:absolute top-0 w-full max-h-[320px] object-cover pointer-events-none mix-blend-multiply"
-          :src="topBg"
+              <PricingPageIntroSection
+                class="w-full max-w-[420px]"
+                :is-dark-background="true"
+              />
+            </div>
+          </div>
+        </aside>
+      </template>
+      <template v-else>
+        <PlusBlocktrendBundleBanner
+          v-if="isShowBlocktrendBundleBanner"
+          class="max-laptop:shrink-0 w-full min-h-max"
+        />
+        <aside
+          v-else
+          class="relative flex justify-center items-center max-laptop:shrink-0 w-full p-12 bg-theme-500 overflow-hidden"
         >
-        <img
-          class="max-laptop:hidden absolute bottom-0 w-full pointer-events-none mix-blend-multiply"
-          :src="bottomBg"
-        >
-
-        <div class="absolute max-laptop:bottom-0 laptop:relative flex flex-col items-center justify-center w-full px-10">
-          <div
-            class="laptop:hidden px-6 py-2 text-white text-center font-bold bg-black rounded-full"
-            v-text="$t('pricing_page_subscription')"
-          />
           <img
             :src="plusLogo"
             :alt="$t('pricing_page_title')"
             class="w-full max-w-[300px] laptop:max-h-[200px] object-contain"
           >
-        </div>
-      </aside>
+        </aside>
+      </template>
 
-      <div class="flex flex-col justify-center items-start w-full p-5 laptop:p-12">
-        <div class="w-full max-w-[420px] max-laptop:mx-auto">
-          <!-- Introduction -->
-          <div class="flex flex-col items-start gap-5">
-            <div
-              :class="[
-                { 'max-laptop:hidden': !isShowBlocktrendBundleBanner },
-                'px-6',
-                'py-2',
-                'text-white',
-                'text-center',
-                'font-bold',
-                'bg-black',
-                'rounded-full',
-              ]"
-              v-text="$t('pricing_page_subscription')"
-            />
-            <ul
-              :class="[
-                'whitespace-pre-wrap',
-                'space-y-4 text-left',
-                '*:flex *:items-start',
-                '[&>li>span:first-child]:shrink-0',
-                '[&>li>span:first-child]:mt-1',
-                '[&>li>span:first-child]:mr-2',
-                '[&>li>span:first-child]:text-green-500',
-              ]"
-            >
-              <li>
-                <UIcon name="i-material-symbols-check" />
-                <span v-text="$t('pricing_page_feature_1')" />
-              </li>
-              <li>
-                <UIcon name="i-material-symbols-check" />
-                <span v-text="$t('pricing_page_feature_2')" />
-              </li>
-              <li>
-                <UIcon name="i-material-symbols-check" />
-                <span v-text="$t('pricing_page_feature_3')" />
-              </li>
-              <li>
-                <UIcon name="i-material-symbols-check" />
-                <span v-text="$t('pricing_page_feature_4')" />
-              </li>
-              <li>
-                <UIcon name="i-material-symbols-check" />
-                <span
-                  v-text="$t('pricing_page_feature_5', {
-                    monthlyPrice,
-                    yearlyPrice,
-                  })"
-                />
-              </li>
-            </ul>
-          </div>
-
+      <div
+        :class="[
+          'flex',
+          'w-full',
+          { 'items-center': !isShowTTSSamples || isShowBlocktrendBundleBanner },
+          'min-h-max',
+        ]"
+      >
+        <div
+          :class="[
+            'w-full',
+            'max-w-[512px]',
+            'max-laptop:mx-auto',
+            'p-5 laptop:p-12',
+            { 'laptop:pt-30': !isShowBlocktrendBundleBanner },
+          ]"
+        >
+          <PricingPageIntroSection
+            v-if="!(isShowTTSSamples && isDesktopScreen)"
+            class="mb-8"
+          />
           <TTSSamplesSection v-if="isShowTTSSamples" />
 
           <!-- Price Select -->
@@ -132,7 +108,7 @@
                 />
 
                 <div class="flex items-center">
-                  <div class="w-6 h-6 flex-shrink-0 mr-4">
+                  <div class="w-6 h-6 shrink-0 mr-4">
                     <div
                       :class="[
                         'w-full h-full rounded-full border flex items-center justify-center',
@@ -266,9 +242,9 @@
 <script setup lang="ts">
 import type { PaywallModalProps } from './PaywallModal.props'
 
-import topBg from '~/assets/images/paywall/bg-top.png'
-import bottomBg from '~/assets/images/paywall/bg-bottom.png'
 import plusLogo from '~/assets/images/paywall/plus-logo.png'
+
+const isDesktopScreen = useDesktopScreen()
 
 // NOTE: When the dialog's modality is set to true, interaction with elements outside the dialog is disabled.
 // Therefore, we set modality to false so input in the Magic login UI remains accessible.
@@ -336,16 +312,17 @@ const modalContentClass = computed(() => {
     'flex',
     'flex-col',
     'laptop:flex-row',
-    'gap-y-2',
     'items-stretch',
     'w-full',
-    'mx-auto',
     'divide-y-0',
-    'laptop:rounded-2xl',
-    'overflow-x-hidden',
+    'rounded-none',
+    '!overflow-x-hidden',
   ]
   if (!isFullscreenModal.value) {
-    classes.push('max-w-[420px] laptop:max-w-[840px]')
+    classes.push(
+      'max-w-[420px] laptop:max-w-[840px]',
+      'laptop:rounded-2xl',
+    )
   }
   return classes.join(' ')
 })
