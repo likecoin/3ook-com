@@ -19,7 +19,7 @@
     <ul class="flex flex-col gap-3 w-full flex-wrap mt-4">
       <li
         v-for="sample in ttsSamples"
-        v-show="!isPlaying || activeTTSSampleId === sample.id"
+        v-show="!isPlayingSample || activeTTSSampleId === sample.id"
         :key="sample.id"
         class="space-y-2"
       >
@@ -37,7 +37,7 @@
           variant="outline"
           size="md"
           :ui="{ base: 'gap-3 bg-white hover:bg-white hover:border-gray-400 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 ease-in-out' }"
-          @click="handleSampleClick(sample)"
+          @click="handleSampleClick(sample.id)"
         >
           <template #leading>
             <div
@@ -85,7 +85,7 @@
         </UButton>
 
         <UCard
-          v-if="activeTTSSampleId === sample.id && isPlaying && currentSegmentText"
+          v-if="activeTTSSampleId === sample.id && isPlayingSample && currentSegmentText"
           class="text-sm font-medium text-gray-900 rounded-xl"
         >
           <div class="relative">
@@ -122,9 +122,9 @@ const {
   currentSegmentText,
   currentSegmentIndex,
   longestSegmentText,
-  isPlaying,
-  play,
-  stop,
+  isPlaying: isPlayingSample,
+  play: playSample,
+  stop: stopSample,
 } = useTTSSamplesPlayer({
   onError: (error: unknown) => handleError(error),
   onEnd: () => {
@@ -132,29 +132,22 @@ const {
   },
 })
 
-function getPlayButtonIcon(sampleId: string): string {
-  return activeTTSSampleId.value === sampleId && isPlaying.value
+function getPlayButtonIcon(sampleId: string) {
+  return activeTTSSampleId.value === sampleId && isPlayingSample.value
     ? 'i-material-symbols-stop-rounded'
     : 'i-material-symbols-play-arrow-rounded'
 }
 
-async function handlePlay(sample: TTSSample) {
-  useLogEvent('tts_sample_play', { sample: sample.id })
-  play(sample.id)
-}
+function handleSampleClick(sampleId: string) {
+  useLogEvent('tts_sample_click', { sample: sampleId })
 
-function handleStop() {
-  useLogEvent('tts_sample_stop', { sample: activeTTSSampleId.value })
-  stop()
-}
-
-function handleSampleClick(sample: TTSSample) {
-  useLogEvent('tts_sample_click', { sample: sample.id })
-
-  if (activeTTSSampleId.value === sample.id && isPlaying.value) {
-    handleStop()
+  if (activeTTSSampleId.value === sampleId && isPlayingSample.value) {
+    useLogEvent('tts_sample_stop', { sample: activeTTSSampleId.value })
+    stopSample()
     return
   }
-  handlePlay(sample)
+
+  useLogEvent('tts_sample_play', { sample: sampleId })
+  playSample(sampleId)
 }
 </script>

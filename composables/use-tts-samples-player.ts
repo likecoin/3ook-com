@@ -91,7 +91,7 @@ export function useTTSSamplesPlayer(options: TTSSamplesPlayerOptions = {}) {
   })
 
   function createAudio(segment: TTSSegment): HTMLAudioElement {
-    cleanUpAudio()
+    resetAudio()
 
     const newAudio = new Audio()
     newAudio.src = segment.audioSrc || ''
@@ -151,7 +151,7 @@ export function useTTSSamplesPlayer(options: TTSSamplesPlayerOptions = {}) {
     playCurrentSegment()
   }
 
-  function cleanUpAudio() {
+  function resetAudio() {
     if (!audio.value) return
     audio.value.pause()
     audio.value.src = ''
@@ -163,7 +163,7 @@ export function useTTSSamplesPlayer(options: TTSSamplesPlayerOptions = {}) {
   }
 
   function stop() {
-    cleanUpAudio()
+    resetAudio()
 
     // Reset all state
     isPlaying.value = false
@@ -176,7 +176,7 @@ export function useTTSSamplesPlayer(options: TTSSamplesPlayerOptions = {}) {
   })
 
   return {
-    samples,
+    samples: readonly(samples),
 
     activeSampleId: readonly(activeSampleId),
     isPlaying: readonly(isPlaying),
