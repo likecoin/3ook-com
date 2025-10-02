@@ -224,7 +224,7 @@ const showYearlyPlan = computed(() => (
 
 const allowYearlyTrial = computed(() => !props.nftClassId)
 
-const yearlyButtonCta = computed(() => {
+const yearlyButtonCTA = computed(() => {
   if (props.nftClassId) {
     return $t('upsell_plus_yearly_gift_cta')
   }
@@ -234,7 +234,7 @@ const yearlyButtonCta = computed(() => {
   return $t('upsell_plus_yearly_button')
 })
 
-const monthlyButtonCta = computed(() => {
+const monthlyButtonCTA = computed(() => {
   if (props.trialPeriodDays) {
     return $t('upsell_plus_monthly_trial_cta', { days: props.trialPeriodDays })
   }
