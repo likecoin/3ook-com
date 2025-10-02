@@ -124,37 +124,8 @@ export function useTTSSamplesPlayer(options: TTSSamplesPlayerOptions = {}) {
     const segment = currentSegment.value
     if (!segment) return
 
-    try {
-      const audioElement = createAudio(segment)
-
-      // Wait for audio to be ready before playing
-      await new Promise<void>((resolve, reject) => {
-        audioElement.oncanplaythrough = () => {
-          resolve()
-        }
-
-        audioElement.onerror = () => {
-          const error = audioElement.error
-          console.error('Audio loading error:', error)
-          reject(error)
-        }
-
-        audioElement.load()
-      })
-
-      await audioElement.play()
-    }
-    catch (error) {
-      console.error('Error playing TTS sample segment:', error)
-      onError?.(error)
-
-      // Try to continue with next segment after error
-      setTimeout(() => {
-        if (isPlaying.value) {
-          playNextSegment()
-        }
-      }, 1000)
-    }
+    const newAudio = createAudio(segment)
+    await newAudio.play()
   }
 
   function playNextSegment() {
@@ -175,22 +146,6 @@ export function useTTSSamplesPlayer(options: TTSSamplesPlayerOptions = {}) {
 
     // Set active sample (this will automatically update segments via computed)
     activeSampleId.value = sampleId
-
-    // Validate that we have segments for this sample
-    if (segments.value.length === 0) {
-      console.error('No segments available for sample:', sampleId)
-      onError?.(new Error('No segments available'))
-      return
-    }
-
-    // Validate first segment has audio source
-    const firstSegment = segments.value[0]
-    if (!firstSegment?.audioSrc) {
-      console.error('First segment has no audio source:', firstSegment)
-      onError?.(new Error('Audio source not available'))
-      return
-    }
-
     // Set up new playback
     currentSegmentIndex.value = 0
     playCurrentSegment()
