@@ -1,11 +1,10 @@
-import { useAccount, useConnect, useDisconnect, useSignMessage } from '@wagmi/vue'
+import { useAccount, useChainId, useConnect, useDisconnect, useSignMessage } from '@wagmi/vue'
 import { UserRejectedRequestError } from 'viem'
 import { FetchError } from 'ofetch'
 import { jwtDecode } from 'jwt-decode'
 import type { Magic } from 'magic-sdk'
 import type { RouteLocationAsRelativeGeneric } from 'vue-router'
 
-import { optimism, optimismSepolia } from '@wagmi/vue/chains'
 import { LoginModal, RegistrationModal } from '#components'
 
 const REGISTER_TIME_LIMIT_IN_TS = 15 * 60 * 1000 // 15 minutes
@@ -38,7 +37,9 @@ function verifyTokenPermissions(token: string): boolean {
 
 export const useAccountStore = defineStore('account', () => {
   const config = useRuntimeConfig()
-  const { address } = useAccount()
+  const { $wagmiConfig } = useNuxtApp()
+  const { address, isConnected } = useAccount()
+  const currentChainId = useChainId()
   const { connectAsync, connectors, status } = useConnect()
   const { disconnectAsync } = useDisconnect()
   const { signMessageAsync } = useSignMessage()
@@ -59,7 +60,7 @@ export const useAccountStore = defineStore('account', () => {
   const isClearingCaches = ref(false)
 
   const chainId = computed(() => {
-    return config.public.isTestnet ? optimismSepolia.id : optimism.id
+    return $wagmiConfig.chains[0].id
   })
 
   watch(
@@ -74,6 +75,19 @@ export const useAccountStore = defineStore('account', () => {
       }
     },
     { immediate: true, deep: true },
+  )
+
+  watch(
+    [isConnected, currentChainId],
+    async ([connected, chain]) => {
+      if (connected) {
+        const hasValidConnection = $wagmiConfig.chains.map(c => c.id).includes(chain)
+        if (!hasValidConnection) {
+          await disconnectAsync()
+        }
+      }
+    },
+    { immediate: true },
   )
 
   const getEmailAlreadyUsedErrorMessage = ({
