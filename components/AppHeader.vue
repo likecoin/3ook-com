@@ -5,7 +5,7 @@
         <ULink
           :to="localeRoute({ name: 'about' })"
         >
-          <AppLogo :height="16" />
+          <AppLogo />
         </ULink>
 
         <ul class="hidden laptop:flex items-center flex-wrap gap-10 gap-y-1 font-semibold">

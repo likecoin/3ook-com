@@ -11,6 +11,7 @@
           <AppLogo
             class="max-w-xs mx-auto"
             height="auto"
+            :is-icon="false"
           />
         </template>
         <h1

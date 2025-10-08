@@ -8,6 +8,7 @@
       <AppLogo
         class="w-full max-w-lg"
         height="auto"
+        :is-icon="false"
         :is-padded="false"
       />
 

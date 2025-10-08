@@ -2,7 +2,7 @@
   <main class="flex flex-col items-center justify-center h-svh px-4">
     <AppLogo
       class="mb-16"
-      :height="36"
+      :height="64"
     />
 
     <p

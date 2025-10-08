@@ -25,10 +25,7 @@
         class="flex justify-center"
         :to="localeRoute({ name: 'about' })"
       >
-        <AppLogo
-          v-if="props.isShowLogo"
-          :height="24"
-        />
+        <AppLogo v-if="props.isShowLogo" />
       </ULink>
       <ULink
         class="border-b leading-5"
