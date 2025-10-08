@@ -1,9 +1,12 @@
 <template>
   <div class="p-6 pt-8 rounded-[20px] bg-white box-[0_4px_4px_0_rgba(0,0,0,0.02)]">
-    <AppLogo class="h-5" />
+    <AppLogo
+      class="mx-auto"
+      :height="44"
+    />
 
     <h2
-      class="mt-[52px] text-theme-black text-2xl font-bold"
+      class="mt-8 text-theme-black text-2xl font-bold text-center"
       v-text="$t('login_panel_title')"
     />
 

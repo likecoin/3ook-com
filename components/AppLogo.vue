@@ -1,6 +1,28 @@
 <template>
   <svg
-    v-if="isPadded"
+    v-if="isIcon"
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    viewBox="0 0 16 16"
+    :height="height"
+  >
+    <rect
+      width="16"
+      height="16"
+      fill="#131313"
+      rx="2"
+    />
+    <path
+      fill="#50e3c2"
+      d="M12.5 4a.5.5 0 0 1 .5.5v2.293a.5.5 0 0 1-.146.353l-.5.5a.5.5 0 0 0 0 .708l.5.5a.5.5 0 0 1 .146.353v2.586a.5.5 0 0 1-.146.354l-1.707 1.707a.5.5 0 0 1-.354.146H4.5a.5.5 0 0 1-.5-.5v-2a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .49.4l.02.2a.5.5 0 0 0 .49.4h4a.5.5 0 0 0 .5-.5v-2a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h4a.5.5 0 0 0 .5-.5V4zM10.5 2a.5.5 0 0 1 .5.5V4H4.5a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5z"
+    />
+    <path
+      fill="#f9f9f9"
+      d="M12 6.793a.5.5 0 0 1-.146.353l-.5.5a.5.5 0 0 0 0 .708l.5.5a.5.5 0 0 1 .146.353v2.586a.5.5 0 0 1-.146.353l-1.708 1.708a.5.5 0 0 1-.353.146H3.5a.5.5 0 0 1-.5-.5v-2a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5.5.5 0 0 0 .5.5h4a.5.5 0 0 0 .5-.5v-2a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h4a.5.5 0 0 0 .5-.5V4h1.5a.5.5 0 0 1 .5.5zM10 4H3.5a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 .5.5z"
+    />
+  </svg>
+  <svg
+    v-else-if="isPadded"
     xmlns="http://www.w3.org/2000/svg"
     fill="none"
     viewBox="0 0 96 24"
@@ -49,9 +71,13 @@
 const props = defineProps({
   height: {
     type: [Number, String],
-    default: 20,
+    default: 32,
   },
   isPadded: {
+    type: Boolean,
+    default: true,
+  },
+  isIcon: {
     type: Boolean,
     default: true,
   },
