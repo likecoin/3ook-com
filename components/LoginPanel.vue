@@ -52,21 +52,6 @@
       </ul>
     </template>
 
-    <i18n-t
-      class="mt-6 text-sm text-theme-500 text-center font-bold"
-      keypath="login_panel_migration_notice"
-      tag="p"
-    >
-      <template #here>
-        <ULink
-          class="text-theme-400 border-b border-[currentColor]"
-          :to="getLikeCoinV3BookMigrationSiteURL({ utmSource: 'login' })"
-          target="_blank"
-          @click="handleMigrationNoticeClick"
-        >{{ $t('login_panel_migration_notice_here') }}</ULink>
-      </template>
-    </i18n-t>
-
     <UAlert
       v-if="error"
       class="mt-4"
@@ -84,16 +69,11 @@ const emit = defineEmits<{ connect: [string] }>()
 
 const { t: $t } = useI18n()
 const { connectors, error } = useConnect()
-const { getLikeCoinV3BookMigrationSiteURL } = useLikeCoinV3MigrationSite()
 
 const othersConnectors = computed(() => connectors.filter(c => !['magic', 'injected'].includes(c.id)))
 
 function handleConnect(connectorId = '') {
   emit('connect', connectorId)
   useLogEvent('login_panel_connect', { connector_id: connectorId })
-}
-
-function handleMigrationNoticeClick() {
-  useLogEvent('login_migration_notice_click')
 }
 </script>
