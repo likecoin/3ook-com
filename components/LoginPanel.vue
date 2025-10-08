@@ -1,9 +1,12 @@
 <template>
   <div class="p-6 pt-8 rounded-[20px] bg-white box-[0_4px_4px_0_rgba(0,0,0,0.02)]">
-    <AppLogo :height="44" />
+    <AppLogo
+      class="mx-auto"
+      :height="44"
+    />
 
     <h2
-      class="mt-8 text-theme-black text-2xl font-bold"
+      class="mt-8 text-theme-black text-2xl font-bold text-center"
       v-text="$t('login_panel_title')"
     />
 
@@ -52,21 +55,6 @@
       </ul>
     </template>
 
-    <i18n-t
-      class="mt-6 text-sm text-theme-black text-center font-bold"
-      keypath="login_panel_migration_notice"
-      tag="p"
-    >
-      <template #here>
-        <ULink
-          class="text-theme-400 border-b border-[currentColor]"
-          :to="getLikeCoinV3BookMigrationSiteURL({ utmSource: 'login' })"
-          target="_blank"
-          @click="handleMigrationNoticeClick"
-        >{{ $t('login_panel_migration_notice_here') }}</ULink>
-      </template>
-    </i18n-t>
-
     <UAlert
       v-if="error"
       class="mt-4"
@@ -84,16 +72,11 @@ const emit = defineEmits<{ connect: [string] }>()
 
 const { t: $t } = useI18n()
 const { connectors, error } = useConnect()
-const { getLikeCoinV3BookMigrationSiteURL } = useLikeCoinV3MigrationSite()
 
 const othersConnectors = computed(() => connectors.filter(c => !['magic', 'injected'].includes(c.id)))
 
 function handleConnect(connectorId = '') {
   emit('connect', connectorId)
   useLogEvent('login_panel_connect', { connector_id: connectorId })
-}
-
-function handleMigrationNoticeClick() {
-  useLogEvent('login_migration_notice_click')
 }
 </script>

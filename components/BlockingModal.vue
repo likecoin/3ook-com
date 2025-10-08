@@ -5,10 +5,11 @@
     :ui="{ content: 'flex flex-col justify-center items-center w-auto min-w-[200px] min-h-[200px] px-6 py-4 divide-y-0 rounded-2xl' }"
   >
     <template #content>
-      <img
-        class="animate-pulse w-[64px]"
-        src="/favicon.svg"
-      >
+      <AppLogo
+        class="animate-pulse"
+        :weight="64"
+        :height="64"
+      />
       <div
         class="mt-2 font-bold"
         v-text="props.title"
