@@ -27,8 +27,8 @@
         @click="handleCloseButtonClick"
       />
       <template v-if="isDesktopScreen && isShowTTSSamples">
-        <aside class="relative flex justify-end w-full bg-[#50E3C2] min-h-max">
-          <div class="flex flex-col items-center relative w-full max-w-[512px] min-h-max bg-theme-500">
+        <aside class="relative flex justify-end w-full bg-theme-cyan min-h-max">
+          <div class="flex flex-col items-center relative w-full max-w-[512px] min-h-max bg-theme-black">
             <PlusBlocktrendBundleBanner
               v-if="isShowBlocktrendBundleBanner"
               class="w-full shrink-0"
@@ -58,7 +58,7 @@
         />
         <aside
           v-else
-          class="relative flex justify-center items-center max-laptop:shrink-0 w-full p-12 bg-theme-500 overflow-hidden"
+          class="relative flex justify-center items-center max-laptop:shrink-0 w-full p-12 bg-theme-black overflow-hidden"
         >
           <img
             :src="plusLogo"
@@ -103,7 +103,7 @@
               >
                 <div
                   v-if="yearlyDiscountPercent"
-                  class="absolute -top-3 left-1/6 -translate-x-1/2 bg-black text-[#A6F5EA] text-xs font-semibold px-3 py-1 rounded-lg"
+                  class="absolute -top-3 left-1/6 -translate-x-1/2 bg-black text-theme-cyan text-xs font-semibold px-3 py-1 rounded-lg"
                   v-text="$t('pricing_page_yearly_discount', { discount: yearlyDiscountPercent })"
                 />
 
@@ -118,7 +118,7 @@
                       <UIcon
                         v-if="selectedPlan === 'yearly'"
                         name="i-material-symbols-check"
-                        class="bg-[#A6F5EA]"
+                        class="bg-theme-cyan"
                         size="16"
                       />
                     </div>
@@ -177,7 +177,7 @@
                       <UIcon
                         v-if="selectedPlan === 'monthly'"
                         name="i-material-symbols-check"
-                        class="bg-[#A6F5EA]"
+                        class="bg-theme-cyan"
                         size="16"
                       />
                     </div>

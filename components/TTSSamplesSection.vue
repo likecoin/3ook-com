@@ -6,7 +6,7 @@
   >
     <div class="flex items-center gap-1">
       <UIcon
-        class="text-[#50E3C2]"
+        class="text-theme-cyan"
         name="i-material-symbols-sound-sensing"
         :size="24"
       />
@@ -30,7 +30,7 @@
             'p-4',
             'group',
             'text-left',
-            { 'ring-[#50E3C2]': activeTTSSampleId === sample.id },
+            { 'ring-theme-cyan': activeTTSSampleId === sample.id },
             'rounded-xl',
             'cursor-pointer',
           ]"
@@ -77,7 +77,7 @@
 
           <template #trailing>
             <img
-              class="w-12 h-12 rounded-full ring-theme-500"
+              class="w-12 h-12 rounded-full ring-theme-black"
               :src="sample.avatarSrc"
               :alt="sample.description"
             >

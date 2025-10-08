@@ -27,7 +27,7 @@
     <template #body>
       <i18n-t
         v-if="showYearlyPlan"
-        class="self-center text-theme-500 text-center font-bold text-[16px] laptop:text-[20px]"
+        class="self-center text-theme-black text-center font-bold text-[16px] laptop:text-[20px]"
         keypath="upsell_plus_yearly_notice"
         tag="p"
       >
@@ -51,19 +51,19 @@
       />
       <i18n-t
         v-if="showMonthlyPlan"
-        class="self-center text-theme-500 text-center font-bold text-[16px] laptop:text-[20px]"
+        class="self-center text-theme-black text-center font-bold text-[16px] laptop:text-[20px]"
         keypath="upsell_plus_monthly_notice"
         tag="p"
       >
         <template #month>
           <span
-            class="text-theme-500 font-semibold"
+            class="text-theme-black font-semibold"
             v-text="$t('upsell_plus_monthly_member')"
           />
         </template>
         <template #discount>
           <span
-            class="text-theme-500 font-semibold"
+            class="text-theme-black font-semibold"
             v-text="$t('upsell_plus_monthly_discount')"
           />
         </template>
@@ -162,7 +162,7 @@
               v-text="$t('upsell_plus_monthly_price_full', { price: originalMonthlyPrice })"
             />
             <span
-              class="text-theme-500"
+              class="text-theme-black"
               v-text="$t('upsell_plus_monthly_price_full', { price: monthlyPrice })"
             />
           </div>

@@ -24,7 +24,7 @@
     />
 
     <span
-      class="text-sm laptop:text-base text-[#949494] font-semibold text-center"
+      class="text-sm laptop:text-base text-muted font-semibold text-center"
       v-text="props.bookName"
     />
 

@@ -2,18 +2,22 @@
 @import "@nuxt/ui";
 
 body {
-  --app-bg: #F2F0E9;
+  --app-bg: var(--color-theme-white);
   --intercom-launcher-offset: calc(env(safe-area-inset-bottom) + 56px);
   @apply bg-(--app-bg);
 }
 
 @theme static {
-  --color-theme-50:  #aaf1e7;
-  --color-theme-100: #77e2d6;
-  --color-theme-200: #44d4c5;
-  --color-theme-300: #23b6ad;
-  --color-theme-400: #20a492;
-  --color-theme-500: #131313;
+  --color-theme-black: #131313;
+  --color-theme-white: #f9f9f9;
+  --color-theme-cyan: #50e3c2;
+
+  --color-theme-50:  var(--color-theme-cyan);
+  --color-theme-100: #49d1b3;
+  --color-theme-200: #41bea4;
+  --color-theme-300: #39ab95;
+  --color-theme-400: #2f8e80;
+  --color-theme-500: var(--color-theme-black);
   --color-theme-600: #0e0e0e;
   --color-theme-700: #090909;
   --color-theme-800: #040404;
@@ -51,6 +55,10 @@ body {
   .pb-safe {
     padding-bottom: env(safe-area-inset-bottom);
   }
+}
+
+:root {
+  --ui-text-highlighted: var(--color-theme-black);
 }
 
 .fade-enter-active,

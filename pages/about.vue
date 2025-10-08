@@ -4,13 +4,7 @@
     :is-footer-visible="true"
   >
     <!-- Hero Section with Banner -->
-    <section
-      class="flex flex-col justify-center items-center text-center space-y-16 min-h-[70vh] px-8 py-20 bg-cover bg-center"
-      :style="{
-        backgroundColor: '#131313', // For initial rendering
-        backgroundImage: `url(${heroBackdropImage})`,
-      }"
-    >
+    <section class="flex flex-col justify-center items-center text-center space-y-16 min-h-[70vh] px-8 py-20 bg-theme-black bg-center">
       <AppLogo
         class="w-full max-w-lg"
         height="auto"
@@ -196,8 +190,6 @@
 </template>
 
 <script setup lang="ts">
-import heroBackdropImage from '~/assets/images/hero-backdrop.jpg'
-
 definePageMeta({ layout: false })
 
 const { t: $t } = useI18n()

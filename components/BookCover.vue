@@ -24,7 +24,7 @@
         :class="[
           'absolute',
           'inset-0',
-          'bg-[#D3D3D3]',
+          'bg-theme-black/5',
           borderRadiusClass,
           'opacity-20',
           'brightness-50',
@@ -61,14 +61,14 @@
           'justify-center',
           'items-center',
           'inset-0',
-          'bg-[#E2E2E2]/60',
+          'bg-theme-black/10',
           'pointer-events-none',
           { 'animate-pulse': !hasLoaded },
         ]"
       >
         <UIcon
           :class="[
-            'text-[#9B9B9B]/50',
+            'text-dimmed/50',
             hasError ? 'opacity-100' : 'opacity-0',
             'transition-opacity',
             'duration-300',
@@ -108,7 +108,7 @@
             'text-center',
             'text-[10px] laptop:text-sm',
             'font-bold',
-            'bg-[#50E3C2]',
+            'bg-theme-cyan',
           ]"
           v-text="$t('bookshelf_claimable_label')"
         />
@@ -173,8 +173,9 @@ const coverHoverScaleAnimationClass = [
 
 const coverClass = computed(() => {
   const classes = [
-    'border',
-    'border-[#EBEBEB]',
+    'border-l',
+    'border-t',
+    'border-muted',
     borderRadiusClass,
     { 'shadow-[0_2px_4px_0_rgba(0,0,0,0.10)]': props.hasShadow },
   ]
