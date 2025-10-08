@@ -5,10 +5,10 @@
         'max-laptop:mx-auto',
         'px-6',
         'py-2',
-        props.isDarkBackground ? 'text-theme-500' : 'text-white',
+        props.isDarkBackground ? 'text-theme-black' : 'text-white',
         'text-center',
         'font-bold',
-        props.isDarkBackground ? 'bg-[#50E3C2]' : 'bg-theme-500',
+        props.isDarkBackground ? 'bg-theme-cyan' : 'bg-theme-black',
         'rounded-full',
       ]"
       v-text="$t('pricing_page_subscription')"
@@ -22,7 +22,7 @@
         '[&>li>span:first-child]:mt-1',
         '[&>li>span:first-child]:mr-2',
         props.isDarkBackground
-          ? '[&>li>span:first-child]:text-[#50E3C2]'
+          ? '[&>li>span:first-child]:text-theme-cyan'
           : '[&>li>span:first-child]:text-green-500',
         { 'text-white': !!props.isDarkBackground },
       ]"

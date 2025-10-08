@@ -18,7 +18,7 @@
           :ui="{
             item: [
               'flex items-center w-full text-center rounded-full px-2 py-2',
-              'has-data-[state=checked]:bg-theme-500',
+              'has-data-[state=checked]:bg-theme-black',
               'has-data-[state=checked]:text-theme-50',
             ].join(' '),
             label: 'text-inherit',

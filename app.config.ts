@@ -21,13 +21,13 @@ export default defineAppConfig({
         {
           color: 'primary',
           variant: 'outline',
-          class: 'ring-theme-500',
+          class: 'ring-theme-black',
         },
       ],
     },
     checkbox: {
       slots: {
-        base: 'ring-2 ring-theme-500',
+        base: 'ring-2 ring-theme-black',
       },
       variants: {
         disabled: {
@@ -47,7 +47,7 @@ export default defineAppConfig({
         {
           color: 'primary',
           variant: 'outline',
-          class: 'ring-2 ring-theme-500',
+          class: 'ring-2 ring-theme-black',
         },
       ],
     },

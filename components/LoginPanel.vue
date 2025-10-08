@@ -3,7 +3,7 @@
     <AppLogo class="h-5" />
 
     <h2
-      class="mt-[52px] text-theme-500 text-2xl font-bold"
+      class="mt-[52px] text-theme-black text-2xl font-bold"
       v-text="$t('login_panel_title')"
     />
 

@@ -9,7 +9,7 @@
         class="flex items-center gap-4 px-2"
       >
         <UAvatar
-          class="bg-white border-[#EBEBEB]"
+          class="bg-white border-muted"
           :src="user?.avatar"
           :alt="user?.displayName"
           icon="i-material-symbols-person-2-rounded"

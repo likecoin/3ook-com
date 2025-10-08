@@ -1,6 +1,6 @@
 <template>
   <aside
-    class="relative flex items-center bg-theme-500 overflow-hidden bg-cover bg-center"
+    class="relative flex items-center bg-theme-black overflow-hidden bg-cover bg-center"
     :style="{ backgroundImage: `url(${bannerBgImgSrc})` }"
   >
     <!-- Desktop Banner -->

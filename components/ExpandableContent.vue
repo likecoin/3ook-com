@@ -13,7 +13,7 @@
     >
       <div
         v-if="!isExpanded"
-        class="absolute bottom-full inset-x-0 h-[60px] bg-linear-to-t from-[#F2F0E9] to-[#F2F0E900]"
+        class="absolute bottom-full inset-x-0 h-[60px] bg-linear-to-t from-(--app-bg) to-(--app-bg)/0"
       />
       <UButton
         class="relative"

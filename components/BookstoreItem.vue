@@ -8,12 +8,13 @@
       :to="productPageRoute"
       :alt="bookName"
       :lazy="props.lazy"
+      :has-shadow="true"
       @click="onBookCoverClick"
     />
 
     <div class="mt-2 h-[70px]">
       <div
-        class="text-sm laptop:text-base text-[#1A1A1A] font-semibold line-clamp-2"
+        class="text-sm laptop:text-base text-highlighted font-semibold line-clamp-2"
         v-text="bookName"
       />
 
@@ -22,11 +23,11 @@
           llMedium: 'author-link',
           llSource: 'bookstore-item',
         })"
-        class="inline-block h-4 laptop:h-5 mt-0.5 text-xs laptop:text-sm text-[#9B9B9B] line-clamp-1 hover:text-theme-500 hover:underline"
+        class="inline-block h-4 laptop:h-5 mt-0.5 text-xs laptop:text-sm text-dimmed line-clamp-1 hover:text-theme-black hover:underline"
       >{{ authorName }}</NuxtLink>
     </div>
 
-    <div class="h-5 mt-3 text-sm text-theme-500">
+    <div class="h-5 mt-3 text-sm text-theme-black">
       <span
         v-if="price > 0"
         class="mr-0.5"

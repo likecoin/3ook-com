@@ -8,13 +8,14 @@
       :alt="bookInfo.name.value"
       :lazy="props.lazy"
       :is-claimable="isClaimable"
+      :has-shadow="true"
       @click="handleCoverClick"
     />
 
     <div class="mt-2 h-[70px]">
       <div class="flex items-start gap-1">
         <div
-          class="text-sm laptop:text-base text-[#1A1A1A] font-semibold line-clamp-2 grow"
+          class="text-sm laptop:text-base text-highlighted font-semibold line-clamp-2 grow"
           v-text="bookInfo.name"
         />
         <UDropdownMenu
@@ -72,7 +73,7 @@
           llMedium: 'author-link',
           llSource: 'bookshelf-item',
         })"
-        class="inline-block mt-0.5 text-xs laptop:text-sm text-[#9B9B9B] hover:text-theme-500 line-clamp-1 hover:underline"
+        class="inline-block mt-0.5 text-xs laptop:text-sm text-dimmed hover:text-theme-black line-clamp-1 hover:underline"
       >{{ bookInfo.authorName }}</NuxtLink>
     </div>
   </li>

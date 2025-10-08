@@ -178,7 +178,7 @@ export default defineNuxtConfig({
       short_name: '3ook',
       description: 'AI reading companion & decentralized bookstore',
       theme_color: '#131313',
-      background_color: '#F2F0E9',
+      background_color: '#f9f9f9',
       display: 'standalone',
       icons: [
         {

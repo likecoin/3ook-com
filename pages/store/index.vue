@@ -40,7 +40,7 @@
           icon="i-material-symbols-close-rounded"
           variant="outline"
           rounded-full
-          :ui="{ base: 'rounded-full bg-(--app-bg)' }"
+          :ui="{ base: 'rounded-full bg-(--app-bg) hover:bg-theme-white/80 hover:-translate-y-0.5 transition-all' }"
           @click="handleCloseClick"
         />
 
@@ -51,7 +51,7 @@
           :label="fixedTag.label"
           variant="outline"
           :ui="{
-            base: 'rounded-full bg-(--app-bg) !ring-gray-600 max-phone:px-[10px] px-4',
+            base: 'rounded-full bg-(--app-bg) hover:bg-theme-white/80 !ring-theme-black max-phone:px-[10px] px-4 hover:-translate-y-0.5 transition-all',
             label: 'text-sm laptop:text-base',
           }"
           :to="localeRoute({ name: 'store', query: { ...route.query, tag: fixedTag.value } })"
@@ -71,10 +71,10 @@
           size="md"
           :ui="{
             base: [
-              'rounded-full !ring-gray-600 justify-center text-sm laptop:text-base font-medium  max-phone:!pl-[10px] !pl-[16px]',
+              'rounded-full !ring-theme-black justify-center text-sm laptop:text-base font-medium max-phone:!pl-[10px] !pl-[16px] hover:-translate-y-0.5 transition-all',
               isDefaultTagId
-                ? 'bg-(--app-bg) hover:bg-[#d0cec8]'
-                : 'bg-black text-white hover:bg-[#d0cec8] hover:text-black',
+                ? 'bg-(--app-bg) hover:bg-theme-white/80'
+                : 'bg-theme-black hover:bg-theme-black/80 text-white',
             ],
             content: 'rounded-lg',
             placeholder: isDefaultTagId ? '!text-black text-sm laptop:text-base' : undefined,
