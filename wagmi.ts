@@ -17,7 +17,7 @@ export function createWagmiConfig({
   isTestnet?: boolean
 }) {
   const chain = isTestnet ? baseSepolia : base
-  const logoURL = customLogoURL || 'https://3ook.com/favicon-32x32.png'
+  const logoURL = customLogoURL || 'https://3ook.com/pwa-64x64.png'
   return createConfig({
     chains: [chain],
     connectors: [

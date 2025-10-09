@@ -141,6 +141,17 @@ export default defineNuxtConfig({
 
   compatibilityDate: '2024-11-01',
 
+  vite: {
+    optimizeDeps: {
+      exclude: ['@resvg/resvg-wasm'],
+    },
+    server: {
+      fs: {
+        allow: ['..'],
+      },
+    },
+  },
+
   gtag: {
     tags: [
       GA_TRACKING_ID,
@@ -175,23 +186,16 @@ export default defineNuxtConfig({
     registerType: 'autoUpdate',
     manifest: {
       name: '3ook.com',
-      short_name: '3ook',
+      short_name: '3ook.com',
       description: 'AI reading companion & decentralized bookstore',
       theme_color: '#131313',
       background_color: '#f9f9f9',
+      orientation: 'portrait',
       display: 'standalone',
-      icons: [
-        {
-          src: '/android-chrome-192x192.png',
-          sizes: '192x192',
-          type: 'image/png',
-        },
-        {
-          src: '/android-chrome-512x512.png',
-          sizes: '512x512',
-          type: 'image/png',
-        },
-      ],
+    },
+    pwaAssets: {
+      config: true,
+      overrideManifestIcons: true,
     },
   },
 
