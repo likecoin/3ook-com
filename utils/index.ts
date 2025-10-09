@@ -63,3 +63,8 @@ export function parseURIString<T>(uri: string): T | undefined {
     return undefined
   }
 }
+
+export function trimText(text: string, length: number) {
+  if (!text || !length || text.length <= length) return text
+  return `${text.slice(0, length - 1)}...`
+}

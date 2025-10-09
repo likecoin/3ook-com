@@ -123,5 +123,7 @@ useHead({
   ],
 })
 
+defineOgImageComponent('Default')
+
 const { isShowMaintenancePage } = useMaintenanceMode()
 </script>
