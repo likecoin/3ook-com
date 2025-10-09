@@ -29,7 +29,7 @@ export function createWagmiConfig({
               name: '3ook.com',
               description: '3ook.com is an AI reading companion coupled with a decentralized bookstore on web3',
               url: 'https://3ook.com',
-              icons: [customLogoURL || 'https://3ook.com/favicon-32x32.png'],
+              icons: [customLogoURL || 'https://3ook.com/pwa-64x64.png'],
             },
           })]
         : []),
