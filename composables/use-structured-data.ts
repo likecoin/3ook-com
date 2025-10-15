@@ -40,7 +40,7 @@ export function useStructuredData(
     },
     {
       property: 'product:brand',
-      content: '3ook',
+      content: '3ook.com',
     },
     {
       property: 'product:catalog_id',
@@ -68,7 +68,7 @@ export function useStructuredData(
     },
     {
       property: 'product:brand',
-      content: '3ook',
+      content: '3ook.com',
     },
     {
       property: 'og:type',
@@ -134,7 +134,7 @@ export function useStructuredData(
         'brand': {
           '@context': 'https://schema.org',
           '@type': 'Brand',
-          'name': '3ook',
+          'name': '3ook.com',
         },
         'author': authorName,
         'sku': skuId,
@@ -213,7 +213,7 @@ export function useStructuredData(
       'brand': {
         '@context': 'https://schema.org',
         '@type': 'Brand',
-        'name': '3ook',
+        'name': '3ook.com',
       },
       'author': authorName,
       'sku': nftClassIdValue,

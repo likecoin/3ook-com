@@ -92,7 +92,7 @@ useHead({
             '@context': 'https://schema.org',
             '@type': 'Brand',
             'url': ogURL,
-            'name': '3ook',
+            'name': '3ook.com',
           },
         ],
       }]),
