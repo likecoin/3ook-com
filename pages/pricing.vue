@@ -28,7 +28,7 @@ const structuredData = computed(() => {
     'brand': {
       '@context': 'https://schema.org',
       '@type': 'Brand',
-      'name': '3ook plus',
+      'name': '3ook.com Plus',
       'url': canonicalURL.value,
     },
     'description': $t('pricing_page_subscription_description'),
@@ -101,7 +101,7 @@ useHead({
     { property: 'og:price:currency', content: currency.value },
     { property: 'product:price:amount', content: monthlyPrice.value },
     { property: 'product:price:currency', content: currency.value },
-    { property: 'product:brand', content: '3ook plus' },
+    { property: 'product:brand', content: '3ook.com Plus' },
     { property: 'product:availability', content: 'in stock' },
     { property: 'product:condition', content: 'new' },
     { property: 'product:catalog_id', content: monthlyProductId },
