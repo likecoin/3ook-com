@@ -7,6 +7,7 @@
 </template>
 
 <script setup lang="ts">
+import base from '~/assets/images/login-connectors/base.svg?url'
 import brave from '~/assets/images/login-connectors/brave.svg?url'
 import cosmostation from '~/assets/images/login-connectors/cosmostation.svg?url'
 import keplr from '~/assets/images/login-connectors/keplr.svg?url'
@@ -20,6 +21,8 @@ const props = defineProps<{
 
 const src = computed(() => {
   switch (props.connectorId) {
+    case 'coinbaseWalletSDK':
+      return base
     case 'com.brave.wallet':
       return brave
     case 'io.cosmostation':

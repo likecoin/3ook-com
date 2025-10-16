@@ -1,6 +1,6 @@
 import { http, createConfig } from '@wagmi/vue'
 import { base, baseSepolia } from '@wagmi/vue/chains'
-import { injected, metaMask, walletConnect } from '@wagmi/vue/connectors'
+import { injected, metaMask, walletConnect, coinbaseWallet } from '@wagmi/vue/connectors'
 import { dedicatedWalletConnector } from '@likecoin/wagmi-connector'
 
 export function createWagmiConfig({
@@ -17,11 +17,16 @@ export function createWagmiConfig({
   isTestnet?: boolean
 }) {
   const chain = isTestnet ? baseSepolia : base
+  const logoURL = customLogoURL || 'https://3ook.com/favicon-32x32.png'
   return createConfig({
     chains: [chain],
     connectors: [
       injected(),
       metaMask(),
+      coinbaseWallet({
+        appName: '3ook.com',
+        appLogoUrl: logoURL,
+      }),
       ...(walletConnectProjectId
         ? [walletConnect({
             projectId: walletConnectProjectId,
@@ -29,7 +34,7 @@ export function createWagmiConfig({
               name: '3ook.com',
               description: '3ook.com is an AI reading companion coupled with a decentralized bookstore on web3',
               url: 'https://3ook.com',
-              icons: [customLogoURL || 'https://3ook.com/favicon-32x32.png'],
+              icons: [logoURL],
             },
           })]
         : []),
@@ -43,7 +48,7 @@ export function createWagmiConfig({
               apiKey,
               accentColor: '#131313',
               customHeaderText: '3ook.com',
-              customLogo: customLogoURL,
+              customLogo: logoURL,
               isDarkMode: false,
               magicSdkConfiguration: {
                 deferPreload: true,
