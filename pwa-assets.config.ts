@@ -35,5 +35,5 @@ export default defineConfig({
     },
     AllAppleDeviceNames,
   ),
-  images: ['public/logo.svg'],
+  images: [process.env.IS_TESTNET ? 'public/logo-testnet.svg' : 'public/logo.svg'],
 })
