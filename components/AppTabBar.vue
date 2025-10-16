@@ -1,5 +1,5 @@
 <template>
-  <nav class="bg-white border-t border-muted fixed bottom-0 left-0 right-0 pb-safe">
+  <nav class="bg-theme-500 fixed bottom-0 left-0 right-0 pb-safe">
     <ul class="flex justify-around items-center w-full max-w-md min-h-14 mx-auto">
       <li
         v-for="item in menuItems"
@@ -14,7 +14,8 @@
           <UAvatar
             :class="[
               'bg-white',
-              item.isActive ? 'border-2 border-theme-black' : 'border border-muted',
+              'border-2',
+              item.isActive ? 'border-theme-cyan' : 'border-theme-white',
             ]"
             :src="user?.avatar"
             :alt="user?.displayName"
@@ -24,10 +25,16 @@
         </NuxtLink>
         <UButton
           v-else
-          class="flex-col gap-0"
+          :class="[
+            'flex-col',
+            'gap-0',
+            item.isActive
+              ? 'text-theme-cyan hover:text-theme-cyan/80'
+              : 'text-theme-white hover:text-theme-white/80',
+          ]"
           :label="item.label"
           :icon="item.icon"
-          :color="item.isActive ? 'primary' : 'neutral'"
+          color="neutral"
           variant="link"
           :to="item.to"
           size="xl"
