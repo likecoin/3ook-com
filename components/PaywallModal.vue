@@ -28,16 +28,22 @@
       />
       <template v-if="isDesktopScreen && isShowTTSSamples">
         <aside class="relative flex justify-end w-full bg-theme-cyan min-h-max">
-          <div class="flex flex-col items-center relative w-full max-w-[512px] min-h-max bg-theme-black">
+          <div class="flex flex-col justify-center items-center relative w-full max-w-[512px] min-h-max bg-theme-black">
             <PlusBlocktrendBundleBanner
-              v-if="isShowBlocktrendBundleBanner"
+              v-if="isBlocktrendCampaign"
               class="w-full shrink-0"
               :is-force-landscape="true"
               :is-dark-background="true"
             />
-            <div :class="['p-12', { 'pt-30': !isShowBlocktrendBundleBanner }]">
+            <PricingPageCampaignMedia
+              v-else-if="campaignContent"
+              class="w-full shrink-0"
+              :campaign-id="campaignContent.id"
+              orientation="landscape"
+            />
+            <div :class="['p-12', { 'pt-30': !campaignContent }]">
               <img
-                v-if="!isShowBlocktrendBundleBanner"
+                v-if="!campaignContent"
                 :src="plusLogo"
                 :alt="$t('pricing_page_title')"
                 class="w-full max-w-[300px] laptop:max-h-[200px] mb-12 object-contain"
@@ -46,6 +52,8 @@
               <PricingPageIntroSection
                 class="w-full max-w-[420px]"
                 :is-dark-background="true"
+                :title="campaignContent?.title"
+                :description="campaignContent?.description"
               />
             </div>
           </div>
@@ -53,9 +61,26 @@
       </template>
       <template v-else>
         <PlusBlocktrendBundleBanner
-          v-if="isShowBlocktrendBundleBanner"
+          v-if="isBlocktrendCampaign"
           class="max-laptop:shrink-0 w-full min-h-max"
         />
+        <aside
+          v-else-if="campaignContent"
+          class="relative max-laptop:shrink-0 w-full min-h-max bg-theme-black"
+        >
+          <div class="max-laptop:hidden absolute inset-0 overflow-hidden">
+            <PricingPageCampaignMedia
+              class="absolute inset-x-0 w-full top-1/2 -translate-y-1/2"
+              :campaign-id="campaignContent.id"
+              orientation="portrait"
+            />
+          </div>
+          <PricingPageCampaignMedia
+            class="laptop:hidden w-full"
+            :campaign-id="campaignContent.id"
+            orientation="landscape"
+          />
+        </aside>
         <aside
           v-else
           class="relative flex justify-center items-center max-laptop:shrink-0 w-full p-12 bg-theme-black overflow-hidden"
@@ -72,7 +97,7 @@
         :class="[
           'flex',
           'w-full',
-          { 'items-center': !isShowTTSSamples || isShowBlocktrendBundleBanner },
+          { 'items-center': !isShowTTSSamples || campaignContent },
           'min-h-max',
         ]"
       >
@@ -82,12 +107,14 @@
             'max-w-[512px]',
             'max-laptop:mx-auto',
             'p-5 laptop:p-12',
-            { 'laptop:pt-30': !isShowBlocktrendBundleBanner },
+            campaignContent ? 'max-laptop:pt-8' : 'laptop:pt-30',
           ]"
         >
           <PricingPageIntroSection
             v-if="!(isShowTTSSamples && isDesktopScreen)"
             class="mb-8"
+            :title="campaignContent?.title"
+            :description="campaignContent?.description"
           />
           <TTSSamplesSection v-if="isShowTTSSamples" />
 
@@ -301,9 +328,14 @@ const abTest = shouldShowTTSSamples.value
 
 const isShowTTSSamples = computed(() => shouldShowTTSSamples.value || abTest?.isVariant('show'))
 
-const isShowBlocktrendBundleBanner = computed(() => {
-  return getRouteQuery('utm_campaign') === 'blocktrend-plus'
+const utmCampaign = computed(() => {
+  return getRouteQuery('utm_campaign') || props.utmCampaign
 })
+
+const {
+  campaignContent,
+  isBlocktrendCampaign,
+} = usePricingPageCampaign({ campaignId: utmCampaign })
 
 const isFullscreenModal = computed(() => props.isFullscreen || isScreenSmall.value)
 
@@ -380,7 +412,7 @@ function handleSubscribeButtonClick() {
     selectedPlan: selectedPlan.value,
     mustCollectPaymentMethod: props.mustCollectPaymentMethod,
     trialPeriodDays: props.trialPeriodDays,
-    utmCampaign: props.utmCampaign,
+    utmCampaign: utmCampaign.value,
     utmMedium: props.utmMedium,
     utmSource: props.utmSource,
   })

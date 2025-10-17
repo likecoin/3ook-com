@@ -1,15 +1,33 @@
 <template>
-  <div class="flex flex-col items-start gap-5">
+  <div
+    :class="[
+      'flex',
+      'flex-col',
+      'items-start',
+      'gap-5',
+      { 'text-white': !!props.isDarkBackground },
+    ]"
+  >
+    <h1
+      v-if="title"
+      :class="[
+        'text-3xl',
+        'font-bold',
+        { 'text-theme-cyan': props.isDarkBackground },
+      ]"
+      v-text="title"
+    />
+    <div
+      v-if="description"
+      class="text-lg"
+      v-text="description"
+    />
     <div
       :class="[
-        'max-laptop:mx-auto',
-        'px-6',
-        'py-2',
-        props.isDarkBackground ? 'text-theme-black' : 'text-white',
+        props.isDarkBackground ? 'text-theme-cyan' : 'text-theme-black',
         'text-center',
         'font-bold',
-        props.isDarkBackground ? 'bg-theme-cyan' : 'bg-theme-black',
-        'rounded-full',
+        'border-b-2 border-current',
       ]"
       v-text="$t('pricing_page_subscription')"
     />
@@ -21,10 +39,7 @@
         '[&>li>span:first-child]:shrink-0',
         '[&>li>span:first-child]:mt-1',
         '[&>li>span:first-child]:mr-2',
-        props.isDarkBackground
-          ? '[&>li>span:first-child]:text-theme-cyan'
-          : '[&>li>span:first-child]:text-green-500',
-        { 'text-white': !!props.isDarkBackground },
+        '[&>li>span:first-child]:text-theme-cyan',
       ]"
     >
       <li>
@@ -35,22 +50,28 @@
         <UIcon name="i-material-symbols-check" />
         <span v-text="$t('pricing_page_feature_2')" />
       </li>
+      <template v-if="!title && !description">
+        <li>
+          <UIcon name="i-material-symbols-check" />
+          <span v-text="$t('pricing_page_feature_3')" />
+        </li>
+        <li>
+          <UIcon name="i-material-symbols-check" />
+          <span v-text="$t('pricing_page_feature_4')" />
+        </li>
+        <li>
+          <UIcon name="i-material-symbols-check" />
+          <span
+            v-text="$t('pricing_page_feature_5', {
+              monthlyPrice,
+              yearlyPrice,
+            })"
+          />
+        </li>
+      </template>
       <li>
         <UIcon name="i-material-symbols-check" />
-        <span v-text="$t('pricing_page_feature_3')" />
-      </li>
-      <li>
-        <UIcon name="i-material-symbols-check" />
-        <span v-text="$t('pricing_page_feature_4')" />
-      </li>
-      <li>
-        <UIcon name="i-material-symbols-check" />
-        <span
-          v-text="$t('pricing_page_feature_5', {
-            monthlyPrice,
-            yearlyPrice,
-          })"
-        />
+        <span v-text="$t('pricing_page_feature_6')" />
       </li>
     </ul>
   </div>
@@ -61,6 +82,14 @@ const props = defineProps({
   isDarkBackground: {
     type: Boolean,
     default: false,
+  },
+  title: {
+    type: String,
+    default: '',
+  },
+  description: {
+    type: String,
+    default: '',
   },
 })
 
