@@ -26,7 +26,8 @@ useHead({
   transform: translateX(100%);
 }
 
-html.reader #intercom-container {
+html.reader #intercom-container,
+html.reader .intercom-lightweight-app {
   /* Hide Intercom in reader */
   display: none !important;
 }
