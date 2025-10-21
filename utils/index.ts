@@ -63,3 +63,7 @@ export function parseURIString<T>(uri: string): T | undefined {
     return undefined
   }
 }
+
+export function shortenWalletAddress(address = '') {
+  return `${address.slice(0, 8)}...${address.slice(-4)}`
+}

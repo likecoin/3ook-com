@@ -60,7 +60,7 @@ const displayName = computed(() => {
 
 const label = computed(() => {
   if (displayName.value) return displayName.value
-  return `${props.walletAddress.slice(0, 10)}...${props.walletAddress.slice(-9)}`
+  return shortenWalletAddress(props.walletAddress)
 })
 
 const linkRoute = computed(() => {

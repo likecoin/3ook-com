@@ -51,6 +51,8 @@ env:
     value: https://static.like.co
   - variable: LIKECOIN_V3_BOOK_MIGRATION_SITE_URL
     value: https://likenft-migration.pandawork.com
+  - variable: LIKER_LAND_SITE_URL
+    value: https://rinkeby.liker.land
   - variable: MAGIC_LINK_API_KEY
     value: pk_live_5E14E3184484268D
   - variable: MAGIC_LINK_CUSTOM_LOGO_URL
