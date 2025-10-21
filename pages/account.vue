@@ -141,7 +141,10 @@
               />
             </UTooltip>
 
-            <template #right>
+            <template
+              v-if="user?.loginMethod === 'magic'"
+              #right
+            >
               <UButton
                 :label="$t('account_page_export_private_key_button_label')"
                 variant="outline"
