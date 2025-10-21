@@ -84,6 +84,9 @@ export default defineNuxtConfig({
       isTestnet: process.env.IS_TESTNET,
       pdfViewerOrigin: process.env.PDF_VIEWER_ORIGIN,
       pdfViewerURL: `${process.env.PDF_VIEWER_ORIGIN}${process.env.PDF_VIEWER_PATH}`,
+      posthogPublicKey: process.env.POSTHOG_PUBLIC_KEY,
+      posthogHost: process.env.POSTHOG_HOST,
+      posthogDefaults: process.env.POSTHOG_DEFAULTS,
       sentryDsn: process.env.SENTRY_DSN,
       subscription: {
         pricing: {

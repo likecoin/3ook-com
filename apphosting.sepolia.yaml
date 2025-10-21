@@ -65,6 +65,12 @@ env:
     value: https://likecoin.github.io
   - variable: PDF_VIEWER_PATH
     value: /pdf.js/legacy/web/viewer.html
+  - variable: POSTHOG_PUBLIC_KEY
+    value: phc_pL5jZEutoxpgLzr8b0ixLk6okAoYFNmnwnDzbUAftpq
+  - variable: POSTHOG_HOST
+    value: https://us.i.posthog.com
+  - variable: POSTHOG_DEFAULTS
+    value: 2025-05-24
   - variable: WALLET_CONNECT_PROJECT_ID
     value: 526a2e1c9bf37fb75a7e0a4b11d6008e
   # Grant access to secrets in Cloud Secret Manager.

@@ -67,6 +67,12 @@ env:
     value: https://likecoin.github.io
   - variable: PDF_VIEWER_PATH
     value: /pdf.js/legacy/web/viewer.html
+  - variable: POSTHOG_PUBLIC_KEY
+    value: phc_VOXrU28p44Z0coehNjKThwVPK5dO0A6xwQTQqThWI1c
+  - variable: POSTHOG_HOST
+    value: https://us.i.posthog.com
+  - variable: POSTHOG_DEFAULTS
+    value: 2025-05-24
   - variable: GA_TRACKING_ID
     value: G-WBSJGPMQE2
   - variable: SENTRY_AUTH_TOKEN
