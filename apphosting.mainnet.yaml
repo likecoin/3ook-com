@@ -54,7 +54,7 @@ env:
   - variable: MAGIC_LINK_API_KEY
     value: pk_live_583D0D54D78940DA
   - variable: MAGIC_LINK_CUSTOM_LOGO_URL
-    value: https://3ook.com/android-chrome-512x512.png
+    value: https://3ook.com/pwa-512x512.png
   - variable: NUXT_PUBLIC_SCRIPTS_INTERCOM_APP_ID
     value: eupcse57
   - variable: NUXT_PUBLIC_SCRIPTS_META_PIXEL_ID
