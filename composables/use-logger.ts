@@ -74,6 +74,17 @@ export function useLogEvent(eventName: string, eventParams: EventParams = {}) {
       console.error(`Failed to log event to Intercom: ${eventName}`, error)
     }
   }
+
+  const { $posthog } = useNuxtApp()
+  if ($posthog) {
+    try {
+      const posthog = $posthog()
+      posthog.capture(eventName, eventParams)
+    }
+    catch (error) {
+      console.error(`Failed to log event to PostHog: ${eventName}`, error)
+    }
+  }
 }
 
 export function useSetLogUser(user: User | null) {
@@ -158,6 +169,20 @@ export function useSetLogUser(user: User | null) {
     }
     catch (error) {
       console.error('Failed to set user data in Intercom', error)
+    }
+  }
+
+  const { $posthog } = useNuxtApp()
+  if ($posthog) {
+    try {
+      const posthog = $posthog()
+      posthog.identify(
+        user?.evmWallet,
+        user ? { email: user?.email || undefined, name: user?.displayName || user?.evmWallet || user?.likeWallet } : undefined,
+      )
+    }
+    catch (error) {
+      console.error('Failed to set user data in PostHog', error)
     }
   }
 }
