@@ -297,6 +297,7 @@ const localeRoute = useLocaleRoute()
 const { handleError } = useErrorHandler()
 const toast = useToast()
 const isWindowFocused = useDocumentVisibility()
+const { copy: copyToClipboard } = useClipboard()
 
 useHead({
   title: $t('account_page_title'),
@@ -379,7 +380,7 @@ async function handleClearReaderCacheButtonClick() {
 async function handleLikerIdClick() {
   useLogEvent('liker_id_wallet_click')
   try {
-    await navigator.clipboard.writeText(user.value?.likerId || '')
+    await copyToClipboard(user.value?.likerId || '')
     useLogEvent('account_liker_id_copy')
     toast.add({
       title: $t('copy_liker_id_success'),
@@ -402,7 +403,7 @@ async function handleLikerIdClick() {
 async function handleEVMWalletClick() {
   useLogEvent('account_evm_wallet_click')
   try {
-    await navigator.clipboard.writeText(user.value?.evmWallet || '')
+    await copyToClipboard(user.value?.evmWallet || '')
     useLogEvent('account_evm_wallet_copy')
     toast.add({
       title: $t('copy_evm_wallet_success'),

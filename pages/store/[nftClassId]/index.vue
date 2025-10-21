@@ -776,11 +776,13 @@ onMounted(() => {
   checkBookListStatus()
 })
 
+const { copy: copyToClipboard } = useClipboard()
+
 async function handleSocialButtonClick(key: string) {
   switch (key) {
     case 'copy-links':
       try {
-        await navigator.clipboard.writeText(window.location.href)
+        await copyToClipboard(window.location.href)
         toast.add({
           title: $t('copy_link_success'),
           duration: 3000,
