@@ -2,6 +2,7 @@
   <li
     ref="lazyLoadTrigger"
     class="flex flex-col justify-end"
+    :class="!props.isOwned && props.stakedAmount > 0 ? 'opacity-50' : 'opacity-100'"
   >
     <BookCover
       :src="bookCoverSrc"
@@ -17,6 +18,13 @@
         <div
           class="text-sm laptop:text-base text-highlighted font-semibold line-clamp-2 grow"
           v-text="bookInfo.name"
+        />
+        <UBadge
+          v-if="hasStakes"
+          :label="$t('staking_dashboard_staked')"
+          variant="soft"
+          color="primary"
+          size="xs"
         />
         <UDropdownMenu
           v-if="isDesktopScreen"
@@ -75,6 +83,31 @@
         })"
         class="inline-block mt-0.5 text-xs laptop:text-sm text-dimmed hover:text-theme-black line-clamp-1 hover:underline"
       >{{ bookInfo.authorName }}</NuxtLink>
+
+      <!-- Staking info section -->
+      <div
+        v-if="hasStakes"
+        class="mt-3 space-y-1"
+      >
+        <div class="h-5 text-sm text-theme-500 flex items-center justify-between">
+          <span class="font-medium">{{ $t('staking_dashboard_staked') }}</span>
+          <div class="flex items-center gap-1">
+            <span class="font-semibold">{{ formattedStakedAmount }}</span>
+            <span class="text-xs text-gray-500">LIKE</span>
+          </div>
+        </div>
+
+        <div
+          v-if="formattedPendingRewards"
+          class="h-4 text-xs text-green-600 flex items-center justify-between"
+        >
+          <span>{{ $t('staking_dashboard_rewards') }}</span>
+          <div class="flex items-center gap-1">
+            <span class="font-medium">{{ formattedPendingRewards }}</span>
+            <span class="text-xs text-gray-400">LIKE</span>
+          </div>
+        </div>
+      </div>
     </div>
   </li>
 </template>
@@ -99,6 +132,18 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  stakedAmount: {
+    type: Number,
+    default: 0,
+  },
+  pendingRewards: {
+    type: Number,
+    default: 0,
+  },
+  isOwned: {
+    type: Boolean,
+    default: true,
+  },
 })
 
 const emit = defineEmits(['visible', 'open', 'download', 'claim'])
@@ -114,6 +159,22 @@ const { getResizedImageURL } = useImageResize()
 const bookCoverSrc = computed(() => getResizedImageURL(bookInfo.coverSrc.value, { size: 300 }))
 
 const isDesktopScreen = useDesktopScreen()
+
+const formattedStakedAmount = computed(() => {
+  if (props.stakedAmount === 0) return ''
+  return props.stakedAmount.toLocaleString(undefined, {
+    maximumFractionDigits: 2,
+  })
+})
+
+const formattedPendingRewards = computed(() => {
+  if (props.pendingRewards === 0) return ''
+  return props.pendingRewards.toLocaleString(undefined, {
+    maximumFractionDigits: 6,
+  })
+})
+
+const hasStakes = computed(() => props.stakedAmount > 0)
 
 const menuItems = computed<DropdownMenuItem[]>(() => {
   const genericItems: DropdownMenuItem[] = []
