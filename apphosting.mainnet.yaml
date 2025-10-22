@@ -47,6 +47,8 @@ env:
     value: https://api.like.co
   - variable: LIKECOIN_EVM_CHAIN_API_ENDPOINT
     value: https://indexer.v3.like.co/protocol/api
+  - variable: LIKECOIN_EVM_CHAIN_COLLECTIVE_API_ENDPOINT
+    value: https://indexer.v3.like.co/collective/api
   - variable: LIKECOIN_STATIC_ENDPOINT
     value: https://static.like.co
   - variable: LIKECOIN_V3_BOOK_MIGRATION_SITE_URL

@@ -72,6 +72,7 @@ export default defineNuxtConfig({
       likeCoinAPIEndpoint: process.env.LIKECOIN_API_ENDPOINT,
       likeCoinStaticEndpoint: process.env.LIKECOIN_STATIC_ENDPOINT,
       likeCoinEVMChainAPIEndpoint: process.env.LIKECOIN_EVM_CHAIN_API_ENDPOINT,
+      likeCoinEVMChainCollectiveAPIEndpoint: process.env.LIKECOIN_EVM_CHAIN_COLLECTIVE_API_ENDPOINT,
       likeCoinV3BookMigrationSiteURL: process.env.LIKECOIN_V3_BOOK_MIGRATION_SITE_URL,
       likerLandSiteURL: process.env.LIKER_LAND_SITE_URL,
       googleAnalyticsTrackingId: process.env.GA_TRACKING_ID,
