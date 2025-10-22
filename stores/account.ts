@@ -342,6 +342,26 @@ export const useAccountStore = defineStore('account', () => {
     return false
   }
 
+  async function restoreConnection() {
+    if (address.value) {
+      return
+    }
+    const lastUsedConnectorId = user.value?.loginMethod
+    let connector
+    if (lastUsedConnectorId) {
+      connector = connectors.find((c: { id: string }) => c.id === lastUsedConnectorId)
+    }
+    if (connector) {
+      await connectAsync({
+        connector,
+        chainId: chainId.value,
+      })
+    }
+    else {
+      await login()
+    }
+  }
+
   async function login(preferredConnectorId?: string) {
     try {
       isLoggingIn.value = true
@@ -598,6 +618,7 @@ export const useAccountStore = defineStore('account', () => {
     login,
     logout,
     refreshSessionInfo,
+    restoreConnection,
     exportPrivateKey,
     clearCaches,
     clearPlusRedirectRoute,
