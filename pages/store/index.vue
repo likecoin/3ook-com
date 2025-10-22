@@ -52,9 +52,8 @@
         </h1>
       </div>
 
-      <!-- Normal tag selector -->
+      <!-- Tag selector -->
       <div
-        v-else
         class="flex items-center max-phone:gap-1 gap-2 w-full"
       >
         <UButton
@@ -161,6 +160,8 @@
           :book-name="item.title"
           :book-cover-src="item.imageUrl"
           :price="item.minPrice"
+          :total-staked="getIsStakingTagId(tagId) ? Number(formatUnits(item.totalStaked ?? 0n, LIKE_TOKEN_DECIMALS)) : 0"
+          :staker-count="getIsStakingTagId(tagId) ? (item.stakerCount ?? 0) : 0"
           :lazy="index >= columnMax"
         />
       </ul>
@@ -180,6 +181,9 @@
 </template>
 
 <script setup lang="ts">
+import { formatUnits } from 'viem'
+import { LIKE_TOKEN_DECIMALS } from '~/shared/constants'
+
 const { t: $t, locale } = useI18n()
 const localeRoute = useLocaleRoute()
 const route = useRoute()
@@ -219,9 +223,14 @@ const searchQuery = computed(() => {
 const isSearchMode = computed(() => !!searchQuery.value)
 
 const TAG_LISTING = 'listing'
+const STAKING_SORT_TAG_PREFIX = 'staking-'
 
 function getIsDefaultTagId(id: string) {
   return id === TAG_LISTING
+}
+
+function getIsStakingTagId(id: string) {
+  return id.startsWith(STAKING_SORT_TAG_PREFIX)
 }
 
 const tagId = computed({
@@ -243,7 +252,7 @@ const isDefaultTagId = computed(() => getIsDefaultTagId(tagId.value))
 const normalizedLocale = computed(() => locale.value === 'zh-Hant' ? 'zh' : 'en')
 
 const allTagItems = computed(() => {
-  return bookstoreStore.bookstoreCMSTags
+  const cmsTags = bookstoreStore.bookstoreCMSTags
     .filter((tag) => {
       return !!tag.isPublic || tag.id === tagId.value
     })
@@ -251,6 +260,13 @@ const allTagItems = computed(() => {
       label: tag.name[normalizedLocale.value],
       value: tag.id,
     }))
+
+  const stakingTags = STAKING_SORT_OPTIONS.map(option => ({
+    label: $t(option.labelKey),
+    value: `${STAKING_SORT_TAG_PREFIX}${option.value}`,
+  }))
+
+  return [...cmsTags, ...stakingTags]
 })
 
 const tagsSliceIndex = computed(() => {
@@ -267,6 +283,25 @@ const fixedTags = computed(() => {
 const selectorTagItems = computed(() => {
   return allTagItems.value.slice(tagsSliceIndex.value)
 })
+
+const STAKING_SORT_OPTIONS = [
+  { value: 'total_staked', labelKey: 'staking_explore_sort_total_staked' },
+  { value: 'staker_count', labelKey: 'staking_explore_sort_staker_count' },
+  { value: 'recent', labelKey: 'staking_explore_sort_recent' },
+]
+
+function mapToAPIStakingSortValue(sortValue: string): 'staked_amount' | 'last_staked_at' | 'number_of_stakers' {
+  switch (sortValue) {
+    case 'total_staked':
+      return 'staked_amount'
+    case 'staker_count':
+      return 'number_of_stakers'
+    case 'recent':
+      return 'last_staked_at'
+    default:
+      return 'staked_amount'
+  }
+}
 
 const localizedTagId = computed(() => {
   // NOTE: Only the default tag is localized
@@ -378,7 +413,17 @@ watch(queryOwnerWallet, async (wallet) => {
 
 const searchResults = computed(() => {
   if (isSearchMode.value) {
-    return bookstoreStore.getBookstoreSearchResultsByQuery(searchQuery.value)
+    const searchResults = bookstoreStore.getBookstoreSearchResultsByQuery(searchQuery.value)
+    return {
+      items: searchResults.items.map(item => ({
+        ...item,
+        totalStaked: 0n,
+        stakerCount: 0,
+      })),
+      isFetchingItems: searchResults.isFetchingItems,
+      hasFetchedItems: searchResults.hasFetchedItems,
+      nextItemsKey: searchResults.nextItemsKey,
+    }
   }
   return null
 })
@@ -407,6 +452,30 @@ const products = computed(() => {
 
     return searchResults.value || defaultListingProducts.value
   }
+
+  // Return staking books when viewing staking tag
+  if (getIsStakingTagId(tagId.value)) {
+    const stakingSort = tagId.value.slice(STAKING_SORT_TAG_PREFIX.length) || 'total_staked'
+    const apiSortValue = mapToAPIStakingSortValue(stakingSort)
+    const staking = bookstoreStore.getStakingBooks(apiSortValue)
+    return {
+      items: staking.items.map((item) => {
+        const bookInfo = bookstoreStore.getBookstoreInfoByNFTClassId(item.nftClassId)
+        return {
+          classId: item.nftClassId,
+          title: bookInfo?.name || '',
+          imageUrl: bookInfo?.thumbnailUrl || '',
+          minPrice: undefined,
+          totalStaked: item.totalStaked,
+          stakerCount: item.stakerCount,
+        }
+      }),
+      isFetchingItems: staking.isFetchingItems,
+      hasFetchedItems: staking.hasFetchedItems,
+      nextItemsKey: staking.nextItemsKey,
+    }
+  }
+
   return defaultListingProducts.value
 })
 
@@ -449,6 +518,20 @@ async function fetchItems({ lazy = false, isRefresh = false } = {}) {
     catch (error) {
       await handleError(error, {
         title: isRefresh ? $t('store_fetch_items_error') : $t('store_fetch_more_items_error'),
+      })
+    }
+    return
+  }
+
+  if (getIsStakingTagId(tagId.value)) {
+    const stakingSort = tagId.value.slice(STAKING_SORT_TAG_PREFIX.length) || 'total_staked'
+    const apiSortValue = mapToAPIStakingSortValue(stakingSort)
+    try {
+      await bookstoreStore.fetchStakingBooks(apiSortValue, { isRefresh })
+    }
+    catch (error) {
+      await handleError(error, {
+        title: $t('staking_explore_fetch_error'),
       })
     }
     return
@@ -497,9 +580,9 @@ onMounted(async () => {
     return
   }
 
-  const fetchTagPromise = fetchTags()
-  if (!isDefaultTagId.value) {
-    // NOTE: Need to fetch all tags if not the default tag
+  const fetchTagPromise = getIsStakingTagId(tagId.value) ? Promise.resolve() : fetchTags()
+  if (!isDefaultTagId.value && !getIsStakingTagId(tagId.value)) {
+    // NOTE: Need to fetch all tags if not the default tag and not staking tag
     await fetchTagPromise
     if (!tag.value) {
       throw createError({

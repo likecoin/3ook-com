@@ -1,3 +1,5 @@
+import { fetchCollectiveBookNFTs } from '~/shared/utils/collective-indexer'
+
 interface BookstoreCMSTagProducts {
   items: BookstoreCMSProduct[]
   isFetching: boolean
@@ -16,6 +18,17 @@ interface BookstoreSearchResults {
   isFetching: boolean
   hasFetched: boolean
   nextKey?: string
+}
+
+interface StakingBooks {
+  items: Array<{
+    nftClassId: string
+    totalStaked: bigint
+    stakerCount: number
+  }>
+  isFetching: boolean
+  hasFetched: boolean
+  offset?: string
 }
 
 export const useBookstoreStore = defineStore('bookstore', () => {
@@ -261,6 +274,67 @@ export const useBookstoreStore = defineStore('bookstore', () => {
     }
   }
 
+  /* Staking Books */
+
+  const stakingBooksMap = ref<Record<string, StakingBooks>>({})
+
+  const getStakingBooks = computed(() => (sortBy: string) => {
+    return {
+      items: stakingBooksMap.value[sortBy]?.items || [],
+      isFetchingItems: stakingBooksMap.value[sortBy]?.isFetching || false,
+      hasFetchedItems: stakingBooksMap.value[sortBy]?.hasFetched || false,
+      nextItemsKey: stakingBooksMap.value[sortBy]?.offset || undefined,
+    }
+  })
+
+  async function fetchStakingBooks(sortBy: string, { isRefresh = false } = {}) {
+    if (stakingBooksMap.value[sortBy]?.isFetching) {
+      return
+    }
+    if (!stakingBooksMap.value[sortBy] || isRefresh) {
+      stakingBooksMap.value[sortBy] = {
+        items: [],
+        isFetching: false,
+        hasFetched: false,
+        offset: undefined,
+      }
+    }
+
+    try {
+      stakingBooksMap.value[sortBy].isFetching = true
+
+      const result = await fetchCollectiveBookNFTs({
+        'pagination.limit': 30,
+        'time_frame_sort_order': 'desc',
+        'time_frame_sort_by': sortBy as 'staked_amount' | 'last_staked_at' | 'number_of_stakers',
+      })
+
+      const bookNFTs = result.data.map(bookNFT => ({
+        nftClassId: bookNFT.evm_address,
+        totalStaked: BigInt(bookNFT.staked_amount || 0),
+        stakerCount: bookNFT.number_of_stakers,
+      }))
+
+      if (isRefresh) {
+        stakingBooksMap.value[sortBy].items = bookNFTs
+      }
+      else {
+        stakingBooksMap.value[sortBy].items.push(...bookNFTs)
+      }
+
+      // Set offset if there are more results (pagination)
+      stakingBooksMap.value[sortBy].offset = result.data.length === 30 ? String(result.data.length) : undefined
+      stakingBooksMap.value[sortBy].hasFetched = true
+    }
+    catch (error) {
+      stakingBooksMap.value[sortBy].hasFetched = true
+      throw error
+    }
+    finally {
+      stakingBooksMap.value[sortBy].isFetching = false
+    }
+  }
+
   return {
     bookstoreInfoByNFTClassIdMap,
 
@@ -292,5 +366,13 @@ export const useBookstoreStore = defineStore('bookstore', () => {
     getBookstoreSearchResultsByQuery,
 
     fetchSearchResults,
+
+    /* Staking Books */
+
+    stakingBooksMap,
+
+    getStakingBooks,
+
+    fetchStakingBooks,
   }
 })

@@ -11,6 +11,8 @@ export interface BookstoreCMSProduct {
   isMultiple?: boolean
   minPrice?: number
   timestamp?: number
+  totalStaked?: bigint
+  stakerCount?: number
 }
 
 export interface FetchBookstoreCMSProductsResponseData {
