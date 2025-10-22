@@ -51,6 +51,7 @@
 
         <UTabs
           v-if="infoTabItems.length"
+          v-model="activeTabValue"
           :items="infoTabItems"
           variant="link"
           class="gap-6 w-full mt-[52px] tablet:mt-[80px]"
@@ -108,6 +109,68 @@
               </tbody>
             </table>
           </template>
+
+          <template #staking-info>
+            <div class="space-y-4">
+              <div class="grid grid-cols-1 tablet:grid-cols-2 gap-4">
+                <UCard :ui="{ body: 'p-4' }">
+                  <div class="text-center">
+                    <div class="text-2xl font-bold text-theme-500">
+                      {{ formattedTotalStake }}
+                    </div>
+                    <div class="text-sm text-gray-600 mt-1">
+                      {{ $t('staking_total_staked') }}
+                    </div>
+                  </div>
+                </UCard>
+                <UCard
+                  v-if="hasLoggedIn"
+                  :ui="{ body: 'p-4' }"
+                >
+                  <div class="text-center">
+                    <div class="text-2xl font-bold text-blue-500">
+                      {{ formattedUserStake }}
+                    </div>
+                    <div class="text-sm text-gray-600 mt-1">
+                      {{ $t('staking_your_stake') }}
+                    </div>
+                    <div
+                      v-if="userStakePercentage > 0"
+                      class="text-xs text-gray-500 mt-1"
+                    >
+                      {{ userStakePercentage }}% {{ $t('staking_of_total') }}
+                    </div>
+                  </div>
+                </UCard>
+              </div>
+
+              <div
+                v-if="hasLoggedIn && pendingRewards > 0n"
+                class="mt-4"
+              >
+                <UCard :ui="{ body: 'p-4' }">
+                  <div class="flex justify-between items-center">
+                    <div>
+                      <div class="text-lg font-semibold text-green-500">
+                        {{ formattedPendingRewards }}
+                      </div>
+                      <div class="text-sm text-gray-600">
+                        {{ $t('staking_pending_rewards') }}
+                      </div>
+                    </div>
+                    <UButton
+                      :label="$t('staking_claim_rewards')"
+                      color="secondary"
+                      variant="outline"
+                      size="sm"
+                      :loading="isClaimingRewards"
+                      @click="handleClaimRewards"
+                    />
+                  </div>
+                </UCard>
+              </div>
+            </div>
+          </template>
         </UTabs>
 
         <ul
@@ -125,7 +188,11 @@
 
       <div class="relative w-full tablet:max-w-[300px] laptop:max-w-[380px] shrink-0">
         <div class="sticky top-0 flex flex-col gap-4 laptop:pt-5">
-          <template v-if="isUserBookOwner">
+          <template v-if="isStakingTabActive">
+            <StakingControl :nft-class-id="nftClassId" />
+          </template>
+
+          <template v-else-if="isUserBookOwner">
             <UButton
               class="max-laptop:hidden"
               :label="$t('product_page_read_button_label')"
@@ -460,6 +527,8 @@
 <script setup lang="ts">
 import type { TabsItem } from '@nuxt/ui'
 import MarkdownIt from 'markdown-it'
+import { formatUnits } from 'viem'
+import { LIKE_TOKEN_DECIMALS } from '~/shared/constants'
 
 const likeCoinSessionAPI = useLikeCoinSessionAPI()
 const route = useRoute()
@@ -611,6 +680,7 @@ const infoTabItems = computed(() => {
     items.push({
       label: $t('product_page_info_tab_description'),
       slot: 'description',
+      value: 'description',
     })
   }
 
@@ -618,16 +688,133 @@ const infoTabItems = computed(() => {
     items.push({
       label: $t('product_page_info_tab_author_description'),
       slot: 'author',
+      value: 'author',
     })
   }
 
   items.push({
     label: $t('product_page_info_tab_file_info'),
     slot: 'file-info',
+    value: 'file-info',
+  })
+
+  items.push({
+    label: $t('staking_info_tab_staking_info'),
+    slot: 'staking-info',
+    value: 'staking-info',
   })
 
   return items
 })
+
+const activeTabValue = ref(infoTabItems.value[0]?.value || 'description')
+const totalStake = ref(0n)
+const userStake = ref(0n)
+const pendingRewards = ref(0n)
+const isClaimingRewards = ref(false)
+
+const {
+  claimWalletRewardsOfNFTClass,
+} = useLikeStaking()
+
+const {
+  getWalletPendingRewardsOfNFTClass,
+  getWalletStakeOfNFTClass,
+  getTotalStakeOfNFTClass,
+} = useLikeCollectiveContract()
+
+const isStakingTabActive = computed(() => {
+  return activeTabValue.value === 'staking-info'
+})
+
+const router = useRouter()
+watch(activeTabValue, (newTabValue) => {
+  const tabValue = infoTabItems.value.find(item => item.value === newTabValue)
+  if (tabValue) {
+    router.replace({ hash: `#${tabValue.slot}` })
+  }
+})
+
+function initializeTabFromHash() {
+  const hash = route.hash.replace('#', '')
+  if (hash) {
+    const tabItem = infoTabItems.value.find(item => item.value === hash)
+    if (tabItem) {
+      activeTabValue.value = tabItem.value as string
+    }
+  }
+}
+
+async function loadStakingData() {
+  try {
+    totalStake.value = await getTotalStakeOfNFTClass(nftClassId.value)
+
+    if (hasLoggedIn.value && user.value?.evmWallet) {
+      const [userStakeAmount, pendingRewardsAmount] = await Promise.all([
+        getWalletStakeOfNFTClass(user.value.evmWallet, nftClassId.value),
+        getWalletPendingRewardsOfNFTClass(user.value.evmWallet, nftClassId.value),
+      ])
+      userStake.value = userStakeAmount
+      pendingRewards.value = pendingRewardsAmount
+    }
+  }
+  catch (error) {
+    console.error('Failed to load staking data:', error)
+  }
+}
+
+// Computed values for staking
+const formattedTotalStake = computed(() => {
+  return Number(formatUnits(totalStake.value, LIKE_TOKEN_DECIMALS)).toLocaleString(undefined, {
+    maximumFractionDigits: 2,
+  })
+})
+
+const formattedUserStake = computed(() => {
+  return Number(formatUnits(userStake.value, LIKE_TOKEN_DECIMALS)).toLocaleString(undefined, {
+    maximumFractionDigits: 6,
+  })
+})
+
+const formattedPendingRewards = computed(() => {
+  return Number(formatUnits(pendingRewards.value, LIKE_TOKEN_DECIMALS)).toLocaleString(undefined, {
+    maximumFractionDigits: 6,
+  })
+})
+
+const userStakePercentage = computed(() => {
+  if (totalStake.value === 0n) return 0
+  return Math.round((Number(userStake.value) / Number(totalStake.value)) * 10000) / 100
+})
+
+async function handleClaimRewards() {
+  try {
+    isClaimingRewards.value = true
+
+    await claimWalletRewardsOfNFTClass(user.value!.evmWallet, nftClassId.value)
+
+    toast.add({
+      title: $t('staking_claim_rewards_success'),
+      color: 'success',
+      icon: 'i-material-symbols-check-circle',
+    })
+
+    useLogEvent('claim_rewards_success', {
+      nft_class_id: nftClassId.value,
+      amount: formatUnits(pendingRewards.value, LIKE_TOKEN_DECIMALS),
+    })
+
+    await loadStakingData()
+  }
+  catch (error) {
+    await handleError(error, {
+      title: $t('staking_claim_rewards_error'),
+    })
+  }
+  finally {
+    isClaimingRewards.value = false
+  }
+}
 
 const pricingItemsElement = useTemplateRef<HTMLLIElement>('pricing')
 const isPricingItemsVisible = useElementVisibility(pricingItemsElement)
@@ -762,7 +949,7 @@ const { gridClasses, getGridItemClassesByIndex } = usePaginatedGrid({
   hasMore: false,
 })
 
-onMounted(() => {
+onMounted(async () => {
   useLogEvent('view_item', formattedLogPayload.value)
   const ownerWalletAddress = bookInfo.nftClassOwnerWalletAddress.value
   if (ownerWalletAddress) {
@@ -779,6 +966,18 @@ onMounted(() => {
   }
 
   checkBookListStatus()
+  await loadStakingData()
+  initializeTabFromHash()
+})
+
+watch(hasLoggedIn, async (isLoggedIn) => {
+  if (isLoggedIn) {
+    await loadStakingData()
+  }
+  else {
+    userStake.value = 0n
+    pendingRewards.value = 0n
+  }
 })
 
 const { copy: copyToClipboard } = useClipboard()
