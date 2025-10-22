@@ -57,18 +57,6 @@
             icon="i-material-symbols-3p-outline-rounded"
             :label="$t('account_page_account_id')"
           >
-            <template #label-append>
-              <UTooltip :text="$t('account_page_account_id_tooltip')">
-                <UButton
-                  class="rounded-full opacity-50"
-                  icon="i-material-symbols-help-outline-rounded"
-                  size="xs"
-                  color="neutral"
-                  variant="ghost"
-                />
-              </UTooltip>
-            </template>
-
             <UButton
               class="-ml-2 text-sm font-mono"
               :label="user?.likerId"
