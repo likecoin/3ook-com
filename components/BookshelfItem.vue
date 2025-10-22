@@ -158,6 +158,14 @@ const menuItems = computed<DropdownMenuItem[]>(() => {
     to: bookInfo.productPageRoute.value,
   })
 
+  genericItems.push({
+    label: $t('bookshelf_view_book_staking_page'),
+    icon: 'i-material-symbols-visibility-outline',
+    to: bookInfo.getProductPageRoute({
+      hash: '#staking-info',
+    }),
+  })
+
   return [
     ...readerItems,
     ...downloadItems,

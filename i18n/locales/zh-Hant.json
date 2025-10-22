@@ -96,6 +96,7 @@
   "bookshelf_open_in_type": "線上閱讀 {type}",
   "bookshelf_please_login": "請登入以查看書架",
   "bookshelf_view_book_product_page": "查看書本資訊",
+  "bookshelf_view_book_staking_page": "質押到此書",
   "checkout_by_author": "作者 {author}",
   "checkout_cart_empty_browse_button": "瀏覽書籍",
   "checkout_cart_empty_description": "添加一些書籍開始",

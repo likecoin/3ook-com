@@ -233,7 +233,7 @@ export default function (
 
   const productPageRoute = computed(() => getProductPageRoute())
 
-  function getProductPageRoute(options?: { llMedium?: string, llSource?: string }) {
+  function getProductPageRoute(options?: { llMedium?: string, llSource?: string, hash?: string }) {
     const query: Record<string, string> = {}
 
     if (options?.llMedium) {
@@ -248,6 +248,7 @@ export default function (
       name: 'store-nftClassId',
       params: { nftClassId: toValue(nftClassId) },
       query: Object.keys(query).length > 0 ? query : undefined,
+      hash: options?.hash,
     })
   }
 
