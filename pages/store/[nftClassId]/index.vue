@@ -85,6 +85,10 @@
                   '[&>tr>td:last-child]:text-gray-900',
                 ]"
               >
+                <tr>
+                  <td v-text="$t('product_page_book_format_label')"></td>
+                  <td v-text="$t('product_page_book_format_value')"></td>
+                </tr>
                 <tr v-if="bookInfo.formattedContentTypes">
                   <td v-text="$t('product_page_file_format_label')" />
                   <td v-text="bookInfo.formattedContentTypes" />

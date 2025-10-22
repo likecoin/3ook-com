@@ -213,6 +213,8 @@
   "product_page_add_to_book_list_button_label": "加入書單",
   "product_page_author_name_label": "作者",
   "product_page_checkout_button_label": "立即購買",
+  "product_page_book_format_label": "書本格式",
+  "product_page_book_format_value": "電子書",
   "product_page_fetch_metadata_failed_error": "讀取書本元資料失敗",
   "product_page_file_format_label": "檔案格式",
   "product_page_gift_button_label": "贈書給好友",
