@@ -527,8 +527,6 @@
 <script setup lang="ts">
 import type { TabsItem } from '@nuxt/ui'
 import MarkdownIt from 'markdown-it'
-import { formatUnits } from 'viem'
-import { LIKE_TOKEN_DECIMALS } from '~/shared/constants'
 
 const likeCoinSessionAPI = useLikeCoinSessionAPI()
 const route = useRoute()
@@ -708,20 +706,17 @@ const infoTabItems = computed(() => {
 })
 
 const activeTabValue = ref(infoTabItems.value[0]?.value || 'description')
-const totalStake = ref(0n)
-const userStake = ref(0n)
-const pendingRewards = ref(0n)
-const isClaimingRewards = ref(false)
 
 const {
-  claimWalletRewardsOfNFTClass,
-} = useLikeStaking()
-
-const {
-  getWalletPendingRewardsOfNFTClass,
-  getWalletStakeOfNFTClass,
-  getTotalStakeOfNFTClass,
-} = useLikeCollectiveContract()
+  pendingRewards,
+  isClaimingRewards,
+  formattedTotalStake,
+  formattedUserStake,
+  formattedPendingRewards,
+  userStakePercentage,
+  handleClaimRewards,
+  loadStakingData,
+} = useNFTClassStakingData(nftClassId)
 
 const isStakingTabActive = computed(() => {
   return activeTabValue.value === 'staking-info'
@@ -742,77 +737,6 @@ function initializeTabFromHash() {
     if (tabItem) {
       activeTabValue.value = tabItem.value as string
     }
-  }
-}
-
-async function loadStakingData() {
-  try {
-    totalStake.value = await getTotalStakeOfNFTClass(nftClassId.value)
-
-    if (hasLoggedIn.value && user.value?.evmWallet) {
-      const [userStakeAmount, pendingRewardsAmount] = await Promise.all([
-        getWalletStakeOfNFTClass(user.value.evmWallet, nftClassId.value),
-        getWalletPendingRewardsOfNFTClass(user.value.evmWallet, nftClassId.value),
-      ])
-      userStake.value = userStakeAmount
-      pendingRewards.value = pendingRewardsAmount
-    }
-  }
-  catch (error) {
-    console.error('Failed to load staking data:', error)
-  }
-}
-
-// Computed values for staking
-const formattedTotalStake = computed(() => {
-  return Number(formatUnits(totalStake.value, LIKE_TOKEN_DECIMALS)).toLocaleString(undefined, {
-    maximumFractionDigits: 2,
-  })
-})
-
-const formattedUserStake = computed(() => {
-  return Number(formatUnits(userStake.value, LIKE_TOKEN_DECIMALS)).toLocaleString(undefined, {
-    maximumFractionDigits: 6,
-  })
-})
-
-const formattedPendingRewards = computed(() => {
-  return Number(formatUnits(pendingRewards.value, LIKE_TOKEN_DECIMALS)).toLocaleString(undefined, {
-    maximumFractionDigits: 6,
-  })
-})
-
-const userStakePercentage = computed(() => {
-  if (totalStake.value === 0n) return 0
-  return Math.round((Number(userStake.value) / Number(totalStake.value)) * 10000) / 100
-})
-
-async function handleClaimRewards() {
-  try {
-    isClaimingRewards.value = true
-
-    await claimWalletRewardsOfNFTClass(user.value!.evmWallet, nftClassId.value)
-
-    toast.add({
-      title: $t('staking_claim_rewards_success'),
-      color: 'success',
-      icon: 'i-material-symbols-check-circle',
-    })
-
-    useLogEvent('claim_rewards_success', {
-      nft_class_id: nftClassId.value,
-      amount: formatUnits(pendingRewards.value, LIKE_TOKEN_DECIMALS),
-    })
-
-    await loadStakingData()
-  }
-  catch (error) {
-    await handleError(error, {
-      title: $t('staking_claim_rewards_error'),
-    })
-  }
-  finally {
-    isClaimingRewards.value = false
   }
 }
 
@@ -968,16 +892,6 @@ onMounted(async () => {
   checkBookListStatus()
   await loadStakingData()
   initializeTabFromHash()
-})
-
-watch(hasLoggedIn, async (isLoggedIn) => {
-  if (isLoggedIn) {
-    await loadStakingData()
-  }
-  else {
-    userStake.value = 0n
-    pendingRewards.value = 0n
-  }
 })
 
 const { copy: copyToClipboard } = useClipboard()

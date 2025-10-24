@@ -272,7 +272,6 @@ const walletAddress = computed(() => user.value?.evmWallet as `0x${string}` | un
 
 const {
   unstakeAmountFromNFTClass,
-  claimWalletRewardsOfNFTClass,
   stakeToNFTClass,
   depositReward,
   likeCoinErc20Address,
@@ -286,63 +285,27 @@ const { data: likeBalanceData } = useBalance({
 const accountStore = useAccountStore()
 const { handleError } = useErrorHandler()
 
+const nftClassIdComputed = computed(() => props.nftClassId)
 const {
-  getWalletPendingRewardsOfNFTClass,
-  getWalletStakeOfNFTClass,
-  getTotalStakeOfNFTClass,
-} = useLikeCollectiveContract()
+  userStake,
+  pendingRewards,
+  isClaimingRewards,
+  formattedTotalStake,
+  formattedUserStake,
+  formattedPendingRewards,
+  handleClaimRewards,
+  loadStakingData,
+} = useNFTClassStakingData(nftClassIdComputed)
 
 const { login, restoreConnection } = accountStore
 
 // Staking state
-const totalStake = ref(0n)
-const userStake = ref(0n)
-const pendingRewards = ref(0n)
 const stakeAmount = ref(0)
 const isStaking = ref(false)
 const isUnstakingAmount = ref(false)
-const isClaimingRewards = ref(false)
 const isDonating = ref(false)
 
 const likeBalance = computed(() => likeBalanceData.value?.value || 0n)
-
-// Load staking data
-async function loadStakingData() {
-  try {
-    totalStake.value = await getTotalStakeOfNFTClass(props.nftClassId)
-
-    if (hasLoggedIn.value && user.value?.evmWallet) {
-      const [userStakeAmount, pendingRewardsAmount] = await Promise.all([
-        getWalletStakeOfNFTClass(user.value.evmWallet, props.nftClassId),
-        getWalletPendingRewardsOfNFTClass(user.value.evmWallet, props.nftClassId),
-      ])
-      userStake.value = userStakeAmount
-      pendingRewards.value = pendingRewardsAmount
-    }
-  }
-  catch (error) {
-    console.error('Failed to load staking data:', error)
-  }
-}
-
-// Computed values
-const formattedTotalStake = computed(() => {
-  return Number(formatUnits(totalStake.value, LIKE_TOKEN_DECIMALS)).toLocaleString(undefined, {
-    maximumFractionDigits: 2,
-  })
-})
-
-const formattedUserStake = computed(() => {
-  return Number(formatUnits(userStake.value, LIKE_TOKEN_DECIMALS)).toLocaleString(undefined, {
-    maximumFractionDigits: 6,
-  })
-})
-
-const formattedPendingRewards = computed(() => {
-  return Number(formatUnits(pendingRewards.value, LIKE_TOKEN_DECIMALS)).toLocaleString(undefined, {
-    maximumFractionDigits: 6,
-  })
-})
 
 const formattedLikeBalance = computed(() => {
   return Number(formatUnits(likeBalance.value, LIKE_TOKEN_DECIMALS)).toLocaleString(undefined, {
@@ -367,16 +330,6 @@ const socialButtons = computed(() => [
 
 onMounted(async () => {
   await loadStakingData()
-})
-
-watch(hasLoggedIn, async (isLoggedIn) => {
-  if (isLoggedIn) {
-    await loadStakingData()
-  }
-  else {
-    userStake.value = 0n
-    pendingRewards.value = 0n
-  }
 })
 
 async function handleConnectWallet() {
@@ -496,35 +449,6 @@ async function handleUnstakeAmount() {
   }
   finally {
     isUnstakingAmount.value = false
-  }
-}
-
-async function handleClaimRewards() {
-  try {
-    isClaimingRewards.value = true
-
-    await claimWalletRewardsOfNFTClass(user.value!.evmWallet, props.nftClassId)
-
-    toast.add({
-      title: $t('staking_claim_rewards_success'),
-      color: 'success',
-      icon: 'i-material-symbols-check-circle',
-    })
-
-    useLogEvent('claim_rewards_success', {
-      nft_class_id: props.nftClassId,
-      amount: formatUnits(pendingRewards.value, LIKE_TOKEN_DECIMALS),
-    })
-
-    await loadStakingData()
-  }
-  catch (error) {
-    await handleError(error, {
-      title: $t('staking_claim_rewards_error'),
-    })
-  }
-  finally {
-    isClaimingRewards.value = false
   }
 }
 
