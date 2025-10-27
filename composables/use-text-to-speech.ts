@@ -211,6 +211,7 @@ export function useTextToSpeech(options: TTSOptions = {}) {
       audio.src = `/api/reader/tts?${params.toString()}`
     }
 
+    audio.playbackRate = ttsPlaybackRate.value
     audio.defaultPlaybackRate = ttsPlaybackRate.value
     audio.setAttribute('data-text', element.text)
     audio.load()
