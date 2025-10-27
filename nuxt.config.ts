@@ -243,6 +243,7 @@ export default defineNuxtConfig({
           'https://www.google.com',
           'https://js.intercomcdn.com',
           'https://downloads.intercomcdn.com',
+          'https://static.intercomassets.com',
           'https://explorer-api.walletconnect.com',
           ...[
             process.env.LIKECOIN_API_ENDPOINT,
