@@ -229,6 +229,7 @@ export default defineNuxtConfig({
               'https://js.stripe.com',
               'https://td.doubleclick.net',
               'https://www.googletagmanager.com',
+              'https://www.facebook.com',
               'https://verify.walletconnect.org',
             ],
         'base-uri': [
