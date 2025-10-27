@@ -146,7 +146,6 @@ export function useSetLogUser(user: User | null) {
         return
       }
       else {
-        const { locale } = useI18n()
         intercom('update', {
           intercom_user_jwt: user.intercomToken,
           session_duration: 2592000000, // 30d
@@ -163,7 +162,6 @@ export function useSetLogUser(user: User | null) {
           like_wallet: user.likeWallet,
           login_method: user.loginMethod,
           is_liker_plus: !!user.isLikerPlus,
-          locale: locale.value,
         })
       }
     }
