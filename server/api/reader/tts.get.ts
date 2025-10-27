@@ -97,6 +97,9 @@ export default defineEventHandler(async (event) => {
         const metadata = await file.getMetadata()
         setHeader(event, 'content-type', metadata[0].contentType || provider.format)
         setHeader(event, 'cache-control', 'public, max-age=604800')
+        if (Number(metadata[0].size)) {
+          setHeader(event, 'content-length', Number(metadata[0].size))
+        }
         console.log(`[Speech] Cache hit for user ${session.user.evmWallet}: ${cacheKey}`)
         return sendStream(event, file.createReadStream())
       }
