@@ -9,6 +9,7 @@
       :alt="bookInfo.name.value"
       :lazy="props.lazy"
       :is-claimable="isClaimable"
+      :is-staked="hasStakes"
       :has-shadow="true"
       @click="handleCoverClick"
     />
@@ -18,13 +19,6 @@
         <div
           class="text-sm laptop:text-base text-highlighted font-semibold line-clamp-2 grow"
           v-text="bookInfo.name"
-        />
-        <UBadge
-          v-if="hasStakes"
-          :label="$t('staking_dashboard_staked')"
-          variant="soft"
-          color="primary"
-          size="xs"
         />
         <UDropdownMenu
           v-if="isDesktopScreen"
@@ -81,7 +75,7 @@
           llMedium: 'author-link',
           llSource: 'bookshelf-item',
         })"
-        class="inline-block mt-0.5 text-xs laptop:text-sm text-dimmed hover:text-theme-black line-clamp-1 hover:underline"
+        class="inline-block mt-0.5 text-xs laptop:text-sm text-toned hover:text-theme-black line-clamp-1 hover:underline"
       >{{ bookInfo.authorName }}</NuxtLink>
 
       <!-- Staking info section -->
@@ -89,22 +83,22 @@
         v-if="hasStakes"
         class="mt-3 space-y-1"
       >
-        <div class="h-5 text-sm text-theme-500 flex items-center justify-between">
-          <span class="font-medium">{{ $t('staking_dashboard_staked') }}</span>
+        <div class="flex items-center justify-between text-toned text-sm">
+          <span v-text="$t('staking_dashboard_staked')" />
           <div class="flex items-center gap-1">
-            <span class="font-semibold">{{ formattedStakedAmount }}</span>
-            <span class="text-xs text-gray-500">LIKE</span>
+            <span v-text="formattedStakedAmount" />
+            <span>LIKE</span>
           </div>
         </div>
 
         <div
           v-if="formattedPendingRewards"
-          class="h-4 text-xs text-green-600 flex items-center justify-between"
+          class="flex items-center justify-between text-toned text-xs"
         >
-          <span>{{ $t('staking_dashboard_rewards') }}</span>
+          <span v-text="$t('staking_dashboard_rewards')" />
           <div class="flex items-center gap-1">
-            <span class="font-medium">{{ formattedPendingRewards }}</span>
-            <span class="text-xs text-gray-400">LIKE</span>
+            <span v-text="formattedPendingRewards" />
+            <span>LIKE</span>
           </div>
         </div>
       </div>

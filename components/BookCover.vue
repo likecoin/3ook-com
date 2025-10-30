@@ -79,9 +79,9 @@
         />
       </div>
 
-      <!-- Claimable ribbon -->
+      <!-- Ribbon -->
       <div
-        v-if="isClaimable"
+        v-if="isShowRibbon"
         :class="[
           'pointer-events-none',
           'absolute',
@@ -104,13 +104,13 @@
             'mt-6 laptop:mt-8',
             'mr-6 laptop:mr-8',
             'p-0.5 laptop:p-1',
-            'text-primary',
+            ribbonTextColorClass,
             'text-center',
             'text-[10px] laptop:text-sm',
             'font-bold',
-            'bg-theme-cyan',
+            ribbonBgColorClass,
           ]"
-          v-text="$t('bookshelf_claimable_label')"
+          v-text="ribbonText"
         />
       </div>
     </component>
@@ -151,8 +151,14 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  isStaked: {
+    type: Boolean,
+    default: false,
+  },
 })
 const emit = defineEmits(['click'])
+
+const { t: $t } = useI18n()
 
 const hasLoaded = ref(false)
 const hasError = ref(false)
@@ -162,6 +168,35 @@ const imgElement = useTemplateRef<HTMLImageElement>('imgElement')
 const borderRadiusClass = 'rounded-lg'
 
 const isClickable = computed(() => !!props.to || !!getCurrentInstance()?.vnode.props?.onClick)
+
+const isShowRibbon = computed(() => props.isClaimable || props.isStaked)
+const ribbonText = computed(() => {
+  if (props.isStaked) {
+    return $t('staking_dashboard_staked')
+  }
+  if (props.isClaimable) {
+    return $t('bookshelf_claimable_label')
+  }
+  return ''
+})
+const ribbonTextColorClass = computed(() => {
+  if (props.isStaked) {
+    return 'text-theme-cyan'
+  }
+  if (props.isClaimable) {
+    return 'text-theme-black'
+  }
+  return ''
+})
+const ribbonBgColorClass = computed(() => {
+  if (props.isStaked) {
+    return 'bg-theme-black'
+  }
+  if (props.isClaimable) {
+    return 'bg-theme-cyan'
+  }
+  return ''
+})
 
 const coverHoverScaleAnimationClass = [
   'group-hover:scale-105',
