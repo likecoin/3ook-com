@@ -194,6 +194,29 @@
         </UCard>
       </section>
 
+      <section
+        v-if="hasLoggedIn"
+        class="space-y-3 pt-4"
+      >
+        <h2
+          class="px-4 text-lg font-bold"
+          v-text="$t('account_page_governance_title', { defaultValue: 'Governance' })"
+        />
+
+        <UCard :ui="{ body: '!p-0 divide-y-1 divide-(--ui-border)' }">
+          <UButton
+            :to="localeRoute({ name: 'account-governance' })"
+            :label="$t('account_page_governance_button', { defaultValue: 'Manage Governance & Voting' })"
+            leading-icon="i-material-symbols-how-to-vote-outline-rounded"
+            trailing-icon="i-material-symbols-arrow-forward-rounded"
+            variant="link"
+            color="primary"
+            size="lg"
+            class="justify-between px-4 py-3"
+          />
+        </UCard>
+      </section>
+
       <section class="space-y-3 pt-4">
         <h2
           class="px-4 text-lg font-bold"
