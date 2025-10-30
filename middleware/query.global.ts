@@ -7,6 +7,8 @@ const CARRY_ON_QUERY_KEYS = [
   'utm_campaign',
   'utm_medium',
   'utm_source',
+  'utm_content',
+  'utm_term',
   'maintenance',
 ]
 

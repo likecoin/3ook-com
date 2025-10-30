@@ -92,6 +92,8 @@ export function useLikeCoinSessionAPI() {
     utmCampaign,
     utmMedium,
     utmSource,
+    utmContent,
+    utmTerm,
     gaClientId,
     gaSessionId,
     gadClickId,
@@ -109,6 +111,8 @@ export function useLikeCoinSessionAPI() {
     utmCampaign?: string
     utmMedium?: string
     utmSource?: string
+    utmContent?: string
+    utmTerm?: string
     gaClientId?: string
     gaSessionId?: string
     gadClickId?: string
@@ -130,6 +134,8 @@ export function useLikeCoinSessionAPI() {
         utmCampaign,
         utmSource,
         utmMedium,
+        utmContent,
+        utmTerm,
         gaClientId,
         gaSessionId,
         gadClickId,
@@ -152,6 +158,8 @@ export function useLikeCoinSessionAPI() {
       utmCampaign,
       utmMedium,
       utmSource,
+      utmContent,
+      utmTerm,
       gaClientId,
       gaSessionId,
       gadClickId,
@@ -167,6 +175,8 @@ export function useLikeCoinSessionAPI() {
       utmCampaign?: string
       utmMedium?: string
       utmSource?: string
+      utmContent?: string
+      utmTerm?: string
       gaClientId?: string
       gaSessionId?: string
       gadClickId?: string
@@ -195,6 +205,8 @@ export function useLikeCoinSessionAPI() {
         utmCampaign,
         utmSource,
         utmMedium,
+        utmContent,
+        utmTerm,
         gaClientId,
         gaSessionId,
         gadClickId,
@@ -227,6 +239,8 @@ export function useLikeCoinSessionAPI() {
     utmCampaign,
     utmMedium,
     utmSource,
+    utmContent,
+    utmTerm,
     gaClientId,
     gaSessionId,
     gadClickId,
@@ -243,6 +257,8 @@ export function useLikeCoinSessionAPI() {
     utmCampaign?: string
     utmMedium?: string
     utmSource?: string
+    utmContent?: string
+    utmTerm?: string
     gaClientId?: string
     gaSessionId?: string
     gadClickId?: string
@@ -261,6 +277,8 @@ export function useLikeCoinSessionAPI() {
         utmCampaign,
         utmMedium,
         utmSource,
+        utmContent,
+        utmTerm,
         gaClientId,
         gaSessionId,
         gadClickId,

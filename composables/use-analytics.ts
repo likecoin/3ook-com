@@ -32,6 +32,8 @@ export function useAnalytics() {
       utmCampaign: getRouteQuery('utm_campaign'),
       utmMedium: getRouteQuery('utm_medium') || getRouteQuery('ll_medium') || utmMedium,
       utmSource: getRouteQuery('utm_source') || getRouteQuery('ll_source') || utmSource,
+      utmContent: getRouteQuery('utm_content'),
+      utmTerm: getRouteQuery('utm_term'),
       gadClickId: getRouteQuery('gclid'),
       gadSource: getRouteQuery('gad_source'),
       fbClickId: getRouteQuery('fbclid'),
