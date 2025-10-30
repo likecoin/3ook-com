@@ -53,10 +53,7 @@
     >
       <div class="flex items-center justify-between text-toned text-sm">
         <span v-text="$t('staking_explore_total_staked')" />
-        <div class="flex items-center gap-1">
-          <span v-text="formattedTotalStaked" />
-          <span>LIKE</span>
-        </div>
+        <BalanceLabel :value="formattedTotalStaked" />
       </div>
 
       <div class="flex items-center justify-between text-muted text-xs">

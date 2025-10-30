@@ -111,16 +111,18 @@
           </template>
 
           <template #staking-info>
-            <div class="space-y-4">
+            <div class="max-tablet:hidden space-y-4 text-theme-black">
               <div class="grid grid-cols-1 tablet:grid-cols-2 gap-4">
                 <UCard :ui="{ body: 'p-4' }">
                   <div class="text-center">
-                    <div class="text-2xl font-bold text-theme-500">
-                      {{ formattedTotalStake }}
-                    </div>
-                    <div class="text-sm text-gray-600 mt-1">
-                      {{ $t('staking_total_staked') }}
-                    </div>
+                    <BalanceLabel
+                      class="text-2xl"
+                      :value="formattedTotalStake"
+                    />
+                    <div
+                      class="mt-1 text-sm text-muted"
+                      v-text="$t('staking_total_staked')"
+                    />
                   </div>
                 </UCard>
                 <UCard
@@ -128,18 +130,20 @@
                   :ui="{ body: 'p-4' }"
                 >
                   <div class="text-center">
-                    <div class="text-2xl font-bold text-blue-500">
-                      {{ formattedUserStake }}
-                    </div>
-                    <div class="text-sm text-gray-600 mt-1">
-                      {{ $t('staking_your_stake') }}
-                    </div>
+                    <BalanceLabel
+                      class="text-2xl"
+                      :value="formattedUserStake"
+                    />
+
+                    <div
+                      class="mt-1 text-sm text-muted"
+                      v-text="$t('staking_your_stake')"
+                    />
                     <div
                       v-if="userStakePercentage > 0"
-                      class="text-xs text-gray-500 mt-1"
-                    >
-                      {{ userStakePercentage }}% {{ $t('staking_of_total') }}
-                    </div>
+                      class="mt-1 text-xs text-dimmed"
+                      v-text="$tc('staking_of_total', { percentage: userStakePercentage })"
+                    />
                   </div>
                 </UCard>
               </div>
@@ -151,18 +155,19 @@
                 <UCard :ui="{ body: 'p-4' }">
                   <div class="flex justify-between items-center">
                     <div>
-                      <div class="text-lg font-semibold text-green-500">
-                        {{ formattedPendingRewards }}
-                      </div>
-                      <div class="text-sm text-gray-600">
-                        {{ $t('staking_pending_rewards') }}
-                      </div>
+                      <BalanceLabel
+                        class="text-2xl"
+                        :value="formattedPendingRewards"
+                      />
+                      <div
+                        class="mt-1 text-sm text-muted"
+                        v-text="$t('staking_pending_rewards')"
+                      />
                     </div>
                     <UButton
                       :label="$t('staking_claim_rewards')"
-                      color="secondary"
+                      color="primary"
                       variant="outline"
-                      size="sm"
                       :loading="isClaimingRewards"
                       @click="handleClaimRewards"
                     />
@@ -175,7 +180,14 @@
 
         <ul
           v-if="bookInfo.keywords.value"
-          class="flex flex-wrap gap-x-2 gap-y-4 mt-[48px]"
+          :class="[
+            'flex',
+            'flex-wrap',
+            'gap-x-2',
+            'gap-y-4',
+            'mt-[48px]',
+            { 'max-tablet:hidden': isStakingTabActive },
+          ]"
         >
           <li
             v-for="tag in bookInfo.keywords.value"
@@ -187,9 +199,12 @@
       </div>
 
       <div class="relative w-full tablet:max-w-[300px] laptop:max-w-[380px] shrink-0">
-        <div class="sticky top-0 flex flex-col gap-4 laptop:pt-5">
+        <div class="sticky top-0 flex flex-col gap-4 tablet:pt-5">
           <template v-if="isStakingTabActive">
-            <StakingControl :nft-class-id="nftClassId" />
+            <StakingControl
+              class="max-tablet:-mt-8"
+              :nft-class-id="nftClassId"
+            />
           </template>
 
           <template v-else-if="isUserBookOwner">
@@ -207,7 +222,10 @@
 
           <template v-else-if="pricingItems.length">
             <div class="bg-white p-4 pb-8 rounded-lg shadow-[0px_10px_20px_0px_rgba(0,0,0,0.04)]">
-              <h2 v-text="$t('product_page_pricing_title')" />
+              <h2
+                class="font-semibold tablet:text-lg"
+                v-text="$t('product_page_pricing_title')"
+              />
               <ul
                 ref="pricing"
                 class="mt-2 space-y-2"
@@ -363,29 +381,29 @@
                 @click="handleGiftButtonClick"
               />
             </div>
-
-            <ul class="flex justify-center items-center gap-2">
-              <li
-                v-for="button in socialButtons"
-                :key="button.icon"
-              >
-                <UTooltip
-                  :delay-duration="0"
-                  :text="button.label"
-                >
-                  <UButton
-                    color="neutral"
-                    variant="outline"
-                    size="xs"
-                    :icon="button.icon"
-                    :disabled="!button.isEnabled"
-                    :ui="{ base: 'p-2 rounded-full' }"
-                    @click="handleSocialButtonClick(button.key)"
-                  />
-                </UTooltip>
-              </li>
-            </ul>
           </template>
+
+          <ul class="flex justify-center items-center gap-2">
+            <li
+              v-for="button in socialButtons"
+              :key="button.icon"
+            >
+              <UTooltip
+                :delay-duration="0"
+                :text="button.label"
+              >
+                <UButton
+                  color="neutral"
+                  variant="outline"
+                  size="xs"
+                  :icon="button.icon"
+                  :disabled="!button.isEnabled"
+                  :ui="{ base: 'p-2 rounded-full' }"
+                  @click="handleSocialButtonClick(button.key)"
+                />
+              </UTooltip>
+            </li>
+          </ul>
         </div>
       </div>
     </section>

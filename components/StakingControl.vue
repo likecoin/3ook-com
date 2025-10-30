@@ -1,264 +1,121 @@
 <template>
-  <div class="relative w-full shrink-0">
-    <div class="sticky top-0 pt-5">
-      <div class="bg-white p-4 pb-8 rounded-lg shadow-[0px_10px_20px_0px_rgba(0,0,0,0.04)]">
-        <h2
-          class="font-semibold text-lg"
-          v-text="$t('staking_stake_on_book_title')"
+  <div class="flex flex-col gap-4 p-4 bg-white rounded-lg shadow-[0px_10px_20px_0px_rgba(0,0,0,0.04)]">
+    <h2
+      class="font-semibold tablet:text-lg"
+      v-text="$t('staking_stake_on_book_title')"
+    />
+
+    <!-- Total Stake Display -->
+    <UCard
+      :ui="{
+        header: 'flex flex-col items-center justify-center',
+        body: 'flex items-center justify-between text-sm !py-2',
+        footer: 'flex justify-between items-center text-sm py-3 bg-theme-cyan/20',
+      }"
+    >
+      <template #header>
+        <BalanceLabel
+          class="text-2xl font-bold"
+          :value="formattedTotalStake"
         />
-
-        <!-- Total Stake Display -->
-        <div class="mt-4 p-3 bg-gray-50 rounded-lg">
-          <div class="text-center">
-            <div class="text-2xl font-bold text-theme-500">
-              {{ formattedTotalStake }}
-            </div>
-            <div class="text-xs text-gray-600 mt-1">
-              {{ $t('staking_total_staked') }}
-            </div>
-          </div>
-        </div>
-
-        <!-- User Stats (logged in only) -->
         <div
-          v-if="hasLoggedIn"
-          class="mt-3 space-y-2"
-        >
-          <!-- Current Stake -->
-          <div class="flex justify-between items-center p-2 bg-blue-50 rounded text-sm">
-            <span class="text-gray-600">{{ $t('staking_your_current_stake') }}</span>
-            <span class="font-semibold text-blue-600">{{ formattedUserStake }} LIKE</span>
-          </div>
+          class="mt-1 text-sm text-muted"
+          v-text="$t('staking_total_staked')"
+        />
+      </template>
 
-          <!-- Pending Rewards -->
+      <!-- Current Stake -->
+      <template
+        v-if="hasLoggedIn"
+        #default
+      >
+        <span
+          class="font-semibold"
+          v-text="$t('staking_your_current_stake')"
+        />
+        <BalanceLabel :value="formattedUserStake" />
+      </template>
+
+      <!-- Pending Rewards (logged in only) -->
+      <template
+        v-if="hasLoggedIn && pendingRewards > 0n"
+        #footer
+      >
+        <div class="flex flex-col gap-1">
           <div
-            v-if="pendingRewards > 0n"
-            class="flex justify-between items-center p-2 bg-green-50 rounded text-sm"
-          >
-            <div>
-              <div class="text-gray-600">
-                {{ $t('staking_pending_rewards') }}
-              </div>
-              <div class="font-semibold text-green-600">
-                {{ formattedPendingRewards }} LIKE
-              </div>
-            </div>
-            <UButton
-              label="Claim"
-              color="success"
-              size="xs"
-              :loading="isClaimingRewards"
-              @click="handleClaimRewards"
-            />
-          </div>
-        </div>
-
-        <!-- Stake Only (no tabs when no stake) -->
-        <div
-          v-if="hasLoggedIn && userStake === 0n"
-          class="mt-4 py-3"
-        >
-          <label class="text-sm text-gray-600 mb-1 block">
-            Amount (LIKE)
-          </label>
-          <UInput
-            v-model="stakeAmount"
-            type="number"
-            :placeholder="$t('staking_amount_placeholder')"
-            :min="0"
-            step="0.000001"
-            class="mb-2"
-          >
-            <template #trailing>
-              <span class="text-gray-400 text-sm">LIKE</span>
-            </template>
-          </UInput>
-
-          <div class="flex gap-2 mb-4">
-            <UButton
-              v-for="amount in quickAmounts"
-              v-show="parseUnits(amount.toString(), LIKE_TOKEN_DECIMALS) <= likeBalance"
-              :key="amount"
-              :label="`${amount}`"
-              variant="outline"
-              size="xs"
-              @click="stakeAmount = amount"
-            />
-            <UButton
-              label="Max"
-              variant="outline"
-              size="xs"
-              @click="stakeAmount = Math.floor(Number(formatUnits(likeBalance, LIKE_TOKEN_DECIMALS)))"
-            />
-          </div>
-
-          <UButton
-            label="Stake"
-            size="lg"
-            :loading="isStaking"
-            :disabled="!isValidStakeAmount || isStaking"
-            block
-            @click="handleStake"
+            class="font-semibold"
+            v-text="$t('staking_pending_rewards')"
           />
+          <BalanceLabel :value="formattedPendingRewards" />
         </div>
 
-        <!-- Stake/Unstake Tabs (when user has stake) -->
-        <UTabs
-          v-if="hasLoggedIn && userStake > 0n"
-          :items="[{ label: 'Stake', slot: 'stake' }, { label: 'Unstake', slot: 'unstake' }]"
-          class="mt-4"
-        >
-          <template #stake>
-            <div class="py-3">
-              <label class="text-sm text-gray-600 mb-1 block">
-                Amount (LIKE)
-              </label>
-              <UInput
-                v-model="stakeAmount"
-                type="number"
-                :placeholder="$t('staking_amount_placeholder')"
-                :min="0"
-                step="0.000001"
-                class="mb-2"
-              >
-                <template #trailing>
-                  <span class="text-gray-400 text-sm">LIKE</span>
-                </template>
-              </UInput>
-
-              <div class="flex gap-2 mb-4">
-                <UButton
-                  v-for="amount in quickAmounts"
-                  v-show="parseUnits(amount.toString(), LIKE_TOKEN_DECIMALS) <= likeBalance"
-                  :key="amount"
-                  :label="`${amount}`"
-                  variant="outline"
-                  size="xs"
-                  @click="stakeAmount = amount"
-                />
-                <UButton
-                  label="Max"
-                  variant="outline"
-                  size="xs"
-                  @click="stakeAmount = Math.floor(Number(formatUnits(likeBalance, LIKE_TOKEN_DECIMALS)))"
-                />
-              </div>
-
-              <UButton
-                label="Stake"
-                size="lg"
-                :loading="isStaking"
-                :disabled="!isValidStakeAmount || isStaking"
-                block
-                @click="handleStake"
-              />
-            </div>
-          </template>
-
-          <template #unstake>
-            <div class="py-3">
-              <label class="text-sm text-gray-600 mb-1 block">
-                Amount (LIKE)
-              </label>
-              <UInput
-                v-model="stakeAmount"
-                type="number"
-                :placeholder="$t('staking_amount_placeholder')"
-                :min="0"
-                :max="Number(formatUnits(userStake, LIKE_TOKEN_DECIMALS))"
-                step="0.000001"
-                class="mb-2"
-              >
-                <template #trailing>
-                  <span class="text-gray-400 text-sm">LIKE</span>
-                </template>
-              </UInput>
-
-              <div class="flex gap-2 mb-4">
-                <UButton
-                  v-for="amount in quickAmounts"
-                  v-show="parseUnits(amount.toString(), LIKE_TOKEN_DECIMALS) <= userStake"
-                  :key="amount"
-                  :label="`${amount}`"
-                  variant="outline"
-                  size="xs"
-                  @click="stakeAmount = amount"
-                />
-                <UButton
-                  label="Max"
-                  variant="outline"
-                  size="xs"
-                  @click="stakeAmount = Number(formatUnits(userStake, LIKE_TOKEN_DECIMALS))"
-                />
-              </div>
-
-              <UButton
-                label="Unstake"
-                variant="outline"
-                color="neutral"
-                size="lg"
-                :loading="isUnstakingAmount"
-                :disabled="!isValidStakeAmount || isUnstakingAmount"
-                block
-                @click="handleUnstakeAmount"
-              />
-            </div>
-          </template>
-        </UTabs>
-
-        <!-- Login Button (not logged in) -->
         <UButton
-          v-if="!hasLoggedIn"
-          :label="$t('staking_connect_wallet_to_stake')"
+          :label="$t('staking_claim_rewards')"
+          color="primary"
           size="lg"
-          block
-          class="mt-4"
-          @click="handleConnectWallet"
+          :loading="isClaimingRewards"
+          @click="handleClaimRewards"
         />
+      </template>
+    </UCard>
 
-        <!-- Donate Button (for testing) -->
+    <footer class="grid grid-cols-2 gap-2">
+      <template v-if="hasLoggedIn">
         <UButton
-          v-if="hasLoggedIn"
-          size="sm"
-          variant="ghost"
-          icon="i-material-symbols-volunteer-activism"
-          label="Donate Reward"
-          :loading="isDonating"
-          :disabled="!isValidStakeAmount || isDonating"
+          class="col-span-1"
+          :label="$t('staking_stake_button')"
+          size="lg"
+          :loading="isStaking"
+          :disabled="isStaking"
           block
-          class="mt-2"
-          @click="handleDonate"
+          @click="handleStakeButtonClick"
         />
-      </div>
 
-      <ul class="flex justify-center items-center gap-2 mt-4">
-        <li
-          v-for="button in socialButtons"
-          :key="button.icon"
-        >
-          <UTooltip
-            :delay-duration="0"
-            :text="button.label"
-          >
-            <UButton
-              color="neutral"
-              variant="outline"
-              size="xs"
-              :icon="button.icon"
-              :disabled="!button.isEnabled"
-              :ui="{ base: 'p-2 rounded-full' }"
-              @click="handleSocialButtonClick(button.key)"
-            />
-          </UTooltip>
-        </li>
-      </ul>
-    </div>
+        <UButton
+          class="col-span-1"
+          :label="$t('staking_unstake_button')"
+          variant="outline"
+          color="neutral"
+          size="lg"
+          :loading="isUnstakingAmount"
+          :disabled="isUnstakingAmount"
+          block
+          @click="handleUnstakeButtonClick"
+        />
+      </template>
+
+      <!-- Login Button (not logged in) -->
+      <UButton
+        v-else
+        class="col-span-full"
+        :label="$t('staking_connect_wallet_to_stake')"
+        size="lg"
+        block
+        @click="handleConnectWallet"
+      />
+
+      <!-- Donate Button (for testing) -->
+      <UButton
+        v-if="hasLoggedIn"
+        class="col-span-full"
+        :label="$t('donate_reward_button')"
+        icon="i-material-symbols-volunteer-activism"
+        variant="ghost"
+        size="sm"
+        :loading="isDonating"
+        :disabled="isDonating"
+        block
+        @click="handleDonateButtonClick"
+      />
+    </footer>
   </div>
 </template>
 
 <script setup lang="ts">
 import { formatUnits, parseUnits } from 'viem'
 import { useBalance } from '@wagmi/vue'
+
+import { AmountInputModal } from '#components'
 import { LIKE_TOKEN_DECIMALS } from '~/shared/constants'
 
 const props = defineProps<{
@@ -284,6 +141,8 @@ const { data: likeBalanceData } = useBalance({
 
 const accountStore = useAccountStore()
 const { handleError } = useErrorHandler()
+const overlay = useOverlay()
+const amountInputModal = overlay.create(AmountInputModal)
 
 const nftClassIdComputed = computed(() => props.nftClassId)
 const {
@@ -314,19 +173,9 @@ const formattedLikeBalance = computed(() => {
   })
 })
 
-const quickAmounts = [1, 10, 100, 1000]
-
 const isValidStakeAmount = computed(() => {
   return stakeAmount.value > 0
 })
-
-const socialButtons = computed(() => [
-  { key: 'copy-links', label: $t('share_button_hint_copy_link'), icon: 'i-material-symbols-link-rounded', isEnabled: true },
-  { key: 'threads', label: $t('share_button_hint_threads'), icon: 'i-simple-icons-threads' },
-  { key: 'facebook', label: $t('share_button_hint_facebook'), icon: 'i-simple-icons-facebook' },
-  { key: 'whatsapp', label: $t('share_button_hint_whatsapp'), icon: 'i-simple-icons-whatsapp' },
-  { key: 'x', label: $t('share_button_hint_x'), icon: 'i-simple-icons-x' },
-])
 
 onMounted(async () => {
   await loadStakingData()
@@ -342,17 +191,13 @@ async function handleConnectWallet() {
   }
 }
 
-async function handleStake() {
+async function handleStakeButtonClick() {
   await restoreConnection()
 
-  if (stakeAmount.value <= 0) {
-    toast.add({
-      title: $t('staking_please_enter_amount'),
-      color: 'warning',
-      icon: 'i-material-symbols-warning-outline',
-    })
-    return
-  }
+  stakeAmount.value = await amountInputModal.open({
+    title: $t('staking_stake_please_enter_amount'),
+    max: likeBalance.value,
+  }).result
 
   if (!isValidStakeAmount.value) return
 
@@ -362,8 +207,11 @@ async function handleStake() {
 
     if (amount > likeBalance.value) {
       toast.add({
-        title: 'Insufficient LIKE balance',
-        description: `You need ${stakeAmount.value} LIKE but only have ${formattedLikeBalance.value} LIKE`,
+        title: $t('error_insufficient_amount'),
+        description: $t('error_insufficient_amount_description', {
+          amount: stakeAmount.value,
+          balance: formattedLikeBalance.value,
+        }),
         color: 'error',
         icon: 'i-material-symbols-error-outline',
       })
@@ -397,17 +245,13 @@ async function handleStake() {
   }
 }
 
-async function handleUnstakeAmount() {
+async function handleUnstakeButtonClick() {
   await restoreConnection()
 
-  if (stakeAmount.value <= 0) {
-    toast.add({
-      title: 'Please enter amount to unstake',
-      color: 'warning',
-      icon: 'i-material-symbols-warning-outline',
-    })
-    return
-  }
+  stakeAmount.value = await amountInputModal.open({
+    title: $t('staking_unstake_please_input_amount'),
+    max: userStake.value,
+  }).result
 
   if (!isValidStakeAmount.value) return
 
@@ -417,8 +261,8 @@ async function handleUnstakeAmount() {
 
     if (amount > userStake.value) {
       toast.add({
-        title: 'Amount exceeds your stake',
-        description: `You can only unstake up to ${formattedUserStake.value} LIKE`,
+        title: $t('error_unstake_amount_exceeded'),
+        description: $t('error_unstake_amount_exceeded_description', { amount: formattedUserStake.value }),
         color: 'error',
         icon: 'i-material-symbols-error-outline',
       })
@@ -429,7 +273,7 @@ async function handleUnstakeAmount() {
     await sleep(3000)
 
     toast.add({
-      title: 'Unstake successful',
+      title: $t('staking_unstake_success'),
       color: 'success',
       icon: 'i-material-symbols-check-circle',
     })
@@ -444,7 +288,7 @@ async function handleUnstakeAmount() {
   }
   catch (error) {
     await handleError(error, {
-      title: 'Unstake failed',
+      title: $t('staking_unstake_error'),
     })
   }
   finally {
@@ -452,17 +296,13 @@ async function handleUnstakeAmount() {
   }
 }
 
-async function handleDonate() {
+async function handleDonateButtonClick() {
   await restoreConnection()
 
-  if (stakeAmount.value <= 0) {
-    toast.add({
-      title: 'Please enter donation amount',
-      color: 'warning',
-      icon: 'i-material-symbols-warning-outline',
-    })
-    return
-  }
+  stakeAmount.value = await amountInputModal.open({
+    title: $t('donate_reward_please_input_amount'),
+    max: userStake.value,
+  }).result
 
   if (!isValidStakeAmount.value) return
 
@@ -473,12 +313,12 @@ async function handleDonate() {
     await depositReward(props.nftClassId, amount)
 
     toast.add({
-      title: 'Donation successful!',
+      title: $t('donate_reward_success'),
       color: 'success',
       icon: 'i-material-symbols-check-circle',
     })
 
-    useLogEvent('donate_success', {
+    useLogEvent('donate_reward_success', {
       nft_class_id: props.nftClassId,
       amount: stakeAmount.value,
     })
@@ -488,49 +328,11 @@ async function handleDonate() {
   }
   catch (error) {
     await handleError(error, {
-      title: 'Donation failed',
+      title: $t('donate_reward_error'),
     })
   }
   finally {
     isDonating.value = false
-  }
-}
-
-async function handleSocialButtonClick(key: string) {
-  switch (key) {
-    case 'copy-links':
-      try {
-        await navigator.clipboard.writeText(window.location.href)
-        toast.add({
-          title: $t('copy_link_success'),
-          duration: 3000,
-          icon: 'i-material-symbols-link-rounded',
-          color: 'success',
-        })
-      }
-      catch (error) {
-        console.error('Failed to copy link:', error)
-        toast.add({
-          title: $t('copy_link_failed'),
-          icon: 'i-material-symbols-error-circle-rounded',
-          duration: 3000,
-          color: 'error',
-        })
-      }
-      break
-    case 'threads':
-      // TODO: Handle Threads
-      break
-    case 'facebook':
-      // TODO: Handle Facebook
-      break
-    case 'whatsapp':
-      // TODO: Handle WhatsApp
-      break
-    case 'x':
-      // TODO: Handle X
-      break
-    default:
   }
 }
 </script>

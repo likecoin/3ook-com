@@ -85,10 +85,7 @@
       >
         <div class="flex items-center justify-between text-toned text-sm">
           <span v-text="$t('staking_dashboard_staked')" />
-          <div class="flex items-center gap-1">
-            <span v-text="formattedStakedAmount" />
-            <span>LIKE</span>
-          </div>
+          <BalanceLabel :value="formattedStakedAmount" />
         </div>
 
         <div
@@ -96,10 +93,7 @@
           class="flex items-center justify-between text-toned text-xs"
         >
           <span v-text="$t('staking_dashboard_rewards')" />
-          <div class="flex items-center gap-1">
-            <span v-text="formattedPendingRewards" />
-            <span>LIKE</span>
-          </div>
+          <BalanceLabel :value="formattedPendingRewards" />
         </div>
       </div>
     </div>
