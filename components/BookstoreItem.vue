@@ -23,7 +23,7 @@
           llMedium: 'author-link',
           llSource: 'bookstore-item',
         })"
-        class="inline-block h-4 laptop:h-5 mt-0.5 text-xs laptop:text-sm text-dimmed line-clamp-1 hover:text-theme-black hover:underline"
+        class="inline-block h-4 laptop:h-5 mt-0.5 text-xs laptop:text-sm text-toned line-clamp-1 hover:text-theme-black hover:underline"
       >{{ authorName }}</NuxtLink>
     </div>
 
@@ -41,7 +41,7 @@
         v-text="formattedDiscountPrice"
       />
       <span
-        :class="{ 'text-xs text-dimmed ml-0.5 line-through': formattedDiscountPrice }"
+        :class="{ 'text-xs text-toned ml-0.5 line-through': formattedDiscountPrice }"
         v-text="formattedPrice"
       />
     </div>
@@ -51,17 +51,17 @@
       v-else
       class="mt-3 space-y-1"
     >
-      <div class="h-5 text-sm text-theme-500 flex items-center justify-between">
-        <span class="font-medium">{{ $t('staking_explore_total_staked') }}</span>
+      <div class="flex items-center justify-between text-toned text-sm">
+        <span v-text="$t('staking_explore_total_staked')" />
         <div class="flex items-center gap-1">
-          <span class="font-semibold">{{ formattedTotalStaked }}</span>
-          <span class="text-xs text-gray-500">LIKE</span>
+          <span v-text="formattedTotalStaked" />
+          <span>LIKE</span>
         </div>
       </div>
 
-      <div class="h-4 text-xs text-gray-600 flex items-center justify-between">
-        <span>{{ $t('staking_explore_stakers') }}</span>
-        <span class="font-medium">{{ stakerCount }}</span>
+      <div class="flex items-center justify-between text-muted text-xs">
+        <span v-text="$t('staking_explore_stakers')" />
+        <span v-text="stakerCount" />
       </div>
     </div>
   </li>
