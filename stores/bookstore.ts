@@ -101,6 +101,7 @@ export const useBookstoreStore = defineStore('bookstore', () => {
 
   const bookstoreCMSTags = ref<Array<BookstoreCMSTag>>([])
   const isFetchingBookstoreCMSTags = ref(false)
+  const hasFetchedBookstoreCMSTags = ref(false)
 
   const getBookstoreCMSTagById = computed(() => (tagId: string) => {
     return bookstoreCMSTags.value.find(tag => tag.id === tagId)
@@ -112,6 +113,7 @@ export const useBookstoreStore = defineStore('bookstore', () => {
       isFetchingBookstoreCMSTags.value = true
       const result = await fetchBookstoreCMSTagsForAll()
       bookstoreCMSTags.value = result.records
+      hasFetchedBookstoreCMSTags.value = true
     }
     finally {
       isFetchingBookstoreCMSTags.value = false
@@ -352,8 +354,9 @@ export const useBookstoreStore = defineStore('bookstore', () => {
 
     /* Bookstore CMS Tags */
 
-    bookstoreCMSTags,
-    isFetchingBookstoreCMSTags,
+    bookstoreCMSTags: readonly(bookstoreCMSTags),
+    isFetchingBookstoreCMSTags: readonly(isFetchingBookstoreCMSTags),
+    hasFetchedBookstoreCMSTags: readonly(hasFetchedBookstoreCMSTags),
 
     getBookstoreCMSTagById,
 

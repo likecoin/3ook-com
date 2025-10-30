@@ -56,8 +56,23 @@
       <div
         class="flex items-center max-phone:gap-1 gap-2 w-full"
       >
+        <template v-if="!bookstoreStore.hasFetchedBookstoreCMSTags && isDefaultTagId">
+          <USkeleton
+            v-for="(widthClass, i) in ['w-20', 'w-18', 'w-24', 'w-16']"
+            :key="`tag-skeleton-${i + 1}`"
+            :class="[
+              'shrink-0',
+              widthClass,
+              'h-8 laptop:h-9',
+              'rounded-full',
+              'border-2',
+              'border-muted',
+            ]"
+          />
+        </template>
+
         <UButton
-          v-if="!isDefaultTagId"
+          v-else-if="!isDefaultTagId"
           icon="i-material-symbols-close-rounded"
           variant="outline"
           rounded-full
@@ -80,6 +95,7 @@
         />
 
         <USelect
+          v-if="bookstoreStore.hasFetchedBookstoreCMSTags || !isDefaultTagId || isStakingTagId"
           v-model="tagId"
           :placeholder="isDefaultTagId ? $t('store_tag_more_categories') : undefined"
           :items="isDefaultTagId ? selectorTagItems : allTagItems"
@@ -160,8 +176,8 @@
           :book-name="item.title"
           :book-cover-src="item.imageUrl"
           :price="item.minPrice"
-          :total-staked="getIsStakingTagId(tagId) ? Number(formatUnits(item.totalStaked ?? 0n, LIKE_TOKEN_DECIMALS)) : 0"
-          :staker-count="getIsStakingTagId(tagId) ? (item.stakerCount ?? 0) : 0"
+          :total-staked="isStakingTagId ? Number(formatUnits(item.totalStaked ?? 0n, LIKE_TOKEN_DECIMALS)) : 0"
+          :staker-count="isStakingTagId ? (item.stakerCount ?? 0) : 0"
           :lazy="index >= columnMax"
         />
       </ul>
@@ -248,6 +264,7 @@ const tagId = computed({
   },
 })
 const isDefaultTagId = computed(() => getIsDefaultTagId(tagId.value))
+const isStakingTagId = computed(() => getIsStakingTagId(tagId.value))
 
 const normalizedLocale = computed(() => locale.value === 'zh-Hant' ? 'zh' : 'en')
 
@@ -454,7 +471,7 @@ const products = computed(() => {
   }
 
   // Return staking books when viewing staking tag
-  if (getIsStakingTagId(tagId.value)) {
+  if (isStakingTagId.value) {
     const stakingSort = tagId.value.slice(STAKING_SORT_TAG_PREFIX.length) || 'total_staked'
     const apiSortValue = mapToAPIStakingSortValue(stakingSort)
     const staking = bookstoreStore.getStakingBooks(apiSortValue)
@@ -487,20 +504,14 @@ const { gridClasses, getGridItemClassesByIndex, columnMax } = usePaginatedGrid({
   hasMore: hasMoreItems,
 })
 
-const isFetchingTags = ref(true)
-
 async function fetchTags() {
   try {
-    isFetchingTags.value = true
     await bookstoreStore.fetchBookstoreCMSTags()
   }
   catch (error) {
     await handleError(error, {
       title: $t('store_fetch_tags_error'),
     })
-  }
-  finally {
-    isFetchingTags.value = false
   }
 }
 
@@ -523,7 +534,7 @@ async function fetchItems({ lazy = false, isRefresh = false } = {}) {
     return
   }
 
-  if (getIsStakingTagId(tagId.value)) {
+  if (isStakingTagId.value) {
     const stakingSort = tagId.value.slice(STAKING_SORT_TAG_PREFIX.length) || 'total_staked'
     const apiSortValue = mapToAPIStakingSortValue(stakingSort)
     try {
@@ -580,11 +591,11 @@ onMounted(async () => {
     return
   }
 
-  const fetchTagPromise = getIsStakingTagId(tagId.value) ? Promise.resolve() : fetchTags()
-  if (!isDefaultTagId.value && !getIsStakingTagId(tagId.value)) {
-    // NOTE: Need to fetch all tags if not the default tag and not staking tag
+  const fetchTagPromise = fetchTags()
+  if (!isDefaultTagId.value) {
+    // NOTE: Need to fetch all tags if not the default tag
     await fetchTagPromise
-    if (!tag.value) {
+    if (!tag.value && !isStakingTagId.value) {
       throw createError({
         statusCode: 404,
         message: $t('error_page_not_found'),
