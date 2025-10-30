@@ -116,7 +116,7 @@ import { formatUnits, parseUnits } from 'viem'
 import { useBalance } from '@wagmi/vue'
 
 import { AmountInputModal } from '#components'
-import { LIKE_TOKEN_DECIMALS } from '~/shared/constants'
+import { LIKE_TOKEN_DECIMALS } from '~/composables/use-likecoin-contract'
 
 const props = defineProps<{
   nftClassId: string

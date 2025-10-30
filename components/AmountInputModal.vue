@@ -62,7 +62,7 @@
 <script lang="ts" setup>
 import { formatUnits, parseUnits } from 'viem'
 
-import { LIKE_TOKEN_DECIMALS } from '~/shared/constants'
+import { LIKE_TOKEN_DECIMALS } from '~/composables/use-likecoin-contract'
 
 const quickAmounts = [1, 10, 100, 1000]
 

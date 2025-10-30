@@ -1,6 +1,6 @@
 import { formatUnits } from 'viem'
 import { fetchCollectiveAccountStakings } from '~/shared/utils/collective-indexer'
-import { LIKE_TOKEN_DECIMALS } from '~/shared/constants'
+import { LIKE_TOKEN_DECIMALS } from '~/composables/use-likecoin-contract'
 
 interface StakingItem {
   nftClassId: string

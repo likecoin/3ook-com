@@ -1,6 +1,6 @@
 import { formatUnits } from 'viem'
 import type { ComputedRef } from 'vue'
-import { LIKE_TOKEN_DECIMALS } from '~/shared/constants'
+import { LIKE_TOKEN_DECIMALS } from '~/composables/use-likecoin-contract'
 
 export function useNFTClassStakingData(nftClassId: ComputedRef<string>) {
   const { loggedIn: hasLoggedIn, user } = useUserSession()

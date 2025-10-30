@@ -181,7 +181,7 @@
 
 <script setup lang="ts">
 import { formatUnits } from 'viem'
-import { LIKE_TOKEN_DECIMALS } from '~/shared/constants'
+import { LIKE_TOKEN_DECIMALS } from '~/composables/use-likecoin-contract'
 
 const { t: $t } = useI18n()
 const { loggedIn: hasLoggedIn, user } = useUserSession()
