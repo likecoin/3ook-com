@@ -21,16 +21,16 @@ export interface FetchBookstoreCMSProductsResponseData {
 }
 
 export interface BookstoreCMSTag {
-  id?: string
+  id: string
   name: {
-    zh?: string
-    en?: string
+    zh: string
+    en: string
   }
   description: {
-    zh?: string
-    en?: string
+    zh: string
+    en: string
   }
-  isPublic?: boolean
+  isPublic: boolean
 }
 
 export interface FetchBookstoreCMSTagsResponseData {

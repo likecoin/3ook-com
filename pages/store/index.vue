@@ -98,12 +98,13 @@
           v-if="bookstoreStore.hasFetchedBookstoreCMSTags || !isDefaultTagId || isStakingTagId"
           v-model="tagId"
           :placeholder="isDefaultTagId ? $t('store_tag_more_categories') : undefined"
-          :items="isDefaultTagId ? selectorTagItems : allTagItems"
+          :items="selectorTagItems"
           :content="{
             align: 'center',
             side: 'bottom',
             sideOffset: 8,
           }"
+          :disabled="!bookstoreStore.hasFetchedBookstoreCMSTags"
           arrow
           size="md"
           :ui="{
@@ -266,6 +267,11 @@ const tagId = computed({
 const isDefaultTagId = computed(() => getIsDefaultTagId(tagId.value))
 const isStakingTagId = computed(() => getIsStakingTagId(tagId.value))
 
+await callOnce(async () => {
+  if (!tagId.value || isDefaultTagId.value || isStakingTagId.value) return
+  await bookstoreStore.fetchBookstoreCMSTag(tagId.value)
+})
+
 const normalizedLocale = computed(() => locale.value === 'zh-Hant' ? 'zh' : 'en')
 
 const allTagItems = computed(() => {
@@ -297,8 +303,20 @@ const fixedTags = computed(() => {
   return allTagItems.value.slice(0, tagsSliceIndex.value)
 })
 
+const activeTag = computed(() => {
+  return bookstoreStore.getBookstoreCMSTagById(tagId.value)
+})
+
 const selectorTagItems = computed(() => {
-  return allTagItems.value.slice(tagsSliceIndex.value)
+  if (!bookstoreStore.hasFetchedBookstoreCMSTags && activeTag.value) {
+    return [
+      {
+        label: activeTag.value.name[normalizedLocale.value],
+        value: activeTag.value.id,
+      },
+    ]
+  }
+  return isDefaultTagId.value ? allTagItems.value.slice(tagsSliceIndex.value) : allTagItems.value
 })
 
 const STAKING_SORT_OPTIONS = [

@@ -179,20 +179,44 @@ export async function fetchAirtableCMSProductsByTagId(
   }
 }
 
+export interface FetchAirtableCMSTagRecord {
+  id: string
+  createdTime: string
+  fields: {
+    'ID'?: string
+    'Name'?: string
+    'Name (Eng)'?: string
+    'Description'?: string
+    'Description (Eng)'?: string
+    'Public'?: boolean
+  }
+}
+
 export interface FetchAirtableCMSTagsResponseData {
-  records: Array<{
-    id: string
-    createdTime: string
-    fields: {
-      'ID'?: string
-      'Name'?: string
-      'Name (Eng)'?: string
-      'Description'?: string
-      'Description (Eng)'?: string
-      'Public'?: boolean
-    }
-  }>
+  records: Array<FetchAirtableCMSTagRecord>
   offset?: string
+}
+
+function normalizeTagRecord(record: FetchAirtableCMSTagRecord): BookstoreCMSTag {
+  const { fields } = record
+  const id = fields.ID || ''
+  const nameZh = fields.Name || ''
+  const nameEn = fields['Name (Eng)'] || ''
+  const descriptionZh = fields.Description || ''
+  const descriptionEn = fields['Description (Eng)'] || ''
+  const isPublic = fields.Public || false
+  return {
+    id,
+    name: {
+      zh: nameZh,
+      en: nameEn,
+    },
+    description: {
+      zh: descriptionZh,
+      en: descriptionEn,
+    },
+    isPublic,
+  }
 }
 
 export async function fetchAirtableCMSTagsForAll(
@@ -211,29 +235,27 @@ export async function fetchAirtableCMSTagsForAll(
     },
   )
 
-  const normalizedRecords: BookstoreCMSTag[] = results.records.map(({ fields }) => {
-    const id = fields.ID
-    const nameZh = fields.Name
-    const nameEn = fields['Name (Eng)']
-    const descriptionZh = fields.Description
-    const descriptionEn = fields['Description (Eng)']
-    const isPublic = fields.Public
-    return {
-      id,
-      name: {
-        zh: nameZh,
-        en: nameEn,
-      },
-      description: {
-        zh: descriptionZh,
-        en: descriptionEn,
-      },
-      isPublic,
-    }
-  })
+  const normalizedRecords = results.records.map(normalizeTagRecord)
 
   return {
     records: normalizedRecords,
     offset: results.offset,
   }
+}
+
+export async function fetchAirtableCMSTagById(tagId: string): Promise<BookstoreCMSTag | undefined> {
+  const config = useRuntimeConfig()
+  const fetch = getAirtableCMSFetch()
+  const results = await fetch<FetchAirtableCMSTagsResponseData>(
+    `/${config.public.airtableCMSTagsTableId}`,
+    {
+      params: {
+        view: 'All',
+        filterByFormula: `{ID} = "${tagId}"`,
+      },
+    },
+  )
+
+  const normalizedRecords = results.records.map(normalizeTagRecord)
+  return normalizedRecords[0]
 }

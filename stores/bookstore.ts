@@ -99,25 +99,38 @@ export const useBookstoreStore = defineStore('bookstore', () => {
 
   /* Bookstore CMS Tags */
 
-  const bookstoreCMSTags = ref<Array<BookstoreCMSTag>>([])
+  const bookstoreCMSTagsMapById = ref<Record<string, BookstoreCMSTag>>({})
+  const bookstoreCMSTagIds = ref<string[]>([])
+  const bookstoreCMSTags = computed(() => bookstoreCMSTagIds.value.map(tagId => bookstoreCMSTagsMapById.value[tagId]!))
   const isFetchingBookstoreCMSTags = ref(false)
   const hasFetchedBookstoreCMSTags = ref(false)
 
-  const getBookstoreCMSTagById = computed(() => (tagId: string) => {
-    return bookstoreCMSTags.value.find(tag => tag.id === tagId)
-  })
+  const getBookstoreCMSTagById = computed(() => (tagId: string) => bookstoreCMSTagsMapById.value[tagId])
+
+  function insertBookstoreCMSTag(tag: BookstoreCMSTag) {
+    bookstoreCMSTagsMapById.value[tag.id] = tag
+    if (!bookstoreCMSTagIds.value.includes(tag.id)) {
+      bookstoreCMSTagIds.value.push(tag.id)
+    }
+    return tag.id
+  }
 
   async function fetchBookstoreCMSTags() {
     if (isFetchingBookstoreCMSTags.value) return
     try {
       isFetchingBookstoreCMSTags.value = true
       const result = await fetchBookstoreCMSTagsForAll()
-      bookstoreCMSTags.value = result.records
+      bookstoreCMSTagIds.value = result.records.map(insertBookstoreCMSTag)
       hasFetchedBookstoreCMSTags.value = true
     }
     finally {
       isFetchingBookstoreCMSTags.value = false
     }
+  }
+
+  async function fetchBookstoreCMSTag(tagId: string) {
+    const tag = await fetchBookstoreCMSTagById(tagId)
+    if (tag) insertBookstoreCMSTag(tag)
   }
 
   /* Bookstore Search Results */
@@ -354,13 +367,16 @@ export const useBookstoreStore = defineStore('bookstore', () => {
 
     /* Bookstore CMS Tags */
 
-    bookstoreCMSTags: readonly(bookstoreCMSTags),
-    isFetchingBookstoreCMSTags: readonly(isFetchingBookstoreCMSTags),
-    hasFetchedBookstoreCMSTags: readonly(hasFetchedBookstoreCMSTags),
+    bookstoreCMSTagsMapById,
+    bookstoreCMSTagIds,
+    bookstoreCMSTags,
+    isFetchingBookstoreCMSTags,
+    hasFetchedBookstoreCMSTags,
 
     getBookstoreCMSTagById,
 
     fetchBookstoreCMSTags,
+    fetchBookstoreCMSTag,
 
     /* Bookstore Search Results */
 

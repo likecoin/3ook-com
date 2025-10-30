@@ -60,6 +60,13 @@ export function fetchBookstoreCMSTagsForAll({
   })
 }
 
+export function fetchBookstoreCMSTagById(tagId: string) {
+  return $fetch<BookstoreCMSTag>(`/api/store/tags/${tagId}`, {
+    credentials: 'include',
+    mode: 'no-cors',
+  })
+}
+
 export function getEncryptedArweaveLinkAPIEndpoint() {
   const config = useRuntimeConfig()
   return `${config.public.likeCoinAPIEndpoint}/arweave/v2/link`
