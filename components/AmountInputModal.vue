@@ -30,7 +30,7 @@
       <div class="flex items-center justify-end gap-2">
         <UButton
           v-for="amount in quickAmounts"
-          v-show="parseUnits(amount.toString(), LIKE_TOKEN_DECIMALS) <= max"
+          v-show="parseUnits(amount.toString(), likeCoinTokenDecimals) <= max"
           :key="amount"
           :label="`${amount}`"
           color="neutral"
@@ -62,7 +62,7 @@
 <script lang="ts" setup>
 import { formatUnits, parseUnits } from 'viem'
 
-import { LIKE_TOKEN_DECIMALS } from '~/composables/use-likecoin-contract'
+const { likeCoinTokenDecimals } = useRuntimeConfig().public
 
 const quickAmounts = [1, 10, 100, 1000]
 
@@ -83,7 +83,7 @@ const amountInput = ref(0)
 const isConfirmButtonDisabled = computed(() => amountInput.value <= 0n || amountInput.value > props.max)
 
 function handleMaxButtonClick() {
-  amountInput.value = Math.floor(Number(formatUnits(props.max, LIKE_TOKEN_DECIMALS)))
+  amountInput.value = Math.floor(Number(formatUnits(props.max, likeCoinTokenDecimals)))
 }
 
 function handleConfirmButtonClick() {

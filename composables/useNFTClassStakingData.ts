@@ -1,8 +1,8 @@
 import { formatUnits } from 'viem'
 import type { ComputedRef } from 'vue'
-import { LIKE_TOKEN_DECIMALS } from '~/composables/use-likecoin-contract'
 
 export function useNFTClassStakingData(nftClassId: ComputedRef<string>) {
+  const { likeCoinTokenDecimals } = useRuntimeConfig().public
   const { loggedIn: hasLoggedIn, user } = useUserSession()
   const toast = useToast()
   const { handleError } = useErrorHandler()
@@ -45,19 +45,19 @@ export function useNFTClassStakingData(nftClassId: ComputedRef<string>) {
 
   // Computed values for formatting
   const formattedTotalStake = computed(() => {
-    return Number(formatUnits(totalStake.value, LIKE_TOKEN_DECIMALS)).toLocaleString(undefined, {
+    return Number(formatUnits(totalStake.value, likeCoinTokenDecimals)).toLocaleString(undefined, {
       maximumFractionDigits: 2,
     })
   })
 
   const formattedUserStake = computed(() => {
-    return Number(formatUnits(userStake.value, LIKE_TOKEN_DECIMALS)).toLocaleString(undefined, {
+    return Number(formatUnits(userStake.value, likeCoinTokenDecimals)).toLocaleString(undefined, {
       maximumFractionDigits: 6,
     })
   })
 
   const formattedPendingRewards = computed(() => {
-    return Number(formatUnits(pendingRewards.value, LIKE_TOKEN_DECIMALS)).toLocaleString(undefined, {
+    return Number(formatUnits(pendingRewards.value, likeCoinTokenDecimals)).toLocaleString(undefined, {
       maximumFractionDigits: 6,
     })
   })
@@ -82,7 +82,7 @@ export function useNFTClassStakingData(nftClassId: ComputedRef<string>) {
 
       useLogEvent('claim_rewards_success', {
         nft_class_id: nftClassId.value,
-        amount: formatUnits(pendingRewards.value, LIKE_TOKEN_DECIMALS),
+        amount: formatUnits(pendingRewards.value, likeCoinTokenDecimals),
       })
 
       await loadStakingData()

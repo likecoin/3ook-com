@@ -3,10 +3,9 @@ import { useWriteContract } from '@wagmi/vue'
 
 import likeCoinABI from '~/contracts/likecoin.json'
 
-export const likeCoinAddress = '0x1EE5DD1794C28F559f94d2cc642BaE62dC3be5cf'
-export const LIKE_TOKEN_DECIMALS = 6
-
 export function useLikeCoinContract() {
+  const config = useRuntimeConfig()
+  const likeCoinAddress = config.public.likeCoinTokenAddress as `0x${string}`
   const { writeContractAsync } = useWriteContract()
   const { $wagmiConfig } = useNuxtApp()
 

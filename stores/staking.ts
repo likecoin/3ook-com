@@ -1,6 +1,4 @@
 import { formatUnits } from 'viem'
-import { fetchCollectiveAccountStakings } from '~/shared/utils/collective-indexer'
-import { LIKE_TOKEN_DECIMALS } from '~/composables/use-likecoin-contract'
 
 interface StakingItem {
   nftClassId: string
@@ -18,6 +16,7 @@ interface UserStakingData {
 }
 
 export const useStakingStore = defineStore('staking', () => {
+  const { likeCoinTokenDecimals } = useRuntimeConfig().public
   const {
     getWalletPendingRewardsOfNFTClass,
     getWalletStakeOfNFTClass,
@@ -45,7 +44,7 @@ export const useStakingStore = defineStore('staking', () => {
 
   const getFormattedTotalRewards = computed(() => (walletAddress: string) => {
     const totalRewards = stakingDataByWalletMap.value[walletAddress]?.totalUnclaimedRewards || 0n
-    return Number(formatUnits(totalRewards, LIKE_TOKEN_DECIMALS)).toLocaleString(undefined, {
+    return Number(formatUnits(totalRewards, likeCoinTokenDecimals)).toLocaleString(undefined, {
       maximumFractionDigits: 6,
     })
   })
