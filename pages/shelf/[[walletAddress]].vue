@@ -1,12 +1,10 @@
 <template>
   <div>
     <header
+      v-if="!isMyBookshelf"
       class="flex gap-6 w-full max-w-[1440px] mx-auto px-4 laptop:px-12 py-4"
     >
-      <div
-        v-if="!isMyBookshelf"
-        class="flex items-center gap-2 overflow-hidden"
-      >
+      <div class="flex items-center gap-2 overflow-hidden">
         <UAvatar
           :src="shelfOwner?.avatarSrc"
           :alt="shelfOwnerDisplayName"
@@ -34,65 +32,6 @@
           />
         </div>
       </div>
-
-      <template
-        v-else-if="isMyBookshelf && hasLoggedIn && hasAnyStakes"
-      >
-        <div
-          class="flex items-center gap-2 overflow-hidden"
-        >
-          <UAvatar
-            :src="user?.avatar"
-            :alt="userDisplayName"
-            icon="i-material-symbols-person-2-rounded"
-            size="3xl"
-          />
-
-          <div class="overflow-hidden">
-            <p
-              v-if="userDisplayName"
-              class="font-medium text-highlighted text-sm"
-              v-text="userDisplayName"
-            />
-            <p
-              v-if="user?.evmWallet"
-              :class="[
-                userDisplayName ? 'text-muted' : 'text-highlighted',
-                'text-xs',
-                'text-ellipsis',
-                'font-mono',
-                'overflow-hidden',
-                'whitespace-nowrap',
-              ]"
-              v-text="user.evmWallet"
-            />
-          </div>
-        </div>
-
-        <div
-          class="flex items-center gap-3"
-        >
-          <div>
-            <div class="flex items-baseline gap-2">
-              <span class="text-lg font-bold text-green-500">
-                {{ formattedTotalRewards }}
-              </span>
-              <span class="text-xs text-gray-500">LIKE</span>
-            </div>
-            <p class="text-xs text-gray-600">
-              {{ $t('staking_dashboard_total_rewards') }}
-            </p>
-          </div>
-          <UButton
-            v-if="totalUnclaimedRewards > 0n"
-            :label="$t('staking_claim_all_rewards')"
-            color="success"
-            size="sm"
-            :loading="isClaimingAllRewards"
-            @click="handleClaimAllRewards"
-          />
-        </div>
-      </template>
     </header>
 
     <main class="flex flex-col items-center grow w-full max-w-[1440px] mx-auto px-4 laptop:px-12 pb-16">
@@ -190,8 +129,6 @@ const getRouteParam = useRouteParam()
 const bookshelfStore = useBookshelfStore()
 const metadataStore = useMetadataStore()
 const stakingStore = useStakingStore()
-const { handleError } = useErrorHandler()
-const toast = useToast()
 const {
   isLoading: isLoadingClaimableFreeBooks,
   nftClassIds: claimableNFTClassIds,
@@ -203,10 +140,6 @@ const {
 const infiniteScrollDetectorElement = useTemplateRef<HTMLLIElement>('infiniteScrollDetector')
 const shouldLoadMore = useElementVisibility(infiniteScrollDetectorElement)
 
-const { claimWalletRewards } = useLikeCollectiveContract()
-const { restoreConnection } = useAccountStore()
-const isClaimingAllRewards = ref(false)
-
 const stakingData = computed(() => {
   return isMyBookshelf.value
     ? stakingStore.getUserStakingData(user.value!.evmWallet)
@@ -216,16 +149,6 @@ const stakingData = computed(() => {
         isFetching: false,
         hasFetched: false,
       }
-})
-
-const totalUnclaimedRewards = computed(() => stakingData.value.totalUnclaimedRewards)
-
-const formattedTotalRewards = computed(() => {
-  return isMyBookshelf.value ? stakingStore.getFormattedTotalRewards(user.value!.evmWallet) : '0'
-})
-
-const hasAnyStakes = computed(() => {
-  return stakingData.value.items.length > 0
 })
 
 const bookshelfItemsWithStaking = computed(() => {
@@ -286,10 +209,6 @@ const shelfOwnerDisplayName = computed(() => {
 })
 const shelfOwnerWalletAddress = computed(() => {
   return shelfOwner.value?.evmWallet || walletAddress.value
-})
-
-const userDisplayName = computed(() => {
-  return user.value?.displayName || user.value?.evmWallet
 })
 
 const totalItemsCount = computed(() => {
@@ -364,46 +283,6 @@ watch(
     }
   },
 )
-
-async function handleClaimAllRewards() {
-  if (!isMyBookshelf.value || !hasLoggedIn.value) return
-
-  try {
-    await restoreConnection()
-
-    isClaimingAllRewards.value = true
-
-    await claimWalletRewards(user.value!.evmWallet)
-    await sleep(3000)
-
-    toast.add({
-      title: $t('staking_claim_all_rewards_success'),
-      color: 'success',
-      icon: 'i-material-symbols-check-circle',
-    })
-
-    useLogEvent('claim_all_rewards_success', {
-      total_amount: formatUnits(totalUnclaimedRewards.value, likeCoinTokenDecimals),
-      book_count: bookshelfStore.items.length,
-    })
-
-    // Reload data to refresh rewards
-    if (isMyBookshelf.value && walletAddress.value) {
-      await Promise.all([
-        stakingStore.fetchUserStakingData(walletAddress.value, { isRefresh: true }),
-        bookshelfStore.fetchItems({ walletAddress: walletAddress.value, isRefresh: true }),
-      ])
-    }
-  }
-  catch (error) {
-    await handleError(error, {
-      title: $t('staking_claim_all_rewards_error'),
-    })
-  }
-  finally {
-    isClaimingAllRewards.value = false
-  }
-}
 
 function handleBookshelfItemOpen({
   type,
