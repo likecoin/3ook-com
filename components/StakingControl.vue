@@ -233,6 +233,7 @@ async function handleStakeButtonClick() {
     })
 
     stakeAmount.value = 0
+    await sleep(3000)
     await loadStakingData()
   }
   catch (error) {
@@ -284,6 +285,7 @@ async function handleUnstakeButtonClick() {
     })
 
     stakeAmount.value = 0
+    await sleep(3000)
     await loadStakingData()
   }
   catch (error) {
@@ -324,6 +326,7 @@ async function handleDonateButtonClick() {
     })
 
     stakeAmount.value = 0
+    await sleep(3000)
     await loadStakingData()
   }
   catch (error) {
