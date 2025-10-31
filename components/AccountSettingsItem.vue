@@ -16,6 +16,7 @@
         'flex',
         'items-center',
         'shrink-0',
+        'gap-2',
 
         $slots.default && $slots.right ? 'col-span-full' : 'col-span-4',
         'phone:col-span-3',
@@ -26,9 +27,14 @@
         'text-muted',
       ]"
     >
+      <slot
+        v-if="$slots['label-prepend']"
+        name="label-prepend"
+      />
       <UIcon
+        v-else-if="icon"
         :name="icon"
-        class="size-5 shrink-0 mr-2"
+        class="size-5 shrink-0"
       />
 
       <span
@@ -83,7 +89,6 @@
 defineProps({
   icon: {
     type: String,
-    required: true,
   },
   label: {
     type: String,
