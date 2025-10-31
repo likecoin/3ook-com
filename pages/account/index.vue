@@ -149,6 +149,32 @@
           </AccountSettingsItem>
 
           <AccountSettingsItem
+            :label="$t('account_page_likecoin')"
+          >
+            <template #label-prepend>
+              <img
+                class="w-5 h-5"
+                :src="likeCoinTokenImage"
+                :alt="$t('account_page_likecoin')"
+              >
+            </template>
+
+            <BalanceLabel
+              class="text-sm text-muted"
+              :value="formattedLikeBalance"
+            />
+
+            <template #right>
+              <UButton
+                :to="localeRoute({ name: 'account-governance' })"
+                :label="$t('account_page_governance_button')"
+                variant="outline"
+                size="lg"
+              />
+            </template>
+          </AccountSettingsItem>
+
+          <AccountSettingsItem
             v-if="user?.likeWallet"
             icon="i-material-symbols-key-outline-rounded"
             :label="$t('account_page_cosmos_wallet')"
@@ -191,29 +217,6 @@
               <LocaleSwitcher :is-icon-hidden="true" />
             </template>
           </AccountSettingsItem>
-        </UCard>
-      </section>
-
-      <section
-        v-if="hasLoggedIn"
-        class="space-y-3 pt-4"
-      >
-        <h2
-          class="px-4 text-lg font-bold"
-          v-text="$t('account_page_governance_title', { defaultValue: 'Governance' })"
-        />
-
-        <UCard :ui="{ body: '!p-0 divide-y-1 divide-(--ui-border)' }">
-          <UButton
-            :to="localeRoute({ name: 'account-governance' })"
-            :label="$t('account_page_governance_button', { defaultValue: 'Manage Governance & Voting' })"
-            leading-icon="i-material-symbols-how-to-vote-outline-rounded"
-            trailing-icon="i-material-symbols-arrow-forward-rounded"
-            variant="link"
-            color="primary"
-            size="lg"
-            class="justify-between px-4 py-3"
-          />
         </UCard>
       </section>
 
@@ -301,6 +304,8 @@
 </template>
 
 <script setup lang="ts">
+import likeCoinTokenImage from '~/assets/images/likecoin-token.png'
+
 // NOTE: Set `layout` to false for injecting props into `<NuxtLayout/>`.
 definePageMeta({ layout: false })
 
@@ -314,6 +319,8 @@ const { handleError } = useErrorHandler()
 const toast = useToast()
 const isWindowFocused = useDocumentVisibility()
 const { copy: copyToClipboard } = useClipboard()
+
+const { formattedLikeBalance } = useLikeCoinBalance(user.value?.evmWallet)
 
 useHead({
   title: $t('account_page_title'),
