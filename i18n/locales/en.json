@@ -263,6 +263,7 @@
   "product_page_book_format_label": "Book Format",
   "product_page_book_format_value": "Digital Book",
   "product_page_checkout_button_label": "Buy Now",
+  "product_page_edition_title": "{name}* Signed by the author, shipping will be slightly delayed.",
   "product_page_fetch_metadata_failed_error": "Failed to fetch the book metadata",
   "product_page_file_format_label": "File Format",
   "product_page_gift_button_label": "Gift this Book",

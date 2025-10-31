@@ -222,10 +222,6 @@
 
           <template v-else-if="pricingItems.length">
             <div class="bg-white p-4 pb-8 rounded-lg shadow-[0px_10px_20px_0px_rgba(0,0,0,0.04)]">
-              <h2
-                class="font-semibold tablet:text-lg"
-                v-text="$t('product_page_pricing_title')"
-              />
               <ul
                 ref="pricing"
                 class="mt-2 space-y-2"
@@ -282,8 +278,8 @@
                         ]"
                       >
                         <span
-                          class="font-semibold"
-                          v-text="item.name"
+                          class="font-semibold text-left"
+                          v-text="item.isAutoDeliver ? item.name : $t('product_page_edition_title', { name: item.name })"
                         />
                         <span
                           v-if="item.isSoldOut"
@@ -333,6 +329,40 @@
                         class="markdown whitespace-normal text-left mt-2"
                         v-html="item.renderedDescription"
                       />
+
+                      <div class="flex flex-wrap gap-1 mt-3">
+                        <UBadge
+                          v-for="contentType in bookInfo.contentTypes.value"
+                          :key="contentType"
+                          :label="contentType.toUpperCase()"
+                          variant="outline"
+                          color="neutral"
+                          size="sm"
+                        />
+
+                        <UBadge
+                          :label="$t('reading_method_read_online')"
+                          variant="outline"
+                          color="neutral"
+                          size="sm"
+                        />
+
+                        <UBadge
+                          v-if="bookInfo.isDownloadable.value"
+                          :label="$t('reading_method_download_file')"
+                          variant="outline"
+                          color="neutral"
+                          size="sm"
+                        />
+
+                        <UBadge
+                          v-if="!bookInfo.isAudioHidden.value && isLikerPlus"
+                          :label="$t('product_page_support_tts_label')"
+                          variant="outline"
+                          color="neutral"
+                          size="sm"
+                        />
+                      </div>
                     </div>
                   </button>
                 </li>
@@ -346,15 +376,6 @@
                   :disabled="!canBePurchased"
                   block
                   @click="handlePurchaseButtonClick"
-                />
-
-                <UBadge
-                  v-if="!selectedPricingItem?.isAutoDeliver"
-                  class="self-center font-bold rounded-full pr-3"
-                  icon="i-material-symbols-warning-outline"
-                  variant="subtle"
-                  color="warning"
-                  :label="$t('manual_delivery_warning_label')"
                 />
               </footer>
             </div>
