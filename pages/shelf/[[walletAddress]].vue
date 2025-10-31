@@ -181,8 +181,8 @@
 
 <script setup lang="ts">
 import { formatUnits } from 'viem'
-import { LIKE_TOKEN_DECIMALS } from '~/composables/use-likecoin-contract'
 
+const { likeCoinTokenDecimals } = useRuntimeConfig().public
 const { t: $t } = useI18n()
 const { loggedIn: hasLoggedIn, user } = useUserSession()
 const localeRoute = useLocaleRoute()
@@ -235,8 +235,8 @@ const bookshelfItemsWithStaking = computed(() => {
     )
     return {
       ...item,
-      stakedAmount: stakingItem ? Number(formatUnits(stakingItem.stakedAmount, LIKE_TOKEN_DECIMALS)) : 0,
-      pendingRewards: stakingItem ? Number(formatUnits(stakingItem.pendingRewards, LIKE_TOKEN_DECIMALS)) : 0,
+      stakedAmount: stakingItem ? Number(formatUnits(stakingItem.stakedAmount, likeCoinTokenDecimals)) : 0,
+      pendingRewards: stakingItem ? Number(formatUnits(stakingItem.pendingRewards, likeCoinTokenDecimals)) : 0,
       isOwned: true,
     }
   })
@@ -383,7 +383,7 @@ async function handleClaimAllRewards() {
     })
 
     useLogEvent('claim_all_rewards_success', {
-      total_amount: formatUnits(totalUnclaimedRewards.value, LIKE_TOKEN_DECIMALS),
+      total_amount: formatUnits(totalUnclaimedRewards.value, likeCoinTokenDecimals),
       book_count: bookshelfStore.items.length,
     })
 

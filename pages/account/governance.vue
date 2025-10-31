@@ -278,12 +278,12 @@
 
 <script setup lang="ts">
 import { formatUnits, parseUnits } from 'viem'
-import { LIKE_TOKEN_DECIMALS } from '~/composables/use-likecoin-contract'
 
 definePageMeta({
   layout: 'default',
 })
 
+const { likeCoinTokenDecimals } = useRuntimeConfig().public
 const accountStore = useAccountStore()
 const { t } = useI18n()
 const toast = useToast()
@@ -353,7 +353,7 @@ async function handleStake() {
     isLoading.value = true
     error.value = null
     await restoreConnection()
-    const amount = parseUnits(stakeAmount.value.toString(), LIKE_TOKEN_DECIMALS)
+    const amount = parseUnits(stakeAmount.value.toString(), likeCoinTokenDecimals)
 
     await governanceData.approveAndDeposit(amount, walletAddress.value)
 
@@ -389,7 +389,7 @@ async function handleWithdraw() {
     isLoading.value = true
     error.value = null
     await restoreConnection()
-    const amount = parseUnits(withdrawAmount.value.toString(), LIKE_TOKEN_DECIMALS)
+    const amount = parseUnits(withdrawAmount.value.toString(), likeCoinTokenDecimals)
 
     await withdraw(amount, walletAddress.value, walletAddress.value)
 
@@ -420,7 +420,7 @@ async function handleMaxStake() {
   if (!walletAddress.value) return
   try {
     const balance = await balanceOf(walletAddress.value)
-    stakeAmount.value = Number(formatUnits(balance, LIKE_TOKEN_DECIMALS))
+    stakeAmount.value = Number(formatUnits(balance, likeCoinTokenDecimals))
   }
   catch (err) {
     console.error('Error fetching LIKE balance:', err)
@@ -429,6 +429,6 @@ async function handleMaxStake() {
 
 function handleMaxWithdraw() {
   if (governanceData.veLikeBalance.value === 0n) return
-  withdrawAmount.value = Number(formatUnits(governanceData.veLikeBalance.value, LIKE_TOKEN_DECIMALS))
+  withdrawAmount.value = Number(formatUnits(governanceData.veLikeBalance.value, likeCoinTokenDecimals))
 }
 </script>

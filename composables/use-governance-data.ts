@@ -1,10 +1,11 @@
 import { formatUnits } from 'viem'
 import { veLikeAddress } from '~/composables/use-ve-like-contract'
-import { LIKE_TOKEN_DECIMALS } from '~/composables/use-likecoin-contract'
 
 const SECONDS_PER_DAY = 86400n
 
 export function useGovernanceData(walletAddress: string | Ref<string>) {
+  const config = useRuntimeConfig()
+  const { likeCoinTokenDecimals } = config.public
   const {
     balanceOf: getVeLikeBalance,
     totalSupply: getVeLikeTotalSupply,
@@ -35,32 +36,32 @@ export function useGovernanceData(walletAddress: string | Ref<string>) {
   const totalSupplyValue = ref(0n)
 
   const formattedVeLikeBalance = computed(() => {
-    return Number(formatUnits(veLikeBalance.value, LIKE_TOKEN_DECIMALS)).toLocaleString(undefined, {
+    return Number(formatUnits(veLikeBalance.value, likeCoinTokenDecimals)).toLocaleString(undefined, {
       maximumFractionDigits: 2,
     })
   })
 
   const formattedLikeStakedBalance = computed(() => {
-    return Number(formatUnits(likeStakedBalance.value, LIKE_TOKEN_DECIMALS)).toLocaleString(undefined, {
+    return Number(formatUnits(likeStakedBalance.value, likeCoinTokenDecimals)).toLocaleString(undefined, {
       maximumFractionDigits: 2,
     })
   })
 
   const formattedPendingReward = computed(() => {
-    return Number(formatUnits(pendingReward.value, LIKE_TOKEN_DECIMALS)).toLocaleString(undefined, {
+    return Number(formatUnits(pendingReward.value, likeCoinTokenDecimals)).toLocaleString(undefined, {
       maximumFractionDigits: 2,
     })
   })
 
   const formattedClaimedReward = computed(() => {
-    return Number(formatUnits(claimedReward.value, LIKE_TOKEN_DECIMALS)).toLocaleString(undefined, {
+    return Number(formatUnits(claimedReward.value, likeCoinTokenDecimals)).toLocaleString(undefined, {
       maximumFractionDigits: 2,
     })
   })
 
   const totalVotingPower = computed(() => {
     const total = veLikeBalance.value
-    return Number(formatUnits(total, LIKE_TOKEN_DECIMALS)).toLocaleString(undefined, {
+    return Number(formatUnits(total, likeCoinTokenDecimals)).toLocaleString(undefined, {
       maximumFractionDigits: 2,
     })
   })
@@ -83,7 +84,7 @@ export function useGovernanceData(walletAddress: string | Ref<string>) {
       // timeUnit * balanceOf(account) * rewardAmount / totalSupply / (endTime - startTime)
       // timeUnit = 86400 (seconds per day)
       const numerator = SECONDS_PER_DAY * veLikeBalance.value * rewardAmount
-      const denominator = totalSupplyValue.value * timeDuration * (BigInt(10) ** BigInt(LIKE_TOKEN_DECIMALS))
+      const denominator = totalSupplyValue.value * timeDuration * (BigInt(10) ** BigInt(likeCoinTokenDecimals))
 
       // Convert to number for formatting
       const estimatedValue = Number(numerator) / Number(denominator)

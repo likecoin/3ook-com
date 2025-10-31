@@ -1,7 +1,3 @@
-import { likeCoinAddress } from '~/composables/use-likecoin-contract'
-
-export const likeCoinErc20Address = likeCoinAddress
-
 export function useLikeStaking() {
   const { approve: approveLikeCoin } = useLikeCoinContract()
   const {
@@ -114,6 +110,5 @@ export function useLikeStaking() {
     getWalletStakeOfNFTClass,
     getTotalStakeOfNFTClass,
     depositReward,
-    likeCoinErc20Address,
   }
 }

@@ -177,7 +177,7 @@
           :book-name="item.title"
           :book-cover-src="item.imageUrl"
           :price="item.minPrice"
-          :total-staked="isStakingTagId ? Number(formatUnits(item.totalStaked ?? 0n, LIKE_TOKEN_DECIMALS)) : 0"
+          :total-staked="isStakingTagId ? Number(formatUnits(item.totalStaked ?? 0n, likeCoinTokenDecimals)) : 0"
           :staker-count="isStakingTagId ? (item.stakerCount ?? 0) : 0"
           :lazy="index >= columnMax"
         />
@@ -199,8 +199,8 @@
 
 <script setup lang="ts">
 import { formatUnits } from 'viem'
-import { LIKE_TOKEN_DECIMALS } from '~/composables/use-likecoin-contract'
 
+const { likeCoinTokenDecimals } = useRuntimeConfig().public
 const { t: $t, locale } = useI18n()
 const localeRoute = useLocaleRoute()
 const route = useRoute()

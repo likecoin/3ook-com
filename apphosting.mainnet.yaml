@@ -51,6 +51,10 @@ env:
     value: https://indexer.v3.like.co/collective/api
   - variable: LIKECOIN_STATIC_ENDPOINT
     value: https://static.like.co
+  - variable: LIKECOIN_TOKEN_ADDRESS
+    value: 0x1EE5DD1794C28F559f94d2cc642BaE62dC3be5cf
+  - variable: LIKECOIN_TOKEN_DECIMALS
+    value: 6
   - variable: LIKECOIN_V3_BOOK_MIGRATION_SITE_URL
     value: https://v3-book-migration.like.co
   - variable: LIKER_LAND_SITE_URL
