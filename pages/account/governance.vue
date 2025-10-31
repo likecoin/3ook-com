@@ -327,6 +327,7 @@ async function handleClaimRewards() {
         color: 'success',
       })
     }
+    await sleep(3000)
     await governanceData.loadGovernanceData()
   }
   catch (err) {
@@ -362,6 +363,7 @@ async function handleStake() {
       color: 'success',
     })
     stakeAmount.value = 0
+    await sleep(3000)
     await governanceData.loadGovernanceData()
   }
   catch (err) {
@@ -397,6 +399,7 @@ async function handleWithdraw() {
       color: 'success',
     })
     withdrawAmount.value = 0
+    await sleep(3000)
     await governanceData.loadGovernanceData()
   }
   catch (err) {
