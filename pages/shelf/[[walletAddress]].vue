@@ -152,14 +152,14 @@ const stakingData = computed(() => {
 })
 
 const bookshelfItemsWithStaking = computed(() => {
-  const bookshelfByNftClassId = new Map(
+  const ownedItemsByNFTClassId = new Map(
     bookshelfStore.items.map(item => [
       item.nftClassId.toLowerCase(),
       item,
     ]),
   )
 
-  const stakingByNftClassId = new Map(
+  const stakedItemsByNFTClassId = new Map(
     stakingData.value.items.map(item => [
       item.nftClassId.toLowerCase(),
       item,
@@ -167,25 +167,25 @@ const bookshelfItemsWithStaking = computed(() => {
   )
 
   const items = bookshelfStore.items.map((bookshelfItem) => {
-    const nftClassIdLower = bookshelfItem.nftClassId.toLowerCase()
-    const stakingItem = stakingByNftClassId.get(nftClassIdLower)
+    const normalizedNFTClassId = bookshelfItem.nftClassId.toLowerCase()
+    const stakedItem = stakedItemsByNFTClassId.get(normalizedNFTClassId)
 
     return {
       ...bookshelfItem,
-      stakedAmount: stakingItem ? Number(formatUnits(stakingItem.stakedAmount, likeCoinTokenDecimals)) : 0,
-      pendingRewards: stakingItem ? Number(formatUnits(stakingItem.pendingRewards, likeCoinTokenDecimals)) : 0,
+      stakedAmount: stakedItem ? Number(formatUnits(stakedItem.stakedAmount, likeCoinTokenDecimals)) : 0,
+      pendingRewards: stakedItem ? Number(formatUnits(stakedItem.pendingRewards, likeCoinTokenDecimals)) : 0,
       isOwned: true,
     }
   })
 
-  stakingData.value.items.forEach((stakingItem) => {
-    const nftClassIdLower = stakingItem.nftClassId.toLowerCase()
-    if (!bookshelfByNftClassId.has(nftClassIdLower)) {
+  stakingData.value.items.forEach((stakedItem) => {
+    const normalizedNFTClassId = stakedItem.nftClassId.toLowerCase()
+    if (!ownedItemsByNFTClassId.has(normalizedNFTClassId)) {
       items.push({
-        nftClassId: stakingItem.nftClassId,
+        nftClassId: stakedItem.nftClassId,
         nftIds: [],
-        stakedAmount: Number(formatUnits(stakingItem.stakedAmount, likeCoinTokenDecimals)),
-        pendingRewards: Number(formatUnits(stakingItem.pendingRewards, likeCoinTokenDecimals)),
+        stakedAmount: Number(formatUnits(stakedItem.stakedAmount, likeCoinTokenDecimals)),
+        pendingRewards: Number(formatUnits(stakedItem.pendingRewards, likeCoinTokenDecimals)),
         isOwned: false,
       })
     }
