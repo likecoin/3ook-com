@@ -12,30 +12,45 @@ export function useNFTClassStakingData(nftClassId: ComputedRef<string>) {
     claimWalletRewardsOfNFTClass,
   } = useLikeStaking()
 
-  const {
-    getWalletPendingRewardsOfNFTClass,
-    getWalletStakeOfNFTClass,
-    getTotalStakeOfNFTClass,
-  } = useLikeCollectiveContract()
+  const stakingStore = useStakingStore()
 
   // State
-  const totalStake = ref(0n)
-  const userStake = ref(0n)
-  const pendingRewards = ref(0n)
   const isClaimingRewards = ref(false)
+
+  // Computed user staking data from store
+  const userStakingItem = computed(() => {
+    if (!hasLoggedIn.value || !user.value?.evmWallet) return null
+
+    const stakingData = stakingStore.getUserStakingData(user.value.evmWallet)
+    return stakingData.items.find(item => item.nftClassId === nftClassId.value)
+  })
+
+  // State proxied from store data or fallback to zeros
+  const userStake = computed(() => {
+    return userStakingItem.value?.stakedAmount ?? 0n
+  })
+
+  const pendingRewards = computed(() => {
+    return userStakingItem.value?.pendingRewards ?? 0n
+  })
+
+  const totalStake = computed(() => {
+    return stakingStore.getTotalStakeOfNFTClassCached(nftClassId.value)
+  })
 
   // Load staking data from blockchain
   async function loadStakingData() {
     try {
-      totalStake.value = await getTotalStakeOfNFTClass(nftClassId.value)
+      // Load total stake for this NFT class
+      await stakingStore.fetchTotalStakeOfNFTClass(nftClassId.value, {
+        isRefresh: true,
+      })
 
+      // Load user staking data via store
       if (hasLoggedIn.value && user.value?.evmWallet) {
-        const [userStakeAmount, pendingRewardsAmount] = await Promise.all([
-          getWalletStakeOfNFTClass(user.value.evmWallet, nftClassId.value),
-          getWalletPendingRewardsOfNFTClass(user.value.evmWallet, nftClassId.value),
-        ])
-        userStake.value = userStakeAmount
-        pendingRewards.value = pendingRewardsAmount
+        await stakingStore.fetchUserStakingData(user.value.evmWallet, {
+          isRefresh: true,
+        })
       }
     }
     catch (error) {
@@ -97,14 +112,6 @@ export function useNFTClassStakingData(nftClassId: ComputedRef<string>) {
       isClaimingRewards.value = false
     }
   }
-
-  // Reset data on logout
-  watch(hasLoggedIn, (isLoggedIn) => {
-    if (!isLoggedIn) {
-      userStake.value = 0n
-      pendingRewards.value = 0n
-    }
-  })
 
   return {
     // State

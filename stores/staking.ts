@@ -1,6 +1,6 @@
 import { formatUnits } from 'viem'
 
-interface StakingItem {
+export interface StakingItem {
   nftClassId: string
   stakedAmount: bigint
   pendingRewards: bigint
@@ -15,22 +15,24 @@ interface UserStakingData {
   ts?: number
 }
 
+interface NFTClassTotalStake {
+  nftClassId: string
+  totalStake: bigint
+  isFetching: boolean
+}
+
 export const useStakingStore = defineStore('staking', () => {
   const { likeCoinTokenDecimals } = useRuntimeConfig().public
+  const { loggedIn: hasLoggedIn } = useUserSession()
   const {
     getWalletPendingRewardsOfNFTClass,
     getWalletStakeOfNFTClass,
+    getTotalStakeOfNFTClass,
   } = useLikeCollectiveContract()
 
   // State
   const stakingDataByWalletMap = ref<Record<string, UserStakingData>>({})
-
-  // Auto-detect stake mode based on current route
-  const route = useRoute()
-  const isStakeMode = computed(() => {
-    const routeName = route.name as string
-    return routeName?.startsWith('stake') || routeName?.startsWith('collective')
-  })
+  const totalStakeByNFTClassMap = ref<Record<string, NFTClassTotalStake>>({})
 
   // Getters
   const getUserStakingData = computed(() => (walletAddress: string) => {
@@ -47,6 +49,10 @@ export const useStakingStore = defineStore('staking', () => {
     return Number(formatUnits(totalRewards, likeCoinTokenDecimals)).toLocaleString(undefined, {
       maximumFractionDigits: 6,
     })
+  })
+
+  const getTotalStakeOfNFTClassCached = computed(() => (nftClassId: string) => {
+    return totalStakeByNFTClassMap.value[nftClassId]?.totalStake ?? 0n
   })
 
   // Actions
@@ -75,19 +81,15 @@ export const useStakingStore = defineStore('staking', () => {
       const stakingData = new Map<string, StakingItem>()
       let totalRewards = 0n
 
-      // Note: Owned books are now handled in the UI layer, not here
-
       // Get books user has staked on from collective indexer
       try {
         const stakingsResponse = await fetchCollectiveAccountStakings(walletAddress, {
           'pagination.limit': 100,
         })
 
-        // Process stakings from indexer
         for (const staking of stakingsResponse.data) {
-          const nftClassId = staking.book_nft
+          const nftClassId = staking.book_nft.toLowerCase()
 
-          // Skip if we already processed this book
           if (stakingData.has(nftClassId)) {
             continue
           }
@@ -160,16 +162,71 @@ export const useStakingStore = defineStore('staking', () => {
     }
   }
 
+  async function fetchTotalStakeOfNFTClass(nftClassId: string, {
+    isRefresh = false,
+  }: {
+    isRefresh?: boolean
+  } = {}) {
+    const cached = totalStakeByNFTClassMap.value[nftClassId]
+
+    // Return cached value if available and not forcing refresh
+    if (cached && !isRefresh && !cached.isFetching) {
+      return cached.totalStake
+    }
+
+    // Avoid duplicate fetches
+    if (cached?.isFetching) {
+      return cached.totalStake
+    }
+
+    try {
+      if (!totalStakeByNFTClassMap.value[nftClassId]) {
+        totalStakeByNFTClassMap.value[nftClassId] = {
+          nftClassId,
+          totalStake: 0n,
+          isFetching: false,
+        }
+      }
+
+      totalStakeByNFTClassMap.value[nftClassId].isFetching = true
+
+      const totalStake = await getTotalStakeOfNFTClass(nftClassId)
+      if (totalStakeByNFTClassMap.value[nftClassId]) {
+        totalStakeByNFTClassMap.value[nftClassId].totalStake = totalStake
+      }
+
+      return totalStake
+    }
+    finally {
+      if (totalStakeByNFTClassMap.value[nftClassId]) {
+        totalStakeByNFTClassMap.value[nftClassId].isFetching = false
+      }
+    }
+  }
+
+  function reset() {
+    stakingDataByWalletMap.value = {}
+    totalStakeByNFTClassMap.value = {}
+  }
+
+  watch(hasLoggedIn, (value, oldValue) => {
+    if (oldValue && !value) {
+      reset()
+    }
+  })
+
   // Note: Stake mode is now auto-detected based on route
 
   return {
     stakingDataByWalletMap,
-    isStakeMode,
+    totalStakeByNFTClassMap,
 
     getUserStakingData,
     getFormattedTotalRewards,
+    getTotalStakeOfNFTClassCached,
 
     fetchUserStakingData,
+    fetchTotalStakeOfNFTClass,
     clearUserStakingData,
     updateStakingItem,
   }
