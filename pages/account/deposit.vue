@@ -239,25 +239,14 @@
             </h3>
 
             <!-- Lock Time Warning -->
-            <div
+            <UAlert
               v-if="governanceData.isWithdrawLocked.value"
-              class="p-3 rounded-lg bg-amber-50 border border-amber-200"
-            >
-              <div class="flex items-start gap-2">
-                <UIcon
-                  name="i-material-symbols-lock-outline-rounded"
-                  class="size-5 text-amber-600 mt-0.5 shrink-0"
-                />
-                <div class="flex-1">
-                  <p class="text-sm font-semibold text-amber-900">
-                    {{ t('governance_page_withdraw_locked') }}
-                  </p>
-                  <p class="text-xs text-amber-800 mt-1">
-                    {{ formatLockTimeRemaining(governanceData.timeUntilWithdrawUnlock.value) }}
-                  </p>
-                </div>
-              </div>
-            </div>
+              :title="t('governance_page_withdraw_locked')"
+              :description="formatLockTimeRemaining(governanceData.timeUntilWithdrawUnlock.value)"
+              icon="i-material-symbols-lock-clock-outline-rounded"
+              color="warning"
+              variant="subtle"
+            />
 
             <div class="flex items-center gap-2">
               <UInput
