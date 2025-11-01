@@ -132,7 +132,7 @@ export function useGovernanceData(walletAddress: string | Ref<string>) {
     // Load all governance data in parallel
     const [veLikeBalanceResult, pendingRewardResult, claimedRewardResult, conditionResult, totalSupplyResult, lockTimeResult] = await Promise.all([
       getVeLikeBalance(address),
-      getPendingReward(address),
+      getPendingReward(address).catch(() => 0n),
       getClaimedReward(address),
       getCurrentCondition(),
       getVeLikeTotalSupply(),
