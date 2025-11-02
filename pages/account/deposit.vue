@@ -1,12 +1,19 @@
 <template>
   <main class="w-full max-w-xl mx-auto p-4 space-y-4 phone:grow">
-    <UButton
-      class="rounded-full mr-auto"
-      icon="i-material-symbols-arrow-back-rounded"
-      :to="$localeRoute({ name: 'account' })"
-      variant="subtle"
-      color="neutral"
-    />
+    <div class="flex items-center gap-4">
+      <UButton
+        class="rounded-full"
+        icon="i-material-symbols-arrow-back-rounded"
+        :to="$localeRoute({ name: 'account' })"
+        variant="subtle"
+        color="neutral"
+      />
+
+      <h1
+        class="text-xl font-bold"
+        v-text="t('breadcrumb_account_deposit')"
+      />
+    </div>
 
     <!-- Login Prompt -->
     <UCard
@@ -34,18 +41,6 @@
 
     <!-- Governance Content -->
     <template v-if="hasLoggedIn && walletAddress">
-      <!-- Page Title -->
-      <div class="pt-4">
-        <h1
-          class="text-2xl font-bold"
-          v-text="t('governance_page_title')"
-        />
-        <p
-          class="text-sm text-muted mt-1"
-          v-text="t('governance_page_subtitle')"
-        />
-      </div>
-
       <!-- My Staking Overview Section -->
       <section class="space-y-3">
         <h2
@@ -152,12 +147,12 @@
           <!-- Claim Rewards Button -->
           <div class="px-4 py-4">
             <UButton
-              :label="t('governance_page_claim_rewards')"
+              :label="isClaimRewardButtonEnabled ? t('governance_page_claim_rewards') : t('governance_page_claim_rewards_disabled')"
               color="primary"
               size="lg"
               block
               :loading="isLoading"
-              :disabled="governanceData.pendingReward.value === 0n"
+              :disabled="!isClaimRewardButtonEnabled"
               @click="handleClaimRewards"
             />
           </div>
@@ -168,7 +163,7 @@
               class="text-sm font-semibold"
               v-text="t('governance_page_auto_restake')"
             />
-            <USwitch v-model="autoRestakeEnabled" />
+            <USwitch v-model="isAutoRestakeEnabled" />
           </div>
         </UCard>
       </section>
@@ -203,13 +198,24 @@
                 step="0.01"
                 :disabled="isLoading"
                 class="flex-1"
-              />
+              >
+                <template #trailing>
+                  <span class="text-sm">LIKE</span>
+                </template>
+              </UInput>
               <UButton
                 :label="$t('amount_input_max')"
                 size="sm"
                 color="neutral"
                 variant="outline"
                 @click="handleMaxStake"
+              />
+              <UButton
+                :label="$t('amount_input_half')"
+                size="sm"
+                color="neutral"
+                variant="outline"
+                @click="handleHalfStake"
               />
             </div>
             <UButton
@@ -256,7 +262,11 @@
                 step="0.01"
                 :disabled="isLoading || governanceData.isWithdrawLocked.value"
                 class="flex-1"
-              />
+              >
+                <template #trailing>
+                  <span class="text-sm">LIKE</span>
+                </template>
+              </UInput>
               <UButton
                 :label="$t('amount_input_max')"
                 size="sm"
@@ -264,6 +274,14 @@
                 variant="outline"
                 :disabled="governanceData.isWithdrawLocked.value"
                 @click="handleMaxWithdraw"
+              />
+              <UButton
+                :label="$t('amount_input_half')"
+                size="sm"
+                color="neutral"
+                variant="outline"
+                :disabled="governanceData.isWithdrawLocked.value"
+                @click="handleHalfWithdraw"
               />
             </div>
             <UButton
@@ -307,9 +325,11 @@ const { balanceOf } = useLikeCoinContract()
 
 const stakeAmount = ref(0)
 const withdrawAmount = ref(0)
-const autoRestakeEnabled = ref(false)
+const isAutoRestakeEnabled = ref(true)
 const isLoading = ref(false)
 const error = ref<string | null>(null)
+
+const isClaimRewardButtonEnabled = computed(() => governanceData.pendingReward.value > 0n)
 
 async function handleLogin() {
   await accountStore.login()
@@ -320,7 +340,7 @@ async function handleClaimRewards() {
     isLoading.value = true
     error.value = null
     await restoreConnection()
-    if (autoRestakeEnabled.value) {
+    if (isAutoRestakeEnabled.value) {
       await restakeReward(walletAddress.value)
       toast.add({
         title: t('governance_page_success'),
@@ -436,9 +456,25 @@ async function handleMaxStake() {
   }
 }
 
+async function handleHalfStake() {
+  if (!walletAddress.value) return
+  try {
+    const balance = await balanceOf(walletAddress.value)
+    stakeAmount.value = Number(formatUnits(balance / 2n, likeCoinTokenDecimals))
+  }
+  catch (err) {
+    console.error('Error fetching LIKE balance:', err)
+  }
+}
+
 function handleMaxWithdraw() {
   if (governanceData.veLikeBalance.value === 0n) return
   withdrawAmount.value = Number(formatUnits(governanceData.veLikeBalance.value, likeCoinTokenDecimals))
+}
+
+function handleHalfWithdraw() {
+  if (governanceData.veLikeBalance.value === 0n) return
+  withdrawAmount.value = Number(formatUnits(governanceData.veLikeBalance.value / 2n, likeCoinTokenDecimals))
 }
 
 function formatLockTimeRemaining(secondsRemaining: number): string {
