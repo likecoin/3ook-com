@@ -466,6 +466,8 @@ function handleMigrateLegacyBookButtonClick() {
 }
 
 async function handleClaimStakingRewardButtonClick() {
+  useLogEvent('account_claim_reward_button_click')
+
   if (!user.value?.evmWallet || totalUnclaimedRewards.value <= 0n) return
 
   try {

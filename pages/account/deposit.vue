@@ -125,7 +125,10 @@
             class="text-sm font-semibold"
             v-text="$t('governance_page_auto_restake')"
           />
-          <USwitch v-model="isAutoRestakeEnabled" />
+          <USwitch
+            v-model="isAutoRestakeEnabled"
+            @update:model-value="handleAutoRestakeSwitchChange"
+          />
         </div>
       </UCard>
     </section>
@@ -291,6 +294,8 @@ const error = ref<string | null>(null)
 const isClaimRewardButtonEnabled = computed(() => governanceData.pendingReward.value > 0n)
 
 async function handleClaimRewards() {
+  useLogEvent('deposit_claim_rewards_button_click')
+
   try {
     isLoading.value = true
     error.value = null
@@ -329,6 +334,8 @@ async function handleClaimRewards() {
 }
 
 async function handleStake() {
+  useLogEvent('deposit_button_click')
+
   if (!stakeAmount.value || !walletAddress.value) {
     return
   }
@@ -364,7 +371,19 @@ async function handleStake() {
   }
 }
 
+function handleAutoRestakeSwitchChange(value: boolean) {
+  useLogEvent('deposit_auto_restake_switch_change', { value: `${value}` })
+  if (value) {
+    useLogEvent('deposit_auto_restake_switch_on')
+  }
+  else {
+    useLogEvent('deposit_auto_restake_switch_off')
+  }
+}
+
 async function handleWithdraw() {
+  useLogEvent('deposit_withdraw_button_click')
+
   if (!withdrawAmount.value || !walletAddress.value) {
     return
   }
@@ -401,6 +420,8 @@ async function handleWithdraw() {
 }
 
 async function handleMaxStake() {
+  useLogEvent('deposit_max_button_click')
+
   if (!walletAddress.value) return
   try {
     const balance = await balanceOf(walletAddress.value)
@@ -412,6 +433,8 @@ async function handleMaxStake() {
 }
 
 async function handleHalfStake() {
+  useLogEvent('deposit_half_button_click')
+
   if (!walletAddress.value) return
   try {
     const balance = await balanceOf(walletAddress.value)
@@ -423,11 +446,15 @@ async function handleHalfStake() {
 }
 
 function handleMaxWithdraw() {
+  useLogEvent('withdraw_max_button_click')
+
   if (governanceData.veLikeBalance.value === 0n) return
   withdrawAmount.value = Number(formatUnits(governanceData.veLikeBalance.value, likeCoinTokenDecimals))
 }
 
 function handleHalfWithdraw() {
+  useLogEvent('withdraw_half_button_click')
+
   if (governanceData.veLikeBalance.value === 0n) return
   withdrawAmount.value = Number(formatUnits(governanceData.veLikeBalance.value / 2n, likeCoinTokenDecimals))
 }
