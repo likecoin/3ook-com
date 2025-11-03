@@ -1,335 +1,299 @@
 <template>
-  <NuxtLayout
-    name="default"
-    :is-footer-visible="true"
-  >
-    <main class="w-full max-w-xl mx-auto p-4 space-y-4 phone:grow">
-      <UCard
-        v-if="!hasLoggedIn"
-        :ui="{ header: 'flex justify-center items-center p-4 sm:p-4 bg-theme-black' }"
-      >
-        <template #header>
-          <AppLogo
-            :is-icon="false"
-            :height="64"
+  <main class="space-y-4">
+    <section
+      v-if="hasLoggedIn"
+      class="space-y-3"
+    >
+      <UCard :ui="{ body: '!p-0 divide-y-1 divide-(--ui-border)' }">
+        <AccountSettingsItem
+          icon="i-material-symbols-diamond-outline-rounded"
+          :label="$t('account_page_subscription')"
+        >
+          <div
+            class="text-sm/5"
+            v-text="subscriptionStateLabel"
           />
-        </template>
 
-        <UButton
-          :label="$t('account_page_login')"
-          :loading="accountStore.isLoggingIn"
-          icon="i-material-symbols-login"
-          color="primary"
-          variant="outline"
-          size="xl"
-          block
-          @click="handleLogin"
-        />
-      </UCard>
-
-      <section
-        v-if="hasLoggedIn"
-        class="space-y-3 pt-4"
-      >
-        <h2
-          class="px-4 text-lg font-bold"
-          v-text="$t('account_page_account_title')"
-        />
-
-        <UCard :ui="{ body: '!p-0 divide-y-1 divide-(--ui-border)' }">
-          <AccountSettingsItem
-            icon="i-material-symbols-diamond-outline-rounded"
-            :label="$t('account_page_subscription')"
-          >
-            <div
-              class="text-sm/5"
-              v-text="subscriptionStateLabel"
-            />
-
-            <template #right>
-              <UButton
-                :label="user?.isLikerPlus ? $t('account_page_manage_subscription') : $t('account_page_upgrade_to_plus')"
-                :variant="user?.isLikerPlus ? 'outline' : 'solid'"
-                color="primary"
-                :loading="isOpeningBillingPortal"
-                @click="handleLikerPlusButtonClick"
-              />
-            </template>
-          </AccountSettingsItem>
-
-          <AccountSettingsItem
-            v-if="user?.likerId"
-            icon="i-material-symbols-3p-outline-rounded"
-            :label="$t('account_page_account_id')"
-          >
+          <template #right>
             <UButton
-              class="-ml-2 text-sm font-mono"
-              :label="user?.likerId"
+              :label="user?.isLikerPlus ? $t('account_page_manage_subscription') : $t('account_page_upgrade_to_plus')"
+              :variant="user?.isLikerPlus ? 'outline' : 'solid'"
+              color="primary"
+              :loading="isOpeningBillingPortal"
+              @click="handleLikerPlusButtonClick"
+            />
+          </template>
+        </AccountSettingsItem>
+
+        <AccountSettingsItem
+          v-if="user?.likerId"
+          icon="i-material-symbols-3p-outline-rounded"
+          :label="$t('account_page_account_id')"
+        >
+          <UButton
+            class="-ml-2 text-sm font-mono"
+            :label="user?.likerId"
+            trailing-icon="i-material-symbols-content-copy-outline-rounded"
+            variant="ghost"
+            color="neutral"
+            size="xs"
+            @click="handleLikerIdClick"
+          />
+
+          <template #right>
+            <UButton
+              class="cursor-pointer"
+              :to="localeRoute({ name: 'list' })"
+              icon="i-material-symbols-favorite-outline-rounded"
+              :label="$t('account_page_book_list')"
+              variant="outline"
+              color="primary"
+            />
+          </template>
+        </AccountSettingsItem>
+
+        <AccountSettingsItem
+          v-if="user?.displayName"
+          icon="i-material-symbols-account-circle-outline"
+          :label="$t('account_page_account_display_name')"
+        >
+          <template #label-append>
+            <UTooltip :text="$t('account_page_display_name_tooltip')">
+              <UButton
+                class="rounded-full opacity-50"
+                icon="i-material-symbols-help-outline-rounded"
+                size="xs"
+                color="neutral"
+                variant="ghost"
+              />
+            </UTooltip>
+          </template>
+
+          <div
+            class="text-sm font-mono"
+            v-text="user?.displayName"
+          />
+        </AccountSettingsItem>
+
+        <AccountSettingsItem
+          v-if="user?.email"
+          icon="i-material-symbols-mail-outline-rounded"
+          :label="$t('account_page_email')"
+        >
+          <div
+            class="text-sm"
+            v-text="user?.email"
+          />
+        </AccountSettingsItem>
+
+        <AccountSettingsItem
+          icon="i-material-symbols-key-outline-rounded"
+          :label="$t('account_page_evm_wallet')"
+        >
+          <UTooltip :text="user?.evmWallet">
+            <UButton
+              class="-ml-2 text-xs/5 font-mono"
+              :label="shortenWalletAddress(user?.evmWallet)"
               trailing-icon="i-material-symbols-content-copy-outline-rounded"
               variant="ghost"
               color="neutral"
               size="xs"
-              @click="handleLikerIdClick"
+              @click="handleEVMWalletClick"
             />
+          </UTooltip>
 
-            <template #right>
-              <UButton
-                class="cursor-pointer"
-                :to="localeRoute({ name: 'list' })"
-                icon="i-material-symbols-favorite-outline-rounded"
-                :label="$t('account_page_book_list')"
-                variant="outline"
-                color="primary"
-              />
-            </template>
-          </AccountSettingsItem>
-
-          <AccountSettingsItem
-            v-if="user?.displayName"
-            icon="i-material-symbols-account-circle-outline"
-            :label="$t('account_page_account_display_name')"
+          <template
+            v-if="user?.loginMethod === 'magic'"
+            #right
           >
-            <template #label-append>
-              <UTooltip :text="$t('account_page_display_name_tooltip')">
-                <UButton
-                  class="rounded-full opacity-50"
-                  icon="i-material-symbols-help-outline-rounded"
-                  size="xs"
-                  color="neutral"
-                  variant="ghost"
-                />
-              </UTooltip>
-            </template>
-
-            <div
-              class="text-sm font-mono"
-              v-text="user?.displayName"
+            <UButton
+              :label="$t('account_page_export_private_key_button_label')"
+              variant="outline"
+              color="error"
+              size="xs"
+              @click="handleMagicButtonClick"
             />
-          </AccountSettingsItem>
+          </template>
+        </AccountSettingsItem>
 
-          <AccountSettingsItem
-            v-if="user?.email"
-            icon="i-material-symbols-mail-outline-rounded"
-            :label="$t('account_page_email')"
-          >
-            <div
-              class="text-sm"
-              v-text="user?.email"
-            />
-          </AccountSettingsItem>
-
-          <AccountSettingsItem
-            icon="i-material-symbols-key-outline-rounded"
-            :label="$t('account_page_evm_wallet')"
-          >
-            <UTooltip :text="user?.evmWallet">
-              <UButton
-                class="-ml-2 text-xs/5 font-mono"
-                :label="shortenWalletAddress(user?.evmWallet)"
-                trailing-icon="i-material-symbols-content-copy-outline-rounded"
-                variant="ghost"
-                color="neutral"
-                size="xs"
-                @click="handleEVMWalletClick"
-              />
-            </UTooltip>
-
-            <template
-              v-if="user?.loginMethod === 'magic'"
-              #right
+        <AccountSettingsItem
+          :label="$t('account_page_likecoin')"
+        >
+          <template #label-prepend>
+            <img
+              class="w-5 h-5"
+              :src="likeCoinTokenImage"
+              :alt="$t('account_page_likecoin')"
             >
-              <UButton
-                :label="$t('account_page_export_private_key_button_label')"
-                variant="outline"
-                color="error"
-                size="xs"
-                @click="handleMagicButtonClick"
-              />
-            </template>
-          </AccountSettingsItem>
+          </template>
 
-          <AccountSettingsItem
-            :label="$t('account_page_likecoin')"
-          >
-            <template #label-prepend>
-              <img
-                class="w-5 h-5"
-                :src="likeCoinTokenImage"
-                :alt="$t('account_page_likecoin')"
-              >
-            </template>
+          <BalanceLabel
+            class="text-sm text-muted"
+            :value="formattedLikeBalance"
+          />
 
-            <BalanceLabel
-              class="text-sm text-muted"
-              :value="formattedLikeBalance"
+          <template #right>
+            <UButton
+              :to="localeRoute({ name: 'account-deposit' })"
+              :label="$t('account_page_governance_button')"
+              variant="outline"
+              size="lg"
             />
+          </template>
+        </AccountSettingsItem>
 
-            <template #right>
-              <UButton
-                :to="localeRoute({ name: 'account-deposit' })"
-                :label="$t('account_page_governance_button')"
-                variant="outline"
-                size="lg"
-              />
-            </template>
-          </AccountSettingsItem>
+        <AccountSettingsItem
+          :label="$t('account_page_staking_reward')"
+          icon="i-material-symbols-auto-graph-rounded"
+        >
+          <BalanceLabel
+            class="text-sm text-muted"
+            :value="formattedTotalStakingRewards"
+          />
 
-          <AccountSettingsItem
-            :label="$t('account_page_staking_reward')"
-            icon="i-material-symbols-auto-graph-rounded"
-          >
-            <BalanceLabel
-              class="text-sm text-muted"
-              :value="formattedTotalStakingRewards"
+          <template #right>
+            <UButton
+              :label="$t('account_page_staking_reward_claim_button')"
+              size="lg"
+              :disabled="totalUnclaimedRewards <= 0n"
+              loading-auto
+              @click="handleClaimStakingRewardButtonClick"
             />
+          </template>
+        </AccountSettingsItem>
 
-            <template #right>
-              <UButton
-                :label="$t('account_page_staking_reward_claim_button')"
-                size="lg"
-                :disabled="totalUnclaimedRewards <= 0n"
-                loading-auto
-                @click="handleClaimStakingRewardButtonClick"
-              />
-            </template>
-          </AccountSettingsItem>
+        <AccountSettingsItem
+          v-if="user?.likeWallet"
+          icon="i-material-symbols-key-outline-rounded"
+          :label="$t('account_page_cosmos_wallet')"
+        >
+          <UTooltip :text="user.likeWallet">
+            <UButton
+              class="-ml-2 text-xs/5 font-mono"
+              :label="shortenWalletAddress(user.likeWallet)"
+              trailing-icon="i-material-symbols-open-in-new-rounded"
+              :to="likeWalletButtonTo"
+              external
+              target="_blank"
+              variant="ghost"
+              color="neutral"
+              size="xs"
+              @click="handleLikeWalletClick"
+            />
+          </UTooltip>
 
-          <AccountSettingsItem
-            v-if="user?.likeWallet"
-            icon="i-material-symbols-key-outline-rounded"
-            :label="$t('account_page_cosmos_wallet')"
-          >
-            <UTooltip :text="user.likeWallet">
-              <UButton
-                class="-ml-2 text-xs/5 font-mono"
-                :label="shortenWalletAddress(user.likeWallet)"
-                trailing-icon="i-material-symbols-open-in-new-rounded"
-                :to="likeWalletButtonTo"
-                external
-                target="_blank"
-                variant="ghost"
-                color="neutral"
-                size="xs"
-                @click="handleLikeWalletClick"
-              />
-            </UTooltip>
+          <template #right>
+            <UButton
+              :label="$t('account_page_migrate_legacy_book')"
+              trailing-icon="i-material-symbols-open-in-new-rounded"
+              :to="config.public.likeCoinV3BookMigrationSiteURL"
+              external
+              target="_blank"
+              variant="outline"
+              color="neutral"
+              size="xs"
+              @click="handleMigrateLegacyBookButtonClick"
+            />
+          </template>
+        </AccountSettingsItem>
 
-            <template #right>
-              <UButton
-                :label="$t('account_page_migrate_legacy_book')"
-                trailing-icon="i-material-symbols-open-in-new-rounded"
-                :to="config.public.likeCoinV3BookMigrationSiteURL"
-                external
-                target="_blank"
-                variant="outline"
-                color="neutral"
-                size="xs"
-                @click="handleMigrateLegacyBookButtonClick"
-              />
-            </template>
-          </AccountSettingsItem>
+        <AccountSettingsItem
+          icon="i-material-symbols-language"
+          :label="$t('account_page_locale')"
+        >
+          <template #right>
+            <LocaleSwitcher :is-icon-hidden="true" />
+          </template>
+        </AccountSettingsItem>
+      </UCard>
+    </section>
 
-          <AccountSettingsItem
-            icon="i-material-symbols-language"
-            :label="$t('account_page_locale')"
-          >
-            <template #right>
-              <LocaleSwitcher :is-icon-hidden="true" />
-            </template>
-          </AccountSettingsItem>
-        </UCard>
-      </section>
+    <section class="space-y-3">
+      <h2
+        class="px-4 pt-4 text-lg font-bold"
+        v-text="$t('account_page_settings_and_help_title')"
+      />
 
-      <section class="space-y-3 pt-4">
-        <h2
-          class="px-4 text-lg font-bold"
-          v-text="$t('account_page_settings_and_help_title')"
+      <UCard
+        :ui="{
+          body: [
+            '!p-0',
+            'divide-y-1',
+            'divide-(--ui-border)',
+            '[&>*:not(:first-child)]:rounded-t-none',
+            '[&>*:not(:last-child)]:rounded-b-none',
+            '[&>*]:p-4',
+            '[&>*]:py-4.5',
+          ].join(' '),
+        }"
+      >
+        <UButton
+          :label="$t('account_page_contact_support')"
+          variant="link"
+          class="cursor-pointer"
+          leading-icon="i-material-symbols-contact-support"
+          trailing-icon="i-material-symbols-chat-bubble-outline-rounded"
+          color="neutral"
+          size="lg"
+          block
+          @click="handleCustomerServiceLinkButtonClick"
         />
 
-        <UCard
-          :ui="{
-            body: [
-              '!p-0',
-              'divide-y-1',
-              'divide-(--ui-border)',
-              '[&>*:not(:first-child)]:rounded-t-none',
-              '[&>*:not(:last-child)]:rounded-b-none',
-              '[&>*]:p-4',
-              '[&>*]:py-4.5',
-            ].join(' '),
-          }"
-        >
-          <UButton
-            :label="$t('account_page_contact_support')"
-            variant="link"
-            class="cursor-pointer"
-            leading-icon="i-material-symbols-contact-support"
-            trailing-icon="i-material-symbols-chat-bubble-outline-rounded"
-            color="neutral"
-            size="lg"
-            block
-            @click="handleCustomerServiceLinkButtonClick"
-          />
+        <UButton
+          :label="$t('account_page_faq')"
+          to="https://docs.3ook.com?utm_source=3ookcom&utm_medium=referral&utm_campaign=3ookcom_account"
+          target="_blank"
+          variant="link"
+          leading-icon="i-material-symbols-question-mark-rounded"
+          trailing-icon="i-material-symbols-open-in-new-rounded"
+          color="neutral"
+          size="lg"
+          block
+        />
 
-          <UButton
-            :label="$t('account_page_faq')"
-            to="https://docs.3ook.com?utm_source=3ookcom&utm_medium=referral&utm_campaign=3ookcom_account"
-            target="_blank"
-            variant="link"
-            leading-icon="i-material-symbols-question-mark-rounded"
-            trailing-icon="i-material-symbols-open-in-new-rounded"
-            color="neutral"
-            size="lg"
-            block
-          />
+        <UButton
+          :label="$t('account_page_publish_book')"
+          to="https://publish.3ook.com?utm_source=3ookcom&utm_medium=referral&utm_campaign=3ookcom_account"
+          target="_blank"
+          variant="link"
+          leading-icon="i-material-symbols-book-4-spark-rounded"
+          trailing-icon="i-material-symbols-open-in-new-rounded"
+          color="neutral"
+          size="lg"
+          block
+        />
+      </UCard>
+    </section>
 
-          <UButton
-            :label="$t('account_page_publish_book')"
-            to="https://publish.3ook.com?utm_source=3ookcom&utm_medium=referral&utm_campaign=3ookcom_account"
-            target="_blank"
-            variant="link"
-            leading-icon="i-material-symbols-book-4-spark-rounded"
-            trailing-icon="i-material-symbols-open-in-new-rounded"
-            color="neutral"
-            size="lg"
-            block
-          />
-        </UCard>
-      </section>
+    <UButton
+      v-if="hasLoggedIn"
+      :label="$t('account_page_reader_cache_clear')"
+      icon="i-material-symbols-delete-outline-rounded"
+      color="neutral"
+      variant="outline"
+      size="lg"
+      block
+      :loading="accountStore.isClearingCaches"
+      @click="handleClearReaderCacheButtonClick"
+    />
 
-      <UButton
-        v-if="hasLoggedIn"
-        :label="$t('account_page_reader_cache_clear')"
-        icon="i-material-symbols-delete-outline-rounded"
-        color="neutral"
-        variant="outline"
-        size="lg"
-        block
-        :loading="accountStore.isClearingCaches"
-        @click="handleClearReaderCacheButtonClick"
-      />
-
-      <UButton
-        v-if="hasLoggedIn"
-        :label="$t('account_page_logout')"
-        icon="i-material-symbols-exit-to-app-rounded"
-        variant="outline"
-        color="error"
-        size="lg"
-        block
-        @click="handleLogout"
-      />
-    </main>
-  </NuxtLayout>
+    <UButton
+      v-if="hasLoggedIn"
+      :label="$t('account_page_logout')"
+      icon="i-material-symbols-exit-to-app-rounded"
+      variant="outline"
+      color="error"
+      size="lg"
+      block
+      @click="handleLogout"
+    />
+  </main>
 </template>
 
 <script setup lang="ts">
 import { formatUnits } from 'viem'
 
 import likeCoinTokenImage from '~/assets/images/likecoin-token.png'
-
-// NOTE: Set `layout` to false for injecting props into `<NuxtLayout/>`.
-definePageMeta({ layout: false })
 
 const config = useRuntimeConfig()
 const likeCoinSessionAPI = useLikeCoinSessionAPI()
@@ -381,10 +345,6 @@ const stakingData = computed(() => {
 })
 
 const totalUnclaimedRewards = computed(() => stakingData.value.totalUnclaimedRewards)
-
-async function handleLogin() {
-  await accountStore.login()
-}
 
 async function handleLogout() {
   await accountStore.logout()

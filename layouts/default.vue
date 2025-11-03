@@ -1,18 +1,22 @@
 <template>
-  <div class="flex flex-col min-h-svh pb-17 mb-(--intercom-launcher-offset)">
+  <div class="flex flex-col min-h-svh pb-(--intercom-launcher-offset)">
     <slot />
 
-    <AppFooter :class="{ hidden: !props.isFooterVisible }" />
+    <AppFooter v-show="isFooterVisible" />
 
-    <AppTabBar />
+    <AppTabBar v-show="isTabBarVisible" />
   </div>
 </template>
 
 <script setup lang="ts">
-const props = defineProps({
+defineProps({
   isFooterVisible: {
     type: Boolean,
     default: false,
+  },
+  isTabBarVisible: {
+    type: Boolean,
+    default: true,
   },
 })
 </script>
