@@ -136,7 +136,6 @@
             <UButton
               :to="localeRoute({ name: 'account-deposit' })"
               :label="$t('account_page_governance_button')"
-              variant="outline"
               size="lg"
             />
           </template>
@@ -154,6 +153,7 @@
           <template #right>
             <UButton
               :label="$t('account_page_staking_reward_claim_button')"
+              variant="outline"
               size="lg"
               :disabled="totalUnclaimedRewards <= 0n"
               loading-auto
