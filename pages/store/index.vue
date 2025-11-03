@@ -482,11 +482,13 @@ const defaultListingProducts = computed(() => {
     }
   })
 
-  items.sort((a, b) => {
-    const aTotalStaked = a.totalStaked ?? 0n
-    const bTotalStaked = b.totalStaked ?? 0n
-    return Number(bTotalStaked - aTotalStaked)
-  })
+  if (tagId.value !== 'latest') {
+    items.sort((a, b) => {
+      const aTotalStaked = a.totalStaked ?? 0n
+      const bTotalStaked = b.totalStaked ?? 0n
+      return Number(bTotalStaked - aTotalStaked)
+    })
+  }
 
   return {
     ...listingProducts,
