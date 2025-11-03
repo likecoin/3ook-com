@@ -114,7 +114,7 @@
                 ? 'bg-(--app-bg) hover:bg-theme-white/80'
                 : 'bg-theme-black hover:bg-theme-black/80 text-white',
             ],
-            content: 'rounded-lg',
+            content: 'min-w-fit rounded-lg',
             placeholder: isDefaultTagId ? '!text-black text-sm laptop:text-base' : undefined,
           }"
         />
