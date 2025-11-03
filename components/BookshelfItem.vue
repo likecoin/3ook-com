@@ -277,8 +277,13 @@ function handleCoverClick() {
   }
 
   const contentURL = bookInfo.defaultContentURL.value
-  if (contentURL) {
+  if (props.isOwned && contentURL) {
     openContentURL(contentURL)
+    return
   }
+
+  navigateTo(bookInfo.getProductPageRoute({
+    hash: '#staking-info',
+  }))
 }
 </script>
