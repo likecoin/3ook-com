@@ -226,6 +226,7 @@ async function handleStakeButtonClick() {
     await loadStakingData()
   }
   catch (error) {
+    console.error(error)
     await handleError(error, {
       title: $t('staking_stake_error'),
     })
