@@ -56,16 +56,12 @@ export const useStakingStore = defineStore('staking', () => {
   })
 
   // Actions
-  async function fetchUserStakingData(walletAddress: string, {
-    isRefresh = false,
-  }: {
-    isRefresh?: boolean
-  } = {}) {
+  async function fetchUserStakingData(walletAddress: string) {
     if (stakingDataByWalletMap.value[walletAddress]?.isFetching) {
       return
     }
 
-    if (!stakingDataByWalletMap.value[walletAddress] || isRefresh) {
+    if (!stakingDataByWalletMap.value[walletAddress]) {
       stakingDataByWalletMap.value[walletAddress] = {
         items: [],
         totalUnclaimedRewards: 0n,
@@ -79,7 +75,6 @@ export const useStakingStore = defineStore('staking', () => {
       stakingDataByWalletMap.value[walletAddress].isFetching = true
 
       const stakingData = new Map<string, StakingItem>()
-      let totalRewards = 0n
 
       // Get books user has staked on from collective indexer
       try {
@@ -94,11 +89,9 @@ export const useStakingStore = defineStore('staking', () => {
             continue
           }
 
-          // Get current on-chain data for this staking
-          const [stakedAmount, pendingRewards] = await Promise.all([
-            getWalletStakeOfNFTClass(walletAddress, nftClassId),
-            getWalletPendingRewardsOfNFTClass(walletAddress, nftClassId),
-          ])
+          // Use data from indexer
+          const stakedAmount = BigInt(staking.staked_amount)
+          const pendingRewards = BigInt(staking.pending_reward_amount)
 
           // Only add if there's still an active stake or pending rewards
           if (stakedAmount > 0n || pendingRewards > 0n) {
@@ -108,7 +101,6 @@ export const useStakingStore = defineStore('staking', () => {
               pendingRewards,
               isOwned: false, // This will be updated in UI layer for owned books
             })
-            totalRewards += pendingRewards
           }
         }
       }
@@ -122,8 +114,14 @@ export const useStakingStore = defineStore('staking', () => {
         return Number(b.stakedAmount - a.stakedAmount)
       })
 
-      stakingDataByWalletMap.value[walletAddress].items = items
-      stakingDataByWalletMap.value[walletAddress].totalUnclaimedRewards = totalRewards
+      if (items.length > 0) {
+        stakingDataByWalletMap.value[walletAddress].items = items
+      }
+
+      stakingDataByWalletMap.value[walletAddress].totalUnclaimedRewards = stakingDataByWalletMap.value[walletAddress].items.reduce(
+        (total, item) => total + item.pendingRewards,
+        0n,
+      )
       stakingDataByWalletMap.value[walletAddress].hasFetched = true
     }
     catch (error) {
@@ -147,19 +145,38 @@ export const useStakingStore = defineStore('staking', () => {
   }
 
   function updateStakingItem(walletAddress: string, nftClassId: string, updates: Partial<StakingItem>) {
-    const userData = stakingDataByWalletMap.value[walletAddress]
-    if (!userData) return
-
-    const itemIndex = userData.items.findIndex(item => item.nftClassId === nftClassId)
-    if (itemIndex !== -1) {
-      userData.items[itemIndex] = { ...userData.items[itemIndex], ...updates } as StakingItem
-
-      // Recalculate total rewards
-      userData.totalUnclaimedRewards = userData.items.reduce(
-        (total, item) => total + item.pendingRewards,
-        0n,
-      )
+    // Initialize user data if it doesn't exist
+    if (!stakingDataByWalletMap.value[walletAddress]) {
+      stakingDataByWalletMap.value[walletAddress] = {
+        items: [],
+        totalUnclaimedRewards: 0n,
+        isFetching: false,
+        hasFetched: false,
+      }
     }
+
+    const userData = stakingDataByWalletMap.value[walletAddress]
+    const itemIndex = userData.items.findIndex(item => item.nftClassId === nftClassId)
+
+    // Initialize item if it doesn't exist
+    if (itemIndex === -1) {
+      userData.items.push({
+        nftClassId,
+        stakedAmount: 0n,
+        pendingRewards: 0n,
+        isOwned: false,
+        ...updates,
+      } as StakingItem)
+    }
+    else {
+      userData.items[itemIndex] = { ...userData.items[itemIndex], ...updates } as StakingItem
+    }
+
+    // Recalculate total rewards
+    userData.totalUnclaimedRewards = userData.items.reduce(
+      (total, item) => total + item.pendingRewards,
+      0n,
+    )
   }
 
   async function fetchTotalStakeOfNFTClass(nftClassId: string, {
@@ -204,6 +221,24 @@ export const useStakingStore = defineStore('staking', () => {
     }
   }
 
+  async function fetchNFTClassStakingData(walletAddress: string, nftClassId: string) {
+    const [stakedAmount, pendingRewards] = await Promise.all([
+      getWalletStakeOfNFTClass(walletAddress, nftClassId),
+      getWalletPendingRewardsOfNFTClass(walletAddress, nftClassId),
+    ])
+
+    const stakingItem = {
+      nftClassId,
+      stakedAmount,
+      pendingRewards,
+      isOwned: false,
+    } as StakingItem
+
+    updateStakingItem(walletAddress, nftClassId, stakingItem)
+
+    return stakingItem
+  }
+
   function reset() {
     stakingDataByWalletMap.value = {}
     totalStakeByNFTClassMap.value = {}
@@ -227,6 +262,7 @@ export const useStakingStore = defineStore('staking', () => {
 
     fetchUserStakingData,
     fetchTotalStakeOfNFTClass,
+    fetchNFTClassStakingData,
     clearUserStakingData,
     updateStakingItem,
   }

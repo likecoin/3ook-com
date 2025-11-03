@@ -48,9 +48,10 @@ export function useNFTClassStakingData(nftClassId: ComputedRef<string>) {
 
       // Load user staking data via store
       if (hasLoggedIn.value && user.value?.evmWallet) {
-        await stakingStore.fetchUserStakingData(user.value.evmWallet, {
-          isRefresh: true,
-        })
+        await stakingStore.fetchNFTClassStakingData(
+          user.value.evmWallet,
+          nftClassId.value,
+        )
       }
     }
     catch (error) {

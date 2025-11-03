@@ -288,7 +288,7 @@ watch(
       if (isMyBookshelf.value) {
         await Promise.all([
           fetchClaimableFreeBooks(),
-          stakingStore.fetchUserStakingData(user.value!.evmWallet, { isRefresh: true }),
+          stakingStore.fetchUserStakingData(user.value!.evmWallet),
         ])
       }
       await bookshelfStore.fetchItems({ walletAddress: value, isRefresh: true })
