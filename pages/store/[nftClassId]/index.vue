@@ -66,7 +66,7 @@
               />
             </ExpandableContent>
             <ul
-              v-if="bookInfo.keywords.value"
+              v-if="descriptionTags.length"
               :class="[
                 'flex',
                 'flex-wrap',
@@ -77,33 +77,12 @@
               ]"
             >
               <li
-                v-for="tag in bookInfo.keywords.value"
+                v-for="tag in descriptionTags"
                 :key="tag"
               >
                 <TagItem :label="tag" />
               </li>
             </ul>
-            <div class="flex flex-wrap gap-1 mt-3">
-              <TagItem
-                :label="$t('product_page_book_format_value')"
-              />
-              <TagItem
-                v-for="contentType in bookInfo.contentTypes.value"
-                :key="contentType"
-                :label="contentType.toUpperCase()"
-              />
-              <TagItem
-                :label="$t('reading_method_read_online')"
-              />
-              <TagItem
-                v-if="bookInfo.isDownloadable.value"
-                :label="$t('reading_method_download_file')"
-              />
-              <TagItem
-                v-if="!bookInfo.isAudioHidden.value && isLikerPlus"
-                :label="$t('product_page_support_tts_label')"
-              />
-            </div>
           </template>
 
           <template #author>
@@ -780,6 +759,35 @@ const selectedPricingItem = computed(() => {
 })
 
 const bookName = computed(() => bookInfo.name.value)
+
+const descriptionTags = computed(() => {
+  const tags: string[] = []
+
+  if (bookInfo.keywords.value) {
+    tags.push(...bookInfo.keywords.value)
+  }
+
+  const bookFormatValue = $t('product_page_book_format_value')
+  if (!bookInfo.keywords.value?.includes('電子書') && !tags.includes(bookFormatValue)) {
+    tags.push(bookFormatValue)
+  }
+
+  if (bookInfo.contentTypes.value) {
+    tags.push(...bookInfo.contentTypes.value.map(type => type.toUpperCase()))
+  }
+
+  tags.push($t('reading_method_read_online'))
+
+  if (bookInfo.isDownloadable.value) {
+    tags.push($t('reading_method_download_file'))
+  }
+
+  if (!bookInfo.isAudioHidden.value && isLikerPlus.value) {
+    tags.push($t('product_page_support_tts_label'))
+  }
+
+  return [...new Set(tags)]
+})
 
 async function checkBookListStatus() {
   if (!hasLoggedIn.value) {
