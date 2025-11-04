@@ -85,6 +85,9 @@
             </ul>
             <div class="flex flex-wrap gap-1 mt-3">
               <TagItem
+                :label="$t('product_page_book_format_value')"
+              />
+              <TagItem
                 v-for="contentType in bookInfo.contentTypes.value"
                 :key="contentType"
                 :label="contentType.toUpperCase()"
