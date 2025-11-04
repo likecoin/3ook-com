@@ -38,7 +38,8 @@ declare interface BookstoreInfo {
   enableCustomMessagePage: boolean
   name: string
   description: string
-  descriptionFull: string
+  descriptionFull?: string
+  descriptionSummary?: string
   author: {
     name: string
     description: string

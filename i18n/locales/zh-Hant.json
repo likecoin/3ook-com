@@ -268,6 +268,7 @@
   "product_page_book_format_label": "書本格式",
   "product_page_book_format_value": "電子書",
   "product_page_checkout_button_label": "購買",
+  "product_page_description_summary_label": "書僮摘要",
   "product_page_edition_title": "{name}* 作者親簽，需稍候發貨",
   "product_page_fetch_metadata_failed_error": "讀取書本元資料失敗",
   "product_page_file_format_label": "檔案格式",

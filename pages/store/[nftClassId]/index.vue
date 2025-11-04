@@ -65,6 +65,17 @@
                 v-html="bookInfoDescriptionHTML"
               />
             </ExpandableContent>
+            <template v-if="bookInfo.descriptionSummary?.value">
+              <h3 class="text-lg font-semibold mt-8 mb-4">
+                {{ $t('product_page_description_summary_label') }}
+              </h3>
+              <ExpandableContent>
+                <div
+                  class="markdown"
+                  v-html="bookInfoDescriptionSummaryHTML"
+                />
+              </ExpandableContent>
+            </template>
             <ul
               v-if="bookInfo.keywords.value"
               :class="[
@@ -690,6 +701,10 @@ useHead(() => ({
 
 const bookInfoDescriptionHTML = computed(() => {
   return md.render(bookInfo.description?.value || '')
+})
+
+const bookInfoDescriptionSummaryHTML = computed(() => {
+  return md.render(bookInfo.descriptionSummary?.value || '')
 })
 
 const authorDescriptionHTML = computed(() => {

@@ -34,6 +34,10 @@ export default function (
     return bookstoreInfo.value?.descriptionFull || bookstoreInfo.value?.description || ''
   })
 
+  const descriptionSummary = computed(() => {
+    return bookstoreInfo.value?.descriptionSummary || ''
+  })
+
   const authorDescription = computed(() => {
     const author = bookInfo.author.value
     if (typeof author === 'object' && 'description' in author) return author.description
@@ -267,6 +271,7 @@ export default function (
     formattedPublishedDate,
     nftClassOwnerAvatar,
     description,
+    descriptionSummary,
     inLanguage,
 
     contentURLs,
