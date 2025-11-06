@@ -43,7 +43,7 @@
           <li>
             <ULink
               class="block border-y border-t-transparent leading-5"
-              :to="localeRoute({ name: 'pricing' })"
+              :to="localeRoute({ name: 'member' })"
             >{{ $t("footer_plus") }}</ULink>
           </li>
           <li>

@@ -361,7 +361,7 @@ async function handleLikerPlusButtonClick() {
   useLogEvent('account_liker_plus_button_click')
 
   if (!user.value?.isLikerPlus) {
-    await navigateTo(localeRoute({ name: 'pricing' }))
+    await navigateTo(localeRoute({ name: 'member' }))
     return
   }
 
