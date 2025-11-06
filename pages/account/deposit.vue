@@ -271,9 +271,10 @@
 </template>
 
 <script setup lang="ts">
+import { useStorage } from '@vueuse/core'
 import { formatUnits, parseUnits } from 'viem'
 
-const { likeCoinTokenDecimals } = useRuntimeConfig().public
+const { likeCoinTokenDecimals, cacheKeyPrefix } = useRuntimeConfig().public
 const accountStore = useAccountStore()
 const { t: $t } = useI18n()
 const toast = useToast()
@@ -287,7 +288,7 @@ const { balanceOf } = useLikeCoinContract()
 
 const stakeAmount = ref(0)
 const withdrawAmount = ref(0)
-const isAutoRestakeEnabled = ref(true)
+const isAutoRestakeEnabled = useStorage(`${cacheKeyPrefix}-deposit-autorestake`, true)
 const isLoading = ref(false)
 const error = ref<string | null>(null)
 
