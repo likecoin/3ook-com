@@ -1,9 +1,7 @@
 <script setup>
-definePageMeta({
-  name: 'pricing-redirect',
-})
+const localeRoute = useLocaleRoute()
 
-navigateTo('/member', {
+await navigateTo(localeRoute({ name: 'member' }), {
   redirectCode: 301,
   external: false,
 })
