@@ -160,7 +160,6 @@ export function useSubscription() {
           period: subscribePlan,
           giftNFTClassId: isYearly ? nftClassId : undefined,
         })
-        await sleep(3000)
         await navigateTo(localeRoute({ name: 'plus-success' }))
       }
       else {

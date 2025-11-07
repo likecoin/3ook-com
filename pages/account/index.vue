@@ -292,10 +292,12 @@
 
 <script setup lang="ts">
 import { formatUnits } from 'viem'
+import { waitForTransactionReceipt } from '@wagmi/core'
 
 import likeCoinTokenImage from '~/assets/images/likecoin-token.png'
 
 const config = useRuntimeConfig()
+const { $wagmiConfig } = useNuxtApp()
 const likeCoinSessionAPI = useLikeCoinSessionAPI()
 const { t: $t, locale } = useI18n()
 const { loggedIn: hasLoggedIn, user } = useUserSession()
@@ -473,8 +475,11 @@ async function handleClaimStakingRewardButtonClick() {
   try {
     await accountStore.restoreConnection()
 
-    await claimWalletRewards(user.value.evmWallet)
-    await sleep(3000)
+    const hash = await claimWalletRewards(user.value.evmWallet)
+    await waitForTransactionReceipt($wagmiConfig, {
+      hash,
+      confirmations: 2,
+    })
 
     toast.add({
       title: $t('staking_claim_all_rewards_success'),

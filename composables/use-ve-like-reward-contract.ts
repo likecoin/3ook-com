@@ -1,5 +1,6 @@
 import { readContract } from '@wagmi/core'
 import { useWriteContract } from '@wagmi/vue'
+import type { Hash } from 'viem'
 
 import veLikeRewardABI from '~/contracts/ve-like-reward.json'
 
@@ -84,8 +85,8 @@ export function useVeLikeRewardContract(contractAddress: Ref<string | null> | st
   }
 
   // Write functions
-  async function deposit(account: string, amount: bigint) {
-    await writeContractAsync({
+  async function deposit(account: string, amount: bigint): Promise<Hash> {
+    return writeContractAsync({
       address: toValue(contractAddress) as `0x${string}`,
       abi: veLikeRewardABI,
       functionName: 'deposit',
@@ -94,8 +95,8 @@ export function useVeLikeRewardContract(contractAddress: Ref<string | null> | st
     })
   }
 
-  async function withdraw(account: string) {
-    await writeContractAsync({
+  async function withdraw(account: string): Promise<Hash> {
+    return writeContractAsync({
       address: toValue(contractAddress) as `0x${string}`,
       abi: veLikeRewardABI,
       functionName: 'withdraw',
@@ -103,8 +104,8 @@ export function useVeLikeRewardContract(contractAddress: Ref<string | null> | st
     })
   }
 
-  async function claimReward(account: string, restake: boolean) {
-    await writeContractAsync({
+  async function claimReward(account: string, restake: boolean): Promise<Hash> {
+    return writeContractAsync({
       address: toValue(contractAddress) as `0x${string}`,
       abi: veLikeRewardABI,
       functionName: 'claimReward',
@@ -112,8 +113,8 @@ export function useVeLikeRewardContract(contractAddress: Ref<string | null> | st
     })
   }
 
-  async function addReward(rewardAmount: bigint, startTime: bigint, endTime: bigint) {
-    await writeContractAsync({
+  async function addReward(rewardAmount: bigint, startTime: bigint, endTime: bigint): Promise<Hash> {
+    return writeContractAsync({
       address: toValue(contractAddress) as `0x${string}`,
       abi: veLikeRewardABI,
       functionName: 'addReward',
@@ -121,8 +122,8 @@ export function useVeLikeRewardContract(contractAddress: Ref<string | null> | st
     })
   }
 
-  async function setLikecoin(likecoinAddress: string) {
-    await writeContractAsync({
+  async function setLikecoin(likecoinAddress: string): Promise<Hash> {
+    return writeContractAsync({
       address: toValue(contractAddress) as `0x${string}`,
       abi: veLikeRewardABI,
       functionName: 'setLikecoin',
@@ -130,8 +131,8 @@ export function useVeLikeRewardContract(contractAddress: Ref<string | null> | st
     })
   }
 
-  async function setVault(vaultAddress: string) {
-    await writeContractAsync({
+  async function setVault(vaultAddress: string): Promise<Hash> {
+    return writeContractAsync({
       address: toValue(contractAddress) as `0x${string}`,
       abi: veLikeRewardABI,
       functionName: 'setVault',
@@ -139,16 +140,16 @@ export function useVeLikeRewardContract(contractAddress: Ref<string | null> | st
     })
   }
 
-  async function pause() {
-    await writeContractAsync({
+  async function pause(): Promise<Hash> {
+    return writeContractAsync({
       address: toValue(contractAddress) as `0x${string}`,
       abi: veLikeRewardABI,
       functionName: 'pause',
     })
   }
 
-  async function unpause() {
-    await writeContractAsync({
+  async function unpause(): Promise<Hash> {
+    return writeContractAsync({
       address: toValue(contractAddress) as `0x${string}`,
       abi: veLikeRewardABI,
       functionName: 'unpause',

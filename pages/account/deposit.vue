@@ -274,7 +274,10 @@
 import { useStorage } from '@vueuse/core'
 import { formatUnits, parseUnits } from 'viem'
 
+import { waitForTransactionReceipt } from '@wagmi/core'
+
 const { likeCoinTokenDecimals, cacheKeyPrefix } = useRuntimeConfig().public
+const { $wagmiConfig } = useNuxtApp()
 const accountStore = useAccountStore()
 const { t: $t } = useI18n()
 const toast = useToast()
@@ -302,7 +305,11 @@ async function handleClaimRewards() {
     error.value = null
     await accountStore.restoreConnection()
     if (isAutoRestakeEnabled.value) {
-      await restakeReward(walletAddress.value)
+      const hash = await restakeReward(walletAddress.value)
+      await waitForTransactionReceipt($wagmiConfig, {
+        hash,
+        confirmations: 2,
+      })
       toast.add({
         title: $t('governance_page_success'),
         description: $t('governance_page_rewards_restaked'),
@@ -310,14 +317,17 @@ async function handleClaimRewards() {
       })
     }
     else {
-      await claimReward(walletAddress.value)
+      const hash = await claimReward(walletAddress.value)
+      await waitForTransactionReceipt($wagmiConfig, {
+        hash,
+        confirmations: 2,
+      })
       toast.add({
         title: $t('governance_page_success'),
         description: $t('governance_page_rewards_claimed'),
         color: 'success',
       })
     }
-    await sleep(3000)
     await governanceData.loadGovernanceData()
   }
   catch (err) {
@@ -355,7 +365,6 @@ async function handleStake() {
       color: 'success',
     })
     stakeAmount.value = 0
-    await sleep(3000)
     await governanceData.loadGovernanceData()
   }
   catch (err) {
@@ -395,7 +404,11 @@ async function handleWithdraw() {
     await accountStore.restoreConnection()
     const amount = parseUnits(withdrawAmount.value.toString(), likeCoinTokenDecimals)
 
-    await withdraw(amount, walletAddress.value, walletAddress.value)
+    const hash = await withdraw(amount, walletAddress.value, walletAddress.value)
+    await waitForTransactionReceipt($wagmiConfig, {
+      hash,
+      confirmations: 2,
+    })
 
     toast.add({
       title: $t('governance_page_success'),
@@ -403,7 +416,6 @@ async function handleWithdraw() {
       color: 'success',
     })
     withdrawAmount.value = 0
-    await sleep(3000)
     await governanceData.loadGovernanceData()
   }
   catch (err) {

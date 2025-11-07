@@ -101,7 +101,6 @@ export function useNFTClassStakingData(nftClassId: ComputedRef<string>) {
         amount: formatUnits(pendingRewards.value, likeCoinTokenDecimals),
       })
 
-      await sleep(3000)
       await loadStakingData()
     }
     catch (error) {

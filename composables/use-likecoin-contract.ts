@@ -1,5 +1,6 @@
 import { readContract } from '@wagmi/core'
 import { useWriteContract } from '@wagmi/vue'
+import type { Hash } from 'viem'
 
 import likeCoinABI from '~/contracts/likecoin.json'
 
@@ -67,31 +68,32 @@ export function useLikeCoinContract() {
   }
 
   // Write functions
-  async function approve(spender: string, amount: bigint) {
-    await writeContractAsync({
+  async function approve(spender: string, amount: bigint): Promise<Hash> {
+    const hash = await writeContractAsync({
       address: likeCoinAddress,
       abi: likeCoinABI,
       functionName: 'approve',
       args: [spender, amount],
     })
+    return hash
   }
 
-  async function approveIfNeeded(owner: string, spender: string, amount: bigint) {
+  async function approveIfNeeded(owner: string, spender: string, amount: bigint): Promise<Hash | null> {
     const currentAllowance = await allowance(owner, spender)
 
     // If current allowance is already sufficient, skip approval
     if (currentAllowance >= amount) {
-      return false
+      return null
     }
 
     // Approve to max uint256 to avoid multiple approvals in the future
     const maxUint256 = (2n ** 256n) - 1n
-    await approve(spender, maxUint256)
-    return true
+    const hash = await approve(spender, maxUint256)
+    return hash
   }
 
-  async function transfer(to: string, amount: bigint) {
-    await writeContractAsync({
+  async function transfer(to: string, amount: bigint): Promise<Hash> {
+    return writeContractAsync({
       address: likeCoinAddress,
       abi: likeCoinABI,
       functionName: 'transfer',
@@ -99,8 +101,8 @@ export function useLikeCoinContract() {
     })
   }
 
-  async function transferFrom(from: string, to: string, amount: bigint) {
-    await writeContractAsync({
+  async function transferFrom(from: string, to: string, amount: bigint): Promise<Hash> {
+    return writeContractAsync({
       address: likeCoinAddress,
       abi: likeCoinABI,
       functionName: 'transferFrom',

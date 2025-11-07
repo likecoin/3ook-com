@@ -1,5 +1,6 @@
 import { readContract } from '@wagmi/core'
 import { useWriteContract } from '@wagmi/vue'
+import type { Hash } from 'viem'
 
 import likeCollectiveABI from '~/contracts/like-collective.json'
 
@@ -40,8 +41,8 @@ export function useLikeCollectiveContract() {
     return totalStake as bigint
   }
 
-  async function stakeToNFTClass(nftClassId: string, amount: bigint) {
-    await writeContractAsync({
+  async function stakeToNFTClass(nftClassId: string, amount: bigint): Promise<Hash> {
+    return writeContractAsync({
       address: likeCollectiveAddress,
       abi: likeCollectiveABI,
       functionName: 'newStakePosition',
@@ -49,8 +50,8 @@ export function useLikeCollectiveContract() {
     })
   }
 
-  async function unstakeFromStakePosition(tokenId: bigint) {
-    await writeContractAsync({
+  async function unstakeFromStakePosition(tokenId: bigint): Promise<Hash> {
+    return writeContractAsync({
       address: likeCollectiveAddress,
       abi: likeCollectiveABI,
       functionName: 'removeStakePosition',
@@ -58,8 +59,8 @@ export function useLikeCollectiveContract() {
     })
   }
 
-  async function increaseStakePosition(tokenId: bigint, amount: bigint) {
-    await writeContractAsync({
+  async function increaseStakePosition(tokenId: bigint, amount: bigint): Promise<Hash> {
+    return writeContractAsync({
       address: likeCollectiveAddress,
       abi: likeCollectiveABI,
       functionName: 'increaseStakeToPosition',
@@ -67,8 +68,8 @@ export function useLikeCollectiveContract() {
     })
   }
 
-  async function decreaseStakePosition(tokenId: bigint, amount: bigint) {
-    await writeContractAsync({
+  async function decreaseStakePosition(tokenId: bigint, amount: bigint): Promise<Hash> {
+    return writeContractAsync({
       address: likeCollectiveAddress,
       abi: likeCollectiveABI,
       functionName: 'decreaseStakePosition',
@@ -76,8 +77,8 @@ export function useLikeCollectiveContract() {
     })
   }
 
-  async function claimWalletRewards(wallet: string) {
-    await writeContractAsync({
+  async function claimWalletRewards(wallet: string): Promise<Hash> {
+    return writeContractAsync({
       address: likeCollectiveAddress,
       abi: likeCollectiveABI,
       functionName: 'claimAllRewards',
@@ -85,8 +86,8 @@ export function useLikeCollectiveContract() {
     })
   }
 
-  async function depositReward(nftClassId: string, amount: bigint) {
-    await writeContractAsync({
+  async function depositReward(nftClassId: string, amount: bigint): Promise<Hash> {
+    return writeContractAsync({
       address: likeCollectiveAddress,
       abi: likeCollectiveABI,
       functionName: 'depositReward',
@@ -94,8 +95,8 @@ export function useLikeCollectiveContract() {
     })
   }
 
-  async function claimRewardsFromStakePosition(tokenId: bigint) {
-    await writeContractAsync({
+  async function claimRewardsFromStakePosition(tokenId: bigint): Promise<Hash> {
+    return writeContractAsync({
       address: likeCollectiveAddress,
       abi: likeCollectiveABI,
       functionName: 'claimRewards',

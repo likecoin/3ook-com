@@ -210,7 +210,6 @@ async function handleStakeButtonClick() {
     }
 
     await stakeToNFTClass(user.value!.evmWallet, props.nftClassId, amount)
-    await sleep(3000)
 
     toast.add({
       title: $t('staking_stake_success'),
@@ -224,7 +223,6 @@ async function handleStakeButtonClick() {
     })
 
     stakeAmount.value = 0
-    await sleep(3000)
     await loadStakingData()
   }
   catch (error) {
@@ -262,7 +260,6 @@ async function handleUnstakeButtonClick() {
     }
 
     await unstakeAmountFromNFTClass(user.value!.evmWallet, props.nftClassId, amount)
-    await sleep(3000)
 
     toast.add({
       title: $t('staking_unstake_success'),
@@ -276,7 +273,6 @@ async function handleUnstakeButtonClick() {
     })
 
     stakeAmount.value = 0
-    await sleep(3000)
     await loadStakingData()
   }
   catch (error) {
@@ -317,7 +313,6 @@ async function handleDonateButtonClick() {
     })
 
     stakeAmount.value = 0
-    await sleep(3000)
     await loadStakingData()
   }
   catch (error) {

@@ -1,4 +1,7 @@
+import { waitForTransactionReceipt } from '@wagmi/core'
+
 export function useLikeStaking() {
+  const { $wagmiConfig } = useNuxtApp()
   const { approveIfNeeded: approveIfNeededLikeCoin } = useLikeCoinContract()
   const {
     getLikeStakePositionInfo,
@@ -40,16 +43,27 @@ export function useLikeStaking() {
   }
 
   async function stakeToNFTClass(wallet: string, nftClassId: string, amount: bigint) {
-    const approved = await approveIfNeededLikeCoin(wallet, likeCollectiveAddress, amount)
-    if (approved) {
-      await sleep(3000)
+    const approvalHash = await approveIfNeededLikeCoin(wallet, likeCollectiveAddress, amount)
+    if (approvalHash) {
+      await waitForTransactionReceipt($wagmiConfig, {
+        hash: approvalHash,
+        confirmations: 2,
+      })
     }
     const tokenIds = await getWalletLikeStakePositionIdsOfNFTClassId(wallet, nftClassId)
     if (tokenIds[0]) {
-      await increaseStakePosition(tokenIds[0], amount)
+      const stakeHash = await increaseStakePosition(tokenIds[0], amount)
+      await waitForTransactionReceipt($wagmiConfig, {
+        hash: stakeHash,
+        confirmations: 2,
+      })
     }
     else {
-      await rawStakeToNFTClass(nftClassId, amount)
+      const stakeHash = await rawStakeToNFTClass(nftClassId, amount)
+      await waitForTransactionReceipt($wagmiConfig, {
+        hash: stakeHash,
+        confirmations: 2,
+      })
     }
   }
 
@@ -59,11 +73,18 @@ export function useLikeStaking() {
   }
 
   async function depositReward(wallet: string, nftClassId: string, amount: bigint) {
-    const approved = await approveIfNeededLikeCoin(wallet, likeCollectiveAddress, amount)
-    if (approved) {
-      await sleep(3000)
+    const approvalHash = await approveIfNeededLikeCoin(wallet, likeCollectiveAddress, amount)
+    if (approvalHash) {
+      await waitForTransactionReceipt($wagmiConfig, {
+        hash: approvalHash,
+        confirmations: 2,
+      })
     }
-    await rawDepositReward(nftClassId, amount)
+    const depositHash = await rawDepositReward(nftClassId, amount)
+    await waitForTransactionReceipt($wagmiConfig, {
+      hash: depositHash,
+      confirmations: 2,
+    })
   }
 
   async function mergeWalletStakePositionsOfNFTClass(wallet: string, nftClassId: string) {

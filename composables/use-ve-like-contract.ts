@@ -1,5 +1,6 @@
 import { readContract } from '@wagmi/core'
 import { useWriteContract } from '@wagmi/vue'
+import type { Hash } from 'viem'
 
 import veLikeABI from '~/contracts/ve-like.json'
 
@@ -196,8 +197,8 @@ export function useVeLikeContract() {
   }
 
   // Write functions
-  async function deposit(assets: bigint, receiver: string) {
-    await writeContractAsync({
+  async function deposit(assets: bigint, receiver: string): Promise<Hash> {
+    return writeContractAsync({
       address: veLikeAddress,
       abi: veLikeABI,
       functionName: 'deposit',
@@ -205,8 +206,8 @@ export function useVeLikeContract() {
     })
   }
 
-  async function mint(shares: bigint, receiver: string) {
-    await writeContractAsync({
+  async function mint(shares: bigint, receiver: string): Promise<Hash> {
+    return writeContractAsync({
       address: veLikeAddress,
       abi: veLikeABI,
       functionName: 'mint',
@@ -214,8 +215,8 @@ export function useVeLikeContract() {
     })
   }
 
-  async function withdraw(assets: bigint, receiver: string, owner: string) {
-    await writeContractAsync({
+  async function withdraw(assets: bigint, receiver: string, owner: string): Promise<Hash> {
+    return writeContractAsync({
       address: veLikeAddress,
       abi: veLikeABI,
       functionName: 'withdraw',
@@ -223,8 +224,8 @@ export function useVeLikeContract() {
     })
   }
 
-  async function redeem(shares: bigint, receiver: string, owner: string) {
-    await writeContractAsync({
+  async function redeem(shares: bigint, receiver: string, owner: string): Promise<Hash> {
+    return writeContractAsync({
       address: veLikeAddress,
       abi: veLikeABI,
       functionName: 'redeem',
@@ -232,8 +233,8 @@ export function useVeLikeContract() {
     })
   }
 
-  async function approve(spender: string, amount: bigint) {
-    await writeContractAsync({
+  async function approve(spender: string, amount: bigint): Promise<Hash> {
+    return writeContractAsync({
       address: veLikeAddress,
       abi: veLikeABI,
       functionName: 'approve',
@@ -241,8 +242,8 @@ export function useVeLikeContract() {
     })
   }
 
-  async function transfer(to: string, amount: bigint) {
-    await writeContractAsync({
+  async function transfer(to: string, amount: bigint): Promise<Hash> {
+    return writeContractAsync({
       address: veLikeAddress,
       abi: veLikeABI,
       functionName: 'transfer',
@@ -250,8 +251,8 @@ export function useVeLikeContract() {
     })
   }
 
-  async function transferFrom(from: string, to: string, amount: bigint) {
-    await writeContractAsync({
+  async function transferFrom(from: string, to: string, amount: bigint): Promise<Hash> {
+    return writeContractAsync({
       address: veLikeAddress,
       abi: veLikeABI,
       functionName: 'transferFrom',
@@ -259,8 +260,8 @@ export function useVeLikeContract() {
     })
   }
 
-  async function claimReward(wallet: string) {
-    await writeContractAsync({
+  async function claimReward(wallet: string): Promise<Hash> {
+    return writeContractAsync({
       address: veLikeAddress,
       abi: veLikeABI,
       functionName: 'claimReward',
@@ -268,8 +269,8 @@ export function useVeLikeContract() {
     })
   }
 
-  async function restakeReward(wallet: string) {
-    await writeContractAsync({
+  async function restakeReward(wallet: string): Promise<Hash> {
+    return writeContractAsync({
       address: veLikeAddress,
       abi: veLikeABI,
       functionName: 'restakeReward',
@@ -277,8 +278,8 @@ export function useVeLikeContract() {
     })
   }
 
-  async function setLockTime(timestamp: bigint) {
-    await writeContractAsync({
+  async function setLockTime(timestamp: bigint): Promise<Hash> {
+    return writeContractAsync({
       address: veLikeAddress,
       abi: veLikeABI,
       functionName: 'setLockTime',
@@ -286,8 +287,8 @@ export function useVeLikeContract() {
     })
   }
 
-  async function setRewardContract(rewardContractAddress: string) {
-    await writeContractAsync({
+  async function setRewardContract(rewardContractAddress: string): Promise<Hash> {
+    return writeContractAsync({
       address: veLikeAddress,
       abi: veLikeABI,
       functionName: 'setRewardContract',
@@ -295,16 +296,16 @@ export function useVeLikeContract() {
     })
   }
 
-  async function pause() {
-    await writeContractAsync({
+  async function pause(): Promise<Hash> {
+    return writeContractAsync({
       address: veLikeAddress,
       abi: veLikeABI,
       functionName: 'pause',
     })
   }
 
-  async function unpause() {
-    await writeContractAsync({
+  async function unpause(): Promise<Hash> {
+    return writeContractAsync({
       address: veLikeAddress,
       abi: veLikeABI,
       functionName: 'unpause',

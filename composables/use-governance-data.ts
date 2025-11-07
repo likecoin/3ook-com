@@ -1,10 +1,12 @@
 import { formatUnits } from 'viem'
+import { waitForTransactionReceipt } from '@wagmi/core'
 import { veLikeAddress } from '~/composables/use-ve-like-contract'
 
 const SECONDS_PER_DAY = 86400n
 
 export function useGovernanceData(walletAddress: string | Ref<string>) {
   const config = useRuntimeConfig()
+  const { $wagmiConfig } = useNuxtApp()
   const { likeCoinTokenDecimals } = config.public
   const {
     balanceOf: getVeLikeBalance,
@@ -156,11 +158,18 @@ export function useGovernanceData(walletAddress: string | Ref<string>) {
   }
 
   async function approveAndDeposit(amount: bigint, owner: string) {
-    const approved = await approveIfNeededLikeCoin(owner, veLikeAddress, amount)
-    if (approved) {
-      await sleep(3000)
+    const approvalHash = await approveIfNeededLikeCoin(owner, veLikeAddress, amount)
+    if (approvalHash) {
+      await waitForTransactionReceipt($wagmiConfig, {
+        hash: approvalHash,
+        confirmations: 2,
+      })
     }
-    await deposit(amount, owner)
+    const depositHash = await deposit(amount, owner)
+    await waitForTransactionReceipt($wagmiConfig, {
+      hash: depositHash,
+      confirmations: 2,
+    })
   }
 
   // Load data when the composable is mounted
