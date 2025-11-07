@@ -607,7 +607,10 @@ function findNextCFIAfterTOC(navItems: NavItem[]): string | undefined {
     firstChapter.label.toLowerCase().includes(keyword),
   )
 
-  return (isTOC && navItems[1]?.href) || firstChapter.href
+  if (isTOC && navItems[1]?.href) {
+    return navItems[1].href
+  }
+  return firstChapter.href
 }
 
 async function extractTTSSegments(book: ePub.Book) {
