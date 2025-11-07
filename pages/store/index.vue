@@ -75,9 +75,8 @@
           v-else-if="!isDefaultTagId"
           icon="i-material-symbols-close-rounded"
           variant="outline"
-          rounded-full
-          :ui="{ base: 'rounded-full bg-(--app-bg) hover:bg-theme-white/80 hover:-translate-y-0.5 transition-all' }"
-          @click="handleCloseClick"
+          :ui="{ base: [TAG_BUTTON_CLASS_LIGHT, TAG_BUTTON_CLASS_BASE] }"
+          @click="handleCloseTagClick"
         />
 
         <UButton
@@ -87,12 +86,33 @@
           :label="fixedTag.label"
           variant="outline"
           :ui="{
-            base: 'rounded-full bg-(--app-bg) hover:bg-theme-white/80 !ring-theme-black max-phone:px-[10px] px-4 hover:-translate-y-0.5 transition-all',
+            base: [
+              TAG_BUTTON_CLASS_LIGHT,
+              TAG_BUTTON_CLASS_BASE,
+              'px-4 max-phone:px-[10px]',
+              '!ring-theme-black',
+            ],
             label: 'text-sm laptop:text-base',
           }"
           :to="localeRoute({ name: 'store', query: { ...route.query, tag: fixedTag.value } })"
           @click.prevent="handleTagClick(fixedTag.value)"
         />
+
+        <UTooltip
+          v-if="bookstoreStore.hasFetchedBookstoreCMSTags && isDefaultTagId"
+          :text="$t('book_list_title')"
+        >
+          <UButton
+            icon="i-material-symbols-favorite-outline-rounded"
+            variant="outline"
+            :ui="{
+              base: [TAG_BUTTON_CLASS_LIGHT, TAG_BUTTON_CLASS_BASE],
+              leadingIcon: 'laptop:size-6 translate-y-[1px]',
+            }"
+            :to="localeRoute({ name: 'list' })"
+            @click="handleBookListTagClick"
+          />
+        </UTooltip>
 
         <USelect
           v-if="bookstoreStore.hasFetchedBookstoreCMSTags || !isDefaultTagId || isStakingTagId"
@@ -109,12 +129,17 @@
           size="md"
           :ui="{
             base: [
-              'rounded-full !ring-theme-black justify-center text-sm laptop:text-base font-medium max-phone:!pl-[10px] !pl-[16px] hover:-translate-y-0.5 transition-all',
+              'justify-center',
+              'max-phone:!pl-[10px] !pl-[16px]',
+              'text-sm laptop:text-base',
+              'font-medium',
+              '!ring-theme-black',
+              TAG_BUTTON_CLASS_BASE,
               isDefaultTagId
-                ? 'bg-(--app-bg) hover:bg-theme-white/80'
-                : 'bg-theme-black hover:bg-theme-black/80 text-white',
+                ? TAG_BUTTON_CLASS_LIGHT
+                : TAG_BUTTON_CLASS_DARK,
             ],
-            content: 'min-w-fit rounded-lg',
+            content: 'min-w-fit',
             placeholder: isDefaultTagId ? '!text-black text-sm laptop:text-base' : undefined,
           }"
         />
@@ -211,7 +236,12 @@ const metadataStore = useMetadataStore()
 const infiniteScrollDetectorElement = useTemplateRef<HTMLLIElement>('infiniteScrollDetector')
 const shouldLoadMore = useElementVisibility(infiniteScrollDetectorElement)
 const { handleError } = useErrorHandler()
-const isMobile = useMediaQuery('(max-width: 768px)')
+const isTablet = useMediaQuery('(max-width: 768px)')
+const isMobile = useMediaQuery('(max-width: 425px)')
+
+const TAG_BUTTON_CLASS_BASE = 'rounded-full hover:-translate-y-0.5 transition-all'
+const TAG_BUTTON_CLASS_LIGHT = 'bg-(--app-bg) hover:bg-theme-white/80'
+const TAG_BUTTON_CLASS_DARK = 'bg-theme-black hover:bg-theme-black/80 text-white'
 
 const querySearchTerm = computed(() => getRouteQuery('q', ''))
 const queryAuthorName = computed(() => getRouteQuery('author', ''))
@@ -294,9 +324,21 @@ const allTagItems = computed(() => {
 
 const tagsSliceIndex = computed(() => {
   if (locale.value === 'zh-Hant') {
-    return isMobile.value ? 3 : 4
+    if (isMobile.value) {
+      return 2
+    }
+    if (isTablet.value) {
+      return 4
+    }
+    return 6
   }
-  return isMobile.value ? 2 : 3
+  if (isMobile.value) {
+    return 2
+  }
+  if (isTablet.value) {
+    return 3
+  }
+  return 5
 })
 
 const fixedTags = computed(() => {
@@ -693,8 +735,12 @@ async function handleTagClick(tagValue?: string) {
   tagId.value = tagValue
 }
 
-async function handleCloseClick() {
-  useLogEvent('store_tag_close_click', { tag_id: tagId.value })
+async function handleCloseTagClick() {
+  useLogEvent('store_tag_close_click')
   tagId.value = TAG_LISTING
+}
+
+async function handleBookListTagClick() {
+  useLogEvent('store_tag_book_list_click')
 }
 </script>
