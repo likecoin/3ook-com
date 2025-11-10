@@ -585,7 +585,8 @@ async function fetchItems({ lazy = false, isRefresh = false } = {}) {
     const stakingSort = tagId.value.slice(STAKING_SORT_TAG_PREFIX.length) || 'total_staked'
     const apiSortValue = mapToAPIStakingSortValue(stakingSort)
     try {
-      await bookstoreStore.fetchStakingBooks(apiSortValue, { isRefresh })
+      // HACK: Use max limit for local sorting until API sorting is fixed
+      await bookstoreStore.fetchStakingBooks(apiSortValue, { isRefresh, limit: 100 })
     }
     catch (error) {
       await handleError(error, {

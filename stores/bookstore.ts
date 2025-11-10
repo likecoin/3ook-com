@@ -354,7 +354,7 @@ export const useBookstoreStore = defineStore('bookstore', () => {
       }
 
       // Set offset if there are more results (pagination)
-      stakingBooksMap.value[sortBy].offset = result.data.length === 30 ? String(result.data.length) : undefined
+      stakingBooksMap.value[sortBy].offset = result.data.length === limit ? String(result.data.length) : undefined
       stakingBooksMap.value[sortBy].hasFetched = true
     }
     catch (error) {
