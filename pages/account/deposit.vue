@@ -291,9 +291,19 @@ const { balanceOf } = useLikeCoinContract()
 
 const stakeAmount = ref(0)
 const withdrawAmount = ref(0)
-const isAutoRestakeEnabled = useStorage(`${cacheKeyPrefix}-deposit-autorestake`, true)
+const isAutoRestakeEnabledStorage = useStorage(`${cacheKeyPrefix}-deposit-autorestake`, true)
+const isAutoRestakeEnabled = ref(true)
 const isLoading = ref(false)
 const error = ref<string | null>(null)
+
+watch(isAutoRestakeEnabled, (newValue) => {
+  isAutoRestakeEnabledStorage.value = newValue
+})
+
+onMounted(() => {
+  // HACK: Mitigate USwitch initial value out sync with v-model issue
+  isAutoRestakeEnabled.value = isAutoRestakeEnabledStorage.value
+})
 
 const isClaimRewardButtonEnabled = computed(() => governanceData.pendingReward.value > 0n)
 
