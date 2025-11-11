@@ -88,3 +88,12 @@ export function fetchLikeCoinNFTClassAggregatedMetadataById(
   if (options.nocache) query.ts = `${Math.round(Date.now() / 1000)}`
   return fetch<FetchLikeCoinNFTClassAggregatedMetadataResponseData>('/likerland/nft/metadata', { query })
 }
+
+export interface FetchBuyerMessageResponseData {
+  messages: NFTBuyerMessage[]
+}
+
+export function fetchMessagesByClassId(classId: string) {
+  const fetch = getLikeCoinAPIFetch()
+  return fetch<FetchBuyerMessageResponseData>(`likernft/book/purchase/${classId}/messages`)
+}
