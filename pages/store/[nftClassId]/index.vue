@@ -229,11 +229,11 @@
                   <div class="flex items-center gap-2 mb-1 text-sm">
                     <span
                       class="font-semibold text-gray-900 truncate max-w-[160px]"
-                      v-text="metadataStore.getLikerInfoByWalletAddress(buyer.wallet)?.displayName|| buyer.wallet"
+                      v-text="metadataStore.getLikerInfoByWalletAddress(buyer.wallet)?.displayName || buyer.wallet"
                     />
                     <span
                       class="text-gray-400"
-                      v-text="new Date(buyer.timestamp).toLocaleString() "
+                      v-text="new Date(buyer.timestamp).toLocaleString()"
                     />
                   </div>
                   <p
