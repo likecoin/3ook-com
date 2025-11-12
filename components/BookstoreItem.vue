@@ -1,5 +1,6 @@
 <template>
   <li
+    v-if="!isHidden"
     ref="lazyLoadTrigger"
     class="flex flex-col justify-end"
   >
@@ -152,6 +153,8 @@ else {
     }
   })
 }
+
+const isHidden = computed(() => bookInfo.isHidden.value)
 
 function fetchBookInfo() {
   nftStore.lazyFetchNFTClassAggregatedMetadataById(props.nftClassId).catch(() => {
