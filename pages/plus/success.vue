@@ -110,11 +110,13 @@ onMounted(async () => {
       const isTrial = getRouteQuery('trial') !== '0'
       const subscriptionPrice = isYearly.value ? yearlyPrice.value : monthlyPrice.value
 
+      const predictedLTV = 120
       if (isTrial) {
         useLogEvent('start_trial', {
           transaction_id: paymentId.value,
           currency: currency.value,
           value: 0,
+          predicted_ltv: predictedLTV * 0.3, // 30% conversion rate
         })
       }
       else {
@@ -122,6 +124,7 @@ onMounted(async () => {
           transaction_id: paymentId.value,
           currency: currency.value,
           value: subscriptionPrice,
+          predicted_ltv: predictedLTV,
         })
       }
 
