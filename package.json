@@ -41,7 +41,7 @@
     "markdown-it": "^14.1.0",
     "microsoft-cognitiveservices-speech-sdk": "^1.45.0",
     "npm": "^10.9.2",
-    "nuxt": "^3.16.0",
+    "nuxt": "^3.20.1",
     "nuxt-auth-utils": "^0.5.17",
     "nuxt-gtag": "^3.0.2",
     "nuxt-security": "^2.2.0",
