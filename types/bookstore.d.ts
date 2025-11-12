@@ -1,3 +1,27 @@
+declare interface BookstoreItem {
+  totalStaked?: bigint
+  stakerCount?: number
+  id?: string
+  classId?: string
+  classIds?: string[]
+  title?: string
+  titles?: string[]
+  imageUrl?: string
+  imageUrls?: string[]
+  locales?: string[]
+  isDRMFree?: boolean
+  isMultiple?: boolean
+  minPrice?: number
+  timestamp?: number
+}
+
+declare interface BookstoreItemList {
+  items: BookstoreItem[]
+  isFetchingItems: boolean
+  hasFetchedItems: boolean
+  nextItemsKey: string | undefined
+}
+
 declare interface BookstorePrice {
   index: number
   price: number

@@ -87,7 +87,7 @@
           variant="outline"
           :ui="{
             base: [
-              TAG_BUTTON_CLASS_LIGHT,
+              fixedTag.value === TAG_DEFAULT ? TAG_BUTTON_CLASS_DARK : TAG_BUTTON_CLASS_LIGHT,
               TAG_BUTTON_CLASS_BASE,
               'px-4 max-phone:px-[10px]',
               '!ring-theme-black',
@@ -115,7 +115,7 @@
         </UTooltip>
 
         <USelect
-          v-if="bookstoreStore.hasFetchedBookstoreCMSTags || !isDefaultTagId || isStakingTagId"
+          v-if="bookstoreStore.hasFetchedBookstoreCMSTags"
           v-model="tagId"
           :placeholder="isDefaultTagId ? $t('store_tag_more_categories') : undefined"
           :items="selectorTagItems"
@@ -241,7 +241,7 @@ const isMobile = useMediaQuery('(max-width: 425px)')
 
 const TAG_BUTTON_CLASS_BASE = 'rounded-full hover:-translate-y-0.5 transition-all'
 const TAG_BUTTON_CLASS_LIGHT = 'bg-(--app-bg) hover:bg-theme-white/80'
-const TAG_BUTTON_CLASS_DARK = 'bg-theme-black hover:bg-theme-black/80 text-white'
+const TAG_BUTTON_CLASS_DARK = 'bg-theme-black hover:bg-theme-black/80 text-theme-cyan'
 
 const querySearchTerm = computed(() => getRouteQuery('q', ''))
 const queryAuthorName = computed(() => getRouteQuery('author', ''))
@@ -269,11 +269,21 @@ const searchQuery = computed(() => {
 
 const isSearchMode = computed(() => !!searchQuery.value)
 
-const TAG_LISTING = 'listing'
 const STAKING_SORT_TAG_PREFIX = 'staking-'
+const STAKING_SORT_OPTIONS = [
+  { value: 'total-staked', isPublic: true },
+  { value: 'staker-count' },
+  { value: 'recent' },
+].map(option => ({
+  ...option,
+  isPublic: !!option.isPublic,
+  value: `${STAKING_SORT_TAG_PREFIX}${option.value}`,
+}))
+const STAKING_TAG_DEFAULT = STAKING_SORT_OPTIONS[0]!.value
+const TAG_DEFAULT = STAKING_TAG_DEFAULT
 
 function getIsDefaultTagId(id: string) {
-  return id === TAG_LISTING
+  return id === TAG_DEFAULT
 }
 
 function getIsStakingTagId(id: string) {
@@ -281,7 +291,7 @@ function getIsStakingTagId(id: string) {
 }
 
 const tagId = computed({
-  get: () => getRouteQuery('tag', TAG_LISTING),
+  get: () => getRouteQuery('tag', TAG_DEFAULT),
   set: async (id) => {
     await navigateTo(localeRoute({
       name: 'store',
@@ -304,7 +314,27 @@ await callOnce(async () => {
 
 const normalizedLocale = computed(() => locale.value === 'zh-Hant' ? 'zh' : 'en')
 
+function getStakingTagLabel(tagId: string) {
+  const suffix = tagId.slice(STAKING_SORT_TAG_PREFIX.length) || 'total-staked'
+  switch (suffix) {
+    case 'staker-count':
+      return $t('staking_explore_sort_staker_count')
+    case 'recent':
+      return $t('staking_explore_sort_recent')
+    case 'total-staked':
+    default:
+      return $t('staking_explore_sort_total_staked')
+  }
+}
+
 const allTagItems = computed(() => {
+  const stakingTags = STAKING_SORT_OPTIONS
+    .map(option => ({
+      ...option,
+      label: getStakingTagLabel(option.value),
+    }))
+    .filter(option => tagId.value === option.value || option.isPublic)
+
   const cmsTags = bookstoreStore.bookstoreCMSTags
     .filter((tag) => {
       return !!tag.isPublic || tag.id === tagId.value
@@ -314,12 +344,10 @@ const allTagItems = computed(() => {
       value: tag.id,
     }))
 
-  const stakingTags = STAKING_SORT_OPTIONS.map(option => ({
-    label: $t(option.labelKey),
-    value: `${STAKING_SORT_TAG_PREFIX}${option.value}`,
-  }))
-
-  return [...cmsTags, ...stakingTags]
+  return [
+    ...stakingTags,
+    ...cmsTags,
+  ]
 })
 
 const tagsSliceIndex = computed(() => {
@@ -361,40 +389,33 @@ const selectorTagItems = computed(() => {
   return isDefaultTagId.value ? allTagItems.value.slice(tagsSliceIndex.value) : allTagItems.value
 })
 
-const STAKING_SORT_OPTIONS = [
-  { value: 'total_staked', labelKey: 'staking_explore_sort_total_staked' },
-  { value: 'staker_count', labelKey: 'staking_explore_sort_staker_count' },
-  { value: 'recent', labelKey: 'staking_explore_sort_recent' },
-]
-
-function mapToAPIStakingSortValue(sortValue: string): 'staked_amount' | 'last_staked_at' | 'number_of_stakers' {
-  switch (sortValue) {
-    case 'total_staked':
-      return 'staked_amount'
-    case 'staker_count':
+function mapTagIdToAPIStakingSortValue(tagId: string): 'staked_amount' | 'last_staked_at' | 'number_of_stakers' {
+  const suffix = tagId.slice(STAKING_SORT_TAG_PREFIX.length) || 'total-staked'
+  switch (suffix) {
+    case 'staker-count':
       return 'number_of_stakers'
     case 'recent':
       return 'last_staked_at'
+    case 'total-staked':
     default:
       return 'staked_amount'
   }
 }
 
-const localizedTagId = computed(() => {
-  // NOTE: Only the default tag is localized
-  return isDefaultTagId.value ? `${tagId.value}-${normalizedLocale.value}` : tagId.value
-})
-
-const tag = computed(() => {
-  return bookstoreStore.getBookstoreCMSTagById(localizedTagId.value)
+const cmsTag = computed(() => {
+  return bookstoreStore.getBookstoreCMSTagById(tagId.value)
 })
 
 const tagName = computed(() => {
-  return isDefaultTagId.value ? $t('store_tag_listing') : tag.value?.name[normalizedLocale.value] || ''
+  if (isStakingTagId.value) {
+    return getStakingTagLabel(tagId.value)
+  }
+  return cmsTag.value?.name[normalizedLocale.value] || ''
 })
 
 const tagDescription = computed(() => {
-  return tag.value?.description[normalizedLocale.value] || ''
+  if (isStakingTagId.value) return ''
+  return cmsTag.value?.description[normalizedLocale.value] || ''
 })
 
 const canonicalURL = computed(() => {
@@ -452,7 +473,7 @@ useHead(() => {
     },
     {
       rel: 'preload',
-      href: `/api/store/products?tag=${localizedTagId.value}&limit=100&ts=${getTimestampRoundedToMinute()}`,
+      href: `/api/store/products?tag=${tagId.value}&limit=100&ts=${getTimestampRoundedToMinute()}`,
       as: 'fetch' as const,
     },
   ]
@@ -464,7 +485,7 @@ useHead(() => {
   }
 })
 
-watch(localizedTagId, async (value) => {
+watch(tagId, async (value) => {
   if (value) {
     await fetchItems({ lazy: true })
   }
@@ -488,7 +509,7 @@ watch(queryOwnerWallet, async (wallet) => {
   }
 })
 
-const searchResults = computed(() => {
+const searchResults = computed<BookstoreItemList | null>(() => {
   if (isSearchMode.value) {
     const searchResults = bookstoreStore.getBookstoreSearchResultsByQuery(searchQuery.value)
     return {
@@ -505,8 +526,8 @@ const searchResults = computed(() => {
   return null
 })
 
-const defaultListingProducts = computed(() => {
-  const apiSortValue = mapToAPIStakingSortValue('total_staked')
+const defaultListingProducts = computed<BookstoreItemList>(() => {
+  const apiSortValue = mapTagIdToAPIStakingSortValue(STAKING_TAG_DEFAULT)
   const stakingData = bookstoreStore.getStakingBooks(apiSortValue).items.reduce((map, item) => {
     map[item.nftClassId.toLowerCase()] = {
       totalStaked: item.totalStaked,
@@ -515,7 +536,7 @@ const defaultListingProducts = computed(() => {
     return map
   }, {} as Record<string, { totalStaked: bigint, stakerCount: number }>)
 
-  const listingProducts = bookstoreStore.getBookstoreCMSProductsByTagId(localizedTagId.value)
+  const listingProducts = bookstoreStore.getBookstoreCMSProductsByTagId(tagId.value)
   const items = listingProducts.items.map((item) => {
     const stakingInfo = stakingData[item.classId?.toLowerCase() || '']
     return {
@@ -547,7 +568,7 @@ const shouldShowDefaultListing = computed(() => {
   return isSearchMode.value && !hasSearchResults.value && searchResults.value?.hasFetchedItems
 })
 
-const products = computed(() => {
+const products = computed<BookstoreItemList>(() => {
   if (isSearchMode.value) {
     if (hasSearchResults.value && searchResults.value) {
       return searchResults.value
@@ -562,21 +583,24 @@ const products = computed(() => {
 
   // Return staking books when viewing staking tag
   if (isStakingTagId.value) {
-    const stakingSort = tagId.value.slice(STAKING_SORT_TAG_PREFIX.length) || 'total_staked'
-    const apiSortValue = mapToAPIStakingSortValue(stakingSort)
+    const apiSortValue = mapTagIdToAPIStakingSortValue(tagId.value)
     const staking = bookstoreStore.getStakingBooks(apiSortValue)
+    const items: BookstoreItem[] = []
+    staking.items.forEach((item) => {
+      const bookInfo = bookstoreStore.getBookstoreInfoByNFTClassId(item.nftClassId)
+      if (bookInfo?.isHidden) return
+      items.push({
+        id: item.nftClassId,
+        classId: item.nftClassId,
+        title: bookInfo?.name || '',
+        imageUrl: bookInfo?.thumbnailUrl || '',
+        minPrice: undefined,
+        totalStaked: item.totalStaked,
+        stakerCount: item.stakerCount,
+      })
+    })
     return {
-      items: staking.items.map((item) => {
-        const bookInfo = bookstoreStore.getBookstoreInfoByNFTClassId(item.nftClassId)
-        return {
-          classId: item.nftClassId,
-          title: bookInfo?.name || '',
-          imageUrl: bookInfo?.thumbnailUrl || '',
-          minPrice: undefined,
-          totalStaked: item.totalStaked,
-          stakerCount: item.stakerCount,
-        }
-      }),
+      items,
       isFetchingItems: staking.isFetchingItems,
       hasFetchedItems: staking.hasFetchedItems,
       nextItemsKey: staking.nextItemsKey,
@@ -624,28 +648,20 @@ async function fetchItems({ lazy = false, isRefresh = false } = {}) {
     return
   }
 
-  if (isStakingTagId.value) {
-    const stakingSort = tagId.value.slice(STAKING_SORT_TAG_PREFIX.length) || 'total_staked'
-    const apiSortValue = mapToAPIStakingSortValue(stakingSort)
-    try {
-      // HACK: Use max limit for local sorting until API sorting is fixed
-      await bookstoreStore.fetchStakingBooks(apiSortValue, { isRefresh, limit: 100 })
-    }
-    catch (error) {
-      await handleError(error, {
-        title: $t('staking_explore_fetch_error'),
-      })
-    }
-    return
-  }
-
   try {
-    const apiSortValue = mapToAPIStakingSortValue('total_staked')
-    await Promise.all([
-      bookstoreStore.fetchCMSProductsByTagId(localizedTagId.value, { isRefresh }),
-      // NOTE: Fetch staking books for sorting items
-      bookstoreStore.fetchStakingBooks(apiSortValue, { isRefresh, limit: 100 }).catch(() => {}),
-    ])
+    const apiSortValue = mapTagIdToAPIStakingSortValue(isStakingTagId.value ? tagId.value : STAKING_TAG_DEFAULT)
+    const fetchPromises = [
+      // NOTE: Fetch staking books for sorting CMS tag items by staking
+      bookstoreStore.fetchStakingBooks(apiSortValue, { isRefresh, limit: 100 }).catch((error) => {
+        if (isStakingTagId.value) {
+          throw error
+        }
+      }),
+    ]
+    if (!isStakingTagId.value) {
+      fetchPromises.push(bookstoreStore.fetchCMSProductsByTagId(tagId.value, { isRefresh }))
+    }
+    await Promise.all(fetchPromises)
   }
   catch (error) {
     await handleError(error, {
@@ -671,7 +687,7 @@ onMounted(async () => {
   if (isSearchMode.value) {
     const promises: Promise<unknown>[] = [
       fetchItems({ lazy: true }),
-      bookstoreStore.fetchCMSProductsByTagId(localizedTagId.value, { isRefresh: false }),
+      bookstoreStore.fetchCMSProductsByTagId(tagId.value, { isRefresh: false }),
     ]
 
     if (queryOwnerWallet.value) {
@@ -687,38 +703,16 @@ onMounted(async () => {
     return
   }
 
-  const fetchTagPromise = fetchTags()
-  if (!isDefaultTagId.value) {
-    // NOTE: Need to fetch all tags if not the default tag
-    await fetchTagPromise
-    if (!tag.value && !isStakingTagId.value) {
-      throw createError({
-        statusCode: 404,
-        message: $t('error_page_not_found'),
-        fatal: true,
-      })
-    }
-  }
-
   await Promise.all([
-    fetchTagPromise,
+    fetchTags(),
     fetchItems({ lazy: true }),
   ])
 })
 
 watch(
-  tag,
-  async (tag) => {
-    if (tag) {
-      await fetchItems({ lazy: true })
-    }
-  },
-)
-
-watch(
-  () => shouldLoadMore.value,
+  shouldLoadMore,
   async (shouldLoadMore) => {
-    if (shouldLoadMore && (tag.value || isSearchMode.value)) {
+    if (shouldLoadMore) {
       await fetchItems()
     }
   },
@@ -740,7 +734,7 @@ async function handleTagClick(tagValue?: string) {
 
 async function handleCloseTagClick() {
   useLogEvent('store_tag_close_click')
-  tagId.value = TAG_LISTING
+  tagId.value = TAG_DEFAULT
 }
 
 async function handleBookListTagClick() {
