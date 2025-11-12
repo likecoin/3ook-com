@@ -649,10 +649,15 @@ await callOnce(async () => {
   }
 })
 
-if (bookInfo.bookstoreInfo.value?.redirectClassId) {
+const {
+  evmClassId,
+  redirectClassId,
+} = bookInfo.bookstoreInfo.value || {}
+const newClassId = evmClassId || redirectClassId
+if (newClassId && newClassId !== nftClassId.value) {
   await navigateTo(localeRoute({
     name: getRouteBaseName(route),
-    params: { nftClassId: bookInfo.bookstoreInfo.value.redirectClassId },
+    params: { nftClassId: newClassId },
     query: route.query,
   }), { replace: true, redirectCode: 301 })
 }
