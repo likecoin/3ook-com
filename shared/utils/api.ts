@@ -93,7 +93,7 @@ export interface FetchBuyerMessageResponseData {
   messages: NFTBuyerMessage[]
 }
 
-export function fetchMessagesByClassId(classId: string) {
+export function fetchPurchaseMessagesByClassId(classId: string) {
   const fetch = getLikeCoinAPIFetch()
   return fetch<FetchBuyerMessageResponseData>(`/likernft/book/purchase/${classId}/messages`)
 }

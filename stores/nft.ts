@@ -74,9 +74,9 @@ export const useNFTStore = defineStore('nft', () => {
     return await fetchNFTClassChainMetadataById(nftClassId)
   }
 
-  async function fetchMessages(classId: string) {
+  async function fetchMessagesByClassId(classId: string) {
     const metadataStore = useMetadataStore()
-    const data = await fetchMessagesByClassId(classId)
+    const data = await fetchPurchaseMessagesByClassId(classId)
     messagesByClassIdMap.value[classId] = data.messages
 
     const fetchPromises = data.messages
@@ -92,7 +92,7 @@ export const useNFTStore = defineStore('nft', () => {
     if (messagesByClassIdMap.value[classId]) {
       return messagesByClassIdMap.value[classId]
     }
-    return await fetchMessages(classId)
+    return await fetchMessagesByClassId(classId)
   }
 
   return {
@@ -110,7 +110,7 @@ export const useNFTStore = defineStore('nft', () => {
     lazyFetchNFTClassAggregatedMetadataById,
     fetchNFTClassChainMetadataById,
     lazyFetchNFTClassChainMetadataById,
-    fetchMessages,
+    fetchMessagesByClassId,
     lazyFetchMessagesByClassId,
   }
 })
