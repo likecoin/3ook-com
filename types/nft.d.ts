@@ -114,3 +114,10 @@ declare type ReadAction = {
   '@type': 'ReadAction'
   'target': ReadActionEntryPoint[]
 } & PotentialAction
+
+declare interface NFTBuyerMessage {
+  wallet: string
+  txHash: string
+  timestamp: number
+  message: string
+}
