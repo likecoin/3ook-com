@@ -35,11 +35,11 @@ export const useBookstoreStore = defineStore('bookstore', () => {
   const bookstoreInfoByNFTClassIdMap = ref<Record<string, BookstoreInfo | null>>({})
 
   const getBookstoreInfoByNFTClassId = computed(() => (nftClassId: string) => {
-    return bookstoreInfoByNFTClassIdMap.value[nftClassId]
+    return bookstoreInfoByNFTClassIdMap.value[normalizeNFTClassId(nftClassId)]
   })
 
   function addBookstoreInfoByNFTClassId(nftClassId: string, data: BookstoreInfo | null) {
-    bookstoreInfoByNFTClassIdMap.value[nftClassId] = data
+    bookstoreInfoByNFTClassIdMap.value[normalizeNFTClassId(nftClassId)] = data
   }
 
   /* Bookstore CMS Products */
@@ -200,7 +200,7 @@ export const useBookstoreStore = defineStore('bookstore', () => {
     const mappedItems = result.records
       .filter(item => item.classId && item.title && item.imageUrl)
       .map(item => ({
-        classId: item.classId!,
+        classId: normalizeNFTClassId(item.classId),
         title: item.title!,
         imageUrl: item.imageUrl!,
         minPrice: item.minPrice,
@@ -220,11 +220,11 @@ export const useBookstoreStore = defineStore('bookstore', () => {
     if (result) {
       const nftClasses = result.data.map(item => ({
         ...item,
-        address: item.address.toLowerCase(),
+        address: normalizeNFTClassId(item.address),
       }))
       const mappedItems = nftClasses
         .map(nftClass => ({
-          classId: nftClass.address.toLowerCase(),
+          classId: nftClass.address,
           title: nftClass.name || '',
           imageUrl: nftClass.metadata?.image || '',
           minPrice: undefined,
@@ -247,11 +247,11 @@ export const useBookstoreStore = defineStore('bookstore', () => {
     if (result) {
       const nftClasses = result.data.map(item => ({
         ...item,
-        address: item.address.toLowerCase(),
+        address: normalizeNFTClassId(item.address),
       }))
       const mappedItems = nftClasses
         .map(nftClass => ({
-          classId: nftClass.address.toLowerCase(),
+          classId: nftClass.address,
           title: nftClass.name || '',
           imageUrl: nftClass.metadata?.image || '',
           minPrice: undefined,
@@ -326,7 +326,7 @@ export const useBookstoreStore = defineStore('bookstore', () => {
       })
 
       const bookNFTs = result.data.map(bookNFT => ({
-        nftClassId: bookNFT.book_nft,
+        nftClassId: normalizeNFTClassId(bookNFT.book_nft),
         totalStaked: BigInt(bookNFT.staked_amount || 0),
         stakerCount: bookNFT.number_of_stakers,
         lastStakedAt: bookNFT.last_staked_at,

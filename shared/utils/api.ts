@@ -82,7 +82,7 @@ export function fetchLikeCoinNFTClassAggregatedMetadataById(
   const includedOptionSet = new Set(options.include || likeCoinNFTClassAggregatedMetadataOptions)
   const excludedOptionSet = new Set(options.exclude || [])
   const query: Record<string, string | string[]> = {
-    class_id: nftClassId,
+    class_id: normalizeNFTClassId(nftClassId),
     data: [...includedOptionSet].filter(option => !excludedOptionSet.has(option)),
   }
   if (options.nocache) query.ts = `${Math.round(Date.now() / 1000)}`

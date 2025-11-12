@@ -3,7 +3,7 @@ export const useNFTStore = defineStore('nft', () => {
 
   const nftClassByIdMap = ref<Record<string, Partial<NFTClass>>>({})
 
-  const getNFTClassById = computed(() => (id: string) => nftClassByIdMap.value[id])
+  const getNFTClassById = computed(() => (id: string) => nftClassByIdMap.value[normalizeNFTClassId(id)])
   const getNFTClassMetadataById = computed(() => (id: string) => {
     const nftClass = getNFTClassById.value(id)
     return nftClass?.metadata
@@ -11,13 +11,19 @@ export const useNFTStore = defineStore('nft', () => {
 
   function addNFTClass(nftClass: Partial<NFTClass>) {
     if (nftClass.address) {
-      nftClassByIdMap.value[nftClass.address] = { ...nftClassByIdMap.value[nftClass.address], ...nftClass }
+      const nftClassId = normalizeNFTClassId(nftClass.address)
+      nftClassByIdMap.value[nftClassId] = {
+        ...nftClassByIdMap.value[nftClassId],
+        ...nftClass,
+        address: nftClassId,
+      }
     }
   }
 
   function addNFTClassMetadata(nftClassId: string, nftClassMetadata: NFTClassMetadata) {
-    nftClassByIdMap.value[nftClassId] = {
-      ...(nftClassByIdMap.value[nftClassId] || {}),
+    const normalizedNFTClassId = normalizeNFTClassId(nftClassId)
+    nftClassByIdMap.value[normalizedNFTClassId] = {
+      ...(nftClassByIdMap.value[normalizedNFTClassId] || {}),
       metadata: nftClassMetadata,
     }
   }
@@ -25,7 +31,7 @@ export const useNFTStore = defineStore('nft', () => {
   function addNFTClasses(nftClasses: NFTClass[]) {
     const nftClassIds: string[] = []
     for (const nftClass of nftClasses) {
-      nftClassIds.push(nftClass.address)
+      nftClassIds.push(normalizeNFTClassId(nftClass.address))
       addNFTClass(nftClass)
     }
     return nftClassIds
@@ -39,6 +45,7 @@ export const useNFTStore = defineStore('nft', () => {
     if (data.bookstoreInfo !== undefined) {
       bookstoreStore.addBookstoreInfoByNFTClassId(nftClassId, data.bookstoreInfo)
     }
+    return data
   }
 
   async function lazyFetchNFTClassAggregatedMetadataById(nftClassId: string, { exclude = [] }: FetchLikeCoinNFTClassAggregatedMetadataOptions = {}) {

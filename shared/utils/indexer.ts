@@ -178,7 +178,7 @@ export function fetchNFTsByOwnerWalletAddress(walletAddress: string, options: In
 
 export function fetchLikeCoinNFTClassChainMetadataById(nftClassId: string) {
   const fetch = getIndexerAPIFetch()
-  return fetch<NFTClass>(`/booknft/${nftClassId}`)
+  return fetch<NFTClass>(`/booknft/${normalizeNFTClassId(nftClassId)}`)
 }
 
 export function fetchTokenBookNFTsByAccount(walletAddress: string, options: IndexerQueryOptions = {}) {
@@ -197,24 +197,24 @@ export function fetchAllBookNFTs(options: IndexerQueryOptions = {}) {
 
 export function fetchTokensByBookNFT(nftClassId: string, options: IndexerQueryOptions = {}) {
   const fetch = getIndexerAPIFetch()
-  return fetch<FetchTokensByBookNFTResponseData>(`/booknft/${nftClassId}/tokens`, {
+  return fetch<FetchTokensByBookNFTResponseData>(`/booknft/${normalizeNFTClassId(nftClassId)}/tokens`, {
     query: getIndexerQueryOptions(options),
   })
 }
 
 export function fetchTokenAccountsByBookNFT(nftClassId: string, options: IndexerQueryOptions = {}) {
   const fetch = getIndexerAPIFetch()
-  return fetch<FetchTokenAccountsByBookNFTResponseData>(`/booknft/${nftClassId}/tokens/account`, {
+  return fetch<FetchTokenAccountsByBookNFTResponseData>(`/booknft/${normalizeNFTClassId(nftClassId)}/tokens/account`, {
     query: getIndexerQueryOptions(options),
   })
 }
 
 export function fetchAccountByBookNFT(nftClassId: string) {
   const fetch = getIndexerAPIFetch()
-  return fetch<FetchAccountByBookNFTResponseData>(`/booknft/${nftClassId}/account`)
+  return fetch<FetchAccountByBookNFTResponseData>(`/booknft/${normalizeNFTClassId(nftClassId)}/account`)
 }
 
 export function fetchTokenById(nftClassId: string, tokenId: string) {
   const fetch = getIndexerAPIFetch()
-  return fetch<NFT>(`/token/${nftClassId}/${tokenId}`)
+  return fetch<NFT>(`/token/${normalizeNFTClassId(nftClassId)}/${tokenId}`)
 }
