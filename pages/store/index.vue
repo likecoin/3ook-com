@@ -506,7 +506,8 @@ const searchResults = computed(() => {
 })
 
 const defaultListingProducts = computed(() => {
-  const stakingData = bookstoreStore.getStakingBooks('total_staked').items.reduce((map, item) => {
+  const apiSortValue = mapToAPIStakingSortValue('total_staked')
+  const stakingData = bookstoreStore.getStakingBooks(apiSortValue).items.reduce((map, item) => {
     map[item.nftClassId.toLowerCase()] = {
       totalStaked: item.totalStaked,
       stakerCount: item.stakerCount,
@@ -639,10 +640,11 @@ async function fetchItems({ lazy = false, isRefresh = false } = {}) {
   }
 
   try {
+    const apiSortValue = mapToAPIStakingSortValue('total_staked')
     await Promise.all([
       bookstoreStore.fetchCMSProductsByTagId(localizedTagId.value, { isRefresh }),
       // NOTE: Fetch staking books for sorting items
-      bookstoreStore.fetchStakingBooks('total_staked', { isRefresh, limit: 100 }).catch(() => {}),
+      bookstoreStore.fetchStakingBooks(apiSortValue, { isRefresh, limit: 100 }).catch(() => {}),
     ])
   }
   catch (error) {
