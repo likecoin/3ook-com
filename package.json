@@ -33,7 +33,7 @@
     "@unhead/vue": "^2.0.10",
     "@vite-pwa/nuxt": "^1.0.4",
     "@vueuse/nuxt": "^13.0.0",
-    "@wagmi/vue": "^0.1.14",
+    "@wagmi/vue": "^0.3.3",
     "eslint": "^9.22.0",
     "firebase-admin": "^13.4.0",
     "i": "^0.3.7",
