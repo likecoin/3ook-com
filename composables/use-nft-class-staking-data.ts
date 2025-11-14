@@ -80,7 +80,7 @@ export function useNFTClassStakingData(nftClassId: ComputedRef<string>) {
 
   const userStakePercentage = computed(() => {
     if (totalStake.value === 0n) return 0
-    return Math.round((Number(userStake.value) / Number(totalStake.value)) * 10000) / 100
+    return Math.round(Math.min(1, Number(userStake.value) / Number(totalStake.value)) * 10000) / 100
   })
 
   // Claim rewards
