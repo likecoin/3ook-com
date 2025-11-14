@@ -1,4 +1,4 @@
-import { fetchCollectiveSortedBookNFTs } from '~/shared/utils/collective-indexer'
+import { fetchCollectiveBookNFTs } from '~/shared/utils/collective-indexer'
 
 interface BookstoreCMSTagProducts {
   items: BookstoreCMSProduct[]
@@ -318,19 +318,33 @@ export const useBookstoreStore = defineStore('bookstore', () => {
     try {
       stakingBooksMap.value[sortBy].isFetching = true
 
-      // HACK: Use 1 year until API support all time
-      const result = await fetchCollectiveSortedBookNFTs('1y', {
-        'sort_by': sortBy as 'staked_amount' | 'last_staked_at' | 'number_of_stakers',
-        'sort_order': 'desc',
+      const result = await fetchCollectiveBookNFTs({
         'pagination.limit': limit,
+        'time_frame_sort_order': 'desc',
+        'time_frame_sort_by': sortBy as 'staked_amount' | 'last_staked_at' | 'number_of_stakers',
       })
 
-      const bookNFTs = result.data.map(bookNFT => ({
-        nftClassId: normalizeNFTClassId(bookNFT.book_nft),
+      let bookNFTs = result.data.map(bookNFT => ({
+        nftClassId: normalizeNFTClassId(bookNFT.evm_address),
         totalStaked: BigInt(bookNFT.staked_amount || 0),
         stakerCount: bookNFT.number_of_stakers,
         lastStakedAt: bookNFT.last_staked_at,
       }))
+
+      // HACK: time_frame_sort_order doesn't work in indexer now
+      // Sort locally to ensure correct ordering, remove after indexer is fixed
+      bookNFTs = bookNFTs.sort((a, b) => {
+        switch (sortBy) {
+          case 'staked_amount':
+            return Number(b.totalStaked - a.totalStaked)
+          case 'number_of_stakers':
+            return b.stakerCount - a.stakerCount
+          case 'last_staked_at':
+            return new Date(b.lastStakedAt || 0).getTime() - new Date(a.lastStakedAt || 0).getTime()
+          default:
+            return 0
+        }
+      })
 
       if (isRefresh) {
         stakingBooksMap.value[sortBy].items = bookNFTs

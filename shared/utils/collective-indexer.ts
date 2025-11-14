@@ -22,13 +22,6 @@ export interface CollectiveBookNFT {
   number_of_stakers: number
 }
 
-export interface CollectiveBookNFTStakeDelta {
-  book_nft: string
-  staked_amount: string
-  last_staked_at: string
-  number_of_stakers: number
-}
-
 export interface CollectiveAccountBookNFT {
   evm_address: string
   pool_share: number
@@ -123,11 +116,10 @@ export interface CollectiveQueryOptions {
   'filter_account_in'?: string[]
 }
 
-export interface CollectiveSortedBookNFTsQueryOptions {
-  'sort_by'?: 'staked_amount' | 'last_staked_at' | 'number_of_stakers'
-  'sort_order'?: 'asc' | 'desc'
-  'pagination.limit'?: number
-  'pagination.page'?: number
+export interface CollectiveBookNFTsQueryOptions extends CollectiveQueryOptions {
+  time_frame?: '7d' | '30d' | '1y' | 'all'
+  time_frame_sort_by?: 'staked_amount' | 'last_staked_at' | 'number_of_stakers'
+  time_frame_sort_order?: 'asc' | 'desc'
 }
 
 export interface CollectiveAccountBookNFTsQueryOptions extends CollectiveQueryOptions {
@@ -150,12 +142,11 @@ function getCollectiveQueryOptions(options: CollectiveQueryOptions = {}) {
   return query
 }
 
-function getCollectiveSortedBookNFTsQueryOptions(options: Partial<CollectiveSortedBookNFTsQueryOptions> = {}) {
-  const query: Record<string, string | string[]> = {}
-  if (options['pagination.limit']) query['pagination.limit'] = options['pagination.limit'].toString()
-  if (options['pagination.page']) query['pagination.page'] = options['pagination.page'].toString()
-  query.sort_by = options.sort_by || 'staked_amount'
-  query.sort_order = options.sort_order || 'desc'
+function getCollectiveBookNFTsQueryOptions(options: CollectiveBookNFTsQueryOptions = {}) {
+  const query = getCollectiveQueryOptions(options)
+  if (options.time_frame) query.time_frame = options.time_frame
+  if (options.time_frame_sort_by) query.time_frame_sort_by = options.time_frame_sort_by
+  if (options.time_frame_sort_order) query.time_frame_sort_order = options.time_frame_sort_order
   return query
 }
 
@@ -238,20 +229,10 @@ export function fetchCollectiveAccountStakingEvents(
 }
 
 // BookNFT endpoints
-export function fetchCollectiveBookNFTs(options: CollectiveQueryOptions = {}) {
+export function fetchCollectiveBookNFTs(options: CollectiveBookNFTsQueryOptions = {}) {
   const fetch = getCollectiveIndexerAPIFetch()
   return fetch<CollectivePaginationResponse<CollectiveBookNFT>>('/book-nfts', {
-    query: getCollectiveQueryOptions(options),
-  })
-}
-
-export function fetchCollectiveSortedBookNFTs(
-  timeFrame: '7d' | '30d' | '1y' = '1y',
-  options: CollectiveSortedBookNFTsQueryOptions = { sort_by: 'staked_amount' },
-) {
-  const fetch = getCollectiveIndexerAPIFetch()
-  return fetch<CollectivePaginationResponse<CollectiveBookNFTStakeDelta>>(`/book-nfts/${timeFrame}/delta`, {
-    query: getCollectiveSortedBookNFTsQueryOptions(options),
+    query: getCollectiveBookNFTsQueryOptions(options),
   })
 }
 
