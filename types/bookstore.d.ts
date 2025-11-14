@@ -19,7 +19,7 @@ declare interface BookstoreItemList {
   items: BookstoreItem[]
   isFetchingItems: boolean
   hasFetchedItems: boolean
-  nextItemsKey: string | undefined
+  nextItemsKey: number | string | undefined
 }
 
 declare interface BookstorePrice {

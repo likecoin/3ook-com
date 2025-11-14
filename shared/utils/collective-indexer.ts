@@ -109,8 +109,8 @@ function getCollectiveIndexerAPIFetch() {
 }
 
 export interface CollectiveQueryOptions {
-  'pagination.key'?: number
-  'pagination.limit'?: number
+  'pagination.key'?: number | string
+  'pagination.limit'?: number | string
   'reverse'?: boolean
   'filter_book_nft_in'?: string[]
   'filter_account_in'?: string[]

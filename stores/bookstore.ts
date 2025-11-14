@@ -28,7 +28,7 @@ interface StakingBooks {
   }>
   isFetching: boolean
   hasFetched: boolean
-  offset?: string
+  offset?: number | string
 }
 
 export const useBookstoreStore = defineStore('bookstore', () => {
@@ -230,7 +230,7 @@ export const useBookstoreStore = defineStore('bookstore', () => {
           minPrice: undefined,
         }))
 
-      const nextKey = result.pagination.count === options.limit ? result.pagination?.next_key?.toString() : undefined
+      const nextKey = result.data.length === options.limit ? result.pagination?.next_key?.toString() : undefined
       updateSearchResults(queryKey, mappedItems, nextKey, isRefresh)
     }
   }
@@ -257,7 +257,7 @@ export const useBookstoreStore = defineStore('bookstore', () => {
           minPrice: undefined,
         }))
 
-      const nextKey = result.pagination.count === options.limit ? result.pagination?.next_key?.toString() : undefined
+      const nextKey = result.data.length === options.limit ? result.pagination?.next_key?.toString() : undefined
       updateSearchResults(queryKey, mappedItems, nextKey, isRefresh)
     }
   }
@@ -320,6 +320,7 @@ export const useBookstoreStore = defineStore('bookstore', () => {
 
       const result = await fetchCollectiveBookNFTs({
         'pagination.limit': limit,
+        'pagination.key': stakingBooksMap.value[sortBy].offset,
         'time_frame_sort_order': 'desc',
         'time_frame_sort_by': sortBy as 'staked_amount' | 'last_staked_at' | 'number_of_stakers',
       })
@@ -353,8 +354,7 @@ export const useBookstoreStore = defineStore('bookstore', () => {
         stakingBooksMap.value[sortBy].items.push(...bookNFTs)
       }
 
-      // Set offset if there are more results (pagination)
-      stakingBooksMap.value[sortBy].offset = result.data.length === limit ? String(result.data.length) : undefined
+      stakingBooksMap.value[sortBy].offset = result.data.length === limit ? result.pagination?.next_key?.toString() : undefined
       stakingBooksMap.value[sortBy].hasFetched = true
     }
     catch (error) {
