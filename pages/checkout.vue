@@ -255,18 +255,7 @@ onMounted(async () => {
     loadingProgress.value = 100
 
     if (cartItems.value.length > 0) {
-      useLogEvent('add_to_cart', {
-        currency: totalCurrency.value,
-        value: totalPrice.value,
-        items: cartItems.value.map(item => ({
-          id: `${item.classId}-${item.priceIndex}`,
-          name: item.bookInfo?.name || '',
-          price: item.pricingItem?.price || 0,
-          currency: totalCurrency.value,
-          quantity: item.quantity,
-          google_business_vertical: 'retail',
-        })),
-      })
+      useLogEvent('add_to_cart', eventPayload.value)
     }
 
     setTimeout(() => {
@@ -289,6 +278,24 @@ const totalPrice = computed(() => {
 
 const totalCurrency = computed(() => {
   return 'USD'
+})
+
+const eventPayload = computed(() => {
+  const payload = {
+    currency: totalCurrency.value,
+    value: totalPrice.value,
+    promotion_id: couponCode || undefined,
+    promotion_name: couponCode || undefined,
+    items: cartItems.value.map(item => ({
+      id: `${item.classId}-${item.priceIndex}`,
+      name: item.bookInfo?.name || '',
+      price: item.pricingItem?.price || 0,
+      currency: totalCurrency.value,
+      quantity: item.quantity,
+      google_business_vertical: 'retail',
+    })),
+  }
+  return payload
 })
 
 function parseProducts(productsString: string): Array<{ classId: string, priceIndex: number, quantity: number }> {
@@ -366,16 +373,7 @@ async function handleCheckout() {
     )
 
     useLogEvent('begin_checkout', {
-      currency: totalCurrency.value,
-      value: totalPrice.value,
-      items: cartItems.value.map(item => ({
-        id: `${item.classId}-${item.priceIndex}`,
-        name: item.bookInfo?.name || '',
-        price: item.pricingItem?.price || 0,
-        currency: totalCurrency.value,
-        quantity: item.quantity,
-        google_business_vertical: 'retail',
-      })),
+      ...eventPayload.value,
       transaction_id: paymentId,
     })
 

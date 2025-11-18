@@ -128,7 +128,12 @@ export function useSubscription() {
   }: UpsellPlusModalSubscribeEventPayload = {}) {
     const subscribePlan = plan || selectedPlan.value
     const isYearly = subscribePlan === 'yearly'
-    useLogEvent('add_to_cart', eventPayload.value)
+    const eventPayloadWithCoupon = {
+      ...eventPayload.value,
+      promotion_id: coupon,
+      promotion_name: coupon,
+    }
+    useLogEvent('add_to_cart', eventPayloadWithCoupon)
     useLogEvent('subscription_button_click')
     useLogEvent(`subscription_button_click_${subscribePlan}`)
 
@@ -152,7 +157,7 @@ export function useSubscription() {
         isProcessingSubscription.value = false
         return
       }
-      useLogEvent('begin_checkout', eventPayload.value)
+      useLogEvent('begin_checkout', eventPayloadWithCoupon)
 
       const analyticsParams = getAnalyticsParameters()
       if (isLikerPlus.value) {

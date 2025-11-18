@@ -365,6 +365,7 @@ async function startClaimingItems() {
       })
     }
     isClaimed.value = true
+    const coupon = cartData.value?.coupon
     useLogEvent('purchase', {
       transaction_id: cartId.value,
       value: cartData.value?.price,
@@ -385,6 +386,8 @@ async function startClaimingItems() {
           google_business_vertical: 'retail',
         }
       }),
+      promotion_id: coupon,
+      promotion_name: coupon,
     })
   }
   catch (error) {

@@ -12,6 +12,7 @@ export interface FetchCartStatusByIdResponseData {
   from: string
   timestamp: number
   quantity: number
+  coupon?: string
   classIds: string[]
   classIdsWithPrice: {
     classId: string

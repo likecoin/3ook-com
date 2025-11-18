@@ -47,6 +47,7 @@ const getRouteBaseName = useRouteBaseName()
 const isRedirected = computed(() => !!getRouteQuery('redirect'))
 const isYearly = computed(() => getRouteQuery('period') === 'yearly')
 const paymentId = computed(() => getRouteQuery('payment_id'))
+const coupon = computed(() => getRouteQuery('coupon'))
 
 const isRefreshing = ref(true)
 const isRedirecting = ref(false)
@@ -111,12 +112,15 @@ onMounted(async () => {
       const subscriptionPrice = isYearly.value ? yearlyPrice.value : monthlyPrice.value
 
       const predictedLTV = 120
+
       if (isTrial) {
         useLogEvent('start_trial', {
           transaction_id: paymentId.value,
           currency: currency.value,
           value: 0,
           predicted_ltv: predictedLTV * 0.3, // 30% conversion rate
+          promotion_id: coupon.value,
+          promotion_name: coupon.value,
         })
       }
       else {
@@ -125,6 +129,8 @@ onMounted(async () => {
           currency: currency.value,
           value: subscriptionPrice,
           predicted_ltv: predictedLTV,
+          promotion_id: coupon.value,
+          promotion_name: coupon.value,
         })
       }
 

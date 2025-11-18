@@ -854,6 +854,7 @@ const socialButtons = computed(() => [
 const formattedLogPayload = computed(() => {
   const currency = selectedPricingItem.value?.currency || 'USD'
   const price = selectedPricingItem.value?.price || 0
+  const coupon = getRouteQuery('coupon')
   return {
     currency,
     value: price,
@@ -865,6 +866,8 @@ const formattedLogPayload = computed(() => {
       quantity: 1,
       google_business_vertical: 'retail',
     }],
+    promotional_id: coupon || undefined,
+    promotional_name: coupon || undefined,
   }
 })
 
