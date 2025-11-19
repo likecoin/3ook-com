@@ -109,7 +109,7 @@
         <!-- Claim Rewards Button -->
         <div class="px-4 py-4">
           <UButton
-            :label="isClaimRewardButtonEnabled ? $t('governance_page_claim_rewards') : $t('governance_page_claim_rewards_disabled')"
+            :label="isAutoRestakeEnabledStorage ? $t('governance_page_claim_rewards') : $t('governance_page_claim_rewards_disabled')"
             color="primary"
             size="lg"
             block
