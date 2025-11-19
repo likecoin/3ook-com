@@ -1,5 +1,33 @@
 <template>
-  <main class="items-center px-4 laptop:px-12 laptop:pt-12 pb-[100px]">
+  <main class="items-center px-4 laptop:px-12 pb-[100px]">
+    <div
+      :class="[
+        'z-10',
+        'h-[62px]',
+        'w-full',
+        'max-w-[1200px]',
+        'pt-2',
+
+        'flex',
+        'items-center',
+        'gap-2',
+
+        'group',
+        'cursor-pointer',
+      ]"
+      @click="handleBackButtonClick"
+    >
+      <UButton
+        class="rounded-full cursor-pointer"
+        icon="i-material-symbols-arrow-back-rounded"
+        variant="subtle"
+        color="neutral"
+      />
+      <p
+        class="text-sm text-gray-400 transition-colors group-hover:text-gray-600"
+        v-text="$t('product_page_back_to_store_label')"
+      />
+    </div>
     <section class="flex flex-col tablet:flex-row gap-[32px] tablet:gap-[44px] w-full max-w-[1200px]">
       <div class="grow pt-5">
         <AffiliateAlert class="mb-6" />
@@ -1185,5 +1213,15 @@ function calculateCustomPrice(editionPrice: number, tippingAmount: number | unde
 
 function handleKeywordClick(keyword: string) {
   useLogEvent('keyword_click', { keyword })
+}
+
+async function handleBackButtonClick() {
+  useLogEvent('product_page_back_button_click')
+  if (window.history.length > 1) {
+    router.back()
+  }
+  else {
+    await navigateTo(localeRoute({ name: 'store' }))
+  }
 }
 </script>

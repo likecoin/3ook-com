@@ -265,6 +265,7 @@
   "pricing_page_yearly_discount": "節省 {discount}%",
   "product_page_add_to_book_list_button_label": "加入書單",
   "product_page_author_name_label": "作者",
+  "product_page_back_to_store_label": "返回書店",
   "product_page_book_format_label": "書本格式",
   "product_page_book_format_value": "電子書",
   "product_page_checkout_button_label": "購買",
