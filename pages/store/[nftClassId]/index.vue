@@ -1221,7 +1221,10 @@ async function handleBackButtonClick() {
     router.back()
   }
   else {
-    await navigateTo(localeRoute({ name: 'store' }))
+    await navigateTo(localeRoute({
+      name: 'store',
+      query: route.query,
+    }))
   }
 }
 </script>
