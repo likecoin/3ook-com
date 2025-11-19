@@ -78,7 +78,7 @@
           color="neutral"
           size="lg"
           :loading="isUnstakingAmount"
-          :disabled="isUnstakingAmount"
+          :disabled="userStake <= 0n"
           block
           @click="handleUnstakeButtonClick"
         />
