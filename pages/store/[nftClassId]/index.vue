@@ -10,23 +10,24 @@
 
         'flex',
         'items-center',
-        'gap-2',
-
-        'group',
-        'cursor-pointer',
       ]"
-      @click="handleBackButtonClick"
     >
       <UButton
-        class="rounded-full cursor-pointer"
-        icon="i-material-symbols-arrow-back-rounded"
-        variant="subtle"
+        variant="link"
         color="neutral"
-      />
-      <p
-        class="text-sm text-gray-400 transition-colors group-hover:text-gray-600"
-        v-text="$t('product_page_back_to_store_label')"
-      />
+        @click="handleBackButtonClick"
+      >
+        <div class="rounded-full p-1 border-1 border-gray-300 flex items-center justify-center">
+          <UIcon
+            name="i-material-symbols-arrow-back-rounded"
+            class="w-4 h-4"
+          />
+        </div>
+        <p
+          class="text-sm"
+          v-text="$t('product_page_back_to_store_label')"
+        />
+      </UButton>
     </div>
     <section class="flex flex-col tablet:flex-row gap-[32px] tablet:gap-[44px] w-full max-w-[1200px]">
       <div class="grow pt-5">
