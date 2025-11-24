@@ -25,13 +25,24 @@ export function useAnalytics() {
     utmSource?: string
     utmMedium?: string
   } = {}) {
+    let resolvedUtmSource = getRouteQuery('utm_source')
+    let resolvedUtmMedium = getRouteQuery('utm_medium')
+    if (getRouteQuery('srsltid')) {
+      if (!resolvedUtmSource) {
+        resolvedUtmSource = 'google'
+      }
+      if (!resolvedUtmMedium) {
+        resolvedUtmMedium = 'organic'
+      }
+    }
+
     return {
       gaClientId: gaClientId.value,
       gaSessionId: gaSessionId.value,
       referrer: referrer.value,
       utmCampaign: getRouteQuery('utm_campaign'),
-      utmMedium: getRouteQuery('utm_medium') || getRouteQuery('ll_medium') || utmMedium,
-      utmSource: getRouteQuery('utm_source') || getRouteQuery('ll_source') || utmSource,
+      utmMedium: resolvedUtmMedium || getRouteQuery('ll_medium') || utmMedium,
+      utmSource: resolvedUtmSource || getRouteQuery('ll_source') || utmSource,
       utmContent: getRouteQuery('utm_content'),
       utmTerm: getRouteQuery('utm_term'),
       gadClickId: getRouteQuery('gclid'),

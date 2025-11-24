@@ -9,6 +9,10 @@ const CARRY_ON_QUERY_KEYS = [
   'utm_source',
   'utm_content',
   'utm_term',
+  'srsltid',
+  'gclid',
+  'gad_source',
+  'fbclid',
   'maintenance',
 ]
 
