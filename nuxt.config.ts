@@ -25,9 +25,9 @@ export default defineNuxtConfig({
     '@sentry/nuxt/module',
     '@nuxt/scripts',
     '@nuxtjs/sitemap',
-    '@posthog/nuxt',
     'v-gsap-nuxt',
     '@vite-pwa/nuxt',
+    '@posthog/nuxt',
   ],
 
   devtools: { enabled: true },
@@ -195,7 +195,7 @@ export default defineNuxtConfig({
   },
 
   posthogConfig: {
-    publicKey: process.env.POSTHOG_PUBLIC_KEY,
+    publicKey: process.env.POSTHOG_PUBLIC_KEY || 'placeholder_key_to_avoid_nuxt_module_error',
     host: process.env.POSTHOG_HOST,
     clientConfig: {
       defaults: process.env.POSTHOG_DEFAULTS as ConfigDefaults | undefined,
