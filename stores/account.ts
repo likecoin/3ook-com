@@ -348,6 +348,12 @@ export const useAccountStore = defineStore('account', () => {
 
   async function restoreConnection() {
     if (address.value) {
+      if (user.value?.evmWallet && address.value.toLowerCase() !== user.value.evmWallet.toLowerCase()) {
+        throw createError({
+          statusCode: 400,
+          message: $t('error_connected_wallet_different'),
+        })
+      }
       return
     }
     const lastUsedConnectorId = user.value?.loginMethod

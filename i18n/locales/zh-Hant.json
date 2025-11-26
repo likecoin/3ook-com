@@ -177,6 +177,7 @@
   "error_book_list_remove": "從書單移除失敗",
   "error_claim_free_book_email_not_set": "帳戶沒有設置電郵，請聯絡客服。",
   "error_connect_wallet_failed": "未能連接錢包",
+  "error_connected_wallet_different": "已連接的錢包與帳戶錢包不符",
   "error_download_book_failed": "下載書本失敗",
   "error_insufficient_amount": "餘額不足",
   "error_insufficient_amount_description": "你需要 {amount} LIKE，但你只有 {balance} LIKE。\n\n",

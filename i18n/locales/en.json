@@ -177,6 +177,7 @@
   "error_book_list_remove": "Failed remove from 3ookList",
   "error_claim_free_book_email_not_set": "No email is set for the account. Please contact customer service.",
   "error_connect_wallet_failed": "Failed to connect wallet",
+  "error_connected_wallet_different": "The connected wallet is different from your account wallet",
   "error_download_book_failed": "Failed to download book",
   "error_insufficient_amount": "Insufficient amount",
   "error_insufficient_amount_description": "You need {amount} LIKE but only have {balance} LIKE",
