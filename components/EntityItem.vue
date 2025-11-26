@@ -3,7 +3,10 @@
     :text="props.walletAddress"
     :disabled="!props.walletAddress || !!displayName"
   >
-    <span ref="lazyLoadTrigger">
+    <span
+      v-if="!props.isLinkDisabled"
+      ref="lazyLoadTrigger"
+    >
       <UButton
         :label="label"
         :to="linkRoute"
@@ -13,10 +16,27 @@
         :ui="{ base: 'pr-4 rounded-full' }"
       />
     </span>
+    <div
+      v-else
+      ref="lazyLoadTrigger"
+      class="flex items-center gap-2"
+    >
+      <UAvatar
+        :alt="name"
+        size="xs"
+        :src="avatar"
+      />
+      <span
+        class="font-semibold text-gray-900 truncate max-w-[160px]"
+        v-text="label"
+      />
+    </div>
   </UTooltip>
 </template>
 
 <script setup lang="ts">
+import defaultAvatar from '@/assets/images/voice-avatars/default.jpg'
+
 const props = defineProps({
   name: {
     type: String,
@@ -29,6 +49,10 @@ const props = defineProps({
   entityType: {
     type: String as PropType<'author' | 'publisher'>,
     default: 'author',
+  },
+  isLinkDisabled: {
+    type: Boolean,
+    default: false,
   },
 })
 
@@ -48,6 +72,11 @@ useVisibility('lazyLoadTrigger', (visible) => {
 const displayName = computed(() => {
   const likerInfo = metadataStore.getLikerInfoByWalletAddress(props.walletAddress)
   return likerInfo?.displayName || props.name
+})
+
+const avatar = computed(() => {
+  const likerInfo = metadataStore.getLikerInfoByWalletAddress(props.walletAddress)
+  return likerInfo?.avatarSrc || defaultAvatar
 })
 
 const label = computed(() => {

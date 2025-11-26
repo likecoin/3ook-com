@@ -220,27 +220,22 @@
               :key="buyer.txHash"
               class="p-4"
             >
-              <div class="flex items-start gap-3">
-                <UAvatar
-                  :src="metadataStore.getLikerInfoByWalletAddress(buyer.wallet)?.avatarSrc || defaultAvatar"
-                  size="sm"
-                />
-                <div class="flex-1">
-                  <div class="flex items-center gap-2 mb-1 text-sm">
-                    <span
-                      class="font-semibold text-gray-900 truncate max-w-[160px]"
-                      v-text="metadataStore.getLikerInfoByWalletAddress(buyer.wallet)?.displayName || buyer.wallet"
-                    />
-                    <span
-                      class="text-gray-400"
-                      v-text="new Date(buyer.timestamp).toLocaleString()"
-                    />
-                  </div>
+              <div class="flex flex-col items-start gap-3">
+                <div class="flex items-center gap-2">
+                  <EntityItem
+                    :name="buyer.wallet"
+                    :wallet-address="buyer.wallet"
+                    :is-link-disabled="true"
+                  />
                   <p
-                    class="text-gray-900 whitespace-pre-wrap break-words"
-                    v-text="buyer.message"
+                    class="text-gray-400 text-xs"
+                    v-text="new Date(buyer.timestamp).toLocaleString()"
                   />
                 </div>
+                <p
+                  class="text-gray-900 whitespace-pre-wrap break-words"
+                  v-text="buyer.message"
+                />
               </div>
             </div>
           </template>
@@ -615,7 +610,6 @@
 <script setup lang="ts">
 import type { TabsItem } from '@nuxt/ui'
 import MarkdownIt from 'markdown-it'
-import defaultAvatar from '@/assets/images/voice-avatars/default.jpg'
 
 const likeCoinSessionAPI = useLikeCoinSessionAPI()
 const route = useRoute()

@@ -75,15 +75,8 @@ export const useNFTStore = defineStore('nft', () => {
   }
 
   async function fetchMessagesByClassId(classId: string) {
-    const metadataStore = useMetadataStore()
     const data = await fetchPurchaseMessagesByNFTClassId(classId)
     messagesByNFTClassIdMap.value[classId] = data.messages
-
-    const fetchPromises = data.messages
-      .filter(message => message.wallet)
-      .map(message => metadataStore.lazyFetchLikerInfoByWalletAddress(message.wallet))
-
-    Promise.all(fetchPromises)
 
     return messagesByNFTClassIdMap.value[classId]
   }
