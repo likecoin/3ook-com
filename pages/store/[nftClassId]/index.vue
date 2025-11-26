@@ -228,12 +228,12 @@
                     :is-link-disabled="true"
                   />
                   <p
-                    class="text-gray-400 text-xs"
+                    class="text-dimmed text-xs"
                     v-text="new Date(buyer.timestamp).toLocaleString()"
                   />
                 </div>
                 <p
-                  class="text-gray-900 whitespace-pre-wrap break-words"
+                  class="text-highlighted whitespace-pre-wrap break-words"
                   v-text="buyer.message"
                 />
               </div>

@@ -27,7 +27,7 @@
         :src="avatar"
       />
       <span
-        class="font-semibold text-gray-900 truncate max-w-[160px]"
+        class="font-semibold text-highlighted truncate max-w-[160px]"
         v-text="label"
       />
     </div>
