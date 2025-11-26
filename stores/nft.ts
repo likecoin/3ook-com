@@ -2,14 +2,14 @@ export const useNFTStore = defineStore('nft', () => {
   const bookstoreStore = useBookstoreStore()
 
   const nftClassByIdMap = ref<Record<string, Partial<NFTClass>>>({})
-  const messagesByClassIdMap = ref<Record<string, NFTBuyerMessage[]>>({})
+  const messagesByNFTClassIdMap = ref<Record<string, NFTBuyerMessage[]>>({})
 
   const getNFTClassById = computed(() => (id: string) => nftClassByIdMap.value[normalizeNFTClassId(id)])
   const getNFTClassMetadataById = computed(() => (id: string) => {
     const nftClass = getNFTClassById.value(id)
     return nftClass?.metadata
   })
-  const getMessagesByClassId = computed(() => (id: string) => messagesByClassIdMap.value[id])
+  const getMessagesByNFTClassId = computed(() => (id: string) => messagesByNFTClassIdMap.value[id])
 
   function addNFTClass(nftClass: Partial<NFTClass>) {
     if (nftClass.address) {
@@ -76,8 +76,8 @@ export const useNFTStore = defineStore('nft', () => {
 
   async function fetchMessagesByClassId(classId: string) {
     const metadataStore = useMetadataStore()
-    const data = await fetchPurchaseMessagesByClassId(classId)
-    messagesByClassIdMap.value[classId] = data.messages
+    const data = await fetchPurchaseMessagesByNFTClassId(classId)
+    messagesByNFTClassIdMap.value[classId] = data.messages
 
     const fetchPromises = data.messages
       .filter(message => message.wallet)
@@ -85,23 +85,23 @@ export const useNFTStore = defineStore('nft', () => {
 
     Promise.all(fetchPromises)
 
-    return messagesByClassIdMap.value[classId]
+    return messagesByNFTClassIdMap.value[classId]
   }
 
   async function lazyFetchMessagesByClassId(classId: string) {
-    if (messagesByClassIdMap.value[classId]) {
-      return messagesByClassIdMap.value[classId]
+    if (messagesByNFTClassIdMap.value[classId]) {
+      return messagesByNFTClassIdMap.value[classId]
     }
     return await fetchMessagesByClassId(classId)
   }
 
   return {
     nftClassByIdMap,
-    messagesByClassIdMap,
+    messagesByNFTClassIdMap,
 
     getNFTClassById,
     getNFTClassMetadataById,
-    getMessagesByClassId,
+    getMessagesByNFTClassId,
 
     addNFTClass,
     addNFTClasses,

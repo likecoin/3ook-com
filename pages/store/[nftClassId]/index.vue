@@ -770,7 +770,7 @@ const authorDescriptionHTML = computed(() => {
 })
 
 const buyerMessages = computed(() => {
-  const messages = nftStore.getMessagesByClassId(nftClassId.value)
+  const messages = nftStore.getMessagesByNFTClassId(nftClassId.value)
   if (!messages) return []
 
   return messages
@@ -1016,7 +1016,9 @@ const { gridClasses, getGridItemClassesByIndex } = usePaginatedGrid({
 
 onMounted(async () => {
   useLogEvent('view_item', formattedLogPayload.value)
-  nftStore.lazyFetchMessagesByClassId(nftClassId.value)
+  nftStore.lazyFetchMessagesByClassId(nftClassId.value).catch((error) => {
+    console.error(`Failed to fetch messages for NFT class ${nftClassId.value}:`, error)
+  })
   const ownerWalletAddress = bookInfo.nftClassOwnerWalletAddress.value
   if (ownerWalletAddress) {
     metadataStore.lazyFetchLikerInfoByWalletAddress(ownerWalletAddress).catch((error) => {
