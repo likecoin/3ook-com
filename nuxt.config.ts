@@ -264,6 +264,7 @@ export default defineNuxtConfig({
           'https://static.intercomassets.com',
           'https://explorer-api.walletconnect.com',
           'https://bat.bing.com',
+          'https://bat.bing.net',
           ...[
             process.env.LIKECOIN_API_ENDPOINT,
             process.env.LIKECOIN_STATIC_ENDPOINT,
