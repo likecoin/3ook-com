@@ -1,6 +1,6 @@
 <template>
   <NuxtLink
-    :to="stakingRoute"
+    :to="to"
     :class="[
       'flex',
       'items-center',
@@ -20,7 +20,7 @@ import type { RouteLocationRaw } from 'vue-router'
 withDefaults(defineProps<{
   label?: string
   isHidden?: boolean
-  stakingRoute?: RouteLocationRaw
+  to?: RouteLocationRaw
 }>(), {
   label: '',
   isHidden: false,
