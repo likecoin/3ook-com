@@ -614,6 +614,7 @@ import MarkdownIt from 'markdown-it'
 const likeCoinSessionAPI = useLikeCoinSessionAPI()
 const route = useRoute()
 const config = useRuntimeConfig()
+const isTestnet = !!config.public.isTestnet
 const baseURL = config.public.baseURL
 const md = new MarkdownIt({
   html: false, // Disable raw HTML to prevent XSS attacks from untrusted markdown input
@@ -797,7 +798,8 @@ const infoTabItems = computed(() => {
     value: 'staking-info',
   })
 
-  if (buyerMessages.value.length) {
+  // [2025-11-27] Temporarily disabled buyer messages feature
+  if (isTestnet && buyerMessages.value.length) {
     items.push({
       label: $t('product_page_buyer_messages_tab'),
       slot: 'buyer-messages',
