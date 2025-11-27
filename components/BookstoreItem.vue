@@ -48,6 +48,7 @@
       <BookItemStatsRow
         :label="$t('staking_explore_total_staked')"
         :is-hidden="totalStaked <= 0"
+        :staking-route="stakingRoute"
       >
         <BalanceLabel
           :value="totalStaked"
@@ -58,6 +59,7 @@
       <BookItemStatsRow
         :label="$t('staking_explore_stakers')"
         :is-hidden="totalStaked <= 0"
+        :staking-route="stakingRoute"
       >
         <BalanceLabel
           :value="stakerCount"
@@ -125,6 +127,16 @@ const productPageRoute = computed(() => {
     llMedium: props.llMedium || undefined,
     llSource: props.llSource || undefined,
   })
+})
+const stakingRoute = computed(() => {
+  const route = productPageRoute.value
+  if (route && route.name) {
+    return {
+      ...route,
+      hash: '#staking-info',
+    }
+  }
+  return undefined
 })
 
 const bookName = computed(() => bookInfo.name.value || props.bookName)
