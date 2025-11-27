@@ -20,7 +20,7 @@
       :label="$t('subscription_success_continue_button')"
       color="primary"
       :loading="isRedirecting"
-      @click="redirectToShelf"
+      @click="redirectToStore"
     />
     <UButton
       v-else
@@ -164,7 +164,7 @@ onMounted(async () => {
       }
       else {
         isRefreshing.value = false
-        setTimeout(redirectToShelf, 1000)
+        setTimeout(redirectToStore, 1000)
       }
     }
   }
@@ -177,10 +177,10 @@ onMounted(async () => {
   }
 })
 
-async function redirectToShelf() {
+async function redirectToStore() {
   isRedirecting.value = true
   try {
-    await navigateTo(localeRoute({ name: 'shelf' }))
+    await navigateTo(localeRoute({ name: 'store' }))
   }
   catch (error) {
     await handleError(error)

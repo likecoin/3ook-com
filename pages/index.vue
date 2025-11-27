@@ -9,14 +9,12 @@
 </template>
 
 <script setup lang="ts">
-const { loggedIn: hasLoggedIn } = useUserSession()
-
 const route = useRoute()
 const localeRoute = useLocaleRoute()
 
 await navigateTo(
   localeRoute({
-    name: hasLoggedIn.value ? 'shelf' : 'store',
+    name: 'store',
     query: route.query,
   }),
   { replace: true },
