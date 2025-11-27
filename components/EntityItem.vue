@@ -13,7 +13,7 @@
         variant="soft"
         size="xl"
         :avatar="{ icon: 'i-material-symbols-person-2-rounded' }"
-        :ui="{ base: 'pr-4 rounded-full', label: 'text-wrap' }"
+        :ui="{ base: 'pr-4 rounded-3xl', label: 'text-wrap' }"
       />
     </span>
     <div
