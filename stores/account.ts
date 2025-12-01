@@ -47,7 +47,7 @@ export const useAccountStore = defineStore('account', () => {
   const overlay = useOverlay()
   const { errorModal, handleError } = useErrorHandler()
   const blockingModal = useBlockingModal()
-  const { t: $t } = useI18n()
+  const { t: $t, locale } = useI18n()
   const { getLikeCoinV3BookMigrationSiteURL } = useLikeCoinV3MigrationSite()
   const likeCoinSessionAPI = useLikeCoinSessionAPI()
 
@@ -70,7 +70,7 @@ export const useAccountStore = defineStore('account', () => {
   watch(
     () => user.value,
     async (user) => {
-      useSetLogUser(user)
+      useSetLogUser(user, locale.value)
       if (user?.token) {
         const hasValidPermissions = verifyTokenPermissions(user.token)
         if (!hasValidPermissions) {

@@ -143,7 +143,7 @@ export function useLogEvent(eventName: string, eventParams: EventParams = {}) {
   }
 }
 
-export function useSetLogUser(user: User | null) {
+export function useSetLogUser(user: User | null, locale: string) {
   // Set user in Sentry
   if (!user) {
     setSentryUser(null)
@@ -172,6 +172,7 @@ export function useSetLogUser(user: User | null) {
       gtag('set', 'user_properties', {
         is_liker_plus: !!user.isLikerPlus,
         login_method: user.loginMethod,
+        locale,
       })
     }
   }
@@ -218,6 +219,7 @@ export function useSetLogUser(user: User | null) {
           like_wallet: user.likeWallet,
           login_method: user.loginMethod,
           is_liker_plus: !!user.isLikerPlus,
+          locale,
         })
       }
     }
@@ -232,7 +234,15 @@ export function useSetLogUser(user: User | null) {
       const posthog = $posthog()
       posthog.identify(
         user?.evmWallet,
-        user ? { email: user?.email || undefined, name: user?.displayName || user?.evmWallet || user?.likeWallet } : undefined,
+        user
+          ? {
+              email: user?.email || undefined,
+              name: user?.displayName || user?.evmWallet || user?.likeWallet,
+              locale,
+              is_liker_plus: !!user.isLikerPlus,
+              login_method: user.loginMethod,
+            }
+          : undefined,
       )
     }
     catch (error) {
