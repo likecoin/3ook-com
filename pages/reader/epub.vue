@@ -614,7 +614,7 @@ async function loadEPub() {
         onVoiceSelected: (languageVoice: string) => {
           snoozeTTSTrialModal(oneWeekInMs)
           ttsTrialModal.close()
-          useLogEvent('tts_trial_voice_submitted', {
+          useLogEvent('tts_trial_voice_selected', {
             nft_class_id: nftClassId.value,
             languageVoice,
           })
