@@ -37,7 +37,7 @@
           variant="outline"
           size="md"
           :ui="{ base: 'gap-3 bg-white hover:bg-white hover:border-gray-400 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 ease-in-out' }"
-          @click="handleSampleClick(sample.id)"
+          @click="handleSampleClick(sample)"
         >
           <template #leading>
             <div
@@ -114,7 +114,18 @@
 </template>
 
 <script setup lang="ts">
+const props = withDefaults(defineProps<{
+  skipPlayback?: boolean
+}>(), {
+  skipPlayback: false,
+})
+
+const emit = defineEmits<{
+  voiceSelected: [languageVoice: string]
+}>()
+
 const { handleError } = useErrorHandler()
+const { setTTSLanguageVoice } = useTTSVoice()
 
 const {
   samples: ttsSamples,
@@ -138,8 +149,22 @@ function getPlayButtonIcon(sampleId: string) {
     : 'i-material-symbols-play-arrow-rounded'
 }
 
-function handleSampleClick(sampleId: string) {
+function handleSampleClick(sample: { id: string, languageVoice: string }) {
+  const sampleId = sample.id
+  const languageVoice = sample.languageVoice
   useLogEvent('tts_sample_click', { sample: sampleId })
+
+  if (props.skipPlayback) {
+    setTTSLanguageVoice(languageVoice)
+    useLogEvent('tts_trial_voice_selected', {
+      sample: sampleId,
+      languageVoice,
+    })
+    nextTick(() => {
+      emit('voiceSelected', languageVoice)
+    })
+    return
+  }
 
   if (activeTTSSampleId.value === sampleId && isPlayingSample.value) {
     useLogEvent('tts_sample_stop', { sample: activeTTSSampleId.value })
