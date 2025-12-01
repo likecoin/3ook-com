@@ -339,7 +339,11 @@ const walletAddress = computed(() => user.value?.evmWallet || '')
 const governanceData = useGovernanceData(walletAddress)
 const { claimReward, restakeReward, withdraw } = useVeLikeContract()
 const { balanceOf } = useLikeCoinContract()
-const { likeBalance, formattedLikeBalance } = useLikeCoinBalance(walletAddress)
+const {
+  likeBalance,
+  formattedLikeBalance,
+  refetch: refetchLikeBalance,
+} = useLikeCoinBalance(walletAddress)
 
 const stakeAmount = ref(0)
 const withdrawAmount = ref(0)
@@ -347,6 +351,13 @@ const isAutoRestakeEnabledStorage = useStorage(`${cacheKeyPrefix}-deposit-autore
 const isAutoRestakeEnabled = ref(true)
 const isLoading = ref(false)
 const error = ref<string | null>(null)
+
+async function refreshData() {
+  await Promise.all([
+    governanceData.loadGovernanceData(),
+    refetchLikeBalance(),
+  ])
+}
 
 const maxDepositButtonTooltipText = computed(() => {
   return Number(formatUnits(getPercentageAmount(likeBalance.value, 0.99), likeCoinTokenDecimals))
@@ -402,7 +413,7 @@ async function handleClaimRewards() {
         color: 'success',
       })
     }
-    await governanceData.loadGovernanceData()
+    await refreshData()
   }
   catch (err) {
     console.error('Error claiming/restaking rewards:', err)
@@ -439,7 +450,7 @@ async function handleStake() {
       color: 'success',
     })
     stakeAmount.value = 0
-    await governanceData.loadGovernanceData()
+    await refreshData()
   }
   catch (err) {
     console.error('Error staking:', err)
@@ -490,7 +501,7 @@ async function handleWithdraw() {
       color: 'success',
     })
     withdrawAmount.value = 0
-    await governanceData.loadGovernanceData()
+    await refreshData()
   }
   catch (err) {
     console.error('Error withdrawing:', err)

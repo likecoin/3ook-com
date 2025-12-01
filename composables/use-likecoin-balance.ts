@@ -4,7 +4,7 @@ import { formatUnits, erc20Abi } from 'viem'
 export function useLikeCoinBalance(walletAddress: MaybeRefOrGetter<string | undefined>) {
   const config = useRuntimeConfig()
 
-  const { data } = useReadContract(
+  const { data, refetch } = useReadContract(
     {
       address: config.public.likeCoinTokenAddress as `0x${string}`,
       abi: erc20Abi,
@@ -26,6 +26,7 @@ export function useLikeCoinBalance(walletAddress: MaybeRefOrGetter<string | unde
   })
 
   return {
+    refetch,
     likeBalance,
     formattedLikeBalance,
   }

@@ -329,7 +329,7 @@ const toast = useToast()
 const isWindowFocused = useDocumentVisibility()
 const { copy: copyToClipboard } = useClipboard()
 
-const { formattedLikeBalance } = useLikeCoinBalance(user.value?.evmWallet)
+const { formattedLikeBalance, refetch: refetchLikeBalance } = useLikeCoinBalance(user.value?.evmWallet)
 const { claimWalletRewards } = useLikeCollectiveContract()
 
 useHead({
@@ -516,6 +516,7 @@ async function handleClaimStakingRewardButtonClick() {
       await Promise.all([
         stakingStore.fetchUserStakingData(user.value.evmWallet),
         bookshelfStore.fetchItems({ walletAddress: user.value.evmWallet, isRefresh: true }),
+        refetchLikeBalance(),
       ])
     }
   }
