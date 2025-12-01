@@ -12,7 +12,7 @@ env:
   # Configure environment variables.
   # See https://firebase.google.com/docs/app-hosting/configure#user-defined-environment
   - variable: NODE_OPTIONS
-    value: --max-old-space-size=4096
+    value: --max-old-space-size=8192
     availability:
       - BUILD
   - variable: AIRTABLE_CMS_BASE_ID
