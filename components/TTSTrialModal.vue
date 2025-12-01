@@ -55,7 +55,6 @@
 </template>
 
 <script setup lang="ts">
-import { defineEmits, defineProps } from 'vue'
 import type { TTSTrialModalProps } from './TTSTrialModal.props'
 
 const props = defineProps<TTSTrialModalProps>()
