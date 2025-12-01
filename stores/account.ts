@@ -1,4 +1,4 @@
-import { useAccount, useChainId, useConnect, useDisconnect, useSignMessage } from '@wagmi/vue'
+import { useConnection, useChainId, useConnect, useDisconnect, useSignMessage } from '@wagmi/vue'
 import { UserRejectedRequestError } from 'viem'
 import { FetchError } from 'ofetch'
 import { jwtDecode } from 'jwt-decode'
@@ -38,7 +38,7 @@ function verifyTokenPermissions(token: string): boolean {
 export const useAccountStore = defineStore('account', () => {
   const config = useRuntimeConfig()
   const { $wagmiConfig } = useNuxtApp()
-  const { address, isConnected } = useAccount()
+  const { address, isConnected } = useConnection()
   const currentChainId = useChainId()
   const { connectAsync, connectors, status } = useConnect()
   const { disconnectAsync } = useDisconnect()

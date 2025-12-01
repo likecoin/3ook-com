@@ -18,8 +18,10 @@
     "typecheck": "nuxt typecheck"
   },
   "dependencies": {
+    "@coinbase/wallet-sdk": "~4.3.6",
     "@likecoin/epubjs": "^0.3.93",
     "@likecoin/wagmi-connector": "2.3.2",
+    "@metamask/sdk": "~0.33.1",
     "@nuxt/eslint": "^1.2.0",
     "@nuxt/icon": "^1.11.0",
     "@nuxt/scripts": "^0.11.8",
@@ -33,7 +35,9 @@
     "@unhead/vue": "^2.0.10",
     "@vite-pwa/nuxt": "^1.0.4",
     "@vueuse/nuxt": "^13.0.0",
-    "@wagmi/vue": "^0.3.4",
+    "@wagmi/core": "3.0.0",
+    "@wagmi/vue": "^0.4.2",
+    "@walletconnect/ethereum-provider": "~2.21.1",
     "eslint": "^9.22.0",
     "firebase-admin": "^13.4.0",
     "jwt-decode": "^4.0.0",
