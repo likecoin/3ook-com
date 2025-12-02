@@ -564,11 +564,17 @@ useHead(() => {
       href: '/api/store/tags',
       as: 'fetch' as const,
     },
-    {
-      rel: 'preload',
-      href: `/api/store/products?tag=${tagId.value}&limit=100&ts=${getTimestampRoundedToMinute()}`,
-      as: 'fetch' as const,
-    },
+    ...(isStakingTagId.value
+      ? [{
+          rel: 'preload',
+          href: `${runtimeConfig.public.likeCoinEVMChainCollectiveAPIEndpoint}/book-nfts?pagination.limit=100&time_frame_sort_by=${mapTagIdToAPIStakingSortValue(tagId.value)}&time_frame_sort_order=desc`,
+          as: 'fetch' as const,
+        }]
+      : [{
+          rel: 'preload',
+          href: `/api/store/products?tag=${tagId.value}&limit=100&ts=${getTimestampRoundedToMinute()}`,
+          as: 'fetch' as const,
+        }]),
   ]
 
   return {
