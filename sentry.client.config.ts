@@ -7,6 +7,7 @@ if (sentryDsn) {
     // dsn: useRuntimeConfig().public.sentry.dsn,
     dsn: sentryDsn,
 
+    sendDefaultPii: true,
     // We recommend adjusting this value in production, or using tracesSampler
     // for finer control
     tracesSampleRate: 1.0,
@@ -25,6 +26,7 @@ if (sentryDsn) {
         maskAllText: true,
         blockAllMedia: true,
       }),
+      Sentry.piniaIntegration(usePinia()),
     ],
 
     ignoreErrors: [
