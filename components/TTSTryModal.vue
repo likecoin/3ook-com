@@ -10,7 +10,7 @@
     <template #header>
       <UIcon
         name="i-material-symbols-volume-up-rounded"
-        class="text-theme-400"
+        class="text-theme-cyan"
         size="24"
       />
       <span
@@ -30,7 +30,7 @@
         v-text="$t('tts_try_modal_description')"
       />
       <TTSSamplesSection
-        skip-playback
+        is-skipping-playback
         @voice-selected="handleVoiceSelected"
       />
     </template>

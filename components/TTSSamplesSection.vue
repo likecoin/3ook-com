@@ -117,9 +117,9 @@
 import { defineEmits, defineProps, withDefaults } from 'vue'
 
 const props = withDefaults(defineProps<{
-  skipPlayback?: boolean
+  isSkippingPlayback?: boolean
 }>(), {
-  skipPlayback: false,
+  isSkippingPlayback: false,
 })
 
 const emit = defineEmits<{
@@ -156,7 +156,7 @@ function handleSampleClick(sample: { id: string, languageVoice: string }) {
   const languageVoice = sample.languageVoice
   useLogEvent('tts_sample_click', { sample: sampleId })
 
-  if (props.skipPlayback) {
+  if (props.isSkippingPlayback) {
     setTTSLanguageVoice(languageVoice)
     useLogEvent('tts_try_voice_selected', {
       sample: sampleId,
