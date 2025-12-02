@@ -4,7 +4,7 @@
       'flex',
       'flex-col',
       isTitleCenter ? 'items-center' : 'items-start',
-      'gap-5',
+      'gap-3 laptop:gap-4',
     ]"
   >
     <div
@@ -19,9 +19,10 @@
 
     <ul
       :class="[
-        'whitespace-pre-wrap',
-        'space-y-4 text-left',
         '*:flex *:items-start',
+        'space-y-3 laptop:space-y-4',
+        'text-left',
+        'whitespace-pre-wrap',
         '[&>li>span:first-child]:shrink-0',
         '[&>li>span:first-child]:mt-1',
         '[&>li>span:first-child]:mr-2',
@@ -50,6 +51,7 @@
           <UIcon name="i-material-symbols-check" />
           <span
             v-text="$t('pricing_page_feature_5', {
+              currency,
               monthlyPrice,
               yearlyPrice,
             })"
@@ -87,6 +89,7 @@ const props = withDefaults(defineProps<{
 const {
   monthlyPrice,
   yearlyPrice,
+  currency,
 } = useSubscriptionPricing()
 
 const isYearlyPlan = computed(() => {

@@ -1,4 +1,4 @@
-import { WagmiPlugin } from '@wagmi/vue'
+import { WagmiPlugin, type Config } from '@wagmi/vue'
 import { VueQueryPlugin } from '@tanstack/vue-query'
 import { defineNuxtPlugin } from 'nuxt/app'
 
@@ -15,7 +15,7 @@ export default defineNuxtPlugin((nuxtApp) => {
     isTestnet: !!config.public.isTestnet,
   })
   nuxtApp.vueApp
-    .use(WagmiPlugin, { config: wagmiConfig })
+    .use(WagmiPlugin, { config: wagmiConfig as Config })
     .use(VueQueryPlugin, {})
 
   return {

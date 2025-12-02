@@ -6,6 +6,8 @@ export default function useSubscriptionPricing() {
   const originalMonthlyPrice = ref(Number(monthly.original))
   const actualMonthlyPrice = ref(Number(monthly.actual))
 
+  const currency = ref('US')
+
   const hasMonthlyDiscount = computed(() => actualMonthlyPrice.value < originalMonthlyPrice.value)
   const hasYearlyDiscount = computed(() => actualYearlyPrice.value < originalYearlyPrice.value)
 
@@ -23,6 +25,7 @@ export default function useSubscriptionPricing() {
     monthlyPrice: readonly(actualMonthlyPrice),
     originalYearlyPrice: readonly(originalYearlyPrice),
     originalMonthlyPrice: readonly(originalMonthlyPrice),
+    currency,
     yearlyDiscountPercent,
     hasYearlyDiscount,
     hasMonthlyDiscount,

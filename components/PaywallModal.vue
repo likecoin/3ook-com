@@ -120,17 +120,26 @@
 
           <!-- Price Select -->
           <div class="flex flex-col w-full mt-12">
-            <PricingPlanSelect v-model="selectedPlan" />
+            <PricingLimitedOfferAlert
+              class="laptop:pt-5 rounded-xl"
+              :is-hidden="!isTrialFor30Days"
+              :trial-period-days="trialPeriodDays"
+            >
+              <PricingPlanSelect
+                v-model="selectedPlan"
+                :trial-period-days="trialPeriodDays"
+              />
 
-            <UButton
-              class="mt-4"
-              :label="subscribeButtonLabel"
-              block
-              size="xl"
-              :loading="props.isProcessingSubscription"
-              :ui="{ base: 'py-2 laptop:py-3 rounded-2xl cursor-pointer', label: 'font-bold' }"
-              @click="handleSubscribeButtonClick"
-            />
+              <UButton
+                class="mt-4"
+                :label="subscribeButtonLabel"
+                block
+                size="xl"
+                :loading="props.isProcessingSubscription"
+                :ui="{ base: 'py-2 laptop:py-3 cursor-pointer', label: 'font-bold' }"
+                @click="handleSubscribeButtonClick"
+              />
+            </PricingLimitedOfferAlert>
           </div>
         </div>
       </div>
@@ -214,10 +223,11 @@ const modalContentClass = computed(() => {
     'divide-y-0',
     'rounded-none',
     '!overflow-x-hidden',
+    '!overflow-y-auto',
   ]
   if (!isFullscreenModal.value) {
     classes.push(
-      'max-w-[420px] laptop:max-w-[840px]',
+      'max-w-md laptop:max-w-5xl',
       'laptop:rounded-2xl',
     )
   }
@@ -231,11 +241,16 @@ watch(
   value => emit('update:modelValue', value),
 )
 
+const isTrialFor30Days = computed(() => props.trialPeriodDays === 30)
+
 const subscribeButtonLabel = computed(() => {
   if (props.trialPeriodDays) {
-    return $t('pricing_page_start_trial_button', { days: props.trialPeriodDays })
+    if (isTrialFor30Days.value) {
+      return $t('plus_subscribe_cta_enjoy_offer')
+    }
+    return $t('plus_subscribe_cta_start_free_trial', { days: props.trialPeriodDays })
   }
-  return $t('pricing_page_continue_button')
+  return $t('plus_subscribe_cta_continue')
 })
 
 onMounted(() => {

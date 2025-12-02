@@ -30,7 +30,7 @@ const LANG_MAPPING = {
 const VOICE_MAPPING: Record<string, string> = {
   // Minimax voices
   0: 'Chinese (Mandarin)_Warm_Bestie',
-  1: 'Boyan_new_platform',
+  1: 'Chinese (Mandarin)_Southern_Young_Man',
   pazu: 'book_pazu_v2',
   phoebe: 'phoebe_v1',
 }

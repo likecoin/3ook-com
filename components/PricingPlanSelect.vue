@@ -1,23 +1,57 @@
 <template>
-  <div class="flex flex-col gap-4">
-    <!-- Yearly plan -->
+  <div class="flex flex-col gap-2 laptop:gap-3">
     <label
+      v-for="plan in plans"
+      :key="plan.value"
       :class="[
-        ...PLAN_LABEL_BASE_CLASS,
-        selectedPlan === 'yearly' ? 'border-black' : 'border-gray-200',
+        'relative',
+
+        'flex',
+        'justify-between',
+        'items-center',
+
+        'px-4',
+        'py-3 laptop:py-4',
+
+        'bg-theme-white',
+        'text-theme-black',
+        'rounded-lg',
+
+        'border-2',
+        plan.isSelected ? 'border-theme-black' : 'border-theme-black/40',
+
+        'mb-1',
+        'hover:mb-0',
+        'hover:border-b-6',
+        'hover:-translate-y-1',
+
+        'cursor-pointer',
+
+        'transition-all',
+        'duration-200',
+        'ease-in-out',
+
+        'before:content-[_]',
+        'before:absolute',
+        'before:inset-0',
+        'before:transition-colors',
+        'before:duration-[inherit]',
+        'before:ease-[inherit]',
+        'before:pointer-events-none',
+        'hover:before:bg-theme-black/5',
       ]"
     >
-      <div
-        v-if="yearlyDiscountPercent"
+      <aside
+        v-if="plan.discountPercent"
         :class="[
           'absolute',
           'top-0',
           'right-4',
 
-          'px-3',
-          'py-1',
+          'px-1.5 laptop:px-3',
+          'py-0.5 laptop:py-1',
 
-          'bg-black',
+          'bg-theme-black',
 
           'text-theme-cyan',
           'text-xs',
@@ -27,120 +61,60 @@
 
           '-translate-y-1/2',
         ]"
-        v-text="$t('pricing_page_yearly_discount', { discount: yearlyDiscountPercent })"
+        v-text="$t('pricing_page_yearly_discount', { discount: plan.discountPercent })"
       />
 
       <div class="flex items-center">
-        <div class="w-6 h-6 shrink-0 mr-4">
-          <div
-            :class="[
-              'w-full h-full rounded-full border flex items-center justify-center',
-              selectedPlan === 'yearly' ? 'bg-black' : 'bg-white border-gray-300',
-            ]"
-          >
-            <UIcon
-              v-show="selectedPlan === 'yearly'"
-              name="i-material-symbols-check"
-              class="text-theme-cyan"
-              :size="16"
-            />
-          </div>
-        </div>
         <div
-          class="text-md font-semibold whitespace-nowrap"
-          v-text="$t('pricing_page_yearly')"
-        />
-      </div>
-      <div class="text-right">
-        <div
-          v-if="hasYearlyDiscount"
-          class="flex justify-end items-center gap-2 text-sm text-gray-400"
+          :class="[
+            'size-5 shrink-0 mr-4 rounded-full border-2',
+            plan.isSelected ? 'bg-theme-black border-theme-black' : 'bg-transparent border-theme-black/40',
+          ]"
         >
-          <p v-text="$t('pricing_page_original_price')" />
-          <span
-            class="line-through text-gray-400"
-            v-text="`US$${originalYearlyPrice}`"
+          <UIcon
+            v-show="plan.isSelected"
+            name="i-material-symbols-check"
+            class="block text-theme-cyan"
+            :size="16"
           />
         </div>
-        <i18n-t
-          keypath="pricing_page_price_per_year"
-          tag="div"
-          class="flex items-baseline text-sm whitespace-nowrap"
-        >
-          <template #price>
-            <p
-              class="text-2xl font-bold px-1"
-              v-text="`$${yearlyPrice}`"
-            />
-          </template>
-        </i18n-t>
-      </div>
-      <input
-        v-model="selectedPlan"
-        type="radio"
-        name="plan"
-        value="yearly"
-        class="hidden"
-      >
-    </label>
 
-    <!-- Monthly plan -->
-    <label
-      :class="[
-        ...PLAN_LABEL_BASE_CLASS,
-        selectedPlan === 'monthly' ? 'border-black' : 'border-gray-200',
-      ]"
-    >
-      <div class="flex items-center">
-        <div class="w-6 h-6 flex-shrink-0 mr-4">
-          <div
-            class="w-full h-full rounded-full border flex items-center justify-center"
-            :class="selectedPlan === 'monthly' ? 'bg-black' : 'bg-white border-gray-300'"
-          >
-            <UIcon
-              v-show="selectedPlan === 'monthly'"
-              name="i-material-symbols-check"
-              class="text-theme-cyan"
-              :size="16"
-            />
-          </div>
-        </div>
-        <div
+        <span
           class="text-md font-semibold whitespace-nowrap"
-          v-text="$t('pricing_page_monthly')"
+          v-text="plan.label"
         />
       </div>
 
-      <div class="text-right">
+      <div class="text-xs laptop:text-sm text-right">
         <div
-          v-if="hasMonthlyDiscount"
-          class="flex justify-end items-center gap-2 text-sm text-gray-400"
+          v-if="plan.hint"
+          class="text-theme-black/60"
+          v-text="plan.hint"
+        />
+
+        <span
+          v-if="plan.hasDiscount"
+          class="text-theme-black/60 after:content-['_']"
         >
-          <p v-text="$t('pricing_page_original_price')" />
+          <span>{{ $t('pricing_page_original_price') }}&nbsp;</span>
+          <span class="line-through">{{ currency }} ${{ plan.originalPrice }}</span>
+        </span>
+
+        <span class="font-bold whitespace-nowrap">
+          <span>{{ currency }}&nbsp;</span>
           <span
-            class="line-through text-gray-400"
-            v-text="`US$${originalMonthlyPrice}`"
+            class="text-lg laptop:text-2xl"
+            v-text="`$${plan.price}`"
           />
-        </div>
-        <i18n-t
-          keypath="pricing_page_price_per_month"
-          tag="div"
-          class="flex items-baseline text-sm whitespace-nowrap"
-        >
-          <template #price>
-            <p
-              class="text-2xl font-bold px-1"
-              v-text="`$${monthlyPrice}`"
-            />
-          </template>
-        </i18n-t>
+          <span>/{{ plan.perUnit }}</span>
+        </span>
       </div>
 
       <input
         v-model="selectedPlan"
         type="radio"
         name="plan"
-        value="monthly"
+        :value="plan.value"
         class="hidden"
       >
     </label>
@@ -148,6 +122,20 @@
 </template>
 
 <script lang="ts" setup>
+const props = withDefaults(defineProps<{
+  isYearlyHidden?: boolean
+  isMonthlyHidden?: boolean
+  trialPeriodDays?: number
+  trialPrice?: number
+}>(), {
+  isYearlyHidden: false,
+  isMonthlyHidden: false,
+  trialPeriodDays: 30,
+  trialPrice: 1,
+})
+
+const { t: $t } = useI18n()
+
 const {
   monthlyPrice,
   yearlyPrice,
@@ -156,27 +144,48 @@ const {
   yearlyDiscountPercent,
   hasMonthlyDiscount,
   hasYearlyDiscount,
+  currency,
 } = useSubscriptionPricing()
 
 const selectedPlan = defineModel({
   type: String,
-  default: 'monthly',
+  default: 'yearly',
 })
 
-const PLAN_LABEL_BASE_CLASS = [
-  'relative',
-  'flex',
-  'justify-between',
-  'items-center',
-  'px-4',
-  'py-4',
-  'rounded-2xl',
-  'border-2',
-  'cursor-pointer',
-  'transition-all',
-  'duration-200',
-  'ease-in-out',
-  'hover:shadow-lg',
-  'hover:border-gray-400',
-]
+const isTrialFor30Days = computed(() => props.trialPeriodDays === 30)
+
+const plans = computed(() => {
+  const values: SubscriptionPlan[] = []
+  if (!props.isYearlyHidden) {
+    values.push('yearly')
+  }
+  if (!props.isMonthlyHidden) {
+    values.push('monthly')
+  }
+  return values.map((value) => {
+    const isMonthly = value === 'monthly'
+    let hint: string | undefined
+    if (isTrialFor30Days.value) {
+      const hintI18nNames = {
+        days: props.trialPeriodDays,
+        currency: currency.value,
+        price: props.trialPrice,
+      }
+      hint = isMonthly
+        ? $t('plus_subscribe_cta_monthly_trial_with_price', hintI18nNames)
+        : $t('plus_subscribe_cta_yearly_trial_with_price', hintI18nNames)
+    }
+    return {
+      isSelected: selectedPlan.value === value,
+      value,
+      label: isMonthly ? $t('pricing_page_monthly') : $t('pricing_page_yearly'),
+      hint,
+      perUnit: isMonthly ? $t('pricing_page_price_per_month') : $t('pricing_page_price_per_year'),
+      price: isMonthly ? monthlyPrice.value : yearlyPrice.value,
+      originalPrice: isMonthly ? originalMonthlyPrice.value : originalYearlyPrice.value,
+      hasDiscount: isMonthly ? hasMonthlyDiscount.value : hasYearlyDiscount.value,
+      discountPercent: isMonthly ? null : yearlyDiscountPercent.value,
+    }
+  })
+})
 </script>

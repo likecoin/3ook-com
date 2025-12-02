@@ -162,14 +162,22 @@ const isDonating = ref(false)
 const {
   likeBalance,
   formattedLikeBalance,
+  refetch: refetchLikeBalance,
 } = useLikeCoinBalance(walletAddress)
 
 const isValidStakeAmount = computed(() => {
   return stakeAmount.value > 0
 })
 
+async function refreshData() {
+  await Promise.all([
+    loadStakingData(),
+    refetchLikeBalance(),
+  ])
+}
+
 onMounted(async () => {
-  await loadStakingData()
+  await refreshData()
 })
 
 async function handleConnectWallet() {
@@ -225,7 +233,7 @@ async function handleStakeButtonClick() {
     })
 
     stakeAmount.value = 0
-    await loadStakingData()
+    await refreshData()
   }
   catch (error) {
     await handleError(error, {
@@ -276,7 +284,7 @@ async function handleUnstakeButtonClick() {
     })
 
     stakeAmount.value = 0
-    await loadStakingData()
+    await refreshData()
   }
   catch (error) {
     await handleError(error, {
@@ -316,7 +324,7 @@ async function handleDonateButtonClick() {
     })
 
     stakeAmount.value = 0
-    await loadStakingData()
+    await refreshData()
   }
   catch (error) {
     await handleError(error, {

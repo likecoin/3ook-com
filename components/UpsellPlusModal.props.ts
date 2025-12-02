@@ -17,6 +17,7 @@ export interface UpsellPlusModalProps {
   likerPlusPeriod?: LikerPlusStatus
   isProcessingSubscription?: boolean
   trialPeriodDays?: number
+  trialPrice?: number
   mustCollectPaymentMethod?: boolean
   nftClassId?: string
   utmCampaign?: string

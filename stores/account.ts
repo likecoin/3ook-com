@@ -1,4 +1,4 @@
-import { useAccount, useChainId, useConnect, useDisconnect, useSignMessage } from '@wagmi/vue'
+import { useConnection, useChainId, useConnect, useDisconnect, useSignMessage } from '@wagmi/vue'
 import { UserRejectedRequestError } from 'viem'
 import { FetchError } from 'ofetch'
 import { jwtDecode } from 'jwt-decode'
@@ -38,7 +38,7 @@ function verifyTokenPermissions(token: string): boolean {
 export const useAccountStore = defineStore('account', () => {
   const config = useRuntimeConfig()
   const { $wagmiConfig } = useNuxtApp()
-  const { address, isConnected } = useAccount()
+  const { address, isConnected } = useConnection()
   const currentChainId = useChainId()
   const { connectAsync, connectors, status } = useConnect()
   const { disconnectAsync } = useDisconnect()
@@ -47,7 +47,7 @@ export const useAccountStore = defineStore('account', () => {
   const overlay = useOverlay()
   const { errorModal, handleError } = useErrorHandler()
   const blockingModal = useBlockingModal()
-  const { t: $t } = useI18n()
+  const { t: $t, locale } = useI18n()
   const { getLikeCoinV3BookMigrationSiteURL } = useLikeCoinV3MigrationSite()
   const likeCoinSessionAPI = useLikeCoinSessionAPI()
 
@@ -70,7 +70,7 @@ export const useAccountStore = defineStore('account', () => {
   watch(
     () => user.value,
     async (user) => {
-      useSetLogUser(user)
+      useSetLogUser(user, locale.value)
       if (user?.token) {
         const hasValidPermissions = verifyTokenPermissions(user.token)
         if (!hasValidPermissions) {

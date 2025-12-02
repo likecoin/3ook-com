@@ -2,7 +2,7 @@
   <UCard
     v-if="ttsSamples.length > 0"
     variant="subtle"
-    :ui="{ root: 'rounded-2xl' }"
+    :ui="{ root: 'rounded-xl' }"
   >
     <div class="flex items-center gap-1">
       <UIcon
@@ -31,7 +31,7 @@
             'group',
             'text-left',
             { 'ring-theme-cyan': activeTTSSampleId === sample.id },
-            'rounded-xl',
+            'rounded-lg',
             'cursor-pointer',
           ]"
           variant="outline"

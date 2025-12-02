@@ -1,32 +1,46 @@
 <template>
   <UModal
     :ui="{
+      header: isTrialFor30Days ? 'p-0 sm:p-0 min-h-max' : undefined,
       title: 'text-sm laptop:text-base font-bold text-center',
-      footer: 'flex flex-col items-center w-full',
+      footer: 'flex flex-col-reverse laptop:flex-row items-center gap-3',
       body: 'flex flex-col items-start gap-1 laptop:gap-2 max-laptop:text-sm px-6',
     }"
     @update:open="onOpenUpdate"
   >
-    <template #header>
+    <template
+      v-if="isTrialFor30Days"
+      #header
+    >
+      <PricingLimitedOfferAlert
+        class="w-full py-6"
+        :trial-period-days="trialPeriodDays"
+      />
+    </template>
+    <template
+      v-else
+      #header
+    >
       <UIcon
         name="i-material-symbols-celebration-outline"
-        class="text-theme-400"
+        class="text-theme-cyan"
         size="24"
       />
       <span
         class="text-lg font-bold"
         v-text="$t('upsell_plus_modal_title')"
       />
-      <UIcon
-        name="i-material-symbols-close"
-        class="text-gray-500 cursor-pointer ml-auto hover:text-gray-700"
-        size="24"
+      <UButton
+        icon="i-material-symbols-close-rounded"
+        class="cursor-pointer ml-auto -mr-2"
+        variant="link"
+        size="xl"
         @click="handleClose"
       />
     </template>
     <template #body>
       <i18n-t
-        v-if="showYearlyPlan"
+        v-if="shouldShowYearlyPlan"
         class="self-center text-theme-black text-center font-bold text-[16px] laptop:text-[20px]"
         keypath="upsell_plus_yearly_notice"
         tag="p"
@@ -45,12 +59,12 @@
         </template>
       </i18n-t>
       <span
-        v-if="showMonthlyPlan"
+        v-if="shouldShowMonthlyPlan"
         class="self-center text-center text-gray-500 text-xs"
         v-text="$t('upsell_plus_or')"
       />
       <i18n-t
-        v-if="showMonthlyPlan"
+        v-if="shouldShowMonthlyPlan"
         class="self-center text-theme-black text-center font-bold text-[16px] laptop:text-[20px]"
         keypath="upsell_plus_monthly_notice"
         tag="p"
@@ -68,117 +82,37 @@
           />
         </template>
       </i18n-t>
-      <div class="self-center border-t border-gray-200 h-1 w-[24px] my-[12px]" />
-      <span
-        class="text-sm !text-gray-500 mb-1"
-        v-text="$t('upsell_plus_modal_other_benefits')"
+
+      <PricingPlanBenefits
+        class="self-center mt-4 laptop:mt-6"
+        :selected-plan="selectedPlan"
+        :is-title-center="true"
+        :is-compact="true"
       />
-      <ul
-        :class="[
-          'whitespace-pre-wrap',
-          'space-y-3 text-left',
-          '*:flex *:items-start',
-          '[&>li>span:first-child]:shrink-0',
-          '[&>li>span:first-child]:mt-1',
-          '[&>li>span:first-child]:mr-2',
-          '[&>li>span:first-child]:text-green-500',
-        ]"
-      >
-        <li>
-          <UIcon name="i-material-symbols-check" />
-          <span v-text="$t('pricing_page_feature_1')" />
-        </li>
-        <li>
-          <UIcon name="i-material-symbols-check" />
-          <span v-text="$t('pricing_page_feature_2')" />
-        </li>
-        <li>
-          <UIcon name="i-material-symbols-check" />
-          <span v-text="$t('pricing_page_feature_3')" />
-        </li>
-        <li>
-          <UIcon name="i-material-symbols-check" />
-          <span v-text="$t('pricing_page_feature_4')" />
-        </li>
-        <li>
-          <UIcon name="i-material-symbols-check" />
-          <span
-            v-text="$t('pricing_page_feature_5', {
-              monthlyPrice,
-              yearlyPrice,
-            })"
-          />
-        </li>
-      </ul>
+
+      <PricingPlanSelect
+        v-model="selectedPlan"
+        class="w-full mt-4 laptop:mt-6"
+        :is-monthly-hidden="!shouldShowMonthlyPlan"
+        :is-yearly-hidden="!shouldShowYearlyPlan"
+        :trial-period-days="trialPeriodDays"
+      />
     </template>
     <template #footer>
-      <div class="w-full flex flex-col laptop:flex-row items-center gap-3">
-        <UButton
-          v-if="showYearlyPlan"
-          class="w-full flex flex-col"
-          :label="$t('upsell_plus_yearly_button')"
-          block
-          size="xl"
-          color="primary"
-          :ui="{
-            base: '!gap-1',
-            label: 'font-bold',
-          }"
-          @click="() => handleSubscribe('yearly')"
-        >
-          <span
-            class="font-bold"
-            v-text="yearlyButtonCTA"
-          />
-          <div class="flex items-center justify-center gap-1">
-            <span
-              v-if="hasYearlyDiscount"
-              class="text-gray-500 line-through"
-              v-text="$t('upsell_plus_yearly_price_full', { price: originalYearlyPrice })"
-            />
-            <span
-              class="text-theme-50 font-bold"
-              v-text="$t('upsell_plus_yearly_price_full', { price: yearlyPrice })"
-            />
-          </div>
-        </UButton>
-        <UButton
-          v-if="showMonthlyPlan"
-          class="w-full flex flex-col"
-          block
-          size="xl"
-          variant="outline"
-          color="primary"
-          :ui="{
-            base: '!gap-1',
-          }"
-          @click="() => handleSubscribe('monthly')"
-        >
-          <span v-text="monthlyButtonCTA" />
-          <div class="flex items-center justify-center gap-1">
-            <span
-              v-if="hasMonthlyDiscount"
-              class="text-gray-500 line-through"
-              v-text="$t('upsell_plus_monthly_price_full', { price: originalMonthlyPrice })"
-            />
-            <span
-              class="text-theme-black"
-              v-text="$t('upsell_plus_monthly_price_full', { price: monthlyPrice })"
-            />
-          </div>
-        </UButton>
-      </div>
-
       <UButton
-        class="mt-2"
-        :label="$t('upsell_plus_modal_close_button')"
-        block
+        :label="$t('plus_subscribe_cta_upsell_skip')"
+        variant="outline"
         size="xl"
-        variant="link"
-        :ui="{
-          base: 'cursor-pointer',
-        }"
+        block
+        :ui="{ base: 'cursor-pointer' }"
         @click="handleClose"
+      />
+      <UButton
+        :label="subscribeButtonLabel"
+        size="xl"
+        block
+        :ui="{ base: 'cursor-pointer' }"
+        @click="handleSubscribe"
       />
     </template>
   </UModal>
@@ -191,7 +125,8 @@ const props = withDefaults(defineProps<UpsellPlusModalProps>(), {
   isLikerPlus: false,
   likerPlusPeriod: undefined,
   isProcessingSubscription: false,
-  trialPeriodDays: 7,
+  trialPeriodDays: 30,
+  trialPrice: 1,
   mustCollectPaymentMethod: false,
   selectedPricingItemIndex: 0,
   utmCampaign: undefined,
@@ -207,49 +142,59 @@ const emit = defineEmits<{
 
 const { t: $t } = useI18n()
 const route = useRoute()
-const {
-  monthlyPrice,
-  originalMonthlyPrice,
-  yearlyPrice,
-  originalYearlyPrice,
-  hasMonthlyDiscount,
-  hasYearlyDiscount,
-} = useSubscriptionPricing()
+const { currency } = useSubscriptionPricing()
 
-const showMonthlyPlan = computed(() => !props.isLikerPlus)
-const showYearlyPlan = computed(() => (
-  showMonthlyPlan.value
+const selectedPlan = ref<SubscriptionPlan>('yearly')
+
+const shouldShowMonthlyPlan = computed(() => !props.isLikerPlus)
+const shouldShowYearlyPlan = computed(() => (
+  shouldShowMonthlyPlan.value
   || (props.isLikerPlus && props.likerPlusPeriod === 'month')
 ))
 
-const allowYearlyTrial = computed(() => !props.nftClassId)
+const isAllowYearlyTrial = computed(() => !props.nftClassId)
 
-const yearlyButtonCTA = computed(() => {
-  if (props.nftClassId) {
-    return $t('upsell_plus_yearly_gift_cta')
-  }
-  if (props.trialPeriodDays && allowYearlyTrial.value) {
-    return $t('upsell_plus_yearly_trial_cta', { days: props.trialPeriodDays })
-  }
-  return $t('upsell_plus_yearly_button')
-})
+const isTrialFor30Days = computed(() => props.trialPeriodDays === 30)
 
-const monthlyButtonCTA = computed(() => {
+const subscribeButtonLabel = computed(() => {
+  if (selectedPlan.value === 'yearly') {
+    if (props.nftClassId) {
+      return $t('plus_subscribe_cta_yearly_gift')
+    }
+    if (props.trialPeriodDays && isAllowYearlyTrial.value) {
+      if (isTrialFor30Days.value) {
+        return $t('plus_subscribe_cta_yearly_trial_with_price', {
+          days: props.trialPeriodDays,
+          price: props.trialPrice,
+          currency: currency.value,
+        })
+      }
+      return $t('plus_subscribe_cta_yearly_trial_free', { days: props.trialPeriodDays })
+    }
+    return $t('plus_subscribe_cta_yearly')
+  }
   if (props.trialPeriodDays) {
-    return $t('upsell_plus_monthly_trial_cta', { days: props.trialPeriodDays })
+    if (isTrialFor30Days.value) {
+      return $t('plus_subscribe_cta_monthly_trial_with_price', {
+        days: props.trialPeriodDays,
+        price: props.trialPrice,
+        currency: currency.value,
+      })
+    }
+    return $t('plus_subscribe_cta_monthly_trial_free', { days: props.trialPeriodDays })
   }
-  return $t('upsell_plus_monthly_button')
+  return $t('plus_subscribe_cta_monthly')
 })
 
-function handleSubscribe(plan: SubscriptionPlan) {
-  const shouldApplyTrial = plan === 'monthly' || allowYearlyTrial.value
+function handleSubscribe() {
+  const shouldApplyTrial = selectedPlan.value === 'monthly' || isAllowYearlyTrial.value
   emit('subscribe', {
-    plan,
+    plan: selectedPlan.value,
     trialPeriodDays: shouldApplyTrial ? props.trialPeriodDays : undefined,
     utmCampaign: props.utmCampaign,
     utmMedium: props.utmMedium,
     utmSource: props.utmSource,
-    nftClassId: plan === 'yearly' ? props.nftClassId : undefined,
+    nftClassId: selectedPlan.value === 'yearly' ? props.nftClassId : undefined,
     redirectRoute: {
       name: route.name,
       params: route.params,

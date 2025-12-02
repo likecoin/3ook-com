@@ -125,7 +125,8 @@ const trialPeriodDays = computed(() => {
     case '3d': return 3
     case '5d': return 5
     case '7d': return 7
-    default: return 7
+    case '30d': return 30
+    default: return 30
   }
 })
 
