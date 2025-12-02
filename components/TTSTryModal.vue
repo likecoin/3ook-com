@@ -15,7 +15,7 @@
       />
       <span
         class="text-lg font-bold"
-        v-text="$t('tts_trial_modal_title')"
+        v-text="$t('tts_try_modal_title')"
       />
       <UIcon
         name="i-material-symbols-close"
@@ -27,7 +27,7 @@
     <template #body>
       <p
         class="text-center text-base whitespace-pre"
-        v-text="$t('tts_trial_modal_description')"
+        v-text="$t('tts_try_modal_description')"
       />
       <TTSSamplesSection
         skip-playback
@@ -37,14 +37,14 @@
     <template #footer>
       <UButton
         class="w-full"
-        :label="$t('tts_trial_modal_remind_me_later')"
+        :label="$t('tts_try_modal_remind_me_later')"
         block
         size="xl"
         color="neutral"
         @click="handleRemindMeLater"
       />
       <UButton
-        :label="$t('tts_trial_modal_dismiss_button')"
+        :label="$t('tts_try_modal_dismiss_button')"
         block
         size="xl"
         variant="link"
@@ -55,9 +55,9 @@
 </template>
 
 <script setup lang="ts">
-import type { TTSTrialModalProps } from './TTSTrialModal.props'
+import type { TTSTryModalProps } from './TTSTryModal.props'
 
-const props = defineProps<TTSTrialModalProps>()
+const props = defineProps<TTSTryModalProps>()
 
 const emit = defineEmits<{
   open: []
@@ -83,7 +83,7 @@ function handleVoiceSelected(languageVoice: string) {
 
 onMounted(() => {
   emit('open')
-  useLogEvent('tts_trial_modal_open', {
+  useLogEvent('tts_try_modal_open', {
     nft_class_id: props.nftClassId,
   })
 })

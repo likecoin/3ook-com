@@ -1,4 +1,4 @@
-export interface TTSTrialModalProps {
+export interface TTSTryModalProps {
   nftClassId?: string
   onDismiss?: () => void
   onOpen?: () => void
