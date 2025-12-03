@@ -1268,14 +1268,9 @@ function handleKeywordClick(keyword: string) {
 
 async function handleBackButtonClick() {
   useLogEvent('product_page_back_button_click')
-  if (window.history.length > 1) {
-    router.back()
-  }
-  else {
-    await navigateTo(localeRoute({
-      name: 'store',
-      query: route.query,
-    }))
-  }
+  await navigateTo(localeRoute({
+    name: 'store',
+    query: route.query,
+  }))
 }
 </script>
