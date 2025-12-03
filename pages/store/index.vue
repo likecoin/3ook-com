@@ -569,6 +569,7 @@ useHead(() => {
           rel: 'preload',
           href: `${runtimeConfig.public.likeCoinEVMChainCollectiveAPIEndpoint}/book-nfts?pagination.limit=100&time_frame_sort_by=${mapTagIdToAPIStakingSortValue(tagId.value)}&time_frame_sort_order=desc`,
           as: 'fetch' as const,
+          crossorigin: 'anonymous' as const,
         }]
       : [{
           rel: 'preload',
