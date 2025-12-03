@@ -65,6 +65,7 @@
     "vue-tsc": "^2.2.10"
   },
   "overrides": {
-    "@vercel/nft": "^0.27.4"
+    "@vercel/nft": "^0.27.4",
+    "@walletconnect/universal-provider": "2.21.10"
   }
 }
