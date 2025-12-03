@@ -70,13 +70,20 @@
         </UDrawer>
       </div>
 
-      <NuxtLink
-        :to="bookInfo.getAuthorPageRoute({
-          llMedium: 'author-link',
-          llSource: 'bookshelf-item',
-        })"
-        class="inline-block mt-0.5 text-xs laptop:text-sm text-toned hover:text-theme-black line-clamp-1 hover:underline"
-      >{{ bookInfo.authorName }}</NuxtLink>
+      <div class="h-4 laptop:h-5 mt-0.5 truncate">
+        <NuxtLink
+          :to="bookInfo.getAuthorPageRoute({
+            llMedium: 'author-link',
+            llSource: 'bookshelf-item',
+          })"
+          :class="[
+            'inline',
+            'text-xs laptop:text-sm',
+            'text-toned hover:text-theme-black',
+            'hover:underline',
+          ]"
+        >{{ bookInfo.authorName }}</NuxtLink>
+      </div>
     </div>
 
     <!-- Staking info section -->

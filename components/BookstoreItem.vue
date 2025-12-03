@@ -18,13 +18,20 @@
         v-text="bookName"
       />
 
-      <NuxtLink
-        :to="bookInfo.getAuthorPageRoute({
-          llMedium: 'author-link',
-          llSource: 'bookstore-item',
-        })"
-        class="inline-block h-4 laptop:h-5 mt-0.5 text-xs laptop:text-sm text-toned line-clamp-1 hover:text-theme-black hover:underline"
-      >{{ authorName }}</NuxtLink>
+      <div class="h-4 laptop:h-5 mt-0.5 truncate">
+        <NuxtLink
+          :to="bookInfo.getAuthorPageRoute({
+            llMedium: 'author-link',
+            llSource: 'bookstore-item',
+          })"
+          :class="[
+            'inline',
+            'text-xs laptop:text-sm',
+            'text-toned hover:text-theme-black',
+            'hover:underline',
+          ]"
+        >{{ authorName }}</NuxtLink>
+      </div>
     </div>
 
     <!-- Price info for store mode -->
