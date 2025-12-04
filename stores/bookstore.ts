@@ -28,7 +28,7 @@ interface StakingBooks {
   }>
   isFetching: boolean
   hasFetched: boolean
-  offset?: number | string
+  offset?: number
 }
 
 export const useBookstoreStore = defineStore('bookstore', () => {
@@ -323,6 +323,9 @@ export const useBookstoreStore = defineStore('bookstore', () => {
         'sort_by': sortBy as 'staked_amount' | 'last_staked_at' | 'number_of_stakers',
         'sort_order': 'desc',
         'pagination.limit': limit,
+        'pagination.page': isRefresh
+          ? undefined
+          : stakingBooksMap.value[sortBy]?.offset,
       })
 
       const bookNFTs = result.data
@@ -343,7 +346,7 @@ export const useBookstoreStore = defineStore('bookstore', () => {
         stakingBooksMap.value[sortBy].items.push(...bookNFTs)
       }
 
-      stakingBooksMap.value[sortBy].offset = result.data.length === limit ? result.pagination?.next_key?.toString() : undefined
+      stakingBooksMap.value[sortBy].offset = result.data.length <= limit ? undefined : ((stakingBooksMap.value[sortBy].offset || 0) + 1)
       stakingBooksMap.value[sortBy].hasFetched = true
     }
     catch (error) {
