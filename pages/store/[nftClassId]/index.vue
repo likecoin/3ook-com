@@ -1204,8 +1204,10 @@ async function handlePurchaseButtonClick() {
     await navigateTo(url, { external: true })
   }
   catch (error) {
-    isPurchasing.value = false
     await handleError(error)
+  }
+  finally {
+    isPurchasing.value = false
   }
 }
 
