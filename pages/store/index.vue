@@ -586,14 +586,20 @@ useHead(() => {
   }
 })
 
-watch(tagId, async (value) => {
-  if (value) {
-    await fetchItems({ lazy: true })
-    if (!isSearchMode.value) {
-      storePageState.restoreScrollIfNeeded()
+watch(
+  () => route.query.tag,
+  async (newTag, oldTag) => {
+    if (oldTag && !newTag && !isSearchMode.value) {
+      storePageState.clear()
     }
-  }
-})
+    if (newTag !== oldTag) {
+      await fetchItems({ lazy: true })
+      if (!isSearchMode.value) {
+        storePageState.restoreScrollIfNeeded()
+      }
+    }
+  },
+)
 
 // Watch for changes in search parameters
 watch([querySearchTerm, queryAuthorName, queryPublisherName, queryOwnerWallet], async () => {
@@ -810,15 +816,6 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   storePageState.save(tagId.value, route.query as Record<string, string>)
 })
-
-watch(
-  () => route.query.tag,
-  (newTag, oldTag) => {
-    if (oldTag && !newTag && !isSearchMode.value) {
-      storePageState.clear()
-    }
-  },
-)
 
 watch(
   () => shouldLoadMore.value,
