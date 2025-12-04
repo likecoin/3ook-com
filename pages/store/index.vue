@@ -818,7 +818,7 @@ onBeforeUnmount(() => {
 })
 
 watch(
-  () => shouldLoadMore.value,
+  shouldLoadMore,
   async (shouldLoadMore) => {
     if (shouldLoadMore) {
       await fetchItems()
