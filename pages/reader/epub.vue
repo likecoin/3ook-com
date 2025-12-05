@@ -261,9 +261,6 @@ import ePub, {
 
 import type Section from '@likecoin/epubjs/types/section'
 
-import { TTSTryModal } from '#components'
-import { useTTSTryModal } from '~/composables/use-tts-try-modal'
-
 declare interface EpubView {
   window: Window
   settings: {
@@ -295,11 +292,9 @@ const {
   bookFileCacheKey,
 } = useReader()
 const { handleError } = useErrorHandler()
-const overlay = useOverlay()
 const {
   shouldShowTTSTryModal,
-  dismissTTSTryModal,
-  snoozeTTSTryModal,
+  showTTSTryModal,
 } = useTTSTryModal()
 
 function getCacheKeyWithSuffix(suffix: ReaderCacheKeySuffix) {
@@ -608,36 +603,12 @@ async function loadEPub() {
   setChapterTitles(chapterTitles)
 
   if (shouldShowTTSTryModal.value && !bookInfo.isAudioHidden.value) {
-    const oneWeekInMs = 7 * 24 * 60 * 60 * 1000
-    const ttsTryModal = overlay.create(TTSTryModal, {
-      props: {
-        nftClassId: nftClassId.value,
-        onVoiceSelected: (languageVoice: string) => {
-          snoozeTTSTryModal(oneWeekInMs)
-          ttsTryModal.close()
-          useLogEvent('tts_try_voice_selected', {
-            nft_class_id: nftClassId.value,
-            languageVoice,
-          })
-          onClickTTSPlay()
-        },
-        onSnooze: () => {
-          snoozeTTSTryModal(oneWeekInMs)
-          useLogEvent('tts_try_snoozed', {
-            nft_class_id: nftClassId.value,
-          })
-          ttsTryModal.close()
-        },
-        onDismiss: () => {
-          dismissTTSTryModal()
-          useLogEvent('tts_try_dismissed', {
-            nft_class_id: nftClassId.value,
-          })
-          ttsTryModal.close()
-        },
+    showTTSTryModal({
+      nftClassId: nftClassId.value,
+      onVoiceSelected: () => {
+        onClickTTSPlay()
       },
     })
-    ttsTryModal.open()
   }
 }
 function findNextCFIAfterTOC(navItems: NavItem[]): string | undefined {
