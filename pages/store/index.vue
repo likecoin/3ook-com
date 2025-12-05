@@ -813,8 +813,13 @@ onMounted(async () => {
   ])
 })
 
-onBeforeUnmount(() => {
-  storePageState.save(tagId.value, route.query as Record<string, string>)
+onBeforeRouteLeave((to) => {
+  if (to.name && String(to.name).startsWith('store')) {
+    storePageState.save(tagId.value, route.query as Record<string, string>)
+  }
+  else {
+    storePageState.clear()
+  }
 })
 
 watch(
