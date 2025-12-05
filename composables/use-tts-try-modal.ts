@@ -1,16 +1,21 @@
 import { useStorage } from '@vueuse/core'
 import { TTSTryModal } from '#components'
 
-const TTS_TRY_OFFER_KEY = '3ook_tts_try_offer'
-const TTS_TRY_COOLDOWN_KEY = '3ook_tts_try_cooldown'
+const TTS_TRY_MODAL_KEY = '3ook_tts_try_modal'
+
+interface TTSTryModalState {
+  isOffered: boolean
+  cooldownUntil: number
+}
 
 export function useTTSTryModal() {
   const { user } = useUserSession()
   const overlay = useOverlay()
 
-  const hasTTSTrialOffered = useStorage(TTS_TRY_OFFER_KEY, true)
-
-  const offerCooldown = useStorage(TTS_TRY_COOLDOWN_KEY, Date.now())
+  const state = useStorage<TTSTryModalState>(TTS_TRY_MODAL_KEY, {
+    isOffered: true,
+    cooldownUntil: Date.now(),
+  })
 
   const isPlus = computed(() => user.value?.isLikerPlus || false)
 
@@ -19,21 +24,23 @@ export function useTTSTryModal() {
       return false
     }
 
-    return hasTTSTrialOffered.value && Date.now() > offerCooldown.value
+    return state.value.isOffered && Date.now() > state.value.cooldownUntil
   })
 
   function dismissTTSTryModal() {
-    hasTTSTrialOffered.value = false
+    state.value.isOffered = false
   }
 
   function snoozeTTSTryModal() {
     const oneWeekInMs = 7 * 24 * 60 * 60 * 1000
-    offerCooldown.value = Date.now() + oneWeekInMs
+    state.value.cooldownUntil = Date.now() + oneWeekInMs
   }
 
   function resetTTSTryOffer() {
-    hasTTSTrialOffered.value = true
-    offerCooldown.value = Date.now()
+    state.value = {
+      isOffered: true,
+      cooldownUntil: Date.now(),
+    }
   }
 
   function showTTSTryModal(options: {
@@ -73,8 +80,6 @@ export function useTTSTryModal() {
   }
 
   return {
-    hasTTSTrialOffered,
-    offerCooldown,
     shouldShowTTSTryModal,
     dismissTTSTryModal,
     snoozeTTSTryModal,
