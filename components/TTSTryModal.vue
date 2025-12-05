@@ -29,9 +29,9 @@
         class="text-center text-base whitespace-pre"
         v-text="$t('tts_try_modal_description')"
       />
-      <TTSSamplesSection
-        is-skipping-playback
-        @voice-selected="handleVoiceSelected"
+      <TTSVoiceSelector
+        icon="i-material-symbols-check-circle-rounded"
+        @voice-click="handleVoiceClick"
       />
     </template>
     <template #footer>
@@ -68,6 +68,7 @@ const emit = defineEmits<{
 }>()
 
 const { t: $t } = useI18n()
+const { setTTSLanguageVoice } = useTTSVoice()
 
 function handleRemindMeLater() {
   emit('snooze')
@@ -77,7 +78,14 @@ function handleDismiss() {
   emit('dismiss')
 }
 
-function handleVoiceSelected(languageVoice: string) {
+function handleVoiceClick(sample: { id: string, languageVoice: string }) {
+  const { id: sampleId, languageVoice } = sample
+
+  setTTSLanguageVoice(languageVoice)
+  useLogEvent('tts_try_voice_selected', {
+    sample: sampleId,
+    languageVoice,
+  })
   emit('voiceSelected', languageVoice)
 }
 
