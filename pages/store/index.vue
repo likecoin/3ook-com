@@ -667,7 +667,7 @@ const isSearchResultEmpty = computed(() => (
 ))
 
 const products = computed<BookstoreItemList>(() => {
-  if (searchResults.value) {
+  if (searchResults.value && !isSearchResultEmpty.value) {
     return searchResults.value
   }
 
@@ -719,6 +719,22 @@ async function fetchTags() {
   }
 }
 
+async function fetchTagItems({ isRefresh = false } = {}) {
+  const apiSortValue = mapTagIdToAPIStakingSortValue(isStakingTagId.value ? tagId.value : STAKING_TAG_DEFAULT)
+  const fetchPromises = [
+    // NOTE: Fetch staking books for sorting CMS tag items by staking
+    bookstoreStore.fetchStakingBooks(apiSortValue, { isRefresh, limit: 100 }).catch((error) => {
+      if (isStakingTagId.value) {
+        throw error
+      }
+    }),
+  ]
+  if (!isStakingTagId.value) {
+    fetchPromises.push(bookstoreStore.fetchCMSProductsByTagId(tagId.value, { isRefresh }))
+  }
+  await Promise.all(fetchPromises)
+}
+
 async function fetchItems({ lazy = false, isRefresh = false } = {}) {
   if (lazy && products.value.items.length > 0) {
     return
@@ -739,19 +755,7 @@ async function fetchItems({ lazy = false, isRefresh = false } = {}) {
   }
 
   try {
-    const apiSortValue = mapTagIdToAPIStakingSortValue(isStakingTagId.value ? tagId.value : STAKING_TAG_DEFAULT)
-    const fetchPromises = [
-      // NOTE: Fetch staking books for sorting CMS tag items by staking
-      bookstoreStore.fetchStakingBooks(apiSortValue, { isRefresh, limit: 100 }).catch((error) => {
-        if (isStakingTagId.value) {
-          throw error
-        }
-      }),
-    ]
-    if (!isStakingTagId.value) {
-      fetchPromises.push(bookstoreStore.fetchCMSProductsByTagId(tagId.value, { isRefresh }))
-    }
-    await Promise.all(fetchPromises)
+    await fetchTagItems({ isRefresh })
   }
   catch (error) {
     await handleError(error, {
@@ -777,7 +781,9 @@ onMounted(async () => {
   if (isSearchMode.value) {
     const promises: Promise<unknown>[] = [
       fetchItems({ lazy: true }),
-      bookstoreStore.fetchCMSProductsByTagId(tagId.value, { isRefresh: false }),
+      fetchTagItems().catch(() => {
+        // Ignore errors when fetching tag items in search mode
+      }),
     ]
 
     if (queryOwnerWallet.value) {
