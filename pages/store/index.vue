@@ -341,14 +341,15 @@ const queryAuthorName = computed(() => getRouteQuery('author', ''))
 const queryPublisherName = computed(() => getRouteQuery('publisher', ''))
 const queryOwnerWallet = computed(() => getRouteQuery('owner_wallet', ''))
 
-const ownerWalletAvatarSrc = computed(() => {
-  if (!queryOwnerWallet.value) return ''
-  return metadataStore.getLikerInfoByWalletAddress(queryOwnerWallet.value)?.avatarSrc || ''
+const ownerWalletInfo = computed(() => {
+  if (!queryOwnerWallet.value) return null
+  return metadataStore.getLikerInfoByWalletAddress(queryOwnerWallet.value) || null
 })
-
+const ownerWalletAvatarSrc = computed(() => {
+  return ownerWalletInfo.value?.avatarSrc || ''
+})
 const ownerWalletDisplayName = computed(() => {
-  if (!queryOwnerWallet.value) return ''
-  return metadataStore.getLikerInfoByWalletAddress(queryOwnerWallet.value)?.displayName || ''
+  return ownerWalletInfo.value?.displayName || ''
 })
 
 // Search query key for bookstore store
@@ -606,6 +607,18 @@ watch(queryOwnerWallet, async (wallet) => {
     catch (error) {
       console.error('Failed to fetch wallet info:', error)
     }
+  }
+})
+
+watch(ownerWalletInfo, (info) => {
+  if (info?.evmWallet && queryOwnerWallet.value.toLowerCase() !== info.evmWallet.toLowerCase()) {
+    navigateTo(localeRoute({
+      name: 'store',
+      query: {
+        ...route.query,
+        owner_wallet: info.evmWallet,
+      },
+    }))
   }
 })
 

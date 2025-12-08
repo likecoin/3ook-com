@@ -278,7 +278,9 @@ export const useBookstoreStore = defineStore('bookstore', () => {
         await fetchTextSearch(searchTerm, queryKey, isRefresh)
       }
       else if (type === 'owner_wallet') {
-        await fetchOwnerWalletSearch(searchTerm, queryKey, isRefresh)
+        if (checkIsEVMAddress(searchTerm)) {
+          await fetchOwnerWalletSearch(searchTerm, queryKey, isRefresh)
+        }
       }
       else {
         await fetchMetadataSearch(type, searchTerm, queryKey, isRefresh)
