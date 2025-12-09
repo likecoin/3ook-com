@@ -52,10 +52,6 @@
 </template>
 
 <script setup lang="ts">
-const emit = defineEmits<{
-  voiceSelected: [languageVoice: string]
-}>()
-
 const { handleError } = useErrorHandler()
 
 const {
