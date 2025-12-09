@@ -589,12 +589,13 @@ useHead(() => {
 watch(
   () => route.query.tag,
   async (newTag, oldTag) => {
-    if (oldTag && !newTag && !isSearchMode.value) {
-      storePageState.clear()
-    }
     if (newTag !== oldTag) {
       await fetchItems({ lazy: true })
+
       if (!isSearchMode.value) {
+        if (!newTag) {
+          storePageState.clear()
+        }
         storePageState.restoreScrollIfNeeded()
       }
     }
