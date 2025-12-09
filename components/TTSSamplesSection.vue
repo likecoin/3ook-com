@@ -52,8 +52,6 @@
 </template>
 
 <script setup lang="ts">
-import { defineEmits, defineProps, withDefaults } from 'vue'
-
 const props = withDefaults(defineProps<{
   isSkippingPlayback?: boolean
 }>(), {

@@ -70,8 +70,6 @@
 </template>
 
 <script setup lang="ts">
-import { defineEmits, defineProps, withDefaults } from 'vue'
-
 withDefaults(defineProps<{
   icon?: string
   selectedVoiceId?: string | null
