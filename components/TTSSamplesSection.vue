@@ -52,18 +52,11 @@
 </template>
 
 <script setup lang="ts">
-const props = withDefaults(defineProps<{
-  isSkippingPlayback?: boolean
-}>(), {
-  isSkippingPlayback: false,
-})
-
 const emit = defineEmits<{
   voiceSelected: [languageVoice: string]
 }>()
 
 const { handleError } = useErrorHandler()
-const { setTTSLanguageVoice } = useTTSVoice()
 
 const {
   samples: ttsSamples,
@@ -89,20 +82,7 @@ function getPlayButtonIcon(sampleId: string | null) {
 
 function handleSampleClick(sample: { id: string, languageVoice: string }) {
   const sampleId = sample.id
-  const languageVoice = sample.languageVoice
   useLogEvent('tts_sample_click', { sample: sampleId })
-
-  if (props.isSkippingPlayback) {
-    setTTSLanguageVoice(languageVoice)
-    useLogEvent('tts_try_voice_selected', {
-      sample: sampleId,
-      languageVoice,
-    })
-    nextTick(() => {
-      emit('voiceSelected', languageVoice)
-    })
-    return
-  }
 
   if (activeTTSSampleId.value === sampleId && isPlayingSample.value) {
     useLogEvent('tts_sample_stop', { sample: activeTTSSampleId.value })
