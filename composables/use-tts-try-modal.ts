@@ -4,7 +4,7 @@ import { TTSTryModal } from '#components'
 const TTS_TRY_MODAL_KEY = '3ook_tts_try_modal'
 
 interface TTSTryModalState {
-  isOffered: boolean
+  shouldOffer: boolean
   cooldownUntil: number
 }
 
@@ -13,7 +13,7 @@ export function useTTSTryModal() {
   const overlay = useOverlay()
 
   const state = useStorage<TTSTryModalState>(TTS_TRY_MODAL_KEY, {
-    isOffered: true,
+    shouldOffer: true,
     cooldownUntil: Date.now(),
   })
 
@@ -24,11 +24,11 @@ export function useTTSTryModal() {
       return false
     }
 
-    return state.value.isOffered && Date.now() > state.value.cooldownUntil
+    return state.value.shouldOffer && Date.now() > state.value.cooldownUntil
   })
 
   function dismissTTSTryModal() {
-    state.value.isOffered = false
+    state.value.shouldOffer = false
   }
 
   function snoozeTTSTryModal() {
@@ -38,7 +38,7 @@ export function useTTSTryModal() {
 
   function resetTTSTryOffer() {
     state.value = {
-      isOffered: true,
+      shouldOffer: true,
       cooldownUntil: Date.now(),
     }
   }
