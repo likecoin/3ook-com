@@ -262,6 +262,7 @@ export default defineNuxtConfig({
           'data:',
           'blob:',
           'https://www.facebook.com',
+          'https://connect.facebook.net',
           'https://www.google.com',
           'https://js.intercomcdn.com',
           'https://downloads.intercomcdn.com',
