@@ -298,6 +298,8 @@
           :total-staked="Number(formatUnits(item.totalStaked ?? 0n, likeCoinTokenDecimals))"
           :staker-count="item.stakerCount ?? 0"
           :lazy="index >= columnMax"
+          :ll-medium="llMedium"
+          ll-source="bookstore"
         />
       </ul>
       <div
@@ -715,6 +717,16 @@ const products = computed<BookstoreItemList>(() => {
 
 const itemsCount = computed(() => products.value.items.length)
 const hasMoreItems = computed(() => !!products.value.nextItemsKey || !products.value.hasFetchedItems)
+
+const llMedium = computed(() => {
+  if (isSearchResultEmpty.value) {
+    return 'search-empty-recommendation'
+  }
+  if (isSearchMode.value) {
+    return 'search-result'
+  }
+  return undefined
+})
 
 const { gridClasses, getGridItemClassesByIndex, columnMax } = usePaginatedGrid({
   itemsCount,
