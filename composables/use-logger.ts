@@ -218,7 +218,6 @@ export function useSetLogUser(user: User | null, locale: string) {
           evm_wallet: user.evmWallet,
           like_wallet: user.likeWallet,
           login_method: user.loginMethod,
-          is_liker_plus: !!user.isLikerPlus,
           locale,
         })
       }

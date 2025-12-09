@@ -91,16 +91,6 @@ onMounted(async () => {
       await accountStore.refreshSessionInfo()
       retry++
     }
-    try {
-      if (window?.Intercom) {
-        window.Intercom('update', {
-          is_liker_plus: isLikerPlus.value,
-        })
-      }
-    }
-    catch (error) {
-      console.error('Failed to update Intercom user:', error)
-    }
     const {
       giftNFTClassId,
       giftCartId,
