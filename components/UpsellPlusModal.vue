@@ -95,6 +95,7 @@
         class="w-full mt-4 laptop:mt-6"
         :is-monthly-hidden="!shouldShowMonthlyPlan"
         :is-yearly-hidden="!shouldShowYearlyPlan"
+        :is-upsell="true"
         :trial-period-days="trialPeriodDays"
       />
     </template>
@@ -163,25 +164,25 @@ const subscribeButtonLabel = computed(() => {
     }
     if (props.trialPeriodDays && isAllowYearlyTrial.value) {
       if (isTrialFor30Days.value) {
-        return $t('plus_subscribe_cta_yearly_trial_with_price', {
+        return $t('plus_subscribe_cta_trial_for_price', {
           days: props.trialPeriodDays,
           price: props.trialPrice,
           currency: currency.value,
         })
       }
-      return $t('plus_subscribe_cta_yearly_trial_free', { days: props.trialPeriodDays })
+      return $t('plus_subscribe_cta_trial_for_free', { days: props.trialPeriodDays })
     }
     return $t('plus_subscribe_cta_yearly')
   }
   if (props.trialPeriodDays) {
     if (isTrialFor30Days.value) {
-      return $t('plus_subscribe_cta_monthly_trial_with_price', {
+      return $t('plus_subscribe_cta_trial_for_price', {
         days: props.trialPeriodDays,
         price: props.trialPrice,
         currency: currency.value,
       })
     }
-    return $t('plus_subscribe_cta_monthly_trial_free', { days: props.trialPeriodDays })
+    return $t('plus_subscribe_cta_trial_for_free', { days: props.trialPeriodDays })
   }
   return $t('plus_subscribe_cta_monthly')
 })

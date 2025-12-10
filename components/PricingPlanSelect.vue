@@ -42,7 +42,7 @@
       ]"
     >
       <aside
-        v-if="plan.discountPercent"
+        v-if="plan.badgeText"
         :class="[
           'absolute',
           'top-0',
@@ -61,7 +61,7 @@
 
           '-translate-y-1/2',
         ]"
-        v-text="$t('pricing_page_yearly_discount', { discount: plan.discountPercent })"
+        v-text="plan.badgeText"
       />
 
       <div class="flex items-center">
@@ -85,7 +85,7 @@
         />
       </div>
 
-      <div class="text-xs laptop:text-sm text-right">
+      <div class="flex flex-col justify-center min-h-[52px] text-xs laptop:text-sm text-right">
         <div
           v-if="plan.hint"
           class="text-theme-black/60"
@@ -125,11 +125,13 @@
 const props = withDefaults(defineProps<{
   isYearlyHidden?: boolean
   isMonthlyHidden?: boolean
+  isUpsell?: boolean
   trialPeriodDays?: number
   trialPrice?: number
 }>(), {
   isYearlyHidden: false,
   isMonthlyHidden: false,
+  isUpsell: false,
   trialPeriodDays: 30,
   trialPrice: 1,
 })
@@ -165,26 +167,32 @@ const plans = computed(() => {
   return values.map((value) => {
     const isMonthly = value === 'monthly'
     let hint: string | undefined
-    if (isTrialFor30Days.value) {
-      const hintI18nNames = {
+    if (isTrialFor30Days.value && (isMonthly || !props.isUpsell)) {
+      hint = $t('plan_select_trial_for_price_hint', {
         days: props.trialPeriodDays,
         currency: currency.value,
         price: props.trialPrice,
-      }
-      hint = isMonthly
-        ? $t('plus_subscribe_cta_monthly_trial_with_price', hintI18nNames)
-        : $t('plus_subscribe_cta_yearly_trial_with_price', hintI18nNames)
+      })
     }
+
+    let badgeText: string | undefined
+    if (!isMonthly) {
+      badgeText = $t('pricing_page_yearly_discount', { discount: yearlyDiscountPercent.value })
+    }
+    else if (props.isUpsell && isTrialFor30Days.value) {
+      badgeText = $t('subscribe_plus_alert_limited_offer')
+    }
+
     return {
       isSelected: selectedPlan.value === value,
       value,
       label: isMonthly ? $t('pricing_page_monthly') : $t('pricing_page_yearly'),
       hint,
+      badgeText,
       perUnit: isMonthly ? $t('pricing_page_price_per_month') : $t('pricing_page_price_per_year'),
       price: isMonthly ? monthlyPrice.value : yearlyPrice.value,
       originalPrice: isMonthly ? originalMonthlyPrice.value : originalYearlyPrice.value,
       hasDiscount: isMonthly ? hasMonthlyDiscount.value : hasYearlyDiscount.value,
-      discountPercent: isMonthly ? null : yearlyDiscountPercent.value,
     }
   })
 })
