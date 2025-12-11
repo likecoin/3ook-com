@@ -95,7 +95,7 @@
         class="w-full mt-4 laptop:mt-6"
         :is-monthly-hidden="!shouldShowMonthlyPlan"
         :is-yearly-hidden="!shouldShowYearlyPlan"
-        :is-upsell="true"
+        :is-allow-yearly-trial="isAllowYearlyTrial"
         :trial-period-days="trialPeriodDays"
       />
     </template>

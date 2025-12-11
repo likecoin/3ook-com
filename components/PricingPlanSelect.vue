@@ -125,13 +125,13 @@
 const props = withDefaults(defineProps<{
   isYearlyHidden?: boolean
   isMonthlyHidden?: boolean
-  isUpsell?: boolean
+  isAllowYearlyTrial?: boolean
   trialPeriodDays?: number
   trialPrice?: number
 }>(), {
   isYearlyHidden: false,
   isMonthlyHidden: false,
-  isUpsell: false,
+  isAllowYearlyTrial: true,
   trialPeriodDays: 30,
   trialPrice: 1,
 })
@@ -167,7 +167,7 @@ const plans = computed(() => {
   return values.map((value) => {
     const isMonthly = value === 'monthly'
     let hint: string | undefined
-    if (isTrialFor30Days.value && (isMonthly || !props.isUpsell)) {
+    if (isTrialFor30Days.value && (isMonthly || props.isAllowYearlyTrial)) {
       hint = $t('plan_select_trial_for_price_hint', {
         days: props.trialPeriodDays,
         currency: currency.value,
@@ -179,7 +179,7 @@ const plans = computed(() => {
     if (!isMonthly) {
       badgeText = $t('pricing_page_yearly_discount', { discount: yearlyDiscountPercent.value })
     }
-    else if (props.isUpsell && isTrialFor30Days.value) {
+    else if (!props.isAllowYearlyTrial && isTrialFor30Days.value) {
       badgeText = $t('subscribe_plus_alert_limited_offer')
     }
 
