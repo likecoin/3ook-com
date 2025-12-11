@@ -375,6 +375,8 @@
   "product_page_related_books_title": "相關書籍",
   "product_page_remove_from_book_list_button_label": "從書單移除",
   "product_page_select_reading_format": "選擇閱讀格式",
+  "product_page_share_text": "來看看《{title}》 - 3ook.com",
+  "product_page_share_text_with_author": "來看看 {author} 的《{title}》 - 3ook.com",
   "product_page_sold_out_button_label": "已售罄",
   "product_page_sticky_purchase_button_label": "購買書籍",
   "product_page_support_tts_label": "聲音朗讀",

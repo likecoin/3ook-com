@@ -375,6 +375,8 @@
   "product_page_related_books_title": "Related Books",
   "product_page_remove_from_book_list_button_label": "Remove from 3ookList",
   "product_page_select_reading_format": "Select Reading Format",
+  "product_page_share_text": "Check out \"{title}\" on 3ook.com",
+  "product_page_share_text_with_author": "Check out \"{title}\" by {author} on 3ook.com",
   "product_page_sold_out_button_label": "Sold Out",
   "product_page_sticky_purchase_button_label": "Purchase",
   "product_page_support_tts_label": "Text-To-Speech",
