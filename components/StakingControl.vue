@@ -9,7 +9,7 @@
     <UCard
       :ui="{
         header: 'flex flex-col items-center justify-center',
-        body: 'flex items-center justify-between text-sm !py-2',
+        body: '*:flex *:items-center *:justify-between *:px-4 sm:*:px-6 *:py-1.5 text-sm !px-0 !py-1 divide-y divide-muted',
         footer: 'flex justify-between items-center text-sm py-3 bg-theme-cyan/20',
       }"
     >
@@ -29,11 +29,30 @@
         v-if="hasLoggedIn"
         #default
       >
-        <span
-          class="font-semibold"
-          v-text="$t('staking_your_current_stake')"
-        />
-        <BalanceLabel :value="formattedUserStake" />
+        <div class="tablet:hidden">
+          <span
+            class="font-semibold"
+            v-text="$t('staking_total_stakers')"
+          />
+          <span
+            class="font-semibold"
+            v-text="numberOfStakers.toLocaleString()"
+          />
+        </div>
+        <div>
+          <span
+            class="font-semibold"
+            v-text="$t('staking_your_stake')"
+          />
+          <BalanceLabel :value="formattedUserStake" />
+        </div>
+        <div>
+          <span
+            class="font-semibold"
+            v-text="$t('staking_your_stake_percentage')"
+          />
+          <span class="font-semibold">{{ userStakePercentage }}%</span>
+        </div>
       </template>
 
       <!-- Pending Rewards (logged in only) -->
@@ -147,6 +166,8 @@ const {
   formattedTotalStake,
   formattedUserStake,
   formattedPendingRewards,
+  userStakePercentage,
+  numberOfStakers,
   handleClaimRewards,
   loadStakingData,
 } = useNFTClassStakingData(nftClassIdComputed)

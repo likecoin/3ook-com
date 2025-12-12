@@ -155,6 +155,7 @@
                     <BalanceLabel
                       class="text-2xl"
                       :value="formattedTotalStake"
+                      :is-compact="true"
                     />
                     <div
                       class="mt-1 text-sm text-muted"
@@ -182,16 +183,12 @@
                     <BalanceLabel
                       class="text-2xl"
                       :value="formattedUserStake"
+                      :is-compact="true"
                     />
 
                     <div
                       class="mt-1 text-sm text-muted"
                       v-text="$t('staking_your_stake')"
-                    />
-                    <div
-                      v-if="userStakePercentage > 0"
-                      class="mt-1 text-xs text-dimmed"
-                      v-text="$t('staking_of_total', { percentage: userStakePercentage })"
                     />
                   </div>
                 </UCard>
@@ -829,7 +826,6 @@ const {
   formattedTotalStake,
   formattedUserStake,
   formattedPendingRewards,
-  userStakePercentage,
   numberOfStakers,
   handleClaimRewards,
   loadStakingData,
