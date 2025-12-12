@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@coinbase/wallet-sdk": "~4.3.6",
+    "@farcaster/miniapp-sdk": "^0.2.1",
     "@likecoin/epubjs": "^0.3.93",
     "@likecoin/wagmi-connector": "2.3.2-like.3",
     "@metamask/sdk": "~0.33.1",

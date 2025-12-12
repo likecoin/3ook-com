@@ -70,6 +70,21 @@ useHead({
       name: 'base:app_id',
       content: '693c33358a7c4e55fec73fbd',
     },
+    {
+      name: 'fc:miniapp',
+      content: JSON.stringify({
+        version: 'next',
+        imageUrl: ogURL,
+        button: {
+          title: 'Start Reading',
+          action: {
+            type: 'launch_miniapp',
+            name: '3ook.com',
+            url: 'https://3ook.com/store',
+          },
+        },
+      }),
+    },
   ],
   titleTemplate: title => title ? `${title} | ${$t('app_title')}` : $t('app_title'),
   link: [
