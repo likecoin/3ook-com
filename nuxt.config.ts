@@ -287,6 +287,17 @@ export default defineNuxtConfig({
           '\'self\'',
           'https://www.facebook.com',
         ],
+        'frame-ancestors': [
+          '\'self\'',
+          'base.org',
+          '*.base.org',
+          'base.app',
+          '*.base.app',
+          'base.dev',
+          '*.base.dev',
+          'farcaster.xyz',
+          '*.farcaster.xyz',
+        ],
         // NOTE: Resolve Safari force HTTPS in development
         'upgrade-insecure-requests': isDevelopment ? false : true,
       },
