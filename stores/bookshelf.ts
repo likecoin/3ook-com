@@ -3,26 +3,30 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
   const nftStore = useNFTStore()
   const likeNFTClassContract = useLikeNFTClassContract()
 
-  const nftByNFTClassIds = ref<Record<string, Record<string, NFT>>>({})
+  const nftClassIds = ref<Set<string>>(new Set())
+  const tokenIdsByNFTClassId = ref<Record<string, string[]>>({})
   const isFetching = ref(false)
   const hasFetched = ref(false)
   const nextKey = ref<number | undefined>(undefined)
 
-  const getNFTsByNFTClassId = computed(() => (nftClassId: string) => {
-    return Object.values(nftByNFTClassIds.value[nftClassId] || {})
+  const getTokenIdsByNFTClassId = computed(() => (nftClassId: string) => {
+    const normalizedId = nftClassId.toLowerCase()
+    return tokenIdsByNFTClassId.value[normalizedId] || []
   })
 
-  const getFirstNFTByNFTClassId = computed(() => (nftClassId: string) => {
-    const nfts = getNFTsByNFTClassId.value(nftClassId)
-    return nfts[0]
+  const getFirstTokenIdByNFTClassId = computed(() => (nftClassId: string) => {
+    return getTokenIdsByNFTClassId.value(nftClassId)[0]
   })
 
   const items = computed(() => {
-    return Object.entries(nftByNFTClassIds.value)
-      .filter(([nftClassId]) => nftStore.getNFTClassMetadataById(nftClassId)?.['@type'] === 'Book')
-      .map(([nftClassId, nfts]) => ({
+    return Array.from(nftClassIds.value)
+      .filter((nftClassId) => {
+        const metadata = nftStore.getNFTClassMetadataById(nftClassId)
+        return metadata?.['@type'] === 'Book'
+      })
+      .map(nftClassId => ({
         nftClassId,
-        nftIds: Object.keys(nfts),
+        nftIds: tokenIdsByNFTClassId.value[nftClassId] || [],
       }))
   })
 
@@ -43,21 +47,23 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
     try {
       isFetching.value = true
       const key = isRefresh ? undefined : nextKey.value?.toString()
-      const res = await fetchNFTsByOwnerWalletAddress(walletAddress, {
+      const res = await fetchTokenBookNFTsByAccount(walletAddress, {
         key,
         nocache: isRefresh,
         limit,
       })
-      res.data.forEach((item) => {
-        const nftClassId = item.contract_address.toLowerCase() as `0x${string}`
-        if (!nftByNFTClassIds.value[nftClassId]) {
-          nftByNFTClassIds.value[nftClassId] = {}
 
-          nftStore.lazyFetchNFTClassChainMetadataById(nftClassId)
+      res.data.forEach((nftClass) => {
+        const nftClassId = nftClass.address.toLowerCase() as `0x${string}`
+
+        nftClassIds.value.add(nftClassId)
+        tokenIdsByNFTClassId.value[nftClassId] ??= []
+
+        if (nftClass.metadata) {
+          nftStore.addNFTClassMetadata(nftClassId, nftClass.metadata)
         }
-        const nftId = item.token_id
-        nftByNFTClassIds.value[nftClassId][nftId] = item
       })
+
       nextKey.value = res.pagination.count < limit ? undefined : res.pagination.next_key
     }
     catch (error) {
@@ -78,32 +84,48 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
     }
   }
 
-  async function fetchNFTByNFTClassIdAndOwnerWalletAddressThroughContract(nftClassId: string, ownerWalletAddress: string) {
-    const nftClassMetadataPromise = likeNFTClassContract.fetchNFTClassMetadataById(nftClassId)
+  async function fetchNFTByNFTClassIdAndOwnerWalletAddressThroughContract(
+    nftClassId: string,
+    ownerWalletAddress: string,
+    { isRefresh = false }: { isRefresh?: boolean } = {},
+  ) {
+    const normalizedNFTClassId = nftClassId.toLowerCase()
+
+    const hasNFTClass = nftClassIds.value.has(normalizedNFTClassId)
+    const existingTokenIds = tokenIdsByNFTClassId.value[normalizedNFTClassId]
+    const existingMetadata = nftStore.getNFTClassMetadataById(normalizedNFTClassId)
+
+    if (!isRefresh && hasNFTClass && existingTokenIds?.length && existingMetadata) {
+      return
+    }
+
     const nftBalance = await likeNFTClassContract.fetchNFTBalanceOf(nftClassId, ownerWalletAddress)
     if (!nftBalance) return
-    const nftId = await likeNFTClassContract.fetchNFTIdByNFTClassIdAndWalletAddressAndIndex(nftClassId, ownerWalletAddress, 0)
-    const [nftClassMetadata, nftMetadata] = await Promise.all([
-      nftClassMetadataPromise,
-      likeNFTClassContract.fetchNFTMetadataByNFTClassIdAndNFTId(nftClassId, nftId),
-    ])
-    if (nftClassMetadata) {
-      nftStore.addNFTClassMetadata(nftClassId, nftClassMetadata)
-    }
-    if (nftId && nftMetadata) {
-      if (!nftByNFTClassIds.value[nftClassId]) {
-        nftByNFTClassIds.value[nftClassId] = {}
+
+    const tokenId = await likeNFTClassContract.fetchNFTIdByNFTClassIdAndWalletAddressAndIndex(nftClassId, ownerWalletAddress, 0)
+
+    let nftClassMetadata = existingMetadata
+    if (!nftClassMetadata || isRefresh) {
+      nftClassMetadata = await likeNFTClassContract.fetchNFTClassMetadataById(nftClassId)
+      if (nftClassMetadata) {
+        nftStore.addNFTClassMetadata(normalizedNFTClassId, nftClassMetadata)
       }
-      // NOTE: Mimic the structure of the NFT metadata from indexer
-      nftMetadata.token_id = nftId
-      nftByNFTClassIds.value[nftClassId][nftId] = nftMetadata
+    }
+
+    if (nftClassMetadata) {
+      nftClassIds.value.add(normalizedNFTClassId)
+
+      if (tokenId) {
+        tokenIdsByNFTClassId.value[normalizedNFTClassId] = [tokenId]
+      }
     }
   }
 
   function reset() {
     isFetching.value = false
     hasFetched.value = false
-    nftByNFTClassIds.value = {}
+    nftClassIds.value.clear()
+    tokenIdsByNFTClassId.value = {}
     nextKey.value = undefined
   }
 
@@ -122,8 +144,8 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
     items,
 
     fetchItems,
-    getNFTsByNFTClassId,
-    getFirstNFTByNFTClassId,
+    getTokenIdsByNFTClassId,
+    getFirstTokenIdByNFTClassId,
     fetchNFTByNFTClassIdAndOwnerWalletAddressThroughContract,
     reset,
   }
