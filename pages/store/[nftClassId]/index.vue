@@ -979,9 +979,9 @@ const canBePurchased = computed(() => {
 const getContentTypeLabel = useContentTypeLabel()
 
 function handleContentURLClick(contentURL: ContentURL) {
-  const firstNFT = bookshelfStore.getFirstNFTByNFTClassId(nftClassId.value)
-  if (firstNFT) {
-    openContentURL(contentURL, firstNFT.token_id)
+  const firstTokenId = bookshelfStore.getFirstTokenIdByNFTClassId(nftClassId.value)
+  if (firstTokenId) {
+    openContentURL(contentURL, firstTokenId)
   }
   isReadBookDrawerOpen.value = false
 }
@@ -1295,26 +1295,23 @@ async function handleReadButtonClick() {
   useLogEvent('product_page_read_button_click', { nft_class_id: nftClassId.value })
 
   try {
-    // Get the first NFT owned by the user for this NFT class
-    const firstNFT = bookshelfStore.getFirstNFTByNFTClassId(nftClassId.value)
-    if (!firstNFT) {
+    const firstTokenId = bookshelfStore.getFirstTokenIdByNFTClassId(nftClassId.value)
+    if (!firstTokenId) {
       throw createError({ data: { description: $t('error_book_not_owned') } })
     }
 
     const contentURLs = bookInfo.contentURLs.value || []
-    // If there are multiple content URLs, open the drawer for selection
     if (contentURLs.length > 1) {
       isReadBookDrawerOpen.value = true
       return
     }
 
-    // If there's only one content URL, open it directly
     const contentURL = contentURLs[0] || bookInfo.defaultContentURL.value
     if (!contentURL) {
       throw createError({ data: { description: $t('error_book_content_url_empty') } })
     }
 
-    openContentURL(contentURL, firstNFT.token_id)
+    openContentURL(contentURL, firstTokenId)
   }
   catch (error) {
     await handleError(error)

@@ -12,8 +12,8 @@ export function useUserBookOwnership(nftClassId: MaybeRef<string>) {
       return false
     }
 
-    const nfts = bookshelfStore.getNFTsByNFTClassId(nftClassIdRef.value)
-    return nfts.length > 0
+    const tokenIds = bookshelfStore.getTokenIdsByNFTClassId(nftClassIdRef.value)
+    return tokenIds.length > 0
   })
 
   async function checkOwnership() {
@@ -25,8 +25,8 @@ export function useUserBookOwnership(nftClassId: MaybeRef<string>) {
       isChecking.value = true
 
       // First check if we already have the NFT in the bookshelf store
-      const existingNFTs = bookshelfStore.getNFTsByNFTClassId(nftClassIdRef.value)
-      if (existingNFTs.length > 0) {
+      const existingTokenIds = bookshelfStore.getTokenIdsByNFTClassId(nftClassIdRef.value)
+      if (existingTokenIds.length > 0) {
         hasChecked.value = true
         return true
       }

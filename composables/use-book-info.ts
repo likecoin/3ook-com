@@ -208,8 +208,7 @@ export default function (
   })
 
   const userOwnedNFTIds = computed(() => {
-    const nftIds = bookshelfStore.getNFTsByNFTClassId(toValue(nftClassId)).map(nft => nft.token_id)
-    return nftIds
+    return bookshelfStore.getTokenIdsByNFTClassId(toValue(nftClassId))
   })
 
   const firstUserOwnedNFTId = computed(() => userOwnedNFTIds.value[0])
