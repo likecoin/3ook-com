@@ -25,6 +25,7 @@ const { t: $t } = useI18n()
 const nftClassId = computed(() => getRouteQuery('nft_class_id'))
 const nftId = computed(() => getRouteQuery('nft_id'))
 const bookInfo = useBookInfo({ nftClassId })
+const { isOwner: isUserBookOwner, checkOwnership } = useUserBookOwnership(nftClassId)
 
 if (!nftClassId.value) {
   await navigateTo(localeRoute({ name: 'shelf', query: route.query }))
@@ -38,6 +39,11 @@ if (nftClassId.value !== nftClassId.value.toLowerCase()) {
       nft_class_id: nftClassId.value.toLowerCase(),
     },
   }), { replace: true })
+}
+
+await checkOwnership()
+if (!isUserBookOwner.value) {
+  await navigateTo(localeRoute({ name: 'shelf', query: route.query }))
 }
 
 if (!nftId.value && bookInfo.firstUserOwnedNFTId.value) {

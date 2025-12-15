@@ -1295,6 +1295,10 @@ async function handleReadButtonClick() {
   useLogEvent('product_page_read_button_click', { nft_class_id: nftClassId.value })
 
   try {
+    if (!isUserBookOwner.value) {
+      throw createError({ data: { description: $t('error_book_not_owned') } })
+    }
+
     const firstTokenId = bookshelfStore.getFirstTokenIdByNFTClassId(nftClassId.value)
     if (!firstTokenId) {
       throw createError({ data: { description: $t('error_book_not_owned') } })
