@@ -1222,6 +1222,7 @@ async function handlePurchaseButtonClick() {
     if (selectedPricingItem.value.price) {
       const isStartSubscription = await openUpsellPlusModalIfEligible({
         nftClassId: nftClassId.value,
+        bookPrice: selectedPricingItem.value.price,
         selectedPricingItemIndex: selectedPricingItemIndex.value,
         utmSource: 'upsell_plus',
         utmCampaign: `upsell_plus_${nftClassId.value}`,

@@ -20,6 +20,7 @@ export interface UpsellPlusModalProps {
   trialPrice?: number
   mustCollectPaymentMethod?: boolean
   nftClassId?: string
+  bookPrice?: number
   utmCampaign?: string
   utmMedium?: string
   utmSource?: string

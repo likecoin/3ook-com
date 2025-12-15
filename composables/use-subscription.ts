@@ -98,9 +98,17 @@ export function useSubscription() {
     }
 
     if (!isLikerPlus.value || likerPlusPeriod.value === 'month') {
+      // Only pass nftClassId if book price is <= Plus yearly price
+      // This way expensive books won't show the "gift book" option, only 20% off
+      let nftClassId = props.nftClassId
+      if (props.bookPrice && props.bookPrice > yearlyPrice.value) {
+        nftClassId = undefined
+      }
+
       const upsellModalProps: UpsellPlusModalProps = {
         ...props,
         ...getUpsellPlusModalProps(),
+        nftClassId,
       }
       useLogEvent('upsell_plus_modal_open')
       return upsellPlusModal.open(upsellModalProps).result
