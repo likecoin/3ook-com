@@ -544,6 +544,33 @@ const canonicalURL = computed(() => {
 
 useHead(() => {
   const meta = []
+  let title = $t('store_page_title')
+
+  if (isSearchMode.value) {
+    if (querySearchTerm.value) {
+      title = `${$t('store_search_prefix')}${querySearchTerm.value} - ${$t('store_page_title')}`
+    }
+    else if (queryAuthorName.value) {
+      title = `${$t('store_author_prefix')}${queryAuthorName.value} - ${$t('store_page_title')}`
+    }
+    else if (queryPublisherName.value) {
+      title = `${$t('store_publisher_prefix')}${queryPublisherName.value} - ${$t('store_page_title')}`
+    }
+    else if (queryOwnerWallet.value) {
+      const displayName = ownerWalletDisplayName.value || queryOwnerWallet.value
+      title = `${$t('store_owner_wallet_prefix')}${displayName} - ${$t('store_page_title')}`
+    }
+  }
+  else {
+    title = [tagName.value, $t('store_page_title')].join(' - ')
+  }
+
+  // Add og:title
+  meta.push({
+    property: 'og:title',
+    content: title,
+  })
+
   const description = tagDescription.value
   if (description) {
     meta.push(
@@ -583,7 +610,7 @@ useHead(() => {
   ]
 
   return {
-    title: [$t('store_page_title'), tagName.value].join('›'),
+    title,
     meta,
     link,
   }
