@@ -453,7 +453,7 @@
   "store_fetch_tags_error": "Unable to load tags",
   "store_no_items": "No books",
   "store_no_search_results": "No results found",
-  "store_owner_wallet_prefix": "Owner",
+  "store_owner_wallet_prefix": "Owner: ",
   "store_page_title": "3ookStore",
   "store_publisher_prefix": "Publisher: ",
   "store_search_input_placeholder": "Search...",

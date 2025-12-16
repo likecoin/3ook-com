@@ -453,7 +453,7 @@
   "store_fetch_tags_error": "無法載入分類",
   "store_no_items": "沒有書本",
   "store_no_search_results": "沒有找到結果",
-  "store_owner_wallet_prefix": "擁有者",
+  "store_owner_wallet_prefix": "擁有者：",
   "store_page_title": "書店",
   "store_publisher_prefix": "出版社：",
   "store_search_input_placeholder": "搜尋⋯⋯",
