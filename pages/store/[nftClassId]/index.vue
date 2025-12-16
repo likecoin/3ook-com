@@ -717,6 +717,8 @@ const isCheckingBookList = ref(false)
 const isUpdatingBookList = ref(false)
 
 const from = computed(() => getRouteQuery('from') || undefined)
+const coupon = computed(() => getRouteQuery('coupon') || undefined)
+const quantity = computed(() => Math.max(parseInt(getRouteQuery('quantity'), 10) || 1, 1))
 
 const ogTitle = computed(() => {
   const title = bookInfo.name.value
@@ -874,6 +876,7 @@ const pricingItems = computed(() => {
 const selectedPricingItem = computed(() => {
   return pricingItems.value[selectedPricingItemIndex.value]
 })
+const priceIndex = computed(() => selectedPricingItem.value?.index || 0)
 
 const bookName = computed(() => bookInfo.name.value)
 
@@ -916,10 +919,9 @@ async function checkBookListStatus() {
 
   isCheckingBookList.value = true
   try {
-    const priceIndex = selectedPricingItem.value?.index || 0
     isInBookList.value = await bookListStore.checkItemExists(
       nftClassId.value,
-      priceIndex,
+      priceIndex.value,
     )
   }
   catch (error) {
@@ -951,20 +953,19 @@ const socialButtons = computed(() => [
 const formattedLogPayload = computed(() => {
   const currency = selectedPricingItem.value?.currency || 'USD'
   const price = selectedPricingItem.value?.price || 0
-  const coupon = getRouteQuery('coupon')
   return {
     currency,
-    value: price,
+    value: price * quantity.value,
     items: [{
       id: `${nftClassId.value}-${selectedPricingItemIndex.value}`,
       name: bookName.value,
-      price,
+      price: price,
       currency,
-      quantity: 1,
+      quantity: quantity.value,
       google_business_vertical: 'retail',
     }],
-    promotion_id: coupon || (user.value?.isLikerPlus ? 'plus' : undefined),
-    promotion_name: coupon || (user.value?.isLikerPlus ? 'plus' : undefined),
+    promotion_id: coupon.value || (user.value?.isLikerPlus ? 'plus' : undefined),
+    promotion_name: coupon.value || (user.value?.isLikerPlus ? 'plus' : undefined),
   }
 })
 
@@ -1227,14 +1228,14 @@ async function handlePurchaseButtonClick() {
         utmSource: 'upsell_plus',
         utmCampaign: `upsell_plus_${nftClassId.value}`,
         utmMedium: 'product_page',
-        from: getRouteQuery('from') || undefined,
+        from: from.value || undefined,
       })
       if (isStartSubscription) return
     }
 
     let customPrice: number | undefined = undefined
 
-    if (selectedPricingItem.value.canTip) {
+    if (quantity.value === 1 && selectedPricingItem.value.canTip) {
       const tippingResult = await openTippingModal({
         // TODO: Check if classOwner is always the book's publisher
         avatar: bookInfo.publisherName.value ? bookInfo.nftClassOwnerAvatar.value : '',
@@ -1249,16 +1250,33 @@ async function handlePurchaseButtonClick() {
       }
     }
 
-    const { url, paymentId } = await likeCoinSessionAPI.createNFTBookPurchase({
-      email: user.value?.email,
-      nftClassId: nftClassId.value,
-      customPrice,
-      priceIndex: selectedPricingItem.value.index,
-      coupon: getRouteQuery('coupon'),
-      language: locale.value.split('-')[0],
-      from: from.value,
-      ...getAnalyticsParameters(),
-    })
+    const email = user.value?.email
+    const language = locale.value.split('-')[0]
+
+    const { url, paymentId } = await (
+      quantity.value > 1
+        ? likeCoinSessionAPI.createNFTBookCartPurchase([{
+            nftClassId: nftClassId.value,
+            priceIndex: priceIndex.value,
+            quantity: quantity.value,
+          }], {
+            email,
+            coupon: coupon.value,
+            from: from.value,
+            language,
+            ...getAnalyticsParameters(),
+          })
+        : likeCoinSessionAPI.createNFTBookPurchase({
+            nftClassId: nftClassId.value,
+            priceIndex: priceIndex.value,
+            customPrice,
+            email,
+            coupon: coupon.value,
+            from: from.value,
+            language,
+            ...getAnalyticsParameters(),
+          })
+    )
     useLogEvent('begin_checkout', {
       ...formattedLogPayload.value,
       transaction_id: paymentId,
