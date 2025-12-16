@@ -20,7 +20,7 @@ export default defineConfig({
         padding: 0,
       },
       maskable: {
-        sizes: [512],
+        sizes: [200, 512, 1024],
         resizeOptions,
       },
       apple: {
