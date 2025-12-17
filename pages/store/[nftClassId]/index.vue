@@ -409,7 +409,7 @@
                         />
 
                         <UBadge
-                          v-if="!bookInfo.isAudioHidden.value && isLikerPlus"
+                          v-if="!bookInfo.isAudioHidden.value"
                           :label="$t('product_page_support_tts_label')"
                           variant="outline"
                           color="neutral"
@@ -902,7 +902,7 @@ const descriptionTags = computed(() => {
     tags.push($t('reading_method_download_file'))
   }
 
-  if (!bookInfo.isAudioHidden.value && isLikerPlus.value) {
+  if (!bookInfo.isAudioHidden.value) {
     tags.push($t('product_page_support_tts_label'))
   }
 
