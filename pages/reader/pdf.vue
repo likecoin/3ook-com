@@ -15,6 +15,7 @@
         :pdf-buffer="fileBuffer"
         :is-audio-hidden="bookInfo.isAudioHidden.value"
         :book-file-cache-key="bookFileCacheKey"
+        :book-progress-key-prefix="bookProgressKeyPrefix"
         @error="handlePDFError"
         @pdf-loaded="handlePDFLoaded"
         @tts-play="handleTTSPlay"
@@ -43,6 +44,7 @@ const {
   bookCoverSrc,
   bookFileURLWithCORS,
   bookFileCacheKey,
+  bookProgressKeyPrefix,
 } = useReader()
 const { handleError } = useErrorHandler()
 

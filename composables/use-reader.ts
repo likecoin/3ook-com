@@ -32,6 +32,14 @@ export default function (params: {
     ].filter(value => value !== undefined).join('-'),
   )
 
+  // Progress/config key prefix - per NFT class only (not per NFT ID or custom message)
+  const bookProgressKeyPrefix = computed(() =>
+    getBookProgressKeyPrefix({
+      nftClassId: nftClassId.value,
+      cacheKeyPrefix: config.public.cacheKeyPrefix,
+    }),
+  )
+
   const bookFileURLWithCORS = computed(() =>
     getBookFileURLWithCORS({
       nftClassId: nftClassId.value,
@@ -50,6 +58,7 @@ export default function (params: {
     bookCoverSrc,
 
     bookFileCacheKey,
+    bookProgressKeyPrefix,
     bookFileURLWithCORS,
   }
 }

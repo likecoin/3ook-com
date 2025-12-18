@@ -14,7 +14,24 @@
       @click="handleCoverClick"
     />
 
-    <div class="mt-2 h-[70px]">
+    <div class="mt-2 w-full h-[24px]">
+      <div
+        v-if="progressPercentage > 0 && progressPercentage <= 100"
+        class="w-full"
+      >
+        <div class="flex items-center justify-between text-xs text-toned mb-1">
+          <span>{{ progressPercentage }}%</span>
+        </div>
+        <div class="w-full h-1 bg-gray-200 rounded-full overflow-hidden">
+          <div
+            class="h-full bg-primary-500 transition-all duration-300"
+            :style="{ width: `${progressPercentage}%` }"
+          />
+        </div>
+      </div>
+    </div>
+
+    <div class="h-[70px]">
       <div class="flex items-start gap-1">
         <div
           class="text-sm laptop:text-base text-highlighted font-semibold line-clamp-2 grow"
@@ -142,6 +159,10 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
+  progress: {
+    type: Number,
+    default: 0,
+  },
 })
 
 const emit = defineEmits(['visible', 'open', 'download', 'claim'])
@@ -155,6 +176,8 @@ const getContentTypeLabel = useContentTypeLabel()
 const { getResizedImageURL } = useImageResize()
 
 const bookCoverSrc = computed(() => getResizedImageURL(bookInfo.coverSrc.value, { size: 300 }))
+
+const progressPercentage = computed(() => Math.round(props.progress * 100))
 
 const isDesktopScreen = useDesktopScreen()
 

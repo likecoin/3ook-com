@@ -197,7 +197,8 @@ interface Props {
   pdfBuffer: ArrayBuffer
   isAudioHidden?: boolean
   bookFileCacheKey: string
-  nftClassId?: string
+  bookProgressKeyPrefix: string
+  nftClassId: string
 }
 
 const props = defineProps<Props>()
@@ -216,7 +217,15 @@ function getCacheKeyWithSuffix(suffix: ReaderCacheKeySuffix) {
   return getReaderCacheKeyWithSuffix(props.bookFileCacheKey, suffix)
 }
 
-const currentPage = useStorage(computed(() => getCacheKeyWithSuffix('locations')), 1)
+const {
+  readProgress,
+  getProgressKeyWithSuffix,
+} = useReaderProgress({
+  nftClassId: props.nftClassId,
+  bookProgressKeyPrefix: props.bookProgressKeyPrefix,
+})
+
+const currentPage = useStorage(computed(() => getProgressKeyWithSuffix('locations')), 1)
 const totalPages = ref(0)
 const scaleMin = 0.5
 const scaleMax = 3.0
@@ -344,6 +353,9 @@ watch([currentPage], async () => {
     await nextTick()
     renderPages()
     emit('pageChanged', currentPage.value)
+    if (totalPages.value > 0) {
+      readProgress.value = currentPage.value / totalPages.value
+    }
   }
 })
 

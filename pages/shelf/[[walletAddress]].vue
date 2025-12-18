@@ -98,6 +98,7 @@
           :staked-amount="item.stakedAmount"
           :pending-rewards="item.pendingRewards"
           :is-owned="item.isOwned"
+          :progress="item.progress"
           :lazy="index >= columnMax"
           @open="handleBookshelfItemOpen"
           @download="handleBookshelfItemDownload"
@@ -120,7 +121,14 @@
 
 <script setup lang="ts">
 import { formatUnits } from 'viem'
+import type { BookshelfItem } from '~/stores/bookshelf'
 import type { StakingItem } from '~/stores/staking'
+
+interface BookshelfItemWithStaking extends BookshelfItem {
+  stakedAmount: number
+  pendingRewards: number
+  isOwned: boolean
+}
 
 const { likeCoinTokenDecimals } = useRuntimeConfig().public
 const { t: $t } = useI18n()
@@ -152,7 +160,7 @@ const stakingData = computed(() => {
       }
 })
 
-const bookshelfItemsWithStaking = computed(() => {
+const bookshelfItemsWithStaking = computed<BookshelfItemWithStaking[]>(() => {
   const ownedItemsByNFTClassId = new Map(
     bookshelfStore.items.map(item => [
       item.nftClassId.toLowerCase(),
@@ -188,6 +196,8 @@ const bookshelfItemsWithStaking = computed(() => {
         stakedAmount: Number(formatUnits(stakedItem.stakedAmount, likeCoinTokenDecimals)),
         pendingRewards: Number(formatUnits(stakedItem.pendingRewards, likeCoinTokenDecimals)),
         isOwned: false,
+        lastOpenedTime: 0,
+        progress: 0,
       })
     }
   })
@@ -201,6 +211,19 @@ const bookshelfItemsWithStaking = computed(() => {
       return a.isOwned ? -1 : 1
     }
 
+    const aOpened = a.progress > 0
+    const bOpened = b.progress > 0
+    // Opened books come before unopened books
+    if (aOpened !== bOpened) {
+      return aOpened ? -1 : 1
+    }
+
+    // Both opened (or both unopened): for opened, sort by lastOpenedTime (desc)
+    if (aOpened && bOpened && a.lastOpenedTime !== b.lastOpenedTime) {
+      return b.lastOpenedTime - a.lastOpenedTime
+    }
+
+    // Finally sort by staked amount
     return b.stakedAmount - a.stakedAmount
   })
 })

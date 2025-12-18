@@ -290,12 +290,20 @@ const {
   bookCoverSrc,
   bookFileURLWithCORS,
   bookFileCacheKey,
+  bookProgressKeyPrefix,
 } = useReader()
 const { errorModal, handleError } = useErrorHandler()
 const {
   shouldShowTTSTryModal,
   showTTSTryModal,
 } = useTTSTryModal()
+const {
+  readProgress,
+  getProgressKeyWithSuffix,
+} = useReaderProgress({
+  nftClassId: nftClassId.value,
+  bookProgressKeyPrefix: bookProgressKeyPrefix.value,
+})
 
 function getCacheKeyWithSuffix(suffix: ReaderCacheKeySuffix) {
   return getReaderCacheKeyWithSuffix(bookFileCacheKey.value, suffix)
@@ -399,7 +407,7 @@ const isRightToLeft = ref(false)
 const currentPageStartCfi = ref<string>('')
 const currentPageEndCfi = ref<string>('')
 const currentPageHref = ref<string>('')
-const currentCfi = useStorage(getCacheKeyWithSuffix('cfi'), '')
+const currentCfi = useStorage(getProgressKeyWithSuffix('cfi'), '')
 
 const FONT_SIZE_OPTIONS = [
   6, 8, 10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 40, 48, 56, 64, 72,
@@ -618,6 +626,7 @@ async function loadEPub() {
     }
     percentage.value = book.locations.percentageFromCfi(location.start.cfi)
     currentCfi.value = location.start.cfi
+    readProgress.value = percentage.value
   })
 
   const { segments: ttsSegments, chapterTitles } = await extractTTSSegments(book)
