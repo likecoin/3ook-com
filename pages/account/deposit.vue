@@ -442,6 +442,10 @@ async function handleStake() {
     await accountStore.restoreConnection()
     const amount = parseUnits(stakeAmount.value.toString(), likeCoinTokenDecimals)
 
+    if (amount > likeBalance.value) {
+      throw new Error($t('error_insufficient_amount'))
+    }
+
     await governanceData.approveAndDeposit(amount, walletAddress.value)
 
     toast.add({

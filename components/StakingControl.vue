@@ -194,11 +194,12 @@ const isDonating = ref(false)
 const {
   likeBalance,
   formattedLikeBalance,
+  formattedLikeBalanceNumber,
   refetch: refetchLikeBalance,
 } = useLikeCoinBalance(walletAddress)
 
 const isValidStakeAmount = computed(() => {
-  return stakeAmount.value > 0
+  return stakeAmount.value > 0 && stakeAmount.value <= formattedLikeBalanceNumber.value
 })
 
 async function refreshData() {
@@ -243,15 +244,7 @@ async function handleStakeButtonClick() {
     const amount = parseUnits(stakeAmount.value.toString(), likeCoinTokenDecimals)
 
     if (amount > likeBalance.value) {
-      toast.add({
-        title: $t('error_insufficient_amount'),
-        description: $t('error_insufficient_amount_description', {
-          amount: stakeAmount.value,
-          balance: formattedLikeBalance.value,
-        }),
-        color: 'error',
-        icon: 'i-material-symbols-error-outline',
-      })
+      throw new Error($t('error_insufficient_amount'))
       return
     }
 

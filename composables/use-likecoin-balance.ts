@@ -18,8 +18,12 @@ export function useLikeCoinBalance(walletAddress: MaybeRefOrGetter<string | unde
 
   const likeBalance = computed(() => data.value || 0n)
 
+  const formattedLikeBalanceNumber = computed(() => {
+    return Number(formatUnits(likeBalance.value, config.public.likeCoinTokenDecimals))
+  })
+
   const formattedLikeBalance = computed(() => {
-    return Number(formatUnits(likeBalance.value, config.public.likeCoinTokenDecimals)).toLocaleString(undefined, {
+    return formattedLikeBalanceNumber.value.toLocaleString(undefined, {
       maximumFractionDigits: 2,
       minimumFractionDigits: 0,
     })
@@ -28,6 +32,7 @@ export function useLikeCoinBalance(walletAddress: MaybeRefOrGetter<string | unde
   return {
     refetch,
     likeBalance,
+    formattedLikeBalanceNumber,
     formattedLikeBalance,
   }
 }
