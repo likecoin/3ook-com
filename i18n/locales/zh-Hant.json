@@ -436,7 +436,7 @@
   "staking_pending_rewards": "待領收益",
   "staking_stake_button": "質押",
   "staking_stake_error": "質押失敗",
-  "staking_stake_on_book_title": "質押 LikeCoin 予作品，應援作者並獲得分成",
+  "staking_stake_on_book_title": "質押 {likecoin} 予作品，應援作者並獲分成",
   "staking_stake_please_enter_amount": "請輸入質押數量",
   "staking_stake_success": "質押成功！",
   "staking_total_staked": "應援指數",

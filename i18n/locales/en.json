@@ -436,7 +436,7 @@
   "staking_pending_rewards": "Pending rewards",
   "staking_stake_button": "Stake",
   "staking_stake_error": "Staking failed",
-  "staking_stake_on_book_title": "Stake to earn and support",
+  "staking_stake_on_book_title": "Stake {likecoin} to earn and support this work",
   "staking_stake_please_enter_amount": "Please enter an amount to stake",
   "staking_stake_success": "Staking successful!",
   "staking_total_staked": "Total staked",

@@ -1,9 +1,20 @@
 <template>
   <div class="flex flex-col gap-4 p-4 bg-white rounded-lg shadow-[0px_10px_20px_0px_rgba(0,0,0,0.04)]">
-    <h2
+    <i18n-t
+      keypath="staking_stake_on_book_title"
+      tag="h2"
       class="font-semibold tablet:text-lg"
-      v-text="$t('staking_stake_on_book_title')"
-    />
+    >
+      <template #likecoin>
+        <a
+          href="https://dao.like.co/?utm_source=3ookcom&utm_medium=referral&utm_campaign=staking"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="text-primary hover:underline"
+          @click="handleLikeCoinLinkClick"
+        >LikeCoin</a>
+      </template>
+    </i18n-t>
 
     <!-- Total Stake Display -->
     <UCard
@@ -200,6 +211,10 @@ async function refreshData() {
 onMounted(async () => {
   await refreshData()
 })
+
+function handleLikeCoinLinkClick() {
+  useLogEvent('stake_likecoin_link_click', { nft_class_id: props.nftClassId })
+}
 
 async function handleConnectWallet() {
   try {
