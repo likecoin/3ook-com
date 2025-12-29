@@ -666,6 +666,20 @@ const {
   generateOGMetaTags,
 } = useStructuredData({ nftClassId })
 
+const {
+  pendingRewards,
+  isClaimingRewards,
+  userStake,
+  formattedTotalStake,
+  formattedUserStake,
+  formattedPendingRewards,
+  numberOfStakers,
+  handleClaimRewards,
+  loadStakingData,
+} = useNFTClassStakingData(nftClassId)
+
+const router = useRouter()
+
 if (nftClassId.value !== nftClassId.value.toLowerCase()) {
   await navigateTo(localeRoute({
     name: getRouteBaseName(route),
@@ -805,11 +819,13 @@ const infoTabItems = computed(() => {
     })
   }
 
-  items.push({
-    label: $t('staking_info_tab_staking_info'),
-    slot: 'staking-info',
-    value: 'staking-info',
-  })
+  if (!bookInfo.isHidden.value || userStake.value > 0n) {
+    items.push({
+      label: $t('staking_info_tab_staking_info'),
+      slot: 'staking-info',
+      value: 'staking-info',
+    })
+  }
 
   // [2025-11-27] Temporarily disabled buyer messages feature
   if (isTestnet && buyerMessages.value.length) {
@@ -825,22 +841,10 @@ const infoTabItems = computed(() => {
 
 const activeTabValue = ref(infoTabItems.value[0]?.value || 'description')
 
-const {
-  pendingRewards,
-  isClaimingRewards,
-  formattedTotalStake,
-  formattedUserStake,
-  formattedPendingRewards,
-  numberOfStakers,
-  handleClaimRewards,
-  loadStakingData,
-} = useNFTClassStakingData(nftClassId)
-
 const isStakingTabActive = computed(() => {
   return activeTabValue.value === 'staking-info'
 })
 
-const router = useRouter()
 watch(activeTabValue, (newTabValue) => {
   const tabValue = infoTabItems.value.find(item => item.value === newTabValue)
   if (tabValue) {
