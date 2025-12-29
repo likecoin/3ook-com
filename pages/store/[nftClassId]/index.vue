@@ -220,6 +220,19 @@
                   </div>
                 </UCard>
               </div>
+
+              <div class="mt-6">
+                <NuxtLink
+                  :to="localeRoute({ name: 'about', hash: '#curate-to-earn' })"
+                  class="inline-flex items-center gap-1 text-sm hover:underline"
+                >
+                  <UIcon
+                    name="i-material-symbols-help-outline-rounded"
+                    size="16"
+                  />
+                  <span>{{ $t('staking_learn_more') }}</span>
+                </NuxtLink>
+              </div>
             </div>
           </template>
 
