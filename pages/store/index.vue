@@ -64,6 +64,22 @@
         v-else
         class="flex items-center max-phone:gap-1 gap-2 w-full"
       >
+        <UButton
+          :to="localeRoute({ name: 'store' })"
+          variant="link"
+          :ui="{
+            base: ['shrink-0'],
+          }"
+          :title="'3ook.com'"
+          @click="handleLogoClick"
+        >
+          <img
+            src="/logo.svg"
+            alt="3ook.com"
+            class="w-8 h-8 block"
+          >
+        </UButton>
+
         <template v-if="!bookstoreStore.hasFetchedBookstoreCMSTags && isDefaultTagId">
           <USkeleton
             v-for="(widthClass, i) in ['w-20', 'w-18', 'w-24', 'w-16']"
@@ -80,19 +96,8 @@
         </template>
 
         <UButton
-          v-else-if="!isDefaultTagId"
-          icon="i-material-symbols-close-rounded"
-          variant="outline"
-          :ui="{
-            base: [TAG_BUTTON_CLASS_LIGHT, TAG_BUTTON_CLASS_BASE],
-            leadingIcon: 'laptop:size-6',
-          }"
-          @click="handleCloseTagClick"
-        />
-
-        <UButton
           v-for="fixedTag in fixedTags"
-          v-else
+          v-else-if="isDefaultTagId"
           :key="fixedTag.value"
           :label="fixedTag.label"
           variant="outline"
@@ -924,14 +929,13 @@ async function handleTagClick(tagValue?: string) {
   tagId.value = tagValue
 }
 
-async function handleCloseTagClick() {
-  useLogEvent('store_tag_close_click')
-  tagId.value = TAG_DEFAULT
-  storePageState.clear()
-}
-
 async function handleBookListTagClick() {
   useLogEvent('store_tag_book_list_click')
+}
+
+async function handleLogoClick() {
+  useLogEvent('store_logo_click')
+  storePageState.clear()
 }
 
 const isSearchInputOpen = ref(false)
