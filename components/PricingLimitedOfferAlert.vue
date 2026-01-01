@@ -120,7 +120,7 @@ withDefaults(
   }>(),
   {
     isHidden: false,
-    trialPeriodDays: 30,
+    trialPeriodDays: 7,
     price: 1,
   },
 )

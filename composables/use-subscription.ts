@@ -50,7 +50,7 @@ export function useSubscription() {
 
   function getPaywallModalProps(): PaywallModalProps {
     return {
-      'trialPeriodDays': 30,
+      'trialPeriodDays': 7,
       'modelValue': selectedPlan.value,
       'isProcessingSubscription': isProcessingSubscription.value,
       'onUpdate:modelValue': (value: SubscriptionPlan) => {

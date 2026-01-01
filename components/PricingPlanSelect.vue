@@ -132,7 +132,7 @@ const props = withDefaults(defineProps<{
   isYearlyHidden: false,
   isMonthlyHidden: false,
   isAllowYearlyTrial: true,
-  trialPeriodDays: 30,
+  trialPeriodDays: 7,
   trialPrice: 1,
 })
 
