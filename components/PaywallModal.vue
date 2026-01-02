@@ -122,7 +122,7 @@
           <div class="flex flex-col w-full mt-12">
             <PricingLimitedOfferAlert
               class="laptop:pt-5 rounded-xl"
-              :is-hidden="!isTrialFor30Days"
+              :is-hidden="!isPaidTrial"
               :trial-period-days="trialPeriodDays"
             >
               <PricingPlanSelect
@@ -149,6 +149,7 @@
 
 <script setup lang="ts">
 import type { PaywallModalProps } from './PaywallModal.props'
+import { PAID_TRIAL_PERIOD_DAYS_THRESHOLD } from '~/constants/pricing'
 
 import plusLogo from '~/assets/images/paywall/plus-logo.png'
 
@@ -241,11 +242,11 @@ watch(
   value => emit('update:modelValue', value),
 )
 
-const isTrialFor30Days = computed(() => props.trialPeriodDays === 30)
+const isPaidTrial = computed(() => props.trialPeriodDays && props.trialPeriodDays >= PAID_TRIAL_PERIOD_DAYS_THRESHOLD)
 
 const subscribeButtonLabel = computed(() => {
   if (props.trialPeriodDays) {
-    if (isTrialFor30Days.value) {
+    if (isPaidTrial.value) {
       return $t('plus_subscribe_cta_enjoy_offer')
     }
     return $t('plus_subscribe_cta_start_free_trial', { days: props.trialPeriodDays })

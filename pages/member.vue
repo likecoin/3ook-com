@@ -3,6 +3,8 @@
 </template>
 
 <script setup lang="ts">
+import { DEFAULT_TRIAL_PERIOD_DAYS } from '~/constants/pricing'
+
 const localeRoute = useLocaleRoute()
 const getRouteQuery = useRouteQuery()
 const subscription = useSubscription()
@@ -132,7 +134,7 @@ const trialPeriodDays = computed(() => {
     case '5d': return 5
     case '7d': return 7
     case '30d': return 30
-    default: return 7
+    default: return DEFAULT_TRIAL_PERIOD_DAYS
   }
 })
 

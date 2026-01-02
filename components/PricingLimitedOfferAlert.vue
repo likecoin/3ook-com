@@ -109,6 +109,7 @@
 
 <script lang="ts" setup>
 import brushCircle from '~/assets/images/brush-circle.png'
+import { DEFAULT_TRIAL_PERIOD_DAYS, PAID_TRIAL_PRICE } from '~/constants/pricing'
 
 const { currency } = useSubscriptionPricing()
 
@@ -120,8 +121,8 @@ withDefaults(
   }>(),
   {
     isHidden: false,
-    trialPeriodDays: 7,
-    price: 1,
+    trialPeriodDays: DEFAULT_TRIAL_PERIOD_DAYS,
+    price: PAID_TRIAL_PRICE,
   },
 )
 </script>

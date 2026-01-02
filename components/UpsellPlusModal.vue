@@ -122,13 +122,14 @@
 
 <script setup lang="ts">
 import type { UpsellPlusModalProps, UpsellPlusModalSubscribeEventPayload } from './UpsellPlusModal.props'
+import { DEFAULT_TRIAL_PERIOD_DAYS, PAID_TRIAL_PRICE, PAID_TRIAL_PERIOD_DAYS_THRESHOLD } from '~/constants/pricing'
 
 const props = withDefaults(defineProps<UpsellPlusModalProps>(), {
   isLikerPlus: false,
   likerPlusPeriod: undefined,
   isProcessingSubscription: false,
-  trialPeriodDays: 7,
-  trialPrice: 1,
+  trialPeriodDays: DEFAULT_TRIAL_PERIOD_DAYS,
+  trialPrice: PAID_TRIAL_PRICE,
   mustCollectPaymentMethod: false,
   selectedPricingItemIndex: 0,
   from: undefined,
@@ -155,10 +156,10 @@ const shouldShowYearlyPlan = computed(() => (!props.isLikerPlus || props.likerPl
 
 const isAllowYearlyTrial = computed(() => !props.nftClassId)
 
-const isTrialFor30Days = computed(() => props.trialPeriodDays === 30)
+const isPaidTrial = computed(() => props.trialPeriodDays && props.trialPeriodDays >= PAID_TRIAL_PERIOD_DAYS_THRESHOLD)
 
 const shouldShowLimitedOfferAlert = computed(() => {
-  return !props.isLikerPlus && isTrialFor30Days.value && (shouldShowMonthlyPlan.value || isAllowYearlyTrial.value)
+  return !props.isLikerPlus && isPaidTrial.value && (shouldShowMonthlyPlan.value || isAllowYearlyTrial.value)
 })
 
 const subscribeButtonLabel = computed(() => {
@@ -167,7 +168,7 @@ const subscribeButtonLabel = computed(() => {
       return $t('plus_subscribe_cta_yearly_gift')
     }
     if (props.trialPeriodDays && isAllowYearlyTrial.value) {
-      if (isTrialFor30Days.value) {
+      if (isPaidTrial.value) {
         return $t('plus_subscribe_cta_trial_for_price', {
           days: props.trialPeriodDays,
           price: props.trialPrice,
@@ -179,7 +180,7 @@ const subscribeButtonLabel = computed(() => {
     return $t('plus_subscribe_cta_yearly')
   }
   if (props.trialPeriodDays) {
-    if (isTrialFor30Days.value) {
+    if (isPaidTrial.value) {
       return $t('plus_subscribe_cta_trial_for_price', {
         days: props.trialPeriodDays,
         price: props.trialPrice,

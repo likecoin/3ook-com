@@ -1,6 +1,7 @@
 import { PaywallModal, UpsellPlusModal } from '#components'
 import type { PaywallModalProps } from '~/components/PaywallModal.props'
 import type { UpsellPlusModalProps, UpsellPlusModalSubscribeEventPayload } from '~/components/UpsellPlusModal.props'
+import { DEFAULT_TRIAL_PERIOD_DAYS } from '~/constants/pricing'
 
 export function useSubscription() {
   const likeCoinSessionAPI = useLikeCoinSessionAPI()
@@ -50,7 +51,7 @@ export function useSubscription() {
 
   function getPaywallModalProps(): PaywallModalProps {
     return {
-      'trialPeriodDays': 7,
+      'trialPeriodDays': DEFAULT_TRIAL_PERIOD_DAYS,
       'modelValue': selectedPlan.value,
       'isProcessingSubscription': isProcessingSubscription.value,
       'onUpdate:modelValue': (value: SubscriptionPlan) => {

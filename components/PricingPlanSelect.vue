@@ -122,6 +122,8 @@
 </template>
 
 <script lang="ts" setup>
+import { DEFAULT_TRIAL_PERIOD_DAYS, PAID_TRIAL_PRICE, PAID_TRIAL_PERIOD_DAYS_THRESHOLD } from '~/constants/pricing'
+
 const props = withDefaults(defineProps<{
   isYearlyHidden?: boolean
   isMonthlyHidden?: boolean
@@ -132,8 +134,8 @@ const props = withDefaults(defineProps<{
   isYearlyHidden: false,
   isMonthlyHidden: false,
   isAllowYearlyTrial: true,
-  trialPeriodDays: 7,
-  trialPrice: 1,
+  trialPeriodDays: DEFAULT_TRIAL_PERIOD_DAYS,
+  trialPrice: PAID_TRIAL_PRICE,
 })
 
 const { t: $t } = useI18n()
@@ -154,7 +156,7 @@ const selectedPlan = defineModel({
   default: 'yearly',
 })
 
-const isTrialFor30Days = computed(() => props.trialPeriodDays === 30)
+const isPaidTrial = computed(() => props.trialPeriodDays && props.trialPeriodDays >= PAID_TRIAL_PERIOD_DAYS_THRESHOLD)
 
 const plans = computed(() => {
   const values: SubscriptionPlan[] = []
@@ -167,7 +169,7 @@ const plans = computed(() => {
   return values.map((value) => {
     const isMonthly = value === 'monthly'
     let hint: string | undefined
-    if (isTrialFor30Days.value && (isMonthly || props.isAllowYearlyTrial)) {
+    if (isPaidTrial.value && (isMonthly || props.isAllowYearlyTrial)) {
       hint = $t('plan_select_trial_for_price_hint', {
         days: props.trialPeriodDays,
         currency: currency.value,
@@ -179,7 +181,7 @@ const plans = computed(() => {
     if (!isMonthly) {
       badgeText = $t('pricing_page_yearly_discount', { discount: yearlyDiscountPercent.value })
     }
-    else if (!props.isAllowYearlyTrial && isTrialFor30Days.value) {
+    else if (!props.isAllowYearlyTrial && isPaidTrial.value) {
       badgeText = $t('subscribe_plus_alert_limited_offer')
     }
 
