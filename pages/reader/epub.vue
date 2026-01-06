@@ -516,9 +516,10 @@ async function loadEPub() {
     hasDisplayed = await displayRendition(currentCfi.value, { isSilentError: true })
   }
   if (!hasDisplayed) {
-    const fallbackCfi = findNextCFIAfterTOC(navItems.value)
-    if (fallbackCfi) {
-      hasDisplayed = await displayRendition(fallbackCfi, { isSilentError: true })
+    const fallbackItem = findNextNavItemAfterTOC(navItems.value)
+    if (fallbackItem) {
+      await setActiveNavItem(fallbackItem, { isSilentError: true })
+      hasDisplayed = true
     }
   }
   if (!hasDisplayed) {
@@ -633,7 +634,7 @@ async function loadEPub() {
     })
   }
 }
-function findNextCFIAfterTOC(navItems: NavItem[]): string | undefined {
+function findNextNavItemAfterTOC(navItems: NavItem[]): NavItem | undefined {
   const firstChapter = navItems[0]
   if (!firstChapter) return undefined
 
@@ -642,10 +643,7 @@ function findNextCFIAfterTOC(navItems: NavItem[]): string | undefined {
     firstChapter.label.toLowerCase().includes(keyword),
   )
 
-  if (isTOC && navItems[1]?.href) {
-    return navItems[1].href
-  }
-  return firstChapter.href
+  return isTOC ? navItems[1] : firstChapter
 }
 
 async function extractTTSSegments(book: ePub.Book) {
@@ -702,7 +700,7 @@ async function extractTTSSegments(book: ePub.Book) {
   return { segments, chapterTitles }
 }
 
-async function setActiveNavItem(item: NavItem) {
+async function setActiveNavItem(item: NavItem, { isSilentError = false } = {}) {
   activeTTSElementIndex.value = undefined
   activeNavItemHref.value = item.href
   isPageLoading.value = true
@@ -718,13 +716,15 @@ async function setActiveNavItem(item: NavItem) {
       if (anchor) {
         spineHref = `${spineHref}#${anchor}`
       }
-      hasDisplayed = await displayRendition(spineHref)
+      hasDisplayed = await displayRendition(spineHref, { isSilentError })
       if (hasDisplayed) {
         return
       }
     }
   }
-  await errorModal.open({ description: $t('reader_epub_rendition_display_failed') }).result
+  if (!isSilentError) {
+    await errorModal.open({ description: $t('reader_epub_rendition_display_failed') }).result
+  }
 }
 
 function nextPage() {
