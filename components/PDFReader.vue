@@ -218,7 +218,7 @@ function getCacheKeyWithSuffix(suffix: ReaderCacheKeySuffix) {
 }
 
 const {
-  readProgress,
+  readingProgress,
   getProgressKeyWithSuffix,
 } = useReaderProgress({
   nftClassId: props.nftClassId,
@@ -354,7 +354,7 @@ watch([currentPage], async () => {
     renderPages()
     emit('pageChanged', currentPage.value)
     if (totalPages.value > 0) {
-      readProgress.value = currentPage.value / totalPages.value
+      readingProgress.value = currentPage.value / totalPages.value
     }
   }
 })

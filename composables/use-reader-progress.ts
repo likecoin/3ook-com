@@ -14,7 +14,7 @@ export function useReaderProgress({
     return getReaderCacheKeyWithSuffix(bookProgressKeyPrefix, suffix)
   }
 
-  const readProgress = useStorage(
+  const readingProgress = useStorage(
     computed(() => getProgressKeyWithSuffix('progress')),
     0,
   )
@@ -28,11 +28,11 @@ export function useReaderProgress({
   })
 
   onBeforeUnmount(() => {
-    bookshelfStore.updateProgress(nftClassId, readProgress.value, lastOpenedTime.value)
+    bookshelfStore.updateProgress(nftClassId, readingProgress.value, lastOpenedTime.value)
   })
 
   return {
-    readProgress,
+    readingProgress,
     lastOpenedTime,
     getProgressKeyWithSuffix,
   }

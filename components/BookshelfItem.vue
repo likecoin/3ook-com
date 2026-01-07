@@ -14,14 +14,15 @@
       @click="handleCoverClick"
     />
 
-    <div class="mt-2 w-full h-[24px]">
+    <div class="mt-2 mb-1 w-full h-[24px]">
       <div
         v-if="progressPercentage > 0 && progressPercentage <= 100"
         class="w-full"
       >
-        <div class="flex items-center justify-between text-xs text-toned mb-1">
-          <span>{{ progressPercentage }}%</span>
-        </div>
+        <div
+          class="text-xs text-toned mb-0.5"
+          v-text="`${progressPercentage}%`"
+        />
         <div class="w-full h-1 bg-gray-200 rounded-full overflow-hidden">
           <div
             class="h-full bg-primary-500 transition-all duration-300"

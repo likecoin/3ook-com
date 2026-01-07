@@ -298,7 +298,7 @@ const {
   showTTSTryModal,
 } = useTTSTryModal()
 const {
-  readProgress,
+  readingProgress,
   getProgressKeyWithSuffix,
 } = useReaderProgress({
   nftClassId: nftClassId.value,
@@ -626,7 +626,7 @@ async function loadEPub() {
     }
     percentage.value = book.locations.percentageFromCfi(location.start.cfi)
     currentCfi.value = location.start.cfi
-    readProgress.value = percentage.value
+    readingProgress.value = percentage.value
   })
 
   const { segments: ttsSegments, chapterTitles } = await extractTTSSegments(book)
