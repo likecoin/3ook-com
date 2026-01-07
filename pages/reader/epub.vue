@@ -147,22 +147,54 @@
               />
 
               <template #body>
-                <div class="flex gap-2 items-center p-6 pt-4">
-                  <UButton
-                    icon="i-material-symbols-text-decrease-outline-rounded"
-                    variant="ghost"
-                    @click="decreaseFontSize"
-                  />
-                  <USelect
-                    v-model="fontSize"
-                    class="w-full"
-                    :items="FONT_SIZE_OPTIONS"
-                  />
-                  <UButton
-                    icon="i-material-symbols-text-increase-rounded"
-                    variant="ghost"
-                    @click="increaseFontSize"
-                  />
+                <div class="flex gap-4 p-6 pt-4 justify-between">
+                  <div class="flex-1">
+                    <p
+                      class="block text-sm font-medium mb-2"
+                      v-text="$t('reader_display_font_size_label')"
+                    />
+                    <div class="flex gap-2 items-center">
+                      <UButton
+                        icon="i-material-symbols-text-decrease-outline-rounded"
+                        variant="ghost"
+                        @click="decreaseFontSize"
+                      />
+                      <USelect
+                        v-model="fontSize"
+                        class="w-full"
+                        :items="FONT_SIZE_OPTIONS"
+                      />
+                      <UButton
+                        icon="i-material-symbols-text-increase-rounded"
+                        variant="ghost"
+                        @click="increaseFontSize"
+                      />
+                    </div>
+                  </div>
+                  <div class="flex-1">
+                    <p
+                      class="block text-sm font-medium mb-2"
+                      v-text="$t('reader_display_line_height_label')"
+                    />
+                    <div class="flex gap-2 items-center">
+                      <UButton
+                        icon="i-material-symbols-remove"
+                        variant="ghost"
+                        @click="decreaseLineHeight"
+                      />
+                      <div class="flex w-full py-2 px-3 bg-gray-50 rounded-md">
+                        <span
+                          class="text-center w-full"
+                          v-text="lineHeight.toFixed(1)"
+                        />
+                      </div>
+                      <UButton
+                        icon="i-material-symbols-add"
+                        variant="ghost"
+                        @click="increaseLineHeight"
+                      />
+                    </div>
+                  </div>
                 </div>
               </template>
             </BottomSlideover>
@@ -260,6 +292,9 @@ import ePub, {
 } from '@likecoin/epubjs'
 
 import type Section from '@likecoin/epubjs/types/section'
+import { useSyncedBookSettings } from '~/composables/use-synced-book-settings'
+import { useReaderProgress } from '~/composables/use-reader-progress'
+import { useBookSettingsStore } from '~/stores/book-settings'
 
 declare interface EpubView {
   window: Window
@@ -435,6 +470,21 @@ watch(fontSize, (size) => {
   rendition.value?.themes.fontSize(`${size}px`)
 })
 
+const DEFAULT_LINE_HEIGHT = 1.6
+const lineHeight = useSyncedBookSettings({
+  nftClassId: nftClassId.value,
+  key: 'lineHeight',
+  defaultValue: DEFAULT_LINE_HEIGHT,
+  namespace: 'epub',
+})
+watch(lineHeight, (height) => {
+  rendition.value?.themes.default({
+    'p, div, span, h1, h2, h3, h4, h5, h6, li': {
+      'line-height': `${height}em !important`,
+    },
+  })
+})
+
 let cleanUpClickListener: (() => void) | undefined
 let removeSwipeListener: (() => void) | undefined
 let removeSelectAllByHotkeyListener: (() => void) | undefined
@@ -532,7 +582,12 @@ async function loadEPub() {
     'text-size-adjust': 'none',
     'direction': 'ltr', // Mitigate epubjs mixing up dir & page-progression-direction
   }
-  rendition.value.themes.default({ body: bodyCSS })
+  rendition.value.themes.default({
+    'body': bodyCSS,
+    'p, div, span, h1, h2, h3, h4, h5, h6, li': {
+      'line-height': `${lineHeight.value}em !important`,
+    },
+  })
   rendition.value.themes.fontSize(`${fontSize.value}px`)
   isPageLoading.value = true
 
@@ -794,6 +849,19 @@ function increaseFontSize() {
 
 function decreaseFontSize() {
   adjustFontSize(-1)
+}
+
+function adjustLineHeight(delta: number) {
+  const newHeight = lineHeight.value + delta
+  lineHeight.value = Math.round(newHeight * 10) / 10
+}
+
+function increaseLineHeight() {
+  adjustLineHeight(0.1)
+}
+
+function decreaseLineHeight() {
+  adjustLineHeight(-0.1)
 }
 
 const desktopActiveNavItemElements = useTemplateRef<HTMLLIElement[]>('desktopActiveNavItemElements')

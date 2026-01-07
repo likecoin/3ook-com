@@ -407,6 +407,8 @@
   "product_page_tts_disabled": "Not Supported",
   "product_page_tts_enabled": "Supported",
   "reader_display_options_button": "Display options",
+  "reader_display_font_size_label": "Font Size",
+  "reader_display_line_height_label": "Line Height",
   "reader_epub_rendition_display_failed": "The page cannot be displayed.",
   "reader_page_mode_dual": "Two-page view",
   "reader_page_mode_single": "One-page view",

@@ -5,6 +5,7 @@ export interface BookSettingsData extends BaseBookSettingsData {
 export type BookSettingKey =
   | 'cfi'
   | 'fontSize'
+  | 'lineHeight'
   | 'activeTTSElementIndex'
   | 'currentPage'
   | 'scale'

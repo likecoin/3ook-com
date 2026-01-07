@@ -407,6 +407,8 @@
   "product_page_tts_disabled": "不支援",
   "product_page_tts_enabled": "支援",
   "reader_display_options_button": "顯示選項",
+  "reader_display_font_size_label": "字體大小",
+  "reader_display_line_height_label": "行高",
   "reader_epub_rendition_display_failed": "無法顯示該頁。",
   "reader_page_mode_dual": "雙頁顯示",
   "reader_page_mode_single": "單頁顯示",
