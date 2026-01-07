@@ -760,7 +760,9 @@ const isRedirectedFromUpsell = computed(() => getRouteQuery('upsell') === '1')
 const ogTitle = computed(() => {
   const title = bookInfo.name.value
   const author = bookInfo.authorName.value
-  return author ? `${title} - ${author}` : title
+  const hasEbookTag = descriptionTags.value.includes($t('product_page_book_format_value'))
+  const ebookSuffix = hasEbookTag ? ` - ${$t('product_page_book_format_value')}` : ''
+  return author ? `${title} - ${author}${ebookSuffix}` : `${title}${ebookSuffix}`
 })
 const ogDescription = computed(() => {
   const description = bookInfo.description.value || ''
