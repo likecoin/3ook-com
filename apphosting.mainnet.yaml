@@ -34,7 +34,7 @@ env:
   - variable: TTS_CACHE_BUCKET_PREFIX
     value: tts-cache
   - variable: ARWEAVE_ENDPOINT
-    value: https://gateway.irys.xyz
+    value: https://gateway.irysnetwork.com
   - variable: AZURE_SERVICE_REGION
     value: southeastasia
   - variable: AZURE_SUBSCRIPTION_KEY
