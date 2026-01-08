@@ -175,6 +175,7 @@ const bookInfo = useBookInfo({ nftClassId: props.nftClassId })
 const { downloadBookFile } = useBookDownload()
 const getContentTypeLabel = useContentTypeLabel()
 const { getResizedImageURL } = useImageResize()
+const { checkOwnership } = useUserBookOwnership(props.nftClassId)
 
 const bookCoverSrc = computed(() => getResizedImageURL(bookInfo.coverSrc.value, { size: 300 }))
 
@@ -283,6 +284,7 @@ function openContentURL(contentURL: ContentURL) {
 }
 
 async function downloadURL({ name, type, fileIndex }: { name: string, type: string, fileIndex?: number }) {
+  await checkOwnership() // fetch ownership to populate firstUserOwnedNFTId
   await downloadBookFile({
     nftClassId: props.nftClassId,
     nftId: props.nftIds?.[0] || bookInfo.firstUserOwnedNFTId.value,
