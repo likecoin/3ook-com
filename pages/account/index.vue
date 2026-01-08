@@ -215,7 +215,16 @@
             />
           </template>
         </AccountSettingsItem>
+      </UCard>
+    </section>
 
+    <section class="space-y-3">
+      <h2
+        class="px-4 pt-4 text-lg font-bold"
+        v-text="$t('account_page_app_settings_title')"
+      />
+
+      <UCard :ui="{ body: '!p-0 divide-y-1 divide-(--ui-border)' }">
         <AccountSettingsItem
           icon="i-material-symbols-language"
           :label="$t('account_page_locale')"
@@ -288,19 +297,7 @@
         v-text="$t('account_page_settings_and_help_title')"
       />
 
-      <UCard
-        :ui="{
-          body: [
-            '!p-0',
-            'divide-y-1',
-            'divide-(--ui-border)',
-            '[&>*:not(:first-child)]:rounded-t-none',
-            '[&>*:not(:last-child)]:rounded-b-none',
-            '[&>*]:p-4',
-            '[&>*]:py-4.5',
-          ].join(' '),
-        }"
-      >
+      <UCard :ui="{ body: '!p-0 divide-y-1 divide-(--ui-border)' }">
         <UButton
           :label="$t('account_page_contact_support')"
           variant="link"
