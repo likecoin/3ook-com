@@ -147,7 +147,7 @@
               />
 
               <template #body>
-                <div class="flex gap-4 p-6 pt-4 justify-between">
+                <div class="flex flex-col laptop:flex-row gap-4 p-6 pt-4 justify-between">
                   <div class="flex-1">
                     <p
                       class="block text-sm font-medium mb-2"
@@ -182,7 +182,7 @@
                         variant="ghost"
                         @click="decreaseLineHeight"
                       />
-                      <div class="flex w-full py-2 px-3 bg-gray-50 rounded-md">
+                      <div class="flex w-full h-[32px] py-1 px-3 bg-gray-50 rounded-md border-2 border-black">
                         <span
                           class="text-center w-full"
                           v-text="lineHeight.toFixed(1)"
