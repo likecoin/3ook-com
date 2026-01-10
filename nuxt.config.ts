@@ -255,6 +255,7 @@ export default defineNuxtConfig({
               'https://www.googletagmanager.com',
               'https://www.facebook.com',
               'https://verify.walletconnect.org',
+              'https://www.youtube-nocookie.com',
             ],
         'base-uri': [
           '\'self\'',
@@ -272,6 +273,7 @@ export default defineNuxtConfig({
           'https://explorer-api.walletconnect.com',
           'https://bat.bing.com',
           'https://bat.bing.net',
+          'https://i.ytimg.com',
           ...[
             process.env.LIKECOIN_API_ENDPOINT,
             process.env.LIKECOIN_STATIC_ENDPOINT,
