@@ -225,40 +225,37 @@
           </p>
         </div>
 
-        <UCard class="overflow-hidden">
-          <div class="space-y-4">
-            <div class="flex items-center gap-3">
-              <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <UIcon
-                  name="i-material-symbols-person-rounded"
-                  size="24"
-                  class="text-primary"
-                />
-              </div>
-              <div>
-                <h3 class="text-xl font-bold text-gray-900">
-                  <NuxtLink
-                    :to="localeRoute({ name: 'store', query: { author: '董啟章' } })"
-                    class="hover:text-primary hover:underline"
-                  >
-                    {{ $t('about_page_author_dong_qizhang') }}
-                  </NuxtLink>
-                </h3>
-              </div>
-            </div>
-            <p class="text-gray-600 leading-relaxed">
-              {{ $t('about_page_author_dong_qizhang_desc') }}
-            </p>
+        <UCard
+          class="overflow-hidden"
+          :ui="{ body: 'space-y-4' }"
+        >
+          <div class="flex items-center gap-3">
+            <UAvatar
+              icon="i-material-symbols-person-rounded"
+              size="md"
+            />
+            <h3 class="text-xl font-bold text-gray-900">
+              <UButton
+                :to="localeRoute({ name: 'store', query: { author: '董啟章' } })"
+                variant="link"
+                :label="$t('about_page_author_dung_kai_cheung')"
+              />
+            </h3>
+          </div>
+          <p class="text-gray-600 leading-relaxed">
+            {{ $t('about_page_author_dung_kai_cheung_desc') }}
+          </p>
 
-            <div class="aspect-video w-full rounded-xl overflow-hidden bg-gray-900 shadow-inner -mx-4 md:mx-0">
-              <ClientOnly>
-                <ScriptYouTubePlayer
-                  video-id="BibwtPyXxCg"
-                  :width="16"
-                  :height="9"
-                />
-              </ClientOnly>
-            </div>
+          <div class="aspect-video w-full rounded-xl overflow-hidden bg-gray-900 shadow-inner">
+            <ClientOnly>
+              <ScriptYouTubePlayer
+                video-id="BibwtPyXxCg"
+                :width="16"
+                :height="9"
+                :aria-label="$t('about_page_author_dung_kai_cheung')"
+                :title="$t('about_page_author_dung_kai_cheung')"
+              />
+            </ClientOnly>
           </div>
         </UCard>
 
@@ -266,23 +263,17 @@
           <div class="flex flex-col md:flex-row gap-6 md:gap-8">
             <div class="flex-1 space-y-4 flex flex-col justify-center">
               <div class="flex items-center gap-3">
-                <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                  <UIcon
-                    name="i-material-symbols-person-rounded"
-                    size="24"
-                    class="text-primary"
+                <UAvatar
+                  icon="i-material-symbols-person-rounded"
+                  size="md"
+                />
+                <h3 class="text-xl font-bold text-gray-900">
+                  <UButton
+                    :to="localeRoute({ name: 'store', query: { author: '傅月庵' } })"
+                    variant="link"
+                    :label="$t('about_page_author_fu_yue_an')"
                   />
-                </div>
-                <div>
-                  <h3 class="text-xl font-bold text-gray-900">
-                    <NuxtLink
-                      :to="localeRoute({ name: 'store', query: { author: '傅月庵' } })"
-                      class="hover:text-primary hover:underline"
-                    >
-                      {{ $t('about_page_author_fu_yue_an') }}
-                    </NuxtLink>
-                  </h3>
-                </div>
+                </h3>
               </div>
               <p class="text-gray-600 leading-relaxed">
                 {{ $t('about_page_author_fu_yue_an_desc') }}
@@ -296,6 +287,8 @@
                     video-id="3nsPGnqdoIk"
                     :width="9"
                     :height="16"
+                    :aria-label="$t('about_page_author_fu_yue_an')"
+                    :title="$t('about_page_author_fu_yue_an')"
                   />
                 </ClientOnly>
               </div>
