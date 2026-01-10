@@ -292,9 +292,6 @@ import ePub, {
 } from '@likecoin/epubjs'
 
 import type Section from '@likecoin/epubjs/types/section'
-import { useSyncedBookSettings } from '~/composables/use-synced-book-settings'
-import { useReaderProgress } from '~/composables/use-reader-progress'
-import { useBookSettingsStore } from '~/stores/book-settings'
 
 declare interface EpubView {
   window: Window
