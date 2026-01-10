@@ -211,6 +211,98 @@
           </UCard>
         </div>
       </section>
+
+      <section
+        id="author-stories"
+        class="space-y-12"
+      >
+        <div class="text-center space-y-4">
+          <h2 class="text-2xl md:text-3xl font-bold text-gray-900">
+            {{ $t('about_page_author_stories_title') }}
+          </h2>
+          <p class="text-lg text-gray-600 leading-relaxed max-w-2xl mx-auto">
+            {{ $t('about_page_author_stories_content') }}
+          </p>
+        </div>
+
+        <UCard class="overflow-hidden">
+          <div class="space-y-4">
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <UIcon
+                  name="i-material-symbols-person-rounded"
+                  size="24"
+                  class="text-primary"
+                />
+              </div>
+              <div>
+                <h3 class="text-xl font-bold text-gray-900">
+                  <NuxtLink
+                    :to="localeRoute({ name: 'store', query: { author: '董啟章' } })"
+                    class="hover:text-primary hover:underline"
+                  >
+                    {{ $t('about_page_author_dong_qizhang') }}
+                  </NuxtLink>
+                </h3>
+              </div>
+            </div>
+            <p class="text-gray-600 leading-relaxed">
+              {{ $t('about_page_author_dong_qizhang_desc') }}
+            </p>
+
+            <div class="aspect-video w-full rounded-xl overflow-hidden bg-gray-900 shadow-inner -mx-4 md:mx-0">
+              <ClientOnly>
+                <ScriptYouTubePlayer
+                  video-id="BibwtPyXxCg"
+                  :width="16"
+                  :height="9"
+                />
+              </ClientOnly>
+            </div>
+          </div>
+        </UCard>
+
+        <UCard class="overflow-hidden">
+          <div class="flex flex-col md:flex-row gap-6 md:gap-8">
+            <div class="flex-1 space-y-4 flex flex-col justify-center">
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                  <UIcon
+                    name="i-material-symbols-person-rounded"
+                    size="24"
+                    class="text-primary"
+                  />
+                </div>
+                <div>
+                  <h3 class="text-xl font-bold text-gray-900">
+                    <NuxtLink
+                      :to="localeRoute({ name: 'store', query: { author: '傅月庵' } })"
+                      class="hover:text-primary hover:underline"
+                    >
+                      {{ $t('about_page_author_fu_yue_an') }}
+                    </NuxtLink>
+                  </h3>
+                </div>
+              </div>
+              <p class="text-gray-600 leading-relaxed">
+                {{ $t('about_page_author_fu_yue_an_desc') }}
+              </p>
+            </div>
+
+            <div class="flex-shrink-0 mx-auto md:mx-0">
+              <div class="aspect-[9/16] w-[200px] md:w-[240px] rounded-xl overflow-hidden bg-gray-900 shadow-inner">
+                <ClientOnly>
+                  <ScriptYouTubePlayer
+                    video-id="3nsPGnqdoIk"
+                    :width="9"
+                    :height="16"
+                  />
+                </ClientOnly>
+              </div>
+            </div>
+          </div>
+        </UCard>
+      </section>
     </div>
 
     <!-- Mission Section -->
