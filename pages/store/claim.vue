@@ -17,6 +17,7 @@
       icon="i-material-symbols-check-circle-rounded"
       :icon-label="claimTitle"
       :loading-label="currentLoadingLabel"
+      :is-printing="!canStartReading"
     >
       <template
         v-if="canStartReading"
