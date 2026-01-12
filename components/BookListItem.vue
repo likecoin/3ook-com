@@ -3,14 +3,26 @@
     ref="lazyLoadTrigger"
     class="grid grid-cols-12 gap-2 items-center py-3"
   >
-    <div class="col-span-1">
+    <div
+      v-if="!isApp"
+      class="col-span-1"
+    >
       <UCheckbox
         :model-value="!isSoldOut && isSelected"
         :disabled="isSoldOut"
         @update:model-value="handleCheckboxValueChange"
       />
     </div>
-    <div class="col-span-9 flex items-center gap-4">
+    <div
+      :class="[
+        isApp
+          ? 'col-span-10'
+          : 'col-span-9',
+        'flex',
+        'items-center',
+        'gap-4',
+      ]"
+    >
       <BookCover
         class="w-[60px] laptop:w-[100px] shrink-0"
         :src="bookCoverSrc"
@@ -29,7 +41,10 @@
           class="max-laptop:text-xs text-sm text-muted line-clamp-2"
           v-text="pricingItem?.name"
         />
-        <div class="mt-1 text-sm text-gray-900">
+        <div
+          v-if="!isApp"
+          class="mt-1 text-sm text-gray-900"
+        >
           <span
             v-if="isSoldOut"
             v-text="$t('book_list_item_sold_out')"
@@ -89,6 +104,7 @@ const nftStore = useNFTStore()
 const bookInfo = useBookInfo({ nftClassId: props.nftClassId })
 const { isLikerPlus, PLUS_BOOK_PURCHASE_DISCOUNT } = useSubscription()
 const { getResizedImageURL } = useImageResize()
+const { isApp } = useAppDetection()
 
 const bookCoverSrc = computed(() => getResizedImageURL(bookInfo.coverSrc.value, { size: 300 }))
 

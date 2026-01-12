@@ -521,6 +521,8 @@
   "tipping_modal_custom_amount_placeholder": "Custom amount",
   "tipping_modal_send_tips_button": "Continue",
   "tipping_modal_title": "Show a bit of extra support?",
+  "tts_free_trial_limit_error_description": "Please subscribe to Plus member to continue using this feature.",
+  "tts_free_trial_limit_error_title": "Text-to-speech usage limit reached",
   "tts_offline_modal_description": "TTS has been paused because the next track could not be loaded without an internet connection. Playback will resume automatically when your connection is restored.",
   "tts_offline_modal_resume_button": "Try Anyway",
   "tts_offline_modal_stop_button": "Stop Playing",

@@ -312,12 +312,12 @@
 
           <template v-else>
             <div
-              v-if="pricingItems.length"
+              v-if="!isApp && pricingItems.length"
               class="bg-white dark:bg-neutral-900 space-y-6 p-4 pt-6 pb-8 rounded-lg shadow-[0px_10px_20px_0px_rgba(0,0,0,0.04)]"
             >
               <ul
                 ref="pricing"
-                class="mt-2 space-y-2"
+                class="space-y-2"
               >
                 <li
                   v-for="(item, index) in pricingItems"
@@ -450,7 +450,7 @@
                   </button>
                 </li>
               </ul>
-              <footer class="flex flex-col mt-6 gap-3">
+              <footer class="flex flex-col gap-3">
                 <UButton
                   v-if="isUserBookOwner"
                   :label="$t('product_page_read_button_label')"
@@ -595,7 +595,7 @@
         />
       </template>
 
-      <template v-else-if="pricingItems.length">
+      <template v-else-if="!isApp && pricingItems.length">
         <span class="text-theme-cyan">
           <span
             v-if="selectedPricingItem?.discountedPrice"
@@ -706,6 +706,7 @@ const { handleError } = useErrorHandler()
 const { getAnalyticsParameters } = useAnalytics()
 
 const isDesktopScreen = useDesktopScreen()
+const { isApp } = useAppDetection()
 
 const nftClassId = computed(() => getRouteParam('nftClassId'))
 const { isOwner: isUserBookOwner } = useUserBookOwnership(nftClassId)
@@ -1335,7 +1336,7 @@ async function handlePurchaseButtonClick() {
       await accountStore.login()
       if (!hasLoggedIn.value) return
     }
-    if (selectedPricingItem.value.price && !isRedirectedFromUpsell.value && !bookInfo.isUpsellDisabled.value) {
+    if (!isApp.value && selectedPricingItem.value.price && !isRedirectedFromUpsell.value && !bookInfo.isUpsellDisabled.value) {
       const isStartSubscription = await openUpsellPlusModalIfEligible({
         nftClassId: nftClassId.value,
         bookPrice: selectedPricingItem.value.price,

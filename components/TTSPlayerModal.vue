@@ -198,7 +198,7 @@ import type { TTSPlayerModalProps } from './TTSPlayerModal.props'
 
 const { user } = useUserSession()
 const subscription = useSubscription()
-const { handleError } = useErrorHandler()
+const { errorModal, handleError } = useErrorHandler()
 
 const emit = defineEmits<{
   open: []
@@ -222,6 +222,7 @@ const props = withDefaults(
   },
 )
 
+const { isApp } = useAppDetection()
 const isDesktopScreen = useDesktopScreen()
 
 const isFullscreen = computed(() => {
@@ -277,6 +278,13 @@ const {
       && error.code === MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED
       && !user.value?.isLikerPlus) {
       stopTextToSpeech()
+      if (isApp.value) {
+        errorModal.open({
+          title: $t('tts_free_trial_limit_error_title'),
+          description: $t('tts_free_trial_limit_error_description'),
+        })
+        return
+      }
       subscription.openPaywallModal({
         utmSource: 'epub_reader',
         utmCampaign: props.nftClassId,

@@ -35,7 +35,10 @@
     </div>
 
     <!-- Price info for store mode -->
-    <div class="h-5 mt-3 text-sm text-theme-black dark:text-highlighted">
+    <div
+      v-if="!isApp"
+      class="h-5 mt-3 text-sm text-theme-black dark:text-highlighted"
+    >
       <span
         v-if="formattedDiscountPrice"
         v-text="formattedDiscountPrice"
@@ -124,6 +127,7 @@ const bookInfo = useBookInfo({ nftClassId: props.nftClassId })
 const { getResizedImageURL } = useImageResize()
 const bookCoverSrc = computed(() => getResizedImageURL(bookInfo.coverSrc.value || props.bookCoverSrc, { size: 300 }))
 const { isLikerPlus, PLUS_BOOK_PURCHASE_DISCOUNT } = useSubscription()
+const { isApp } = useAppDetection()
 
 const productPageRoute = computed(() => {
   return bookInfo.getProductPageRoute({

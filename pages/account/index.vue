@@ -14,7 +14,10 @@
             v-text="subscriptionStateLabel"
           />
 
-          <template #right>
+          <template
+            v-if="user?.isLikerPlus || !isApp"
+            #right
+          >
             <UButton
               :label="user?.isLikerPlus ? $t('account_page_manage_subscription') : $t('account_page_upgrade_to_plus')"
               :variant="user?.isLikerPlus ? 'outline' : 'solid'"
@@ -26,6 +29,7 @@
         </AccountSettingsItem>
 
         <AccountSettingsItem
+          v-if="!isApp"
           icon="i-material-symbols-featured-seasonal-and-gifts-rounded"
           :label="$t('account_page_gift_plus')"
         >
@@ -136,6 +140,7 @@
         </AccountSettingsItem>
 
         <AccountSettingsItem
+          v-if="!isApp || likeBalance > 0n"
           :label="$t('account_page_likecoin')"
         >
           <template #label-prepend>
@@ -161,6 +166,7 @@
         </AccountSettingsItem>
 
         <AccountSettingsItem
+          v-if="!isApp || likeBalance > 0n"
           :label="$t('account_page_staking_reward')"
           icon="i-material-symbols-auto-graph-rounded"
         >
@@ -235,6 +241,7 @@
         </AccountSettingsItem>
 
         <AccountSettingsItem
+          v-if="!isApp"
           icon="i-material-symbols-payments-outline-rounded"
           :label="$t('account_page_payment_currency')"
         >
@@ -244,6 +251,7 @@
         </AccountSettingsItem>
 
         <AccountSettingsItem
+          v-if="!isApp || user?.isLikerPlus"
           icon="i-material-symbols-dark-mode-outline-rounded"
           :label="$t('account_page_color_mode')"
         >
@@ -295,6 +303,7 @@
         />
 
         <UButton
+          v-if="!isApp"
           :label="$t('account_page_view_member')"
           :to="localeRoute({ name: 'member' })"
           variant="link"
@@ -398,9 +407,14 @@ const { handleError } = useErrorHandler()
 const toast = useToast()
 const isWindowFocused = useDocumentVisibility()
 const { copy: copyToClipboard } = useClipboard()
+const { isApp } = useAppDetection()
 
 const walletAddress = computed(() => user.value?.evmWallet)
-const { formattedLikeBalance, refetch: refetchLikeBalance } = useLikeCoinBalance(walletAddress)
+const {
+  likeBalance,
+  formattedLikeBalance,
+  refetch: refetchLikeBalance,
+} = useLikeCoinBalance(walletAddress)
 const { claimWalletRewards } = useLikeCollectiveContract()
 
 useHead({

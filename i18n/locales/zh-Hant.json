@@ -521,6 +521,8 @@
   "tipping_modal_custom_amount_placeholder": "自訂金額",
   "tipping_modal_send_tips_button": "額外支持",
   "tipping_modal_title": "給予作者額外支持",
+  "tts_free_trial_limit_error_description": "請訂閱 Plus 會員以繼續享用服務。",
+  "tts_free_trial_limit_error_title": "朗讀功能使用已達上限",
   "tts_offline_modal_description": "由於沒有網絡連接，無法載入下一個音軌，朗讀已暫停。網絡連接恢復後將自動繼續播放。",
   "tts_offline_modal_resume_button": "嘗試繼續",
   "tts_offline_modal_stop_button": "停止播放",
