@@ -142,8 +142,6 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
       if (tokenId) {
         tokenIdsByNFTClassId.value[normalizedNFTClassId] = [tokenId]
       }
-
-      await bookSettingsStore.ensureInitialized(normalizedNFTClassId)
     }
   }
 
