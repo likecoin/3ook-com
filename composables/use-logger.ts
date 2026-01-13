@@ -110,7 +110,9 @@ export function useLogEvent(eventName: string, eventParams: EventParams = {}) {
         if (eventParams[key]) eventData[uetKey] = eventParams[key]
       })
 
-      if (eventParams.currency) eventData.currency = (eventParams.currency as string).toUpperCase()
+      if (typeof eventParams.currency === 'string') {
+        eventData.currency = eventParams.currency.toUpperCase()
+      }
       if (eventParams.value) eventData.revenue_value = eventParams.value
 
       if (Array.isArray(eventParams.items) && eventParams.items.length) {
