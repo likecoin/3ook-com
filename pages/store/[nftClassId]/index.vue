@@ -295,21 +295,11 @@
             />
           </template>
 
-          <template v-else-if="isUserBookOwner">
-            <UButton
-              class="max-tablet:hidden"
-              :label="$t('product_page_read_button_label')"
-              icon="i-material-symbols-auto-stories-outline-rounded"
-              size="xl"
-              color="primary"
-              variant="solid"
-              block
-              @click="handleReadButtonClick"
-            />
-          </template>
-
-          <template v-else-if="pricingItems.length">
-            <div class="bg-white p-4 pb-8 rounded-lg shadow-[0px_10px_20px_0px_rgba(0,0,0,0.04)]">
+          <template v-else>
+            <div
+              v-if="pricingItems.length"
+              class="bg-white p-4 pb-8 rounded-lg shadow-[0px_10px_20px_0px_rgba(0,0,0,0.04)]"
+            >
               <ul
                 ref="pricing"
                 class="mt-2 space-y-2"
@@ -443,6 +433,16 @@
               </ul>
               <footer class="flex flex-col mt-6 gap-3">
                 <UButton
+                  v-if="isUserBookOwner"
+                  :label="$t('product_page_read_button_label')"
+                  icon="i-material-symbols-auto-stories-outline-rounded"
+                  size="xl"
+                  color="primary"
+                  variant="solid"
+                  block
+                  @click="handleReadButtonClick"
+                />
+                <UButton
                   v-bind="checkoutButtonProps"
                   class="cursor-pointer"
                   size="xl"
@@ -454,9 +454,21 @@
               </footer>
             </div>
 
+            <UButton
+              v-else-if="isUserBookOwner"
+              class="max-tablet:hidden"
+              :label="$t('product_page_read_button_label')"
+              icon="i-material-symbols-auto-stories-outline-rounded"
+              size="xl"
+              color="primary"
+              variant="solid"
+              block
+              @click="handleReadButtonClick"
+            />
+
             <div
               v-if="pricingItems.length"
-              class="flex flex-col gap-4 mt-6"
+              class="flex flex-col gap-4"
             >
               <UButton
                 class="cursor-pointer"
@@ -1039,14 +1051,22 @@ function handleContentURLClick(contentURL: ContentURL) {
 }
 
 const checkoutButtonProps = computed<{
-  variant: 'subtle' | 'solid'
+  variant: 'subtle' | 'solid' | 'outline'
   label: string
 }>(() => {
+  const label = isSelectedPricingItemSoldOut.value
+    ? $t('product_page_sold_out_button_label')
+    : isUserBookOwner.value
+      ? $t('product_page_buy_again_button_label')
+      : $t('product_page_checkout_button_label')
+  const variant = isSelectedPricingItemSoldOut.value
+    ? 'subtle'
+    : isUserBookOwner.value
+      ? 'outline'
+      : 'solid'
   return {
-    variant: isSelectedPricingItemSoldOut.value ? 'subtle' : 'solid',
-    label: isSelectedPricingItemSoldOut.value
-      ? $t('product_page_sold_out_button_label')
-      : $t('product_page_checkout_button_label'),
+    variant,
+    label,
   }
 })
 
