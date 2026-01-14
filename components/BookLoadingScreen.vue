@@ -2,7 +2,7 @@
   <div class="flex flex-col justify-center items-center py-[56px]">
     <div
       class="relative max-w-[164px] w-full aspect-2/3 mt-[8vh] shrink-0 transition-opacity duration-1000"
-      :class="props.bookCoverSrc ? 'opacity-100' : 'opacity-0'"
+      :class="props.bookCoverSrc ? 'opacity-100' : 'opacity-0 pointer-events-none'"
     >
       <BookCover
         class="w-full h-full"
