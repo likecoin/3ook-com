@@ -53,7 +53,10 @@
           v-text="$t('about_page_features_title')"
         />
 
-        <div class="grid md:grid-cols-2 gap-6">
+        <div
+          v-gsap.whenVisible.once.stagger.from="{ y: 50, opacity: 0, duration: 0.6, stagger: 0.1 }"
+          class="grid md:grid-cols-2 gap-6"
+        >
           <UCard
             id="ai-narration"
             class="p-6 space-y-3"
