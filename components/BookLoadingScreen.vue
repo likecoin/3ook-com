@@ -65,7 +65,7 @@
         class="mt-[56px]"
         name="footer"
       />
-      <template v-else>
+      <template v-else-if="!props.loadingProgress || props.loadingProgress < 100">
         <span
           class="text-gray-600 text-[10px]"
           v-text="loadingLabel"

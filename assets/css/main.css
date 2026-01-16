@@ -135,3 +135,14 @@ body {
     opacity: 0.4;
   }
 }
+
+/* Reader loading transition animation */
+.reader-load-leave-active {
+  transition: opacity 1000ms cubic-bezier(0.16, 1, 0.3, 1),
+              transform 1000ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reader-load-leave-to {
+  opacity: 0;
+  transform: scale(1.5);
+}

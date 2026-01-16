@@ -1,12 +1,15 @@
 <template>
   <main>
-    <BookLoadingScreen
-      v-if="isReaderLoading"
-      :book-name="bookInfo.name.value"
-      :book-cover-src="bookCoverSrc"
-      :loading-label="loadingLabel"
-    />
-    <ClientOnly v-else-if="fileBuffer">
+    <Transition name="reader-load">
+      <BookLoadingScreen
+        v-if="isReaderLoading"
+        :book-name="bookInfo.name.value"
+        :book-cover-src="bookCoverSrc"
+        :loading-label="loadingLabel"
+        :loading-percentage="loadingPercentage"
+      />
+    </Transition>
+    <ClientOnly v-if="!isReaderLoading && fileBuffer">
       <PDFReader
         ref="pdfReaderRef"
         class="grow w-full"
@@ -70,7 +73,7 @@ const { setTTSSegments, setChapterTitles, openPlayer } = useTTSPlayerModal({
 })
 const isReaderLoading = ref(true)
 
-const { loadingLabel, loadFileAsBuffer } = useBookFileLoader()
+const { loadingLabel, loadingPercentage, loadFileAsBuffer } = useBookFileLoader()
 
 onMounted(async () => {
   isReaderLoading.value = true
