@@ -283,7 +283,7 @@ async function handleUnstakeButtonClick() {
     helpText: $t('amount_available', { amount: `${formattedUserStake.value} ${likeCoinTokenSymbol}` }),
   }).result
 
-  if (!isValidStakeAmount.value) return
+  if (stakeAmount.value <= 0) return
 
   try {
     isUnstakingAmount.value = true
