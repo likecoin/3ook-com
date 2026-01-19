@@ -263,7 +263,15 @@
                 :height="9"
                 :aria-label="$t('about_page_author_dung_kai_cheung')"
                 :title="$t('about_page_author_dung_kai_cheung')"
-              />
+              >
+                <template #placeholder>
+                  <img
+                    src="~/assets/images/about/dung_preview.png"
+                    :alt="$t('about_page_author_dung_kai_cheung')"
+                    class="w-full h-full object-cover"
+                  >
+                </template>
+              </ScriptYouTubePlayer>
             </ClientOnly>
           </div>
         </UCard>
@@ -298,7 +306,15 @@
                   :height="16"
                   :aria-label="$t('about_page_author_kin_ko')"
                   :title="$t('about_page_author_kin_ko')"
-                />
+                >
+                  <template #placeholder>
+                    <img
+                      src="~/assets/images/about/kin_preview.png"
+                      :alt="$t('about_page_author_kin_ko')"
+                      class="w-full h-full object-cover"
+                    >
+                  </template>
+                </ScriptYouTubePlayer>
               </ClientOnly>
             </div>
           </UCard>
@@ -332,7 +348,15 @@
                   :height="16"
                   :aria-label="$t('about_page_author_fu_yue_an')"
                   :title="$t('about_page_author_fu_yue_an')"
-                />
+                >
+                  <template #placeholder>
+                    <img
+                      src="~/assets/images/about/fu_preview.png"
+                      :alt="$t('about_page_author_fu_yue_an')"
+                      class="w-full h-full object-cover"
+                    >
+                  </template>
+                </ScriptYouTubePlayer>
               </ClientOnly>
             </div>
           </UCard>
