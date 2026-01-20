@@ -47,6 +47,11 @@
               class="text-[24px] text-black laptop:text-[32px] desktop:text-[40px] font-bold leading-[1.2]"
               v-text="bookName"
             />
+            <p
+              v-if="bookInfo.alternativeHeadline.value"
+              class="text-[16px] text-gray-600 laptop:text-[20px] desktop:text-[24px] leading-[1.3] mt-2"
+              v-text="bookInfo.alternativeHeadline.value"
+            />
 
             <ul
               :class="[
@@ -800,10 +805,12 @@ const descriptionTags = computed(() => {
 
 const ogTitle = computed(() => {
   const title = bookInfo.name.value
+  const subtitle = bookInfo.alternativeHeadline.value
   const author = bookInfo.authorName.value
   const hasEbookTag = descriptionTags.value.includes($t('product_page_book_format_value'))
   const ebookSuffix = hasEbookTag ? ` - ${$t('product_page_book_format_value')}` : ''
-  return author ? `${title} - ${author}${ebookSuffix}` : `${title}${ebookSuffix}`
+  const titleWithSubtitle = subtitle ? `${title}：${subtitle}` : title
+  return author ? `${titleWithSubtitle} - ${author}${ebookSuffix}` : `${titleWithSubtitle}${ebookSuffix}`
 })
 const ogDescription = computed(() => {
   const description = bookInfo.description.value || ''

@@ -11,6 +11,7 @@ export function useEVMBookInfo(
   const contentMetadata = computed(() => nftClass.value?.metadata)
 
   const name = computed(() => contentMetadata.value?.name || '')
+  const alternativeHeadline = computed(() => contentMetadata.value?.alternativeHeadline)
   const description = computed(() => contentMetadata.value?.description || '')
 
   const author = computed(() => contentMetadata.value?.author)
@@ -41,6 +42,7 @@ export function useEVMBookInfo(
 
   return {
     name,
+    alternativeHeadline,
     description,
     coverSrc,
     nftClassOwnerWalletAddress,

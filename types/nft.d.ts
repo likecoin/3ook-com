@@ -36,6 +36,7 @@ declare interface NFTClassMetadata {
   datePublished: string
   external_url: string
   inLanguage: string
+  alternativeHeadline?: string
   keywords: string[]
   language: string
   tags: string[]

@@ -380,6 +380,7 @@ export function useStructuredData(
     const baseURL = config.public.baseURL
 
     const name = bookInfo.name.value
+    const alternativeHeadline = bookInfo.alternativeHeadline.value
     const description = bookInfo.description.value
     const image = bookInfo.coverSrc.value
     const authorName = bookInfo.authorName.value
@@ -401,6 +402,7 @@ export function useStructuredData(
         '@id': `${canonicalURL}?price_index=${pricing.index}`,
         'url': `${canonicalURL}?price_index=${pricing.index}`,
         'name': pricing?.name ? `${name} - ${authorName} - ${pricing.name}` : `${name} - ${authorName}`,
+        alternativeHeadline,
         image,
         description,
         'brand': {
@@ -464,6 +466,7 @@ export function useStructuredData(
       '@type': ['Book', 'ProductGroup'],
       'url': canonicalURL,
       'name': `${name} - ${authorName}`,
+      alternativeHeadline,
       image,
       description,
       'brand': {
