@@ -809,7 +809,7 @@ const ogTitle = computed(() => {
   const author = bookInfo.authorName.value
   const hasEbookTag = descriptionTags.value.includes($t('product_page_book_format_value'))
   const ebookSuffix = hasEbookTag ? ` - ${$t('product_page_book_format_value')}` : ''
-  const titleWithSubtitle = subtitle ? `${title}：${subtitle}` : title
+  const titleWithSubtitle = subtitle ? `${title}${$t('text_separator_colon')}${subtitle}` : title
   return author ? `${titleWithSubtitle} - ${author}${ebookSuffix}` : `${titleWithSubtitle}${ebookSuffix}`
 })
 const ogDescription = computed(() => {
