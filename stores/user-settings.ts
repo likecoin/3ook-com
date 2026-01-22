@@ -89,6 +89,11 @@ export const useUserSettingsStore = defineStore('user-settings', () => {
 
   function queueUpdate(key: string, value: unknown) {
     if (!hasLoggedIn.value) return
+
+    if (settingsEntry.value?.data) {
+      (settingsEntry.value.data as Record<string, unknown>)[key] = value
+    }
+
     batchQueue.value.set(key, value)
     debouncedFlush()
   }

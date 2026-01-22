@@ -1,6 +1,4 @@
-import type { UserSettingKey } from '~/shared/types/user-settings'
-
-const ALLOWED_KEYS = ['locale', 'currency'] as const satisfies readonly UserSettingKey[]
+const ALLOWED_KEYS = ['locale', 'currency', 'colorMode'] as const satisfies readonly UserSettingKey[]
 
 export default defineEventHandler(async (event) => {
   const wallet = await requireUserWallet(event)

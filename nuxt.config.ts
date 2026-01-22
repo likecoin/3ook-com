@@ -43,8 +43,14 @@ export default defineNuxtConfig({
     name: '3ook.com',
   },
 
+  colorMode: {
+    preference: 'light',
+    fallback: 'light',
+    storageKey: '3ook-com-color-mode',
+  },
+
   ui: {
-    colorMode: false,
+    colorMode: true,
   },
 
   runtimeConfig: {

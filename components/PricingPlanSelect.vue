@@ -13,12 +13,14 @@
         'px-4',
         'py-3 laptop:py-4',
 
-        'bg-theme-white',
-        'text-theme-black',
+        'bg-theme-white dark:bg-theme-black',
+        'text-theme-black dark:text-theme-white',
         'rounded-lg',
 
         'border-2',
-        plan.isSelected ? 'border-theme-black' : 'border-theme-black/40',
+        plan.isSelected
+          ? 'border-theme-black dark:border-theme-white'
+          : 'border-theme-black/40 dark:border-theme-white/40',
 
         'mb-1',
         'hover:mb-0',
@@ -51,9 +53,9 @@
           'px-1.5 laptop:px-3',
           'py-0.5 laptop:py-1',
 
-          'bg-theme-black',
+          'bg-theme-black dark:bg-theme-cyan',
 
-          'text-theme-cyan',
+          'text-theme-cyan dark:text-theme-black',
           'text-xs',
           'font-semibold',
 
@@ -68,13 +70,15 @@
         <div
           :class="[
             'size-5 shrink-0 mr-4 rounded-full border-2',
-            plan.isSelected ? 'bg-theme-black border-theme-black' : 'bg-transparent border-theme-black/40',
+            plan.isSelected
+              ? 'bg-theme-black dark:bg-theme-cyan border-theme-black dark:border-theme-cyan'
+              : 'bg-transparent border-theme-black/40 dark:border-theme-cyan/40',
           ]"
         >
           <UIcon
             v-show="plan.isSelected"
             name="i-material-symbols-check"
-            class="block text-theme-cyan"
+            class="block text-theme-cyan dark:text-theme-black"
             :size="16"
           />
         </div>

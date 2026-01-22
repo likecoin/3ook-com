@@ -2,7 +2,7 @@
   <main class="flex flex-col grow px-4 laptop:px-12 pb-4">
     <div class="flex flex-col grow w-full max-w-[1200px] mx-auto">
       <h1
-        class="mt-4 laptop:mt-10 mb-6 text-green-500 text-xl laptop:text-3xl font-bold"
+        class="mt-4 laptop:mt-10 mb-6 text-theme-cyan text-xl laptop:text-3xl font-bold"
         v-text="$t('book_list_title')"
       />
       <UCard

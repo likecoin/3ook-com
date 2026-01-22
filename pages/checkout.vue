@@ -15,11 +15,11 @@
         class="flex flex-col items-center justify-center py-[56px]"
       >
         <UIcon
-          class="text-green-500 text-[40px] mb-4"
+          class="text-theme-cyan text-[40px] mb-4"
           name="i-material-symbols-shopping-cart"
         />
         <h1
-          class="text-green-500 text-xl font-bold mb-4"
+          class="text-theme-cyan text-xl font-bold mb-4"
           v-text="$t('checkout_preparing_title')"
         />
         <UProgress
@@ -33,7 +33,7 @@
     <template v-else-if="cartItems.length > 0">
       <section class="flex flex-col w-full max-w-[800px] mt-8">
         <h1
-          class="text-[32px] font-bold text-black mb-8"
+          class="text-[32px] font-bold text-highlighted mb-8"
           v-text="$t('checkout_page_title')"
         />
 
@@ -58,12 +58,12 @@
 
               <div class="flex-1">
                 <h3
-                  class="font-semibold text-black mb-1"
+                  class="font-semibold text-highlighted mb-1"
                   v-text="item.bookInfo?.name"
                 />
                 <p
                   v-if="item.bookInfo?.authorName"
-                  class="text-sm text-gray-600 mb-2"
+                  class="text-sm text-muted mb-2"
                   v-text="$t('checkout_by_author', { author: item.bookInfo.authorName })"
                 />
                 <div class="flex items-center justify-between">
@@ -139,7 +139,7 @@
           name="i-material-symbols-shopping-cart-off"
         />
         <h1
-          class="text-gray-600 text-xl font-bold mb-2"
+          class="text-muted text-xl font-bold mb-2"
           v-text="$t('checkout_cart_empty_title')"
         />
         <p

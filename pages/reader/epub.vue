@@ -1,6 +1,6 @@
 <template>
   <main>
-    <Transition name="reader-load" >
+    <Transition name="reader-load">
       <BookLoadingScreen
         v-if="isReaderLoading"
         class="absolute inset-0"
@@ -168,8 +168,9 @@
                       />
                       <USelect
                         v-model="fontSize"
-                        class="w-full"
+                        class="pl-9 w-full"
                         :items="FONT_SIZE_OPTIONS"
+                        :ui="{ value: 'mx-auto' }"
                       />
                       <UButton
                         icon="i-material-symbols-text-increase-rounded"
@@ -189,12 +190,10 @@
                         variant="ghost"
                         @click="decreaseLineHeight"
                       />
-                      <div class="flex w-full h-[32px] py-1 px-3 bg-gray-50 rounded-md border-2 border-black">
-                        <span
-                          class="text-center w-full"
-                          v-text="lineHeight.toFixed(1)"
-                        />
-                      </div>
+                      <div
+                        class="flex justify-center items-center w-full px-2.5 py-1.5 text-sm rounded-md ring-2 ring-theme-black dark:ring-muted ring-inset"
+                        v-text="lineHeight.toFixed(1)"
+                      />
                       <UButton
                         icon="i-material-symbols-add"
                         variant="ghost"
@@ -266,7 +265,7 @@
               'flex',
               'items-center',
               'justify-center',
-              'bg-white/75',
+              'bg-accented/75',
               isPageLoading ? 'opacity-100' : 'opacity-0',
               'pointer-events-none',
               'transition-opacity',
@@ -321,7 +320,7 @@ if (!hasLoggedIn.value) {
   await navigateTo(localeRoute({ name: 'account', query: route.query }))
 }
 const toast = useToast()
-
+const { value: colorModeValue } = useColorModeSync()
 const { t: $t } = useI18n()
 const nftStore = useNFTStore()
 const bookSettingsStore = useBookSettingsStore()
@@ -472,9 +471,6 @@ const fontSize = useSyncedBookSettings({
   defaultValue: FONT_SIZE_OPTIONS[DEFAULT_FONT_SIZE_INDEX],
   namespace: 'epub',
 })
-watch(fontSize, (size) => {
-  rendition.value?.themes.fontSize(`${size}px`)
-})
 
 const DEFAULT_LINE_HEIGHT = 1.6
 const lineHeight = useSyncedBookSettings({
@@ -483,12 +479,43 @@ const lineHeight = useSyncedBookSettings({
   defaultValue: DEFAULT_LINE_HEIGHT,
   namespace: 'epub',
 })
-watch(lineHeight, (height) => {
-  rendition.value?.themes.default({
-    'p, div, span, h1, h2, h3, h4, h5, h6, li': {
-      'line-height': `${height}em !important`,
-    },
+
+function applyTheme() {
+  if (!rendition.value) return
+
+  const isDarkMode = colorModeValue.value === 'dark'
+  const bodyCSS: Record<string, string> = {
+    'color': isDarkMode ? '#f9f9f9 !important' : '#333',
+    '-webkit-text-size-adjust': 'none',
+    'text-size-adjust': 'none',
+    'direction': 'ltr',
+  }
+  if (isDarkMode) {
+    bodyCSS.background = '#131313'
+  }
+  const textCSS: Record<string, string> = {
+    'line-height': `${lineHeight.value}em !important`,
+  }
+  if (isDarkMode) {
+    textCSS.color = bodyCSS.color as string
+  }
+  rendition.value.themes.default({
+    'body': bodyCSS,
+    'p, div, span, h1, h2, h3, h4, h5, h6, li': textCSS,
   })
+  rendition.value.themes.fontSize(`${fontSize.value}px`)
+}
+
+watch(fontSize, () => {
+  applyTheme()
+})
+
+watch(lineHeight, () => {
+  applyTheme()
+})
+
+watch(colorModeValue, () => {
+  applyTheme()
 })
 
 let cleanUpClickListener: (() => void) | undefined
@@ -583,19 +610,7 @@ async function loadEPub() {
     allowScriptedContent: true,
     spread: 'none',
   })
-  const bodyCSS: Record<string, string> = {
-    'color': '#333',
-    '-webkit-text-size-adjust': 'none',
-    'text-size-adjust': 'none',
-    'direction': 'ltr', // Mitigate epubjs mixing up dir & page-progression-direction
-  }
-  rendition.value.themes.default({
-    'body': bodyCSS,
-    'p, div, span, h1, h2, h3, h4, h5, h6, li': {
-      'line-height': `${lineHeight.value}em !important`,
-    },
-  })
-  rendition.value.themes.fontSize(`${fontSize.value}px`)
+  applyTheme()
   isPageLoading.value = true
 
   let hasDisplayed = false

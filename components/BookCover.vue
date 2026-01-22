@@ -41,7 +41,7 @@
         :class="[
           coverClass,
           { relative: hasShadow },
-          'bg-white',
+          'bg-white dark:bg-black',
           !isShowPlaceholder ? 'opacity-100' : 'opacity-0',
           { 'blur-xl': !hasLoaded },
           { 'pointer-events-none': isShowPlaceholder },
@@ -61,7 +61,7 @@
           'justify-center',
           'items-center',
           'inset-0',
-          'bg-theme-black/10',
+          'bg-theme-black/10 dark:bg-theme-white/10',
           'pointer-events-none',
           { 'animate-pulse': !hasLoaded },
         ]"

@@ -11,7 +11,7 @@
         :size="24"
       />
       <h3
-        class="text-lg font-semibold text-gray-900"
+        class="text-lg font-semibold text-highlighted"
         v-text="$t('tts_samples_section_title')"
       />
     </div>
@@ -25,7 +25,7 @@
 
       <UCard
         v-if="isPlayingSample && currentSegmentText"
-        class="text-sm font-medium text-gray-900 rounded-xl"
+        class="text-sm font-medium text-highlighted rounded-xl"
       >
         <div class="relative">
           <!-- Spacer for text -->

@@ -3,8 +3,22 @@
 
 body {
   --app-bg: var(--color-theme-white);
+  --ui-text-highlighted: var(--color-theme-black);
   --intercom-launcher-offset: calc(env(safe-area-inset-bottom) + 56px);
   @apply bg-(--app-bg);
+}
+
+.dark body {
+  --app-bg: var(--color-theme-black);
+  --ui-text-highlighted: var(--color-theme-white);
+}
+
+.dark {
+  --color-theme-50:  #7aefd9;
+  --color-theme-100: #6aebce;
+  --color-theme-200: #5de7c9;
+  --color-theme-300: #56e5c6;
+  --color-theme-400: #50e3c2;
 }
 
 @theme static {
@@ -55,10 +69,6 @@ body {
   .pb-safe {
     padding-bottom: env(safe-area-inset-bottom);
   }
-}
-
-:root {
-  --ui-text-highlighted: var(--color-theme-black);
 }
 
 .fade-enter-active,

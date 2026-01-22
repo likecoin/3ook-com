@@ -44,7 +44,7 @@
         #footer
       >
         <span
-          class="px-6 text-xs text-gray-600"
+          class="px-6 text-xs text-muted"
           v-text="$t('claim_page_description_await_for_delivery')"
         />
         <UButton

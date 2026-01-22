@@ -45,12 +45,12 @@
 
           <div class="flex flex-col justify-center">
             <h1
-              class="text-[24px] text-black laptop:text-[32px] desktop:text-[40px] font-bold leading-[1.2]"
+              class="text-[24px] text-highlighted laptop:text-[32px] desktop:text-[40px] font-bold leading-[1.2]"
               v-text="bookName"
             />
             <p
               v-if="bookInfo.alternativeHeadline.value"
-              class="text-[16px] text-gray-600 laptop:text-[20px] desktop:text-[24px] leading-[1.3] mt-2"
+              class="text-[16px] text-muted laptop:text-[20px] desktop:text-[24px] leading-[1.3] mt-2"
               v-text="bookInfo.alternativeHeadline.value"
             />
 
@@ -61,7 +61,7 @@
                 'gap-x-[64px]',
                 'gap-y-6',
                 'mt-6 tablet:mt-8',
-                '[&>li>div:first-child]:text-gray-600',
+                '[&>li>div:first-child]:text-muted',
                 '[&>li>div:first-child]:text-sm',
                 '[&>li>div:first-child]:mb-2',
               ]"
@@ -176,7 +176,7 @@
           </template>
 
           <template #staking-info>
-            <div class="max-tablet:hidden space-y-4 text-theme-black">
+            <div class="max-tablet:hidden space-y-4 text-highlighted">
               <div class="grid grid-cols-1 tablet:grid-cols-3 gap-4">
                 <UCard :ui="{ body: 'p-4' }">
                   <div class="text-center">
@@ -304,7 +304,7 @@
           <template v-else>
             <div
               v-if="pricingItems.length"
-              class="bg-white p-4 pb-8 rounded-lg shadow-[0px_10px_20px_0px_rgba(0,0,0,0.04)]"
+              class="bg-white dark:bg-neutral-900 space-y-6 p-4 pt-6 pb-8 rounded-lg shadow-[0px_10px_20px_0px_rgba(0,0,0,0.04)]"
             >
               <ul
                 ref="pricing"
@@ -319,12 +319,16 @@
                       'flex',
                       'items-center',
                       'gap-3',
-                      'hover:bg-gray-200',
+                      'dark:bg-neutral-800',
+                      'hover:bg-muted',
+                      'hover:dark:bg-neutral-700/50',
                       'rounded-lg',
                       'w-full',
                       'p-4',
                       'border-2',
-                      item.isSelected ? 'border-gray-900' : 'border-gray-300',
+                      item.isSelected
+                        ? 'border-neutral-900 dark:border-neutral-300'
+                        : 'border-neutral-300 dark:border-neutral-700',
                       'transition-[background-color, border-color]',
                       'duration-200',
                       'ease-in-out',
@@ -341,12 +345,12 @@
                           item.isSelected ? 'bg-theme-50' : 'bg-white',
                           'rounded-full',
                           'border',
-                          'border-gray-300',
+                          'border-neutral-300',
                         ]"
                       />
                       <UIcon
                         v-if="item.isSelected"
-                        class="absolute text-gray-900 z-10"
+                        class="absolute text-neutral-900 z-10"
                         name="i-material-symbols-check-circle"
                         size="24"
                       />
@@ -358,7 +362,7 @@
                           'justify-between',
                           'items-center',
                           'gap-3',
-                          item.isSoldOut ? 'text-gray-400' : 'text-gray-900',
+                          item.isSoldOut ? 'text-dimmed' : 'text-highlighted',
                         ]"
                       >
                         <span
@@ -375,14 +379,14 @@
                           class="flex flex-col items-end text-right"
                         >
                           <template v-if="item?.discountedPrice">
-                            <span class="flex flex-nowrap items-center text-gray-900 font-semibold">
+                            <span class="flex flex-nowrap items-center text-highlighted font-semibold">
                               <span v-text="item.discountedPrice" />
                               <PlusBadge
                                 v-if="isLikerPlus"
                                 class="ml-1"
                               />
                             </span>
-                            <span class="text-xs text-gray-400 line-through">
+                            <span class="text-xs text-dimmed line-through">
                               <span v-text="item.originalPrice" />
                             </span>
                           </template>
@@ -525,7 +529,7 @@
       class="w-full max-w-[1200px] mx-auto mt-16 laptop:mt-20"
     >
       <h2
-        class="text-green-500 text-lg font-bold"
+        class="text-theme-cyan text-lg font-bold"
         v-text="$t('product_page_related_books_title')"
       />
 
@@ -564,9 +568,9 @@
         'mb-safe',
         'px-4',
         'py-3',
-        'bg-white',
-        'border-b',
-        'border-b-muted',
+        'bg-white dark:bg-(--app-bg)',
+        'border-y',
+        'border-y-muted',
         'z-10',
       ]"
     >
@@ -583,7 +587,7 @@
       </template>
 
       <template v-else-if="pricingItems.length">
-        <span class="text-green-500">
+        <span class="text-theme-cyan">
           <span
             v-if="selectedPricingItem?.discountedPrice"
             class="text-2xl font-semibold"

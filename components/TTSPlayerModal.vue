@@ -11,7 +11,7 @@
   <UModal
     v-else
     :fullscreen="isFullscreen"
-    :ui="{ content: 'bg-white divide-none' }"
+    :ui="{ content: 'bg-(--ui-bg) divide-none' }"
     @update:open="handleModalUpdateOpen"
   >
     <template #content>
@@ -22,7 +22,7 @@
         <div class="flex items-center justify-between">
           <div class="grow overflow-hidden">
             <h1
-              class="text-center text-sm font-semibold text-gray-500 truncate"
+              class="text-center text-sm font-semibold text-muted truncate"
               v-text="bookTitle"
             />
           </div>
@@ -37,7 +37,7 @@
         </div>
         <h2
           v-if="sectionTitle"
-          class="text-lg font-semibold text-gray-700 truncate text-center laptop:my-4"
+          class="text-lg font-semibold text-(--ui-text) truncate text-center laptop:my-4"
           v-text="sectionTitle"
         />
 
@@ -235,7 +235,7 @@ const scrollIndicatorClasses = [
 
   'h-12',
 
-  'from-white',
+  'from-(--ui-bg)',
   'to-transparent',
   'pointer-events-none',
 ]
@@ -355,8 +355,8 @@ function setSegmentRef(
 
 function getSegmentClass(index: number) {
   const baseClasses = 'inline-block text-sm laptop:text-lg transition-opacity duration-300 cursor-pointer'
-  const activeClasses = 'text-gray-700 opacity-100 font-bold'
-  const inactiveClasses = 'opacity-40 text-gray-500 hover:opacity-90'
+  const activeClasses = 'text-(--ui-text) opacity-100 font-bold'
+  const inactiveClasses = 'opacity-40 text-muted hover:opacity-90'
 
   return `${baseClasses} ${index === currentTTSSegmentIndex.value ? activeClasses : inactiveClasses}`
 }

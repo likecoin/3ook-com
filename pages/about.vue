@@ -231,7 +231,7 @@
           <h2 class="text-2xl md:text-3xl font-bold text-gray-900">
             {{ $t('about_page_author_stories_title') }}
           </h2>
-          <p class="text-lg text-gray-600 leading-relaxed max-w-2xl mx-auto">
+          <p class="text-lg text-muted leading-relaxed max-w-2xl mx-auto">
             {{ $t('about_page_author_stories_content') }}
           </p>
         </div>
@@ -253,7 +253,7 @@
               />
             </h3>
           </div>
-          <p class="text-gray-600 leading-relaxed">
+          <p class="text-muted leading-relaxed">
             {{ $t('about_page_author_dung_kai_cheung_desc') }}
           </p>
 
@@ -296,7 +296,7 @@
                 />
               </h3>
             </div>
-            <p class="text-gray-600 leading-relaxed">
+            <p class="text-muted leading-relaxed">
               {{ $t('about_page_author_kin_ko_desc') }}
             </p>
 
@@ -338,7 +338,7 @@
                 />
               </h3>
             </div>
-            <p class="text-gray-600 leading-relaxed">
+            <p class="text-muted leading-relaxed">
               {{ $t('about_page_author_fu_yue_an_desc') }}
             </p>
 
@@ -428,7 +428,7 @@
           v-text="$t('about_page_contact_title')"
         />
         <p
-          class="text-lg text-gray-600 max-w-2xl mx-auto"
+          class="text-lg text-muted max-w-2xl mx-auto"
           v-text="$t('about_page_contact_content')"
         />
         <div class="flex flex-row flex-wrap gap-4 justify-center">
@@ -453,7 +453,10 @@
 </template>
 
 <script setup lang="ts">
-definePageMeta({ layout: false })
+definePageMeta({
+  layout: false,
+  colorMode: 'light',
+})
 
 const { t: $t } = useI18n()
 const localeRoute = useLocaleRoute()

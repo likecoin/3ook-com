@@ -106,7 +106,7 @@
               fixedTag.value === TAG_DEFAULT ? TAG_BUTTON_CLASS_DARK : TAG_BUTTON_CLASS_LIGHT,
               TAG_BUTTON_CLASS_BASE,
               'px-2.5 laptop:px-4',
-              '!ring-theme-black',
+              '!ring-theme-black dark:!ring-muted',
             ],
             label: 'text-sm laptop:text-base',
           }"
@@ -341,8 +341,8 @@ const isTablet = useMediaQuery('(max-width: 768px)')
 const isMobile = useMediaQuery('(max-width: 425px)')
 
 const TAG_BUTTON_CLASS_BASE = 'rounded-full hover:-translate-y-0.5 transition-all'
-const TAG_BUTTON_CLASS_LIGHT = 'bg-(--app-bg) hover:bg-theme-white/80'
-const TAG_BUTTON_CLASS_DARK = 'bg-theme-black hover:bg-theme-black/80 text-theme-cyan'
+const TAG_BUTTON_CLASS_LIGHT = 'bg-(--app-bg) hover:bg-accented/80 hover:dark:bg-muted/80'
+const TAG_BUTTON_CLASS_DARK = 'bg-theme-black hover:bg-theme-black/80 hover:dark:bg-accented/80 text-theme-cyan'
 
 const querySearchTerm = computed(() => getRouteQuery('q', ''))
 const queryAuthorName = computed(() => getRouteQuery('author', ''))

@@ -2,7 +2,7 @@
   <main class="items-center justify-center w-full max-w-xl mx-auto p-4 space-y-4 text-center">
     <UIcon
       name="i-material-symbols-check-circle-rounded"
-      class="text-green-500 mb-4"
+      class="text-theme-cyan mb-4"
       size="64"
     />
 
@@ -11,7 +11,7 @@
       v-text="$t('subscription_success_title')"
     />
     <p
-      class="mb-6 text-gray-600"
+      class="mb-6 text-muted"
       v-text="$t('subscription_success_description')"
     />
 

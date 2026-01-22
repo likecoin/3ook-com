@@ -168,4 +168,6 @@ useHead({
 })
 
 const { isShowMaintenancePage } = useMaintenanceMode()
+
+useColorModeSync()
 </script>

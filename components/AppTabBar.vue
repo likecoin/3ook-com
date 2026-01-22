@@ -1,5 +1,5 @@
 <template>
-  <nav class="bg-white border-t border-muted fixed bottom-0 left-0 right-0 pb-safe">
+  <nav class="bg-white dark:bg-theme-black border-t border-muted fixed bottom-0 left-0 right-0 pb-safe">
     <ul class="flex justify-around items-center w-full max-w-md min-h-14 mx-auto">
       <li
         v-for="item in menuItems"
@@ -14,7 +14,9 @@
           <UAvatar
             :class="[
               'bg-white',
-              item.isActive ? 'border-2 border-theme-black' : 'border border-muted',
+              item.isActive
+                ? 'border-2 border-theme-black dark:border-theme-white'
+                : 'border border-muted',
             ]"
             :src="user?.avatar"
             :alt="user?.displayName"
@@ -29,7 +31,9 @@
             :ui="{
               base: [
                 'rounded-full',
-                item.isActive ? 'bg-theme-black text-theme-cyan' : 'bg-theme-white',
+                item.isActive
+                  ? 'bg-theme-black dark:bg-theme-cyan text-theme-cyan dark:text-theme-black'
+                  : 'bg-theme-white dark:bg-theme-black',
                 'font-bold',
               ],
             }"

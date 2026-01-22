@@ -125,6 +125,7 @@ export async function getUserSettings(
   return {
     locale: data.locale,
     currency: data.currency,
+    colorMode: data.colorMode,
     updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toMillis() : undefined,
   }
 }

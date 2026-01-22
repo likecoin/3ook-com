@@ -9,7 +9,7 @@
       'min-h-[56px]',
       'px-3', 'phone:px-5',
 
-      'bg-white',
+      'bg-white dark:bg-theme-black',
       'border-b',
       'border-gray-500',
     ]"

@@ -35,7 +35,7 @@
     </div>
 
     <!-- Price info for store mode -->
-    <div class="h-5 mt-3 text-sm text-theme-black">
+    <div class="h-5 mt-3 text-sm text-theme-black dark:text-highlighted">
       <span
         v-if="formattedDiscountPrice"
         v-text="formattedDiscountPrice"

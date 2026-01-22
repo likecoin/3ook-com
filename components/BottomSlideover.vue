@@ -73,6 +73,7 @@ const scrollIndicatorClasses = [
   'h-12',
 
   'from-white',
+  'dark:from-black',
   'to-transparent',
   'pointer-events-none',
 ]

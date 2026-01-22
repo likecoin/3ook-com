@@ -242,6 +242,15 @@
             <CurrencySwitcher :is-icon-hidden="true" />
           </template>
         </AccountSettingsItem>
+
+        <AccountSettingsItem
+          icon="i-material-symbols-dark-mode-outline-rounded"
+          :label="$t('account_page_color_mode')"
+        >
+          <template #right>
+            <ColorModeSwitcher />
+          </template>
+        </AccountSettingsItem>
       </UCard>
     </section>
 

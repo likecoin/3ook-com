@@ -12,7 +12,7 @@ export default defineAppConfig({
         {
           color: 'primary',
           variant: 'solid',
-          class: 'text-theme-50',
+          class: 'text-theme-cyan dark:text-theme-black',
         },
         {
           variant: 'outline',
@@ -21,13 +21,13 @@ export default defineAppConfig({
         {
           color: 'primary',
           variant: 'outline',
-          class: 'ring-theme-black',
+          class: 'ring-theme-black dark:ring-muted',
         },
       ],
     },
     checkbox: {
       slots: {
-        base: 'ring-2 ring-theme-black',
+        base: 'ring-2 ring-theme-black dark:ring-muted',
       },
       variants: {
         disabled: {
@@ -47,7 +47,7 @@ export default defineAppConfig({
         {
           color: 'primary',
           variant: 'outline',
-          class: 'ring-2 ring-theme-black',
+          class: 'ring-2 ring-theme-black dark:ring-muted',
         },
       ],
     },

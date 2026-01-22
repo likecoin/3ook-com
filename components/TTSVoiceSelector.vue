@@ -18,7 +18,7 @@
         ]"
         variant="outline"
         size="md"
-        :ui="{ base: 'gap-3 bg-white hover:bg-white hover:border-gray-400 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 ease-in-out' }"
+        :ui="{ base: 'gap-3 bg-default hover:border-accented hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 ease-in-out' }"
         @click="handleVoiceClick(sample)"
       >
         <template #leading>
@@ -30,8 +30,8 @@
               'w-10',
               'h-10',
               'rounded-full',
-              'bg-gray-100',
-              'group-hover:bg-gray-200',
+              'bg-accented',
+              'group-hover:bg-muted',
               'transition-colors',
               'duration-200',
               'flex-shrink-0',
@@ -39,7 +39,7 @@
           >
             <UIcon
               :name="icon"
-              class="text-gray-600 group-hover:text-gray-800 transition-colors duration-200"
+              class="text-muted group-hover:text-highlighted transition-colors duration-200"
               size="20"
             />
           </div>
@@ -47,12 +47,12 @@
 
         <div class="flex flex-col gap-1 grow">
           <div
-            class="font-medium text-gray-900 truncate group-hover:text-black transition-colors duration-200"
+            class="font-medium text-toned truncate group-hover:text-highlighted transition-colors duration-200"
             v-text="sample.title"
           />
           <div
             v-if="sample.description"
-            class="text-sm text-gray-500 truncate group-hover:text-gray-600 transition-colors duration-200"
+            class="text-sm text-muted truncate transition-colors duration-200"
             v-text="sample.description"
           />
         </div>

@@ -9,7 +9,7 @@
   >
     <div
       :class="[
-        isDarkBackground ? 'text-theme-cyan' : 'text-theme-black',
+        isDarkBackground ? 'text-theme-cyan' : 'text-theme-black dark:text-theme-cyan',
         isTitleCenter ? 'text-center' : 'text-left',
         'font-bold',
         'border-b-2 border-current',

@@ -23,9 +23,9 @@
           class="text-xs text-toned mb-0.5"
           v-text="`${progressPercentage}%`"
         />
-        <div class="w-full h-1 bg-gray-200 rounded-full overflow-hidden">
+        <div class="w-full h-1 rounded-full overflow-hidden ring-[0.5px] ring-inset ring-current text-highlighted">
           <div
-            class="h-full bg-primary-500 transition-all duration-300"
+            class="h-full bg-current transition-all duration-300"
             :style="{ width: `${progressPercentage}%` }"
           />
         </div>

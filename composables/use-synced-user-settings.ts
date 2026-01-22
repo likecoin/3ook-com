@@ -1,5 +1,4 @@
 import type { UserSettingsData } from '~/types/user-settings'
-import type { UserSettingKey } from '~/shared/types/user-settings'
 
 interface UseSyncedUserSettingsOptions<T> {
   key: UserSettingKey

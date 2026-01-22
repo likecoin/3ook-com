@@ -63,7 +63,7 @@
     >
 
     <span
-      :class="[labelClass, 'relative', 'text-green-500']"
+      :class="[labelClass, 'relative', 'text-theme-cyan']"
       v-text="props.label"
     />
   </button>

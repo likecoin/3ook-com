@@ -41,7 +41,7 @@
     <template #body>
       <i18n-t
         v-if="shouldShowYearlyPlan"
-        class="self-center text-theme-black text-center font-bold text-[16px] laptop:text-[20px]"
+        class="self-center text-highlighted text-center font-bold text-[16px] laptop:text-[20px]"
         keypath="upsell_plus_yearly_notice"
         tag="p"
       >
@@ -60,18 +60,18 @@
       </i18n-t>
       <span
         v-if="shouldShowMonthlyPlan"
-        class="self-center text-center text-gray-500 text-xs"
+        class="self-center text-center text-muted text-xs"
         v-text="$t('upsell_plus_or')"
       />
       <i18n-t
         v-if="shouldShowMonthlyPlan"
-        class="self-center text-theme-black text-center font-bold text-[16px] laptop:text-[20px]"
+        class="self-center text-highlighted text-center font-bold text-[16px] laptop:text-[20px]"
         keypath="upsell_plus_monthly_notice"
         tag="p"
       >
         <template #month>
           <span
-            class="text-theme-black font-semibold"
+            class="text-highlighted font-semibold"
             v-text="$t('upsell_plus_monthly_member')"
           />
         </template>

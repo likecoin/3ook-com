@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col gap-4 p-4 bg-white rounded-lg shadow-[0px_10px_20px_0px_rgba(0,0,0,0.04)]">
+  <div class="flex flex-col gap-4 p-4 bg-white dark:bg-neutral-800 rounded-lg shadow-[0px_10px_20px_0px_rgba(0,0,0,0.04)]">
     <i18n-t
       keypath="staking_stake_on_book_title"
       tag="h2"
