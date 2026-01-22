@@ -383,7 +383,8 @@ const toast = useToast()
 const isWindowFocused = useDocumentVisibility()
 const { copy: copyToClipboard } = useClipboard()
 
-const { formattedLikeBalance, refetch: refetchLikeBalance } = useLikeCoinBalance(user.value?.evmWallet)
+const walletAddress = computed(() => user.value?.evmWallet)
+const { formattedLikeBalance, refetch: refetchLikeBalance } = useLikeCoinBalance(walletAddress)
 const { claimWalletRewards } = useLikeCollectiveContract()
 
 useHead({

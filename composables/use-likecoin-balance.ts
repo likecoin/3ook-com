@@ -4,17 +4,20 @@ import { formatUnits, erc20Abi } from 'viem'
 export function useLikeCoinBalance(walletAddress: MaybeRefOrGetter<string | undefined>) {
   const config = useRuntimeConfig()
 
-  const { data, refetch } = useReadContract(
-    {
-      address: config.public.likeCoinTokenAddress as `0x${string}`,
-      abi: erc20Abi,
-      functionName: 'balanceOf',
-      args: [toValue(walletAddress) as `0x${string}`],
-      query: {
-        enabled: computed(() => !!toValue(walletAddress)),
-      },
+  const args = computed((): [`0x${string}`] | undefined => {
+    const address = toValue(walletAddress)
+    return address ? [address as `0x${string}`] : undefined
+  })
+
+  const { data, refetch } = useReadContract({
+    address: config.public.likeCoinTokenAddress as `0x${string}`,
+    abi: erc20Abi,
+    functionName: 'balanceOf',
+    args: args,
+    query: {
+      enabled: computed(() => !!toValue(walletAddress)),
     },
-  )
+  })
 
   const likeBalance = computed(() => data.value || 0n)
 
