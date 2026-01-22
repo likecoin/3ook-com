@@ -1,4 +1,4 @@
-import { useDebounceFn, useStorage } from '@vueuse/core'
+import { useDebounceFn, useEventListener, useStorage } from '@vueuse/core'
 
 interface TTSOptions {
   nftClassId?: string
@@ -56,6 +56,9 @@ export function useTextToSpeech(options: TTSOptions = {}) {
   const isTextToSpeechOn = ref(false)
   const isTextToSpeechPlaying = ref(false)
   const audioBuffers = ref<(HTMLAudioElement | null)[]>([null, null])
+  const isOffline = ref(false)
+  const showOfflineModal = ref(false)
+  const shouldResumeWhenOnline = ref(false)
   const currentBufferIndex = ref<0 | 1>(0)
   const idleBufferIndex = computed<0 | 1>(() => (currentBufferIndex.value === 0 ? 1 : 0))
   const currentTTSSegmentIndex = ref(0)
@@ -65,6 +68,42 @@ export function useTextToSpeech(options: TTSOptions = {}) {
   })
   const currentTTSSegmentText = computed(() => {
     return currentTTSSegment.value?.text || ''
+  })
+
+  function hasMoreTracks(): boolean {
+    return currentTTSSegmentIndex.value + 1 < ttsSegments.value.length
+  }
+
+  function handleOffline() {
+    isOffline.value = true
+    if (isTextToSpeechPlaying.value && hasMoreTracks()) {
+      shouldResumeWhenOnline.value = true
+      showOfflineModal.value = true
+      pauseTextToSpeech()
+    }
+  }
+
+  function handleOnline() {
+    isOffline.value = false
+    showOfflineModal.value = false
+    if (shouldResumeWhenOnline.value && isTextToSpeechOn.value && !isTextToSpeechPlaying.value) {
+      shouldResumeWhenOnline.value = false
+      startTextToSpeech(currentTTSSegmentIndex.value)
+    }
+  }
+
+  function forceResume() {
+    showOfflineModal.value = false
+    shouldResumeWhenOnline.value = false
+    startTextToSpeech(currentTTSSegmentIndex.value)
+  }
+
+  // Set up network listeners with automatic cleanup via useEventListener
+  useEventListener(window, 'offline', handleOffline)
+  useEventListener(window, 'online', handleOnline)
+
+  onMounted(() => {
+    isOffline.value = !navigator.onLine
   })
 
   function setupMediaSession() {
@@ -188,6 +227,21 @@ export function useTextToSpeech(options: TTSOptions = {}) {
         if (bufferIndex === currentBufferIndex.value) {
           const error = audio?.error || e
           console.warn('Audio playback error:', error)
+
+          // Check if this is a network error (require both error code AND offline status to avoid misjudgment)
+          const isNetworkError = error instanceof MediaError
+            && error.code === MediaError.MEDIA_ERR_NETWORK
+            && !navigator.onLine
+
+          if (isNetworkError && hasMoreTracks()) {
+            // Network issue detected, handle similar to offline event
+            isOffline.value = true
+            shouldResumeWhenOnline.value = true
+            showOfflineModal.value = true
+            pauseTextToSpeech()
+            return
+          }
+
           options.onError?.(error)
           setTimeout(() => {
             if (isTextToSpeechOn.value && isTextToSpeechPlaying.value) {
@@ -362,6 +416,8 @@ export function useTextToSpeech(options: TTSOptions = {}) {
   }
 
   function stopTextToSpeech() {
+    showOfflineModal.value = false
+    shouldResumeWhenOnline.value = false
     resetAudio()
     isTextToSpeechOn.value = false
     isTextToSpeechPlaying.value = false
@@ -393,6 +449,7 @@ export function useTextToSpeech(options: TTSOptions = {}) {
     isShowTextToSpeechOptions,
     isTextToSpeechOn,
     isTextToSpeechPlaying,
+    showOfflineModal,
     currentTTSSegment,
     currentTTSSegmentText,
     currentTTSSegmentIndex,
@@ -405,5 +462,6 @@ export function useTextToSpeech(options: TTSOptions = {}) {
     restartTextToSpeech,
     stopTextToSpeech,
     cyclePlaybackRate,
+    forceResume,
   }
 }

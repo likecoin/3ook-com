@@ -1,11 +1,23 @@
 <template>
+  <ErrorModal
+    v-if="showOfflineModal"
+    level="warning"
+    :title="$t('tts_offline_modal_title')"
+    :description="$t('tts_offline_modal_description')"
+    :actions="offlineModalActions"
+    @close="handleOfflineModalStop"
+  />
+
   <UModal
+    v-else
     :fullscreen="isFullscreen"
     :ui="{ content: 'bg-white divide-none' }"
     @update:open="handleModalUpdateOpen"
   >
     <template #content>
-      <div class="flex flex-col h-full w-full max-w-[670px] mx-auto py-6 px-8 laptop:px-4">
+      <div
+        class="flex flex-col h-full w-full max-w-[670px] mx-auto py-6 px-8 laptop:px-4"
+      >
         <!-- Header -->
         <div class="flex items-center justify-between">
           <div class="grow overflow-hidden">
@@ -252,6 +264,8 @@ const {
   stopTextToSpeech,
   currentTTSSegmentIndex,
   cyclePlaybackRate,
+  showOfflineModal,
+  forceResume,
 } = useTextToSpeech({
   nftClassId: props.nftClassId,
   bookName: props.bookTitle,
@@ -300,6 +314,19 @@ const getTTSPlaybackRateLabel = computed(() => {
   const rate = ttsPlaybackRate.value
   return ttsPlaybackRateOptions.value.find(option => option.value === rate)?.label || ''
 })
+
+const { t: $t } = useI18n()
+const isResuming = ref(false)
+const offlineModalActions = computed(() => [
+  {
+    label: $t('tts_offline_modal_resume_button'),
+    color: 'primary' as const,
+    onClick: () => {
+      isResuming.value = true
+      forceResume()
+    },
+  },
+])
 
 watch(currentTTSSegmentIndex, async (newIndex: number) => {
   await nextTick()
@@ -354,5 +381,14 @@ function handleModalUpdateOpen(isOpen: boolean) {
 function handleTTSPlaybackRateButton() {
   const rate = cyclePlaybackRate()
   useLogEvent('tts_playback_rate_change', { rate })
+}
+
+function handleOfflineModalStop() {
+  if (isResuming.value) {
+    isResuming.value = false
+    return
+  }
+  stopTextToSpeech()
+  handleModalClose()
 }
 </script>
