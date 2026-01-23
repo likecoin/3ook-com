@@ -1078,12 +1078,23 @@ const checkoutButtonProps = computed<{
 })
 
 const recommendedClassIds = computed(() => {
-  let items: string[] = []
-  if (bookInfo.bookstoreInfo.value?.recommendedClassIds) {
-    items = items.concat(bookInfo.bookstoreInfo.value.recommendedClassIds)
-  }
   const ownedClassIds = authorStore.getOwnedBookClassIds(bookInfo.nftClassOwnerWalletAddress.value)
-  return items.concat(ownedClassIds).filter(id => id !== nftClassId.value).slice(0, 10)
+  const bookstoreRecommendedClassIds = bookInfo.bookstoreInfo.value?.recommendedClassIds || []
+  const currentAuthorName = bookInfo.authorName.value
+
+  return ownedClassIds
+    .concat(bookstoreRecommendedClassIds)
+    .filter(id => id !== nftClassId.value)
+    .sort((a, b) => {
+      const metadataA = nftStore.getNFTClassMetadataById(a)
+      const metadataB = nftStore.getNFTClassMetadataById(b)
+      const authorA = typeof metadataA?.author === 'object' ? metadataA?.author?.name : metadataA?.author || ''
+      const authorB = typeof metadataB?.author === 'object' ? metadataB?.author?.name : metadataB?.author || ''
+      if (authorA === currentAuthorName && authorB !== currentAuthorName) return -1
+      if (authorA !== currentAuthorName && authorB === currentAuthorName) return 1
+      return 0
+    })
+    .slice(0, 10)
 })
 
 const filteredRecommendedClassIds = computed(() => {

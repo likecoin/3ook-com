@@ -2,6 +2,7 @@ export const useAuthorStore = defineStore('AuthorStore', () => {
   const nftBookClassIdsByOwner = ref<Record<string, string[]>>({})
   const isFetchingItems = ref<Record<string, boolean>>({})
   const hasFetchedItems = ref<Record<string, boolean>>({})
+  const nftStore = useNFTStore()
 
   async function lazyFetchBookClassByOwnerWallet(walletAddress: string): Promise<string[] | undefined> {
     try {
@@ -15,14 +16,17 @@ export const useAuthorStore = defineStore('AuthorStore', () => {
       isFetchingItems.value[walletAddress] = true
       const result = await fetchNFTClassesByOwnerWalletAddress(walletAddress, {})
 
-      nftBookClassIdsByOwner.value[walletAddress] = result.data
-        .filter((nftClass: NFTClass) => {
-          const metadata = nftClass.metadata
-          return metadata?.['@type'] === 'Book'
-        })
-        .map((item) => {
-          return item.address.toLowerCase() as `0x${string}` // ensure address is lowercase
-        })
+      const filteredBooks = result.data.filter((nftClass: NFTClass) => {
+        const metadata = nftClass.metadata
+        return metadata?.['@type'] === 'Book'
+      })
+
+      // Save NFTClass data to NFT store for metadata access
+      nftStore.addNFTClasses(filteredBooks)
+
+      nftBookClassIdsByOwner.value[walletAddress] = filteredBooks.map((item) => {
+        return item.address.toLowerCase() as `0x${string}` // ensure address is lowercase
+      })
       hasFetchedItems.value[walletAddress] = true
       return nftBookClassIdsByOwner.value[walletAddress]
     }
