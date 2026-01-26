@@ -88,7 +88,8 @@ const emit = defineEmits(['close'])
 
 const amountInput = ref(0)
 
-const isConfirmButtonDisabled = computed(() => amountInput.value <= 0n || amountInput.value > props.max)
+const amountInputInWei = computed(() => parseUnits(amountInput.value.toString(), likeCoinTokenDecimals))
+const isConfirmButtonDisabled = computed(() => amountInput.value <= 0 || amountInputInWei.value > props.max)
 
 const maxAmount = computed(() => {
   return Math.floor(Number(formatUnits(props.max, likeCoinTokenDecimals)) * 100) / 100

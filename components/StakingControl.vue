@@ -237,7 +237,20 @@ async function handleStakeButtonClick() {
     helpText: $t('amount_available', { amount: `${formattedLikeBalance.value} ${likeCoinTokenSymbol}` }),
   }).result
 
-  if (!isValidStakeAmount.value) return
+  if (!isValidStakeAmount.value) {
+    if (stakeAmount.value > formattedLikeBalanceNumber.value) {
+      toast.add({
+        title: $t('error_insufficient_amount'),
+        description: $t('error_insufficient_amount_description', {
+          amount: stakeAmount.value,
+          balance: formattedLikeBalance.value,
+        }),
+        color: 'error',
+        icon: 'i-material-symbols-error-outline',
+      })
+    }
+    return
+  }
 
   try {
     isStaking.value = true
