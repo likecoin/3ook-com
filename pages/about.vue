@@ -100,7 +100,9 @@
               />
               <h3 class="text-xl font-semibold text-gray-900">
                 <NuxtLink
-                  :to="localeRoute({ name: 'shelf' })"
+                  to="https://docs.3ook.com/zh-TW/articles/11905421-成為-3ook-plus-會員後-如何使用朗讀功能"
+                  target="_blank"
+                  rel="noopener"
                   class="hover:text-primary hover:underline"
                 >
                   {{ $t('about_page_feature_dual_format') }}
@@ -150,7 +152,7 @@
               />
               <h3 class="text-xl font-semibold text-gray-900">
                 <NuxtLink
-                  to="https://3ook.com/store/0x3ddc416c403449bc2a9ae873bff0b687993cd662#staking-info"
+                  to="https://docs.3ook.com/zh-TW/articles/12750024-如何將-likecoin-質押-應援作品並獲取收益"
                   target="_blank"
                   rel="noopener"
                   class="hover:text-primary hover:underline"
@@ -177,7 +179,7 @@
               />
               <h3 class="text-xl font-semibold text-gray-900">
                 <NuxtLink
-                  :to="publishURL"
+                  to="https://docs.3ook.com/zh-TW/articles/12507238-如何在-3ook-com-出版電子書"
                   target="_blank"
                   rel="noopener"
                   class="hover:text-primary hover:underline"
