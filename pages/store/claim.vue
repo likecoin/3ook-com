@@ -192,8 +192,6 @@ const receivedNFTId = computed(() => bookInfo.firstUserOwnedNFTId.value)
 const canStartReading = computed(() => !!receivedNFTId.value)
 const isCheckingItemsDelivery = ref(false)
 const hasBypassedIndexer = ref(false)
-const hasOpenCollectorMessageModal = ref(false)
-let stopCollectorMessageModalTimer: (() => void) | null = null
 
 onMounted(async () => {
   isLoading.value = true
@@ -269,10 +267,8 @@ async function checkItemsDeliveryThroughIndexer() {
 }
 
 function openCollectorModal() {
-  if (isOpenCollectorMessageModal.value || hasOpenCollectorMessageModal.value) return
-  stopCollectorMessageModalTimer?.()
+  if (isOpenCollectorMessageModal.value) return
   isOpenCollectorMessageModal.value = true
-  hasOpenCollectorMessageModal.value = true
 }
 
 async function waitForItemsDelivery({ timeout = 30000, interval = 3000 } = {}) {
@@ -497,9 +493,6 @@ watch([hasLoggedIn, canStartReading], () => {
 
   if (canStartReading.value) {
     openCollectorModal()
-  }
-  else {
-    stopCollectorMessageModalTimer = useTimeoutFn(openCollectorModal, 3000).stop
   }
 }, { immediate: true })
 </script>
