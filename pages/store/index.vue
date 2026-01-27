@@ -110,7 +110,9 @@
             ],
             label: 'text-sm laptop:text-base',
           }"
-          :to="localeRoute({ name: 'store', query: { ...route.query, tag: fixedTag.value } })"
+          :to="fixedTag.value === 'local-histories'
+            ? localeRoute({ name: 'local-histories' })
+            : localeRoute({ name: 'store', query: { ...route.query, tag: fixedTag.value } })"
           @click.prevent="handleTagClick(fixedTag.value)"
         />
 
@@ -446,8 +448,15 @@ const allTagItems = computed(() => {
       value: tag.id,
     }))
 
+  const localHistoriesTag = {
+    label: $t('local_histories_page_title'),
+    value: 'local-histories',
+    isCustom: true,
+  }
+
   return [
     ...stakingTags,
+    localHistoriesTag,
     ...cmsTags,
   ]
 })
@@ -925,6 +934,13 @@ async function handleTagClick(tagValue?: string) {
   if (!tagValue || tagValue === tagId.value) {
     return
   }
+
+  if (tagValue === 'local-histories') {
+    useLogEvent('store_tag_click', { tag_id: tagValue })
+    await navigateTo(localeRoute({ name: 'local-histories' }))
+    return
+  }
+
   useLogEvent('store_tag_click', { tag_id: tagValue })
   tagId.value = tagValue
 }
