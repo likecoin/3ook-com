@@ -37,22 +37,6 @@
               @region-click="handleMapClick"
             />
 
-            <div
-              v-if="selectedRegionData && expandedRegion === selectedRegionData.key"
-              class="rounded-xl border border-amber-200 bg-amber-50/70 px-4 py-3 text-sm text-neutral-700 lg:hidden"
-            >
-              <ul class="grid gap-2">
-                <li
-                  v-for="unit in selectedRegionData.units"
-                  :key="unit"
-                  class="flex items-center gap-2"
-                >
-                  <span class="h-1.5 w-1.5 rounded-full bg-amber-400" />
-                  {{ unit }}
-                </li>
-              </ul>
-            </div>
-
             <div class="flex flex-wrap gap-2 text-xs text-neutral-600 lg:hidden">
               <button
                 v-for="region in regions"
@@ -66,7 +50,6 @@
                   class="inline-flex h-2.5 w-2.5 rounded-full"
                   :class="regionClasses[region.key]"
                 />
-                <span class="lg:hidden">{{ region.name }}（{{ region.units.length }}）</span>
                 <span class="hidden lg:inline">{{ region.name }}</span>
               </button>
             </div>
@@ -94,7 +77,7 @@
                 {{ region.name }}
               </div>
               <span class="rounded-full bg-neutral-100 px-3 py-1 text-xs font-medium text-neutral-600">
-                {{ region.units.length }} 個單位
+                {{ featuredByRegion[region.name]?.length ?? 0 }} 個單位
               </span>
             </div>
             <p class="mt-3 text-sm text-neutral-600">
@@ -109,12 +92,25 @@
               </p>
               <ul class="mt-2 grid gap-2 text-sm text-neutral-600">
                 <li
-                  v-for="unit in region.units"
-                  :key="unit"
-                  class="flex items-center gap-2"
+                  v-for="item in featuredByRegion[region.name] ?? []"
+                  :key="item.title"
+                  class="flex items-center gap-2 min-w-0"
                 >
                   <span class="h-1.5 w-1.5 rounded-full bg-neutral-400" />
-                  {{ unit }}
+                  <NuxtLink
+                    v-if="item.isPublished"
+                    :to="getStoreQueryLink(item.title)"
+                    class="whitespace-nowrap text-amber-700 hover:text-amber-800"
+                  >
+                    {{ item.title }}
+                  </NuxtLink>
+                  <span
+                    v-else
+                    class="whitespace-nowrap text-neutral-400"
+                  >
+                    {{ item.title }}
+                  </span>
+                  <span class="min-w-0 flex-1 truncate text-xs text-neutral-400">— {{ item.summary }}</span>
                 </li>
               </ul>
             </div>
@@ -166,39 +162,76 @@
         </div>
 
         <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <article
+          <template
             v-for="item in filteredFeatured"
             :key="item.title"
-            class="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm"
           >
-            <div class="flex items-start justify-between gap-3">
-              <div class="flex items-start gap-3">
-                <span class="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 text-amber-600">
-                  <UIcon name="i-material-symbols-auto-stories-outline" />
-                </span>
-                <div>
-                  <h3 class="text-base font-semibold text-neutral-900">
-                    {{ item.title }}
-                  </h3>
-                  <p class="mt-1 text-xs text-neutral-500">
-                    {{ item.region }} · {{ item.date }}
-                  </p>
+            <NuxtLink
+              v-if="item.isPublished"
+              :to="getStoreQueryLink(item.title)"
+              class="rounded-2xl border border-amber-200 bg-white p-4 shadow-sm transition hover:border-amber-400"
+            >
+              <div class="flex items-start justify-between gap-3">
+                <div class="flex items-start gap-3">
+                  <span class="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 text-amber-600">
+                    <UIcon name="i-material-symbols-auto-stories-outline" />
+                  </span>
+                  <div>
+                    <h3 class="text-base font-semibold text-neutral-900">
+                      {{ item.title }}
+                    </h3>
+                    <p class="mt-1 text-xs text-neutral-500">
+                      {{ item.region }}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
-            <p class="mt-3 text-sm text-neutral-600">
-              {{ item.summary }}
-            </p>
-            <div class="mt-3 flex flex-wrap gap-2">
-              <span
-                v-for="tag in item.tags"
-                :key="tag"
-                class="rounded-full bg-neutral-100 px-2 py-0.5 text-[11px] font-medium text-neutral-500"
-              >
-                {{ tag }}
-              </span>
-            </div>
-          </article>
+              <p class="mt-3 text-sm text-neutral-600">
+                {{ item.summary }}
+              </p>
+              <div class="mt-3 flex flex-wrap gap-2">
+                <span
+                  v-for="tag in item.tags"
+                  :key="tag"
+                  class="rounded-full bg-neutral-100 px-2 py-0.5 text-[11px] font-medium text-neutral-500"
+                >
+                  {{ tag }}
+                </span>
+              </div>
+            </NuxtLink>
+            <article
+              v-else
+              class="rounded-2xl border border-neutral-200 bg-neutral-100/70 p-4 shadow-sm"
+            >
+              <div class="flex items-start justify-between gap-3">
+                <div class="flex items-start gap-3">
+                  <span class="flex h-10 w-10 items-center justify-center rounded-full bg-neutral-200 text-neutral-400">
+                    <UIcon name="i-material-symbols-auto-stories-outline" />
+                  </span>
+                  <div>
+                    <h3 class="text-base font-semibold text-neutral-500">
+                      {{ item.title }}
+                    </h3>
+                    <p class="mt-1 text-xs text-neutral-400">
+                      {{ item.region }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <p class="mt-3 text-sm text-neutral-500">
+                {{ item.summary }}
+              </p>
+              <div class="mt-3 flex flex-wrap gap-2">
+                <span
+                  v-for="tag in item.tags"
+                  :key="tag"
+                  class="rounded-full bg-neutral-200/70 px-2 py-0.5 text-[11px] font-medium text-neutral-400"
+                >
+                  {{ tag }}
+                </span>
+              </div>
+            </article>
+          </template>
         </div>
       </section>
     </div>
@@ -219,13 +252,15 @@ const handleMapHover = (region: string | null) => {
 }
 
 const handleMapClick = (region: string) => {
-  selectedRegion.value = selectedRegion.value === region ? null : region
-  expandedRegion.value = selectedRegion.value
+  if (selectedRegion.value === region) return
+  selectedRegion.value = region
+  expandedRegion.value = region
 }
 
 const handleCardClick = (regionKey: string) => {
+  if (selectedRegion.value === regionKey) return
   selectedRegion.value = regionKey
-  expandedRegion.value = expandedRegion.value === regionKey ? null : regionKey
+  expandedRegion.value = regionKey
 }
 
 const handleCardEnter = (regionKey: string) => {
@@ -237,16 +272,32 @@ const handleCardLeave = () => {
 }
 
 const handleTagClick = (regionKey: string) => {
-  selectedRegion.value = selectedRegion.value === regionKey ? null : regionKey
-  expandedRegion.value = selectedRegion.value
+  if (selectedRegion.value === regionKey) return
+  selectedRegion.value = regionKey
+  expandedRegion.value = regionKey
 }
 
-const selectedRegionData = computed(() => regions.find(region => region.key === selectedRegion.value) ?? null)
+const featuredByRegion = computed(() => {
+  const map: Record<string, typeof featuredLocalHistories> = {}
+  featuredLocalHistories.forEach((item) => {
+    if (!map[item.region]) {
+      map[item.region] = []
+    }
+    map[item.region]?.push(item)
+  })
+
+  Object.values(map).forEach((items) => {
+    items.sort((a, b) => Number(b.isPublished) - Number(a.isPublished))
+  })
+  return map
+})
+
+const getStoreQueryLink = (title: string) => `/store?q=${encodeURIComponent(title)}`
 
 const searchTerm = ref('')
 const activeKeyword = ref('全部')
 
-const featuredTags = ['全部', '文化', '產業', '歷史', '族群', '地景', '飲食']
+const featuredTags = ['全部', '文化', '生活', '歷史', '飲食', '職人', '地方創生']
 
 const featuredItems = featuredLocalHistories
 
@@ -254,13 +305,15 @@ const filteredFeatured = computed(() => {
   const keyword = activeKeyword.value
   const term = searchTerm.value.trim().toLowerCase()
 
-  return featuredItems.filter((item) => {
+  const filtered = featuredItems.filter((item) => {
     const matchesKeyword = keyword === '全部' || item.tags.includes(keyword)
     if (!term) return matchesKeyword
 
     const text = `${item.title} ${item.region} ${item.summary} ${item.tags.join(' ')}`.toLowerCase()
     return matchesKeyword && text.includes(term)
   })
+
+  return filtered.sort((a, b) => Number(b.isPublished) - Number(a.isPublished))
 })
 
 const toggleKeyword = (tag: string) => {
@@ -272,31 +325,26 @@ const regions = [
     key: 'north',
     name: '北部',
     areas: ['基隆市', '台北市', '新北市', '桃園市', '新竹市', '新竹縣', '宜蘭縣'],
-    units: ['北部地方誌單位 A', '北部地方誌單位 B', '北部地方誌單位 C'],
   },
   {
     key: 'central',
     name: '中部',
     areas: ['苗栗縣', '台中市', '彰化縣', '南投縣', '雲林縣'],
-    units: ['中部地方誌單位 A', '中部地方誌單位 B'],
   },
   {
     key: 'south',
     name: '南部',
     areas: ['嘉義市', '嘉義縣', '台南市', '高雄市', '屏東縣', '澎湖縣'],
-    units: ['南部地方誌單位 A', '南部地方誌單位 B', '南部地方誌單位 C', '南部地方誌單位 D'],
   },
   {
     key: 'east',
     name: '東部',
     areas: ['花蓮縣', '台東縣', '綠島', '蘭嶼'],
-    units: ['東部地方誌單位 A', '東部地方誌單位 B'],
   },
   {
     key: 'islands',
     name: '金馬',
     areas: ['金門縣', '連江縣（馬祖）'],
-    units: ['離島地方誌單位 A'],
   },
 ]
 
