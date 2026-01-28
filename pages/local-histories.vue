@@ -1,34 +1,38 @@
 <template>
-  <div class="bg-[#faf8f2] flex flex-col justify-center items-center">
-    <section class="w-full relative bg-black text-white py-16 laptop:py-24">
-      <div class="absolute inset-0 bg-gradient-to-b from-black/80 to-black/60" />
-      <div class="relative z-10 flex flex-col items-center text-center max-w-4xl mx-auto px-4 laptop:px-12">
-        <h1 class="text-4xl laptop:text-6xl font-bold mb-6">
-          {{ $t('local_histories_hero_title') }}
-        </h1>
+  <div class="bg-[#eef3ec] flex flex-col justify-center items-center">
+    <section class="local-histories-hero w-full relative text-white py-32 laptop:py-48">
+      <div class="absolute inset-0 bg-gradient-to-b from-[#1f2a22]/20 to-[#2f4a3a]/55" />
+      <div class="relative z-10 flex flex-col text-left max-w-6xl mx-auto px-4 laptop:px-12">
+        <h1
+          class="text-4xl laptop:text-6xl font-bold mb-6"
+          v-text="$t('local_histories_hero_title')"
+        />
 
-        <p class="text-lg laptop:text-xl text-gray-300 mb-8 max-w-2xl">
-          {{ $t('local_histories_hero_description') }}
-        </p>
+        <p
+          class="text-lg laptop:text-xl text-gray-300 mb-8 max-w-2xl"
+          v-text="$t('local_histories_hero_description')"
+        />
 
         <div class="flex items-center gap-2 text-sm text-theme-cyan">
           <UIcon name="i-material-symbols-auto-stories-outline" />
-          <span>{{ $t('local_histories_hero_stats') }}</span>
+          <span v-text="$t('local_histories_hero_stats')" />
         </div>
       </div>
     </section>
     <div class="mx-auto w-full max-w-6xl px-4 py-10">
       <header class="mb-8">
-        <h1 class="text-2xl font-semibold text-neutral-900">
-          地區總覽
-        </h1>
-        <p class="mt-2 text-sm text-neutral-600">
-          點擊各區，查看該區的地方誌單位。
-        </p>
+        <h1
+          class="text-2xl font-semibold text-neutral-900"
+          v-text="$t('local_histories_overview_title') "
+        />
+        <p
+          class="mt-2 text-sm text-neutral-600"
+          v-text="$t('local_histories_overview_description')"
+        />
       </header>
 
       <div class="grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
-        <section class="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm sm:p-6">
+        <section class="bg-transparent">
           <div class="flex flex-col gap-4">
             <LocalHistoriesMap
               :active-region="activeRegion"
@@ -50,7 +54,10 @@
                   class="inline-flex h-2.5 w-2.5 rounded-full"
                   :class="regionClasses[region.key]"
                 />
-                <span class="hidden lg:inline">{{ region.name }}</span>
+                <span
+                  class="hidden lg:inline"
+                  v-text="region.name"
+                />
               </button>
             </div>
           </div>
@@ -60,57 +67,59 @@
           <div
             v-for="region in regions"
             :key="region.key"
-            class="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm transition"
-            :class="activeRegion === region.key ? 'bg-amber-50/50 ring-2 ring-amber-400/70 ring-offset-2' : ''"
+            class="relative rounded-2xl border border-[#c9d3c1] bg-[#f6f4ec] p-5 shadow-sm transition"
+            :class="activeRegion === region.key ? 'ring-2 ring-[#8fa08a]/70 ring-offset-2 ring-offset-[#eef3ec]' : ''"
             role="button"
             tabindex="0"
             @click="handleCardClick(region.key)"
-            @mouseenter="handleCardEnter(region.key)"
-            @mouseleave="handleCardLeave"
           >
+            <div
+              class="pointer-events-none absolute inset-0 rounded-2xl bg-cover bg-center opacity-10"
+              :style="{ backgroundImage: `url(${regionImages[region.key]})` }"
+            />
             <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2 text-base font-semibold text-neutral-900">
-                <span
-                  class="inline-flex h-7 w-7 items-center justify-center rounded-full"
-                  :class="regionClasses[region.key]"
-                />
-                {{ region.name }}
+              <div class="flex items-center gap-2 text-base font-semibold text-[#2f4a3a]">
+                <span v-text="region.name" />
               </div>
-              <span class="rounded-full bg-neutral-100 px-3 py-1 text-xs font-medium text-neutral-600">
-                {{ featuredByRegion[region.name]?.length ?? 0 }} 個單位
-              </span>
+              <span
+                class="rounded-full bg-[#e3e8dd] px-3 py-1 text-xs font-medium text-[#4a5f4c]"
+                v-text="$t('local_histories_unit_count', { count: featuredByRegion[region.name]?.length ?? 0 })"
+              />
             </div>
-            <p class="mt-3 text-sm text-neutral-600">
-              {{ region.areas.join('、') }}
-            </p>
+            <p
+              class="mt-3 text-sm text-[#5c6f61]"
+              v-text="region.areas.join('、')"
+            />
             <div
               v-if="expandedRegion === region.key"
-              class="mt-4 border-t border-neutral-200 pt-3"
+              class="mt-4 border-t border-[#d8dfd2] pt-3"
             >
-              <p class="text-xs font-medium text-neutral-500">
-                地方誌單位
-              </p>
-              <ul class="mt-2 grid gap-2 text-sm text-neutral-600">
+              <p
+                class="text-sm font-medium text-[#2f4a3a]"
+                v-text="$t('local_histories_units_title')"
+              />
+              <ul class="mt-2 grid gap-2 text-sm text-[#5c6f61]">
                 <li
                   v-for="item in featuredByRegion[region.name] ?? []"
                   :key="item.title"
                   class="flex items-center gap-2 min-w-0"
                 >
-                  <span class="h-1.5 w-1.5 rounded-full bg-neutral-400" />
+                  <span class="h-1.5 w-1.5 rounded-full bg-[#8fa08a]" />
                   <NuxtLink
                     v-if="item.isPublished"
                     :to="getStoreQueryLink(item.title)"
-                    class="whitespace-nowrap text-amber-700 hover:text-amber-800"
-                  >
-                    {{ item.title }}
-                  </NuxtLink>
+                    class="whitespace-nowrap text-[#2f4a3a] hover:text-[#1f2a22]"
+                  >{{ item.title }}</NuxtLink>
                   <span
                     v-else
-                    class="whitespace-nowrap text-neutral-400"
-                  >
-                    {{ item.title }}
-                  </span>
-                  <span class="min-w-0 flex-1 truncate text-xs text-neutral-400">— {{ item.summary }}</span>
+                    class="whitespace-nowrap text-[#9aa89b]"
+                    v-text="item.title"
+                  />
+
+                  <span
+                    class="min-w-0 flex-1 truncate text-xs text-[#9aa89b]"
+                    v-text="`— ${item.summary}`"
+                  />
                 </li>
               </ul>
             </div>
@@ -118,31 +127,34 @@
         </section>
       </div>
 
-      <section class="mt-12 min-h-[800px]">
+      <section class="mt-12 min-h-[800px] rounded-3xl bg-[#2f4a3a] px-6 py-8 text-[#f2f0e8]">
         <header class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 class="text-xl font-semibold text-neutral-900">
-              精選地方誌
-            </h2>
-            <p class="mt-1 text-sm text-neutral-600">
-              搜尋或用關鍵字篩選感興趣的地方誌。
-            </p>
+            <h2
+              class="text-xl font-semibold text-[#f2f0e8]"
+              v-text="$t('local_histories_featured_title')"
+            />
+            <p
+              class="mt-1 text-sm text-[#cfd8c7]"
+              v-text="$t('local_histories_featured_description')"
+            />
           </div>
           <div class="w-full sm:max-w-xs">
             <label
               class="sr-only"
               for="featured-search"
-            >搜尋地方誌</label>
+              v-text="$t('local_histories_featured_search_label')"
+            />
             <div class="relative">
-              <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
+              <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#8fa08a]">
                 <UIcon name="i-material-symbols-search" />
               </span>
               <input
                 id="featured-search"
                 v-model="searchTerm"
                 type="text"
-                placeholder="搜尋地方誌"
-                class="w-full rounded-full border border-neutral-200 bg-white py-2 pl-10 pr-4 text-sm text-neutral-800 shadow-sm focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-200"
+                :placeholder="$t('local_histories_featured_search_placeholder')"
+                class="w-full rounded-full border border-[#c9d3c1] bg-[#f6f4ec] py-2 pl-10 pr-4 text-sm text-[#2f4a3a] shadow-sm focus:border-[#9bb59d] focus:outline-none focus:ring-2 focus:ring-[#b9c9b1]"
               >
             </div>
           </div>
@@ -154,11 +166,10 @@
             :key="tag"
             type="button"
             class="rounded-full border px-3 py-1 text-xs font-medium transition"
-            :class="activeKeyword === tag ? 'border-amber-400 bg-amber-50 text-amber-700' : 'border-neutral-200 bg-white text-neutral-600 hover:border-amber-200 hover:text-amber-700'"
+            :class="activeKeyword === tag ? 'border-[#dfe7d8] bg-[#dfe7d8] text-[#2f4a3a]' : 'border-[#4a5f4c] bg-transparent text-[#dfe7d8] hover:border-[#9bb59d] hover:text-[#f2f0e8]'"
             @click="toggleKeyword(tag)"
-          >
-            {{ tag }}
-          </button>
+            v-text="tag"
+          />
         </div>
 
         <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -177,26 +188,28 @@
                     <UIcon name="i-material-symbols-auto-stories-outline" />
                   </span>
                   <div>
-                    <h3 class="text-base font-semibold text-neutral-900">
-                      {{ item.title }}
-                    </h3>
-                    <p class="mt-1 text-xs text-neutral-500">
-                      {{ item.region }}
-                    </p>
+                    <h3
+                      class="text-base font-semibold text-neutral-900"
+                      v-text="item.title"
+                    />
+                    <p
+                      class="mt-1 text-xs text-neutral-500"
+                      v-text="item.region"
+                    />
                   </div>
                 </div>
               </div>
-              <p class="mt-3 text-sm text-neutral-600">
-                {{ item.summary }}
-              </p>
+              <p
+                class="mt-3 text-sm text-neutral-600"
+                v-text="item.summary"
+              />
               <div class="mt-3 flex flex-wrap gap-2">
                 <span
                   v-for="tag in item.tags"
                   :key="tag"
                   class="rounded-full bg-neutral-100 px-2 py-0.5 text-[11px] font-medium text-neutral-500"
-                >
-                  {{ tag }}
-                </span>
+                  v-text="tag"
+                />
               </div>
             </NuxtLink>
             <article
@@ -209,26 +222,28 @@
                     <UIcon name="i-material-symbols-auto-stories-outline" />
                   </span>
                   <div>
-                    <h3 class="text-base font-semibold text-neutral-500">
-                      {{ item.title }}
-                    </h3>
-                    <p class="mt-1 text-xs text-neutral-400">
-                      {{ item.region }}
-                    </p>
+                    <h3
+                      class="text-base font-semibold text-neutral-500"
+                      v-text="item.title"
+                    />
+                    <p
+                      class="mt-1 text-xs text-neutral-400"
+                      v-text="item.region"
+                    />
                   </div>
                 </div>
               </div>
-              <p class="mt-3 text-sm text-neutral-500">
-                {{ item.summary }}
-              </p>
+              <p
+                class="mt-3 text-sm text-neutral-500"
+                v-text="item.summary"
+              />
               <div class="mt-3 flex flex-wrap gap-2">
                 <span
                   v-for="tag in item.tags"
                   :key="tag"
                   class="rounded-full bg-neutral-200/70 px-2 py-0.5 text-[11px] font-medium text-neutral-400"
-                >
-                  {{ tag }}
-                </span>
+                  v-text="tag"
+                />
               </div>
             </article>
           </template>
@@ -242,8 +257,8 @@
 import { featuredLocalHistories } from '@/constants/featured-local-histories'
 
 const hoveredRegion = ref<string | null>(null)
-const selectedRegion = ref<string | null>(null)
-const expandedRegion = ref<string | null>(null)
+const selectedRegion = ref<string | null>('north')
+const expandedRegion = ref<string | null>('north')
 
 const activeRegion = computed(() => selectedRegion.value ?? hoveredRegion.value)
 
@@ -261,14 +276,6 @@ const handleCardClick = (regionKey: string) => {
   if (selectedRegion.value === regionKey) return
   selectedRegion.value = regionKey
   expandedRegion.value = regionKey
-}
-
-const handleCardEnter = (regionKey: string) => {
-  hoveredRegion.value = regionKey
-}
-
-const handleCardLeave = () => {
-  hoveredRegion.value = null
 }
 
 const handleTagClick = (regionKey: string) => {
@@ -348,6 +355,14 @@ const regions = [
   },
 ]
 
+const regionImages: Record<string, string> = {
+  north: '/images/north.jpg',
+  central: '/images/central.jpg',
+  south: '/images/south.jpg',
+  east: '/images/east.jpg',
+  islands: '/images/islands.jpg',
+}
+
 const regionClasses: Record<string, string> = {
   north: 'region-north',
   central: 'region-central',
@@ -359,22 +374,28 @@ const regionClasses: Record<string, string> = {
 
 <style scoped>
 .region-north {
-	background-color: #94b5f4;
+  background-color: #94b5f4;
 }
 
 .region-central {
-	background-color: #a7d7b8;
+  background-color: #a7d7b8;
 }
 
 .region-south {
-	background-color: #f5c29a;
+  background-color: #f5c29a;
 }
 
 .region-east {
-	background-color: #f3a6b1;
+  background-color: #f3a6b1;
 }
 
 .region-islands {
-	background-color: #d0c5f1;
+  background-color: #d0c5f1;
+}
+
+.local-histories-hero {
+  background-image: url('/images/taiwan-banner.jpg');
+  background-size: cover;
+  background-position: center;
 }
 </style>

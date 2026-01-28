@@ -240,17 +240,21 @@ watch(
   (region) => {
     updateTransform(region)
   },
-  { immediate: true },
+  { immediate: true, flush: 'post' },
 )
+
+onMounted(() => {
+  updateTransform(props.selectedRegion)
+})
 </script>
 
 <style scoped>
 .tw-map path {
-	fill: #f4f4f5;
-	stroke: #334155;
-	stroke-width: 2;
-	transition: opacity 0.2s ease, transform 0.2s ease;
-	transform-origin: center;
+  fill: rgba(127, 178, 149, 0.442);
+  stroke: #f4ebb7;
+  stroke-width: 1;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  transform-origin: center;
 }
 
 .tw-map #features {
@@ -261,11 +265,11 @@ watch(
 }
 
 .tw-map path:hover {
-	opacity: 0.85;
+  opacity: 0.85;
 }
 
 .tw-map [data-region] {
-	cursor: pointer;
+  cursor: pointer;
 }
 
 .tw-map[data-selected-region='north'] [data-region]:not([data-region='north']),
@@ -273,7 +277,7 @@ watch(
 .tw-map[data-selected-region='south'] [data-region]:not([data-region='south']),
 .tw-map[data-selected-region='east'] [data-region]:not([data-region='east']),
 .tw-map[data-selected-region='islands'] [data-region]:not([data-region='islands']) {
-	opacity: 0.35;
+  opacity: 0.35;
 }
 
 .tw-map[data-selected-region='north'] [data-region='north'],
@@ -281,27 +285,7 @@ watch(
 .tw-map[data-selected-region='south'] [data-region='south'],
 .tw-map[data-selected-region='east'] [data-region='east'],
 .tw-map[data-selected-region='islands'] [data-region='islands'] {
-	filter: drop-shadow(0 6px 12px rgba(15, 23, 42, 0.2));
-}
-
-.tw-map :is(#TWTPE, #TWNWT, #TWKEE, #TWTAO, #TWHSQ, #TWHSZ, #TWILA) {
-	fill: #94b5f4;
-}
-
-.tw-map :is(#TWMIA, #TWTXG, #TWCHA, #TWNAN, #TWYUN) {
-	fill: #a7d7b8;
-}
-
-.tw-map :is(#TWCYI, #TWCYQ, #TWTNN, #TWKHH, #TWPIF, #TWPEN) {
-	fill: #f5c29a;
-}
-
-.tw-map :is(#TWHUA, #TWTTT) {
-	fill: #f3a6b1;
-}
-
-.tw-map :is(#TWKIN, #TWLIE) {
-	fill: #d0c5f1;
+  fill: rgba(75, 120, 94, 0.442);
 }
 
 @media (prefers-reduced-motion: reduce) {
