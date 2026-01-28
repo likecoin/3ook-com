@@ -1,6 +1,6 @@
 <template>
-  <div class="local-histories-page bg-[#faf8f2]">
-    <section class="relative bg-black text-white py-16 laptop:py-24">
+  <div class="bg-[#faf8f2] flex flex-col justify-center items-center">
+    <section class="w-full relative bg-black text-white py-16 laptop:py-24">
       <div class="absolute inset-0 bg-gradient-to-b from-black/80 to-black/60" />
       <div class="relative z-10 flex flex-col items-center text-center max-w-4xl mx-auto px-4 laptop:px-12">
         <h1 class="text-4xl laptop:text-6xl font-bold mb-6">
@@ -17,7 +17,7 @@
         </div>
       </div>
     </section>
-    <div class="mx-auto max-w-6xl px-4 py-10">
+    <div class="mx-auto w-full max-w-6xl px-4 py-10">
       <header class="mb-8">
         <h1 class="text-2xl font-semibold text-neutral-900">
           地區總覽
@@ -121,11 +121,93 @@
           </div>
         </section>
       </div>
+
+      <section class="mt-12 min-h-[800px]">
+        <header class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 class="text-xl font-semibold text-neutral-900">
+              精選地方誌
+            </h2>
+            <p class="mt-1 text-sm text-neutral-600">
+              搜尋或用關鍵字篩選感興趣的地方誌。
+            </p>
+          </div>
+          <div class="w-full sm:max-w-xs">
+            <label
+              class="sr-only"
+              for="featured-search"
+            >搜尋地方誌</label>
+            <div class="relative">
+              <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
+                <UIcon name="i-material-symbols-search" />
+              </span>
+              <input
+                id="featured-search"
+                v-model="searchTerm"
+                type="text"
+                placeholder="搜尋地方誌"
+                class="w-full rounded-full border border-neutral-200 bg-white py-2 pl-10 pr-4 text-sm text-neutral-800 shadow-sm focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-200"
+              >
+            </div>
+          </div>
+        </header>
+
+        <div class="mb-6 flex flex-wrap gap-2">
+          <button
+            v-for="tag in featuredTags"
+            :key="tag"
+            type="button"
+            class="rounded-full border px-3 py-1 text-xs font-medium transition"
+            :class="activeKeyword === tag ? 'border-amber-400 bg-amber-50 text-amber-700' : 'border-neutral-200 bg-white text-neutral-600 hover:border-amber-200 hover:text-amber-700'"
+            @click="toggleKeyword(tag)"
+          >
+            {{ tag }}
+          </button>
+        </div>
+
+        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <article
+            v-for="item in filteredFeatured"
+            :key="item.title"
+            class="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm"
+          >
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex items-start gap-3">
+                <span class="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 text-amber-600">
+                  <UIcon name="i-material-symbols-auto-stories-outline" />
+                </span>
+                <div>
+                  <h3 class="text-base font-semibold text-neutral-900">
+                    {{ item.title }}
+                  </h3>
+                  <p class="mt-1 text-xs text-neutral-500">
+                    {{ item.region }} · {{ item.date }}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <p class="mt-3 text-sm text-neutral-600">
+              {{ item.summary }}
+            </p>
+            <div class="mt-3 flex flex-wrap gap-2">
+              <span
+                v-for="tag in item.tags"
+                :key="tag"
+                class="rounded-full bg-neutral-100 px-2 py-0.5 text-[11px] font-medium text-neutral-500"
+              >
+                {{ tag }}
+              </span>
+            </div>
+          </article>
+        </div>
+      </section>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { featuredLocalHistories } from '@/constants/featured-local-histories'
+
 const hoveredRegion = ref<string | null>(null)
 const selectedRegion = ref<string | null>(null)
 const expandedRegion = ref<string | null>(null)
@@ -161,6 +243,30 @@ const handleTagClick = (regionKey: string) => {
 
 const selectedRegionData = computed(() => regions.find(region => region.key === selectedRegion.value) ?? null)
 
+const searchTerm = ref('')
+const activeKeyword = ref('全部')
+
+const featuredTags = ['全部', '文化', '產業', '歷史', '族群', '地景', '飲食']
+
+const featuredItems = featuredLocalHistories
+
+const filteredFeatured = computed(() => {
+  const keyword = activeKeyword.value
+  const term = searchTerm.value.trim().toLowerCase()
+
+  return featuredItems.filter((item) => {
+    const matchesKeyword = keyword === '全部' || item.tags.includes(keyword)
+    if (!term) return matchesKeyword
+
+    const text = `${item.title} ${item.region} ${item.summary} ${item.tags.join(' ')}`.toLowerCase()
+    return matchesKeyword && text.includes(term)
+  })
+})
+
+const toggleKeyword = (tag: string) => {
+  activeKeyword.value = activeKeyword.value === tag ? '全部' : tag
+}
+
 const regions = [
   {
     key: 'north',
@@ -171,13 +277,13 @@ const regions = [
   {
     key: 'central',
     name: '中部',
-    areas: ['苗栗縣', '台中市', '彰化縣', '南投縣'],
+    areas: ['苗栗縣', '台中市', '彰化縣', '南投縣', '雲林縣'],
     units: ['中部地方誌單位 A', '中部地方誌單位 B'],
   },
   {
     key: 'south',
     name: '南部',
-    areas: ['嘉義市', '嘉義縣', '台南市', '高雄市', '屏東縣', '澎湖縣', '雲林縣'],
+    areas: ['嘉義市', '嘉義縣', '台南市', '高雄市', '屏東縣', '澎湖縣'],
     units: ['南部地方誌單位 A', '南部地方誌單位 B', '南部地方誌單位 C', '南部地方誌單位 D'],
   },
   {
