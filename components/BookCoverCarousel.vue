@@ -64,33 +64,50 @@
       :close="{ color: 'neutral', variant: 'ghost', class: 'text-white' }"
     >
       <template #content>
-        <img
-          v-if="modalItem?.type === 'cover' || modalItem?.type === 'image'"
-          :src="modalItem?.fullSrc || modalItem?.src"
-          :alt="props.alt"
-          class="w-full h-auto max-h-[80vh] object-contain"
-        >
+        <div class="relative">
+          <img
+            v-if="modalItem?.type === 'cover' || modalItem?.type === 'image'"
+            :src="modalItem?.fullSrc || modalItem?.src"
+            :alt="props.alt"
+            class="w-full h-auto max-h-[80vh] object-contain"
+          >
 
-        <div
-          v-else-if="modalItem?.type === 'youtube' && modalItem?.videoId"
-          class="aspect-video"
-        >
-          <ScriptYouTubePlayer
-            :video-id="modalItem.videoId"
-            :player-vars="{ autoplay: 1, rel: 0, playsinline: 1 }"
-            trigger="visible"
-            class="w-full h-full"
+          <div
+            v-else-if="modalItem?.type === 'youtube' && modalItem?.videoId"
+            class="aspect-video"
+          >
+            <ScriptYouTubePlayer
+              :video-id="modalItem.videoId"
+              :player-vars="{ autoplay: 1, rel: 0, playsinline: 1 }"
+              trigger="visible"
+              class="w-full h-full"
+            />
+          </div>
+
+          <video
+            v-else-if="modalItem?.type === 'video'"
+            :src="modalItem?.src"
+            controls
+            autoplay
+            playsinline
+            class="w-full max-h-[80vh]"
+          />
+
+          <UButton
+            icon="i-material-symbols-chevron-left"
+            color="neutral"
+            variant="ghost"
+            class="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-black/50 text-white hover:bg-black/70 cursor-pointer"
+            @click="navigateModal(-1)"
+          />
+          <UButton
+            icon="i-material-symbols-chevron-right"
+            color="neutral"
+            variant="ghost"
+            class="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-black/50 text-white hover:bg-black/70 cursor-pointer"
+            @click="navigateModal(1)"
           />
         </div>
-
-        <video
-          v-else-if="modalItem?.type === 'video'"
-          :src="modalItem?.src"
-          controls
-          autoplay
-          playsinline
-          class="w-full max-h-[80vh]"
-        />
       </template>
     </UModal>
   </div>
@@ -141,11 +158,18 @@ const props = defineProps({
 })
 
 const isModalOpen = ref(false)
-const modalItem = ref<CarouselItem | null>(null)
+const modalItemIndex = ref(0)
+const modalItem = computed(() => carouselItems.value[modalItemIndex.value] || null)
 
 function openModal(item: CarouselItem) {
-  modalItem.value = item
+  const index = carouselItems.value.indexOf(item)
+  modalItemIndex.value = index >= 0 ? index : 0
   isModalOpen.value = true
+}
+
+function navigateModal(direction: number) {
+  const len = carouselItems.value.length
+  modalItemIndex.value = (modalItemIndex.value + direction + len) % len
 }
 
 const carouselItems = computed<CarouselItem[]>(() => {
