@@ -4,7 +4,7 @@ export interface PaginationResponse {
 }
 
 export interface NFTClassWithTokenId extends NFTClass {
-  token_id: string
+  token_id?: string
 }
 
 export interface FetchNFTClassesByOwnerWalletAddressResponseData {
