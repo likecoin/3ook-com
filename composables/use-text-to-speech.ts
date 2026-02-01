@@ -61,6 +61,8 @@ export function useTextToSpeech(options: TTSOptions = {}) {
   const shouldResumeWhenOnline = ref(false)
   const currentBufferIndex = ref<0 | 1>(0)
   const idleBufferIndex = computed<0 | 1>(() => (currentBufferIndex.value === 0 ? 1 : 0))
+  const consecutiveAudioErrors = ref(0)
+  const MAX_CONSECUTIVE_ERRORS = 3
   const currentTTSSegmentIndex = ref(0)
   const ttsSegments = ref<TTSSegment[]>([])
   const currentTTSSegment = computed(() => {
@@ -210,6 +212,7 @@ export function useTextToSpeech(options: TTSOptions = {}) {
 
       audio.onended = () => {
         isTextToSpeechPlaying.value = false
+        consecutiveAudioErrors.value = 0
         playNextElement()
       }
 
@@ -243,6 +246,12 @@ export function useTextToSpeech(options: TTSOptions = {}) {
           }
 
           options.onError?.(error)
+          consecutiveAudioErrors.value += 1
+          if (consecutiveAudioErrors.value >= MAX_CONSECUTIVE_ERRORS) {
+            console.warn(`TTS paused after ${MAX_CONSECUTIVE_ERRORS} consecutive audio errors`)
+            pauseTextToSpeech()
+            return
+          }
           setTimeout(() => {
             if (isTextToSpeechOn.value && isTextToSpeechPlaying.value) {
               playNextElement()
@@ -342,6 +351,7 @@ export function useTextToSpeech(options: TTSOptions = {}) {
   }
 
   function resetAudio() {
+    consecutiveAudioErrors.value = 0
     currentBufferIndex.value = 0
     audioBuffers.value.forEach((audio) => {
       if (audio) {
