@@ -1,6 +1,6 @@
 export function useColorModeSync() {
   const colorMode = useColorMode()
-  const { loggedIn: hasLoggedIn } = useUserSession()
+  const { loggedIn: hasLoggedIn, user } = useUserSession()
   const userSettingsStore = useUserSettingsStore()
 
   const syncedColorMode = useSyncedUserSettings<ColorMode>({
@@ -10,6 +10,19 @@ export function useColorModeSync() {
 
   const hasInitialized = ref(false)
 
+  const isLikerPlus = computed(() => {
+    if (!hasLoggedIn.value) return false
+    return user.value?.isLikerPlus || false
+  })
+
+  // Enforce light mode for non-Plus users
+  const enforcedColorMode = computed(() => {
+    if (!isLikerPlus.value) {
+      return 'light'
+    }
+    return syncedColorMode.value
+  })
+
   // Sync color mode preference
   onMounted(async () => {
     if (hasLoggedIn.value) {
@@ -17,24 +30,30 @@ export function useColorModeSync() {
       if (!userSettingsStore.isInitialized()) {
         await userSettingsStore.ensureInitialized()
       }
-      // API overrides localStorage
-      if (syncedColorMode.value) {
-        colorMode.preference = syncedColorMode.value
+      // Apply enforced color mode (light for non-Plus, user preference for Plus)
+      if (enforcedColorMode.value) {
+        colorMode.preference = enforcedColorMode.value
       }
     }
     else {
-      // If not logged in, sync existing color mode preference to local state
-      if (colorMode.preference !== syncedColorMode.value) {
-        syncedColorMode.value = colorMode.preference as ColorMode
-      }
+      // If not logged in, always use light mode
+      colorMode.preference = 'light'
     }
     hasInitialized.value = true
   })
 
-  // Watch syncedColorMode (single source of truth) and sync to Nuxt's color mode
-  watch(syncedColorMode, (newValue) => {
+  // Watch enforcedColorMode and sync to color mode
+  watch(enforcedColorMode, (newValue) => {
     if (hasInitialized.value && newValue && colorMode.preference !== newValue) {
       colorMode.preference = newValue
+    }
+  })
+
+  watch(isLikerPlus, (newValue) => {
+    if (hasInitialized.value && !newValue) {
+      // Force light mode when subscription expires
+      colorMode.preference = 'light'
+      syncedColorMode.value = 'light'
     }
   })
 
