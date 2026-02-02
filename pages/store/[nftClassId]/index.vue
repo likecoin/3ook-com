@@ -175,6 +175,15 @@
             </ExpandableContent>
           </template>
 
+          <template #table-of-contents>
+            <ExpandableContent>
+              <div
+                class="markdown"
+                v-html="tableOfContentsHTML"
+              />
+            </ExpandableContent>
+          </template>
+
           <template #staking-info>
             <div class="max-tablet:hidden space-y-4 text-theme-black">
               <div class="grid grid-cols-1 tablet:grid-cols-3 gap-4">
@@ -860,6 +869,10 @@ const bookInfoDescriptionSummaryHTML = computed(() => {
   return md.render(bookInfo.descriptionSummary?.value || '')
 })
 
+const tableOfContentsHTML = computed(() => {
+  return md.render(bookInfo.tableOfContents?.value || '')
+})
+
 const authorDescriptionHTML = computed(() => {
   return md.render(bookInfo.authorDescription?.value || '')
 })
@@ -881,6 +894,14 @@ const infoTabItems = computed(() => {
       label: $t('product_page_info_tab_description'),
       slot: 'description',
       value: 'description',
+    })
+  }
+
+  if (bookInfo.tableOfContents.value) {
+    items.push({
+      label: $t('product_page_info_tab_table_of_contents'),
+      slot: 'table-of-contents',
+      value: 'table-of-contents',
     })
   }
 

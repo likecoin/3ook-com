@@ -75,6 +75,7 @@ declare interface BookstoreInfo {
   keywords: string[]
   thumbnailUrl: string
   usageInfo: string
+  tableOfContents?: string
   recommendedClassIds?: string[]
   promotionalImages?: string[]
   promotionalVideos?: string[]

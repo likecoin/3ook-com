@@ -195,6 +195,10 @@ export default function (
     return isAudioHidden.value ? $t('product_page_tts_disabled') : $t('product_page_tts_enabled')
   })
 
+  const tableOfContents = computed(() => {
+    return bookstoreInfo.value?.tableOfContents || ''
+  })
+
   const keywords = computed(() => {
     return bookstoreInfo.value?.keywords.filter(keyword => !!keyword) || []
   })
@@ -313,6 +317,7 @@ export default function (
     isUpsellDisabled,
     formattedTTSSupportLabel,
     formattedReadingMethods,
+    tableOfContents,
     keywords,
     promotionalImages,
     promotionalVideos,
