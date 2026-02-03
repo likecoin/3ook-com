@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col gap-4 p-4 bg-white dark:bg-neutral-800 rounded-lg shadow-[0px_10px_20px_0px_rgba(0,0,0,0.04)]">
+  <div class="flex flex-col gap-4 p-4 bg-white dark:bg-neutral-900 rounded-lg shadow-[0px_10px_20px_0px_rgba(0,0,0,0.04)]">
     <i18n-t
       keypath="staking_stake_on_book_title"
       tag="h2"
@@ -19,8 +19,9 @@
     <!-- Total Stake Display -->
     <UCard
       :ui="{
+        root: 'border-2 border-theme-black dark:border-accented',
         header: 'flex flex-col items-center justify-center',
-        body: '*:flex *:items-center *:justify-between *:px-4 sm:*:px-6 *:py-1.5 text-sm !px-0 !py-1 divide-y divide-muted',
+        body: '*:flex *:items-center *:justify-between *:px-4 sm:*:px-6 *:py-1.5 text-sm !px-0 !py-1 divide-y divide-default',
         footer: 'flex justify-between items-center text-sm py-3 bg-theme-cyan/20',
       }"
     >
@@ -105,7 +106,7 @@
           class="col-span-1"
           :label="$t('staking_unstake_button')"
           variant="outline"
-          color="neutral"
+          color="primary"
           size="lg"
           :loading="isUnstakingAmount"
           :disabled="userStake <= 0n"

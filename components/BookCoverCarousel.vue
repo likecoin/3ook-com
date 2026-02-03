@@ -14,7 +14,7 @@
       :ui="{
         item: 'basis-full aspect-2/3 cursor-pointer',
         dots: 'relative bottom-0 gap-2 mt-2',
-        dot: 'size-2 bg-muted data-[active]:bg-(--ui-text-muted)',
+        dot: 'size-2 bg-accented data-[active]:bg-(--ui-text-muted)',
       }"
     >
       <div

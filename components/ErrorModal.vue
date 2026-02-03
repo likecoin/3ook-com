@@ -19,7 +19,7 @@
       />
 
       <h2
-        class="text-(--ui-text-highlighted) font-semibold"
+        class="text-highlighted font-semibold"
         v-text="title || $t('error_modal_title')"
       />
     </template>
@@ -29,13 +29,13 @@
     >
       <p
         v-if="props.description"
-        class="text-(--ui-text-muted) text-sm"
+        class="text-muted text-sm"
         v-text="description"
       />
 
       <code
         v-if="props.rawMessage"
-        class="block not-first:mt-4 px-2 py-1 text-xs font-mono font-medium rounded-md border border-gray-300 bg-gray-100 break-all whitespace-pre-wrap"
+        class="block not-first:mt-4 px-2 py-1 text-xs font-mono font-medium rounded-md border border-accented bg-elevated break-all whitespace-pre-wrap"
         v-text="rawMessage"
       />
 
