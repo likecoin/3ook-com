@@ -47,11 +47,13 @@
                 v-if="!campaignContent"
                 class="relative flex items-center mb-12"
               >
-                <AppLogo
-                  height="48"
-                  :is-icon="false"
-                  :is-padded="false"
-                />
+                <NuxtLink :to="localeRoute({ name: 'store', query: { ll_medium: 'plus-logo', ll_source: 'plus-modal' } })">
+                  <AppLogo
+                    height="48"
+                    :is-icon="false"
+                    :is-padded="false"
+                  />
+                </NuxtLink>
               </div>
 
               <PricingPageIntroSection
@@ -91,14 +93,17 @@
           class="relative flex justify-center items-center max-laptop:shrink-0 w-full p-12 bg-theme-black overflow-hidden"
         >
           <PaywallBookstoreBackdrop />
-          <div class="relative flex justify-center items-center">
+          <NuxtLink
+            class="relative flex justify-center items-center"
+            :to="localeRoute({ name: 'store', query: { ll_medium: 'plus-logo', ll_source: 'plus-modal' } })"
+          >
             <AppLogo
               class="max-w-2/3"
               height="128"
               :is-icon="false"
               :is-padded="false"
             />
-          </div>
+          </NuxtLink>
         </aside>
       </template>
 
@@ -161,6 +166,7 @@
 import type { PaywallModalProps } from './PaywallModal.props'
 import { PAID_TRIAL_PERIOD_DAYS_THRESHOLD } from '~/constants/pricing'
 
+const localeRoute = useLocaleRoute()
 const isDesktopScreen = useDesktopScreen()
 
 // NOTE: When the dialog's modality is set to true, interaction with elements outside the dialog is disabled.
