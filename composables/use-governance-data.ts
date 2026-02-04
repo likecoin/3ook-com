@@ -81,6 +81,11 @@ export function useGovernanceData(walletAddress: string | Ref<string>) {
       return 0
     }
 
+    const currentTime = BigInt(Math.floor(Date.now() / 1000))
+    if (currentTime >= endTime) {
+      return 0
+    }
+
     try {
       const timeDuration = endTime - startTime
       // Perform calculation with bigint, then convert to formatted string
