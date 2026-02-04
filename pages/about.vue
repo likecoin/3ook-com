@@ -396,28 +396,6 @@
         />
       </section>
 
-      <!-- Platform Evolution Section -->
-      <section id="platform">
-        <h2
-          class="text-2xl md:text-3xl text-center font-bold text-gray-900 mb-4"
-          v-text="$t('about_page_platform_title')"
-        />
-        <i18n-t
-          keypath="about_page_platform_evolution"
-          tag="p"
-          class="text-lg text-gray-700 text-center leading-relaxed"
-        >
-          <template #likecoin_v3>
-            <a
-              href="https://like.co"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="text-primary hover:underline font-medium"
-            >LikeCoin v3</a>
-          </template>
-        </i18n-t>
-      </section>
-
       <!-- Get Started Section -->
       <UCard
         id="contact"
