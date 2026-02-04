@@ -373,6 +373,7 @@
   "pricing_page_feature_5": "{currency} ${monthlyPrice}/month or {currency} ${yearlyPrice}/year",
   "pricing_page_feature_6": "Receive a complimentary ebook of your choice (annual subscribers only)",
   "pricing_page_feature_6_yearly": "Receive a complimentary ebook of your choice",
+  "pricing_page_intercom_prefill": "Hi, I'd like to learn more about 3ook Plus",
   "pricing_page_liker_id_required": "Register Required",
   "pricing_page_liker_id_required_description": "You need to register in order to subscribe. Please contact support for assistance.",
   "pricing_page_monthly": "Monthly",

@@ -373,6 +373,7 @@
   "pricing_page_feature_5": "{currency} ${monthlyPrice}/月或 {currency} ${yearlyPrice}/年",
   "pricing_page_feature_6": "獲贈自選電子書一本（只限年費訂戶）",
   "pricing_page_feature_6_yearly": "獲贈自選電子書一本",
+  "pricing_page_intercom_prefill": "你好，我想了解更多關於 3ook Plus 的資訊",
   "pricing_page_liker_id_required": "需要註冊帳戶",
   "pricing_page_liker_id_required_description": "你需要註冊帳戶才能訂閱。請聯絡客服獲取協助。",
   "pricing_page_monthly": "月費",

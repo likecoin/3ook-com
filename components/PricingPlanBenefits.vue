@@ -36,16 +36,35 @@
       </li>
       <li>
         <UIcon name="i-material-symbols-check" />
-        <span v-text="$t('pricing_page_feature_2')" />
+        <NuxtLink
+          :to="localeRoute({ name: 'store' })"
+          target="_blank"
+          class="underline"
+          @click="useLogEvent('pricing_benefit_click_store')"
+        >
+          {{ $t('pricing_page_feature_2') }}
+        </NuxtLink>
       </li>
       <template v-if="!isCompact">
         <li>
           <UIcon name="i-material-symbols-check" />
-          <span v-text="$t('pricing_page_feature_3')" />
+          <NuxtLink
+            to="https://review.3ook.com/s/plus?utm_source=3ookcom&utm_medium=plus-benefit"
+            target="_blank"
+            class="underline"
+            @click="useLogEvent('pricing_benefit_click_early_access')"
+          >
+            {{ $t('pricing_page_feature_3') }}
+          </NuxtLink>
         </li>
         <li>
           <UIcon name="i-material-symbols-check" />
-          <span v-text="$t('pricing_page_feature_4')" />
+          <button
+            type="button"
+            class="underline cursor-pointer"
+            @click="handleOpenIntercom"
+            v-text="$t('pricing_page_feature_4')"
+          />
         </li>
         <li>
           <UIcon name="i-material-symbols-check" />
@@ -74,6 +93,8 @@
 </template>
 
 <script lang="ts" setup>
+const localeRoute = useLocaleRoute()
+
 const props = withDefaults(defineProps<{
   selectedPlan?: SubscriptionPlan
   title?: string
@@ -97,4 +118,13 @@ const {
 const isYearlyPlan = computed(() => {
   return props.selectedPlan === 'yearly'
 })
+
+const { t: $t } = useI18n()
+
+function handleOpenIntercom() {
+  useLogEvent('pricing_benefit_click_intercom')
+  if (window?.Intercom) {
+    window.Intercom('showNewMessage', $t('pricing_page_intercom_prefill'))
+  }
+}
 </script>
