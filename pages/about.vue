@@ -11,6 +11,7 @@
       <NuxtLink
         :to="localeRoute({ name: 'store' })"
         class="w-full max-w-lg"
+        @click="onClickHeroLogo"
       >
         <div class="relative flex justify-center items-center">
           <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
@@ -77,6 +78,7 @@
                 <NuxtLink
                   :to="localeRoute({ name: 'member' })"
                   class="hover:text-primary hover:underline"
+                  @click="onClickFeatureAiNarration"
                 >
                   {{ $t('about_page_feature_ai_narration') }}
                 </NuxtLink>
@@ -104,6 +106,7 @@
                   target="_blank"
                   rel="noopener"
                   class="hover:text-primary hover:underline"
+                  @click="onClickFeatureDualFormat"
                 >
                   {{ $t('about_page_feature_dual_format') }}
                 </NuxtLink>
@@ -129,6 +132,7 @@
                 <NuxtLink
                   :to="localeRoute({ name: 'store' })"
                   class="hover:text-primary hover:underline"
+                  @click="onClickFeatureWeb3"
                 >
                   {{ $t('about_page_feature_web3') }}
                 </NuxtLink>
@@ -156,6 +160,7 @@
                   target="_blank"
                   rel="noopener"
                   class="hover:text-primary hover:underline"
+                  @click="onClickFeatureCurateToEarn"
                 >
                   {{ $t('about_page_feature_curate_to_earn') }}
                 </NuxtLink>
@@ -183,6 +188,7 @@
                   target="_blank"
                   rel="noopener"
                   class="hover:text-primary hover:underline"
+                  @click="onClickFeatureAuthorBenefits"
                 >
                   {{ $t('about_page_feature_author_benefits') }}
                 </NuxtLink>
@@ -210,6 +216,7 @@
                   target="_blank"
                   rel="noopener"
                   class="hover:text-primary hover:underline"
+                  @click="onClickFeatureAffiliate"
                 >
                   {{ $t('about_page_feature_affiliate') }}
                 </NuxtLink>
@@ -250,6 +257,7 @@
                 :to="localeRoute({ name: 'store', query: { author: '董啟章' } })"
                 variant="link"
                 :label="$t('about_page_author_dung_kai_cheung')"
+                @click="onClickAuthorDungKaiCheung"
               />
             </h3>
           </div>
@@ -257,7 +265,10 @@
             {{ $t('about_page_author_dung_kai_cheung_desc') }}
           </p>
 
-          <div class="aspect-video w-full rounded-xl overflow-hidden bg-gray-900 shadow-inner">
+          <div
+            class="aspect-video w-full rounded-xl overflow-hidden bg-gray-900 shadow-inner"
+            @click.once="onPlayAuthorDungKaiCheungVideo"
+          >
             <ClientOnly>
               <ScriptYouTubePlayer
                 video-id="BibwtPyXxCg"
@@ -293,6 +304,7 @@
                   :to="localeRoute({ name: 'store', query: { author: '高重建' } })"
                   variant="link"
                   :label="$t('about_page_author_kin_ko')"
+                  @click="onClickAuthorKinKo"
                 />
               </h3>
             </div>
@@ -300,7 +312,10 @@
               {{ $t('about_page_author_kin_ko_desc') }}
             </p>
 
-            <div class="w-[180px] aspect-[9/16] rounded-xl overflow-hidden bg-gray-900 shadow-inner mx-auto mt-auto">
+            <div
+              class="w-[180px] aspect-[9/16] rounded-xl overflow-hidden bg-gray-900 shadow-inner mx-auto mt-auto"
+              @click.once="onPlayAuthorKinKoVideo"
+            >
               <ClientOnly>
                 <ScriptYouTubePlayer
                   video-id="llHnvvDyzns"
@@ -335,6 +350,7 @@
                   :to="localeRoute({ name: 'store', query: { author: '傅月庵' } })"
                   variant="link"
                   :label="$t('about_page_author_fu_yue_an')"
+                  @click="onClickAuthorFuYueAn"
                 />
               </h3>
             </div>
@@ -342,7 +358,10 @@
               {{ $t('about_page_author_fu_yue_an_desc') }}
             </p>
 
-            <div class="w-[180px] aspect-[9/16] rounded-xl overflow-hidden bg-gray-900 shadow-inner mx-auto mt-auto">
+            <div
+              class="w-[180px] aspect-[9/16] rounded-xl overflow-hidden bg-gray-900 shadow-inner mx-auto mt-auto"
+              @click.once="onPlayAuthorFuYueAnVideo"
+            >
               <ClientOnly>
                 <ScriptYouTubePlayer
                   video-id="3nsPGnqdoIk"
@@ -438,6 +457,7 @@
             target="_blank"
             variant="outline"
             size="lg"
+            @click="onClickCtaFaq"
           />
           <UButton
             :to="localeRoute({ name: 'store' })"
@@ -445,6 +465,7 @@
             color="primary"
             size="lg"
             icon="i-material-symbols-store-rounded"
+            @click="onClickCtaStore"
           />
         </div>
       </UCard>
@@ -462,6 +483,66 @@ const { t: $t } = useI18n()
 const localeRoute = useLocaleRoute()
 const config = useRuntimeConfig()
 const baseURL = config.public.baseURL
+
+function onClickHeroLogo() {
+  useLogEvent('about_hero_logo_click')
+}
+
+function onClickFeatureAiNarration() {
+  useLogEvent('about_feature_ai_narration_click')
+}
+
+function onClickFeatureDualFormat() {
+  useLogEvent('about_feature_dual_format_click')
+}
+
+function onClickFeatureWeb3() {
+  useLogEvent('about_feature_web3_click')
+}
+
+function onClickFeatureCurateToEarn() {
+  useLogEvent('about_feature_curate_to_earn_click')
+}
+
+function onClickFeatureAuthorBenefits() {
+  useLogEvent('about_feature_author_benefits_click')
+}
+
+function onClickFeatureAffiliate() {
+  useLogEvent('about_feature_affiliate_click')
+}
+
+function onClickAuthorDungKaiCheung() {
+  useLogEvent('about_author_dung_kai_cheung_click')
+}
+
+function onPlayAuthorDungKaiCheungVideo() {
+  useLogEvent('about_author_dung_kai_cheung_video_play')
+}
+
+function onClickAuthorKinKo() {
+  useLogEvent('about_author_kin_ko_click')
+}
+
+function onPlayAuthorKinKoVideo() {
+  useLogEvent('about_author_kin_ko_video_play')
+}
+
+function onClickAuthorFuYueAn() {
+  useLogEvent('about_author_fu_yue_an_click')
+}
+
+function onPlayAuthorFuYueAnVideo() {
+  useLogEvent('about_author_fu_yue_an_video_play')
+}
+
+function onClickCtaFaq() {
+  useLogEvent('about_cta_faq_click')
+}
+
+function onClickCtaStore() {
+  useLogEvent('about_cta_store_click')
+}
 
 const pageTitle = computed(() => $t('about_page_title'))
 const pageDescription = computed(() => $t('about_page_hero_subtitle'))
