@@ -120,6 +120,7 @@
     :alt="props.alt"
     :is-vertical-center="true"
     :has-shadow="props.hasShadow"
+    @click="handleSingleCoverClick"
   />
 </template>
 
@@ -157,6 +158,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  nftClassId: {
+    type: String,
+    default: '',
+  },
 })
 
 const isModalOpen = ref(false)
@@ -167,11 +172,31 @@ function openModal(item: CarouselItem) {
   const index = carouselItems.value.indexOf(item)
   modalItemIndex.value = index >= 0 ? index : 0
   isModalOpen.value = true
+  useLogEvent('carousel_item_click', {
+    nft_class_id: props.nftClassId,
+    item_type: item.type,
+    item_index: modalItemIndex.value,
+  })
 }
 
 function navigateModal(direction: number) {
   const len = carouselItems.value.length
   modalItemIndex.value = (modalItemIndex.value + direction + len) % len
+  const item = carouselItems.value[modalItemIndex.value]
+  useLogEvent('carousel_modal_navigate', {
+    nft_class_id: props.nftClassId,
+    direction: direction > 0 ? 'next' : 'previous',
+    item_type: item?.type,
+    item_index: modalItemIndex.value,
+  })
+}
+
+function handleSingleCoverClick() {
+  useLogEvent('carousel_item_click', {
+    nft_class_id: props.nftClassId,
+    item_type: 'cover',
+    item_index: 0,
+  })
 }
 
 const carouselItems = computed<CarouselItem[]>(() => {

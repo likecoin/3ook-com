@@ -41,6 +41,7 @@
             :promotional-images="bookInfo.promotionalImages.value"
             :promotional-videos="bookInfo.promotionalVideos.value"
             :has-shadow="true"
+            :nft-class-id="nftClassId"
           />
 
           <div class="flex flex-col justify-center">
