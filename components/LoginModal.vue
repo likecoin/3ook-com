@@ -1,7 +1,7 @@
 <template>
   <UModal
     :close="{ onClick: () => handleConnect() }"
-    :ui="{ content: 'max-w-[348px]' }"
+    :ui="{ content: 'w-min overflow-y-auto' }"
   >
     <template #content>
       <LoginPanel @connect="handleConnect" />

@@ -1,5 +1,18 @@
 <template>
-  <div class="p-6 pt-8 bg-white dark:bg-muted box-[0_4px_4px_0_rgba(0,0,0,0.02)]">
+  <div
+    v-if="isApp"
+    class="flex flex-col justify-center items-center min-w-[200px] min-h-[200px] px-6 py-4"
+  >
+    <AppLogo
+      class="animate-pulse"
+      :weight="64"
+      :height="64"
+    />
+  </div>
+  <div
+    v-else
+    class="min-w-[342px] p-6 pt-8 bg-white dark:bg-muted box-[0_4px_4px_0_rgba(0,0,0,0.02)]"
+  >
     <AppLogo
       class="mx-auto"
       :height="44"
@@ -72,11 +85,24 @@ const emit = defineEmits<{ connect: [string] }>()
 
 const { t: $t } = useI18n()
 const { connectors, error } = useConnect()
+const { isApp } = useAppDetection()
 
-const othersConnectors = computed(() => connectors.filter(c => !['magic', 'injected'].includes(c.id)))
+const othersConnectors = computed(() => {
+  // Disable others connectors for app
+  return isApp.value
+    ? []
+    : connectors.filter(c => !['magic', 'injected'].includes(c.id))
+})
 
 function handleConnect(connectorId = '') {
   emit('connect', connectorId)
   useLogEvent('login_panel_connect', { method: connectorId })
 }
+
+onMounted(() => {
+  // Auto-open email login when in app
+  if (isApp.value) {
+    handleConnect('magic')
+  }
+})
 </script>
