@@ -292,23 +292,17 @@
 <script setup lang="ts">
 import type { UseSwipeDirection } from '@vueuse/core'
 import ePub, {
-  type Rendition as RenditionBase,
+  type Book,
+  type Rendition,
   type NavItem,
   type Location,
-} from '@likecoin/epubjs'
-
-import type Section from '@likecoin/epubjs/types/section'
+  type Section,
+} from '@likecoin/epub-ts'
 
 declare interface EpubView {
   window: Window
   settings: {
     direction: 'ltr' | 'rtl'
-  }
-}
-
-declare interface Rendition extends RenditionBase {
-  manager?: {
-    container: HTMLElement
   }
 }
 
@@ -549,7 +543,7 @@ async function loadEPub() {
 
   const book = ePub(buffer)
   await book.ready
-  const toc = await book.loaded.navigation.then(async (navigation) => {
+  const toc = await book.loaded!.navigation.then(async (navigation) => {
     return navigation.toc.flatMap((item) => {
       if (item.subitems) {
         return [item, ...item.subitems]
@@ -564,17 +558,17 @@ async function loadEPub() {
     if (window.localStorage) {
       const locationCache = window.localStorage.getItem(locationCacheKey)
       if (locationCache) {
-        book.locations.load(locationCache)
+        book.locations!.load(locationCache)
         isLocationLoaded = true
       }
     }
     if (!isLocationLoaded) {
       // NOTE: https://github.com/futurepress/epub.js/issues/278
       // Break sections by 1000 chars for calculating percentage
-      book.locations.generate(1000).then(() => {
+      book.locations!.generate(1000).then(() => {
         try {
           if (window.localStorage) {
-            window.localStorage.setItem(locationCacheKey, book.locations.save())
+            window.localStorage.setItem(locationCacheKey, book.locations!.save())
           }
         }
         catch (error) {
@@ -587,7 +581,7 @@ async function loadEPub() {
     console.warn('Failed to get location cache:', error)
   }
 
-  book.spine.each((section: Section) => {
+  book.spine!.each((section: Section) => {
     const directories = section.href.split('/')
     const filename = directories.pop()
     if (!filename) return
@@ -595,9 +589,9 @@ async function loadEPub() {
   })
   navItems.value = toc.filter((item): item is NavItem => item !== null)
 
-  activeNavItemHref.value = book.spine.first().href
+  activeNavItemHref.value = book.spine!.first()!.href
   currentPageHref.value = activeNavItemHref.value
-  lastSectionIndex.value = book.spine.last().index
+  lastSectionIndex.value = book.spine!.last()!.index
 
   if (!renditionElement.value) {
     return
@@ -740,7 +734,7 @@ async function loadEPub() {
     if (navItems.value.some(item => item.href === href)) {
       activeNavItemHref.value = href
     }
-    percentage.value = book.locations.percentageFromCfi(location.start.cfi)
+    percentage.value = book.locations!.percentageFromCfi(location.start.cfi) ?? 0
     currentCfi.value = location.start.cfi
     readingProgress.value = percentage.value
   })
@@ -770,10 +764,10 @@ function findNextNavItemAfterTOC(navItems: NavItem[]): NavItem | undefined {
   return isTOC ? navItems[1] : firstChapter
 }
 
-async function extractTTSSegments(book: ePub.Book) {
+async function extractTTSSegments(book: Book) {
   const sectionPromises: Promise<{ segments: TTSSegment[], chapterTitle: string, sectionIndex: number }>[] = []
 
-  book.spine.each((section: Section) => {
+  book.spine!.each((section: Section) => {
     const sectionPromise = (async () => {
       try {
         const chapter = await book.load(section.href)

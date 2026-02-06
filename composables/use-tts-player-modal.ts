@@ -1,4 +1,4 @@
-import { EpubCFI } from '@likecoin/epubjs'
+import { EpubCFI } from '@likecoin/epub-ts'
 import { TTSPlayerModal } from '#components'
 import type { TTSPlayerModalProps } from '~/components/TTSPlayerModal.props'
 
