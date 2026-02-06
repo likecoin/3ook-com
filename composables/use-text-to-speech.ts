@@ -4,7 +4,6 @@ interface TTSOptions {
   nftClassId?: string
   onError?: (error: string | Event | MediaError) => void
   onAllSegmentsPlayed?: () => void
-  checkIfNeededPageChange?: (element: TTSSegment) => boolean
   bookName?: string | Ref<string> | ComputedRef<string>
   bookChapterName?: string | Ref<string> | ComputedRef<string>
   bookAuthorName?: string | Ref<string> | ComputedRef<string>
@@ -447,9 +446,10 @@ export function useTextToSpeech(options: TTSOptions = {}) {
 
   function restartTextToSpeech() {
     const wasPlaying = isTextToSpeechOn.value && isTextToSpeechPlaying.value
+    const currentIndex = currentTTSSegmentIndex.value
     stopTextToSpeech()
     if (wasPlaying) {
-      startTextToSpeech(currentTTSSegmentIndex.value)
+      startTextToSpeech(currentIndex)
     }
   }
 

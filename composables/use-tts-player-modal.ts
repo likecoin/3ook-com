@@ -4,7 +4,7 @@ import type { TTSPlayerModalProps } from '~/components/TTSPlayerModal.props'
 
 interface TTSPlayerOptions {
   nftClassId: MaybeRef<string>
-  onSegmentChange?: (segment: TTSSegment & { index?: number } | undefined) => void
+  onSegmentChange?: (segment: TTSSegment & { index: number }) => void
 }
 
 export function useTTSPlayerModal(options: TTSPlayerOptions) {
@@ -17,7 +17,7 @@ export function useTTSPlayerModal(options: TTSPlayerOptions) {
     getResizedImageURL(bookInfo.coverSrc.value, { size: 300 }),
   )
 
-  const ttsPlayerModalProps = computed<TTSPlayerModalProps>(() => ({
+  const ttsPlayerModalProps = computed(() => ({
     bookTitle: bookInfo.name.value,
     bookCoverSrc: bookCoverSrc.value,
     bookAuthorName: bookInfo.authorName.value,

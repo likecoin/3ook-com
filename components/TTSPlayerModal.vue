@@ -58,7 +58,6 @@
         <!-- Content -->
         <div class="relative flex-1 min-h-0">
           <div
-            ref="scrollContainer"
             class="overflow-y-auto hide-scrollbar h-full relative"
             style="scroll-behavior: smooth;"
           >
@@ -201,8 +200,8 @@ const subscription = useSubscription()
 const { errorModal, handleError } = useErrorHandler()
 
 const emit = defineEmits<{
-  open: []
   close: []
+  segmentChange: [segment: TTSSegment & { index: number }]
 }>()
 
 const props = withDefaults(
@@ -243,7 +242,6 @@ const scrollIndicatorClasses = [
 
 const BUFFER_SIZE = 10
 const visibleSegmentElements = ref<Map<number, HTMLElement>>(new Map())
-const scrollContainer = ref<HTMLElement>()
 
 const {
   ttsLanguageVoiceOptionsWithAvatars,
@@ -384,8 +382,8 @@ function getSegmentClass(index: number) {
 }
 
 watch(currentTTSSegment, (newSegment: TTSSegment | undefined) => {
-  if (props.onSegmentChange && newSegment) {
-    props.onSegmentChange({ index: currentTTSSegmentIndex.value, ...newSegment })
+  if (newSegment) {
+    emit('segmentChange', { index: currentTTSSegmentIndex.value, ...newSegment })
   }
 })
 
