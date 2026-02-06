@@ -113,6 +113,11 @@ body {
   transform: translateY(calc(-1 * var(--intercom-launcher-offset))) !important;
 }
 
+/* Hide Intercom banner frame in app mode */
+html[data-app="true"] iframe[name="intercom-banner-frame"] {
+  display: none !important;
+}
+
 .logo-glow {
   background: conic-gradient(
     from 0deg,

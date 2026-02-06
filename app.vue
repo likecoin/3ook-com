@@ -25,6 +25,7 @@ const { memberProgramData } = useMemberProgramStructuredData()
 const { initializeServerGeolocation, initializeClientGeolocation } = useDetectedGeolocation()
 const { initializePaymentCurrency } = usePaymentCurrency()
 const { initializeLocale } = useAutoLocale()
+const { isApp } = useAppDetection()
 
 callOnce(() => {
   initializeServerGeolocation()
@@ -61,7 +62,8 @@ onMounted(async () => {
 })
 useHead({
   htmlAttrs: {
-    lang: i18nHead.value.htmlAttrs!.lang,
+    'lang': i18nHead.value.htmlAttrs!.lang,
+    'data-app': isApp.value ? 'true' : undefined,
   },
   meta: [
     ...(i18nHead.value.meta || []),
