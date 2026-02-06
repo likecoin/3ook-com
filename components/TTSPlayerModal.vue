@@ -67,7 +67,7 @@
                 v-for="item in visibleSegments"
                 :key="item.id"
                 :ref="(el) => setSegmentRef(el, item.index)"
-                v-memo="[currentTTSSegmentIndex === item.index]"
+                v-memo="[currentTTSSegmentIndex === item.index, item.text]"
                 :class="getSegmentClass(item.index)"
                 @click="skipToIndex(item.index)"
                 v-text="item.text"
@@ -241,7 +241,7 @@ const scrollIndicatorClasses = [
 ]
 
 const BUFFER_SIZE = 10
-const visibleSegmentElements = ref<HTMLElement[]>([])
+const visibleSegmentElements = ref<Map<number, HTMLElement>>(new Map())
 const scrollContainer = ref<HTMLElement>()
 
 const {
@@ -330,16 +330,28 @@ const offlineModalActions = computed(() => [
 
 watch(currentTTSSegmentIndex, async (newIndex: number) => {
   await nextTick()
-  const el = visibleSegmentElements.value[newIndex]
+  const el = visibleSegmentElements.value.get(newIndex)
   el?.scrollIntoView({
     behavior: 'smooth',
     block: 'center',
   })
 })
 
+const hasStartedPlaying = ref(false)
+
+watch(
+  () => props.segments,
+  (newSegments) => {
+    setTTSSegments(newSegments)
+    if (newSegments.length > 0 && !hasStartedPlaying.value) {
+      hasStartedPlaying.value = true
+      startTextToSpeech(props.startIndex || 0)
+    }
+  },
+  { immediate: true },
+)
+
 onMounted(() => {
-  setTTSSegments(props.segments)
-  startTextToSpeech(props.startIndex || 0)
   setTTSLanguageVoice(props.specificLanguageVoice)
 })
 
@@ -347,9 +359,11 @@ function setSegmentRef(
   el: Element | ComponentPublicInstance | null,
   index: number,
 ) {
-  const htmlEl = el as ComponentPublicInstance
-  if (htmlEl instanceof HTMLElement) {
-    visibleSegmentElements.value[index] = htmlEl
+  if (el instanceof HTMLElement) {
+    visibleSegmentElements.value.set(index, el)
+  }
+  else if (el === null) {
+    visibleSegmentElements.value.delete(index)
   }
 }
 
@@ -368,6 +382,7 @@ watch(currentTTSSegment, (newSegment: TTSSegment | undefined) => {
 })
 
 function handleModalClose() {
+  hasStartedPlaying.value = false
   stopTextToSpeech()
   emit('close')
 }

@@ -55,6 +55,7 @@ export function useTextToSpeech(options: TTSOptions = {}) {
   const isShowTextToSpeechOptions = ref(false)
   const isTextToSpeechOn = ref(false)
   const isTextToSpeechPlaying = ref(false)
+  const isStartingTextToSpeech = ref(false)
   const activeAudio = ref<HTMLAudioElement | null>(null)
   const preloadAudio = ref<HTMLAudioElement | null>(null)
   const isOffline = ref(false)
@@ -316,38 +317,41 @@ export function useTextToSpeech(options: TTSOptions = {}) {
   }
 
   async function startTextToSpeech(index: number | null = null) {
-    isShowTextToSpeechOptions.value = true
-    if (!ttsLanguageVoiceValues.value.includes(ttsLanguageVoice.value)) {
-      ttsLanguageVoice.value = ttsLanguageVoiceValues.value[0]
-    }
-
-    if (index !== null) {
-      currentTTSSegmentIndex.value = Math.max(Math.min(index, ttsSegments.value.length - 1), 0)
-    }
-    else if (isTextToSpeechOn.value) {
-      if (activeAudio.value) {
-        activeAudio.value.play()?.catch((e: unknown) => {
-          console.warn('Resume play rejected:', e)
-        })
-        useLogEvent('tts_resume', {
-          nft_class_id: nftClassId,
-        })
-        return
-      }
-    }
-    else {
-      currentTTSSegmentIndex.value = 0
-    }
-
-    resetAudio()
-    isTextToSpeechOn.value = true
-    setupMediaSession()
-
-    useLogEvent('tts_start', {
-      nft_class_id: nftClassId,
-    })
+    if (isStartingTextToSpeech.value) return
+    isStartingTextToSpeech.value = true
 
     try {
+      isShowTextToSpeechOptions.value = true
+      if (!ttsLanguageVoiceValues.value.includes(ttsLanguageVoice.value)) {
+        ttsLanguageVoice.value = ttsLanguageVoiceValues.value[0]
+      }
+
+      if (index !== null) {
+        currentTTSSegmentIndex.value = Math.max(Math.min(index, ttsSegments.value.length - 1), 0)
+      }
+      else if (isTextToSpeechOn.value) {
+        if (activeAudio.value) {
+          activeAudio.value.play()?.catch((e: unknown) => {
+            console.warn('Resume play rejected:', e)
+          })
+          useLogEvent('tts_resume', {
+            nft_class_id: nftClassId,
+          })
+          return
+        }
+      }
+      else {
+        currentTTSSegmentIndex.value = 0
+      }
+
+      resetAudio()
+      isTextToSpeechOn.value = true
+      setupMediaSession()
+
+      useLogEvent('tts_start', {
+        nft_class_id: nftClassId,
+      })
+
       if (ttsSegments.value.length === 0) {
         return
       }
@@ -356,6 +360,9 @@ export function useTextToSpeech(options: TTSOptions = {}) {
     catch (error) {
       isTextToSpeechOn.value = false
       throw error
+    }
+    finally {
+      isStartingTextToSpeech.value = false
     }
   }
 
