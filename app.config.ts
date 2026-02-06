@@ -43,6 +43,9 @@ export default defineAppConfig({
       close: 'i-material-symbols-close-rounded',
     },
     select: {
+      slots: {
+        base: 'disabled:opacity-30',
+      },
       compoundVariants: [
         {
           color: 'primary',

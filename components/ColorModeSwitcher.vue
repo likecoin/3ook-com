@@ -5,6 +5,7 @@
     :items="colorModeOptions"
     trailing-icon="i-material-symbols-keyboard-arrow-down-rounded"
     size="md"
+    :disabled="disabled"
     @update:model-value="handleColorModeChange"
   />
 </template>
@@ -12,6 +13,12 @@
 <script setup lang="ts">
 const { t: $t } = useI18n()
 const { preference } = useColorModeSync()
+
+withDefaults(defineProps<{
+  disabled?: boolean
+}>(), {
+  disabled: false,
+})
 
 const colorModeOptions = computed(() => [
   {

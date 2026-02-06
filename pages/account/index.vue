@@ -251,12 +251,14 @@
         </AccountSettingsItem>
 
         <AccountSettingsItem
-          v-if="!isApp || user?.isLikerPlus"
           icon="i-material-symbols-dark-mode-outline-rounded"
           :label="$t('account_page_color_mode')"
         >
           <template #right>
-            <ColorModeSwitcher v-if="user?.isLikerPlus" />
+            <ColorModeSwitcher
+              v-if="isApp || user?.isLikerPlus"
+              :disabled="isApp"
+            />
             <UButton
               v-else
               :label="$t('account_page_upgrade_to_plus')"
