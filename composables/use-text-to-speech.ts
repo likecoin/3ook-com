@@ -394,12 +394,20 @@ export function useTextToSpeech(options: TTSOptions = {}) {
     }
   }
 
+  function cancelPreload() {
+    if (preloadAudio.value) {
+      preloadAudio.value.src = ''
+      preloadAudio.value.load()
+    }
+  }
+
   function skipForward() {
     if (!isTextToSpeechOn.value) return
     useLogEvent('tts_skip_forward', {
       nft_class_id: nftClassId,
     })
     stopActiveAudio()
+    cancelPreload()
     if (currentTTSSegmentIndex.value + 1 < ttsSegments.value.length) {
       currentTTSSegmentIndex.value += 1
     }
@@ -412,6 +420,7 @@ export function useTextToSpeech(options: TTSOptions = {}) {
       nft_class_id: nftClassId,
     })
     stopActiveAudio()
+    cancelPreload()
     currentTTSSegmentIndex.value = Math.max(Math.min(segmentIndex, ttsSegments.value.length - 1), 0)
     playCurrentElementDebounced()
   }
@@ -422,6 +431,7 @@ export function useTextToSpeech(options: TTSOptions = {}) {
       nft_class_id: nftClassId,
     })
     stopActiveAudio()
+    cancelPreload()
     if (currentTTSSegmentIndex.value > 0) {
       currentTTSSegmentIndex.value -= 1
     }
