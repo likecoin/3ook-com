@@ -53,7 +53,7 @@ export function useTTSPlayerModal(options: TTSPlayerOptions) {
     cfi?: string
   } & TTSPlayerModalProps = {}) {
     if (ttsIndex !== undefined) {
-      ttsPlayerModalProps.value.startIndex = ttsIndex
+      startIndex.value = ttsIndex
     }
     else if (sectionIndex !== undefined || cfi) {
       let segmentIndex = 0
@@ -73,10 +73,10 @@ export function useTTSPlayerModal(options: TTSPlayerOptions) {
           segmentIndex += cfiIndex - 1
         }
       }
-      ttsPlayerModalProps.value.startIndex = segmentIndex
+      startIndex.value = segmentIndex
     }
     else {
-      ttsPlayerModalProps.value.startIndex = 0
+      startIndex.value = 0
     }
     modal.open({ ...ttsPlayerModalProps.value, ...props })
   }
