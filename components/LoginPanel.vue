@@ -55,6 +55,29 @@
       </ul>
     </template>
 
+    <i18n-t
+      keypath="login_panel_terms_notice"
+      tag="p"
+      class="mt-4 text-xs text-neutral-500 text-center leading-5"
+    >
+      <template #terms>
+        <ULink
+          class="underline text-neutral-700 hover:text-neutral-900"
+          href="https://docs.3ook.com/zh-TW/articles/11847208-%E6%9C%8D%E5%8B%99%E6%A2%9D%E6%AC%BE"
+          target="_blank"
+          rel="noopener noreferrer"
+        >{{ $t('login_panel_terms_link') }}</ULink>
+      </template>
+      <template #privacy>
+        <ULink
+          class="underline text-neutral-700 hover:text-neutral-900"
+          href="https://docs.3ook.com/zh-TW/articles/11847198-%E7%A7%81%E9%9A%B1%E6%A2%9D%E6%AC%BE"
+          target="_blank"
+          rel="noopener noreferrer"
+        >{{ $t('login_panel_privacy_link') }}</ULink>
+      </template>
+    </i18n-t>
+
     <UAlert
       v-if="error"
       class="mt-4"
