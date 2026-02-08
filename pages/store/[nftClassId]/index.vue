@@ -678,6 +678,7 @@ const md = new MarkdownIt({
   linkify: true,
   breaks: true,
 })
+md.disable('fence') // Disable code fences (~~~ / ```) — descriptions often contain ~~~ as decorative separators, not code
 
 const localeRoute = useLocaleRoute()
 const getRouteBaseName = useRouteBaseName()
