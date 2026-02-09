@@ -224,53 +224,6 @@
       </UCard>
     </section>
 
-    <section class="space-y-3">
-      <h2
-        class="px-4 pt-4 text-lg font-bold"
-        v-text="$t('account_page_app_settings_title')"
-      />
-
-      <UCard :ui="{ body: '!p-0 divide-y-1 divide-(--ui-border)' }">
-        <AccountSettingsItem
-          icon="i-material-symbols-language"
-          :label="$t('account_page_locale')"
-        >
-          <template #right>
-            <LocaleSwitcher :is-icon-hidden="true" />
-          </template>
-        </AccountSettingsItem>
-
-        <AccountSettingsItem
-          v-if="!isApp"
-          icon="i-material-symbols-payments-outline-rounded"
-          :label="$t('account_page_payment_currency')"
-        >
-          <template #right>
-            <CurrencySwitcher :is-icon-hidden="true" />
-          </template>
-        </AccountSettingsItem>
-
-        <AccountSettingsItem
-          icon="i-material-symbols-dark-mode-outline-rounded"
-          :label="$t('account_page_color_mode')"
-        >
-          <template #right>
-            <ColorModeSwitcher
-              v-if="isApp || user?.isLikerPlus"
-              :disabled="isApp"
-            />
-            <UButton
-              v-else
-              :label="$t('account_page_upgrade_to_plus')"
-              variant="solid"
-              color="primary"
-              :to="localeRoute({ name: 'member', query: { ll_medium: 'color-mode' } })"
-            />
-          </template>
-        </AccountSettingsItem>
-      </UCard>
-    </section>
-
     <section
       v-if="!hasLoggedIn"
       class="space-y-3"
@@ -315,6 +268,53 @@
           size="lg"
           block
         />
+      </UCard>
+    </section>
+
+    <section class="space-y-3">
+      <h2
+        class="px-4 pt-4 text-lg font-bold"
+        v-text="$t('account_page_app_settings_title')"
+      />
+
+      <UCard :ui="{ body: '!p-0 divide-y-1 divide-(--ui-border)' }">
+        <AccountSettingsItem
+          icon="i-material-symbols-language"
+          :label="$t('account_page_locale')"
+        >
+          <template #right>
+            <LocaleSwitcher :is-icon-hidden="true" />
+          </template>
+        </AccountSettingsItem>
+
+        <AccountSettingsItem
+          v-if="!isApp"
+          icon="i-material-symbols-payments-outline-rounded"
+          :label="$t('account_page_payment_currency')"
+        >
+          <template #right>
+            <CurrencySwitcher :is-icon-hidden="true" />
+          </template>
+        </AccountSettingsItem>
+
+        <AccountSettingsItem
+          icon="i-material-symbols-dark-mode-outline-rounded"
+          :label="$t('account_page_color_mode')"
+        >
+          <template #right>
+            <ColorModeSwitcher
+              v-if="isApp || user?.isLikerPlus"
+              :disabled="isApp"
+            />
+            <UButton
+              v-else
+              :label="$t('account_page_upgrade_to_plus')"
+              variant="solid"
+              color="primary"
+              :to="localeRoute({ name: 'member', query: { ll_medium: 'color-mode' } })"
+            />
+          </template>
+        </AccountSettingsItem>
       </UCard>
     </section>
 

@@ -264,6 +264,18 @@
             class="text-muted"
             v-text="$t('store_showing_recommendations')"
           />
+          <p
+            class="text-muted mt-4"
+            v-text="$t('store_no_search_results_contact_message')"
+          />
+          <UButton
+            class="mt-2"
+            :label="$t('store_no_search_results_contact')"
+            leading-icon="i-material-symbols-chat-bubble-outline-rounded"
+            variant="outline"
+            color="neutral"
+            @click="handleContactUsClick"
+          />
         </div>
       </div>
 
@@ -280,6 +292,16 @@
         <p
           class="text-muted"
           v-text="$t('store_no_items')"
+        />
+
+        <UButton
+          class="mt-3"
+          :label="$t('store_no_items_learn_more')"
+          :to="localeRoute({ name: 'about', query: { ll_medium: 'about-link', ll_source: 'store-empty' } })"
+          variant="link"
+          color="neutral"
+          size="sm"
+          trailing-icon="i-material-symbols-arrow-forward-rounded"
         />
       </div>
 
@@ -949,6 +971,17 @@ function handleSearchTagClick() {
 function handleClearSearchInputButton() {
   useLogEvent('store_search_input_clear_button_click')
   searchInputValue.value = ''
+}
+
+function handleContactUsClick() {
+  useLogEvent('store_no_search_results_contact_click', { search_term: querySearchTerm.value })
+  const searchTerm = querySearchTerm.value || queryAuthorName.value || queryPublisherName.value || queryOwnerWallet.value
+  if (window?.Intercom) {
+    window.Intercom('showNewMessage', $t('store_no_search_results_contact_prefill', { term: searchTerm }))
+  }
+  else {
+    window.open(`mailto:cs@3ook.com?subject=${encodeURIComponent($t('store_no_search_results_contact_prefill', { term: searchTerm }))}`, '_blank')
+  }
 }
 
 async function handleSearchSubmit() {

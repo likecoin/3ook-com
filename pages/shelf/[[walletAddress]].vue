@@ -38,10 +38,29 @@
       <UCard
         v-if="!walletAddress && !hasLoggedIn"
         class="w-full max-w-sm mt-8"
-        :ui="{ footer: 'flex justify-end' }"
+        :ui="{ body: 'flex flex-col items-center text-center', footer: 'flex justify-end items-center gap-2' }"
       >
-        <p v-text="$t('bookshelf_please_login')" />
+        <UIcon
+          class="opacity-20 mb-4"
+          name="i-material-symbols-menu-book-outline-rounded"
+          size="80"
+        />
+        <p
+          class="text-lg font-bold text-highlighted"
+          v-text="$t('bookshelf_please_login_value')"
+        />
+        <p
+          class="text-sm text-muted mt-1"
+          v-text="$t('bookshelf_please_login')"
+        />
         <template #footer>
+          <UButton
+            :label="$t('bookshelf_please_login_learn_more')"
+            :to="localeRoute({ name: 'about', query: { ll_medium: 'about-link', ll_source: 'shelf' } })"
+            variant="link"
+            color="neutral"
+            size="sm"
+          />
           <LoginButton />
         </template>
       </UCard>

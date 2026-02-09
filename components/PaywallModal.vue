@@ -122,7 +122,6 @@
             'max-laptop:mx-auto',
             'p-5 laptop:p-12',
             'pt-12',
-            { 'laptop:pt-16': !campaignContent },
           ]"
         >
           <PricingPageIntroSection
@@ -155,6 +154,15 @@
                 @click="handleSubscribeButtonClick"
               />
             </PricingLimitedOfferAlert>
+
+            <UButton
+              class="mt-2 self-center"
+              :label="$t('pricing_page_learn_more')"
+              :to="localeRoute({ name: 'about', query: { ll_medium: 'about-link', ll_source: 'plus-modal' } })"
+              variant="link"
+              color="neutral"
+              size="sm"
+            />
           </div>
         </div>
       </div>
