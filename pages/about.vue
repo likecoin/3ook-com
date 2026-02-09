@@ -36,17 +36,67 @@
           v-text="$t('about_page_hero_subtitle')"
         />
       </div>
+
+      <div class="flex flex-row flex-wrap gap-4 justify-center">
+        <UButton
+          :to="localeRoute({ name: 'store' })"
+          :label="$t('about_page_hero_cta_store')"
+          color="primary"
+          size="xl"
+          icon="i-material-symbols-store-rounded"
+          @click="onClickHeroCtaStore"
+        />
+        <UButton
+          :to="localeRoute({ name: 'member', query: { samples: '1' } })"
+          :label="$t('about_page_hero_cta_narration')"
+          variant="outline"
+          class="text-inverted ring-inverted hover:bg-white/10"
+          size="xl"
+          icon="i-material-symbols-volume-up-rounded"
+          @click="onClickHeroCtaNarration"
+        />
+      </div>
+    </section>
+
+    <!-- Stats Bar -->
+    <section class="w-full bg-gray-50 border-y border-gray-200 py-8">
+      <div
+        v-gsap.whenVisible.once.stagger.from="{ y: 20, opacity: 0, duration: 0.4, stagger: 0.1 }"
+        class="max-w-4xl mx-auto flex flex-wrap justify-center gap-8 md:gap-16 px-4"
+      >
+        <div class="text-center">
+          <p class="text-3xl font-bold text-primary">
+            1,000+
+          </p>
+          <p
+            class="text-sm text-muted"
+            v-text="$t('about_page_stat_books')"
+          />
+        </div>
+        <div class="text-center">
+          <p class="text-3xl font-bold text-primary">
+            10,000+
+          </p>
+          <p
+            class="text-sm text-muted"
+            v-text="$t('about_page_stat_readers')"
+          />
+        </div>
+        <div class="text-center">
+          <p class="text-3xl font-bold text-primary">
+            90%*
+          </p>
+          <p
+            class="text-sm text-muted"
+            v-text="$t('about_page_stat_author_revenue')"
+          />
+        </div>
+      </div>
     </section>
 
     <div class="w-full max-w-4xl mx-auto px-4 pt-12 py-16 space-y-12">
-      <!-- What is 3ook.com Section -->
-      <h2
-        id="what-is"
-        class="text-2xl md:text-3xl text-center font-bold text-gray-900 mb-4"
-        v-text="$t('about_page_what_is_title')"
-      />
       <p
-        class="text-lg text-gray-700 leading-relaxed"
+        class="text-lg text-gray-700 leading-relaxed max-w-3xl mx-auto text-center"
         v-text="$t('about_page_what_is_content')"
       />
 
@@ -385,36 +435,81 @@
       </section>
     </div>
 
-    <!-- Mission Section -->
-    <div
-      id="mission"
-      class="p-8 py-12 bg-gradient-to-r from-primary/10 to-secondary/20"
+    <!-- 3ook Plus Membership Section -->
+    <section
+      id="plus"
+      class="w-full bg-gradient-to-r from-primary/10 to-secondary/20 py-12 px-4"
     >
       <div class="max-w-4xl mx-auto text-center space-y-6">
         <h2
-          class="text-2xl md:text-3xl font-bold text-gray-900 mb-4"
-          v-text="$t('about_page_mission_title')"
+          class="text-2xl md:text-3xl font-bold text-gray-900"
+          v-text="$t('about_page_plus_title')"
         />
         <p
-          class="text-lg text-gray-700 leading-relaxed"
-          v-text="$t('about_page_mission_content')"
+          class="text-lg text-gray-700 leading-relaxed max-w-2xl mx-auto"
+          v-text="$t('about_page_plus_description')"
+        />
+        <div
+          v-gsap.whenVisible.once.stagger.from="{ y: 30, opacity: 0, duration: 0.4, stagger: 0.1 }"
+          class="grid sm:grid-cols-2 md:grid-cols-4 gap-4 text-left max-w-3xl mx-auto"
+        >
+          <div class="flex items-start gap-2">
+            <UIcon
+              name="i-material-symbols-volume-up-rounded"
+              size="20"
+              class="text-primary mt-0.5 shrink-0"
+            />
+            <span
+              class="text-sm text-gray-700"
+              v-text="$t('about_page_plus_feature_tts')"
+            />
+          </div>
+          <div class="flex items-start gap-2">
+            <UIcon
+              name="i-material-symbols-discount-rounded"
+              size="20"
+              class="text-primary mt-0.5 shrink-0"
+            />
+            <span
+              class="text-sm text-gray-700"
+              v-text="$t('about_page_plus_feature_discount')"
+            />
+          </div>
+          <div class="flex items-start gap-2">
+            <UIcon
+              name="i-material-symbols-new-releases-rounded"
+              size="20"
+              class="text-primary mt-0.5 shrink-0"
+            />
+            <span
+              class="text-sm text-gray-700"
+              v-text="$t('about_page_plus_feature_early_access')"
+            />
+          </div>
+          <div class="flex items-start gap-2">
+            <UIcon
+              name="i-material-symbols-support-agent-rounded"
+              size="20"
+              class="text-primary mt-0.5 shrink-0"
+            />
+            <span
+              class="text-sm text-gray-700"
+              v-text="$t('about_page_plus_feature_support')"
+            />
+          </div>
+        </div>
+        <UButton
+          :to="localeRoute({ name: 'member' })"
+          :label="$t('about_page_plus_cta')"
+          color="primary"
+          size="lg"
+          icon="i-material-symbols-star-rounded"
+          @click="onClickPlusCta"
         />
       </div>
-    </div>
+    </section>
 
     <div class="w-full max-w-4xl mx-auto px-4 py-12 space-y-12">
-      <!-- Team Section -->
-      <section id="team">
-        <h2
-          class="text-2xl md:text-3xl text-center font-bold text-gray-900 mb-4"
-          v-text="$t('about_page_team_title')"
-        />
-        <p
-          class="text-lg text-gray-700 text-center leading-relaxed"
-          v-text="$t('about_page_team_content')"
-        />
-      </section>
-
       <!-- Get Started Section -->
       <UCard
         id="contact"
@@ -429,14 +524,7 @@
           v-text="$t('about_page_contact_content')"
         />
         <div class="flex flex-row flex-wrap gap-4 justify-center">
-          <UButton
-            to="https://docs.3ook.com?utm_source=3ookcom&utm_medium=referral&utm_campaign=about_page"
-            :label="$t('account_page_faq')"
-            target="_blank"
-            variant="outline"
-            size="lg"
-            @click="onClickCtaFaq"
-          />
+          <LoginButton @click="onClickCtaSignUp" />
           <UButton
             :to="localeRoute({ name: 'store' })"
             :label="$t('app_header_store')"
@@ -464,6 +552,14 @@ const baseURL = config.public.baseURL
 
 function onClickHeroLogo() {
   useLogEvent('about_hero_logo_click')
+}
+
+function onClickHeroCtaStore() {
+  useLogEvent('about_hero_cta_store_click')
+}
+
+function onClickHeroCtaNarration() {
+  useLogEvent('about_hero_cta_narration_click')
 }
 
 function onClickFeatureAiNarration() {
@@ -514,12 +610,16 @@ function onPlayAuthorFuYueAnVideo() {
   useLogEvent('about_author_fu_yue_an_video_play')
 }
 
-function onClickCtaFaq() {
-  useLogEvent('about_cta_faq_click')
+function onClickCtaSignUp() {
+  useLogEvent('about_cta_sign_up_click')
 }
 
 function onClickCtaStore() {
   useLogEvent('about_cta_store_click')
+}
+
+function onClickPlusCta() {
+  useLogEvent('about_plus_cta_click')
 }
 
 const pageTitle = computed(() => $t('about_page_title'))
