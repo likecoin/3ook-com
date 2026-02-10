@@ -349,7 +349,7 @@
   "login_panel_or_separator": "OR",
   "login_panel_terms_link": "Terms of Service",
   "login_panel_privacy_link": "Privacy Policy",
-  "login_panel_terms_notice": "By signing in, you confirm that you have read and agree to the {terms} and {privacy}. We will process your personal information as described in these terms to ensure you receive updates to your works and after-sales support.",
+  "login_panel_terms_notice": "By signing in, you confirm that you have read and agree to the {terms} and {privacy}.",
   "login_panel_title": "Please login",
   "maintenance_page_description": "Our website is undergoing maintenance to bring you a better experience. We’ll be back shortly!",
   "maintenance_page_title": "🚧 Under maintenance 🚧",
