@@ -40,6 +40,16 @@ export function useAutoLocale() {
   }
 
   async function initializeLocale() {
+    // Don't override locale if the URL has an explicit locale prefix (e.g. /en/about)
+    const route = useRoute()
+    const hasExplicitLocalePrefix = i18n.locales.value.some(
+      (l) => {
+        const code = typeof l === 'string' ? l : l.code
+        return route.path.startsWith(`/${code}/`) || route.path === `/${code}`
+      },
+    )
+    if (hasExplicitLocalePrefix) return
+
     if (!detectedCountry.value) {
       initializeClientGeolocation()
     }
