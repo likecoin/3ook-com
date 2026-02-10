@@ -36,26 +36,12 @@
       </li>
       <li>
         <UIcon name="i-material-symbols-check" />
-        <NuxtLink
-          :to="localeRoute({ name: 'store' })"
-          target="_blank"
-          class="underline"
-          @click="useLogEvent('pricing_benefit_click_store')"
-        >
-          {{ $t('pricing_page_feature_2') }}
-        </NuxtLink>
+        <span v-text="$t('pricing_page_feature_2')" />
       </li>
       <template v-if="!isCompact">
         <li>
           <UIcon name="i-material-symbols-check" />
-          <NuxtLink
-            to="https://review.3ook.com/s/plus?utm_source=3ookcom&utm_medium=plus-benefit"
-            target="_blank"
-            class="underline"
-            @click="useLogEvent('pricing_benefit_click_early_access')"
-          >
-            {{ $t('pricing_page_feature_3') }}
-          </NuxtLink>
+          <span v-text="$t('pricing_page_feature_3')" />
         </li>
         <li>
           <UIcon name="i-material-symbols-check" />
@@ -64,16 +50,6 @@
             class="underline cursor-pointer"
             @click="handleOpenIntercom"
             v-text="$t('pricing_page_feature_4')"
-          />
-        </li>
-        <li>
-          <UIcon name="i-material-symbols-check" />
-          <span
-            v-text="$t('pricing_page_feature_5', {
-              currency,
-              monthlyPrice,
-              yearlyPrice,
-            })"
           />
         </li>
       </template>
@@ -93,8 +69,6 @@
 </template>
 
 <script lang="ts" setup>
-const localeRoute = useLocaleRoute()
-
 const props = withDefaults(defineProps<{
   selectedPlan?: SubscriptionPlan
   title?: string
@@ -108,12 +82,6 @@ const props = withDefaults(defineProps<{
   isCompact: false,
   isAudioHidden: false,
 })
-
-const {
-  monthlyPrice,
-  yearlyPrice,
-  currency,
-} = useSubscriptionPricing()
 
 const isYearlyPlan = computed(() => {
   return props.selectedPlan === 'yearly'
