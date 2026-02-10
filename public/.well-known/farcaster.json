@@ -11,14 +11,14 @@
     "iconUrl": "https://3ook.com/maskable-icon-1024x1024.png",
     "splashImageUrl": "https://3ook.com/maskable-icon-200x200.png",
     "splashBackgroundColor": "#131313",
-    "subtitle": "Web3 Digital Bookstore",
-    "description": "3ook.com is an AI reading companion with a decentralized bookstore powered by LikeCoin v3, built by Liker Land.",
+    "subtitle": "Read, Listen, Own",
+    "description": "3ook.com — Read, Listen, Own. The 3rd-gen bookstore ecosystem where authors and readers co-create a decentralized home for books and periodicals. By merging AI-enhanced experiences with Web3 ownership, we safeguard the freedom to read and the integrity of our shared history.",
     "primaryCategory": "shopping",
     "tags": ["books", "reading", "audiobooks", "bookstore"],
     "heroImageUrl": "https://3ook.com/images/og/default.jpg",
-    "tagline": "Your AI reading companion",
+    "tagline": "Read, Listen, Own",
     "ogTitle": "3ook.com",
-    "ogDescription": "3ook.com is an AI reading companion with a decentralized bookstore.",
+    "ogDescription": "3ook.com — Read, Listen, Own. The 3rd-gen bookstore ecosystem where authors and readers co-create a decentralized home for books and periodicals.",
     "ogImageUrl": "https://3ook.com/images/og/default.jpg"
   }
 }
