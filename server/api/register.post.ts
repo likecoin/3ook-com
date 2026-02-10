@@ -11,6 +11,7 @@ export default defineEventHandler(async (event) => {
     loginMethod: string
     magicUserId?: string
     magicDIDToken?: string
+    locale?: string
   } | undefined
   try {
     body = await readBody(event)
@@ -65,6 +66,7 @@ export default defineEventHandler(async (event) => {
         email: body.email,
         magicUserId: body.magicUserId,
         magicDIDToken: body.magicDIDToken,
+        locale: body.locale?.startsWith('zh') ? 'zh' : 'en',
       },
     })
   }

@@ -314,6 +314,7 @@ export const useAccountStore = defineStore('account', () => {
             loginMethod,
             magicUserId,
             magicDIDToken,
+            locale: locale.value,
           },
         })
 
