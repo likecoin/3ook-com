@@ -43,11 +43,11 @@
           :label="$t('about_page_hero_cta_store')"
           color="primary"
           size="xl"
-          icon="i-material-symbols-store-rounded"
+          icon="i-material-symbols-storefront"
           @click="onClickHeroCtaStore"
         />
         <UButton
-          :to="localeRoute({ name: 'member', query: { samples: '1' } })"
+          :to="isLikerPlus ? localeRoute({ name: 'shelf' }) : localeRoute({ name: 'member', query: { samples: '1' } })"
           :label="$t('about_page_hero_cta_narration')"
           variant="outline"
           class="text-inverted ring-inverted hover:bg-white/10"
@@ -174,7 +174,7 @@
           >
             <div class="flex items-center gap-3">
               <UIcon
-                name="i-material-symbols-store-rounded"
+                name="i-material-symbols-storefront"
                 size="24"
                 class="text-primary"
               />
@@ -530,7 +530,7 @@
             :label="$t('app_header_store')"
             color="primary"
             size="lg"
-            icon="i-material-symbols-store-rounded"
+            icon="i-material-symbols-storefront"
             @click="onClickCtaStore"
           />
         </div>
@@ -549,6 +549,8 @@ const { t: $t } = useI18n()
 const localeRoute = useLocaleRoute()
 const config = useRuntimeConfig()
 const baseURL = config.public.baseURL
+const { user } = useUserSession()
+const isLikerPlus = computed(() => Boolean(user.value?.isLikerPlus))
 
 function onClickHeroLogo() {
   useLogEvent('about_hero_logo_click')
