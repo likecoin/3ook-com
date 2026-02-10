@@ -637,9 +637,57 @@ useHead({
     { property: 'og:image', content: `${baseURL}/images/og/default.jpg` },
     { property: 'og:url', content: canonicalURL.value },
     { property: 'og:type', content: 'website' },
+    { property: 'og:video', content: 'https://www.youtube.com/embed/BibwtPyXxCg' },
+    { property: 'og:video:type', content: 'text/html' },
+    { property: 'og:video:width', content: '1280' },
+    { property: 'og:video:height', content: '720' },
   ],
   link: [
     { rel: 'canonical', href: canonicalURL.value },
+  ],
+  script: [
+    {
+      type: 'application/ld+json',
+      innerHTML: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'AboutPage',
+        'name': pageTitle.value,
+        'description': pageDescription.value,
+        'url': canonicalURL.value,
+        'mainEntity': {
+          '@type': 'Organization',
+          'name': '3ook.com',
+          'url': baseURL,
+          'logo': `${baseURL}/images/og/default.jpg`,
+        },
+        'video': [
+          {
+            '@type': 'VideoObject',
+            'name': $t('about_page_author_dung_kai_cheung'),
+            'description': $t('about_page_author_dung_kai_cheung_desc'),
+            'thumbnailUrl': 'https://img.youtube.com/vi/BibwtPyXxCg/maxresdefault.jpg',
+            'contentUrl': 'https://www.youtube.com/watch?v=BibwtPyXxCg',
+            'embedUrl': 'https://www.youtube.com/embed/BibwtPyXxCg',
+          },
+          {
+            '@type': 'VideoObject',
+            'name': $t('about_page_author_kin_ko'),
+            'description': $t('about_page_author_kin_ko_desc'),
+            'thumbnailUrl': 'https://img.youtube.com/vi/llHnvvDyzns/maxresdefault.jpg',
+            'contentUrl': 'https://www.youtube.com/watch?v=llHnvvDyzns',
+            'embedUrl': 'https://www.youtube.com/embed/llHnvvDyzns',
+          },
+          {
+            '@type': 'VideoObject',
+            'name': $t('about_page_author_fu_yue_an'),
+            'description': $t('about_page_author_fu_yue_an_desc'),
+            'thumbnailUrl': 'https://img.youtube.com/vi/3nsPGnqdoIk/maxresdefault.jpg',
+            'contentUrl': 'https://www.youtube.com/watch?v=3nsPGnqdoIk',
+            'embedUrl': 'https://www.youtube.com/embed/3nsPGnqdoIk',
+          },
+        ],
+      }),
+    },
   ],
 })
 </script>

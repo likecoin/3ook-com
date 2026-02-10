@@ -451,6 +451,7 @@ export function useStructuredData(
               'name': name,
               'description': description,
               'contentUrl': url,
+              ...(youtubeId && { embedUrl: `https://www.youtube.com/embed/${youtubeId}` }),
               'thumbnailUrl': youtubeId ? getYouTubeThumbnailUrl(youtubeId) : coverImage,
               'uploadDate': datePublished,
             }
@@ -527,6 +528,7 @@ export function useStructuredData(
             'name': name,
             'description': description,
             'contentUrl': url,
+            ...(youtubeId && { embedUrl: `https://www.youtube.com/embed/${youtubeId}` }),
             'thumbnailUrl': youtubeId ? getYouTubeThumbnailUrl(youtubeId) : coverImage,
             'uploadDate': datePublished,
           }
