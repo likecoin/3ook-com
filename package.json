@@ -20,7 +20,7 @@
   "dependencies": {
     "@coinbase/wallet-sdk": "~4.3.6",
     "@farcaster/miniapp-sdk": "^0.2.1",
-    "@likecoin/epub-ts": "^0.3.97",
+    "@likecoin/epub-ts": "^0.4.1",
     "@likecoin/wagmi-connector": "2.3.2-like.3",
     "@metamask/sdk": "~0.33.1",
     "@nuxt/icon": "^1.11.0",
