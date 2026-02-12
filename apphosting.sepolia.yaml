@@ -33,6 +33,8 @@ env:
     secret: MINIMAX_API_KEY
   - variable: TTS_CACHE_BUCKET_PREFIX
     value: tts-cache
+  - variable: CUSTOM_VOICE_BUCKET_PREFIX
+    value: custom-voices
   - variable: ARWEAVE_ENDPOINT
     value: https://gateway.irys.xyz
   - variable: AZURE_SERVICE_REGION

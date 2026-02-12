@@ -44,16 +44,24 @@ export function getCustomVoiceTTSCachePrefix(wallet: string): string {
 }
 
 export function getCustomVoiceAudioPath(wallet: string, ext: string): string {
-  return `custom-voices/${wallet}/source-audio.${ext}`
+  const config = useRuntimeConfig()
+  if (!config.customVoiceBucketPrefix) {
+    throw new Error('Custom voice bucket is not configured')
+  }
+  return `${config.customVoiceBucketPrefix}/${wallet}/source-audio.${ext}`
 }
 
 export function getCustomVoiceAvatarPath(wallet: string, ext: string): string {
-  return `custom-voices/${wallet}/avatar.${ext}`
+  const config = useRuntimeConfig()
+  if (!config.customVoiceBucketPrefix) {
+    throw new Error('Custom voice bucket is not configured')
+  }
+  return `${config.customVoiceBucketPrefix}/${wallet}/avatar.${ext}`
 }
 
 export function getCustomVoiceStorageBucket() {
   const config = useRuntimeConfig()
-  if (!config.customVoiceBucketEnabled) {
+  if (!config.customVoiceBucketPrefix) {
     return null
   }
   return getDefaultBucket()

@@ -1,4 +1,3 @@
-import { MiniMaxSpeech } from 'minimax-speech-ts'
 import type { BaseTTSProvider, TTSRequestParams } from './api-tts'
 import { TTSProvider } from './api-tts'
 
@@ -45,15 +44,7 @@ export class MinimaxTTSProvider implements BaseTTSProvider {
   format = 'audio/mpeg'
 
   async processRequest(params: TTSRequestParams): Promise<ReadableStream> {
-    const { text, language, voiceId, customMiniMaxVoiceId, config } = params
-    const { minimaxGroupId, minimaxAPIKey } = config
-
-    if (!minimaxGroupId || !minimaxAPIKey) {
-      throw createError({
-        status: 403,
-        message: 'NOT_AVAILABLE',
-      })
-    }
+    const { text, language, voiceId, customMiniMaxVoiceId } = params
 
     if (!customMiniMaxVoiceId && !VOICE_MAPPING[voiceId]) {
       throw createError({
@@ -62,10 +53,7 @@ export class MinimaxTTSProvider implements BaseTTSProvider {
       })
     }
 
-    const client = new MiniMaxSpeech({
-      apiKey: minimaxAPIKey,
-      groupId: minimaxGroupId,
-    })
+    const client = getMiniMaxSpeechClient()
     const resolvedVoiceId = (customMiniMaxVoiceId || VOICE_MAPPING[voiceId]) as string
     const model = customMiniMaxVoiceId ? 'speech-2.8-hd' : 'speech-2.6-hd'
 

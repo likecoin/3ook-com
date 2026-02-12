@@ -7,6 +7,11 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 401, message: 'WALLET_NOT_FOUND' })
   }
 
+  const isLikerPlus = session.user.isLikerPlus || false
+  if (!isLikerPlus) {
+    throw createError({ statusCode: 403, message: 'REQUIRE_LIKER_PLUS' })
+  }
+
   const customVoice = await getCustomVoice(wallet)
   if (!customVoice) {
     throw createError({ statusCode: 404, message: 'NO_CUSTOM_VOICE' })

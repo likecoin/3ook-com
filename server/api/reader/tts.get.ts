@@ -108,11 +108,14 @@ export default defineEventHandler(async (event) => {
 
   const bucket = getTTSCacheBucket()
   const isCacheEnabled = !!bucket
+  const cacheKey = isCacheEnabled
+    ? (customVoiceWallet
+        ? generateCustomVoiceTTSCacheKey(customVoiceWallet, language, text)
+        : generateTTSCacheKey(language, validVoiceId, text))
+    : null
+
   if (isCacheEnabled) {
-    const cacheKey = customVoiceWallet
-      ? generateCustomVoiceTTSCacheKey(customVoiceWallet, language, text)
-      : generateTTSCacheKey(language, validVoiceId, text)
-    const file = bucket.file(cacheKey)
+    const file = bucket.file(cacheKey!)
 
     try {
       const [exists] = await file.exists()
@@ -144,13 +147,9 @@ export default defineEventHandler(async (event) => {
     })
 
     let cacheWriteStream: Writable | null = null
-    let cacheKey: string | null = null
 
     if (isCacheEnabled) {
-      cacheKey = customVoiceWallet
-        ? generateCustomVoiceTTSCacheKey(customVoiceWallet, language, text)
-        : generateTTSCacheKey(language, validVoiceId, text)
-      const cacheFile = bucket.file(cacheKey)
+      const cacheFile = bucket.file(cacheKey!)
       // Firebase Storage metadata has a 2KB limit per key
       const truncatedText = text.length > 1800 ? text.substring(0, 1800) + '...' : text
       cacheWriteStream = cacheFile.createWriteStream({

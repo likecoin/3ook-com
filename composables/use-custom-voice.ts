@@ -1,9 +1,9 @@
 import type { CustomVoiceData } from '~/shared/types/custom-voice'
 
 export function useCustomVoice() {
-  const customVoice = ref<CustomVoiceData | null>(null)
-  const isLoading = ref(false)
-  const isUploading = ref(false)
+  const customVoice = useState<CustomVoiceData | null>('custom-voice', () => null)
+  const isLoading = useState<boolean>('custom-voice-loading', () => false)
+  const isUploading = useState<boolean>('custom-voice-uploading', () => false)
 
   const hasCustomVoice = computed(() => !!customVoice.value?.voiceId)
 

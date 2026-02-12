@@ -49,8 +49,12 @@ export function encodeWav(audioBuffer: AudioBuffer): Blob {
 
 export async function convertBlobToWav(blob: Blob): Promise<Blob> {
   const audioCtx = new AudioContext()
-  const arrayBuffer = await blob.arrayBuffer()
-  const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer)
-  await audioCtx.close()
-  return encodeWav(audioBuffer)
+  try {
+    const arrayBuffer = await blob.arrayBuffer()
+    const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer)
+    return encodeWav(audioBuffer)
+  }
+  finally {
+    await audioCtx.close()
+  }
 }

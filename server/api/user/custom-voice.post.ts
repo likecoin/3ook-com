@@ -1,5 +1,6 @@
 import type { CustomVoiceData } from '~/shared/types/custom-voice'
 
+const ALLOWED_VOICE_LANGUAGES = ['zh-HK', 'zh-TW']
 const ALLOWED_AUDIO_TYPES = ['audio/mpeg', 'audio/wav', 'audio/x-wav', 'audio/mp4', 'audio/x-m4a', 'audio/mp3']
 const ALLOWED_AVATAR_TYPES = ['image/jpeg', 'image/png']
 const MAX_AUDIO_SIZE = 20 * 1024 * 1024 // 20MB
@@ -78,7 +79,11 @@ export default defineEventHandler(async (event): Promise<CustomVoiceData> => {
   }
 
   if (!voiceName) {
-    voiceName = '我的私人聲優'
+    throw createError({ statusCode: 400, message: 'MISSING_VOICE_NAME' })
+  }
+
+  if (voiceLanguage && !ALLOWED_VOICE_LANGUAGES.includes(voiceLanguage)) {
+    throw createError({ statusCode: 400, message: 'INVALID_VOICE_LANGUAGE' })
   }
 
   const existingVoice = await getCustomVoice(wallet)

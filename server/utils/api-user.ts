@@ -181,12 +181,10 @@ export async function updateCustomVoiceLanguage(
   userWallet: string,
   voiceLanguage: string,
 ): Promise<void> {
-  await getUserCollection().doc(userWallet).set({
-    customVoice: {
-      voiceLanguage,
-      updatedAt: FieldValue.serverTimestamp(),
-    },
-  }, { merge: true })
+  await getUserCollection().doc(userWallet).update({
+    'customVoice.voiceLanguage': voiceLanguage,
+    'customVoice.updatedAt': FieldValue.serverTimestamp(),
+  })
 }
 
 export async function deleteCustomVoice(

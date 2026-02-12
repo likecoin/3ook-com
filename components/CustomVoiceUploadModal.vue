@@ -372,7 +372,9 @@ function formatSeconds(sec: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`
 }
 
-hasMicrophone.value = !!navigator.mediaDevices?.getUserMedia
+onMounted(() => {
+  hasMicrophone.value = !!navigator.mediaDevices?.getUserMedia
+})
 
 async function startRecording() {
   errorMessage.value = ''
