@@ -107,3 +107,91 @@ export async function deleteAnnotation(
   await docRef.delete()
   return true
 }
+
+/**
+ * Convert annotations to Open Annotation (OA) JSON-LD collection format.
+ * Ref: https://idpf.org/epub/oa
+ */
+export function composeOpenAnnotationCollection({
+  nftClassId,
+  title,
+  annotations,
+}: {
+  nftClassId: string
+  title: string
+  annotations: Annotation[]
+}) {
+  const config = useRuntimeConfig()
+
+  const styleClasses = Object.entries(ANNOTATION_COLORS_MAP)
+    .map(([name, rgba]) => `.${name} { background-color: ${rgba}; }`)
+    .join(' ')
+
+  const oaAnnotations = annotations.map((annotation) => {
+    const target: Record<string, unknown> = {
+      '@type': 'oa:SpecificResource',
+      'hasSource': {
+        '@type': 'dctypes:Text',
+        'uniqueIdentifier': nftClassId,
+        'dc:title': title,
+      },
+      'hasSelector': [
+        {
+          '@type': 'oa:FragmentSelector',
+          'value': annotation.cfi,
+        },
+        {
+          '@type': 'oa:TextQuoteSelector',
+          'exact': annotation.text,
+        },
+      ],
+      'styleClass': annotation.color,
+    }
+
+    const oa: Record<string, unknown> = {
+      '@id': `urn:uuid:${annotation.id}`,
+      '@type': 'oa:Annotation',
+      'motivatedBy': annotation.note ? 'oa:commenting' : 'oa:highlighting',
+      'hasTarget': target,
+      'annotatedAt': new Date(annotation.createdAt).toISOString(),
+    }
+
+    if (annotation.note) {
+      const escapedNote = annotation.note
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+        .replace(/\n/g, '<br/>')
+      oa.hasBody = {
+        '@type': 'dctypes:Text',
+        'format': 'application/xhtml+xml',
+        'chars': `<div xmlns='http://www.w3.org/1999/xhtml'>${escapedNote}</div>`,
+      }
+    }
+
+    return oa
+  })
+
+  const latestUpdatedAt = annotations.reduce(
+    (max, a) => Math.max(max, a.updatedAt),
+    0,
+  )
+
+  return {
+    '@context': 'http://www.idpf.org/epub/oa/1.0/context.json',
+    '@id': `${config.public.baseURL}/store/${nftClassId}`,
+    '@type': 'epub:AnnotationCollection',
+    'dc:title': title,
+    'dcterms:modified': latestUpdatedAt
+      ? new Date(latestUpdatedAt).toISOString()
+      : new Date().toISOString(),
+    'styledBy': {
+      '@type': 'oa:CssStyle',
+      'format': 'text/css',
+      'chars': styleClasses,
+    },
+    'annotations': oaAnnotations,
+  }
+}

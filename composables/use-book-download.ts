@@ -21,18 +21,6 @@ export function useBookDownload() {
   const getMimeType = (ext: string): string =>
     mimeTypeMap[ext.toLowerCase()] || 'application/octet-stream'
 
-  const saveAs = (blob: Blob, filename: string): void => {
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = filename
-    a.style.display = 'none'
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-  }
-
   const downloadBookFile = async ({
     nftClassId,
     nftId,
@@ -88,5 +76,5 @@ export function useBookDownload() {
     }
   }
 
-  return { saveAs, getMimeType, downloadBookFile }
+  return { getMimeType, downloadBookFile }
 }

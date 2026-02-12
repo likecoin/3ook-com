@@ -176,6 +176,7 @@ const { downloadBookFile } = useBookDownload()
 const getContentTypeLabel = useContentTypeLabel()
 const { getResizedImageURL } = useImageResize()
 const { checkOwnership } = useUserBookOwnership(props.nftClassId)
+const toast = useToast()
 
 const bookCoverSrc = computed(() => getResizedImageURL(bookInfo.coverSrc.value, { size: 300 }))
 
@@ -219,6 +220,14 @@ const menuItems = computed<DropdownMenuItem[]>(() => {
             }),
         })
       }
+    })
+  }
+
+  if (props.isOwned) {
+    genericItems.push({
+      label: $t('bookshelf_export_annotations'),
+      icon: 'i-material-symbols-download-rounded',
+      onSelect: exportAnnotations,
     })
   }
 
@@ -318,5 +327,42 @@ function handleCoverClick() {
   navigateTo(bookInfo.getProductPageRoute({
     hash: '#staking-info',
   }))
+}
+
+async function exportAnnotations() {
+  useLogEvent('export_annotations', { nft_class_id: props.nftClassId })
+  const loadingToast = toast.add({
+    title: $t('bookshelf_export_annotations_loading'),
+    duration: 0,
+  })
+
+  try {
+    const data = await $fetch<Record<string, unknown> & { annotations: unknown[] }>(`/api/books/${props.nftClassId}/annotations/export`)
+
+    if (!data.annotations?.length) {
+      toast.add({
+        title: $t('bookshelf_export_annotations_empty'),
+        duration: 3000,
+      })
+      return
+    }
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/ld+json' })
+    saveAs(blob, `${bookInfo.name.value || props.nftClassId}-annotations.json`)
+    toast.add({
+      title: $t('bookshelf_export_annotations_success'),
+      duration: 3000,
+    })
+  }
+  catch (error) {
+    console.error(`Failed to export annotations for ${props.nftClassId}:`, error)
+    toast.add({
+      title: $t('bookshelf_export_annotations_failed'),
+      color: 'error',
+    })
+  }
+  finally {
+    toast.remove(loadingToast.id)
+  }
 }
 </script>
