@@ -29,7 +29,6 @@ export default defineEventHandler(async (event) => {
 
   try {
     await updateUserSettings(wallet, body)
-    return { success: true }
   }
   catch (error) {
     console.error('Error updating user settings:', error)
@@ -38,4 +37,24 @@ export default defineEventHandler(async (event) => {
       message: 'FAILED_TO_UPDATE_USER_SETTINGS',
     })
   }
+
+  // Sync locale to like.co user API
+  if ('locale' in body && session.user.token) {
+    try {
+      await getLikeCoinAPIFetch()('/users/update', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${session.user.token}`,
+        },
+        body: {
+          locale: body.locale?.startsWith('zh') ? 'zh' : 'en',
+        },
+      })
+    }
+    catch (error) {
+      console.error('Error syncing locale to like.co:', error)
+    }
+  }
+
+  return { success: true }
 })
