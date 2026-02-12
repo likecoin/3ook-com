@@ -147,6 +147,41 @@
               />
 
               <template #body>
+                <div class="px-4 pt-3 pb-2">
+                  <p
+                    class="text-xs font-semibold text-muted uppercase tracking-wide"
+                    v-text="$t('tts_custom_voice_section_title')"
+                  />
+                </div>
+
+                <div
+                  v-if="!hasCustomVoice && user?.isLikerPlus"
+                  class="px-4 pb-2"
+                >
+                  <UButton
+                    block
+                    variant="soft"
+                    :label="$t('tts_custom_voice_upload_button')"
+                    icon="i-material-symbols-upload-rounded"
+                    @click="navigateTo(localeRoute({ name: 'account' }))"
+                  />
+                </div>
+
+                <div
+                  v-if="!hasCustomVoice && !user?.isLikerPlus"
+                  class="px-4 pb-2"
+                >
+                  <UButton
+                    block
+                    variant="soft"
+                    :label="$t('tts_custom_voice_upgrade_button')"
+                    icon="i-material-symbols-lock-outline"
+                    @click="subscription.openPaywallModal({ utmSource: 'tts_custom_voice' })"
+                  />
+                </div>
+
+                <UDivider class="my-1" />
+
                 <div class="flex gap-2 items-center w-full">
                   <URadioGroup
                     v-model="ttsLanguageVoice"
@@ -198,6 +233,9 @@ import type { TTSPlayerModalProps } from './TTSPlayerModal.props'
 const { user } = useUserSession()
 const subscription = useSubscription()
 const { errorModal, handleError } = useErrorHandler()
+
+const { customVoice, hasCustomVoice, fetchCustomVoice } = useCustomVoice()
+const localeRoute = useLocaleRoute()
 
 const emit = defineEmits<{
   close: []
@@ -271,6 +309,7 @@ const {
   bookAuthorName: props.bookAuthorName,
   bookCoverSrc: props.bookCoverSrc,
   bookLanguage: props.bookLanguage,
+  customVoice,
   onError: (error: string | Event | MediaError) => {
     if (error instanceof MediaError
       && error.code === MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED
@@ -359,6 +398,9 @@ watch(
 
 onMounted(() => {
   setTTSLanguageVoice(props.specificLanguageVoice)
+  if (user.value) {
+    fetchCustomVoice()
+  }
 })
 
 function setSegmentRef(

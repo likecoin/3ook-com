@@ -1,4 +1,5 @@
 import { useDebounceFn, useEventListener, useStorage } from '@vueuse/core'
+import type { CustomVoiceData } from '~/shared/types/custom-voice'
 
 interface TTSOptions {
   nftClassId?: string
@@ -9,6 +10,7 @@ interface TTSOptions {
   bookAuthorName?: string | Ref<string> | ComputedRef<string>
   bookCoverSrc?: string | Ref<string> | ComputedRef<string>
   bookLanguage?: string | Ref<string> | ComputedRef<string>
+  customVoice?: Ref<CustomVoiceData | null>
 }
 
 export function useTextToSpeech(options: TTSOptions = {}) {
@@ -33,7 +35,7 @@ export function useTextToSpeech(options: TTSOptions = {}) {
     ttsLanguageVoiceOptionsWithAvatars,
     ttsLanguageVoiceValues,
     setTTSLanguageVoice,
-  } = useTTSVoice({ bookLanguage })
+  } = useTTSVoice({ bookLanguage, customVoice: options.customVoice })
 
   // Playback rate options and storage
   const ttsConfigCacheKey = computed(() =>
@@ -190,6 +192,19 @@ export function useTextToSpeech(options: TTSOptions = {}) {
 
   function getAudioSrc(element: TTSSegment): string {
     if (element.audioSrc) return element.audioSrc
+
+    if (ttsLanguageVoice.value === 'custom') {
+      const lang = toValue(bookLanguage) || 'zh-HK'
+      const isEnglish = lang.toLowerCase().startsWith('en')
+      const language = isEnglish ? 'en-US' : (options.customVoice?.value?.voiceLanguage || 'zh-HK')
+      const params = new URLSearchParams({
+        text: sanitizeTTSText(element.text),
+        language,
+        voice_id: 'custom',
+      })
+      return `/api/reader/tts?${params.toString()}`
+    }
+
     const [language, ...voiceIdParts] = ttsLanguageVoice.value.split('_')
     const params = new URLSearchParams({
       text: sanitizeTTSText(element.text),

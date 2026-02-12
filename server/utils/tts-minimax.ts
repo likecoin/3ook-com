@@ -45,7 +45,7 @@ export class MinimaxTTSProvider implements BaseTTSProvider {
   format = 'audio/mpeg'
 
   async processRequest(params: TTSRequestParams): Promise<ReadableStream> {
-    const { text, language, voiceId, config } = params
+    const { text, language, voiceId, customMiniMaxVoiceId, config } = params
     const { minimaxGroupId, minimaxAPIKey } = config
 
     if (!minimaxGroupId || !minimaxAPIKey) {
@@ -55,7 +55,7 @@ export class MinimaxTTSProvider implements BaseTTSProvider {
       })
     }
 
-    if (!VOICE_MAPPING[voiceId]) {
+    if (!customMiniMaxVoiceId && !VOICE_MAPPING[voiceId]) {
       throw createError({
         status: 400,
         message: 'INVALID_VOICE_ID',
@@ -66,13 +66,15 @@ export class MinimaxTTSProvider implements BaseTTSProvider {
       apiKey: minimaxAPIKey,
       groupId: minimaxGroupId,
     })
+    const resolvedVoiceId = (customMiniMaxVoiceId || VOICE_MAPPING[voiceId]) as string
+    const model = customMiniMaxVoiceId ? 'speech-2.8-hd' : 'speech-2.6-hd'
 
     return await client.synthesizeStream({
       text,
-      model: 'speech-2.6-hd',
+      model,
       voiceSetting: {
-        voiceId: VOICE_MAPPING[voiceId],
-        speed: 0.95,
+        voiceId: resolvedVoiceId,
+        speed: 1,
         emotion: 'neutral',
         textNormalization: true,
       },

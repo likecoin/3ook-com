@@ -279,6 +279,35 @@
 
       <UCard :ui="{ body: '!p-0 divide-y-1 divide-(--ui-border)' }">
         <AccountSettingsItem
+          v-if="hasLoggedIn"
+          icon="i-material-symbols-record-voice-over-outline"
+          :label="$t('tts_custom_voice_section_title')"
+        >
+          <div
+            v-if="hasCustomVoice"
+            class="text-sm text-muted"
+            v-text="customVoice?.voiceName"
+          />
+
+          <template #right>
+            <UButton
+              v-if="user?.isLikerPlus"
+              :label="hasCustomVoice ? customVoice?.voiceName : $t('tts_custom_voice_upload_button')"
+              :variant="hasCustomVoice ? 'outline' : 'solid'"
+              color="primary"
+              @click="handleOpenCustomVoiceModal"
+            />
+            <UButton
+              v-else
+              :label="$t('tts_custom_voice_upgrade_button')"
+              variant="solid"
+              color="primary"
+              :to="localeRoute({ name: 'member', query: { ll_medium: 'custom-voice' } })"
+            />
+          </template>
+        </AccountSettingsItem>
+
+        <AccountSettingsItem
           icon="i-material-symbols-language"
           :label="$t('account_page_locale')"
         >
@@ -394,6 +423,7 @@ import { formatUnits } from 'viem'
 import { waitForTransactionReceipt } from '@wagmi/core'
 import { useSignMessage } from '@wagmi/vue'
 
+import { CustomVoiceUploadModal } from '#components'
 import likeCoinTokenImage from '~/assets/images/likecoin-token.png'
 
 const config = useRuntimeConfig()
@@ -410,6 +440,14 @@ const toast = useToast()
 const isWindowFocused = useDocumentVisibility()
 const { copy: copyToClipboard } = useClipboard()
 const { isApp } = useAppDetection()
+
+const { customVoice, hasCustomVoice, fetchCustomVoice } = useCustomVoice()
+const overlay = useOverlay()
+const customVoiceModal = overlay.create(CustomVoiceUploadModal)
+
+watch(hasLoggedIn, (loggedIn) => {
+  if (loggedIn) fetchCustomVoice()
+}, { immediate: true })
 
 const walletAddress = computed(() => user.value?.evmWallet)
 const {
@@ -577,6 +615,15 @@ function handleLikeWalletClick() {
 
 function handleMigrateLegacyBookButtonClick() {
   useLogEvent('migrate_legacy_book_button_click')
+}
+
+async function handleOpenCustomVoiceModal() {
+  await customVoiceModal.open({
+    existingVoice: customVoice.value,
+    onUploaded: () => fetchCustomVoice(),
+    onDeleted: () => fetchCustomVoice(),
+  }).result
+  fetchCustomVoice()
 }
 
 async function handleClaimStakingRewardButtonClick() {

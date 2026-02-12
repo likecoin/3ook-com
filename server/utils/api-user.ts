@@ -17,6 +17,16 @@ export async function requireUserWallet(event: H3Event): Promise<string> {
   return wallet
 }
 
+export interface CustomVoiceDocData {
+  voiceId: string
+  voiceName: string
+  voiceLanguage?: string
+  avatarPath?: string
+  audioPath?: string
+  createdAt: Timestamp
+  updatedAt: Timestamp
+}
+
 export interface UserDocData {
   ttsCharactersUsed?: number
   ttsLastUsed?: typeof FieldValue.serverTimestamp
@@ -24,6 +34,7 @@ export interface UserDocData {
   loginTimestamp?: typeof FieldValue.serverTimestamp
   accessTimestamp?: typeof FieldValue.serverTimestamp
   loginMethod?: string
+  customVoice?: CustomVoiceDocData
 }
 
 export async function getUserDoc(
@@ -140,4 +151,48 @@ export async function updateUserSettings(
     ...restSettings,
     updatedAt: FieldValue.serverTimestamp(),
   }, { merge: true })
+}
+
+export async function getCustomVoice(
+  userWallet: string,
+): Promise<CustomVoiceDocData | undefined> {
+  const doc = await getUserDoc(userWallet)
+  return doc?.customVoice
+}
+
+export async function setCustomVoice(
+  userWallet: string,
+  data: { voiceId: string, voiceName: string, voiceLanguage?: string, audioPath?: string, avatarPath?: string },
+): Promise<void> {
+  await getUserCollection().doc(userWallet).set({
+    customVoice: {
+      voiceId: data.voiceId,
+      voiceName: data.voiceName,
+      ...(data.voiceLanguage && { voiceLanguage: data.voiceLanguage }),
+      ...(data.audioPath && { audioPath: data.audioPath }),
+      ...(data.avatarPath && { avatarPath: data.avatarPath }),
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+    },
+  }, { merge: true })
+}
+
+export async function updateCustomVoiceLanguage(
+  userWallet: string,
+  voiceLanguage: string,
+): Promise<void> {
+  await getUserCollection().doc(userWallet).set({
+    customVoice: {
+      voiceLanguage,
+      updatedAt: FieldValue.serverTimestamp(),
+    },
+  }, { merge: true })
+}
+
+export async function deleteCustomVoice(
+  userWallet: string,
+): Promise<void> {
+  await getUserCollection().doc(userWallet).update({
+    customVoice: FieldValue.delete(),
+  })
 }

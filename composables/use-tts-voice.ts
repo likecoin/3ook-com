@@ -1,15 +1,18 @@
 import { useStorage } from '@vueuse/core'
+import type { CustomVoiceData } from '~/shared/types/custom-voice'
 import phoebeAvatar from '@/assets/images/voice-avatars/phoebe.jpg'
 import leiTingYinAvatar from '@/assets/images/voice-avatars/lei-ting-yin.jpg'
 import pazuAvatar from '@/assets/images/voice-avatars/pazu.jpg'
 import defaultAvatar from '@/assets/images/voice-avatars/default.jpg'
+import customDefaultAvatar from '@/assets/images/voice-avatars/custom-default.jpg'
 
 interface TTSVoiceOptions {
   bookLanguage?: string | Ref<string> | ComputedRef<string>
+  customVoice?: Ref<CustomVoiceData | null>
 }
 
 export function useTTSVoice(options: TTSVoiceOptions = {}) {
-  const { bookLanguage } = options
+  const { bookLanguage, customVoice } = options
 
   const config = useRuntimeConfig()
   const { detectedCountry } = useDetectedGeolocation()
@@ -45,9 +48,13 @@ export function useTTSVoice(options: TTSVoiceOptions = {}) {
     return ttsLanguageVoiceOptions
   })
 
-  const ttsLanguageVoiceValues = computed(() =>
-    availableTTSLanguageVoiceOptions.value.map(option => option.value),
-  )
+  const ttsLanguageVoiceValues = computed(() => {
+    const values = availableTTSLanguageVoiceOptions.value.map(option => option.value)
+    if (customVoice?.value?.voiceId) {
+      return ['custom', ...values]
+    }
+    return values
+  })
 
   function getDefaultTTSVoiceByLocale(): string {
     const country = detectedCountry.value
@@ -80,13 +87,30 @@ export function useTTSVoice(options: TTSVoiceOptions = {}) {
   })
 
   const ttsLanguageVoiceOptionsWithAvatars = computed(() => {
-    return availableTTSLanguageVoiceOptions.value.map((option: { value: string, label: string }) => ({
+    const builtInOptions = availableTTSLanguageVoiceOptions.value.map((option: { value: string, label: string }) => ({
       ...option,
       avatar: getVoiceAvatar(option.value),
     }))
+
+    if (customVoice?.value?.voiceId) {
+      return [
+        {
+          label: customVoice.value.voiceName,
+          value: 'custom',
+          avatar: getVoiceAvatar('custom'),
+        },
+        ...builtInOptions,
+      ]
+    }
+
+    return builtInOptions
   })
 
   function getVoiceAvatar(languageVoice: string): string {
+    if (languageVoice === 'custom') {
+      return customVoice?.value?.avatarUrl || customDefaultAvatar
+    }
+
     switch (languageVoice) {
       case 'zh-HK_phoebe':
         return phoebeAvatar
