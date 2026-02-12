@@ -51,6 +51,8 @@
   "account_page_color_mode": "Color Mode",
   "account_page_contact_support": "Customer service",
   "account_page_cosmos_wallet": "Legacy Wallet",
+  "account_page_delete_account": "Delete Account",
+  "account_page_delete_account_intercom_prefill": "Hi, I would like to delete my account.",
   "account_page_display_name_tooltip": "Used for referring books to people, the recipient's name on inscription pages signed by authors, etc.",
   "account_page_email": "Email",
   "account_page_evm_wallet": "Wallet",

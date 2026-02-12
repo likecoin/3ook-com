@@ -1,5 +1,5 @@
 <template>
-  <main class="space-y-4">
+  <main class="flex flex-col space-y-4">
     <section
       v-if="hasLoggedIn"
       class="space-y-3"
@@ -364,28 +364,37 @@
       </UCard>
     </section>
 
-    <UButton
-      v-if="hasLoggedIn"
-      :label="$t('account_page_reader_cache_clear')"
-      icon="i-material-symbols-delete-outline-rounded"
-      color="neutral"
-      variant="outline"
-      size="lg"
-      block
-      :loading="accountStore.isClearingCaches"
-      @click="handleClearReaderCacheButtonClick"
-    />
+    <template v-if="hasLoggedIn">
+      <UButton
+        :label="$t('account_page_reader_cache_clear')"
+        icon="i-material-symbols-delete-outline-rounded"
+        color="neutral"
+        variant="outline"
+        size="lg"
+        block
+        :loading="accountStore.isClearingCaches"
+        @click="handleClearReaderCacheButtonClick"
+      />
 
-    <UButton
-      v-if="hasLoggedIn"
-      :label="$t('account_page_logout')"
-      icon="i-material-symbols-exit-to-app-rounded"
-      variant="outline"
-      color="error"
-      size="lg"
-      block
-      @click="handleLogout"
-    />
+      <UButton
+        :label="$t('account_page_logout')"
+        icon="i-material-symbols-exit-to-app-rounded"
+        variant="outline"
+        color="error"
+        size="lg"
+        block
+        @click="handleLogout"
+      />
+
+      <UButton
+        class="self-center mt-2 p-0 border-b leading-5 rounded-none"
+        :label="$t('account_page_delete_account')"
+        variant="link"
+        color="error"
+        size="xs"
+        @click="handleDeleteAccountButtonClick"
+      />
+    </template>
   </main>
 </template>
 
@@ -499,14 +508,27 @@ async function handleLikerPlusButtonClick() {
   }
 }
 
-async function handleCustomerServiceLinkButtonClick() {
-  if (!window?.Intercom) {
-    window.open('mailto:cs@3ook.com', '_blank')
-    useLogEvent('customer_service', { method: 'link' })
-    return
+function openIntercomWithEmailFallback(prefillMessage?: string) {
+  if (window?.Intercom) {
+    if (prefillMessage) {
+      window.Intercom('showNewMessage', prefillMessage)
+    }
+    else {
+      window.Intercom('show')
+    }
+    return 'chat'
   }
-  window.Intercom('show')
-  useLogEvent('customer_service', { method: 'chat' })
+  let mailto = 'mailto:cs@3ook.com'
+  if (prefillMessage) {
+    mailto += `?subject=${encodeURIComponent(prefillMessage)}`
+  }
+  window.open(mailto, '_blank')
+  return 'link'
+}
+
+function handleCustomerServiceLinkButtonClick() {
+  const method = openIntercomWithEmailFallback()
+  useLogEvent('customer_service', { method })
 }
 
 async function handleClearReaderCacheButtonClick() {
@@ -663,5 +685,10 @@ async function handlePublishBookButtonClick(event: MouseEvent) {
     console.error(error)
     await navigateTo(publishBookURL.value, { external: true })
   }
+}
+
+function handleDeleteAccountButtonClick() {
+  const method = openIntercomWithEmailFallback($t('account_page_delete_account_intercom_prefill'))
+  useLogEvent('account_delete_account_click', { method })
 }
 </script>
