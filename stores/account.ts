@@ -16,6 +16,8 @@ const JWT_PERMISSIONS = [
   'write:nftbook',
   'read:plus',
   'write:plus',
+  'read:preferences',
+  'write:preferences',
 ]
 
 function verifyTokenPermissions(token: string): boolean {

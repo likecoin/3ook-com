@@ -1,3 +1,5 @@
+import { jwtDecode } from 'jwt-decode'
+
 const ALLOWED_KEYS = ['locale', 'currency', 'colorMode'] as const satisfies readonly UserSettingKey[]
 
 export default defineEventHandler(async (event) => {
@@ -38,18 +40,22 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // Sync locale to like.co user API
+  // Sync locale to like.co user preferences API
   if ('locale' in body && session.user.token) {
     try {
-      await getLikeCoinAPIFetch()('/users/update', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${session.user.token}`,
-        },
-        body: {
-          locale: body.locale?.startsWith('zh') ? 'zh' : 'en',
-        },
-      })
+      const decoded = jwtDecode<{ permissions?: string[] }>(session.user.token)
+      const hasWritePreferences = decoded.permissions?.includes('write:preferences')
+      if (hasWritePreferences) {
+        await getLikeCoinAPIFetch()('/users/preferences', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${session.user.token}`,
+          },
+          body: {
+            locale: body.locale?.startsWith('zh') ? 'zh' : 'en',
+          },
+        })
+      }
     }
     catch (error) {
       console.error('Error syncing locale to like.co:', error)
