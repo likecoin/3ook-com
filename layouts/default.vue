@@ -55,17 +55,14 @@ defineProps({
 const { isApp } = useAppDetection()
 
 const containerRef = ref<HTMLElement>()
+const pullTarget = computed(() => isApp.value ? containerRef.value : undefined)
 
 const {
   isPulling,
   isRefreshing,
   pullDistance,
   pullProgress,
-  handleTouchStart,
-  handleTouchMove,
-  handleTouchEnd,
-  handleTouchCancel,
-} = usePullToRefresh()
+} = usePullToRefresh(pullTarget)
 
 const isSnappingBack = ref(false)
 let snapBackTimer: ReturnType<typeof setTimeout> | undefined
@@ -101,14 +98,4 @@ const indicatorStyle = computed(() => ({
 const spinnerStyle = computed(() => ({
   transform: `rotate(${pullProgress.value * 720}deg)`,
 }))
-
-onMounted(() => {
-  if (isApp.value && containerRef.value) {
-    useEventListener(containerRef, 'touchstart', handleTouchStart, { passive: true })
-    // NOTE: Set passive to false is required to call preventDefault() during pull-to-refresh
-    useEventListener(containerRef, 'touchmove', handleTouchMove, { passive: false })
-    useEventListener(containerRef, 'touchend', handleTouchEnd, { passive: true })
-    useEventListener(containerRef, 'touchcancel', handleTouchCancel, { passive: true })
-  }
-})
 </script>
