@@ -330,6 +330,9 @@ export const useBookstoreStore = defineStore('bookstore', () => {
     if (stakingBooksMap.value[sortBy]?.isFetching) {
       return
     }
+    if (!isRefresh && stakingBooksMap.value[sortBy]?.hasFetched && !stakingBooksMap.value[sortBy]?.offset) {
+      return
+    }
     if (!stakingBooksMap.value[sortBy] || isRefresh) {
       stakingBooksMap.value[sortBy] = {
         items: [],
@@ -369,10 +372,6 @@ export const useBookstoreStore = defineStore('bookstore', () => {
 
       stakingBooksMap.value[sortBy].offset = result.data.length <= limit ? undefined : result.pagination?.next_key?.toString()
       stakingBooksMap.value[sortBy].hasFetched = true
-    }
-    catch (error) {
-      stakingBooksMap.value[sortBy].hasFetched = true
-      throw error
     }
     finally {
       stakingBooksMap.value[sortBy].isFetching = false
