@@ -59,57 +59,59 @@
     <UModal
       v-model:open="isModalOpen"
       :ui="{
-        content: 'relative max-w-4xl bg-black',
+        content: 'max-w-4xl bg-black',
       }"
       :close="{ color: 'neutral', variant: 'ghost', class: 'text-white' }"
     >
       <template #content>
-        <img
-          v-if="modalItem?.type === 'cover' || modalItem?.type === 'image'"
-          :src="modalItem?.fullSrc || modalItem?.src"
-          :alt="props.alt"
-          class="w-full h-auto max-h-[80vh] object-contain"
-        >
+        <div class="relative">
+          <img
+            v-if="modalItem?.type === 'cover' || modalItem?.type === 'image'"
+            :src="modalItem?.fullSrc || modalItem?.src"
+            :alt="props.alt"
+            class="w-full h-auto max-h-[80vh] object-contain"
+          >
 
-        <div
-          v-else-if="modalItem?.type === 'youtube' && modalItem?.videoId"
-          class="aspect-video"
-        >
-          <ScriptYouTubePlayer
-            :video-id="modalItem.videoId"
-            :player-vars="{ autoplay: 1, rel: 0, playsinline: 1 }"
-            trigger="visible"
-            class="w-full h-full"
+          <div
+            v-else-if="modalItem?.type === 'youtube' && modalItem?.videoId"
+            class="aspect-video"
+          >
+            <ScriptYouTubePlayer
+              :video-id="modalItem.videoId"
+              :player-vars="{ autoplay: 1, rel: 0, playsinline: 1 }"
+              trigger="visible"
+              class="w-full h-full"
+            />
+          </div>
+
+          <video
+            v-else-if="modalItem?.type === 'video'"
+            :src="modalItem?.src"
+            controls
+            autoplay
+            playsinline
+            class="w-full max-h-[80vh]"
           />
+
+          <template v-if="carouselItems.length > 1">
+            <UButton
+              icon="i-material-symbols-chevron-left"
+              color="neutral"
+              variant="ghost"
+              aria-label="Previous"
+              class="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-black/50 text-white hover:bg-black/70 cursor-pointer"
+              @click="navigateModal(-1)"
+            />
+            <UButton
+              icon="i-material-symbols-chevron-right"
+              color="neutral"
+              variant="ghost"
+              aria-label="Next"
+              class="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-black/50 text-white hover:bg-black/70 cursor-pointer"
+              @click="navigateModal(1)"
+            />
+          </template>
         </div>
-
-        <video
-          v-else-if="modalItem?.type === 'video'"
-          :src="modalItem?.src"
-          controls
-          autoplay
-          playsinline
-          class="w-full max-h-[80vh]"
-        />
-
-        <template v-if="carouselItems.length > 1">
-          <UButton
-            icon="i-material-symbols-chevron-left"
-            color="neutral"
-            variant="ghost"
-            aria-label="Previous"
-            class="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-black/50 text-white hover:bg-black/70 cursor-pointer"
-            @click="navigateModal(-1)"
-          />
-          <UButton
-            icon="i-material-symbols-chevron-right"
-            color="neutral"
-            variant="ghost"
-            aria-label="Next"
-            class="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-black/50 text-white hover:bg-black/70 cursor-pointer"
-            @click="navigateModal(1)"
-          />
-        </template>
       </template>
     </UModal>
   </div>
