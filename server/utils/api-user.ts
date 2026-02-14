@@ -22,6 +22,7 @@ export interface CustomVoiceDocData {
   voiceName: string
   voiceLanguage?: string
   avatarPath?: string
+  avatarUrl?: string
   audioPath?: string
   createdAt: Timestamp
   updatedAt: Timestamp
@@ -162,7 +163,7 @@ export async function getCustomVoice(
 
 export async function setCustomVoice(
   userWallet: string,
-  data: { voiceId: string, voiceName: string, voiceLanguage?: string, audioPath?: string, avatarPath?: string },
+  data: { voiceId: string, voiceName: string, voiceLanguage?: string, audioPath?: string, avatarPath?: string, avatarUrl?: string },
 ): Promise<void> {
   await getUserCollection().doc(userWallet).set({
     customVoice: {
@@ -171,6 +172,7 @@ export async function setCustomVoice(
       ...(data.voiceLanguage && { voiceLanguage: data.voiceLanguage }),
       ...(data.audioPath && { audioPath: data.audioPath }),
       ...(data.avatarPath && { avatarPath: data.avatarPath }),
+      ...(data.avatarUrl && { avatarUrl: data.avatarUrl }),
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
     },

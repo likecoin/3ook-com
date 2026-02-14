@@ -130,18 +130,23 @@ export default defineEventHandler(async (event): Promise<CustomVoiceData> => {
     })
 
     if (avatarPart?.data && avatarPart.type) {
-      const avatarExt = getExtFromMime(avatarPart.type)
-      avatarPath = getCustomVoiceAvatarPath(wallet, avatarExt)
-      const avatarFile = bucket.file(avatarPath)
-      await avatarFile.save(avatarPart.data, {
-        metadata: { contentType: avatarPart.type },
-      })
-
-      const [url] = await bucket.file(avatarPath).getSignedUrl({
-        action: 'read',
-        expires: Date.now() + 7 * 24 * 60 * 60 * 1000,
-      })
-      avatarUrl = url
+      try {
+        const avatarExt = getExtFromMime(avatarPart.type)
+        avatarPath = getCustomVoiceAvatarPath(wallet, avatarExt)
+        const avatarFile = bucket.file(avatarPath)
+        const downloadToken = generateFirebaseDownloadToken()
+        await avatarFile.save(avatarPart.data, {
+          metadata: {
+            contentType: avatarPart.type,
+            metadata: { firebaseStorageDownloadTokens: downloadToken },
+          },
+        })
+        avatarUrl = getFirebaseStorageDownloadURL(bucket.name, avatarPath, downloadToken)
+      }
+      catch (error) {
+        console.warn('[CustomVoice] Failed to save avatar:', error)
+        avatarPath = undefined
+      }
     }
   }
 
@@ -151,6 +156,7 @@ export default defineEventHandler(async (event): Promise<CustomVoiceData> => {
     voiceLanguage: voiceLanguage || undefined,
     audioPath,
     avatarPath,
+    avatarUrl,
   })
 
   return {

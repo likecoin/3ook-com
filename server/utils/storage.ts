@@ -1,4 +1,4 @@
-import { createHash } from 'crypto'
+import { createHash, randomUUID } from 'crypto'
 import { getStorage as getFirebaseStorage } from 'firebase-admin/storage'
 
 function getDefaultBucket() {
@@ -65,4 +65,12 @@ export function getCustomVoiceStorageBucket() {
     return null
   }
   return getDefaultBucket()
+}
+
+export function generateFirebaseDownloadToken(): string {
+  return randomUUID()
+}
+
+export function getFirebaseStorageDownloadURL(bucketName: string, filePath: string, token: string): string {
+  return `https://firebasestorage.googleapis.com/v0/b/${bucketName}/o/${encodeURIComponent(filePath)}?alt=media&token=${token}`
 }
