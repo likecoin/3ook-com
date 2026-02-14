@@ -211,12 +211,6 @@
         </div>
 
         <p
-          v-if="existingVoice"
-          class="text-xs text-amber-600"
-          v-text="$t('tts_custom_voice_replace_warning')"
-        />
-
-        <p
           v-if="errorMessage"
           class="text-xs text-red-500"
           v-text="errorMessage"
@@ -274,9 +268,14 @@
         />
       </template>
       <template v-else>
+        <p
+          v-if="existingVoice"
+          class="text-xs text-amber-600"
+          v-text="$t('tts_custom_voice_replace_warning')"
+        />
         <UButton
           class="w-full"
-          :label="$t('tts_custom_voice_upload_button')"
+          :label="existingVoice ? $t('tts_custom_voice_replace_button') : $t('tts_custom_voice_upload_button')"
           block
           size="xl"
           :loading="isUploading"
@@ -352,8 +351,8 @@ const audioInputEl = useTemplateRef<HTMLInputElement>('audioInputEl')
 const avatarInputEl = useTemplateRef<HTMLInputElement>('avatarInputEl')
 
 const voiceLanguageOptions = [
-  { label: '粵語 (Cantonese)', value: 'zh-HK' },
-  { label: '國語 (Mandarin)', value: 'zh-TW' },
+  { label: '粵語', value: 'zh-HK' },
+  { label: '國語', value: 'zh-TW' },
 ]
 
 const activePreviewLanguages = computed(() => [
