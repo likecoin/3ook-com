@@ -392,9 +392,55 @@
         variant="link"
         color="error"
         size="xs"
-        @click="handleDeleteAccountButtonClick"
+        @click="isDeleteAccountDialogOpen = true"
       />
     </template>
+
+    <UModal
+      v-model:open="isDeleteAccountDialogOpen"
+      :dismissible="!isDeletingAccount"
+      :close="!isDeletingAccount"
+      :ui="{
+        title: 'text-lg font-bold',
+        footer: 'flex justify-end gap-3',
+      }"
+    >
+      <template #title>
+        <span v-text="$t('account_page_delete_account_confirm_title')" />
+      </template>
+
+      <template #body>
+        <div class="space-y-4">
+          <p
+            class="text-sm"
+            v-text="$t('account_page_delete_account_confirm_description')"
+          />
+
+          <UAlert
+            icon="i-material-symbols-warning-outline-rounded"
+            color="error"
+            variant="subtle"
+            :title="$t('account_page_delete_account_confirm_warning')"
+          />
+        </div>
+      </template>
+
+      <template #footer>
+        <UButton
+          :label="$t('common_cancel')"
+          variant="outline"
+          color="neutral"
+          :disabled="isDeletingAccount"
+          @click="isDeleteAccountDialogOpen = false"
+        />
+        <UButton
+          :label="$t('account_page_delete_account_confirm_button')"
+          color="error"
+          :loading="isDeletingAccount"
+          @click="confirmDeleteAccount"
+        />
+      </template>
+    </UModal>
   </main>
 </template>
 
@@ -687,8 +733,64 @@ async function handlePublishBookButtonClick(event: MouseEvent) {
   }
 }
 
-function handleDeleteAccountButtonClick() {
-  const method = openIntercomWithEmailFallback($t('account_page_delete_account_intercom_prefill'))
-  useLogEvent('account_delete_account_click', { method })
+const isDeleteAccountDialogOpen = ref(false)
+const isDeletingAccount = ref(false)
+
+async function confirmDeleteAccount() {
+  if (!user.value?.likerId || !user.value?.evmWallet) return
+
+  const { evmWallet } = user.value
+  isDeletingAccount.value = true
+
+  try {
+    await accountStore.restoreConnection()
+
+    // Sign authorize message
+    const authorizePayload = JSON.stringify({
+      action: 'authorize',
+      permissions: ['write'],
+      ts: Date.now(),
+      evmWallet,
+    })
+    const authorizeSignature = await signMessageAsync({ message: authorizePayload })
+
+    // Sign delete message
+    const deletePayload = JSON.stringify({
+      action: 'user_delete',
+      ts: Date.now(),
+      evmWallet,
+    })
+    const deleteSignature = await signMessageAsync({ message: deletePayload })
+
+    await $fetch('/api/account/delete', {
+      method: 'POST',
+      body: {
+        wallet: evmWallet,
+        signMethod: 'personal_sign',
+        authorizeSignature,
+        authorizeMessage: authorizePayload,
+        deleteSignature,
+        deleteMessage: deletePayload,
+      },
+    })
+
+    useLogEvent('account_delete_account_success')
+
+    await accountStore.logout()
+    isDeleteAccountDialogOpen.value = false
+
+    toast.add({
+      title: $t('account_page_delete_account_success'),
+      color: 'success',
+    })
+  }
+  catch (error) {
+    await handleError(error, {
+      title: $t('account_page_delete_account_error'),
+    })
+  }
+  finally {
+    isDeletingAccount.value = false
+  }
 }
 </script>
