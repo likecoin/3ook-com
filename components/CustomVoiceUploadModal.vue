@@ -323,6 +323,7 @@ const errorMessage = ref('')
 const uploadSuccess = ref(false)
 const showDeleteConfirm = ref(false)
 const showUploadForm = ref(!props.existingVoice)
+const previewCacheBuster = ref(Date.now())
 
 const showPreview = computed(() => uploadSuccess.value || (!!props.existingVoice && !showUploadForm.value))
 const previewVoiceName = computed(() => voiceName.value || props.existingVoice?.voiceName || '')
@@ -536,6 +537,7 @@ async function handleUpload() {
     })
     if (data) {
       uploadSuccess.value = true
+      previewCacheBuster.value = Date.now()
       emit('uploaded', data)
     }
   }
@@ -568,6 +570,7 @@ function getTTSPreviewUrl(language: string): string {
     text,
     language,
     voice_id: 'custom',
+    _t: previewCacheBuster.value.toString(),
   })
   return `/api/reader/tts?${params.toString()}`
 }

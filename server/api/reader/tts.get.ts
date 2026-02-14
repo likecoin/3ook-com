@@ -122,7 +122,7 @@ export default defineEventHandler(async (event) => {
       if (exists) {
         const metadata = await file.getMetadata()
         setHeader(event, 'content-type', metadata[0].contentType || provider.format)
-        setHeader(event, 'cache-control', 'public, max-age=604800')
+        setHeader(event, 'cache-control', isCustomVoice ? 'private, max-age=604800' : 'public, max-age=604800')
         if (Number(metadata[0].size)) {
           setHeader(event, 'content-length', Number(metadata[0].size))
         }
@@ -189,7 +189,7 @@ export default defineEventHandler(async (event) => {
     })
     const processResponse = response.pipeThrough(processStream)
     setHeader(event, 'content-type', provider.format)
-    setHeader(event, 'cache-control', 'public, max-age=604800')
+    setHeader(event, 'cache-control', isCustomVoice ? 'private, max-age=604800' : 'public, max-age=604800')
     return sendStream(event, processResponse)
   }
   catch (error) {

@@ -196,12 +196,16 @@ export function useTextToSpeech(options: TTSOptions = {}) {
     if (ttsLanguageVoice.value === 'custom') {
       const lang = toValue(bookLanguage) || 'zh-HK'
       const isEnglish = lang.toLowerCase().startsWith('en')
-      const language = isEnglish ? 'en-US' : (options.customVoice?.value?.voiceLanguage || 'zh-HK')
+      const customVoice = options.customVoice?.value
+      const language = isEnglish ? 'en-US' : (customVoice?.voiceLanguage || 'zh-HK')
       const params = new URLSearchParams({
         text: sanitizeTTSText(element.text),
         language,
         voice_id: 'custom',
       })
+      if (customVoice?.updatedAt) {
+        params.set('_t', customVoice.updatedAt.toString())
+      }
       return `/api/reader/tts?${params.toString()}`
     }
 
