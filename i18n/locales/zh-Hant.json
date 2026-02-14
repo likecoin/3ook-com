@@ -591,6 +591,7 @@
   "tipping_modal_send_tips_button": "額外支持",
   "tipping_modal_title": "給予作者額外支持",
   "tts_custom_voice_audio_source_label": "語音樣本",
+  "tts_custom_voice_authorization_warning": "請僅使用你已獲授權的語音錄音。未經他人同意上傳其聲音是被禁止的。",
   "tts_custom_voice_avatar_upload_button": "上傳頭像",
   "tts_custom_voice_default_name": "我的私人聲優",
   "tts_custom_voice_delete_button": "刪除聲音",

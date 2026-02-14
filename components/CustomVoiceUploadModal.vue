@@ -85,6 +85,11 @@
           v-text="$t('tts_custom_voice_instructions')"
         />
 
+        <p
+          class="text-xs text-amber-600"
+          v-text="$t('tts_custom_voice_authorization_warning')"
+        />
+
         <div class="flex flex-col gap-1">
           <p
             class="text-xs text-dimmed"
