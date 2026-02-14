@@ -498,7 +498,7 @@ function handleAudioChange(e: Event) {
   target.value = ''
 }
 
-function handleAvatarChange(e: Event) {
+async function handleAvatarChange(e: Event) {
   const target = e.target as HTMLInputElement
   const file = target.files?.[0]
   if (!file) return
@@ -507,8 +507,8 @@ function handleAvatarChange(e: Event) {
     return
   }
   errorMessage.value = ''
-  avatarFile.value = file
-  avatarPreview.value = URL.createObjectURL(file)
+  avatarFile.value = await resizeImageFile(file, 256)
+  avatarPreview.value = URL.createObjectURL(avatarFile.value)
 }
 
 async function handleVoiceLanguageChange(value: string) {
