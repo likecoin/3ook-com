@@ -98,6 +98,17 @@ export default defineEventHandler(async (event): Promise<CustomVoiceData> => {
     catch (error) {
       console.warn('[CustomVoice] Failed to delete old Minimax voice:', error)
     }
+
+    const ttsBucket = getTTSCacheBucket()
+    if (ttsBucket) {
+      try {
+        const prefix = getCustomVoiceTTSCachePrefix(wallet)
+        await ttsBucket.deleteFiles({ prefix })
+      }
+      catch (error) {
+        console.warn('[CustomVoice] Failed to delete TTS cache files:', error)
+      }
+    }
   }
 
   const client = getMiniMaxSpeechClient()
