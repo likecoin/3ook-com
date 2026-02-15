@@ -625,6 +625,9 @@ async function loadEPub() {
     }
   }
 
+  // Clear stale TTS index from previous session so it doesn't override current page position
+  activeTTSElementIndex.value = undefined
+
   rendition.value.on('rendered', (section: Section, view: EpubView) => {
     currentSectionIndex.value = section.index
     isRightToLeft.value = view.settings.direction === 'rtl'
