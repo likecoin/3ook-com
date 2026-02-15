@@ -506,8 +506,16 @@ async function handleAvatarChange(e: Event) {
     return
   }
   errorMessage.value = ''
-  avatarFile.value = await resizeImageFile(file, 256)
-  avatarPreview.value = URL.createObjectURL(avatarFile.value)
+  try {
+    const resizedFile = await resizeImageFile(file, 256)
+    avatarFile.value = resizedFile
+    avatarPreview.value = URL.createObjectURL(avatarFile.value)
+  }
+  catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error)
+    errorMessage.value = message
+    console.error('[CustomVoice] Avatar resize failed:', error)
+  }
 }
 
 async function handleVoiceLanguageChange(value: string) {
