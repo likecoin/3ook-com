@@ -383,12 +383,13 @@ watch(currentTTSSegmentIndex, async (newIndex: number) => {
 })
 
 const hasStartedPlaying = ref(false)
+const isCustomVoiceReady = ref(!user.value)
 
 watch(
-  () => props.segments,
-  (newSegments) => {
+  [() => props.segments, isCustomVoiceReady],
+  ([newSegments, ready]) => {
     setTTSSegments(newSegments)
-    if (newSegments.length > 0 && !hasStartedPlaying.value) {
+    if (ready && newSegments.length > 0 && !hasStartedPlaying.value) {
       hasStartedPlaying.value = true
       startTextToSpeech(props.startIndex || 0)
     }
@@ -396,11 +397,12 @@ watch(
   { immediate: true },
 )
 
-onMounted(() => {
+onMounted(async () => {
   setTTSLanguageVoice(props.specificLanguageVoice)
   if (user.value) {
-    fetchCustomVoice()
+    await fetchCustomVoice()
   }
+  isCustomVoiceReady.value = true
 })
 
 function setSegmentRef(
