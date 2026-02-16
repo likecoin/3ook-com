@@ -319,7 +319,22 @@ export function useTextToSpeech(options: TTSOptions = {}) {
     stopActiveAudio()
     const audio = createAudio(currentElement)
     audio?.play()?.catch((e: unknown) => {
+      if (e instanceof DOMException && e.name === 'AbortError') return
       console.warn('Play rejected:', e)
+      if (e instanceof DOMException && e.name === 'NotAllowedError') {
+        // Autoplay blocked — need user gesture to resume
+        isTextToSpeechPlaying.value = false
+        options.onError?.(e.message)
+        return
+      }
+      consecutiveAudioErrors.value += 1
+      if (consecutiveAudioErrors.value >= MAX_CONSECUTIVE_ERRORS) {
+        pauseTextToSpeech()
+        return
+      }
+      setTimeout(() => {
+        if (isTextToSpeechOn.value) playNextElement()
+      }, 1000)
     })
 
     preloadNextSegment()
@@ -350,7 +365,12 @@ export function useTextToSpeech(options: TTSOptions = {}) {
       else if (isTextToSpeechOn.value) {
         if (activeAudio.value) {
           activeAudio.value.play()?.catch((e: unknown) => {
+            if (e instanceof DOMException && e.name === 'AbortError') return
             console.warn('Resume play rejected:', e)
+            if (e instanceof DOMException && e.name === 'NotAllowedError') {
+              isTextToSpeechPlaying.value = false
+              options.onError?.(e.message)
+            }
           })
           useLogEvent('tts_resume', {
             nft_class_id: nftClassId,
