@@ -64,6 +64,7 @@ export function useTextToSpeech(options: TTSOptions = {}) {
   const shouldResumeWhenOnline = ref(false)
   const consecutiveAudioErrors = ref(0)
   const MAX_CONSECUTIVE_ERRORS = 3
+  let pausedInternally = false
   const currentTTSSegmentIndex = ref(0)
   const ttsSegments = ref<TTSSegment[]>([])
   const currentTTSSegment = computed(() => {
@@ -235,6 +236,21 @@ export function useTextToSpeech(options: TTSOptions = {}) {
 
       audio.onpause = () => {
         isTextToSpeechPlaying.value = false
+        if (pausedInternally) {
+          pausedInternally = false
+          return
+        }
+        // Unexpected pause (OS interruption: phone call, other app audio, etc.)
+        // Attempt auto-resume after a short delay
+        if (isTextToSpeechOn.value) {
+          setTimeout(() => {
+            if (isTextToSpeechOn.value && !isTextToSpeechPlaying.value && activeAudio.value) {
+              activeAudio.value.play()?.catch(() => {
+                // Auto-resume failed — user needs to tap play manually
+              })
+            }
+          }, 1000)
+        }
       }
 
       audio.onended = () => {
@@ -407,6 +423,7 @@ export function useTextToSpeech(options: TTSOptions = {}) {
   function resetAudio() {
     consecutiveAudioErrors.value = 0
     if (activeAudio.value) {
+      pausedInternally = true
       activeAudio.value.pause()
       activeAudio.value.src = ''
       activeAudio.value.load()
@@ -434,6 +451,7 @@ export function useTextToSpeech(options: TTSOptions = {}) {
 
   function stopActiveAudio() {
     if (activeAudio.value) {
+      pausedInternally = true
       activeAudio.value.pause()
       activeAudio.value.currentTime = 0
     }
