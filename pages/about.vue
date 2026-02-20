@@ -299,6 +299,8 @@
         >
           <div class="flex items-center gap-3">
             <UAvatar
+              :src="getAvatarSrc('nghengsun')"
+              :alt="$t('about_page_author_dung_kai_cheung')"
               icon="i-material-symbols-person-rounded"
               size="md"
             />
@@ -346,6 +348,8 @@
           >
             <div class="flex items-center gap-3">
               <UAvatar
+                :src="getAvatarSrc('ckxpress')"
+                :alt="$t('about_page_author_kin_ko')"
                 icon="i-material-symbols-person-rounded"
                 size="md"
               />
@@ -551,6 +555,16 @@ const config = useRuntimeConfig()
 const baseURL = config.public.baseURL
 const { user } = useUserSession()
 const isLikerPlus = computed(() => Boolean(user.value?.isLikerPlus))
+
+const metadataStore = useMetadataStore()
+
+function getAvatarSrc(likerId: string) {
+  return metadataStore.getLikerInfoById(likerId)?.avatarSrc
+}
+
+onMounted(async () => {
+  await Promise.allSettled(['nghengsun', 'ckxpress'].map(id => metadataStore.lazyFetchLikerInfoById(id)))
+})
 
 function onClickHeroLogo() {
   useLogEvent('about_hero_logo_click')
