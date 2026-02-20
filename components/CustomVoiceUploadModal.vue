@@ -326,7 +326,12 @@ const previewCacheBuster = ref(Date.now())
 
 const showPreview = computed(() => uploadSuccess.value || (!!props.existingVoice && !showUploadForm.value))
 const previewVoiceName = computed(() => voiceName.value || props.existingVoice?.voiceName || '')
-const previewAvatarUrl = computed(() => avatarPreview.value || props.existingVoice?.avatarUrl || null)
+const { getResizedImageURL } = useImageResize()
+const previewAvatarUrl = computed(() => {
+  if (avatarPreview.value) return avatarPreview.value
+  const raw = props.existingVoice?.avatarUrl
+  return raw ? getResizedImageURL(raw, { size: 128 }) : null
+})
 
 const hasMicrophone = ref(false)
 const isRecording = ref(false)

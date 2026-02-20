@@ -16,6 +16,7 @@ export function useTTSVoice(options: TTSVoiceOptions = {}) {
 
   const config = useRuntimeConfig()
   const { detectedCountry } = useDetectedGeolocation()
+  const { getResizedImageURL } = useImageResize()
 
   const ttsConfigCacheKey = computed(() =>
     [
@@ -108,7 +109,8 @@ export function useTTSVoice(options: TTSVoiceOptions = {}) {
 
   function getVoiceAvatar(languageVoice: string): string {
     if (languageVoice === 'custom') {
-      return customVoice?.value?.avatarUrl || customDefaultAvatar
+      const raw = customVoice?.value?.avatarUrl
+      return raw ? getResizedImageURL(raw, { size: 128 }) : customDefaultAvatar
     }
 
     switch (languageVoice) {
