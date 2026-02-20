@@ -1,6 +1,8 @@
 import { useDebounceFn, useEventListener, useStorage } from '@vueuse/core'
 import type { CustomVoiceData } from '~/shared/types/custom-voice'
 
+export const TTS_ERROR_NOT_ALLOWED = 'NotAllowedError'
+
 interface TTSOptions {
   nftClassId?: string
   onError?: (error: string | Event | MediaError) => void
@@ -64,6 +66,8 @@ export function useTextToSpeech(options: TTSOptions = {}) {
   const shouldResumeWhenOnline = ref(false)
   const consecutiveAudioErrors = ref(0)
   const MAX_CONSECUTIVE_ERRORS = 3
+  const MAX_AUTO_RESUME_RETRIES = 3
+  let autoResumeRetries = 0
   let pausedInternally = false
   const currentTTSSegmentIndex = ref(0)
   const ttsSegments = ref<TTSSegment[]>([])
@@ -232,6 +236,7 @@ export function useTextToSpeech(options: TTSOptions = {}) {
 
       audio.onplay = () => {
         isTextToSpeechPlaying.value = true
+        autoResumeRetries = 0
       }
 
       audio.onpause = () => {
@@ -241,12 +246,15 @@ export function useTextToSpeech(options: TTSOptions = {}) {
           return
         }
         // Unexpected pause (OS interruption: phone call, other app audio, etc.)
-        // Attempt auto-resume after a short delay
-        if (isTextToSpeechOn.value) {
+        // Attempt auto-resume after a short delay, with a retry limit
+        if (isTextToSpeechOn.value && autoResumeRetries < MAX_AUTO_RESUME_RETRIES) {
+          autoResumeRetries += 1
           setTimeout(() => {
             if (isTextToSpeechOn.value && !isTextToSpeechPlaying.value && activeAudio.value) {
-              activeAudio.value.play()?.catch(() => {
-                // Auto-resume failed — user needs to tap play manually
+              activeAudio.value.play()?.catch((e: unknown) => {
+                if (e instanceof DOMException && e.name === 'NotAllowedError') {
+                  options.onError?.(TTS_ERROR_NOT_ALLOWED)
+                }
               })
             }
           }, 1000)
@@ -340,7 +348,7 @@ export function useTextToSpeech(options: TTSOptions = {}) {
       if (e instanceof DOMException && e.name === 'NotAllowedError') {
         // Autoplay blocked — need user gesture to resume
         isTextToSpeechPlaying.value = false
-        options.onError?.(e.message)
+        options.onError?.(TTS_ERROR_NOT_ALLOWED)
         return
       }
       consecutiveAudioErrors.value += 1
@@ -349,7 +357,7 @@ export function useTextToSpeech(options: TTSOptions = {}) {
         return
       }
       setTimeout(() => {
-        if (isTextToSpeechOn.value) playNextElement()
+        if (isTextToSpeechOn.value) playCurrentElement()
       }, 1000)
     })
 
@@ -385,7 +393,7 @@ export function useTextToSpeech(options: TTSOptions = {}) {
             console.warn('Resume play rejected:', e)
             if (e instanceof DOMException && e.name === 'NotAllowedError') {
               isTextToSpeechPlaying.value = false
-              options.onError?.(e.message)
+              options.onError?.(TTS_ERROR_NOT_ALLOWED)
             }
           })
           useLogEvent('tts_resume', {

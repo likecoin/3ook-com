@@ -629,6 +629,8 @@
   "tts_offline_modal_resume_button": "Try Anyway",
   "tts_offline_modal_stop_button": "Stop Playing",
   "tts_offline_modal_title": "No Internet Connection",
+  "tts_play_blocked_description": "Press the play button to continue listening.",
+  "tts_play_blocked_title": "Playback paused",
   "tts_sample_cantonese": "Cantonese",
   "tts_sample_cantonese_description": "Read by Pazu",
   "tts_sample_mandarin": "Mandarin",

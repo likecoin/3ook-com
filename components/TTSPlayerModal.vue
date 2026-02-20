@@ -233,6 +233,7 @@ import type { TTSPlayerModalProps } from './TTSPlayerModal.props'
 const { user } = useUserSession()
 const subscription = useSubscription()
 const { errorModal, handleError } = useErrorHandler()
+const toast = useToast()
 
 const { customVoice, hasCustomVoice, fetchCustomVoice } = useCustomVoice()
 const localeRoute = useLocaleRoute()
@@ -311,6 +312,15 @@ const {
   bookLanguage: props.bookLanguage,
   customVoice,
   onError: (error: string | Event | MediaError) => {
+    if (error === TTS_ERROR_NOT_ALLOWED) {
+      toast.add({
+        title: $t('tts_play_blocked_title'),
+        description: $t('tts_play_blocked_description'),
+        icon: 'i-material-symbols-play-arrow-rounded',
+        color: 'warning',
+      })
+      return
+    }
     if (error instanceof MediaError
       && error.code === MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED
       && !user.value?.isLikerPlus) {

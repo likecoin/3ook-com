@@ -629,6 +629,8 @@
   "tts_offline_modal_resume_button": "嘗試繼續",
   "tts_offline_modal_stop_button": "停止播放",
   "tts_offline_modal_title": "沒有網絡連接",
+  "tts_play_blocked_description": "請按播放按鈕繼續收聽。",
+  "tts_play_blocked_title": "播放已暫停",
   "tts_sample_cantonese": "粵語",
   "tts_sample_cantonese_description": "由薯伯伯 Pazu 讀出",
   "tts_sample_mandarin": "國語",
