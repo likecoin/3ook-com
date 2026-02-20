@@ -306,7 +306,7 @@
             />
             <h3 class="text-xl font-bold text-gray-900">
               <UButton
-                :to="localeRoute({ name: 'store', query: { author: '董啟章' } })"
+                :to="getEntityStoreRoute('董啟章', 'author', 'nghengsun')"
                 variant="link"
                 :label="$t('about_page_author_dung_kai_cheung')"
                 @click="onClickAuthorDungKaiCheung"
@@ -355,7 +355,7 @@
               />
               <h3 class="text-xl font-bold text-gray-900">
                 <UButton
-                  :to="localeRoute({ name: 'store', query: { author: '高重建' } })"
+                  :to="getEntityStoreRoute('高重建', 'author', 'ckxpress')"
                   variant="link"
                   :label="$t('about_page_author_kin_ko')"
                   @click="onClickAuthorKinKo"
@@ -459,7 +459,7 @@
           <NuxtLink
             v-for="publisher in featuredPublishers"
             :key="publisher.likerId"
-            :to="localeRoute({ name: 'store', query: { publisher: publisher.name } })"
+            :to="getEntityStoreRoute(publisher.name, 'publisher', publisher.likerId)"
             class="flex flex-col items-center gap-2 group"
             @click="onClickFeaturedPublisher"
           >
@@ -620,6 +620,14 @@ const featuredPublishers = [
 
 function getAvatarSrc(likerId: string) {
   return metadataStore.getLikerInfoById(likerId)?.avatarSrc
+}
+
+function getEntityStoreRoute(name: string, fallbackType: 'author' | 'publisher', likerId?: string) {
+  if (likerId) {
+    const wallet = metadataStore.getLikerInfoById(likerId)?.evmWallet
+    if (wallet) return localeRoute({ name: 'store', query: { owner_wallet: wallet } })
+  }
+  return localeRoute({ name: 'store', query: { [fallbackType]: name } })
 }
 
 onMounted(async () => {
