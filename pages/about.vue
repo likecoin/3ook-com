@@ -441,6 +441,45 @@
         </div>
       </section>
 
+      <!-- Featured Authors Section -->
+      <section
+        id="featured-authors"
+        class="space-y-6"
+      >
+        <div class="text-center space-y-2">
+          <h2 class="text-2xl md:text-3xl font-bold text-gray-900">
+            {{ $t('about_page_featured_authors_title') }}
+          </h2>
+          <p class="text-lg text-muted leading-relaxed max-w-2xl mx-auto">
+            {{ $t('about_page_featured_authors_content') }}
+          </p>
+        </div>
+
+        <div
+          v-gsap.whenVisible.once.stagger.from="{ y: 20, opacity: 0, duration: 0.4, stagger: 0.05 }"
+          class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-6"
+        >
+          <NuxtLink
+            v-for="author in featuredAuthors"
+            :key="author.name"
+            :to="getEntityStoreRoute(author.name, 'author', author.likerId)"
+            class="flex flex-col items-center gap-2 group"
+            @click="onClickFeaturedAuthor"
+          >
+            <UAvatar
+              :src="author.likerId ? getAvatarSrc(author.likerId) : undefined"
+              :alt="author.name"
+              icon="i-material-symbols-person-2-rounded"
+              size="xl"
+              class="transition-transform group-hover:scale-110"
+            />
+            <span class="text-sm text-center text-gray-700 group-hover:text-primary transition-colors">
+              {{ author.name }}
+            </span>
+          </NuxtLink>
+        </div>
+      </section>
+
       <!-- Featured Publishers & Media Section -->
       <section
         id="featured-publishers"
@@ -600,6 +639,32 @@ const isLikerPlus = computed(() => Boolean(user.value?.isLikerPlus))
 
 const metadataStore = useMetadataStore()
 
+const featuredAuthors = [
+  { name: '高重建', likerId: 'ckxpress' },
+  { name: 'H醫生' },
+  { name: '胡境陽', likerId: 'lakeviewsun' },
+  { name: '董啟章', likerId: 'nghengsun' },
+  { name: '邵家臻' },
+  { name: 'Pazu 薯伯伯' },
+  { name: '譚蕙芸' },
+  { name: '畢明' },
+  { name: '陳滅', likerId: 'chanmit' },
+  { name: '法庭線', likerId: 'thewitness' },
+  { name: '庭刊', likerId: 'hkcourtnews2023' },
+  { name: 'Wave流行文化誌' },
+  { name: '吳靄儀' },
+  { name: '徐賁' },
+  { name: 'Ms Yu' },
+  { name: '馬菲' },
+  { name: '馬傑偉' },
+  { name: '蔣曉薇' },
+  { name: '游欣妮' },
+  { name: '梁柏堅' },
+  { name: '傅月庵' },
+  { name: '蔡錦源' },
+  { name: '亞然' },
+]
+
 const featuredPublishers = [
   { name: '突破出版', likerId: 'breakthrough_publish' },
   { name: '風簷出版', likerId: '0xpioneer' },
@@ -637,11 +702,16 @@ onMounted(async () => {
   const likerIds = [
     'nghengsun',
     'ckxpress',
+    ...featuredAuthors.filter(a => a.likerId).map(a => a.likerId!),
     ...featuredPublishers.map(p => p.likerId),
   ]
   const uniqueLikerIds = [...new Set(likerIds)]
   await Promise.allSettled(uniqueLikerIds.map(id => metadataStore.lazyFetchLikerInfoById(id)))
 })
+
+function onClickFeaturedAuthor() {
+  useLogEvent('about_featured_author_click')
+}
 
 function onClickFeaturedPublisher() {
   useLogEvent('about_featured_publisher_click')
