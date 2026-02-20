@@ -437,6 +437,45 @@
           </UCard>
         </div>
       </section>
+
+      <!-- Featured Publishers & Media Section -->
+      <section
+        id="featured-publishers"
+        class="space-y-6"
+      >
+        <div class="text-center space-y-2">
+          <h2 class="text-2xl md:text-3xl font-bold text-gray-900">
+            {{ $t('about_page_featured_publishers_title') }}
+          </h2>
+          <p class="text-lg text-muted leading-relaxed max-w-2xl mx-auto">
+            {{ $t('about_page_featured_publishers_content') }}
+          </p>
+        </div>
+
+        <div
+          v-gsap.whenVisible.once.stagger.from="{ y: 20, opacity: 0, duration: 0.4, stagger: 0.05 }"
+          class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-6"
+        >
+          <NuxtLink
+            v-for="publisher in featuredPublishers"
+            :key="publisher.likerId"
+            :to="localeRoute({ name: 'store', query: { publisher: publisher.name } })"
+            class="flex flex-col items-center gap-2 group"
+            @click="onClickFeaturedPublisher"
+          >
+            <UAvatar
+              :src="getAvatarSrc(publisher.likerId)"
+              :alt="publisher.name"
+              icon="i-material-symbols-person-2-rounded"
+              size="xl"
+              class="transition-transform group-hover:scale-110"
+            />
+            <span class="text-sm text-center text-gray-700 group-hover:text-primary transition-colors">
+              {{ publisher.name }}
+            </span>
+          </NuxtLink>
+        </div>
+      </section>
     </div>
 
     <!-- 3ook Plus Membership Section -->
@@ -558,13 +597,44 @@ const isLikerPlus = computed(() => Boolean(user.value?.isLikerPlus))
 
 const metadataStore = useMetadataStore()
 
+const featuredPublishers = [
+  { name: '突破出版', likerId: 'breakthrough_publish' },
+  { name: '風簷出版', likerId: '0xpioneer' },
+  { name: '飛地出版', likerId: 'nowherebooks' },
+  { name: '端點出版', likerId: 'terminus2046' },
+  { name: '本土研究社', likerId: 'liber-research' },
+  { name: '藍藍的天', likerId: 'bbluesky' },
+  { name: '留下書舍', likerId: 'hansbookstore' },
+  { name: '早安財經文化', likerId: 'goodmorningpress' },
+  { name: '壹壹陸工作室', likerId: '116workshop' },
+  { name: '蜂鳥出版', likerId: 'ywxctc' },
+  { name: '董富記', likerId: 'nghengsun' },
+  { name: '好青年荼毒室', likerId: 'corrupttheyouth' },
+  { name: '界限書店', likerId: 'boundarybooks' },
+  { name: '字字研究所', likerId: 'wordbyword' },
+  { name: '筆求人工作室', likerId: 'penseeker' },
+  { name: '集誌社', likerId: 'thecollectivehk' },
+  { name: 'Kubrick', likerId: 'kubrick_hk' },
+  { name: 'dirty press', likerId: 'kcyguj' },
+]
+
 function getAvatarSrc(likerId: string) {
   return metadataStore.getLikerInfoById(likerId)?.avatarSrc
 }
 
 onMounted(async () => {
-  await Promise.allSettled(['nghengsun', 'ckxpress'].map(id => metadataStore.lazyFetchLikerInfoById(id)))
+  const likerIds = [
+    'nghengsun',
+    'ckxpress',
+    ...featuredPublishers.map(p => p.likerId),
+  ]
+  const uniqueLikerIds = [...new Set(likerIds)]
+  await Promise.allSettled(uniqueLikerIds.map(id => metadataStore.lazyFetchLikerInfoById(id)))
 })
+
+function onClickFeaturedPublisher() {
+  useLogEvent('about_featured_publisher_click')
+}
 
 function onClickHeroLogo() {
   useLogEvent('about_hero_logo_click')
