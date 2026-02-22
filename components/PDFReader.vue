@@ -154,6 +154,7 @@
             />
           </div>
           <div
+            v-if="!isCoverPage"
             :class="[
               ...pagePaddingClasses,
               'pl-2 laptop:pl-2',
@@ -301,24 +302,39 @@ const { pixelRatio } = useDevicePixelRatio()
 
 const isMobile = useMediaQuery('(max-width: 768px)')
 
+const dualLeftPage = computed(() => {
+  if (!isDualPageMode.value || totalPages.value <= 1) return currentPage.value
+  if (currentPage.value <= 1) return 1
+  return currentPage.value % 2 === 0 ? currentPage.value : currentPage.value - 1
+})
+const dualRightPage = computed(() => {
+  if (!isDualPageMode.value || totalPages.value <= 1) return undefined
+  const rightPage = dualLeftPage.value + 1
+  return rightPage <= totalPages.value ? rightPage : undefined
+})
+const isCoverPage = computed(() => {
+  return isDualPageMode.value && totalPages.value > 1 && dualLeftPage.value === 1
+})
+
 const pageDisplayText = computed(() => {
   if (isDualPageMode.value && totalPages.value > 1) {
-    const leftPage = currentPage.value
-    const rightPage = currentPage.value + 1
-    if (rightPage <= totalPages.value) {
+    const leftPage = dualLeftPage.value
+    const rightPage = dualRightPage.value
+    if (rightPage && !isCoverPage.value) {
       return `${leftPage}-${rightPage} / ${totalPages.value}`
     }
+    return `${leftPage} / ${totalPages.value}`
   }
   return `${currentPage.value} / ${totalPages.value}`
 })
 
 const isAtFirstPage = computed(() => currentPage.value <= 1)
 const isAtLastPage = computed(() => {
-  let current = currentPage.value
-  if (isDualPageMode.value && totalPages.value > 1) {
-    current += 1
+  if (!isDualPageMode.value || totalPages.value <= 1) {
+    return currentPage.value >= totalPages.value
   }
-  return current >= totalPages.value
+  const lastVisiblePage = dualRightPage.value ?? dualLeftPage.value
+  return lastVisiblePage >= totalPages.value
 })
 
 async function loadPDFLib() {
@@ -348,6 +364,12 @@ onMounted(async () => {
 watch(isMobile, async (value) => {
   if (value && isDualPageMode.value) {
     isDualPageMode.value = false
+  }
+})
+
+watch(isDualPageMode, (value) => {
+  if (value && currentPage.value > 1 && currentPage.value % 2 === 1) {
+    currentPage.value -= 1
   }
 })
 
@@ -469,8 +491,8 @@ async function renderSinglePage() {
 async function renderDualPages() {
   if (!pdfDocument.value || !leftCanvas.value || !rightCanvas.value) return
 
-  const leftPageNum = currentPage.value
-  const rightPageNum = currentPage.value + 1
+  const leftPageNum = dualLeftPage.value
+  const rightPageNum = dualRightPage.value ?? leftPageNum + 1
 
   const leftContext = leftCanvas.value.getContext('2d')
   const rightContext = rightCanvas.value.getContext('2d')
@@ -478,8 +500,12 @@ async function renderDualPages() {
 
   const renderTasks = []
 
-  const actualLeftPageNum = isRightToLeft.value ? rightPageNum : leftPageNum
-  const actualRightPageNum = isRightToLeft.value ? leftPageNum : rightPageNum
+  const actualLeftPageNum = isCoverPage.value
+    ? leftPageNum
+    : (isRightToLeft.value ? rightPageNum : leftPageNum)
+  const actualRightPageNum = isCoverPage.value
+    ? undefined
+    : (isRightToLeft.value ? leftPageNum : rightPageNum)
 
   const leftPageTask = pdfDocument.value.getPage(actualLeftPageNum).then(async (leftPage) => {
     const leftViewport = leftPage.getViewport({ scale: scale.value })
@@ -499,7 +525,7 @@ async function renderDualPages() {
   })
   renderTasks.push(leftPageTask)
 
-  if (actualRightPageNum <= totalPages.value) {
+  if (actualRightPageNum && actualRightPageNum <= totalPages.value) {
     const rightPageTask = pdfDocument.value.getPage(actualRightPageNum).then(async (rightPage) => {
       const rightViewport = rightPage.getViewport({ scale: scale.value })
       if (rightCanvas.value) {
@@ -520,20 +546,24 @@ async function renderDualPages() {
   }
   else {
     rightContext.clearRect(0, 0, rightCanvas.value.width, rightCanvas.value.height)
-    rightCanvas.value.width = leftCanvas.value.width
-    rightCanvas.value.height = leftCanvas.value.height
+    rightCanvas.value.width = 0
+    rightCanvas.value.height = 0
   }
 
   await Promise.all(renderTasks)
 }
 
 function nextPage() {
-  const step = isDualPageMode.value ? 2 : 1
+  const step = isDualPageMode.value
+    ? (currentPage.value === 1 ? 1 : 2)
+    : 1
   currentPage.value = Math.min(currentPage.value + step, totalPages.value)
 }
 
 function previousPage() {
-  const step = isDualPageMode.value ? 2 : 1
+  const step = isDualPageMode.value
+    ? (currentPage.value <= 2 ? 1 : 2)
+    : 1
   currentPage.value = Math.max(currentPage.value - step, 1)
 }
 
@@ -544,7 +574,7 @@ function togglePageMode(value?: 'single' | 'dual') {
   else {
     isDualPageMode.value = value === 'dual'
   }
-  if (isDualPageMode.value && currentPage.value % 2 === 0 && currentPage.value > 1) {
+  if (isDualPageMode.value && currentPage.value > 1 && currentPage.value % 2 === 1) {
     currentPage.value--
   }
   renderPages()
@@ -564,7 +594,12 @@ function zoomOut() {
 
 function goToPage(pageNumber: number) {
   if (pageNumber >= 1 && pageNumber <= totalPages.value) {
-    currentPage.value = pageNumber
+    if (isDualPageMode.value && pageNumber > 1 && pageNumber % 2 === 1) {
+      currentPage.value = pageNumber - 1
+    }
+    else {
+      currentPage.value = pageNumber
+    }
   }
 }
 
