@@ -154,7 +154,7 @@
             />
           </div>
           <div
-            v-if="!isCoverPage"
+            v-show="!isCoverPage"
             :class="[
               ...pagePaddingClasses,
               'pl-2 laptop:pl-2',
@@ -492,7 +492,8 @@ async function renderDualPages() {
   if (!pdfDocument.value || !leftCanvas.value || !rightCanvas.value) return
 
   const leftPageNum = dualLeftPage.value
-  const rightPageNum = dualRightPage.value ?? leftPageNum + 1
+  const rightPageNum = dualRightPage.value
+  const hasRightPage = Boolean(rightPageNum)
 
   const leftContext = leftCanvas.value.getContext('2d')
   const rightContext = rightCanvas.value.getContext('2d')
@@ -502,10 +503,14 @@ async function renderDualPages() {
 
   const actualLeftPageNum = isCoverPage.value
     ? leftPageNum
-    : (isRightToLeft.value ? rightPageNum : leftPageNum)
+    : (isRightToLeft.value
+        ? (hasRightPage ? rightPageNum! : leftPageNum)
+        : leftPageNum)
   const actualRightPageNum = isCoverPage.value
     ? undefined
-    : (isRightToLeft.value ? leftPageNum : rightPageNum)
+    : (isRightToLeft.value
+        ? (hasRightPage ? leftPageNum : undefined)
+        : rightPageNum)
 
   const leftPageTask = pdfDocument.value.getPage(actualLeftPageNum).then(async (leftPage) => {
     const leftViewport = leftPage.getViewport({ scale: scale.value })
@@ -548,6 +553,8 @@ async function renderDualPages() {
     rightContext.clearRect(0, 0, rightCanvas.value.width, rightCanvas.value.height)
     rightCanvas.value.width = 0
     rightCanvas.value.height = 0
+    rightCanvas.value.style.width = '0px'
+    rightCanvas.value.style.height = '0px'
   }
 
   await Promise.all(renderTasks)
