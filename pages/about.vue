@@ -324,6 +324,7 @@
             <ClientOnly>
               <ScriptYouTubePlayer
                 video-id="BibwtPyXxCg"
+                :cookies="true"
                 :width="16"
                 :height="9"
                 :aria-label="$t('about_page_author_dung_kai_cheung')"
@@ -373,6 +374,7 @@
               <ClientOnly>
                 <ScriptYouTubePlayer
                   video-id="llHnvvDyzns"
+                  :cookies="true"
                   :width="9"
                   :height="16"
                   :aria-label="$t('about_page_author_kin_ko')"
@@ -419,6 +421,7 @@
               <ClientOnly>
                 <ScriptYouTubePlayer
                   video-id="3nsPGnqdoIk"
+                  :cookies="true"
                   :width="9"
                   :height="16"
                   :aria-label="$t('about_page_author_fu_yue_an')"

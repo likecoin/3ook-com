@@ -263,6 +263,7 @@ export default defineNuxtConfig({
               'https://www.facebook.com',
               'https://verify.walletconnect.org',
               'https://www.youtube-nocookie.com',
+              'https://www.youtube.com',
             ],
         'base-uri': [
           '\'self\'',
@@ -314,6 +315,7 @@ export default defineNuxtConfig({
       // NOTE: Allow Magic Link/PDF.js iframes
       crossOriginEmbedderPolicy: 'unsafe-none',
       crossOriginOpenerPolicy: 'same-origin-allow-popups',
+      referrerPolicy: 'strict-origin-when-cross-origin',
       permissionsPolicy: {
         microphone: ['self'],
       },
