@@ -126,7 +126,7 @@ export function useTextToSpeech(options: TTSOptions = {}) {
       return
     }
     setTimeout(() => {
-      if (isTextToSpeechOn.value && isTextToSpeechPlaying.value) {
+      if (isTextToSpeechOn.value) {
         playNextElement()
       }
     }, 1000)

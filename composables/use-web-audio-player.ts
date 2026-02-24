@@ -12,6 +12,7 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
   let autoResumeRetries = 0
   let playing = false
   let active = false
+  let errored = false
 
   const handlers: Partial<{ [K in keyof TTSAudioPlayerEvents]: TTSAudioPlayerEvents[K] }> = {}
 
@@ -40,12 +41,14 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
   }
 
   function createAudio(element: TTSSegment): HTMLAudioElement {
+    errored = false
     const audio = new Audio()
     activeAudio.value = audio
     audio.preload = 'auto'
 
     audio.onplay = () => {
       playing = true
+      errored = false
       autoResumeRetries = 0
       handlers.play?.()
     }
@@ -58,6 +61,9 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
         return
       }
       handlers.pause?.()
+      // Don't auto-resume if the audio element is in an error state;
+      // the error handler will skip to the next segment instead.
+      if (errored) return
       // Unexpected pause (OS interruption: phone call, other app audio, etc.)
       // Attempt auto-resume after a short delay, with a retry limit
       if (active && autoResumeRetries < MAX_AUTO_RESUME_RETRIES) {
@@ -92,6 +98,7 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
     }
 
     audio.onerror = (e) => {
+      errored = true
       const error = audio.error || e
       handlers.error?.(error)
     }
