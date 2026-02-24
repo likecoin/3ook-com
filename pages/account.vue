@@ -60,7 +60,7 @@
         </template>
 
         <UButton
-          :label="$t('account_page_login')"
+          :label="isApp ? $t('account_page_login_app') : $t('account_page_login')"
           :loading="accountStore.isLoggingIn"
           icon="i-material-symbols-login"
           color="primary"
@@ -86,6 +86,7 @@ const { t: $t } = useI18n()
 const localeRoute = useLocaleRoute()
 const { loggedIn: hasLoggedIn } = useUserSession()
 const accountStore = useAccountStore()
+const { isApp } = useAppDetection()
 
 const routeName = computed(() => getRouteBaseName(route) || '')
 
