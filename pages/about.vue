@@ -467,7 +467,7 @@
             @click="onClickFeaturedAuthor"
           >
             <UAvatar
-              :src="author.likerId ? getAvatarSrc(author.likerId) : undefined"
+              :src="author.avatar || (author.likerId ? getAvatarSrc(author.likerId) : undefined)"
               :alt="author.name"
               icon="i-material-symbols-person-2-rounded"
               size="xl"
@@ -639,30 +639,36 @@ const isLikerPlus = computed(() => Boolean(user.value?.isLikerPlus))
 
 const metadataStore = useMetadataStore()
 
+const authorAvatars = import.meta.glob<{ default: string }>('~/assets/images/about/avatars/*.png', { eager: true })
+function getLocalAvatar(filename: string) {
+  const key = Object.keys(authorAvatars).find(k => k.endsWith(`/${filename}`))
+  return key ? authorAvatars[key]!.default : undefined
+}
+
 const featuredAuthors = [
   { name: '高重建', likerId: 'ckxpress' },
-  { name: 'H醫生' },
+  { name: 'H醫生', avatar: getLocalAvatar('dr-h.png') },
   { name: '胡境陽', likerId: 'lakeviewsun' },
   { name: '董啟章', likerId: 'nghengsun' },
-  { name: '邵家臻' },
-  { name: 'Pazu 薯伯伯' },
-  { name: '譚蕙芸' },
-  { name: '畢明' },
-  { name: '陳滅', likerId: 'chanmit' },
+  { name: '邵家臻', avatar: getLocalAvatar('shiu-ka-chun.png') },
+  { name: 'Pazu 薯伯伯', avatar: getLocalAvatar('pazu.png') },
+  { name: '譚蕙芸', avatar: getLocalAvatar('tam-wai-wan.png') },
+  { name: '畢明', avatar: getLocalAvatar('budming.png') },
+  { name: '陳滅', likerId: 'chanmit', avatar: getLocalAvatar('chan-mit.png') },
   { name: '法庭線', likerId: 'thewitness' },
   { name: '庭刊', likerId: 'hkcourtnews2023' },
-  { name: 'Wave流行文化誌' },
-  { name: '吳靄儀' },
-  { name: '徐賁' },
+  { name: 'Wave流行文化誌', avatar: getLocalAvatar('wave-zinehk.png') },
+  { name: '吳靄儀', avatar: getLocalAvatar('margaret-ng.png') },
+  { name: '徐賁', avatar: getLocalAvatar('xu-ben.png') },
   { name: 'Ms Yu' },
-  { name: '馬菲' },
-  { name: '馬傑偉' },
-  { name: '蔣曉薇' },
-  { name: '游欣妮' },
-  { name: '梁柏堅' },
-  { name: '傅月庵' },
-  { name: '蔡錦源' },
-  { name: '亞然' },
+  { name: '馬菲', avatar: getLocalAvatar('ma-fei.png') },
+  { name: '馬傑偉', avatar: getLocalAvatar('ma-kit-wai.png') },
+  { name: '蔣曉薇', avatar: getLocalAvatar('cheung-hiu-mei.png') },
+  { name: '游欣妮', avatar: getLocalAvatar('yau-yan-nei.png') },
+  { name: '梁柏堅', avatar: getLocalAvatar('leung-pak-kin.png') },
+  { name: '傅月庵', avatar: getLocalAvatar('fu-yue-an.png') },
+  { name: '蔡錦源', avatar: getLocalAvatar('tsoi-kam-yuen.png') },
+  { name: '亞然', avatar: getLocalAvatar('tommy-kwan.png') },
 ]
 
 const featuredPublishers = [
