@@ -1,7 +1,7 @@
 import type { BaseTTSProvider, TTSRequestParams } from './api-tts'
 import { TTSProvider } from './api-tts'
 
-const LANG_MAPPING = {
+export const LANG_MAPPING = {
   'en-US': 'English',
   'zh-TW': 'Chinese',
   'zh-HK': 'Chinese,Yue',
@@ -39,6 +39,10 @@ export function getTTSPronunciationDictionary(language: string) {
   }
 }
 
+export function getMinimaxModel(customMiniMaxVoiceId?: string, language?: string): string {
+  return customMiniMaxVoiceId && language !== 'zh-TW' ? 'speech-2.8-hd' : 'speech-2.6-hd'
+}
+
 export class MinimaxTTSProvider implements BaseTTSProvider {
   provider = TTSProvider.MINIMAX
   format = 'audio/mpeg'
@@ -55,7 +59,7 @@ export class MinimaxTTSProvider implements BaseTTSProvider {
 
     const client = getMiniMaxSpeechClient()
     const resolvedVoiceId = (customMiniMaxVoiceId || VOICE_MAPPING[voiceId]) as string
-    const model = customMiniMaxVoiceId ? 'speech-2.8-hd' : 'speech-2.6-hd'
+    const model = getMinimaxModel(customMiniMaxVoiceId, language)
 
     return await client.synthesizeStream({
       text,

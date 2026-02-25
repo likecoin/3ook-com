@@ -106,12 +106,15 @@ export default defineEventHandler(async (event) => {
 
   await updateUserTTSCharacterUsage(session.user.evmWallet, text.length)
 
+  const ttsModel = isCustomVoice
+    ? getMinimaxModel(customMiniMaxVoiceId, language)
+    : (VOICE_PROVIDER_MAPPING[validVoiceId] === TTSProvider.MINIMAX ? getMinimaxModel() : 'azure')
   const bucket = getTTSCacheBucket()
   const isCacheEnabled = !!bucket
   const cacheKey = isCacheEnabled
     ? (customVoiceWallet
-        ? generateCustomVoiceTTSCacheKey(customVoiceWallet, language, text)
-        : generateTTSCacheKey(language, validVoiceId, text))
+        ? generateCustomVoiceTTSCacheKey(customVoiceWallet, language, text, ttsModel)
+        : generateTTSCacheKey(language, validVoiceId, text, ttsModel))
     : null
 
   if (isCacheEnabled) {

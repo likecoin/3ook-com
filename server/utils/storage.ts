@@ -7,14 +7,14 @@ function getDefaultBucket() {
   return storage.bucket()
 }
 
-export function generateTTSCacheKey(language: string, voiceId: string, text: string): string {
+export function generateTTSCacheKey(language: string, voiceId: string, text: string, model: string): string {
   const config = useRuntimeConfig()
   if (!config.ttsCacheBucketPrefix) {
     throw new Error('TTS cache bucket is not configured')
   }
   // Create a hash of the text to avoid filesystem issues with special characters
   const textHash = createHash('sha256').update(text).digest('hex')
-  return `${config.ttsCacheBucketPrefix}/${language}/${voiceId}/${textHash}.mp3`
+  return `${config.ttsCacheBucketPrefix}/${model}/${language}/${voiceId}/${textHash}.mp3`
 }
 
 export function getTTSCacheBucket() {
@@ -26,13 +26,13 @@ export function getTTSCacheBucket() {
   return getDefaultBucket()
 }
 
-export function generateCustomVoiceTTSCacheKey(wallet: string, language: string, text: string): string {
+export function generateCustomVoiceTTSCacheKey(wallet: string, language: string, text: string, model: string): string {
   const config = useRuntimeConfig()
   if (!config.ttsCacheBucketPrefix) {
     throw new Error('TTS cache bucket is not configured')
   }
   const textHash = createHash('sha256').update(text).digest('hex')
-  return `${config.ttsCacheBucketPrefix}/custom-voices/${wallet}/${language}/${textHash}.mp3`
+  return `${config.ttsCacheBucketPrefix}/custom-voices/${wallet}/${model}/${language}/${textHash}.mp3`
 }
 
 export function getCustomVoiceTTSCachePrefix(wallet: string): string {
