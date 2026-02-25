@@ -21,7 +21,7 @@ export function useCustomVoice() {
     }
   }
 
-  async function uploadCustomVoice(params: { audio: File, voiceName: string, voiceLanguage?: string, avatar?: File }) {
+  async function uploadCustomVoice(params: { audio: File, voiceName: string, voiceLanguage?: string, avatar?: File, promptAudio?: File, promptText?: string }) {
     if (isUploading.value) return
     isUploading.value = true
     try {
@@ -33,6 +33,12 @@ export function useCustomVoice() {
       }
       if (params.avatar) {
         formData.append('avatar', params.avatar)
+      }
+      if (params.promptAudio) {
+        formData.append('promptAudio', params.promptAudio)
+      }
+      if (params.promptText) {
+        formData.append('promptText', params.promptText)
       }
       const data = await $fetch<CustomVoiceData>('/api/user/custom-voice', {
         method: 'POST',

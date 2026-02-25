@@ -45,7 +45,10 @@
           <span class="text-base font-medium">{{ previewVoiceName }}</span>
         </div>
 
-        <div class="flex flex-col gap-2">
+        <div
+          v-if="voiceLanguageOptions.length > 1"
+          class="flex flex-col gap-2"
+        >
           <p
             class="text-sm font-medium text-muted"
             v-text="$t('tts_custom_voice_language_label')"
@@ -81,100 +84,8 @@
 
       <template v-else>
         <p
-          class="text-sm text-muted"
-          v-text="$t('tts_custom_voice_instructions')"
-        />
-
-        <p
           class="text-xs text-amber-600"
           v-text="$t('tts_custom_voice_authorization_warning')"
-        />
-
-        <div class="flex flex-col gap-1">
-          <p
-            class="text-xs text-dimmed"
-            v-text="$t('tts_custom_voice_suggested_text_label')"
-          />
-          <blockquote class="border-l-2 border-gray-300 pl-3 text-sm text-muted italic">
-            {{ locale === 'en' ? $t('tts_custom_voice_suggested_text_en') : $t('tts_custom_voice_suggested_text_zh') }}
-          </blockquote>
-        </div>
-
-        <div class="flex flex-col gap-2">
-          <label
-            class="text-sm font-medium"
-            v-text="$t('tts_custom_voice_audio_source_label')"
-          />
-
-          <div class="flex items-center gap-2">
-            <UButton
-              class="flex-1 min-w-0"
-              variant="outline"
-              :label="audioFile ? audioFile.name : $t('tts_custom_voice_upload_audio_button')"
-              icon="i-material-symbols-audio-file-outline"
-              :ui="{ label: 'truncate' }"
-              @click="audioInputEl?.click()"
-            />
-
-            <template v-if="hasMicrophone">
-              <UButton
-                v-if="!isRecording"
-                variant="outline"
-                icon="i-material-symbols-mic"
-                :label="$t('tts_custom_voice_record_button')"
-                @click="startRecording"
-              />
-              <UButton
-                v-else
-                variant="solid"
-                color="error"
-                icon="i-material-symbols-stop-rounded"
-                :label="formattedRecordingDuration"
-                @click="stopRecording"
-              />
-            </template>
-          </div>
-
-          <input
-            ref="audioInputEl"
-            type="file"
-            class="hidden"
-            accept=".mp3,.wav,.m4a"
-            @change="handleAudioChange"
-          >
-        </div>
-
-        <div
-          v-if="audioPreviewUrl"
-          class="flex items-center gap-2 rounded-lg bg-(--ui-bg-muted) p-3"
-        >
-          <UButton
-            size="sm"
-            :icon="isPlayingPreview ? 'i-material-symbols-pause-rounded' : 'i-material-symbols-play-arrow-rounded'"
-            variant="soft"
-            @click="toggleAudioPreview"
-          />
-          <div class="flex-1 text-xs text-muted truncate">
-            {{ audioFile?.name || $t('tts_custom_voice_recorded_audio_label') }}
-          </div>
-          <span
-            class="text-xs tabular-nums"
-            :class="isAudioDurationValid ? 'text-dimmed' : 'text-red-500 font-medium'"
-          >
-            {{ formattedAudioDuration }}
-          </span>
-          <UButton
-            size="xs"
-            icon="i-material-symbols-close"
-            variant="ghost"
-            color="neutral"
-            @click="clearAudio"
-          />
-        </div>
-        <p
-          v-if="audioPreviewUrl && !isAudioDurationValid"
-          class="text-xs text-red-500"
-          v-text="$t('tts_custom_voice_error_audio_duration')"
         />
 
         <div class="flex items-center gap-3">
@@ -198,7 +109,10 @@
           >
         </div>
 
-        <div class="flex flex-col gap-2">
+        <div
+          v-if="voiceLanguageOptions.length > 1"
+          class="flex flex-col gap-2"
+        >
           <p
             class="text-sm font-medium text-muted"
             v-text="$t('tts_custom_voice_language_label')"
@@ -207,6 +121,190 @@
             v-model="voiceLanguage"
             :items="voiceLanguageOptions"
             orientation="horizontal"
+          />
+        </div>
+
+        <!-- Step 1: Main voice sample -->
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-medium">
+            1. {{ $t('tts_custom_voice_audio_source_label') }}
+          </label>
+          <p
+            class="text-xs text-muted"
+            v-text="$t('tts_custom_voice_instructions')"
+          />
+
+          <div class="flex flex-col gap-1">
+            <p
+              class="text-xs text-dimmed"
+              v-text="$t('tts_custom_voice_suggested_text_label')"
+            />
+            <blockquote class="border-l-2 border-gray-300 pl-3 text-sm text-muted italic">
+              {{ locale === 'en' ? $t('tts_custom_voice_suggested_text_en') : $t('tts_custom_voice_suggested_text_zh') }}
+            </blockquote>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <UButton
+              class="flex-1 min-w-0"
+              variant="outline"
+              :label="mainAudio.file.value ? mainAudio.file.value.name : $t('tts_custom_voice_upload_audio_button')"
+              icon="i-material-symbols-audio-file-outline"
+              :ui="{ label: 'truncate' }"
+              @click="audioInputEl?.click()"
+            />
+
+            <template v-if="hasMicrophone">
+              <UButton
+                v-if="!mainAudio.isRecording.value"
+                variant="outline"
+                icon="i-material-symbols-mic"
+                :label="$t('tts_custom_voice_record_button')"
+                :disabled="isAnyRecording"
+                @click="startMainRecording"
+              />
+              <UButton
+                v-else
+                variant="solid"
+                color="error"
+                icon="i-material-symbols-stop-rounded"
+                :label="mainAudio.formattedRecordingDuration.value"
+                @click="mainAudio.stopRecording()"
+              />
+            </template>
+          </div>
+
+          <input
+            ref="audioInputEl"
+            type="file"
+            class="hidden"
+            accept=".mp3,.wav,.m4a"
+            @change="mainAudio.handleFileChange"
+          >
+
+          <div
+            v-if="mainAudio.previewUrl.value"
+            class="flex items-center gap-2 rounded-lg bg-(--ui-bg-muted) p-3"
+          >
+            <UButton
+              size="sm"
+              :icon="mainPreview.isPlaying.value ? 'i-material-symbols-pause-rounded' : 'i-material-symbols-play-arrow-rounded'"
+              variant="soft"
+              @click="mainPreview.toggle"
+            />
+            <div class="flex-1 text-xs text-muted truncate">
+              {{ mainAudio.file.value?.name || $t('tts_custom_voice_recorded_audio_label') }}
+            </div>
+            <span
+              class="text-xs tabular-nums"
+              :class="isAudioDurationValid ? 'text-dimmed' : 'text-red-500 font-medium'"
+            >
+              {{ mainAudio.formattedDuration.value }}
+            </span>
+            <UButton
+              size="xs"
+              icon="i-material-symbols-close"
+              variant="ghost"
+              color="neutral"
+              @click="clearMainAudio"
+            />
+          </div>
+          <p
+            v-if="mainAudio.previewUrl.value && !isAudioDurationValid"
+            class="text-xs text-red-500"
+            v-text="$t('tts_custom_voice_error_audio_duration')"
+          />
+        </div>
+
+        <!-- Step 2: Prompt voice -->
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-medium">
+            2. {{ $t('tts_custom_voice_prompt_voice_label') }}
+          </label>
+          <p
+            class="text-xs text-dimmed"
+            v-text="$t('tts_custom_voice_prompt_voice_description')"
+          />
+
+          <div class="flex flex-col gap-1">
+            <p
+              class="text-xs text-dimmed"
+              v-text="$t('tts_custom_voice_prompt_text_label')"
+            />
+            <blockquote class="border-l-2 border-gray-300 pl-3 text-sm text-muted italic">
+              {{ $t('tts_custom_voice_prompt_text') }}
+            </blockquote>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <UButton
+              class="flex-1 min-w-0"
+              variant="outline"
+              :label="promptAudio.file.value ? promptAudio.file.value.name : $t('tts_custom_voice_prompt_audio_button')"
+              icon="i-material-symbols-audio-file-outline"
+              :ui="{ label: 'truncate' }"
+              @click="promptAudioInputEl?.click()"
+            />
+
+            <template v-if="hasMicrophone">
+              <UButton
+                v-if="!promptAudio.isRecording.value"
+                variant="outline"
+                icon="i-material-symbols-mic"
+                :label="$t('tts_custom_voice_record_button')"
+                :disabled="isAnyRecording"
+                @click="startPromptRecording"
+              />
+              <UButton
+                v-else
+                variant="solid"
+                color="error"
+                icon="i-material-symbols-stop-rounded"
+                :label="promptAudio.formattedRecordingDuration.value"
+                @click="promptAudio.stopRecording()"
+              />
+            </template>
+          </div>
+
+          <input
+            ref="promptAudioInputEl"
+            type="file"
+            class="hidden"
+            accept=".mp3,.wav,.m4a"
+            @change="promptAudio.handleFileChange"
+          >
+
+          <div
+            v-if="promptAudio.previewUrl.value"
+            class="flex items-center gap-2 rounded-lg bg-(--ui-bg-muted) p-3"
+          >
+            <UButton
+              size="sm"
+              :icon="promptPreview.isPlaying.value ? 'i-material-symbols-pause-rounded' : 'i-material-symbols-play-arrow-rounded'"
+              variant="soft"
+              @click="promptPreview.toggle"
+            />
+            <div class="flex-1 text-xs text-muted truncate">
+              {{ promptAudio.file.value?.name || $t('tts_custom_voice_recorded_audio_label') }}
+            </div>
+            <span
+              class="text-xs tabular-nums shrink-0"
+              :class="isPromptAudioDurationValid ? 'text-dimmed' : 'text-red-500 font-medium'"
+            >
+              {{ promptAudio.formattedDuration.value }}
+            </span>
+            <UButton
+              size="xs"
+              icon="i-material-symbols-close"
+              variant="ghost"
+              color="neutral"
+              @click="clearPromptAudio"
+            />
+          </div>
+          <p
+            v-if="promptAudio.previewUrl.value && !isPromptAudioDurationValid"
+            class="text-xs text-red-500"
+            v-text="$t('tts_custom_voice_error_prompt_audio_duration')"
           />
         </div>
 
@@ -279,7 +377,7 @@
           block
           size="xl"
           :loading="isUploading"
-          :disabled="!audioFile || isUploading || !isAudioDurationValid"
+          :disabled="!mainAudio.file.value || !promptAudio.file.value || isUploading || !isAudioDurationValid || !isPromptAudioDurationValid"
           @click="handleUpload"
         />
         <UButton
@@ -314,8 +412,7 @@ const { t: $t, locale } = useI18n()
 const { isUploading, uploadCustomVoice, updateVoiceLanguage, removeCustomVoice } = useCustomVoice()
 
 const voiceName = ref(props.existingVoice?.voiceName || '')
-const voiceLanguage = ref(props.existingVoice?.voiceLanguage || 'zh-HK')
-const audioFile = ref<File | null>(null)
+const voiceLanguage = ref(props.existingVoice?.voiceLanguage || (locale.value === 'en' ? 'en-US' : 'zh-HK'))
 const avatarFile = ref<File | null>(null)
 const avatarPreview = ref<string | null>(null)
 const errorMessage = ref('')
@@ -334,40 +431,98 @@ const previewAvatarUrl = computed(() => {
 })
 
 const hasMicrophone = ref(false)
-const isRecording = ref(false)
-const mediaRecorder = ref<MediaRecorder | null>(null)
-const recordingChunks = ref<Blob[]>([])
-const recordingDuration = ref(0)
-const { pause: pauseRecordingTimer, resume: resumeRecordingTimer } = useIntervalFn(() => {
-  recordingDuration.value++
-}, 1000, { immediate: false })
 
-const audioPreviewUrl = ref<string | null>(null)
-const audioPreviewEl = ref<HTMLAudioElement | null>(null)
-const isPlayingPreview = ref(false)
-const audioDuration = ref(0)
+function setError(key: string) {
+  errorMessage.value = $t(key)
+}
+function clearError() {
+  errorMessage.value = ''
+}
+
+const mainAudio = useAudioRecorder({ onError: setError, onClearError: clearError })
+const promptAudio = useAudioRecorder({ maxFileSize: 2 * 1024 * 1024, fileTooLargeErrorKey: 'tts_custom_voice_error_prompt_audio_too_large', onError: setError, onClearError: clearError })
+
+const isAnyRecording = computed(() => mainAudio.isRecording.value || promptAudio.isRecording.value)
+
+function createPreviewPlayer(getUrl: () => string | null) {
+  const el = ref<HTMLAudioElement | null>(null)
+  const isPlaying = ref(false)
+
+  function stop() {
+    if (el.value) {
+      el.value.pause()
+      el.value.onended = null
+      el.value.onerror = null
+      el.value = null
+    }
+    isPlaying.value = false
+  }
+
+  function toggle() {
+    if (isPlaying.value) {
+      stop()
+      return
+    }
+    const url = getUrl()
+    if (!url) return
+
+    stop()
+    const audio = new Audio(url)
+    el.value = audio
+    isPlaying.value = true
+    audio.onended = () => {
+      isPlaying.value = false
+    }
+    audio.onerror = () => {
+      isPlaying.value = false
+    }
+    audio.play().catch(() => {
+      isPlaying.value = false
+    })
+  }
+
+  return { isPlaying, toggle, stop }
+}
+
+const mainPreview = createPreviewPlayer(() => mainAudio.previewUrl.value)
+const promptPreview = createPreviewPlayer(() => promptAudio.previewUrl.value)
 
 const MIN_AUDIO_DURATION = 10
 const MAX_AUDIO_DURATION = 300
 const isAudioDurationValid = computed(() => {
-  if (!audioFile.value || audioDuration.value === 0) return true
-  return audioDuration.value >= MIN_AUDIO_DURATION && audioDuration.value <= MAX_AUDIO_DURATION
+  if (!mainAudio.file.value || mainAudio.duration.value === 0) return true
+  return mainAudio.duration.value >= MIN_AUDIO_DURATION && mainAudio.duration.value <= MAX_AUDIO_DURATION
+})
+
+const MIN_PROMPT_AUDIO_DURATION = 1
+const MAX_PROMPT_AUDIO_DURATION = 8
+const isPromptAudioDurationValid = computed(() => {
+  if (!promptAudio.file.value || promptAudio.duration.value === 0) return true
+  return promptAudio.duration.value >= MIN_PROMPT_AUDIO_DURATION && promptAudio.duration.value <= MAX_PROMPT_AUDIO_DURATION
 })
 
 const audioInputEl = useTemplateRef<HTMLInputElement>('audioInputEl')
 const avatarInputEl = useTemplateRef<HTMLInputElement>('avatarInputEl')
+const promptAudioInputEl = useTemplateRef<HTMLInputElement>('promptAudioInputEl')
 
-const voiceLanguageOptions = [
-  { label: '粵語', value: 'zh-HK' },
-  { label: '國語', value: 'zh-TW' },
-]
+const voiceLanguageOptions = computed(() =>
+  locale.value === 'en'
+    ? [{ label: 'English', value: 'en-US' }]
+    : [
+        { label: '粵語', value: 'zh-HK' },
+        { label: '國語', value: 'zh-TW' },
+      ],
+)
 
-const activePreviewLanguages = computed(() => [
-  voiceLanguage.value === 'zh-TW'
-    ? { label: '國語', value: 'zh-TW' }
-    : { label: '粵語', value: 'zh-HK' },
-  { label: 'English', value: 'en-US' },
-])
+const activePreviewLanguages = computed((): { label: string, value: string }[] => {
+  const primary = voiceLanguageOptions.value.find(o => o.value === voiceLanguage.value)
+    ?? voiceLanguageOptions.value[0]
+    ?? { label: voiceLanguage.value, value: voiceLanguage.value }
+  if (voiceLanguage.value === 'en-US') {
+    return [primary]
+  }
+  return [primary, { label: 'English', value: 'en-US' }]
+})
 
 const PREVIEW_TEXT: Record<string, string> = {
   'zh-HK': '歡迎收聽，這是我的私人聲優。',
@@ -375,129 +530,44 @@ const PREVIEW_TEXT: Record<string, string> = {
   'en-US': 'Welcome, this is my private voice artist.',
 }
 
-const formattedRecordingDuration = computed(() => formatSeconds(recordingDuration.value))
-const formattedAudioDuration = computed(() => formatSeconds(Math.round(audioDuration.value)))
-
-function formatSeconds(sec: number): string {
-  const m = Math.floor(sec / 60)
-  const s = sec % 60
-  return `${m}:${s.toString().padStart(2, '0')}`
-}
-
 onMounted(() => {
   hasMicrophone.value = !!navigator.mediaDevices?.getUserMedia
   if (hasMicrophone.value) import('@breezystack/lamejs')
 })
 
-async function startRecording() {
+async function startMainRecording() {
   errorMessage.value = ''
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-    const recorder = new MediaRecorder(stream)
-    recordingChunks.value = []
-    recordingDuration.value = 0
-
-    recorder.ondataavailable = (e) => {
-      if (e.data.size > 0) recordingChunks.value.push(e.data)
-    }
-
-    recorder.onstop = async () => {
-      stream.getTracks().forEach(t => t.stop())
-      pauseRecordingTimer()
-      const rawBlob = new Blob(recordingChunks.value, { type: recorder.mimeType })
-      try {
-        const mp3Blob = await convertBlobToMp3(rawBlob)
-        const file = new File([mp3Blob], 'recording.mp3', { type: 'audio/mpeg' })
-        setAudioFile(file)
-      }
-      catch (error) {
-        console.error('[CustomVoice] MP3 conversion failed:', error)
-        errorMessage.value = $t('tts_custom_voice_error_recording_failed')
-      }
-    }
-
-    mediaRecorder.value = recorder
-    recorder.start()
-    isRecording.value = true
-    resumeRecordingTimer()
+    await mainAudio.startRecording()
   }
   catch {
-    errorMessage.value = $t('tts_custom_voice_error_mic_denied')
     hasMicrophone.value = false
   }
 }
 
-function stopRecording() {
-  if (mediaRecorder.value && mediaRecorder.value.state !== 'inactive') {
-    mediaRecorder.value.stop()
-  }
-  isRecording.value = false
-}
-
-function setAudioFile(file: File) {
-  if (file.size > 20 * 1024 * 1024) {
-    errorMessage.value = $t('tts_custom_voice_error_audio_too_large')
-    return
-  }
+async function startPromptRecording() {
   errorMessage.value = ''
-  audioFile.value = file
-
-  if (audioPreviewUrl.value) URL.revokeObjectURL(audioPreviewUrl.value)
-  stopAudioPreview()
-  const url = URL.createObjectURL(file)
-  audioPreviewUrl.value = url
-
-  const audio = new Audio(url)
-  audio.onloadedmetadata = () => {
-    audioDuration.value = audio.duration
+  try {
+    await promptAudio.startRecording()
+  }
+  catch {
+    hasMicrophone.value = false
   }
 }
 
-function clearAudio() {
-  stopAudioPreview()
-  if (audioPreviewUrl.value) {
-    URL.revokeObjectURL(audioPreviewUrl.value)
-    audioPreviewUrl.value = null
-  }
-  audioFile.value = null
-  audioDuration.value = 0
+const promptTextSnapshot = ref('')
+watch(() => promptAudio.file.value, (file) => {
+  promptTextSnapshot.value = file ? $t('tts_custom_voice_prompt_text') : ''
+})
+
+function clearMainAudio() {
+  mainPreview.stop()
+  mainAudio.clear()
 }
 
-function toggleAudioPreview() {
-  if (isPlayingPreview.value) {
-    stopAudioPreview()
-    return
-  }
-  if (!audioPreviewUrl.value) return
-
-  const audio = new Audio(audioPreviewUrl.value)
-  audioPreviewEl.value = audio
-  isPlayingPreview.value = true
-  audio.onended = () => {
-    isPlayingPreview.value = false
-  }
-  audio.onerror = () => {
-    isPlayingPreview.value = false
-  }
-  audio.play().catch(() => {
-    isPlayingPreview.value = false
-  })
-}
-
-function stopAudioPreview() {
-  if (audioPreviewEl.value) {
-    audioPreviewEl.value.pause()
-    audioPreviewEl.value = null
-  }
-  isPlayingPreview.value = false
-}
-
-function handleAudioChange(e: Event) {
-  const target = e.target as HTMLInputElement
-  const file = target.files?.[0]
-  if (!file) return
-  setAudioFile(file)
-  target.value = ''
+function clearPromptAudio() {
+  promptPreview.stop()
+  promptAudio.clear()
 }
 
 async function handleAvatarChange(e: Event) {
@@ -534,16 +604,18 @@ async function handleVoiceLanguageChange(value: string) {
 }
 
 async function handleUpload() {
-  if (!audioFile.value) return
+  if (!mainAudio.file.value) return
   errorMessage.value = ''
 
   try {
     const name = voiceName.value || $t('tts_custom_voice_default_name')
     const data = await uploadCustomVoice({
-      audio: audioFile.value,
+      audio: mainAudio.file.value,
       voiceName: name,
       voiceLanguage: voiceLanguage.value,
       avatar: avatarFile.value || undefined,
+      promptAudio: promptAudio.file.value || undefined,
+      promptText: promptTextSnapshot.value || undefined,
     })
     if (data) {
       uploadSuccess.value = true
@@ -592,9 +664,10 @@ function onOpenUpdate(open: boolean) {
 }
 
 onUnmounted(() => {
-  if (isRecording.value) stopRecording()
-  if (audioPreviewUrl.value) URL.revokeObjectURL(audioPreviewUrl.value)
+  mainAudio.cleanup()
+  promptAudio.cleanup()
   if (avatarPreview.value) URL.revokeObjectURL(avatarPreview.value)
-  stopAudioPreview()
+  mainPreview.stop()
+  promptPreview.stop()
 })
 </script>

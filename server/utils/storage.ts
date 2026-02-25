@@ -43,12 +43,28 @@ export function getCustomVoiceTTSCachePrefix(wallet: string): string {
   return `${config.ttsCacheBucketPrefix}/custom-voices/${wallet}/`
 }
 
-export function getCustomVoiceAudioPath(wallet: string, ext: string): string {
+export function getCustomVoiceAudioPrefix(wallet: string): string {
   const config = useRuntimeConfig()
   if (!config.customVoiceBucketPrefix) {
     throw new Error('Custom voice bucket is not configured')
   }
-  return `${config.customVoiceBucketPrefix}/${wallet}/source-audio.${ext}`
+  return `${config.customVoiceBucketPrefix}/${wallet}/source-audio.`
+}
+
+export function getCustomVoiceAudioPath(wallet: string, ext: string): string {
+  return `${getCustomVoiceAudioPrefix(wallet)}${ext}`
+}
+
+export function getCustomVoicePromptAudioPrefix(wallet: string): string {
+  const config = useRuntimeConfig()
+  if (!config.customVoiceBucketPrefix) {
+    throw new Error('Custom voice bucket is not configured')
+  }
+  return `${config.customVoiceBucketPrefix}/${wallet}/prompt-audio.`
+}
+
+export function getCustomVoicePromptAudioPath(wallet: string, ext: string): string {
+  return `${getCustomVoicePromptAudioPrefix(wallet)}${ext}`
 }
 
 export function getCustomVoiceAvatarPath(wallet: string, ext: string): string {
