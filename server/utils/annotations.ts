@@ -13,7 +13,7 @@ function getAnnotationsCollection(userWallet: string, nftClassId: string) {
     .doc(userWallet)
     .collection('books')
     .doc(nftClassId.toLowerCase())
-    .collection('annotations')
+    .collection('annotations') as FirebaseFirestore.CollectionReference<AnnotationFirestoreData>
 }
 
 function convertFirestoreToAnnotation(docId: string, data: AnnotationFirestoreData): Annotation {
@@ -37,8 +37,7 @@ export async function getAnnotations(
     .get()
 
   return snapshot.docs.map((doc) => {
-    const data = doc.data() as AnnotationFirestoreData
-    return convertFirestoreToAnnotation(doc.id, data)
+    return convertFirestoreToAnnotation(doc.id, doc.data())
   })
 }
 
@@ -63,7 +62,7 @@ export async function createAnnotation(
   await docRef.create(annotationData)
 
   const createdDoc = await docRef.get()
-  return convertFirestoreToAnnotation(docRef.id, createdDoc.data() as AnnotationFirestoreData)
+  return convertFirestoreToAnnotation(docRef.id, createdDoc.data()!)
 }
 
 export async function updateAnnotation(
@@ -91,7 +90,7 @@ export async function updateAnnotation(
   await docRef.update(updateData)
 
   const updatedDoc = await docRef.get()
-  return convertFirestoreToAnnotation(annotationId, updatedDoc.data() as AnnotationFirestoreData)
+  return convertFirestoreToAnnotation(annotationId, updatedDoc.data()!)
 }
 
 export async function deleteAnnotation(
