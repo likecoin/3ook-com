@@ -47,7 +47,7 @@ export class MinimaxTTSProvider implements BaseTTSProvider {
   provider = TTSProvider.MINIMAX
   format = 'audio/mpeg'
 
-  async processRequest(params: TTSRequestParams): Promise<ReadableStream> {
+  async processRequest(params: TTSRequestParams): Promise<Buffer> {
     const { text, language, voiceId, customMiniMaxVoiceId } = params
 
     if (!customMiniMaxVoiceId && !VOICE_MAPPING[voiceId]) {
@@ -61,7 +61,7 @@ export class MinimaxTTSProvider implements BaseTTSProvider {
     const resolvedVoiceId = (customMiniMaxVoiceId || VOICE_MAPPING[voiceId]) as string
     const model = getMinimaxModel(customMiniMaxVoiceId, language)
 
-    return await client.synthesizeStream({
+    const result = await client.synthesize({
       text,
       model,
       voiceSetting: {
@@ -72,23 +72,8 @@ export class MinimaxTTSProvider implements BaseTTSProvider {
       },
       pronunciationDict: getTTSPronunciationDictionary(language),
       languageBoost: LANG_MAPPING[language as keyof typeof LANG_MAPPING],
-      streamOptions: { excludeAggregatedAudio: true },
     })
-  }
 
-  createProcessStream(cacheWriteOptions: { isCacheEnabled: boolean, audioChunks: Buffer[], handleCacheWrite: () => void }): ReadableWritablePair {
-    const { isCacheEnabled, audioChunks, handleCacheWrite } = cacheWriteOptions
-
-    return new TransformStream({
-      transform(chunk, controller) {
-        if (isCacheEnabled) {
-          audioChunks.push(chunk)
-        }
-        controller.enqueue(chunk)
-      },
-      flush() {
-        handleCacheWrite()
-      },
-    })
+    return result.audio
   }
 }

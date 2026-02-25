@@ -21,7 +21,7 @@ function escapeSSML(text: string): string {
     .replace(/'/g, '&apos;')
 }
 
-function speakTextAsync(synthesizer: sdk.SpeechSynthesizer, text: string, voiceName: string, language: string) {
+function speakTextAsync(synthesizer: sdk.SpeechSynthesizer, text: string, voiceName: string, language: string): Promise<sdk.SpeechSynthesisResult> {
   return new Promise((resolve, reject) => {
     const escapedText = escapeSSML(text)
     const ssml = `<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="${language}">
@@ -53,7 +53,7 @@ export class AzureTTSProvider implements BaseTTSProvider {
   provider = TTSProvider.AZURE
   format = 'audio/mpeg'
 
-  async processRequest(params: TTSRequestParams): Promise<ReadableStream> {
+  async processRequest(params: TTSRequestParams): Promise<Buffer> {
     const { text, language, voiceId, config } = params
     const { azureSubscriptionKey, azureServiceRegion } = config
 
@@ -81,78 +81,13 @@ export class AzureTTSProvider implements BaseTTSProvider {
 
     const outputFormat = sdk.SpeechSynthesisOutputFormat.Audio16Khz128KBitRateMonoMp3
 
-    const pullStream = sdk.PullAudioOutputStream.create()
-    const audioConfig = sdk.AudioConfig.fromStreamOutput(pullStream)
     const speechConfig = sdk.SpeechConfig.fromSubscription(azureSubscriptionKey, azureServiceRegion)
     speechConfig.speechSynthesisVoiceName = voiceName
     speechConfig.speechSynthesisOutputFormat = outputFormat
 
-    const synthesizer = new sdk.SpeechSynthesizer(speechConfig, audioConfig)
-    await speakTextAsync(synthesizer, text, voiceName, language)
+    const synthesizer = new sdk.SpeechSynthesizer(speechConfig, null as unknown as sdk.AudioConfig)
+    const result = await speakTextAsync(synthesizer, text, voiceName, language)
 
-    const readableStream = new ReadableStream({
-      type: 'bytes',
-      autoAllocateChunkSize: 1024,
-      async pull(controller) {
-        try {
-          const byobRequest = controller.byobRequest
-          if (byobRequest?.view) {
-            const buffer = byobRequest.view.buffer as ArrayBuffer
-            const bytesRead = await pullStream.read(buffer)
-
-            if (bytesRead > 0) {
-              byobRequest.respond(bytesRead)
-            }
-            else {
-              pullStream.close()
-              controller.close()
-            }
-          }
-          else {
-            // Fallback: allocate our own buffer
-            const buffer = new ArrayBuffer(1024)
-            const bytesRead = await pullStream.read(buffer)
-
-            if (bytesRead > 0) {
-              const chunk = new Uint8Array(buffer, 0, bytesRead)
-              controller.enqueue(chunk)
-            }
-            else {
-              pullStream.close()
-              controller.close()
-            }
-          }
-        }
-        catch (error) {
-          console.error('[Speech] Error reading from pull stream:', error)
-          controller.error(error)
-          pullStream.close()
-        }
-      },
-      cancel() {
-        pullStream.close()
-      },
-    })
-
-    return readableStream
-  }
-
-  createProcessStream(cacheWriteOptions: { isCacheEnabled: boolean, audioChunks: Buffer[], handleCacheWrite: () => void }): ReadableWritablePair {
-    const { isCacheEnabled, audioChunks, handleCacheWrite } = cacheWriteOptions
-
-    return new TransformStream({
-      transform(chunk, controller) {
-        const audioBuffer = chunk
-        if (audioBuffer) {
-          if (isCacheEnabled) {
-            audioChunks.push(audioBuffer)
-          }
-          controller.enqueue(audioBuffer)
-        }
-      },
-      flush() {
-        handleCacheWrite()
-      },
-    })
+    return Buffer.from(result.audioData)
   }
 }

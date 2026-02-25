@@ -1,4 +1,3 @@
-import type { Writable } from 'node:stream'
 import { AzureTTSProvider } from '~/server/utils/tts-azure'
 
 const LANG_MAPPING = {
@@ -139,8 +138,7 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    // Make the request to the TTS provider
-    const response = await provider.processRequest({
+    const buffer = await provider.processRequest({
       text,
       language,
       voiceId: validVoiceId,
@@ -149,13 +147,14 @@ export default defineEventHandler(async (event) => {
       config,
     })
 
-    let cacheWriteStream: Writable | null = null
+    setHeader(event, 'content-type', provider.format)
+    setHeader(event, 'cache-control', isCustomVoice ? 'private, max-age=604800' : 'public, max-age=604800')
+    setHeader(event, 'content-length', buffer.length)
 
     if (isCacheEnabled) {
       const cacheFile = bucket.file(cacheKey!)
-      // Firebase Storage metadata has a 2KB limit per key
       const truncatedText = text.length > 1800 ? text.substring(0, 1800) + '...' : text
-      cacheWriteStream = cacheFile.createWriteStream({
+      cacheFile.save(buffer, {
         metadata: {
           contentType: provider.format,
           customMetadata: {
@@ -167,33 +166,12 @@ export default defineEventHandler(async (event) => {
             createdAt: new Date().toISOString(),
           },
         },
+      }).catch((error: unknown) => {
+        console.warn(`[Speech] Cache write failed for user ${session.user.evmWallet}:`, error)
       })
     }
 
-    const audioChunks: Buffer[] = []
-
-    function handleCacheWrite() {
-      if (isCacheEnabled && cacheWriteStream) {
-        if (audioChunks.length > 0) {
-          const combinedBuffer = Buffer.concat(audioChunks)
-          cacheWriteStream.end(combinedBuffer)
-        }
-        else {
-          cacheWriteStream.destroy()
-        }
-      }
-    }
-
-    // Use provider-specific stream processing
-    const processStream = provider.createProcessStream({
-      isCacheEnabled,
-      audioChunks,
-      handleCacheWrite,
-    })
-    const processResponse = response.pipeThrough(processStream)
-    setHeader(event, 'content-type', provider.format)
-    setHeader(event, 'cache-control', isCustomVoice ? 'private, max-age=604800' : 'public, max-age=604800')
-    return sendStream(event, processResponse)
+    return buffer
   }
   catch (error) {
     console.error(`[Speech] Failed to convert text for user ${session.user.evmWallet}:`, error)

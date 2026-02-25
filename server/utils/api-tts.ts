@@ -18,8 +18,7 @@ export interface TTSRequestParams {
 export interface BaseTTSProvider {
   provider: TTSProvider
   format: string
-  processRequest(params: TTSRequestParams): Promise<ReadableStream>
-  createProcessStream(cacheWriteOptions: { isCacheEnabled: boolean, audioChunks: Buffer[], handleCacheWrite: () => void }): ReadableWritablePair
+  processRequest(params: TTSRequestParams): Promise<Buffer>
 }
 
 export async function getUserTTSAvailable(event: H3Event): Promise<boolean> {
