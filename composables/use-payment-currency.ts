@@ -44,9 +44,9 @@ export function usePaymentCurrency() {
     return currency.value as PricingCurrency
   })
 
-  function getCheckoutCurrency(): string | undefined {
+  function getCheckoutCurrency(): string {
     if (currency.value === 'auto') {
-      return undefined
+      return detectedCurrency.value
     }
     return currency.value.toLowerCase()
   }
