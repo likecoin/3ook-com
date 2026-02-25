@@ -1076,7 +1076,7 @@ function createAnnotationHighlight(annotation: Annotation) {
     rendition.value.annotations.highlight(
       annotation.cfi,
       { id: annotation.id },
-      (e: MouseEvent) => {
+      (e: Event) => {
         e.stopPropagation()
         e.preventDefault()
         isAnnotationClickInProgress.value = true
