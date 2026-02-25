@@ -100,12 +100,15 @@ export function useSubscription() {
     paywallModal.close()
   }
 
+  const hasShownUpsellThisSession = useSessionStorage('3ook_upsell_plus_shown', false)
+
   async function openUpsellPlusModalIfEligible(props: UpsellPlusModalProps = {}) {
+    if (hasShownUpsellThisSession.value) return
     if (upsellPlusModal.isOpen) {
       upsellPlusModal.close()
     }
     let nftClassId = props.nftClassId
-    if (props.bookPrice && props.bookPrice > yearlyPrice.value) {
+    if (!props.bookPrice || props.bookPrice > yearlyPrice.value) {
       nftClassId = undefined
     }
     const shouldShowMonthlyPlan = !isLikerPlus.value && !props.from
@@ -119,6 +122,7 @@ export function useSubscription() {
         ...getUpsellPlusModalProps(),
         nftClassId,
       }
+      hasShownUpsellThisSession.value = true
       useLogEvent('upsell_plus_modal_open')
       return upsellPlusModal.open(upsellModalProps).result
     }

@@ -84,7 +84,7 @@
         </div>
 
         <span
-          class="text-md font-semibold whitespace-nowrap"
+          class="text-md font-semibold"
           v-text="plan.label"
         />
       </div>
@@ -134,12 +134,18 @@ const props = withDefaults(defineProps<{
   isAllowYearlyTrial?: boolean
   trialPeriodDays?: number
   trialPrice?: number
+  yearlyDescription?: string
+  monthlyDescription?: string
+  isLimitedOfferBadgeHidden?: boolean
 }>(), {
   isYearlyHidden: false,
   isMonthlyHidden: false,
   isAllowYearlyTrial: true,
   trialPeriodDays: DEFAULT_TRIAL_PERIOD_DAYS,
   trialPrice: PAID_TRIAL_PRICE,
+  yearlyDescription: undefined,
+  monthlyDescription: undefined,
+  isLimitedOfferBadgeHidden: false,
 })
 
 const { t: $t } = useI18n()
@@ -185,14 +191,16 @@ const plans = computed(() => {
     if (!isMonthly) {
       badgeText = $t('pricing_page_yearly_discount', { discount: yearlyDiscountPercent.value })
     }
-    else if (!props.isAllowYearlyTrial && isPaidTrial.value) {
+    else if (!props.isLimitedOfferBadgeHidden && !props.isAllowYearlyTrial && isPaidTrial.value) {
       badgeText = $t('subscribe_plus_alert_limited_offer')
     }
 
     return {
       isSelected: selectedPlan.value === value,
       value,
-      label: isMonthly ? $t('pricing_page_monthly') : $t('pricing_page_yearly'),
+      label: isMonthly
+        ? (props.monthlyDescription || $t('pricing_page_monthly'))
+        : (props.yearlyDescription || $t('pricing_page_yearly')),
       hint,
       badgeText,
       perUnit: isMonthly ? $t('pricing_page_price_per_month') : $t('pricing_page_price_per_year'),

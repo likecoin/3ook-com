@@ -8,6 +8,7 @@
     ]"
   >
     <div
+      v-if="!isTitleHidden"
       :class="[
         isDarkBackground ? 'text-theme-cyan' : 'text-theme-black dark:text-theme-cyan',
         isTitleCenter ? 'text-center' : 'text-left',
@@ -45,12 +46,19 @@
         </li>
         <li>
           <UIcon name="i-material-symbols-check" />
-          <button
-            type="button"
-            class="underline cursor-pointer"
-            @click="handleOpenIntercom"
-            v-text="$t('pricing_page_feature_4')"
-          />
+          <i18n-t
+            keypath="pricing_page_feature_4"
+            tag="span"
+          >
+            <template #customerService>
+              <button
+                type="button"
+                class="underline cursor-pointer"
+                @click="handleOpenIntercom"
+                v-text="$t('pricing_page_feature_4_customer_service')"
+              />
+            </template>
+          </i18n-t>
         </li>
       </template>
       <li v-if="selectedPlan === undefined || isYearlyPlan">
@@ -73,11 +81,13 @@ const props = withDefaults(defineProps<{
   selectedPlan?: SubscriptionPlan
   title?: string
   isTitleCenter?: boolean
+  isTitleHidden?: boolean
   isDarkBackground?: boolean
   isCompact?: boolean
   isAudioHidden?: boolean
 }>(), {
   isTitleCenter: false,
+  isTitleHidden: false,
   isDarkBackground: false,
   isCompact: false,
   isAudioHidden: false,

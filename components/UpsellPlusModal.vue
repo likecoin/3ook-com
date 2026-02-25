@@ -1,31 +1,13 @@
 <template>
   <UModal
     :ui="{
-      header: shouldShowLimitedOfferAlert ? 'p-0 sm:p-0 min-h-max' : undefined,
       title: 'text-sm laptop:text-base font-bold text-center',
       footer: 'flex flex-col-reverse laptop:flex-row items-center gap-3',
       body: 'flex flex-col items-start gap-1 laptop:gap-2 max-laptop:text-sm px-6',
     }"
     @update:open="onOpenUpdate"
   >
-    <template
-      v-if="shouldShowLimitedOfferAlert"
-      #header
-    >
-      <PricingLimitedOfferAlert
-        class="w-full py-6"
-        :trial-period-days="trialPeriodDays"
-      />
-    </template>
-    <template
-      v-else
-      #header
-    >
-      <UIcon
-        name="i-material-symbols-celebration-outline"
-        class="text-theme-cyan"
-        size="24"
-      />
+    <template #header>
       <span
         class="text-lg font-bold"
         v-text="$t('upsell_plus_modal_title')"
@@ -39,55 +21,12 @@
       />
     </template>
     <template #body>
-      <i18n-t
-        v-if="shouldShowYearlyPlan"
-        class="self-center text-highlighted text-center font-bold text-[16px] laptop:text-[20px]"
-        keypath="upsell_plus_yearly_notice"
-        tag="p"
-      >
-        <template #year>
-          <span
-            class="text-theme-400 font-semibold"
-            v-text="$t('upsell_plus_yearly_member')"
-          />
-        </template>
-        <template #gift>
-          <span
-            class="text-theme-400 font-semibold"
-            v-text="$t('upsell_plus_yearly_gift')"
-          />
-        </template>
-      </i18n-t>
-      <span
-        v-if="shouldShowMonthlyPlan"
-        class="self-center text-center text-muted text-xs"
-        v-text="$t('upsell_plus_or')"
-      />
-      <i18n-t
-        v-if="shouldShowMonthlyPlan"
-        class="self-center text-highlighted text-center font-bold text-[16px] laptop:text-[20px]"
-        keypath="upsell_plus_monthly_notice"
-        tag="p"
-      >
-        <template #month>
-          <span
-            class="text-highlighted font-semibold"
-            v-text="$t('upsell_plus_monthly_member')"
-          />
-        </template>
-        <template #discount>
-          <span
-            class="text-theme-400 font-semibold"
-            v-text="$t('upsell_plus_monthly_discount')"
-          />
-        </template>
-      </i18n-t>
-
       <PricingPlanBenefits
-        class="self-center mt-4 laptop:mt-6"
+        class="self-center"
         :selected-plan="selectedPlan"
+        :title="$t('upsell_plus_benefits_title')"
         :is-title-center="true"
-        :is-compact="true"
+        :is-compact="false"
         :is-audio-hidden="isAudioHidden"
       />
 
@@ -98,6 +37,9 @@
         :is-yearly-hidden="!shouldShowYearlyPlan"
         :is-allow-yearly-trial="isAllowYearlyTrial"
         :trial-period-days="trialPeriodDays"
+        :yearly-description="yearlyDescription"
+        :monthly-description="monthlyDescription"
+        :is-limited-offer-badge-hidden="true"
       />
     </template>
     <template #footer>
@@ -158,8 +100,17 @@ const isAllowYearlyTrial = computed(() => !props.nftClassId)
 
 const isPaidTrial = computed(() => props.trialPeriodDays && props.trialPeriodDays >= PAID_TRIAL_PERIOD_DAYS_THRESHOLD)
 
-const shouldShowLimitedOfferAlert = computed(() => {
-  return !props.isLikerPlus && isPaidTrial.value && (shouldShowMonthlyPlan.value || isAllowYearlyTrial.value)
+const canGiftBook = computed(() => !!props.bookPrice && !!props.nftClassId)
+const isFreeBook = computed(() => !props.bookPrice)
+
+const yearlyDescription = computed(() => {
+  if (canGiftBook.value) return $t('upsell_plus_plan_yearly_gift_book')
+  return undefined
+})
+
+const monthlyDescription = computed(() => {
+  if (!isFreeBook.value) return $t('upsell_plus_plan_monthly_discount_book')
+  return undefined
 })
 
 const subscribeButtonLabel = computed(() => {
