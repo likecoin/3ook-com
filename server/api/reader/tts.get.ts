@@ -36,6 +36,7 @@ const VOICE_PROVIDER_MAPPING: Record<string, TTSProvider> = {
   // Minimax voices
   0: TTSProvider.MINIMAX,
   1: TTSProvider.MINIMAX,
+  aurora: TTSProvider.MINIMAX,
   pazu: TTSProvider.MINIMAX,
   phoebe: TTSProvider.MINIMAX,
   xiaochen: TTSProvider.AZURE,
@@ -73,7 +74,7 @@ export default defineEventHandler(async (event) => {
     })
   }
   const config = useRuntimeConfig()
-  const { text, language: rawLanguage, voice_id: voiceId = '0' } = getQuery(event)
+  const { text, language: rawLanguage, voice_id: voiceId } = getQuery(event)
 
   if (!text || typeof text !== 'string') {
     throw createError({

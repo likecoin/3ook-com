@@ -12,6 +12,7 @@ const VOICE_MAPPING: Record<string, string> = {
   // Minimax voices
   0: 'Chinese (Mandarin)_Warm_Bestie',
   1: 'Chinese (Mandarin)_Southern_Young_Man',
+  aurora: 'three_book_aurora_v0',
   pazu: 'book_pazu_v2',
   phoebe: 'phoebe_v1',
 }

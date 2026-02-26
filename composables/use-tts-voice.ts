@@ -1,7 +1,7 @@
 import { useStorage } from '@vueuse/core'
 import type { CustomVoiceData } from '~/shared/types/custom-voice'
 import phoebeAvatar from '@/assets/images/voice-avatars/phoebe.jpg'
-import leiTingYinAvatar from '@/assets/images/voice-avatars/lei-ting-yin.jpg'
+import auroraAvatar from '@/assets/images/voice-avatars/aurora.jpg'
 import pazuAvatar from '@/assets/images/voice-avatars/pazu.jpg'
 import defaultAvatar from '@/assets/images/voice-avatars/default.jpg'
 import customDefaultAvatar from '@/assets/images/voice-avatars/custom-default.jpg'
@@ -30,7 +30,7 @@ export function useTTSVoice(options: TTSVoiceOptions = {}) {
     { label: 'Pazu 薯伯伯 - 粵語', value: 'zh-HK_pazu' },
     { label: 'Phoebe - 粵語', value: 'zh-HK_phoebe' },
     { label: '曉晨 - 粵語', value: 'zh-HK_xiaochen' },
-    { label: '雷庭音 - 國語', value: 'zh-TW_0' },
+    { label: 'Aurora - 國語', value: 'zh-TW_aurora' },
     { label: '國語男聲', value: 'zh-TW_1' },
     { label: 'English female', value: 'en-US_0' },
     { label: 'English male', value: 'en-US_1' },
@@ -120,8 +120,8 @@ export function useTTSVoice(options: TTSVoiceOptions = {}) {
       case 'zh-HK_pazu':
         return pazuAvatar
 
-      case 'zh-TW_0': // lei-ting-yin
-        return leiTingYinAvatar
+      case 'zh-TW_aurora':
+        return auroraAvatar
 
       default:
         return defaultAvatar

@@ -27,7 +27,7 @@ export function useTTSSamplesPlayer(options: TTSSamplesPlayerOptions = {}) {
         voiceId: 'pazu',
       },
       {
-        id: 'mandarin-lei-ting-yin',
+        id: 'mandarin-aurora',
         title: $t('tts_sample_mandarin'),
         description: $t('tts_sample_mandarin_description'),
         segments: [
@@ -43,7 +43,7 @@ export function useTTSSamplesPlayer(options: TTSSamplesPlayerOptions = {}) {
           '雖然她不記得打過我無數次，但這一次，確實是她最後一次打我，那年我十四歲。',
         ],
         language: 'zh-TW',
-        voiceId: '0',
+        voiceId: 'aurora',
       },
     ].map(({ voiceId, ...sample }) => {
       const languageVoice = `${sample.language}_${voiceId}`

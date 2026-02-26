@@ -303,7 +303,7 @@ export function useTextToSpeech(options: TTSOptions = {}) {
     const params = new URLSearchParams({
       text: sanitizeTTSText(element.text),
       language: language || 'zh-HK',
-      voice_id: voiceIdParts.join('_') || '0',
+      voice_id: voiceIdParts.join('_'),
     })
     return `/api/reader/tts?${params.toString()}`
   }
