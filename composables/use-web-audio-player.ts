@@ -40,8 +40,12 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
     preloadAudio.value = null
   }
 
-  function createAudio(element: TTSSegment): HTMLAudioElement {
-    errored = false
+  // Ensure a single Audio element exists and has event handlers attached.
+  // Reusing the same element across segments preserves the iOS audio session
+  // and user-gesture association, allowing background playback to continue.
+  function ensureAudio(): HTMLAudioElement {
+    if (activeAudio.value) return activeAudio.value
+
     const audio = new Audio()
     activeAudio.value = audio
     audio.preload = 'auto'
@@ -103,11 +107,6 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
       handlers.error?.(error)
     }
 
-    audio.src = getAudioSrc(element)
-    audio.playbackRate = currentRate
-    audio.defaultPlaybackRate = currentRate
-    audio.load()
-
     return audio
   }
 
@@ -130,13 +129,24 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
 
   function playAtIndex(index: number) {
     currentIndex = index
-    resetAudio()
+    errored = false
 
     const element = segments[index]
     if (!element) return
 
+    // Stop current playback without destroying the audio element
+    if (activeAudio.value) {
+      pausedInternally = true
+      activeAudio.value.pause()
+      activeAudio.value.currentTime = 0
+    }
+
     handlers.trackChanged?.(index)
-    const audio = createAudio(element)
+    const audio = ensureAudio()
+    audio.src = getAudioSrc(element)
+    audio.playbackRate = currentRate
+    audio.defaultPlaybackRate = currentRate
+    audio.load()
     audio.play()?.catch((e: unknown) => {
       if (e instanceof DOMException && e.name === 'AbortError') return
       console.warn('Play rejected:', e)
