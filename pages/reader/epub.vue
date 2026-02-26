@@ -1358,7 +1358,8 @@ async function handleAnnotationNavigate(annotation: Annotation) {
     }
     await rendition.value?.display(cfi.toString())
   }
-  catch {
+  catch (error) {
+    console.error('Failed to navigate to annotation:', error)
     toast.add({
       title: $t('reader_annotations_navigate_failed'),
       color: 'error',
