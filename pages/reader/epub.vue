@@ -333,7 +333,7 @@ import ePub, {
   type Location,
   type Section,
 } from '@likecoin/epub-ts'
-import { ANNOTATION_COLORS_MAP } from '~/constants/annotations'
+import { ANNOTATION_COLORS_MAP, ANNOTATION_TEXT_MAX_LENGTH } from '~/constants/annotations'
 
 declare interface EpubView {
   window: Window
@@ -1159,7 +1159,7 @@ function handleTextSelection(event: MouseEvent, viewWindow: Window) {
       return
     }
 
-    selectedText.value = text
+    selectedText.value = text.slice(0, ANNOTATION_TEXT_MAX_LENGTH)
     selectedCfi.value = cfiRange
     selectedChapterTitle.value = activeNavItemLabel.value
 
