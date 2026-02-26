@@ -38,12 +38,9 @@
           :class="[
             'w-8 h-8 rounded-full border-2 transition-transform focus:outline-none focus:ring-1 focus:ring-offset-1',
             selectedColor === color ? 'border-primary' : 'border-transparent',
-            isDisabled
-              ? 'opacity-50 cursor-not-allowed'
-              : 'hover:scale-110 cursor-pointer',
+            'hover:scale-110 cursor-pointer',
           ]"
           :style="{ backgroundColor: ANNOTATION_INDICATOR_COLORS_MAP[color] }"
-          :disabled="isDisabled"
           @click="selectedColor = color"
         />
       </div>
@@ -56,7 +53,6 @@
         <UTextarea
           v-model="note"
           class="w-full"
-          :disabled="isDisabled"
           :maxlength="ANNOTATION_NOTE_MAX_LENGTH"
           :placeholder="$t('reader_annotation_note_placeholder')"
           variant="soft"
@@ -71,8 +67,6 @@
         color="error"
         variant="soft"
         :label="$t('reader_annotation_delete')"
-        :loading="isDeleting"
-        :disabled="isSaving"
         @click="handleDelete"
       />
       <div class="flex gap-2">
@@ -80,14 +74,11 @@
           color="neutral"
           variant="outline"
           :label="$t('reader_annotation_cancel')"
-          :disabled="isDisabled"
           @click="handleCancel"
         />
         <UButton
           color="primary"
           :label="$t('reader_annotation_save')"
-          :loading="isSaving"
-          :disabled="isDeleting"
           @click="handleSave"
         />
       </div>
@@ -108,8 +99,6 @@ const props = defineProps<{
   text: string
   initialColor: AnnotationColor
   isNewAnnotation?: boolean
-  isSaving?: boolean
-  isDeleting?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -122,8 +111,6 @@ const open = defineModel<boolean>('open')
 
 const selectedColor = ref<AnnotationColor>(props.initialColor)
 const note = ref(props.annotation?.note || '')
-
-const isDisabled = computed(() => props.isSaving || props.isDeleting)
 
 const selectedColorRgba = computed(() => {
   return ANNOTATION_COLORS_MAP[selectedColor.value]

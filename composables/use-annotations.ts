@@ -37,8 +37,23 @@ export default function useAnnotations(params: {
     return fetchPromise.value
   }
 
-  async function createAnnotation(data: AnnotationCreateData): Promise<Annotation | null> {
+  function createAnnotation(data: AnnotationCreateData): Annotation {
+    const now = Date.now()
+    const annotation: Annotation = {
+      id: `temp-${now}`,
+      ...data,
+      note: data.note || '',
+      chapterTitle: data.chapterTitle || '',
+      createdAt: now,
+      updatedAt: now,
+    }
+    annotations.value = [...annotations.value, annotation]
+    return annotation
+  }
+
+  async function saveAnnotation(annotationId: string, data: AnnotationCreateData): Promise<Annotation | null> {
     if (!hasLoggedIn.value || !nftClassId.value) {
+      annotations.value = annotations.value.filter(a => a.id !== annotationId)
       return null
     }
 
@@ -51,10 +66,13 @@ export default function useAnnotations(params: {
         },
       })
 
-      annotations.value = [...annotations.value, response.annotation]
+      annotations.value = annotations.value.map(a =>
+        a.id === annotationId ? response.annotation : a,
+      )
       return response.annotation
     }
     catch (error: unknown) {
+      annotations.value = annotations.value.filter(a => a.id !== annotationId)
       if (error instanceof FetchError && error.statusCode === 409) {
         await fetchAnnotations()
         const existing = annotations.value.find(a => a.cfi === data.cfi)
@@ -69,6 +87,11 @@ export default function useAnnotations(params: {
     if (!hasLoggedIn.value || !nftClassId.value) {
       return null
     }
+
+    const oldAnnotations = [...annotations.value]
+    annotations.value = annotations.value.map(a =>
+      a.id === annotationId ? { ...a, ...data, updatedAt: Date.now() } : a,
+    )
 
     try {
       const response = await $fetch<{ annotation: Annotation }>(`/api/books/${nftClassId.value}/annotations/${annotationId}`, {
@@ -85,6 +108,7 @@ export default function useAnnotations(params: {
       return response.annotation
     }
     catch (error) {
+      annotations.value = oldAnnotations
       console.warn(`Failed to update annotation ${annotationId}:`, error)
       return null
     }
@@ -123,6 +147,7 @@ export default function useAnnotations(params: {
     hasFetched: computed(() => hasFetched.value),
     fetchAnnotations,
     createAnnotation,
+    saveAnnotation,
     updateAnnotation,
     deleteAnnotation,
     getAnnotationByCfi,

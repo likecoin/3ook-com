@@ -317,8 +317,6 @@
       :text="editingAnnotation?.text || selectedText"
       :initial-color="editingAnnotation?.color || pendingAnnotationColor"
       :is-new-annotation="isNewAnnotation"
-      :is-saving="isAnnotationSaving"
-      :is-deleting="isAnnotationDeleting"
       @save="handleAnnotationModalSave"
       @delete="handleAnnotationModalDelete"
     />
@@ -380,6 +378,7 @@ const {
   annotations,
   fetchAnnotations,
   createAnnotation,
+  saveAnnotation,
   updateAnnotation,
   deleteAnnotation,
   getAnnotationById,
@@ -418,8 +417,6 @@ const selectedText = ref('')
 const selectedCfi = ref('')
 const selectedChapterTitle = ref('')
 const isAnnotationModalOpen = ref(false)
-const isAnnotationSaving = ref(false)
-const isAnnotationDeleting = ref(false)
 const editingAnnotation = ref<Annotation | null>(null)
 const isNewAnnotation = ref(false)
 const pendingAnnotationColor = ref<AnnotationColor>('yellow')
@@ -1068,7 +1065,7 @@ function checkIsSelectingText() {
   return !!selection && selection.toString().length > 0
 }
 
-function createAnnotationHighlight(annotation: Annotation) {
+function addAnnotationHighlight(annotation: Annotation) {
   if (!rendition.value) return
   if (renderedHighlights.has(annotation.cfi)) return
 
@@ -1119,7 +1116,7 @@ function renderAnnotations() {
   }
 
   // Add new highlights
-  annotations.value.forEach(createAnnotationHighlight)
+  annotations.value.forEach(addAnnotationHighlight)
 }
 
 function handleAnnotationClick(annotationId: string) {
@@ -1196,11 +1193,15 @@ async function handleAnnotationColorSelect(color: AnnotationColor) {
 
   const existingAnnotation = annotations.value.find(a => a.cfi === selectedCfi.value)
   if (existingAnnotation) {
+    // Re-render with new color immediately
+    removeAnnotationHighlight(existingAnnotation.cfi)
+    addAnnotationHighlight({ ...existingAnnotation, color })
+
     const updated = await updateAnnotation(existingAnnotation.id, { color })
-    if (updated) {
-      removeAndReRenderHighlight(existingAnnotation.cfi, existingAnnotation.id)
-    }
-    else {
+    if (!updated) {
+      // Revert to original color
+      removeAnnotationHighlight(existingAnnotation.cfi)
+      addAnnotationHighlight(existingAnnotation)
       toast.add({
         title: $t('reader_annotations_update_failed'),
         color: 'error',
@@ -1208,16 +1209,23 @@ async function handleAnnotationColorSelect(color: AnnotationColor) {
     }
   }
   else {
-    const annotation = await createAnnotation({
+    const createData: AnnotationCreateData = {
       cfi: selectedCfi.value,
       text: selectedText.value,
       color,
       chapterTitle: selectedChapterTitle.value,
-    })
-    if (annotation) {
-      createAnnotationHighlight(annotation)
+    }
+    const newAnnotation = createAnnotation(createData)
+    addAnnotationHighlight(newAnnotation)
+
+    const saved = await saveAnnotation(newAnnotation.id, createData)
+    if (saved) {
+      // Re-render with server-assigned ID
+      removeAnnotationHighlight(newAnnotation.cfi)
+      addAnnotationHighlight(saved)
     }
     else {
+      removeAnnotationHighlight(newAnnotation.cfi)
       toast.add({
         title: $t('reader_annotations_create_failed'),
         color: 'error',
@@ -1238,97 +1246,98 @@ async function handleAnnotationAddNote() {
     isNewAnnotation.value = false
   }
   else {
-    const annotation = await createAnnotation({
+    const newAnnotation = createAnnotation({
       cfi: selectedCfi.value,
       text: selectedText.value,
       color: pendingAnnotationColor.value,
       chapterTitle: selectedChapterTitle.value,
     })
-    if (annotation) {
-      createAnnotationHighlight(annotation)
-      editingAnnotation.value = annotation
-      isNewAnnotation.value = true
-    }
-    else {
-      toast.add({
-        title: $t('reader_annotations_create_failed'),
-        color: 'error',
-      })
-      return
-    }
+    addAnnotationHighlight(newAnnotation)
+    editingAnnotation.value = newAnnotation
+    isNewAnnotation.value = true
   }
 
   isAnnotationModalOpen.value = true
   renditionViewWindow.value?.getSelection()?.removeAllRanges()
-}
 
-function removeAndReRenderHighlight(cfi: string, annotationId: string) {
-  removeAnnotationHighlight(cfi)
-  const annotation = getAnnotationById(annotationId)
-  if (annotation) {
-    createAnnotationHighlight(annotation)
+  if (!isNewAnnotation.value || !editingAnnotation.value) return
+
+  const newAnnotation = editingAnnotation.value
+  const saved = await saveAnnotation(newAnnotation.id, {
+    cfi: newAnnotation.cfi,
+    text: newAnnotation.text,
+    color: newAnnotation.color,
+    chapterTitle: newAnnotation.chapterTitle,
+  })
+  if (saved) {
+    removeAnnotationHighlight(newAnnotation.cfi)
+    addAnnotationHighlight(saved)
+    if (editingAnnotation.value?.id === newAnnotation.id) {
+      editingAnnotation.value = saved
+    }
+  }
+  else {
+    removeAnnotationHighlight(newAnnotation.cfi)
+    toast.add({
+      title: $t('reader_annotations_create_failed'),
+      color: 'error',
+    })
   }
 }
 
 async function handleAnnotationModalSave(data: { color: AnnotationColor, note: string }) {
-  isAnnotationSaving.value = true
-  try {
-    if (editingAnnotation.value) {
-      const result = await updateAnnotation(editingAnnotation.value.id, {
-        color: data.color,
-        note: data.note,
-      })
-      if (!result) {
-        toast.add({
-          title: $t('reader_annotations_update_failed'),
-          color: 'error',
-          duration: 3000,
-          progress: false,
-        })
-        return
-      }
-      removeAndReRenderHighlight(editingAnnotation.value.cfi, editingAnnotation.value.id)
-    }
-    // Close modal first
-    isAnnotationModalOpen.value = false
-    // Wait for modal close transition to complete before resetting state
-    setTimeout(() => {
-      editingAnnotation.value = null
-      isNewAnnotation.value = false
-    }, 300)
-  }
-  finally {
-    isAnnotationSaving.value = false
+  if (!editingAnnotation.value) return
+
+  const { cfi, id } = editingAnnotation.value
+
+  // Re-render highlight with new color immediately
+  removeAnnotationHighlight(cfi)
+  addAnnotationHighlight({ ...editingAnnotation.value, color: data.color })
+
+  // Close modal immediately for better UX
+  isAnnotationModalOpen.value = false
+  setTimeout(() => {
+    editingAnnotation.value = null
+    isNewAnnotation.value = false
+  }, 300)
+
+  const result = await updateAnnotation(id, {
+    color: data.color,
+    note: data.note,
+  })
+  if (!result) {
+    // Revert highlight to previous state if update failed
+    removeAnnotationHighlight(cfi)
+    const reverted = getAnnotationById(id)
+    if (reverted) addAnnotationHighlight(reverted)
+    toast.add({
+      title: $t('reader_annotations_update_failed'),
+      color: 'error',
+    })
   }
 }
 
 async function handleAnnotationModalDelete() {
-  isAnnotationDeleting.value = true
-  try {
-    if (editingAnnotation.value) {
-      const cfi = editingAnnotation.value.cfi
-      const success = await deleteAnnotation(editingAnnotation.value.id)
-      if (!success) {
-        toast.add({
-          title: $t('reader_annotations_delete_failed'),
-          color: 'error',
-          duration: 3000,
-          progress: false,
-        })
-        return
-      }
-      removeAnnotationHighlight(cfi)
-    }
-    // Close modal first
-    isAnnotationModalOpen.value = false
-    // Wait for modal close transition to complete before resetting state
-    setTimeout(() => {
-      editingAnnotation.value = null
-      isNewAnnotation.value = false
-    }, 300)
-  }
-  finally {
-    isAnnotationDeleting.value = false
+  if (!editingAnnotation.value) return
+
+  const annotation = editingAnnotation.value
+  removeAnnotationHighlight(annotation.cfi)
+
+  isAnnotationModalOpen.value = false
+  setTimeout(() => {
+    editingAnnotation.value = null
+    isNewAnnotation.value = false
+  }, 300)
+
+  const success = await deleteAnnotation(annotation.id)
+  if (!success) {
+    addAnnotationHighlight(annotation)
+    toast.add({
+      title: $t('reader_annotations_delete_failed'),
+      color: 'error',
+      duration: 3000,
+      progress: false,
+    })
   }
 }
 
