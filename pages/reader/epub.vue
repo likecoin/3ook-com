@@ -412,7 +412,7 @@ const isMobileTocOpen = computed({
 const isPageLoading = ref(false)
 
 const isAnnotationMenuVisible = ref(false)
-const annotationMenuPosition = ref({ x: 0, y: 0 })
+const annotationMenuPosition = ref({ x: 0, y: 0, yBottom: 0 })
 const selectedText = ref('')
 const selectedCfi = ref('')
 const selectedChapterTitle = ref('')
@@ -1173,12 +1173,14 @@ function handleTextSelection(event: MouseEvent, viewWindow: Window) {
       annotationMenuPosition.value = {
         x: iframeRect.left + rect.left + rect.width / 2,
         y: iframeRect.top + rect.top,
+        yBottom: iframeRect.top + rect.bottom,
       }
     }
     else {
       annotationMenuPosition.value = {
         x: rect.left + rect.width / 2,
         y: rect.top,
+        yBottom: rect.bottom,
       }
     }
 
