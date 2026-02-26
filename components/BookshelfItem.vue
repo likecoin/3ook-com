@@ -348,7 +348,8 @@ async function exportAnnotations() {
     }
 
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/ld+json' })
-    saveAs(blob, `${bookInfo.name.value || props.nftClassId}-annotations.json`)
+    const filename = bookInfo.name.value?.replace(/[<>:"/\\|?*\n\r]+/g, '_').trim() || props.nftClassId
+    saveAs(blob, `${filename}-annotations.json`)
     toast.add({
       title: $t('bookshelf_export_annotations_success'),
       duration: 3000,
