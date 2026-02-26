@@ -22,8 +22,10 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
 
   function resetAudio() {
     if (activeAudio.value) {
-      pausedInternally = true
-      activeAudio.value.pause()
+      if (!activeAudio.value.paused) {
+        pausedInternally = true
+        activeAudio.value.pause()
+      }
       activeAudio.value.src = ''
       activeAudio.value.load()
       activeAudio.value.onplay = null
@@ -61,7 +63,6 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
       playing = false
       if (pausedInternally) {
         pausedInternally = false
-        handlers.pause?.()
         return
       }
       handlers.pause?.()
@@ -135,7 +136,7 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
     if (!element) return
 
     // Stop current playback without destroying the audio element
-    if (activeAudio.value) {
+    if (activeAudio.value && !activeAudio.value.paused) {
       pausedInternally = true
       activeAudio.value.pause()
       activeAudio.value.currentTime = 0
@@ -188,10 +189,13 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
 
   function pause() {
     if (activeAudio.value) {
-      pausedInternally = true
-      activeAudio.value.pause()
+      if (!activeAudio.value.paused) {
+        pausedInternally = true
+        activeAudio.value.pause()
+      }
       activeAudio.value.currentTime = 0
     }
+    handlers.pause?.()
   }
 
   function stop() {
