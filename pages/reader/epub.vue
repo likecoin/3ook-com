@@ -1132,7 +1132,7 @@ function handleAnnotationClick(annotationId: string) {
   }
 }
 
-function handleTextSelection(event: MouseEvent, viewWindow: Window) {
+function handleTextSelection(_event: MouseEvent, viewWindow: Window) {
   const selection = viewWindow.getSelection()
   if (!selection || selection.isCollapsed || !selection.toString().trim()) {
     isAnnotationMenuVisible.value = false
