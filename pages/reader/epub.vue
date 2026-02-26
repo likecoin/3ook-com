@@ -1119,6 +1119,8 @@ function renderAnnotations() {
   annotations.value.forEach(addAnnotationHighlight)
 }
 
+watch(annotations, renderAnnotations)
+
 function handleAnnotationClick(annotationId: string) {
   const annotation = getAnnotationById(annotationId)
   if (annotation) {
