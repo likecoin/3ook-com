@@ -140,7 +140,7 @@
               v-text="$t('tts_custom_voice_suggested_text_label')"
             />
             <blockquote class="border-l-2 border-gray-300 pl-3 text-sm text-muted italic">
-              {{ locale === 'en' ? $t('tts_custom_voice_suggested_text_en') : $t('tts_custom_voice_suggested_text_zh') }}
+              {{ $t('tts_custom_voice_suggested_text') }}
             </blockquote>
           </div>
 
