@@ -1343,14 +1343,27 @@ async function handleAnnotationModalDelete() {
   }
 }
 
-function handleAnnotationNavigate(annotation: Annotation) {
+async function handleAnnotationNavigate(annotation: Annotation) {
   isAnnotationsListOpen.value = false
   isPageLoading.value = true
-  const cfi = new EpubCFI(annotation.cfi)
-  if (cfi.range) {
-    cfi.collapse(true)
+  try {
+    const cfi = new EpubCFI(annotation.cfi)
+    if (cfi.range) {
+      cfi.collapse(true)
+    }
+    await rendition.value?.display(cfi.toString())
   }
-  rendition.value?.display(cfi.toString())
+  catch {
+    toast.add({
+      title: $t('reader_annotations_navigate_failed'),
+      color: 'error',
+      duration: 3000,
+      progress: false,
+    })
+  }
+  finally {
+    isPageLoading.value = false
+  }
 }
 
 const isShiftPressed = useKeyModifier('Shift')

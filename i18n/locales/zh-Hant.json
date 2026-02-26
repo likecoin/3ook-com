@@ -513,6 +513,7 @@
   "reader_annotations_create_failed": "建立標註失敗",
   "reader_annotations_delete_failed": "刪除標註失敗",
   "reader_annotations_empty": "尚無標註",
+  "reader_annotations_navigate_failed": "無法跳轉至標註位置",
   "reader_annotations_title": "標註與註記",
   "reader_annotations_update_failed": "更新標註失敗",
   "reader_display_font_size_label": "字體大小",
