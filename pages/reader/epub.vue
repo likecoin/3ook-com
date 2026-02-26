@@ -1280,6 +1280,9 @@ async function handleAnnotationAddNote() {
   }
   else {
     removeAnnotationHighlight(newAnnotation.cfi)
+    isAnnotationModalOpen.value = false
+    editingAnnotation.value = null
+    isNewAnnotation.value = false
     toast.add({
       title: $t('reader_annotations_create_failed'),
       color: 'error',
