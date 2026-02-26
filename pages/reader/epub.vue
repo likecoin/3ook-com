@@ -422,6 +422,7 @@ const isNewAnnotation = ref(false)
 const pendingAnnotationColor = ref<AnnotationColor>('yellow')
 const isAnnotationsListOpen = ref(false)
 const isAnnotationClickInProgress = ref(false)
+const pendingSavePromise = ref<Promise<Annotation | null> | null>(null)
 const renderedHighlights = new Set<string>()
 
 const { loadingLabel, loadingPercentage, loadFileAsBuffer } = useBookFileLoader()
@@ -1267,12 +1268,14 @@ async function handleAnnotationAddNote() {
   if (!isNewAnnotation.value || !editingAnnotation.value) return
 
   const newAnnotation = editingAnnotation.value
-  const saved = await saveAnnotation(newAnnotation.id, {
+  pendingSavePromise.value = saveAnnotation(newAnnotation.id, {
     cfi: newAnnotation.cfi,
     text: newAnnotation.text,
     color: newAnnotation.color,
     chapterTitle: newAnnotation.chapterTitle,
   })
+  const saved = await pendingSavePromise.value
+  pendingSavePromise.value = null
   if (saved) {
     removeAnnotationHighlight(newAnnotation.cfi)
     addAnnotationHighlight(saved)
@@ -1295,7 +1298,7 @@ async function handleAnnotationAddNote() {
 async function handleAnnotationModalSave(data: { color: AnnotationColor, note: string }) {
   if (!editingAnnotation.value) return
 
-  const { cfi, id } = editingAnnotation.value
+  const { cfi } = editingAnnotation.value
 
   // Re-render highlight with new color immediately
   removeAnnotationHighlight(cfi)
@@ -1308,14 +1311,22 @@ async function handleAnnotationModalSave(data: { color: AnnotationColor, note: s
     isNewAnnotation.value = false
   }, 300)
 
-  const result = await updateAnnotation(id, {
+  // Wait for initial save to complete so we have the server-assigned ID
+  if (pendingSavePromise.value) {
+    await pendingSavePromise.value
+  }
+
+  // Look up by CFI to get the server-assigned ID
+  const current = annotations.value.find(a => a.cfi === cfi)
+  if (!current) return
+
+  const result = await updateAnnotation(current.id, {
     color: data.color,
     note: data.note,
   })
   if (!result) {
-    // Revert highlight to previous state if update failed
     removeAnnotationHighlight(cfi)
-    const reverted = getAnnotationById(id)
+    const reverted = annotations.value.find(a => a.cfi === cfi)
     if (reverted) addAnnotationHighlight(reverted)
     toast.add({
       title: $t('reader_annotations_update_failed'),
@@ -1327,8 +1338,8 @@ async function handleAnnotationModalSave(data: { color: AnnotationColor, note: s
 async function handleAnnotationModalDelete() {
   if (!editingAnnotation.value) return
 
-  const annotation = editingAnnotation.value
-  removeAnnotationHighlight(annotation.cfi)
+  const { cfi } = editingAnnotation.value
+  removeAnnotationHighlight(cfi)
 
   isAnnotationModalOpen.value = false
   setTimeout(() => {
@@ -1336,9 +1347,17 @@ async function handleAnnotationModalDelete() {
     isNewAnnotation.value = false
   }, 300)
 
-  const success = await deleteAnnotation(annotation.id)
+  // Wait for initial save to complete so we have the server-assigned ID
+  if (pendingSavePromise.value) {
+    await pendingSavePromise.value
+  }
+
+  const current = annotations.value.find(a => a.cfi === cfi)
+  if (!current) return
+
+  const success = await deleteAnnotation(current.id)
   if (!success) {
-    addAnnotationHighlight(annotation)
+    addAnnotationHighlight(current)
     toast.add({
       title: $t('reader_annotations_delete_failed'),
       color: 'error',
