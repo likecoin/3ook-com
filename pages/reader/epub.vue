@@ -1400,6 +1400,7 @@ onBeforeUnmount(() => {
   removeCopyListener?.()
   removeMouseUpListener?.()
   removeTouchEndListener?.()
+  renderedHighlights.clear()
   renditionViewWindow.value = undefined
   rendition.value?.destroy()
 })
