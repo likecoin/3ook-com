@@ -36,7 +36,7 @@ export default defineEventHandler(async (event) => {
       annotations: annotationsResult.value,
     })
 
-    setResponseHeader(event, 'Content-Type', 'application/ld+json')
+    setHeader(event, 'Content-Type', 'application/ld+json')
     return collection
   }
   catch (error) {
