@@ -40,7 +40,7 @@ export default function useAnnotations(params: {
   function createAnnotation(data: AnnotationCreateData): Annotation {
     const now = Date.now()
     const annotation: Annotation = {
-      id: `temp-${now}`,
+      id: crypto.randomUUID(),
       ...data,
       note: data.note || '',
       chapterTitle: data.chapterTitle || '',
