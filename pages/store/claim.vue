@@ -7,7 +7,7 @@
       />
       <LoginPanel
         class="max-w-[348px] w-full p-6 pt-8 rounded-[20px] bg-white"
-        @connect="handleLogin"
+        @connect="handleConnect"
       />
     </template>
     <BookLoadingScreen
@@ -407,9 +407,9 @@ function startClaimFlow() {
   }
 }
 
-async function handleLogin(connectorId: string) {
+async function handleConnect({ id: connectorId, email }: { id: string, email?: string }) {
   if (hasLoggedIn.value) return
-  await accountStore.login(connectorId)
+  await accountStore.login({ connectorId, email })
 }
 
 async function checkAndRemoveBookListItems() {

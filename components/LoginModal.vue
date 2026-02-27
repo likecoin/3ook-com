@@ -10,9 +10,9 @@
 </template>
 
 <script setup lang="ts">
-const emit = defineEmits<{ close: [string] }>()
+const emit = defineEmits<{ close: [{ id: string, email?: string }] }>()
 
-function handleConnect(connectorId = '') {
-  emit('close', connectorId)
+function handleConnect({ id = '', email }: { id?: string, email?: string } = {}) {
+  emit('close', { id, email })
 }
 </script>

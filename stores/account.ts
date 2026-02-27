@@ -9,6 +9,8 @@ import { LoginModal, RegistrationModal } from '#components'
 
 const REGISTER_TIME_LIMIT_IN_TS = 15 * 60 * 1000 // 15 minutes
 
+const MAGIC_EMAIL_INPUT_ELEMENT_ID = 'MagicFormInput'
+
 const JWT_PERMISSIONS = [
   'profile',
   'email',
@@ -377,15 +379,18 @@ export const useAccountStore = defineStore('account', () => {
     }
   }
 
-  async function login(preferredConnectorId?: string) {
+  async function login({ connectorId: preferredConnectorId, email: preferredEmail }: { connectorId?: string, email?: string } = {}) {
     let connectorId: string | undefined = preferredConnectorId
     try {
       isLoggingIn.value = true
 
       // Disconnect any existing connection
       await disconnectAsync()
+      let magicEmail: string | undefined = preferredEmail
       if (!connectorId || !connectors.some((c: { id: string }) => c.id === connectorId)) {
-        connectorId = await loginModal.open().result
+        const result = await loginModal.open().result
+        connectorId = result?.id
+        magicEmail = result?.email
       }
       if (!connectorId) {
         useLogEvent('login_panel_dismiss')
@@ -397,12 +402,31 @@ export const useAccountStore = defineStore('account', () => {
       )
       if (!connector) return
 
+      let magicEmailInput: HTMLInputElement | undefined
+      if (connectorId === 'magic' && magicEmail) {
+        document.getElementById(MAGIC_EMAIL_INPUT_ELEMENT_ID)?.remove()
+        magicEmailInput = document.createElement('input')
+        magicEmailInput.id = MAGIC_EMAIL_INPUT_ELEMENT_ID
+        magicEmailInput.type = 'hidden'
+        magicEmailInput.value = magicEmail
+        magicEmailInput.style.display = 'none'
+        document.body.appendChild(magicEmailInput)
+      }
+
       isLoggingIn.value = true
-      if (status.value !== 'success') {
-        await connectAsync({
-          connector,
-          chainId: chainId.value,
-        })
+      try {
+        if (status.value !== 'success') {
+          await connectAsync({
+            connector,
+            chainId: chainId.value,
+          })
+        }
+      }
+      finally {
+        if (connectorId === 'magic') {
+          // Clean up the Magic email input if exists
+          magicEmailInput?.remove()
+        }
       }
 
       useLogEvent('login_wallet_connected', { method: connector.id })

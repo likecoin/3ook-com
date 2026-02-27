@@ -49,6 +49,7 @@ export function createWagmiConfig({
         customHeaderText: '3ook.com',
         customLogo: logoURL,
         isDarkMode: false,
+        isCustomModal: true,
         magicSdkConfiguration: {
           deferPreload: true,
           network: {
