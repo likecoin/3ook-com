@@ -333,7 +333,7 @@
           <template #right>
             <ColorModeSwitcher
               v-if="isApp || user?.isLikerPlus"
-              :disabled="isApp"
+              :disabled="isApp && !user?.isLikerPlus"
             />
             <UButton
               v-else
