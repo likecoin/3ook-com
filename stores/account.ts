@@ -505,6 +505,9 @@ export const useAccountStore = defineStore('account', () => {
         useLogEvent('login_wallet_rejected', { method: connectorId })
         return
       }
+      if (error instanceof Error && error.message.includes('User canceled action.')) {
+        return
+      }
       if (error instanceof FetchError && error.data?.message === 'EMAIL_ALREADY_USED') {
         useLogEvent('login_email_already_used', { method: connectorId })
         return
