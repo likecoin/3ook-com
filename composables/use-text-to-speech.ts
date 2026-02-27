@@ -30,6 +30,7 @@ export function useTextToSpeech(options: TTSOptions = {}) {
 
   // Use the TTS voice composable
   const {
+    isBookEnglish,
     ttsLanguageVoiceOptions: availableTTSLanguageVoiceOptions,
     ttsLanguageVoice,
     activeTTSLanguageVoiceAvatar,
@@ -458,6 +459,7 @@ export function useTextToSpeech(options: TTSOptions = {}) {
 
   return {
     // Voice-related properties (from useTTSVoice)
+    isBookEnglish,
     ttsLanguageVoiceOptions: availableTTSLanguageVoiceOptions,
     ttsLanguageVoice,
     activeTTSLanguageVoiceAvatar,

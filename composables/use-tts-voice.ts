@@ -49,9 +49,14 @@ export function useTTSVoice(options: TTSVoiceOptions = {}) {
     return ttsLanguageVoiceOptions
   })
 
+  const isBookEnglish = computed(() => {
+    const language = toValue(bookLanguage)
+    return language ? language.toLowerCase().startsWith('en') : false
+  })
+
   const ttsLanguageVoiceValues = computed(() => {
     const values = availableTTSLanguageVoiceOptions.value.map(option => option.value)
-    if (customVoice?.value?.voiceId) {
+    if (customVoice?.value?.voiceId && !isBookEnglish.value) {
       return ['custom', ...values]
     }
     return values
@@ -93,7 +98,7 @@ export function useTTSVoice(options: TTSVoiceOptions = {}) {
       avatar: getVoiceAvatar(option.value),
     }))
 
-    if (customVoice?.value?.voiceId) {
+    if (customVoice?.value?.voiceId && !isBookEnglish.value) {
       return [
         {
           label: customVoice.value.voiceName,
@@ -129,6 +134,7 @@ export function useTTSVoice(options: TTSVoiceOptions = {}) {
   }
 
   return {
+    isBookEnglish,
     ttsLanguageVoiceOptions: availableTTSLanguageVoiceOptions,
     ttsLanguageVoice,
     activeTTSLanguageVoiceAvatar,

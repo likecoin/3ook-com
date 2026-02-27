@@ -147,40 +147,42 @@
               />
 
               <template #body>
-                <div class="px-4 pt-3 pb-2">
-                  <p
-                    class="text-xs font-semibold text-muted uppercase tracking-wide"
-                    v-text="$t('tts_custom_voice_section_title')"
-                  />
-                </div>
+                <template v-if="!isBookEnglish">
+                  <div class="px-4 pt-3 pb-2">
+                    <p
+                      class="text-xs font-semibold text-muted uppercase tracking-wide"
+                      v-text="$t('tts_custom_voice_section_title')"
+                    />
+                  </div>
 
-                <div
-                  v-if="!hasCustomVoice && user?.isLikerPlus"
-                  class="px-4 pb-2"
-                >
-                  <UButton
-                    block
-                    variant="soft"
-                    :label="$t('tts_custom_voice_upload_button')"
-                    icon="i-material-symbols-upload-rounded"
-                    @click="navigateTo(localeRoute({ name: 'account' }))"
-                  />
-                </div>
+                  <div
+                    v-if="!hasCustomVoice && user?.isLikerPlus"
+                    class="px-4 pb-2"
+                  >
+                    <UButton
+                      block
+                      variant="soft"
+                      :label="$t('tts_custom_voice_upload_button')"
+                      icon="i-material-symbols-upload-rounded"
+                      @click="navigateTo(localeRoute({ name: 'account' }))"
+                    />
+                  </div>
 
-                <div
-                  v-if="!hasCustomVoice && !user?.isLikerPlus"
-                  class="px-4 pb-2"
-                >
-                  <UButton
-                    block
-                    variant="soft"
-                    :label="$t('tts_custom_voice_upgrade_button')"
-                    icon="i-material-symbols-lock-outline"
-                    @click="subscription.openPaywallModal({ utmSource: 'tts_custom_voice' })"
-                  />
-                </div>
+                  <div
+                    v-if="!hasCustomVoice && !user?.isLikerPlus"
+                    class="px-4 pb-2"
+                  >
+                    <UButton
+                      block
+                      variant="soft"
+                      :label="$t('tts_custom_voice_upgrade_button')"
+                      icon="i-material-symbols-lock-outline"
+                      @click="subscription.openPaywallModal({ utmSource: 'tts_custom_voice' })"
+                    />
+                  </div>
 
-                <UDivider class="my-1" />
+                  <UDivider class="my-1" />
+                </template>
 
                 <div class="flex gap-2 items-center w-full">
                   <URadioGroup
@@ -283,6 +285,7 @@ const BUFFER_SIZE = 10
 const visibleSegmentElements = ref<Map<number, HTMLElement>>(new Map())
 
 const {
+  isBookEnglish,
   ttsLanguageVoiceOptionsWithAvatars,
   ttsLanguageVoice,
   setTTSLanguageVoice,
