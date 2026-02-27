@@ -592,7 +592,7 @@
           </div>
           <div class="flex items-start gap-2">
             <UIcon
-              name="i-material-symbols-discount-rounded"
+              name="i-material-symbols-percent-discount-outline-rounded"
               size="20"
               class="text-primary mt-0.5 shrink-0"
             />
@@ -603,7 +603,7 @@
           </div>
           <div class="flex items-start gap-2">
             <UIcon
-              name="i-material-symbols-new-releases-rounded"
+              name="i-material-symbols-dark-mode-outline-rounded"
               size="20"
               class="text-primary mt-0.5 shrink-0"
             />
