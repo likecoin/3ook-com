@@ -47,6 +47,7 @@
           @click="onClickHeroCtaStore"
         />
         <UButton
+          v-if="!isApp"
           :to="isLikerPlus ? localeRoute({ name: 'shelf' }) : localeRoute({ name: 'member', query: { samples: '1' } })"
           :label="$t('about_page_hero_cta_narration')"
           variant="outline"
@@ -124,7 +125,15 @@
                 size="24"
                 class="text-primary"
               />
-              <h3 class="text-xl font-semibold text-gray-900">
+              <h3
+                v-if="isApp"
+                class="text-xl font-semibold text-gray-900"
+                v-text="$t('about_page_feature_ai_narration')"
+              />
+              <h3
+                v-else
+                class="text-xl font-semibold text-gray-900"
+              >
                 <NuxtLink
                   :to="localeRoute({ name: 'member' })"
                   class="hover:text-primary hover:underline"
@@ -625,6 +634,7 @@
           </div>
         </div>
         <UButton
+          v-if="!isApp"
           :to="localeRoute({ name: 'member' })"
           :label="$t('about_page_plus_cta')"
           color="primary"
@@ -685,6 +695,7 @@ const { user } = useUserSession()
 const isLikerPlus = computed(() => Boolean(user.value?.isLikerPlus))
 
 const metadataStore = useMetadataStore()
+const { isApp } = useAppDetection()
 
 const authorAvatars = import.meta.glob<{ default: string }>('~/assets/images/about/avatars/*.png', { eager: true })
 function getLocalAvatar(filename: string) {
