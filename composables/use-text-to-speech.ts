@@ -92,8 +92,10 @@ export function useTextToSpeech(options: TTSOptions = {}) {
   })
 
   player.on('trackChanged', (index) => {
+    if (index !== currentTTSSegmentIndex.value) {
+      consecutiveAudioErrors.value = 0
+    }
     currentTTSSegmentIndex.value = index
-    consecutiveAudioErrors.value = 0
   })
 
   player.on('allEnded', () => {
