@@ -118,8 +118,21 @@ export function useTextToSpeech(options: TTSOptions = {}) {
       return
     }
 
-    options.onError?.(error)
     consecutiveAudioErrors.value += 1
+
+    // On first error, silently retry the current segment before escalating.
+    // Transient network issues (e.g. ERR_CONNECTION_CLOSED) often manifest as
+    // MEDIA_ERR_SRC_NOT_SUPPORTED and resolve on retry.
+    if (consecutiveAudioErrors.value <= 1) {
+      setTimeout(() => {
+        if (isTextToSpeechOn.value) {
+          player.skipTo(currentTTSSegmentIndex.value)
+        }
+      }, 1000)
+      return
+    }
+
+    options.onError?.(error)
     if (consecutiveAudioErrors.value >= MAX_CONSECUTIVE_ERRORS) {
       console.warn(`TTS paused after ${MAX_CONSECUTIVE_ERRORS} consecutive audio errors`)
       pauseTextToSpeech()
