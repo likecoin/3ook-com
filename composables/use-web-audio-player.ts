@@ -74,7 +74,7 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
       if (active && autoResumeRetries < MAX_AUTO_RESUME_RETRIES) {
         autoResumeRetries += 1
         setTimeout(() => {
-          if (!playing && activeAudio.value) {
+          if (!playing && activeAudio.value && !activeAudio.value.ended) {
             activeAudio.value.play()?.catch((e: unknown) => {
               if (e instanceof DOMException && e.name === 'NotAllowedError') {
                 handlers.error?.('NotAllowedError')
