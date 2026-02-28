@@ -1,39 +1,44 @@
 <template>
   <div class="bg-[#eef3ec] flex w-full flex-col justify-center">
-    <section class="local-histories-hero w-full flex justify-center relative text-white px-12 py-24 laptop:py-36">
+    <section class="local-histories-hero w-full min-h-screen flex justify-center relative text-white px-12 py-24 laptop:py-36">
       <div class="z-10 flex flex-col text-center max-w-6xl mx-auto px-2 laptop:px-12">
-        <h1
-          class="text-4xl laptop:text-6xl font-bold mb-6"
-          v-text="$t('local_histories_hero_title')"
-        />
-
-        <p
-          class="text-lg laptop:text-xl text-gray-300 mb-8 max-w-2xl"
-          v-text="$t('local_histories_hero_description')"
-        />
-
-        <div class="absolute bottom-[48px] left-1/2 transform -translate-x-1/2 w-full max-w-2xl text-white">
-          <div class="grid grid-cols-3 gap-4 text-center">
-            <div
-              v-for="stat in heroStats"
-              :key="stat.label"
-              class="flex flex-col items-center gap-1"
-            >
-              <span
-                class="text-2xl laptop:text-3xl font-semibold"
-                v-text="stat.value"
-              />
-              <span
-                class="text-sm text-white"
-                v-text="stat.label"
-              />
-            </div>
+        <div class="absolute bottom-[60px] left-1/2 transform -translate-x-1/2 w-full max-w-2xl text-white">
+          <div class="flex justify-center mb-6">
+            <LocalHistoriesScrollIndicator class="mx-auto" />
           </div>
+          <h1
+            class="text-4xl laptop:text-6xl font-bold mb-6"
+            v-text="$t('local_histories_hero_title')"
+          />
+
+          <p
+            class="text-lg laptop:text-xl text-gray-300 mb-8 max-w-2xl"
+            v-text="$t('local_histories_hero_description')"
+          />
         </div>
       </div>
     </section>
     <section class="w-full bg-white">
-      <div class="mx-auto w-full max-w-6xl px-4 py-12 laptop:p-36">
+      <div class="mx-auto w-full max-w-6xl px-4 py-12 laptop:p-24 laptop:pt-18">
+        <div
+          ref="heroStatsRef"
+          class="grid grid-cols-3 gap-4 text-center mb-20"
+        >
+          <div
+            v-for="(stat, index) in heroStats"
+            :key="stat.label"
+            class="flex flex-col items-center gap-1"
+          >
+            <span
+              class="text-2xl laptop:text-3xl font-semibold"
+              v-text="animatedStats[index]"
+            />
+            <span
+              class="text-sm text-black"
+              v-text="stat.label"
+            />
+          </div>
+        </div>
         <div class="flex flex-col gap-4 text-[#1f2a22]">
           <p
             class="text-sm font-semibold uppercase tracking-wider text-[#6b7a6f]"
@@ -357,11 +362,50 @@ const toggleKeyword = (tag: string) => {
 
 const { t } = useI18n()
 
+const heroStatTargets = [66, 4, 12]
+
 const heroStats = computed(() => [
-  { value: '66', label: t('local_histories_hero_stat_books') },
-  { value: '4', label: t('local_histories_hero_stat_regions') },
-  { value: '12', label: t('local_histories_hero_stat_units') },
+  { label: t('local_histories_hero_stat_books') },
+  { label: t('local_histories_hero_stat_regions') },
+  { label: t('local_histories_hero_stat_units') },
 ])
+
+const heroStatsRef = ref<HTMLElement | null>(null)
+const animatedStats = ref<number[]>(heroStatTargets.map(() => 0))
+const hasAnimatedStats = ref(false)
+
+const animateStats = () => {
+  const duration = 700
+  const start = performance.now()
+
+  const step = (now: number) => {
+    const progress = Math.min((now - start) / duration, 1)
+    animatedStats.value = heroStatTargets.map(target => Math.round(target * progress))
+
+    if (progress < 1) {
+      requestAnimationFrame(step)
+    }
+  }
+
+  requestAnimationFrame(step)
+}
+
+onMounted(() => {
+  if (!heroStatsRef.value) return
+
+  const observer = new IntersectionObserver(
+    ([entry]) => {
+      if (entry?.isIntersecting && !hasAnimatedStats.value) {
+        hasAnimatedStats.value = true
+        animateStats()
+        observer.disconnect()
+      }
+    },
+    { threshold: 0.4 },
+  )
+
+  observer.observe(heroStatsRef.value)
+})
 
 const regions = [
   {
