@@ -251,7 +251,7 @@ onMounted(() => {
 <style scoped>
 .tw-map path {
   fill: rgba(127, 178, 149, 0.442);
-  stroke: #f4ebb7;
+  stroke: rgba(99, 142, 117, 0.442);
   stroke-width: 1;
   transition: opacity 0.2s ease, transform 0.2s ease;
   transform-origin: center;

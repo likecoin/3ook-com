@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-[#eef3ec] flex w-full flex-col justify-center">
+  <div class="flex w-full flex-col justify-center">
     <section class="local-histories-hero w-full min-h-screen flex justify-center relative text-white px-12 py-24 laptop:py-36">
       <div class="z-10 flex flex-col text-center max-w-6xl mx-auto px-2 laptop:px-12">
         <div class="absolute bottom-[60px] left-1/2 transform -translate-x-1/2 w-full max-w-2xl text-white">
@@ -104,14 +104,13 @@
           <div
             v-for="region in regions"
             :key="region.key"
-            class="relative rounded-2xl border border-[#c9d3c1] bg-[#f6f4ec] p-5 shadow-sm transition"
-            :class="activeRegion === region.key ? 'ring-2 ring-[#8fa08a]/70 ring-offset-2 ring-offset-[#eef3ec]' : ''"
+            class="relative rounded-2xl bg-[#f6f4ec] p-5 shadow-sm transition"
             role="button"
             tabindex="0"
             @click="handleCardClick(region.key)"
           >
             <div
-              class="pointer-events-none absolute inset-0 rounded-2xl bg-cover bg-center opacity-10"
+              class="pointer-events-none absolute inset-0 rounded-2xl bg-cover bg-center opacity-30"
               :style="{ backgroundImage: `url(${regionImages[region.key]})` }"
             />
             <div class="flex items-center justify-between">
@@ -160,7 +159,7 @@
         </section>
       </div>
 
-      <section class="mt-12 min-h-[800px] rounded-3xl bg-[#2f4a3a] px-6 py-8 text-[#f2f0e8]">
+      <section class="mt-12 min-h-[800px] px-6 py-8 text-[#f2f0e8]">
         <header class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2
@@ -436,11 +435,11 @@ const regions = [
 ]
 
 const regionImages: Record<string, string> = {
-  north: '/images/north.jpg',
-  central: '/images/central.jpg',
-  south: '/images/south.jpg',
-  east: '/images/east.jpg',
-  islands: '/images/islands.jpg',
+  north: '/images/north.svg',
+  central: '/images/central.svg',
+  south: '/images/south.svg',
+  east: '/images/east.svg',
+  islands: '/images/islands.svg',
 }
 
 const regionClasses: Record<string, string> = {
@@ -474,7 +473,7 @@ const regionClasses: Record<string, string> = {
 }
 
 .local-histories-hero {
-  background-image: url('/images/taiwan-banner.png');
+  background-image: url('/images/taiwan-banner.svg');
   background-size: cover;
   background-position: center;
 }
