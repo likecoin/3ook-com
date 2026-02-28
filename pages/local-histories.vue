@@ -1,8 +1,7 @@
 <template>
-  <div class="bg-[#eef3ec] flex flex-col justify-center items-center">
-    <section class="local-histories-hero w-full relative text-white py-32 laptop:py-48">
-      <div class="absolute inset-0 bg-gradient-to-b from-[#1f2a22]/20 to-[#2f4a3a]/55" />
-      <div class="relative z-10 flex flex-col text-left max-w-6xl mx-auto px-4 laptop:px-12">
+  <div class="bg-[#eef3ec] flex w-full flex-col justify-center">
+    <section class="local-histories-hero w-full flex justify-center relative text-white px-12 py-24 laptop:py-36">
+      <div class="z-10 flex flex-col text-center max-w-6xl mx-auto px-2 laptop:px-12">
         <h1
           class="text-4xl laptop:text-6xl font-bold mb-6"
           v-text="$t('local_histories_hero_title')"
@@ -13,20 +12,34 @@
           v-text="$t('local_histories_hero_description')"
         />
 
-        <div class="flex items-center gap-2 text-sm text-theme-cyan">
-          <UIcon name="i-material-symbols-auto-stories-outline" />
-          <span v-text="$t('local_histories_hero_stats')" />
+        <div class="absolute bottom-[48px] left-1/2 transform -translate-x-1/2 w-full max-w-2xl text-white">
+          <div class="grid grid-cols-3 gap-4 text-center">
+            <div
+              v-for="stat in heroStats"
+              :key="stat.label"
+              class="flex flex-col items-center gap-1"
+            >
+              <span
+                class="text-2xl laptop:text-3xl font-semibold"
+                v-text="stat.value"
+              />
+              <span
+                class="text-sm text-white"
+                v-text="stat.label"
+              />
+            </div>
+          </div>
         </div>
       </div>
     </section>
     <div class="mx-auto w-full max-w-6xl px-4 py-10">
-      <header class="mb-8">
+      <header class="mb-8 laptop:mb-12">
         <h1
-          class="text-2xl font-semibold text-neutral-900"
+          class="text-2xl text-center font-semibold text-neutral-900"
           v-text="$t('local_histories_overview_title') "
         />
         <p
-          class="mt-2 text-sm text-neutral-600"
+          class="mt-2 text-sm text-center text-neutral-600"
           v-text="$t('local_histories_overview_description')"
         />
       </header>
@@ -94,10 +107,6 @@
               v-if="expandedRegion === region.key"
               class="mt-4 border-t border-[#d8dfd2] pt-3"
             >
-              <p
-                class="text-sm font-medium text-[#2f4a3a]"
-                v-text="$t('local_histories_units_title')"
-              />
               <ul class="mt-2 grid gap-2 text-sm text-[#5c6f61]">
                 <li
                   v-for="item in featuredByRegion[region.name] ?? []"
@@ -327,6 +336,14 @@ const toggleKeyword = (tag: string) => {
   activeKeyword.value = activeKeyword.value === tag ? '全部' : tag
 }
 
+const { t } = useI18n()
+
+const heroStats = computed(() => [
+  { value: '66', label: t('local_histories_hero_stat_books') },
+  { value: '4', label: t('local_histories_hero_stat_regions') },
+  { value: '12', label: t('local_histories_hero_stat_units') },
+])
+
 const regions = [
   {
     key: 'north',
@@ -394,7 +411,7 @@ const regionClasses: Record<string, string> = {
 }
 
 .local-histories-hero {
-  background-image: url('/images/taiwan-banner.jpg');
+  background-image: url('/images/taiwan-banner.png');
   background-size: cover;
   background-position: center;
 }
