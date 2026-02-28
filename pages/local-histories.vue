@@ -32,6 +32,25 @@
         </div>
       </div>
     </section>
+    <section class="w-full bg-white">
+      <div class="mx-auto w-full max-w-6xl px-4 py-12 laptop:p-36">
+        <div class="flex flex-col gap-4 text-[#1f2a22]">
+          <p
+            class="text-sm font-semibold uppercase tracking-wider text-[#6b7a6f]"
+            v-text="$t('local_histories_about_kicker')"
+          />
+          <h2
+            class="text-2xl laptop:text-3xl font-semibold"
+            v-text="$t('local_histories_about_title')"
+          />
+          <div class="space-y-4 text-base leading-relaxed text-[#4a5f4c]">
+            <p v-text="$t('local_histories_about_paragraph_1')" />
+            <p v-text="$t('local_histories_about_paragraph_2')" />
+            <p v-text="$t('local_histories_about_paragraph_3')" />
+          </div>
+        </div>
+      </div>
+    </section>
     <div class="mx-auto w-full max-w-6xl px-4 py-10">
       <header class="mb-8 laptop:mb-12">
         <h1
