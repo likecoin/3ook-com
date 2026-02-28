@@ -159,16 +159,30 @@
         </section>
       </div>
 
-      <section class="mt-12 min-h-[800px] px-6 py-8 text-[#f2f0e8]">
-        <header class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
+      <section class="mt-20 min-h-[800px] px-6 py-8 text-[#2f2f4a]">
+        <header class="mb-6">
+          <div class="text-center">
             <h2
-              class="text-xl font-semibold text-[#f2f0e8]"
+              class="text-2xl text-center font-semibold text-neutral-900"
               v-text="$t('local_histories_featured_title')"
             />
             <p
-              class="mt-1 text-sm text-[#cfd8c7]"
+              class="mt-1 text-sm text-neutral-900"
               v-text="$t('local_histories_featured_description')"
+            />
+          </div>
+        </header>
+
+        <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div class="flex flex-wrap gap-2">
+            <button
+              v-for="tag in featuredTags"
+              :key="tag"
+              type="button"
+              class="rounded-full border px-3 py-1 text-xs font-medium transition"
+              :class="activeKeyword === tag ? 'border-[#8aa09f] bg-[#8aa09f] text-[#effadf]' : 'border-[#4a4d5f] bg-transparent text-[#2f374a] hover:border-[#9ba2b5] hover:text-[#2f374a]'"
+              @click="toggleKeyword(tag)"
+              v-text="tag"
             />
           </div>
           <div class="w-full sm:max-w-xs">
@@ -186,22 +200,10 @@
                 v-model="searchTerm"
                 type="text"
                 :placeholder="$t('local_histories_featured_search_placeholder')"
-                class="w-full rounded-full border border-[#c9d3c1] bg-[#f6f4ec] py-2 pl-10 pr-4 text-sm text-[#2f4a3a] shadow-sm focus:border-[#9bb59d] focus:outline-none focus:ring-2 focus:ring-[#b9c9b1]"
+                class="w-full rounded-full border border-[#c9d3c1] py-2 pl-10 pr-4 text-sm text-[#2f4a3a] shadow-sm focus:border-[#9bb59d] focus:outline-none focus:ring-2 focus:ring-[#b9c9b1]"
               >
             </div>
           </div>
-        </header>
-
-        <div class="mb-6 flex flex-wrap gap-2">
-          <button
-            v-for="tag in featuredTags"
-            :key="tag"
-            type="button"
-            class="rounded-full border px-3 py-1 text-xs font-medium transition"
-            :class="activeKeyword === tag ? 'border-[#dfe7d8] bg-[#dfe7d8] text-[#2f4a3a]' : 'border-[#4a5f4c] bg-transparent text-[#dfe7d8] hover:border-[#9bb59d] hover:text-[#f2f0e8]'"
-            @click="toggleKeyword(tag)"
-            v-text="tag"
-          />
         </div>
 
         <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -212,11 +214,11 @@
             <NuxtLink
               v-if="item.isPublished"
               :to="getStoreQueryLink(item.title)"
-              class="rounded-2xl border border-amber-200 bg-white p-4 shadow-sm transition hover:border-amber-400"
+              class="rounded-2xl border border-[#effadf] bg-white p-4 shadow-sm transition hover:border-[#b6d89e]"
             >
               <div class="flex items-start justify-between gap-3">
                 <div class="flex items-start gap-3">
-                  <span class="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 text-amber-600">
+                  <span class="flex h-10 w-10 items-center justify-center rounded-full bg-[#effadf] text-[#363736]">
                     <UIcon name="i-material-symbols-auto-stories-outline" />
                   </span>
                   <div>
@@ -473,7 +475,7 @@ const regionClasses: Record<string, string> = {
 }
 
 .local-histories-hero {
-  background-image: url('/images/taiwan-banner.svg');
+  background-image: url('/images/taiwan-banner.png');
   background-size: cover;
   background-position: center;
 }
