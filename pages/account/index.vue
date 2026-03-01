@@ -557,9 +557,28 @@ function confirmAdultContent() {
 const { customVoice, hasCustomVoice, fetchCustomVoice } = useCustomVoice()
 const overlay = useOverlay()
 const customVoiceModal = overlay.create(CustomVoiceUploadModal)
+const blockingModal = useBlockingModal()
 
-watchImmediate(hasLoggedIn, (loggedIn) => {
-  if (loggedIn) fetchCustomVoice()
+const route = useRoute()
+
+watchImmediate(hasLoggedIn, async (loggedIn) => {
+  if (loggedIn) {
+    const isCustomVoiceAction = route.query.action === 'custom-voice'
+    if (isCustomVoiceAction) {
+      blockingModal.open({ title: $t('common_processing') })
+    }
+    try {
+      await fetchCustomVoice()
+    }
+    finally {
+      if (isCustomVoiceAction) {
+        blockingModal.close()
+      }
+    }
+    if (isCustomVoiceAction) {
+      handleOpenCustomVoiceModal()
+    }
+  }
 })
 
 const walletAddress = computed(() => user.value?.evmWallet)

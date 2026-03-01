@@ -164,7 +164,7 @@
                       variant="soft"
                       :label="$t('tts_custom_voice_upload_button')"
                       icon="i-material-symbols-upload-rounded"
-                      @click="navigateTo(localeRoute({ name: 'account' }))"
+                      @click="handleCustomVoiceUploadClick"
                     />
                   </div>
 
@@ -468,6 +468,11 @@ function handleModalUpdateOpen(isOpen: boolean) {
   if (!isOpen) {
     handleModalClose()
   }
+}
+
+function handleCustomVoiceUploadClick() {
+  handleModalClose()
+  navigateTo(localeRoute({ name: 'account', query: { action: 'custom-voice' } }))
 }
 
 function handleTTSPlaybackRateButton() {
