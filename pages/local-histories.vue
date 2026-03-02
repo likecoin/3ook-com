@@ -56,7 +56,7 @@
         </div>
       </div>
     </section>
-    <div class="mx-auto w-full max-w-6xl px-4 py-10">
+    <div class="mx-auto w-full max-w-6xl px-4 py-12">
       <header class="mb-8 laptop:mb-12">
         <h1
           class="text-2xl text-center font-semibold text-neutral-900"
@@ -69,38 +69,16 @@
       </header>
 
       <div class="grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
-        <section class="bg-transparent">
-          <div class="flex flex-col gap-4">
-            <LocalHistoriesMap
-              :active-region="activeRegion"
-              :selected-region="selectedRegion"
-              @region-hover="handleMapHover"
-              @region-click="handleMapClick"
-            />
-
-            <div class="flex flex-wrap gap-2 text-xs text-neutral-600 lg:hidden">
-              <button
-                v-for="region in regions"
-                :key="region.key"
-                type="button"
-                class="flex items-center gap-2 rounded-full bg-neutral-50 px-3 py-1 transition"
-                :class="selectedRegion === region.key ? 'ring-2 ring-amber-400/80' : ''"
-                @click="handleTagClick(region.key)"
-              >
-                <span
-                  class="inline-flex h-2.5 w-2.5 rounded-full"
-                  :class="regionClasses[region.key]"
-                />
-                <span
-                  class="hidden lg:inline"
-                  v-text="region.name"
-                />
-              </button>
-            </div>
-          </div>
+        <section class="hidden bg-transparent lg:block">
+          <LocalHistoriesMap
+            :active-region="activeRegion"
+            :selected-region="selectedRegion"
+            @region-hover="handleMapHover"
+            @region-click="handleMapClick"
+          />
         </section>
 
-        <section class="hidden flex-col gap-4 lg:flex">
+        <section class="flex flex-col gap-4">
           <div
             v-for="region in regions"
             :key="region.key"
