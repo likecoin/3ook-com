@@ -90,4 +90,83 @@ export class AzureTTSProvider implements BaseTTSProvider {
 
     return Buffer.from(result.audioData)
   }
+
+  async processRequestStream(params: TTSRequestParams): Promise<ReadableStream<Buffer>> {
+    const { text, language, voiceId, config } = params
+    const { azureSubscriptionKey, azureServiceRegion } = config
+
+    if (!azureSubscriptionKey || !azureServiceRegion) {
+      throw createError({
+        status: 403,
+        message: 'NOT_AVAILABLE',
+      })
+    }
+
+    const voiceName = VOICE_MAPPING[voiceId]
+    if (!voiceName) {
+      throw createError({
+        status: 400,
+        message: 'INVALID_VOICE_ID',
+      })
+    }
+
+    if (!LANG_MAPPING[language as keyof typeof LANG_MAPPING]) {
+      throw createError({
+        status: 400,
+        message: 'INVALID_LANGUAGE',
+      })
+    }
+
+    const outputFormat = sdk.SpeechSynthesisOutputFormat.Audio16Khz128KBitRateMonoMp3
+
+    const pullStream = sdk.PullAudioOutputStream.create()
+    const audioConfig = sdk.AudioConfig.fromStreamOutput(pullStream)
+    const speechConfig = sdk.SpeechConfig.fromSubscription(azureSubscriptionKey, azureServiceRegion)
+    speechConfig.speechSynthesisVoiceName = voiceName
+    speechConfig.speechSynthesisOutputFormat = outputFormat
+
+    const synthesizer = new sdk.SpeechSynthesizer(speechConfig, audioConfig)
+    let synthesisError: Error | null = null
+
+    // Fire synthesis without awaiting — pullStream.read() will block
+    // until data is available, allowing true streaming.
+    speakTextAsync(synthesizer, text, voiceName, language)
+      .catch((err) => { synthesisError = err })
+
+    return new ReadableStream({
+      async pull(controller) {
+        if (synthesisError) {
+          pullStream.close()
+          controller.error(synthesisError)
+          return
+        }
+        const buffer = new ArrayBuffer(4096)
+        let bytesRead: number
+        try {
+          bytesRead = await pullStream.read(buffer)
+        }
+        catch (err) {
+          pullStream.close()
+          controller.error(err as Error)
+          return
+        }
+        if (bytesRead > 0) {
+          controller.enqueue(Buffer.from(buffer, 0, bytesRead))
+        }
+        else {
+          pullStream.close()
+          controller.close()
+        }
+      },
+      cancel() {
+        try {
+          synthesizer.close()
+        }
+        catch {
+          // ignore — speakTextAsync may have already closed it
+        }
+        pullStream.close()
+      },
+    })
+  }
 }

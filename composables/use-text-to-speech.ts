@@ -335,6 +335,9 @@ export function useTextToSpeech(options: TTSOptions = {}) {
       if (customVoice?.updatedAt) {
         params.set('_t', customVoice.updatedAt.toString())
       }
+      if (isNativeBridge.value) {
+        params.set('blocking', '1')
+      }
       return `/api/reader/tts?${params.toString()}`
     }
 
@@ -344,6 +347,9 @@ export function useTextToSpeech(options: TTSOptions = {}) {
       language: language || 'zh-HK',
       voice_id: voiceIdParts.join('_'),
     })
+    if (isNativeBridge.value) {
+      params.set('blocking', '1')
+    }
     return `/api/reader/tts?${params.toString()}`
   }
 

@@ -77,4 +77,33 @@ export class MinimaxTTSProvider implements BaseTTSProvider {
 
     return result.audio
   }
+
+  async processRequestStream(params: TTSRequestParams): Promise<ReadableStream<Buffer>> {
+    const { text, language, voiceId, customMiniMaxVoiceId } = params
+
+    if (!customMiniMaxVoiceId && !VOICE_MAPPING[voiceId]) {
+      throw createError({
+        status: 400,
+        message: 'INVALID_VOICE_ID',
+      })
+    }
+
+    const client = getMiniMaxSpeechClient()
+    const resolvedVoiceId = (customMiniMaxVoiceId || VOICE_MAPPING[voiceId]) as string
+    const model = getMinimaxModel(customMiniMaxVoiceId, language)
+
+    return await client.synthesizeStream({
+      text,
+      model,
+      voiceSetting: {
+        voiceId: resolvedVoiceId,
+        speed: 1,
+        emotion: 'neutral',
+        textNormalization: true,
+      },
+      pronunciationDict: getTTSPronunciationDictionary(language),
+      languageBoost: LANG_MAPPING[language as keyof typeof LANG_MAPPING],
+      streamOptions: { excludeAggregatedAudio: true },
+    })
+  }
 }

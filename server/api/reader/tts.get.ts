@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto'
+import type { Writable } from 'node:stream'
 import { AzureTTSProvider } from '~/server/utils/tts-azure'
 import { TTSQuerySchema } from '~/server/schemas/tts'
 
@@ -68,7 +69,7 @@ export default defineEventHandler(async (event) => {
     })
   }
   const config = useRuntimeConfig()
-  const { text, language, voice_id: voiceId } = await getValidatedQuery(event, createValidator(TTSQuerySchema))
+  const { text, language, voice_id: voiceId, blocking } = await getValidatedQuery(event, createValidator(TTSQuerySchema))
 
   const isCustomVoice = voiceId === 'custom'
   let customMiniMaxVoiceId: string | undefined
@@ -156,60 +157,116 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  try {
-    const buffer = await provider.processRequest({
-      text,
+  const isBlocking = blocking === '1'
+  const requestParams: TTSRequestParams = {
+    text,
+    language,
+    voiceId,
+    customMiniMaxVoiceId,
+    session,
+    config,
+  }
+
+  const cacheMetadata = {
+    contentType: provider.format,
+    customMetadata: {
       language,
       voiceId,
-      customMiniMaxVoiceId,
-      session,
-      config,
-    })
+      provider: provider.provider,
+      text: text.length > 1800 ? text.substring(0, 1800) + '...' : text,
+      textLength: text.length.toString(),
+      createdAt: new Date().toISOString(),
+    },
+  }
 
-    const etag = cacheKey
-      ? `"${createHash('sha256').update(cacheKey).digest('hex').substring(0, 16)}"`
-      : `"${createHash('sha256').update(buffer).digest('hex').substring(0, 16)}"`
+  try {
+    if (isBlocking) {
+      // Blocking path: full buffer with content-length (needed by native app)
+      const buffer = await provider.processRequest(requestParams)
+
+      const etag = cacheKey
+        ? `"${createHash('sha256').update(cacheKey).digest('hex').substring(0, 16)}"`
+        : `"${createHash('sha256').update(buffer).digest('hex').substring(0, 16)}"`
+      setHeader(event, 'content-type', provider.format)
+      setHeader(event, 'cache-control', isCustomVoice ? 'private, max-age=604800' : 'public, max-age=604800')
+      setHeader(event, 'accept-ranges', 'bytes')
+      setHeader(event, 'vary', 'Range')
+      setHeader(event, 'etag', etag)
+
+      if (isCacheEnabled) {
+        const cacheFile = bucket.file(cacheKey!)
+        cacheFile.save(buffer, { metadata: cacheMetadata }).catch((error: unknown) => {
+          console.warn(`[Speech] Cache write failed for user ${session.user.evmWallet}:`, error)
+        })
+      }
+
+      const rangeHeader = getHeader(event, 'range')
+      if (rangeHeader) {
+        const range = parseRangeHeader(rangeHeader, buffer.length)
+        if (range) {
+          const { start, end } = range
+          setResponseStatus(event, 206)
+          setHeader(event, 'content-range', `bytes ${start}-${end}/${buffer.length}`)
+          setHeader(event, 'content-length', end - start + 1)
+          return buffer.subarray(start, end + 1)
+        }
+      }
+
+      setHeader(event, 'content-length', buffer.length)
+      return buffer
+    }
+
+    // Streaming path (default): pipe audio chunks as they arrive
+    const stream = await provider.processRequestStream(requestParams)
+
+    if (cacheKey) {
+      const etag = `"${createHash('sha256').update(cacheKey).digest('hex').substring(0, 16)}"`
+      setHeader(event, 'etag', etag)
+    }
     setHeader(event, 'content-type', provider.format)
     setHeader(event, 'cache-control', isCustomVoice ? 'private, max-age=604800' : 'public, max-age=604800')
-    setHeader(event, 'accept-ranges', 'bytes')
-    setHeader(event, 'vary', 'Range')
-    setHeader(event, 'etag', etag)
 
+    let cacheWriteStream: Writable | null = null
     if (isCacheEnabled) {
       const cacheFile = bucket.file(cacheKey!)
-      const truncatedText = text.length > 1800 ? text.substring(0, 1800) + '...' : text
-      cacheFile.save(buffer, {
-        metadata: {
-          contentType: provider.format,
-          customMetadata: {
-            language,
-            voiceId,
-            provider: provider.provider,
-            text: truncatedText,
-            textLength: text.length.toString(),
-            createdAt: new Date().toISOString(),
-          },
-        },
-      }).catch((error: unknown) => {
+      cacheWriteStream = cacheFile.createWriteStream({ metadata: cacheMetadata })
+      cacheWriteStream.on('error', (error: unknown) => {
         console.warn(`[Speech] Cache write failed for user ${session.user.evmWallet}:`, error)
+        if (cacheWriteStream) {
+          if (!cacheWriteStream.writableEnded) {
+            cacheWriteStream.destroy()
+          }
+          cacheWriteStream = null
+          bucket!.file(cacheKey!).delete({ ignoreNotFound: true }).catch(() => {})
+        }
       })
     }
 
-    const rangeHeader = getHeader(event, 'range')
-    if (rangeHeader) {
-      const range = parseRangeHeader(rangeHeader, buffer.length)
-      if (range) {
-        const { start, end } = range
-        setResponseStatus(event, 206)
-        setHeader(event, 'content-range', `bytes ${start}-${end}/${buffer.length}`)
-        setHeader(event, 'content-length', end - start + 1)
-        return buffer.subarray(start, end + 1)
+    // Clean up incomplete cache object if client disconnects mid-stream
+    event.node.req.on('close', () => {
+      if (cacheWriteStream && !cacheWriteStream.writableEnded) {
+        cacheWriteStream.destroy()
+        cacheWriteStream = null
+        bucket!.file(cacheKey!).delete({ ignoreNotFound: true }).catch(() => {})
       }
-    }
+    })
 
-    setHeader(event, 'content-length', buffer.length)
+    const cacheStream = new TransformStream<Buffer, Buffer>({
+      async transform(chunk, controller) {
+        if (cacheWriteStream) {
+          const canContinue = cacheWriteStream.write(chunk)
+          if (!canContinue) {
+            await new Promise<void>(resolve => cacheWriteStream!.once('drain', resolve))
+          }
+        }
+        controller.enqueue(chunk)
+      },
+      flush() {
+        cacheWriteStream?.end()
+      },
+    })
 
-    return buffer
+    return sendStream(event, stream.pipeThrough(cacheStream))
   }
   catch (error) {
     console.error(`[Speech] Failed to convert text for user ${session.user.evmWallet}:`, error)

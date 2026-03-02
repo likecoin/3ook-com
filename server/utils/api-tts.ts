@@ -19,6 +19,7 @@ export interface BaseTTSProvider {
   provider: TTSProvider
   format: string
   processRequest(params: TTSRequestParams): Promise<Buffer>
+  processRequestStream(params: TTSRequestParams): Promise<ReadableStream<Buffer>>
 }
 
 export async function getUserTTSAvailable(event: H3Event): Promise<boolean> {

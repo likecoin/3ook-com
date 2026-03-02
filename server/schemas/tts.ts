@@ -10,4 +10,5 @@ export const TTSQuerySchema = v.object({
     v.string('INVALID_VOICE_ID'),
     v.nonEmpty('INVALID_VOICE_ID'),
   ),
+  blocking: v.optional(v.string()),
 })
