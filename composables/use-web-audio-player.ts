@@ -186,21 +186,17 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
 
     // Stuck detection: if onplay never fires within timeout, retry once then error
     stuckTimer = setTimeout(() => {
-      if (!playing && active && !errored) {
-        if (!stuckRetried) {
-          console.warn(`Audio stuck — retrying playback`)
-          stuckRetried = true
-          audio.load()
-          audio.play()?.catch(e => handlePlayError(e, { clearStuck: true }))
-          stuckTimer = setTimeout(() => {
-            if (!playing && active && !errored) {
-              console.warn(`Audio stuck — retry failed after ${STUCK_DETECTION_TIMEOUT_MS}ms`)
-              errored = true
-              handlers.error?.(audio.error || 'STUCK_TIMEOUT')
-            }
-          }, STUCK_DETECTION_TIMEOUT_MS)
-        }
-      }
+      if (playing || !active || errored || stuckRetried) return
+      console.warn(`Audio stuck — retrying playback`)
+      stuckRetried = true
+      audio.load()
+      audio.play()?.catch(e => handlePlayError(e, { clearStuck: true }))
+      stuckTimer = setTimeout(() => {
+        if (playing || !active || errored) return
+        console.warn(`Audio stuck — retry failed after ${STUCK_DETECTION_TIMEOUT_MS}ms`)
+        errored = true
+        handlers.error?.(audio.error || 'STUCK_TIMEOUT')
+      }, STUCK_DETECTION_TIMEOUT_MS)
     }, STUCK_DETECTION_TIMEOUT_MS)
 
     preloadNextSegment()
