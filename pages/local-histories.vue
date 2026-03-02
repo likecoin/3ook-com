@@ -290,12 +290,6 @@ const handleCardClick = (regionKey: string) => {
   expandedRegion.value = regionKey
 }
 
-const handleTagClick = (regionKey: string) => {
-  if (selectedRegion.value === regionKey) return
-  selectedRegion.value = regionKey
-  expandedRegion.value = regionKey
-}
-
 const featuredByRegion = computed(() => {
   const map: Record<string, typeof featuredLocalHistories> = {}
   featuredLocalHistories.forEach((item) => {
@@ -420,14 +414,6 @@ const regionImages: Record<string, string> = {
   south: '/images/south.svg',
   east: '/images/east.svg',
   islands: '/images/islands.svg',
-}
-
-const regionClasses: Record<string, string> = {
-  north: 'region-north',
-  central: 'region-central',
-  south: 'region-south',
-  east: 'region-east',
-  islands: 'region-islands',
 }
 </script>
 
