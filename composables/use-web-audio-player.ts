@@ -1,4 +1,5 @@
 const MAX_AUTO_RESUME_RETRIES = 3
+const STUCK_DETECTION_TIMEOUT_MS = 5000
 
 export function useWebAudioPlayer(): TTSAudioPlayer {
   const activeAudio = ref<HTMLAudioElement | null>(null)
@@ -13,6 +14,8 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
   let playing = false
   let active = false
   let errored = false
+  let stuckTimer: ReturnType<typeof setTimeout> | null = null
+  let stuckRetried = false
 
   const handlers: Partial<{ [K in keyof TTSAudioPlayerEvents]: TTSAudioPlayerEvents[K] }> = {}
 
@@ -56,6 +59,7 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
       playing = true
       errored = false
       autoResumeRetries = 0
+      clearStuckTimer()
       handlers.play?.()
     }
 
@@ -75,11 +79,7 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
         autoResumeRetries += 1
         setTimeout(() => {
           if (!playing && activeAudio.value && !activeAudio.value.ended) {
-            activeAudio.value.play()?.catch((e: unknown) => {
-              if (e instanceof DOMException && e.name === 'NotAllowedError') {
-                handlers.error?.('NotAllowedError')
-              }
-            })
+            activeAudio.value.play()?.catch(handlePlayError)
           }
         }, 1000)
       }
@@ -99,6 +99,9 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
       if (audio.currentTime < 0.00001) {
         // Safari on iOS sometimes gets stuck at 0.000001 for rate > 1.0
         audio.playbackRate = 1.0
+        if (active && !errored) {
+          audio.play()?.catch(() => {})
+        }
       }
     }
 
@@ -134,9 +137,34 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
     }
   }
 
+  function handlePlayError(e: unknown, { clearStuck = false } = {}) {
+    if (e instanceof DOMException && e.name === 'AbortError') return
+    if (e instanceof DOMException && e.name === 'NotAllowedError') {
+      playing = false
+      errored = true
+      if (clearStuck) clearStuckTimer()
+      handlers.error?.('NotAllowedError')
+      return
+    }
+    playing = false
+    errored = true
+    if (clearStuck) clearStuckTimer()
+    console.warn('Play rejected:', e)
+    handlers.error?.(e instanceof DOMException ? e.name : String(e))
+  }
+
+  function clearStuckTimer() {
+    if (stuckTimer) {
+      clearTimeout(stuckTimer)
+      stuckTimer = null
+    }
+  }
+
   function playAtIndex(index: number) {
     currentIndex = index
     errored = false
+    stuckRetried = false
+    clearStuckTimer()
 
     const element = segments[index]
     if (!element) return
@@ -154,14 +182,26 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
     audio.playbackRate = currentRate
     audio.defaultPlaybackRate = currentRate
     audio.load()
-    audio.play()?.catch((e: unknown) => {
-      if (e instanceof DOMException && e.name === 'AbortError') return
-      console.warn('Play rejected:', e)
-      if (e instanceof DOMException && e.name === 'NotAllowedError') {
-        playing = false
-        handlers.error?.('NotAllowedError')
+    audio.play()?.catch(e => handlePlayError(e, { clearStuck: true }))
+
+    // Stuck detection: if onplay never fires within timeout, retry once then error
+    stuckTimer = setTimeout(() => {
+      if (!playing && active && !errored) {
+        if (!stuckRetried) {
+          console.warn(`Audio stuck — retrying playback`)
+          stuckRetried = true
+          audio.load()
+          audio.play()?.catch(e => handlePlayError(e, { clearStuck: true }))
+          stuckTimer = setTimeout(() => {
+            if (!playing && active && !errored) {
+              console.warn(`Audio stuck — retry failed after ${STUCK_DETECTION_TIMEOUT_MS}ms`)
+              errored = true
+              handlers.error?.(audio.error || 'STUCK_TIMEOUT')
+            }
+          }, STUCK_DETECTION_TIMEOUT_MS)
+        }
       }
-    })
+    }, STUCK_DETECTION_TIMEOUT_MS)
 
     preloadNextSegment()
   }
@@ -182,18 +222,12 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
 
   function resume(): boolean {
     if (!activeAudio.value) return false
-    activeAudio.value.play()?.catch((e: unknown) => {
-      if (e instanceof DOMException && e.name === 'AbortError') return
-      console.warn('Resume play rejected:', e)
-      if (e instanceof DOMException && e.name === 'NotAllowedError') {
-        playing = false
-        handlers.error?.('NotAllowedError')
-      }
-    })
+    activeAudio.value.play()?.catch(handlePlayError)
     return true
   }
 
   function pause() {
+    clearStuckTimer()
     if (activeAudio.value) {
       if (!activeAudio.value.paused) {
         pausedInternally = true
@@ -206,6 +240,7 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
 
   function stop() {
     active = false
+    clearStuckTimer()
     resetAudio()
   }
 
