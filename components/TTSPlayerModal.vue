@@ -59,7 +59,6 @@
         <div class="relative flex-1 min-h-0">
           <div
             class="overflow-y-auto hide-scrollbar h-full relative"
-            style="scroll-behavior: smooth;"
           >
             <ul class="flex flex-col gap-4 items-start py-6">
               <li
@@ -283,7 +282,7 @@ const scrollIndicatorClasses = [
 ]
 
 const BUFFER_SIZE = 10
-const visibleSegmentElements = ref<Map<number, HTMLElement>>(new Map())
+const visibleSegmentElements = new Map<number, HTMLElement>()
 
 const {
   isBookEnglish,
@@ -404,9 +403,9 @@ const offlineModalActions = computed(() => [
 
 watch(currentTTSSegmentIndex, async (newIndex: number) => {
   await nextTick()
-  const el = visibleSegmentElements.value.get(newIndex)
+  const el = visibleSegmentElements.get(newIndex)
   el?.scrollIntoView({
-    behavior: 'smooth',
+    behavior: 'instant',
     block: 'center',
   })
 })
@@ -439,15 +438,15 @@ function setSegmentRef(
   index: number,
 ) {
   if (el instanceof HTMLElement) {
-    visibleSegmentElements.value.set(index, el)
+    visibleSegmentElements.set(index, el)
   }
   else if (el === null) {
-    visibleSegmentElements.value.delete(index)
+    visibleSegmentElements.delete(index)
   }
 }
 
 function getSegmentClass(index: number) {
-  const baseClasses = 'inline-block text-sm laptop:text-lg transition-opacity duration-300 cursor-pointer'
+  const baseClasses = 'inline-block text-sm laptop:text-lg cursor-pointer'
   const activeClasses = 'text-(--ui-text) opacity-100 font-bold'
   const inactiveClasses = 'opacity-40 text-muted hover:opacity-90'
 
