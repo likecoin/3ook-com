@@ -316,7 +316,7 @@ const getStoreQueryLink = (title: string) => `/store?q=${encodeURIComponent(titl
 const searchTerm = ref('')
 const activeKeyword = ref('全部')
 
-const featuredTags = ['全部', '文化', '生活', '歷史', '飲食', '職人', '地方創生']
+const featuredTags = ['全部', '文化', '歷史', '飲食', '職人', '社區營造']
 
 const featuredItems = featuredLocalHistories
 
