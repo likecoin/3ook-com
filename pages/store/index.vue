@@ -197,6 +197,22 @@
           />
         </UTooltip>
 
+        <UTooltip
+          v-if="bookstoreStore.hasFetchedBookstoreCMSTags && isDefaultTagId"
+          :text="$t('about_page_title')"
+        >
+          <UButton
+            icon="i-material-symbols-info-i-rounded"
+            variant="outline"
+            :ui="{
+              base: [TAG_BUTTON_CLASS_LIGHT, TAG_BUTTON_CLASS_BASE],
+              leadingIcon: 'laptop:size-6',
+            }"
+            :to="localeRoute({ name: 'about' })"
+            @click="handleAboutTagClick"
+          />
+        </UTooltip>
+
         <div
           v-if="bookstoreStore.hasFetchedBookstoreCMSTags"
           class="relative group rounded-full"
@@ -1006,6 +1022,10 @@ async function handleTagClick(tagValue?: string) {
 
 async function handleBookListTagClick() {
   useLogEvent('store_tag_book_list_click')
+}
+
+function handleAboutTagClick() {
+  useLogEvent('store_tag_about_click')
 }
 
 async function handleLogoClick() {
