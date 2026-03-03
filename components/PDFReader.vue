@@ -412,6 +412,7 @@ async function loadPDF() {
       wasmUrl: `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.value.version}/wasm/`,
       cMapUrl: `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.value.version}/cmaps/`,
       cMapPacked: true,
+      disableAutoFetch: true,
     })
 
     pdfDocument.value = await loadingTask.promise
