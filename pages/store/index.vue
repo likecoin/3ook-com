@@ -503,11 +503,10 @@ const allTagItems = computed(() => {
     isCustom: true,
   }
 
-  return [
-    ...stakingTags,
-    localHistoriesTag,
-    ...cmsTags,
-  ]
+  if (isMobile.value) {
+    return [...stakingTags, ...cmsTags, localHistoriesTag]
+  }
+  return [...stakingTags, localHistoriesTag, ...cmsTags]
 })
 
 const tagsSliceIndex = computed(() => {
