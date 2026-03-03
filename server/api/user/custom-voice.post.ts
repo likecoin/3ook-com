@@ -1,3 +1,4 @@
+import type { FileUploadResult } from 'minimax-speech-ts'
 import type { CustomVoiceData } from '~/shared/types/custom-voice'
 import { LANG_MAPPING } from '~/server/utils/tts-minimax'
 import {
@@ -81,7 +82,8 @@ export default defineEventHandler(async (event): Promise<CustomVoiceData> => {
     fieldName: 'promptAudio',
     allowedTypes: CUSTOM_VOICE_ALLOWED_AUDIO_TYPES,
     maxSize: CUSTOM_VOICE_MAX_PROMPT_AUDIO_SIZE,
-    errorMessages: { missing: 'MISSING_PROMPT_AUDIO', invalidFormat: 'INVALID_PROMPT_AUDIO_FORMAT', tooLarge: 'PROMPT_AUDIO_TOO_LARGE' },
+    required: false,
+    errorMessages: { invalidFormat: 'INVALID_PROMPT_AUDIO_FORMAT', tooLarge: 'PROMPT_AUDIO_TOO_LARGE' },
   })
 
   const existingVoice = await getCustomVoice(wallet)
@@ -128,14 +130,17 @@ export default defineEventHandler(async (event): Promise<CustomVoiceData> => {
   const audioExt = getExtFromMime(audioPart!.type!)
   const audioBlob = new File([audioPart!.data], `voice.${audioExt}`, { type: audioPart!.type })
 
-  const promptExt = getExtFromMime(promptAudioPart!.type!)
-  const promptBlob = new File([promptAudioPart!.data], `prompt.${promptExt}`, { type: promptAudioPart!.type })
+  const audioUploadPromise = client.uploadFile(audioBlob, 'voice_clone')
 
-  const [uploadResult, promptUploadResult] = await Promise.all([
-    client.uploadFile(audioBlob, 'voice_clone'),
-    client.uploadFile(promptBlob, 'prompt_audio'),
-  ])
-  if (!uploadResult || !promptUploadResult) throw createError({ statusCode: 500, message: 'UPLOAD_FAILED' })
+  let promptUploadResult: FileUploadResult | undefined
+  if (promptAudioPart?.data && promptAudioPart.type) {
+    const promptExt = getExtFromMime(promptAudioPart.type)
+    const promptBlob = new File([promptAudioPart.data], `prompt.${promptExt}`, { type: promptAudioPart.type })
+    promptUploadResult = await client.uploadFile(promptBlob, 'prompt_audio')
+  }
+
+  const uploadResult = await audioUploadPromise
+  if (!uploadResult) throw createError({ statusCode: 500, message: 'UPLOAD_FAILED' })
   const fileId = uploadResult.file.fileId
 
   const walletPrefix = wallet.slice(0, 8).toLowerCase()
@@ -146,7 +151,9 @@ export default defineEventHandler(async (event): Promise<CustomVoiceData> => {
     ? LANG_MAPPING[voiceLanguage as keyof typeof LANG_MAPPING]
     : undefined
 
-  const clonePrompt = { promptAudio: promptUploadResult.file.fileId, promptText }
+  const clonePrompt = promptUploadResult
+    ? { promptAudio: promptUploadResult.file.fileId, promptText: promptText || '' }
+    : undefined
 
   await client.cloneVoice({
     fileId,
@@ -169,16 +176,18 @@ export default defineEventHandler(async (event): Promise<CustomVoiceData> => {
       metadata: { contentType: audioPart!.type },
     })
 
-    try {
-      const promptStorageExt = getExtFromMime(promptAudioPart!.type!)
-      const promptPath = getCustomVoicePromptAudioPath(wallet, promptStorageExt)
-      const promptStorageFile = bucket.file(promptPath)
-      await promptStorageFile.save(promptAudioPart!.data, {
-        metadata: { contentType: promptAudioPart!.type },
-      })
-    }
-    catch (error) {
-      console.warn('[CustomVoice] Failed to save prompt audio:', error)
+    if (promptAudioPart?.data && promptAudioPart.type) {
+      try {
+        const promptStorageExt = getExtFromMime(promptAudioPart.type)
+        const promptPath = getCustomVoicePromptAudioPath(wallet, promptStorageExt)
+        const promptStorageFile = bucket.file(promptPath)
+        await promptStorageFile.save(promptAudioPart.data, {
+          metadata: { contentType: promptAudioPart.type },
+        })
+      }
+      catch (error) {
+        console.warn('[CustomVoice] Failed to save prompt audio:', error)
+      }
     }
 
     if (avatarPart?.data && avatarPart.type) {

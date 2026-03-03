@@ -19,9 +19,9 @@ export const CustomVoiceFieldsSchema = v.object({
     v.nonEmpty('MISSING_VOICE_NAME'),
   ),
   voiceLanguage: v.optional(v.picklist([...CUSTOM_VOICE_ALLOWED_VOICE_LANGUAGES], 'INVALID_VOICE_LANGUAGE')),
-  promptText: v.pipe(
+  promptText: v.optional(v.pipe(
     v.string('MISSING_PROMPT_TEXT'),
     v.nonEmpty('MISSING_PROMPT_TEXT'),
     v.maxLength(CUSTOM_VOICE_MAX_PROMPT_TEXT_LENGTH, 'PROMPT_TEXT_TOO_LONG'),
-  ),
+  )),
 })

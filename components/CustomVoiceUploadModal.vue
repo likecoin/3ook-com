@@ -128,6 +128,7 @@
         <div class="flex flex-col gap-2">
           <label class="text-sm font-medium">
             1. {{ $t('tts_custom_voice_audio_source_label') }}
+            <span class="text-red-500 font-normal">*</span>
           </label>
           <p
             class="text-xs text-muted"
@@ -220,10 +221,15 @@
         <div class="flex flex-col gap-2">
           <label class="text-sm font-medium">
             2. {{ $t('tts_custom_voice_prompt_voice_label') }}
+            <span class="text-dimmed font-normal">({{ $t('tts_custom_voice_optional') }})</span>
           </label>
           <p
             class="text-xs text-dimmed"
             v-text="$t('tts_custom_voice_prompt_voice_description')"
+          />
+          <p
+            class="text-xs text-amber-600"
+            v-text="$t('tts_custom_voice_prompt_voice_recommendation')"
           />
 
           <div class="flex flex-col gap-1">
@@ -377,7 +383,7 @@
           block
           size="xl"
           :loading="isUploading"
-          :disabled="!mainAudio.file.value || !promptAudio.file.value || isUploading || !isAudioDurationValid || !isPromptAudioDurationValid"
+          :disabled="!mainAudio.file.value || isUploading || !isAudioDurationValid || !isPromptAudioDurationValid"
           @click="handleUpload"
         />
         <UButton
