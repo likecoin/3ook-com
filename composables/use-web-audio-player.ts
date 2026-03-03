@@ -18,7 +18,8 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
   let currentRate = 1.0
   let pausedInternally = false
   let autoResumeRetries = 0
-  let playing = false
+  let autoResumeTimer: ReturnType<typeof setTimeout> | null = null
+  let audible = false
   let active = false
   let errored = false
   let stuckTimer: ReturnType<typeof setTimeout> | null = null
@@ -43,23 +44,35 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
     activeSlot = activeSlot === 'A' ? 'B' : 'A'
   }
 
+  function clearAutoResumeTimer() {
+    if (autoResumeTimer) {
+      clearTimeout(autoResumeTimer)
+      autoResumeTimer = null
+    }
+  }
+
   function installHandlers(audio: HTMLAudioElement) {
     audio.onplay = () => {
-      if (audio !== getActiveAudio() || swapping) return
-      playing = true
+      // Bug fix: if iOS resumes the idle element after lock screen, pause it
+      // immediately to prevent two audio streams overlapping.
+      if (audio !== getActiveAudio() || swapping) {
+        audio.pause()
+        return
+      }
       errored = false
       autoResumeRetries = 0
-      clearStuckTimer()
     }
 
     audio.onplaying = () => {
       if (audio !== getActiveAudio() || swapping) return
+      audible = true
+      clearStuckTimer()
       handlers.play?.()
     }
 
     audio.onpause = () => {
       if (audio !== getActiveAudio() || swapping) return
-      playing = false
+      audible = false
       if (pausedInternally) {
         pausedInternally = false
         return
@@ -72,9 +85,11 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
       // Attempt auto-resume after a short delay, with a retry limit
       if (active && autoResumeRetries < MAX_AUTO_RESUME_RETRIES) {
         autoResumeRetries += 1
-        setTimeout(() => {
+        clearAutoResumeTimer()
+        autoResumeTimer = setTimeout(() => {
+          autoResumeTimer = null
           const current = getActiveAudio()
-          if (!playing && current && !current.ended) {
+          if (!audible && current && !current.ended) {
             current.play()?.catch(handlePlayError)
           }
         }, 1000)
@@ -158,7 +173,7 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
     cleanupElement(audioB.value)
     audioA.value = null
     audioB.value = null
-    playing = false
+    audible = false
     swapping = false
     pausedInternally = false
   }
@@ -188,13 +203,11 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
   function handlePlayError(e: unknown, { clearStuck = false } = {}) {
     if (e instanceof DOMException && e.name === 'AbortError') return
     if (e instanceof DOMException && e.name === 'NotAllowedError') {
-      playing = false
       errored = true
       if (clearStuck) clearStuckTimer()
       handlers.error?.('NotAllowedError')
       return
     }
-    playing = false
     errored = true
     if (clearStuck) clearStuckTimer()
     console.warn('Play rejected:', e)
@@ -212,7 +225,9 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
     currentIndex = index
     errored = false
     stuckRetried = false
+    audible = false
     clearStuckTimer()
+    clearAutoResumeTimer()
     ensureAudioPool()
 
     const element = segments[index]
@@ -221,7 +236,6 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
     const targetSrc = getAudioSrc(element)
 
     swapping = true
-    playing = false
     const currentActive = getActiveAudio()
     if (currentActive && !currentActive.paused) {
       pausedInternally = true
@@ -284,10 +298,11 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
     audio.play()?.catch(e => handlePlayError(e, { clearStuck: true }))
   }
 
-  // Stuck detection: if onplay never fires within timeout, retry once then error
+  // Stuck detection: if audio never becomes audible (onplaying) within timeout,
+  // retry once then error.
   function armStuckTimer() {
     stuckTimer = setTimeout(() => {
-      if (playing || !active || errored || stuckRetried) return
+      if (audible || !active || errored || stuckRetried) return
       console.warn(`Audio stuck — retrying playback`)
       stuckRetried = true
       const audio = getActiveAudio()
@@ -295,7 +310,7 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
       audio.load()
       audio.play()?.catch(e => handlePlayError(e, { clearStuck: true }))
       stuckTimer = setTimeout(() => {
-        if (playing || !active || errored) return
+        if (audible || !active || errored) return
         console.warn(`Audio stuck — retry failed after ${STUCK_DETECTION_TIMEOUT_MS}ms`)
         errored = true
         handlers.error?.(audio.error || 'STUCK_TIMEOUT')
@@ -344,6 +359,8 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
 
   function pause() {
     clearStuckTimer()
+    clearAutoResumeTimer()
+    audible = false
     const audio = getActiveAudio()
     if (audio) {
       if (!audio.paused) {
@@ -358,6 +375,7 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
   function stop() {
     active = false
     clearStuckTimer()
+    clearAutoResumeTimer()
     resetAudio()
   }
 

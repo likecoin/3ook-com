@@ -102,9 +102,10 @@
               @click="skipBackward"
             />
             <UButton
-              v-if="isTextToSpeechPlaying"
+              v-if="isTextToSpeechPlaying || isTextToSpeechLoading"
               :ui="{ leadingIcon: 'size-10' }"
               icon="i-line-md-pause"
+              :loading="isTextToSpeechLoading"
               variant="ghost"
               color="neutral"
               @click="pauseTextToSpeech"
@@ -115,7 +116,6 @@
               icon="i-material-symbols-play-arrow-rounded"
               variant="ghost"
               color="neutral"
-              :loading="isTextToSpeechLoading"
               @click="startTextToSpeech(currentTTSSegmentIndex)"
             />
             <UButton
