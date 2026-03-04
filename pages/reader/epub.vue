@@ -553,6 +553,7 @@ function applyTheme() {
   }
   if (isDarkMode) {
     textCSS.color = bodyCSS.color as string
+    textCSS['background-color'] = 'transparent !important'
   }
   rendition.value.themes.default({
     'body': bodyCSS,
