@@ -123,6 +123,7 @@
         <!-- Price Select -->
         <div class="flex flex-col w-full mt-6 laptop:mt-8">
           <PricingLimitedOfferAlert
+            v-if="!isApp"
             class="laptop:pt-5 rounded-xl"
             :is-hidden="!isPaidTrial"
             :trial-period-days="trialPeriodDays"
@@ -165,6 +166,7 @@ const localeRoute = useLocaleRoute()
 const isDesktopScreen = useDesktopScreen()
 const { t: $t } = useI18n()
 const getRouteQuery = useRouteQuery()
+const { isApp } = useAppDetection()
 
 const emit = defineEmits<{
   'open': []
