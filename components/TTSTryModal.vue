@@ -26,7 +26,7 @@
     </template>
     <template #body>
       <p
-        class="text-center text-base whitespace-pre"
+        class="text-center text-base whitespace-pre-wrap"
         v-text="$t('tts_try_modal_description')"
       />
       <TTSVoiceSelector
