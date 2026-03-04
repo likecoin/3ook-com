@@ -351,6 +351,7 @@
         </AccountSettingsItem>
 
         <AccountSettingsItem
+          v-if="!isApp"
           icon="i-material-symbols-18-up-rating-outline-rounded"
           :label="$t('account_page_adult_content')"
         >
