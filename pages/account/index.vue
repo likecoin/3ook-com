@@ -15,7 +15,7 @@
           />
 
           <template
-            v-if="user?.isLikerPlus || !isApp"
+            v-if="!isApp && user?.isLikerPlus"
             #right
           >
             <UButton
