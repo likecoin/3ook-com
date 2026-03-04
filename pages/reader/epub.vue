@@ -555,9 +555,13 @@ function applyTheme() {
     textCSS.color = bodyCSS.color as string
     textCSS['background-color'] = 'transparent !important'
   }
+  const anchorCSS: Record<string, string> = {
+    color: isDarkMode ? '#9ecfff !important' : '#0066cc',
+  }
   rendition.value.themes.default({
     'body': bodyCSS,
     'p, div, span, h1, h2, h3, h4, h5, h6, li': textCSS,
+    'a': anchorCSS,
   })
   rendition.value.themes.fontSize(`${fontSize.value}px`)
 }
