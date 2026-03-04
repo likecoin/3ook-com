@@ -1,7 +1,8 @@
 <template>
   <div
     v-if="isVisible"
-    class="fixed z-50 flex items-center gap-2 p-2 bg-theme-white dark:bg-theme-black border rounded-lg shadow-lg"
+    ref="menuEl"
+    class="fixed z-50 flex items-center gap-2 bg-theme-white dark:bg-theme-black border rounded-lg shadow-lg"
     :style="menuStyle"
   >
     <button
@@ -26,6 +27,8 @@
 <script setup lang="ts">
 import { ANNOTATION_COLORS, ANNOTATION_INDICATOR_COLORS_MAP } from '~/constants/annotations'
 
+const MENU_PADDING = 8
+
 const props = defineProps<{
   isVisible: boolean
   position: { x: number, y: number, yBottom: number }
@@ -38,13 +41,25 @@ const emit = defineEmits<{
 
 const { t: $t } = useI18n()
 
-const shouldAppearFromBottom = computed(() => import.meta.client && props.position.y > window.innerHeight / 2)
+const menuEl = useTemplateRef<HTMLDivElement>('menuEl')
+const { width: menuWidth } = useElementSize(menuEl)
+const { width: viewportWidth, height: viewportHeight } = useWindowSize()
 
-const menuStyle = computed(() => ({
-  left: `${props.position.x}px`,
-  top: `${shouldAppearFromBottom.value ? props.position.yBottom + 8 : props.position.y - 8}px`,
-  transform: shouldAppearFromBottom.value ? 'translateX(-50%)' : 'translate(-50%, -100%)',
-}))
+const shouldAppearFromBottom = computed(() => props.position.y > viewportHeight.value / 2)
+
+const menuStyle = computed(() => {
+  const minX = menuWidth.value / 2 + MENU_PADDING * 2
+  const maxX = viewportWidth.value - menuWidth.value / 2 - MENU_PADDING * 2
+  const clampedX = menuWidth.value > 0 && viewportWidth.value > 0
+    ? minX > maxX ? viewportWidth.value / 2 : Math.min(Math.max(props.position.x, minX), maxX)
+    : props.position.x
+  return {
+    padding: `${MENU_PADDING}px`,
+    left: `${clampedX}px`,
+    top: `${shouldAppearFromBottom.value ? props.position.yBottom + MENU_PADDING : props.position.y - MENU_PADDING}px`,
+    transform: shouldAppearFromBottom.value ? 'translateX(-50%)' : 'translate(-50%, -100%)',
+  }
+})
 
 function handleColorSelect(color: AnnotationColor) {
   emit('select', color)
