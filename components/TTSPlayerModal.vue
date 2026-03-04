@@ -147,42 +147,34 @@
               />
 
               <template #body>
-                <template v-if="!isBookEnglish">
-                  <div class="px-4 pt-3 pb-2">
-                    <p
-                      class="text-xs font-semibold text-muted uppercase tracking-wide"
-                      v-text="$t('tts_custom_voice_section_title')"
-                    />
-                  </div>
+                <div
+                  v-if="!isBookEnglish && (user?.isLikerPlus || !isApp)"
+                  class="px-4 py-3 space-y-3 border-b border-b-muted"
+                >
+                  <p
+                    class="text-xs font-semibold text-muted uppercase tracking-wide"
+                    v-text="$t('tts_custom_voice_section_title')"
+                  />
 
-                  <div
-                    v-if="!hasCustomVoice && user?.isLikerPlus"
-                    class="px-4 pb-2"
-                  >
+                  <template v-if="!hasCustomVoice">
                     <UButton
+                      v-if="user?.isLikerPlus"
                       block
                       variant="soft"
                       :label="$t('tts_custom_voice_upload_button')"
                       icon="i-material-symbols-upload-rounded"
                       @click="handleCustomVoiceUploadClick"
                     />
-                  </div>
-
-                  <div
-                    v-if="!hasCustomVoice && !user?.isLikerPlus"
-                    class="px-4 pb-2"
-                  >
                     <UButton
+                      v-else
                       block
                       variant="soft"
                       :label="$t('tts_custom_voice_upgrade_button')"
                       icon="i-material-symbols-lock-outline"
                       @click="subscription.openPaywallModal({ utmSource: 'tts_custom_voice' })"
                     />
-                  </div>
-
-                  <UDivider class="my-1" />
-                </template>
+                  </template>
+                </div>
 
                 <div class="flex gap-2 items-center w-full">
                   <URadioGroup

@@ -3,6 +3,7 @@
     class="min-w-32"
     :model-value="selectedColorMode"
     :items="colorModeOptions"
+    :icon="icon"
     trailing-icon="i-material-symbols-keyboard-arrow-down-rounded"
     size="md"
     :disabled="disabled"
@@ -15,8 +16,10 @@ const { t: $t } = useI18n()
 const { preference } = useColorModeSync()
 
 withDefaults(defineProps<{
+  icon?: string
   disabled?: boolean
 }>(), {
+  icon: undefined,
   disabled: false,
 })
 
