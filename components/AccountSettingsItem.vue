@@ -38,7 +38,7 @@
       />
 
       <span
-        class="text-sm font-semibold whitespace-nowrap"
+        class="text-sm font-semibold"
         v-text="label"
       />
 
