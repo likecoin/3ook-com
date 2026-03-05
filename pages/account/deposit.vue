@@ -131,6 +131,36 @@
           </div>
         </div>
 
+        <!-- Legacy Rewards -->
+        <div
+          v-if="governanceData.hasLegacyReward.value"
+          class="px-4 py-4 flex items-start justify-between"
+        >
+          <div class="flex items-start gap-3 grow">
+            <UIcon
+              name="i-material-symbols-history-rounded"
+              class="size-5 text-warning mt-1 shrink-0"
+            />
+            <span
+              class="text-sm font-semibold mt-0.5"
+              v-text="$t('governance_page_legacy_rewards')"
+            />
+          </div>
+          <div class="flex flex-col items-end gap-1">
+            <BalanceLabel
+              class="text-2xl"
+              :value="governanceData.formattedLegacyPendingReward.value"
+            />
+            <UButton
+              :label="$t('governance_page_claim_legacy_rewards')"
+              color="warning"
+              size="sm"
+              :loading="isLoading"
+              @click="handleClaimLegacyRewards"
+            />
+          </div>
+        </div>
+
         <!-- Claim Rewards Button -->
         <div class="px-4 py-4">
           <UButton
@@ -337,7 +367,7 @@ const { handleError } = useErrorHandler()
 const walletAddress = computed(() => user.value?.evmWallet || '')
 
 const governanceData = useGovernanceData(walletAddress)
-const { claimReward, restakeReward, withdraw } = useVeLikeContract()
+const { claimReward, restakeReward, claimLegacyReward, withdraw } = useVeLikeContract()
 const { balanceOf } = useLikeCoinContract()
 const {
   likeBalance,
@@ -426,6 +456,46 @@ async function handleClaimRewards() {
   }
   finally {
     isLoading.value = false
+  }
+}
+
+async function handleClaimLegacyRewards() {
+  useLogEvent('deposit_claim_legacy_rewards_button_click')
+
+  const claimable = governanceData.legacyRewards.value.filter(r => r.pendingReward > 0n)
+  if (!claimable.length || !walletAddress.value) {
+    return
+  }
+
+  try {
+    isLoading.value = true
+    error.value = null
+    await accountStore.restoreConnection()
+    for (const reward of claimable) {
+      const hash = await claimLegacyReward(reward.address, walletAddress.value)
+      await waitForTransactionReceipt($wagmiConfig, {
+        hash,
+        confirmations: 2,
+      })
+    }
+    toast.add({
+      title: $t('governance_page_success'),
+      description: $t('governance_page_legacy_rewards_claimed'),
+      color: 'success',
+    })
+  }
+  catch (err) {
+    console.error('Error claiming legacy rewards:', err)
+    error.value = err instanceof Error ? err.message : $t('governance_page_error_claiming')
+    toast.add({
+      title: $t('governance_page_error'),
+      description: error.value,
+      color: 'error',
+    })
+  }
+  finally {
+    isLoading.value = false
+    await refreshData()
   }
 }
 

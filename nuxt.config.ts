@@ -89,6 +89,7 @@ export default defineNuxtConfig({
       likeCoinTokenSymbol: process.env.LIKECOIN_TOKEN_SYMBOL,
       likeCoinVeTokenAddress: process.env.LIKECOIN_VE_TOKEN_ADDRESS,
       likeCoinVeTokenSymbol: process.env.LIKECOIN_VE_TOKEN_SYMBOL,
+      likeCoinVeLikeLegacyRewardAddresses: process.env.LIKECOIN_VE_LIKE_LEGACY_REWARD_ADDRESSES,
       likeCoinV3BookMigrationSiteURL: process.env.LIKECOIN_V3_BOOK_MIGRATION_SITE_URL,
       likerLandSiteURL: process.env.LIKER_LAND_SITE_URL,
       googleAnalyticsTrackingId: process.env.GA_TRACKING_ID,

@@ -95,12 +95,12 @@ export function useVeLikeRewardContract(contractAddress: Ref<string | null> | st
     })
   }
 
-  async function withdraw(account: string): Promise<Hash> {
+  async function withdraw(account: string, amount: bigint): Promise<Hash> {
     return writeContractAsync({
       address: toValue(contractAddress) as `0x${string}`,
       abi: veLikeRewardABI,
       functionName: 'withdraw',
-      args: [account],
+      args: [account, amount],
     })
   }
 
@@ -113,12 +113,12 @@ export function useVeLikeRewardContract(contractAddress: Ref<string | null> | st
     })
   }
 
-  async function addReward(rewardAmount: bigint, startTime: bigint, endTime: bigint): Promise<Hash> {
+  async function addReward(drawer: string, rewardAmount: bigint, startTime: bigint, endTime: bigint): Promise<Hash> {
     return writeContractAsync({
       address: toValue(contractAddress) as `0x${string}`,
       abi: veLikeRewardABI,
       functionName: 'addReward',
-      args: [rewardAmount, startTime, endTime],
+      args: [drawer, rewardAmount, startTime, endTime],
     })
   }
 

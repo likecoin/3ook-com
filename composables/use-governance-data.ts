@@ -1,13 +1,14 @@
 import { formatUnits } from 'viem'
-import { waitForTransactionReceipt } from '@wagmi/core'
+import { readContract, waitForTransactionReceipt } from '@wagmi/core'
 import { veLikeAddress } from '~/composables/use-ve-like-contract'
+import veLikeRewardABI from '~/contracts/ve-like-reward.json'
 
 const SECONDS_PER_DAY = 86400n
 
 export function useGovernanceData(walletAddress: string | Ref<string>) {
   const config = useRuntimeConfig()
   const { $wagmiConfig } = useNuxtApp()
-  const { likeCoinTokenDecimals } = config.public
+  const { likeCoinTokenDecimals, likeCoinVeLikeLegacyRewardAddresses } = config.public
   const {
     balanceOf: getVeLikeBalance,
     totalSupply: getVeLikeTotalSupply,
@@ -25,9 +26,15 @@ export function useGovernanceData(walletAddress: string | Ref<string>) {
     getCurrentCondition,
   } = useVeLikeRewardContract(rewardContractAddress)
 
+  const legacyRewardAddresses = (likeCoinVeLikeLegacyRewardAddresses || '')
+    .split(',')
+    .map(a => a.trim())
+    .filter(Boolean)
+
   const veLikeBalance = ref(0n)
   const likeStakedBalance = ref(0n)
   const pendingReward = ref(0n)
+  const legacyRewards = ref<Array<{ address: string, pendingReward: bigint }>>([])
   const claimedReward = ref(0n)
   const lockTime = ref(0n)
   const currentCondition = ref<{
@@ -55,6 +62,18 @@ export function useGovernanceData(walletAddress: string | Ref<string>) {
       maximumFractionDigits: 2,
     })
   })
+
+  const totalLegacyPendingReward = computed(() =>
+    legacyRewards.value.reduce((sum, r) => sum + r.pendingReward, 0n),
+  )
+
+  const formattedLegacyPendingReward = computed(() => {
+    return Number(formatUnits(totalLegacyPendingReward.value, likeCoinTokenDecimals)).toLocaleString(undefined, {
+      maximumFractionDigits: 2,
+    })
+  })
+
+  const hasLegacyReward = computed(() => totalLegacyPendingReward.value > 0n)
 
   const formattedClaimedReward = computed(() => {
     return Number(formatUnits(claimedReward.value, likeCoinTokenDecimals)).toLocaleString(undefined, {
@@ -150,13 +169,21 @@ export function useGovernanceData(walletAddress: string | Ref<string>) {
     const address = toValue(walletAddress) as `0x${string}`
 
     // Load all governance data in parallel
-    const [veLikeBalanceResult, pendingRewardResult, claimedRewardResult, conditionResult, totalSupplyResult, lockTimeResult] = await Promise.all([
+    const [veLikeBalanceResult, pendingRewardResult, claimedRewardResult, conditionResult, totalSupplyResult, lockTimeResult, ...legacyPendingResults] = await Promise.all([
       getVeLikeBalance(address),
       getPendingReward(address).catch(() => 0n),
       getClaimedReward(address),
       getCurrentCondition(),
       getVeLikeTotalSupply(),
       getContractLockTime(),
+      ...legacyRewardAddresses.map(legacyAddress =>
+        readContract($wagmiConfig, {
+          address: legacyAddress as `0x${string}`,
+          abi: veLikeRewardABI,
+          functionName: 'getPendingReward',
+          args: [address],
+        }).catch(() => 0n) as Promise<bigint>,
+      ),
     ])
 
     veLikeBalance.value = veLikeBalanceResult
@@ -164,6 +191,10 @@ export function useGovernanceData(walletAddress: string | Ref<string>) {
     const likeStakedAmount = await convertToAssets(veLikeBalanceResult)
     likeStakedBalance.value = likeStakedAmount
     pendingReward.value = pendingRewardResult
+    legacyRewards.value = legacyRewardAddresses.map((addr, i) => ({
+      address: addr,
+      pendingReward: legacyPendingResults[i] as bigint,
+    }))
     claimedReward.value = claimedRewardResult
     currentCondition.value = conditionResult as {
       startTime: bigint
@@ -206,6 +237,7 @@ export function useGovernanceData(walletAddress: string | Ref<string>) {
     veLikeBalance,
     likeStakedBalance,
     pendingReward,
+    legacyRewards,
     claimedReward,
     lockTime,
     estimatedRewardPerDay: readonly(estimatedRewardPerDay),
@@ -214,10 +246,13 @@ export function useGovernanceData(walletAddress: string | Ref<string>) {
     formattedVeLikeBalance,
     formattedLikeStakedBalance,
     formattedPendingReward,
+    formattedLegacyPendingReward,
     formattedClaimedReward,
     formattedEstimatedRewardPerDay: readonly(formattedEstimatedRewardPerDay),
     formattedEstimatedRewardAPY: readonly(formattedEstimatedRewardAPY),
     totalVotingPower,
+    // Legacy reward
+    hasLegacyReward: readonly(hasLegacyReward),
     // Lock time status
     isWithdrawLocked: readonly(isWithdrawLocked),
     timeUntilWithdrawUnlock: readonly(timeUntilWithdrawUnlock),

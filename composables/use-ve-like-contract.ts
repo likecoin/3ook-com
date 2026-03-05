@@ -278,6 +278,15 @@ export function useVeLikeContract() {
     })
   }
 
+  async function claimLegacyReward(legacyRewardAddress: string, wallet: string): Promise<Hash> {
+    return writeContractAsync({
+      address: veLikeAddress,
+      abi: veLikeABI,
+      functionName: 'claimLegacyReward',
+      args: [legacyRewardAddress, wallet],
+    })
+  }
+
   async function setLockTime(timestamp: bigint): Promise<Hash> {
     return writeContractAsync({
       address: veLikeAddress,
@@ -343,6 +352,7 @@ export function useVeLikeContract() {
     transferFrom,
     claimReward,
     restakeReward,
+    claimLegacyReward,
     setLockTime,
     setRewardContract,
     pause,
