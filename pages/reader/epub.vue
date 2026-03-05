@@ -546,7 +546,7 @@ function applyTheme() {
     'direction': 'ltr',
   }
   if (isDarkMode) {
-    bodyCSS.background = '#131313'
+    bodyCSS['background-color'] = '#131313 !important'
   }
   const textCSS: Record<string, string> = {
     'line-height': `${lineHeight.value}em !important`,
