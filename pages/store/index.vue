@@ -117,6 +117,53 @@
           @click.prevent="handleTagClick(fixedTag.value)"
         />
 
+        <div
+          v-if="bookstoreStore.hasFetchedBookstoreCMSTags"
+          class="relative group rounded-full"
+        >
+          <template v-if="isDefaultTagId">
+            <!-- Dummy button -->
+            <UButton
+              icon="i-material-symbols-keyboard-arrow-down-rounded"
+              variant="outline"
+              :ui="{
+                base: [
+                  TAG_BUTTON_CLASS_LIGHT,
+                  TAG_BUTTON_CLASS_BASE,
+                  'group-hover:-translate-y-0.5',
+                  'pointer-events-none',
+                ],
+                leadingIcon: 'laptop:size-6 translate-y-[1px]',
+              }"
+            />
+            <!-- Real select -->
+            <select
+              v-model="tagId"
+              class="absolute inset-0 opacity-0 rounded-full cursor-pointer"
+            >
+              <option
+                v-for="tag in selectorTagItems"
+                :key="tag.value"
+                :value="tag.value"
+                v-text="tag.label"
+              />
+            </select>
+          </template>
+          <!-- Selected tag (dummy button) -->
+          <UButton
+            v-else
+            :label="activeTag?.label"
+            :ui="{
+              base: [
+                TAG_BUTTON_CLASS_BASE,
+                'px-2.5 laptop:px-4',
+                'pointer-events-none',
+              ],
+              label: 'text-sm laptop:text-base',
+            }"
+          />
+        </div>
+
         <UModal
           v-if="bookstoreStore.hasFetchedBookstoreCMSTags && isDefaultTagId"
           v-model:open="isSearchInputOpen"
@@ -188,6 +235,7 @@
           <UButton
             icon="i-material-symbols-favorite-outline-rounded"
             variant="outline"
+            :aria-label="$t('book_list_title')"
             :ui="{
               base: [TAG_BUTTON_CLASS_LIGHT, TAG_BUTTON_CLASS_BASE],
               leadingIcon: 'laptop:size-6 translate-y-[1px]',
@@ -204,61 +252,15 @@
           <UButton
             icon="i-material-symbols-info-i-rounded"
             variant="outline"
+            :aria-label="$t('about_page_title')"
             :ui="{
               base: [TAG_BUTTON_CLASS_LIGHT, TAG_BUTTON_CLASS_BASE],
               leadingIcon: 'laptop:size-6',
             }"
-            :to="localeRoute({ name: 'about' })"
+            :to="localeRoute({ name: 'about', query: { ll_medium: 'about-icon' } })"
             @click="handleAboutTagClick"
           />
         </UTooltip>
-
-        <div
-          v-if="bookstoreStore.hasFetchedBookstoreCMSTags"
-          class="relative group rounded-full"
-        >
-          <template v-if="isDefaultTagId">
-            <!-- Dummy button -->
-            <UButton
-              icon="i-material-symbols-keyboard-arrow-down-rounded"
-              variant="outline"
-              :ui="{
-                base: [
-                  TAG_BUTTON_CLASS_LIGHT,
-                  TAG_BUTTON_CLASS_BASE,
-                  'group-hover:-translate-y-0.5',
-                  'pointer-events-none',
-                ],
-                leadingIcon: 'laptop:size-6 translate-y-[1px]',
-              }"
-            />
-            <!-- Real select -->
-            <select
-              v-model="tagId"
-              class="absolute inset-0 opacity-0 rounded-full cursor-pointer"
-            >
-              <option
-                v-for="tag in selectorTagItems"
-                :key="tag.value"
-                :value="tag.value"
-                v-text="tag.label"
-              />
-            </select>
-          </template>
-          <!-- Selected tag (dummy button) -->
-          <UButton
-            v-else
-            :label="activeTag?.label"
-            :ui="{
-              base: [
-                TAG_BUTTON_CLASS_BASE,
-                'px-2.5 laptop:px-4',
-                'pointer-events-none',
-              ],
-              label: 'text-sm laptop:text-base',
-            }"
-          />
-        </div>
       </div>
     </header>
 
