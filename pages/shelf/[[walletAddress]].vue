@@ -250,6 +250,17 @@ const bookshelfItemsWithStaking = computed<BookshelfItemWithStaking[]>(() => {
 const itemsCount = computed(() => bookshelfStore.items.length)
 const hasMoreItems = computed(() => !!bookshelfStore.nextKey)
 const paramWalletAddress = computed(() => getRouteParam('walletAddress'))
+
+if (paramWalletAddress.value && !checkIsEVMAddress(paramWalletAddress.value)) {
+  throw createError({ statusCode: 404, message: $t('error_page_not_found') })
+}
+
+watch(paramWalletAddress, (value) => {
+  if (value && !checkIsEVMAddress(value)) {
+    showError({ statusCode: 404, message: $t('error_page_not_found') })
+  }
+})
+
 const walletAddress = computed(() => {
   return (paramWalletAddress.value || user.value?.evmWallet)?.toLowerCase()
 })

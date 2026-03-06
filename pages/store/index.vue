@@ -757,6 +757,13 @@ useHead(() => {
   const meta = []
   const script = []
 
+  if (isSearchResultEmpty.value) {
+    meta.push({
+      name: 'robots',
+      content: 'noindex, nofollow',
+    })
+  }
+
   // Add og:title
   meta.push({
     property: 'og:title',

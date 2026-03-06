@@ -770,9 +770,12 @@ const isCacheDisabled = useNoCache()
 
 await callOnce(async () => {
   try {
-    await nftStore.lazyFetchNFTClassAggregatedMetadataById(nftClassId.value, {
+    const data = await nftStore.lazyFetchNFTClassAggregatedMetadataById(nftClassId.value, {
       nocache: isCacheDisabled.value,
     })
+    if (!data.classData && !nftStore.getNFTClassMetadataById(nftClassId.value)) {
+      throw createError({ statusCode: 404 })
+    }
   }
   catch (error) {
     await handleError(error, {
