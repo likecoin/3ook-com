@@ -227,9 +227,8 @@ import type { TTSPlayerModalProps } from './TTSPlayerModal.props'
 const { user } = useUserSession()
 const subscription = useSubscription()
 const { errorModal, handleError } = useErrorHandler()
-const toast = useToast()
 
-const { customVoice, hasCustomVoice, fetchCustomVoice } = useCustomVoice()
+const { customVoice, hasCustomVoice, isLoading: isCustomVoiceLoading, fetchCustomVoice } = useCustomVoice()
 const localeRoute = useLocaleRoute()
 
 const emit = defineEmits<{
@@ -308,15 +307,6 @@ const {
   bookLanguage: props.bookLanguage,
   customVoice,
   onError: (error: string | Event | MediaError) => {
-    if (error === TTS_ERROR_NOT_ALLOWED) {
-      toast.add({
-        title: $t('tts_play_blocked_title'),
-        description: $t('tts_play_blocked_description'),
-        icon: 'i-material-symbols-play-arrow-rounded',
-        color: 'warning',
-      })
-      return
-    }
     if (error instanceof MediaError
       && error.code === MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED
       && !user.value?.isLikerPlus) {
@@ -403,13 +393,12 @@ watch(currentTTSSegmentIndex, async (newIndex: number) => {
 })
 
 const hasStartedPlaying = ref(false)
-const isCustomVoiceReady = ref(!user.value)
 
 watch(
-  [() => props.segments, isCustomVoiceReady],
-  ([newSegments, ready]) => {
+  () => props.segments,
+  (newSegments) => {
     setTTSSegments(newSegments)
-    if (ready && newSegments.length > 0 && !hasStartedPlaying.value) {
+    if (newSegments.length > 0 && !hasStartedPlaying.value) {
       hasStartedPlaying.value = true
       startTextToSpeech(props.startIndex || 0)
     }
@@ -417,12 +406,11 @@ watch(
   { immediate: true },
 )
 
-onMounted(async () => {
+onMounted(() => {
   setTTSLanguageVoice(props.specificLanguageVoice)
-  if (user.value) {
-    await fetchCustomVoice()
+  if (user.value && !customVoice.value && !isCustomVoiceLoading.value) {
+    fetchCustomVoice()
   }
-  isCustomVoiceReady.value = true
 })
 
 function setSegmentRef(

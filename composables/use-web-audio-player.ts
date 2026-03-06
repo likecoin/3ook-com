@@ -1,9 +1,6 @@
 const MAX_AUTO_RESUME_RETRIES = 3
 const STUCK_DETECTION_TIMEOUT_MS = 5000
 
-const SILENCE_WAV_DATA_URI
-  = 'data:audio/wav;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEARKwAABCxAgACABAAZGF0YQIAAAAAAA=='
-
 export function useWebAudioPlayer(): TTSAudioPlayer {
   const audioA = ref<HTMLAudioElement | null>(null)
   const audioB = ref<HTMLAudioElement | null>(null)
@@ -332,20 +329,6 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
 
     dualMode = true
     ensureAudioPool()
-
-    const idle = getIdleAudio()
-    if (idle) {
-      idle.src = SILENCE_WAV_DATA_URI
-      idle.play()
-        ?.then(() => idle.pause())
-        ?.catch((err) => {
-          // AbortError is expected — playAtIndex() interrupts the silence priming
-          if (err instanceof DOMException && err.name === 'AbortError') return
-          console.error('Error priming audio element for dual mode:', err)
-          dualMode = false
-          console.warn('Dual audio element not supported, falling back to single element')
-        })
-    }
 
     playAtIndex(options.startIndex)
   }

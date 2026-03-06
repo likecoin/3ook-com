@@ -351,6 +351,13 @@ const localeRoute = useLocaleRoute()
 if (!hasLoggedIn.value) {
   await navigateTo(localeRoute({ name: 'account', query: route.query }))
 }
+
+const { customVoice, isLoading: isCustomVoiceLoading, fetchCustomVoice } = useCustomVoice()
+onMounted(() => {
+  if (hasLoggedIn.value && !customVoice.value && !isCustomVoiceLoading.value) {
+    fetchCustomVoice()
+  }
+})
 const toast = useToast()
 const { value: colorModeValue } = useColorModeSync()
 const { t: $t } = useI18n()

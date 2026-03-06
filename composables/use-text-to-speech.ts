@@ -129,6 +129,12 @@ export function useTextToSpeech(options: TTSOptions = {}) {
     isTextToSpeechLoading.value = false
     console.warn('Audio playback error:', error)
 
+    if (error === TTS_ERROR_NOT_ALLOWED) {
+      stopTextToSpeech()
+      options.onError?.(error)
+      return
+    }
+
     // Check if this is a network error (require both error code AND offline status to avoid misjudgment)
     const isNetworkError = error instanceof MediaError
       && error.code === MediaError.MEDIA_ERR_NETWORK
