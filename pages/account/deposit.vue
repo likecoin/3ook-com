@@ -58,10 +58,21 @@
             :value="governanceData.totalVotingPower.value"
             :currency="likeCoinVeTokenSymbol"
           />
-          <div
+          <i18n-t
+            keypath="governance_page_voting_subtitle"
+            tag="div"
             class="text-xs text-muted mt-2"
-            v-text="$t('governance_page_voting_subtitle')"
-          />
+          >
+            <template #proposals>
+              <a
+                href="https://snapshot.box/#/s:likerland.eth"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="underline"
+                v-text="$t('governance_page_community_proposals')"
+              />
+            </template>
+          </i18n-t>
           <UButton
             v-if="!accountStore.isLoginWithMagic"
             class="mt-2"
