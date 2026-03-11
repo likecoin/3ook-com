@@ -219,6 +219,7 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
   }
 
   function playAtIndex(index: number) {
+    active = true
     currentIndex = index
     errored = false
     stuckRetried = false
@@ -336,11 +337,17 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
   function resume(): boolean {
     const audio = getActiveAudio()
     if (!audio) return false
-    audio.play()?.catch(handlePlayError)
+    active = true
+    audio.play()?.catch((e) => {
+      active = false
+      clearAutoResumeTimer()
+      handlePlayError(e)
+    })
     return true
   }
 
   function pause() {
+    active = false
     clearStuckTimer()
     clearAutoResumeTimer()
     audible = false
