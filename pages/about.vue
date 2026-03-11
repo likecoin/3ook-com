@@ -586,7 +586,7 @@
         />
         <div
           v-gsap.whenVisible.once.stagger.from="{ y: 30, opacity: 0, duration: 0.4, stagger: 0.1 }"
-          class="grid sm:grid-cols-2 md:grid-cols-4 gap-4 text-left max-w-3xl mx-auto"
+          class="grid sm:grid-cols-2 md:grid-cols-5 gap-4 text-left max-w-3xl mx-auto"
         >
           <div class="flex items-start gap-2">
             <UIcon
@@ -597,6 +597,17 @@
             <span
               class="text-sm text-gray-700"
               v-text="$t('about_page_plus_feature_tts')"
+            />
+          </div>
+          <div class="flex items-start gap-2">
+            <UIcon
+              name="i-material-symbols-record-voice-over-rounded"
+              size="20"
+              class="text-primary mt-0.5 shrink-0"
+            />
+            <span
+              class="text-sm text-gray-700"
+              v-text="$t('about_page_plus_feature_custom_voice')"
             />
           </div>
           <div class="flex items-start gap-2">
