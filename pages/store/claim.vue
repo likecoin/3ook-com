@@ -359,8 +359,9 @@ async function startClaimingItems() {
     isClaimed.value = true
   }
   catch (error) {
-    // If error is CART_ALREADY_CLAIMED_BY_WALLET, just skip and set isClaimed as if nothing happened
-    if (getErrorMessage(error) === 'CART_ALREADY_CLAIMED_BY_WALLET') {
+    const errorMessage = getErrorMessage(error)
+    // If cart was already claimed (e.g. by server auto-claim), silently continue
+    if (errorMessage === 'CART_ALREADY_CLAIMED_BY_WALLET' || errorMessage === 'CART_ALREADY_CLAIMED') {
       isClaimed.value = true
     }
     else {
@@ -368,12 +369,6 @@ async function startClaimingItems() {
         title: $t('claim_page_claim_error'),
         customHandlerMap: {
           CART_ALREADY_CLAIMED_BY_OTHER: {
-            description: $t('claim_page_cart_already_claimed'),
-            onClose: () => {
-              isClaimed.value = true
-            },
-          },
-          CART_ALREADY_CLAIMED: {
             description: $t('claim_page_cart_already_claimed'),
             onClose: () => {
               isClaimed.value = true
