@@ -247,6 +247,7 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
     if (dualMode) {
       const idle = getIdleAudio()!
       const idleReady = idle.getAttribute('data-src') === targetSrc
+        && idle.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA
 
       if (idleReady) {
         swapSlots()
