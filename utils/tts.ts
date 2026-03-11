@@ -1,3 +1,21 @@
+export function sanitizeTTSText(text: string): string {
+  if (!text) return ''
+  return text
+    .replace(/^\s*-{2,}\s*$/gm, '')
+    .replace(/^\s*\.+\s*$/gm, '')
+    .replace(/[*＊]/g, '')
+    .replace(/[⋯︙…]+/g, '。')
+    .replace(/[—─―︱⸺]+/g, '，')
+    .replace(/﹁/g, '「')
+    .replace(/﹂/g, '」')
+    .replace(/﹃/g, '『')
+    .replace(/﹄/g, '』')
+}
+
+export function isSpeakableText(text: string): boolean {
+  return /[\p{L}\p{N}]/u.test(sanitizeTTSText(text))
+}
+
 export function splitTextIntoSegments(text: string): string[] {
   if (!text) return []
   const punctuationRegex = /([.!?;*。！？；：，、＊][\s\u200B]*)/
@@ -12,14 +30,14 @@ export function splitTextIntoSegments(text: string): string[] {
       currentSegment += segment
     }
     else {
-      if (sanitizeTTSText(currentSegment)) {
+      if (isSpeakableText(currentSegment)) {
         result.push(currentSegment)
       }
       currentSegment = segment
     }
   }
 
-  if (sanitizeTTSText(currentSegment)) {
+  if (isSpeakableText(currentSegment)) {
     result.push(currentSegment)
   }
 
@@ -41,18 +59,4 @@ export function getTTSConfigKeySuffixes() {
 
 export function getTTSConfigKeyWithSuffix(key: string, suffix: TTSConfigKeySuffix) {
   return `${key}-${suffix}`
-}
-
-export function sanitizeTTSText(text: string): string {
-  if (!text) return ''
-  return text
-    .replace(/^\s*-{2,}\s*$/gm, '')
-    .replace(/^\s*\.+\s*$/gm, '')
-    .replace(/[*＊]/g, '')
-    .replace(/[⋯︙…]+/g, '。')
-    .replace(/[—─―︱⸺]+/g, '，')
-    .replace(/﹁/g, '「')
-    .replace(/﹂/g, '」')
-    .replace(/﹃/g, '『')
-    .replace(/﹄/g, '』')
 }
