@@ -307,9 +307,19 @@ const {
   bookLanguage: props.bookLanguage,
   customVoice,
   onError: (error: string | Event | MediaError) => {
-    if (error instanceof MediaError
-      && error.code === MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED
-      && !user.value?.isLikerPlus) {
+    if (
+      !user.value?.isLikerPlus
+      && (
+        (
+          typeof error === 'string'
+          && error === 'NotSupportedError'
+        )
+        || (
+          error instanceof MediaError
+          && error.code === MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED
+        )
+      )
+    ) {
       stopTextToSpeech()
       if (isApp.value) {
         errorModal.open({
