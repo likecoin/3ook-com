@@ -705,6 +705,15 @@ const md = new MarkdownIt({
 })
 md.disable('fence') // Disable code fences (~~~ / ```) — descriptions often contain ~~~ as decorative separators, not code
 
+// In app mode, strip all URLs from descriptions:
+// - Plain text URLs (https://..., http://...)
+// - Markdown links [text](url) → keep text only
+function stripURLs(text: string): string {
+  return text
+    .replace(/\[([^\]]*)\]\([^)]+\)/g, '$1') // [text](url) → text
+    .replace(/https?:\/\/\S+/g, '') // plain URLs
+}
+
 const localeRoute = useLocaleRoute()
 const getRouteBaseName = useRouteBaseName()
 const getRouteParam = useRouteParam()
@@ -898,20 +907,25 @@ useHead(() => ({
     : [],
 }))
 
+function renderDescription(text: string): string {
+  const source = isApp.value ? stripURLs(text) : text
+  return md.render(source)
+}
+
 const bookInfoDescriptionHTML = computed(() => {
-  return md.render(bookInfo.description?.value || '')
+  return renderDescription(bookInfo.description?.value || '')
 })
 
 const bookInfoDescriptionSummaryHTML = computed(() => {
-  return md.render(bookInfo.descriptionSummary?.value || '')
+  return renderDescription(bookInfo.descriptionSummary?.value || '')
 })
 
 const tableOfContentsHTML = computed(() => {
-  return md.render(bookInfo.tableOfContents?.value || '')
+  return renderDescription(bookInfo.tableOfContents?.value || '')
 })
 
 const authorDescriptionHTML = computed(() => {
-  return md.render(bookInfo.authorDescription?.value || '')
+  return renderDescription(bookInfo.authorDescription?.value || '')
 })
 
 const buyerMessages = computed(() => {
@@ -1004,7 +1018,7 @@ const pricingItems = computed(() => {
       originalPrice: formatPrice(item.price),
       discountedPrice: shouldShowDiscount ? formatDiscountedPrice(item.price, PLUS_BOOK_PURCHASE_DISCOUNT) : null,
       isSelected: index === selectedPricingItemIndex.value,
-      renderedDescription: md.render(item.description || ''),
+      renderedDescription: renderDescription(item.description || ''),
     }
   })
 })
