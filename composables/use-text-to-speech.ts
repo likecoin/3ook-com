@@ -108,8 +108,13 @@ export function useTextToSpeech(options: TTSOptions = {}) {
   })
 
   player.on('ended', () => {
-    isTextToSpeechPlaying.value = false
     consecutiveAudioErrors.value = 0
+    // Set loading before clearing playing so the UI never briefly shows
+    // the play button while the next segment is being fetched.
+    if (hasMoreTracks()) {
+      isTextToSpeechLoading.value = true
+    }
+    isTextToSpeechPlaying.value = false
     playNextElement()
   })
 
