@@ -115,6 +115,8 @@
   "account_register_error_email_already_used_with_like_wallet": "{email} was bound to {likeWallet} and cannot be used to register a new account. Please migrate your account.",
   "account_register_error_invalid_account_id": "Account ID {id} is invalid.",
   "account_register_timeout": "Registration has timed out, please start again.",
+  "account_signing_in": "Signing in",
+  "account_verifying": "Verifying account",
   "affiliate_alert_description": "Recommended by {name} ✨",
   "amount_available": "Available: {amount}",
   "amount_input_confirm": "Confirm",

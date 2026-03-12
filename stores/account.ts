@@ -431,7 +431,7 @@ export const useAccountStore = defineStore('account', () => {
 
       useLogEvent('login_wallet_connected', { method: connector.id })
 
-      blockingModal.open({ title: $t('account_logging_in') })
+      blockingModal.open({ title: $t('account_verifying') })
 
       const walletAddress = address.value
       if (status.value !== 'success' || !walletAddress) {
@@ -493,8 +493,10 @@ export const useAccountStore = defineStore('account', () => {
         2,
       )
 
+      blockingModal.patch({ title: $t('account_signing_in') })
       const signature = await signMessageAsync({ message })
 
+      blockingModal.patch({ title: $t('account_logging_in') })
       await $fetch('/api/login', {
         method: 'POST',
         body: {

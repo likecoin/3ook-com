@@ -115,6 +115,8 @@
   "account_register_error_email_already_used_with_like_wallet": "{email} 已綁定至 {likeWallet}，無法用作註冊新帳戶，請先遷移你的帳戶。",
   "account_register_error_invalid_account_id": "不接受 {id} 為帳戶 ID。",
   "account_register_timeout": "註冊帳戶已逾時，請重新開始。",
+  "account_signing_in": "正在簽署",
+  "account_verifying": "正在驗證帳戶",
   "affiliate_alert_description": "{name} 推薦給你 ✨",
   "amount_available": "可使用：{amount}",
   "amount_input_confirm": "確認",
