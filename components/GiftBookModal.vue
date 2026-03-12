@@ -1,22 +1,22 @@
 <template>
   <UModal
     v-model:open="model"
-    :ui="{ content: 'sm:max-w-md' }"
     :title="$t('gift_book_modal_title')"
     :dismissible="!isProcessing"
+    :ui="{
+      content: 'sm:max-w-md',
+      title: 'flex items-center gap-3',
+    }"
   >
-    <template #header>
-      <div class="flex items-center gap-3">
-        <img
-          class="h-10"
-          :src="bookImage"
-          :alt="$t('gift_book_modal_title')"
-        >
-        <span
-          class="text-lg font-semibold"
-          v-text="$t('gift_book_modal_title')"
-        />
-      </div>
+    <template #title>
+      <UIcon
+        name="i-material-symbols-featured-seasonal-and-gifts-rounded"
+        size="24"
+      />
+      <h2
+        class="text-highlighted font-semibold"
+        v-text="$t('gift_book_modal_title')"
+      />
     </template>
 
     <template #body>
@@ -102,8 +102,6 @@
 </template>
 
 <script setup lang="ts">
-import bookImage from '~/assets/images/gift-book.png'
-
 const props = defineProps<{
   nftClassId: string
   priceIndex: number
