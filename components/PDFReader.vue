@@ -234,6 +234,7 @@ const totalPages = ref(0)
 const scaleMin = 0.5
 const scaleMax = 3.0
 const scaleStep = 0.25
+const scaleButtonStep = 0.05
 const scale = useSyncedBookSettings({
   nftClassId: props.nftClassId,
   key: 'scale',
@@ -633,13 +634,13 @@ function togglePageMode(value?: 'single' | 'dual') {
 
 function zoomIn() {
   if (scale.value < scaleMax) {
-    scale.value += scaleStep
+    scale.value = clampScale(scale.value + scaleButtonStep)
   }
 }
 
 function zoomOut() {
   if (scale.value > scaleMin) {
-    scale.value -= scaleStep
+    scale.value = clampScale(scale.value - scaleButtonStep)
   }
 }
 
