@@ -1,219 +1,218 @@
 <template>
-  <main>
-    <div v-if="!isLoading && !error">
-      <!-- Header -->
-      <div class="w-full bg-theme-black">
-        <div class="px-4 py-2">
-          <UButton
-            class="group"
-            :label="$t('gift_book_success_continue_button')"
-            variant="link"
-            color="neutral"
-            :loading="isRedirecting"
-            :ui="{ base: '!px-0 text-white hover:text-theme-cyan' }"
-            @click="handleContinue"
-          >
-            <template #leading>
-              <div class="rounded-full p-1 border-1 text-white group-hover:text-theme-cyan border-gray-300 flex">
-                <UIcon
-                  name="i-material-symbols-arrow-back-rounded"
-                  class="w-4 h-4"
-                />
-              </div>
-            </template>
-          </UButton>
-        </div>
-
-        <div class="flex flex-col items-center justify-center px-4 py-8 laptop:pb-16">
-          <!-- Success Icon -->
-          <div
-            v-gsap.from="{
-              y: -6,
-              delay: 1,
-              duration: 1,
-              ease: 'power1.inOut',
-              repeat: -1,
-              yoyo: true,
-            }"
-            class="relative"
-          >
-            <UIcon
-              v-gsap.to="{
-                opacity: 0,
-                duration: 0.5,
-                x: '100%',
-              }"
-              class="text-theme-cyan"
-              name="i-material-symbols-featured-seasonal-and-gifts-rounded"
-              :size="64"
-            />
-            <UIcon
-              v-gsap.from.fromInvisible="{
-                delay: 0.25,
-                duration: 0.5,
-                x: '-100%',
-                rotate: 0,
-              }"
-              class="absolute inset-0 text-theme-cyan -rotate-30"
-              name="i-material-symbols-send-rounded"
-              :size="64"
-            />
-          </div>
-
-          <!-- Success Message -->
-          <h1
-            class="mt-5 text-theme-cyan text-3xl font-bold text-center"
-            v-text="$t('gift_book_success_title')"
-          />
-
-          <!-- Info Section -->
-          <h3
-            class="mt-8 pb-1 text-center font-bold text-lg text-theme-cyan border-b-2 border-theme-cyan"
-            v-text="$t('gift_book_success_info_title')"
-          />
-
-          <ul
-            :class="[
-              'mt-6',
-              'space-y-4',
-              '[&>li]:flex',
-              '[&>li]:items-start',
-              '[&>li]:gap-3',
-              '[&>li>span:first-child]:shrink-0',
-              '[&>li>span:first-child]:text-theme-cyan',
-              '[&>li>span:first-child]:size-5',
-              '[&>li>span:last-child]:text-sm',
-              '[&>li>span:last-child]:text-white',
-            ]"
-          >
-            <li>
-              <UIcon name="i-material-symbols-check" />
-              <span v-text="$t('gift_book_success_info_item_1')" />
-            </li>
-            <li>
-              <UIcon name="i-material-symbols-check" />
-              <span v-text="$t('gift_book_success_info_item_2')" />
-            </li>
-            <li>
-              <UIcon name="i-material-symbols-check" />
-              <span v-text="$t('gift_book_success_info_item_3')" />
-            </li>
-          </ul>
-        </div>
+  <main v-if="!isLoading && !error">
+    <!-- Header -->
+    <div class="w-full bg-theme-black">
+      <div class="px-4 py-2">
+        <UButton
+          class="group"
+          :label="$t('gift_book_success_continue_button')"
+          variant="link"
+          color="neutral"
+          :loading="isRedirecting"
+          :ui="{ base: '!px-0 text-white hover:text-theme-cyan' }"
+          @click="handleContinue"
+        >
+          <template #leading>
+            <div class="rounded-full p-1 border-1 text-white group-hover:text-theme-cyan border-gray-300 flex">
+              <UIcon
+                name="i-material-symbols-arrow-back-rounded"
+                class="w-4 h-4"
+              />
+            </div>
+          </template>
+        </UButton>
       </div>
 
-      <div class="flex flex-col items-center px-4 py-8">
-        <!-- Gift Details Card -->
-        <UCard
-          v-if="giftInfo"
-          class="w-full max-w-md"
+      <div class="flex flex-col items-center justify-center px-4 py-8 laptop:pb-16">
+        <!-- Success Icon -->
+        <div
+          v-gsap.from="{
+            y: -6,
+            delay: 1,
+            duration: 1,
+            ease: 'power1.inOut',
+            repeat: -1,
+            yoyo: true,
+          }"
+          class="relative"
         >
-          <h3
-            class="text-center font-semibold"
-            v-text="$t('gift_book_success_details_title')"
+          <UIcon
+            v-gsap.to="{
+              opacity: 0,
+              duration: 0.5,
+              x: '100%',
+            }"
+            class="text-theme-cyan"
+            name="i-material-symbols-featured-seasonal-and-gifts-rounded"
+            :size="64"
           />
-
-          <ul
-            :class="[
-              'mt-4',
-              'space-y-3',
-              'text-sm',
-              '[&>li]:flex',
-              '[&>li]:justify-between',
-              '[&>li>span:first-child]:font-bold',
-              '[&>li>span:last-child]:text-sm',
-            ]"
-          >
-            <li>
-              <span v-text="$t('gift_book_success_to_email')" />
-              <span v-text="giftInfo.toEmail" />
-            </li>
-            <li v-if="giftInfo.toName">
-              <span v-text="$t('gift_book_success_to_name')" />
-              <span v-text="giftInfo.toName" />
-            </li>
-            <li v-if="giftInfo.fromName">
-              <span v-text="$t('gift_book_success_from_name')" />
-              <span v-text="giftInfo.fromName" />
-            </li>
-            <li v-if="bookName">
-              <span v-text="$t('gift_book_success_book_name')" />
-              <span v-text="bookName" />
-            </li>
-          </ul>
-        </UCard>
-
-        <!-- Action Buttons -->
-        <div class="flex flex-col items-center gap-4 mt-8">
-          <UButton
-            v-if="nftClassId"
-            :label="$t('gift_book_success_gift_another')"
-            color="primary"
-            size="xl"
-            variant="outline"
-            :loading="isRedirecting"
-            :ui="{ base: 'cursor-pointer' }"
-            @click="handleGiftAnother"
-          />
-          <UButton
-            :label="$t('gift_book_success_back_to_store')"
-            variant="ghost"
-            size="xl"
-            :loading="isRedirecting"
-            :ui="{ base: 'cursor-pointer' }"
-            @click="handleContinue"
+          <UIcon
+            v-gsap.from.fromInvisible="{
+              delay: 0.25,
+              duration: 0.5,
+              x: '-100%',
+              rotate: 0,
+            }"
+            class="absolute inset-0 text-theme-cyan -rotate-30"
+            name="i-material-symbols-send-rounded"
+            :size="64"
           />
         </div>
+
+        <!-- Success Message -->
+        <h1
+          class="mt-5 text-theme-cyan text-3xl font-bold text-center"
+          v-text="$t('gift_book_success_title')"
+        />
+
+        <!-- Info Section -->
+        <h3
+          class="mt-8 pb-1 text-center font-bold text-lg text-theme-cyan border-b-2 border-theme-cyan"
+          v-text="$t('gift_book_success_info_title')"
+        />
+
+        <ul
+          :class="[
+            'mt-6',
+            'space-y-4',
+            '[&>li]:flex',
+            '[&>li]:items-start',
+            '[&>li]:gap-3',
+            '[&>li>span:first-child]:shrink-0',
+            '[&>li>span:first-child]:text-theme-cyan',
+            '[&>li>span:first-child]:size-5',
+            '[&>li>span:last-child]:text-sm',
+            '[&>li>span:last-child]:text-white',
+          ]"
+        >
+          <li>
+            <UIcon name="i-material-symbols-check" />
+            <span v-text="$t('gift_book_success_info_item_1')" />
+          </li>
+          <li>
+            <UIcon name="i-material-symbols-check" />
+            <span v-text="$t('gift_book_success_info_item_2')" />
+          </li>
+          <li>
+            <UIcon name="i-material-symbols-check" />
+            <span v-text="$t('gift_book_success_info_item_3')" />
+          </li>
+        </ul>
       </div>
     </div>
 
-    <div
-      v-else
-      class="flex flex-col items-center justify-center grow px-4 py-8"
-    >
-      <!-- Loading State -->
-      <template v-if="isLoading">
-        <UIcon
-          class="text-theme-cyan animate-bounce"
-          name="i-material-symbols-featured-seasonal-and-gifts-rounded"
-          :size="64"
+    <div class="flex flex-col items-center px-4 py-8">
+      <!-- Gift Details Card -->
+      <UCard
+        v-if="giftInfo"
+        class="w-full max-w-md"
+      >
+        <h3
+          class="text-center font-semibold"
+          v-text="$t('gift_book_success_details_title')"
         />
 
-        <p
-          class="mt-3 text-muted"
-          v-text="$t('gift_book_success_loading')"
-        />
-      </template>
+        <ul
+          :class="[
+            'mt-4',
+            'space-y-3',
+            'text-sm',
+            '[&>li]:flex',
+            '[&>li]:justify-between',
+            '[&>li>span:first-child]:font-bold',
+            '[&>li>span:last-child]:text-sm',
+          ]"
+        >
+          <li>
+            <span v-text="$t('gift_book_success_to_email')" />
+            <span v-text="giftInfo.toEmail" />
+          </li>
+          <li v-if="giftInfo.toName">
+            <span v-text="$t('gift_book_success_to_name')" />
+            <span v-text="giftInfo.toName" />
+          </li>
+          <li v-if="giftInfo.fromName">
+            <span v-text="$t('gift_book_success_from_name')" />
+            <span v-text="giftInfo.fromName" />
+          </li>
+          <li v-if="bookName">
+            <span v-text="$t('gift_book_success_book_name')" />
+            <span v-text="bookName" />
+          </li>
+        </ul>
+      </UCard>
 
-      <!-- Error State -->
-      <template v-else>
-        <UIcon
-          name="i-material-symbols-error-circle-rounded"
-          class="text-error"
-          :size="64"
-        />
-
-        <h1
-          class="mt-5 text-2xl font-bold"
-          v-text="$t('gift_book_success_error_title')"
-        />
-
-        <p
-          class="mt-3 text-muted"
-          v-text="error || $t('gift_book_success_error_description')"
+      <!-- Action Buttons -->
+      <div class="flex items-center gap-4 mt-8">
+        <UButton
+          v-if="nftClassId"
+          :label="$t('gift_book_success_gift_another')"
+          color="primary"
+          size="xl"
+          variant="solid"
+          :loading="isRedirecting"
+          :ui="{ base: 'cursor-pointer' }"
+          @click="handleGiftAnother"
         />
 
         <UButton
-          class="mt-8"
-          :label="$t('gift_book_success_retry')"
-          color="primary"
+          :label="$t('gift_book_success_back_to_store')"
           variant="outline"
           size="xl"
+          :loading="isRedirecting"
           :ui="{ base: 'cursor-pointer' }"
-          @click="handleRetry"
+          @click="handleContinue"
         />
-      </template>
+      </div>
     </div>
+  </main>
+
+  <main
+    v-else
+    class="flex flex-col items-center justify-center grow px-4 py-8 min-h-svh"
+  >
+    <!-- Loading State -->
+    <template v-if="isLoading">
+      <UIcon
+        class="text-theme-cyan animate-bounce"
+        name="i-material-symbols-featured-seasonal-and-gifts-rounded"
+        :size="64"
+      />
+
+      <p
+        class="mt-3 text-muted"
+        v-text="$t('gift_book_success_loading')"
+      />
+    </template>
+
+    <!-- Error State -->
+    <template v-else>
+      <UIcon
+        name="i-material-symbols-error-circle-rounded"
+        class="text-error"
+        :size="64"
+      />
+
+      <h1
+        class="mt-5 text-2xl font-bold"
+        v-text="$t('gift_book_success_error_title')"
+      />
+
+      <p
+        class="mt-3 text-muted"
+        v-text="error || $t('gift_book_success_error_description')"
+      />
+
+      <UButton
+        class="mt-8"
+        :label="$t('gift_book_success_retry')"
+        color="primary"
+        variant="outline"
+        size="xl"
+        :ui="{ base: 'cursor-pointer' }"
+        @click="handleRetry"
+      />
+    </template>
   </main>
 </template>
 
