@@ -224,14 +224,13 @@ async function handleCheckout() {
     })
 
     await navigateTo(url, { external: true })
+    // Keep showing loading state
   }
   catch (error) {
+    isProcessing.value = false
     await handleError(error, {
       title: $t('gift_book_modal_checkout_error'),
     })
-  }
-  finally {
-    isProcessing.value = false
   }
 }
 </script>
