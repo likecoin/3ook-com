@@ -6,6 +6,7 @@
     :ui="{
       content: 'sm:max-w-md',
       title: 'flex items-center gap-3',
+      body: 'flex flex-col gap-6',
     }"
   >
     <template #title>
@@ -20,71 +21,69 @@
     </template>
 
     <template #body>
-      <div class="flex flex-col gap-6">
-        <!-- Recipient Email -->
-        <UFormField
-          :label="$t('gift_plus_recipient_email')"
-          :error="errors.toEmail"
-          :required="true"
-        >
-          <UInput
-            v-model="formData.toEmail"
-            class="w-full"
-            placeholder="example@email.com"
-            type="email"
-            size="xl"
-            :disabled="isProcessing"
-          />
-        </UFormField>
+      <!-- Recipient Email -->
+      <UFormField
+        :label="$t('gift_plus_recipient_email')"
+        :error="errors.toEmail"
+        :required="true"
+      >
+        <UInput
+          v-model="formData.toEmail"
+          class="w-full"
+          placeholder="example@email.com"
+          type="email"
+          size="xl"
+          :disabled="isProcessing"
+        />
+      </UFormField>
 
-        <!-- Recipient Name -->
-        <UFormField
-          :label="$t('gift_plus_recipient_name')"
-          :error="errors.toName"
-          :required="true"
-        >
-          <UInput
-            v-model="formData.toName"
-            class="w-full"
-            :placeholder="$t('gift_book_modal_recipient_name_placeholder')"
-            type="text"
-            size="xl"
-            :disabled="isProcessing"
-          />
-        </UFormField>
+      <!-- Recipient Name -->
+      <UFormField
+        :label="$t('gift_plus_recipient_name')"
+        :error="errors.toName"
+        :required="true"
+      >
+        <UInput
+          v-model="formData.toName"
+          class="w-full"
+          :placeholder="$t('gift_book_modal_recipient_name_placeholder')"
+          type="text"
+          size="xl"
+          :disabled="isProcessing"
+        />
+      </UFormField>
 
-        <!-- Message -->
-        <UFormField
-          :label="$t('gift_plus_message')"
-          :help="$t('gift_plus_message_help_text')"
-        >
-          <UTextarea
-            v-model="formData.message"
-            class="w-full"
-            :placeholder="$t('gift_plus_message_placeholder')"
-            :disabled="isProcessing"
-            size="xl"
-            :rows="3"
-          />
-        </UFormField>
+      <!-- Message -->
+      <UFormField
+        :label="$t('gift_plus_message')"
+        :help="$t('gift_plus_message_help_text')"
+      >
+        <UTextarea
+          v-model="formData.message"
+          class="w-full"
+          :placeholder="$t('gift_plus_message_placeholder')"
+          :disabled="isProcessing"
+          size="xl"
+          :rows="3"
+        />
+      </UFormField>
 
-        <!-- Sender Name (signature position) -->
-        <UFormField
-          :label="$t('gift_plus_sender_name')"
-          :error="errors.fromName"
-          :required="true"
-          :help="$t('gift_plus_sender_name_hint_text')"
-        >
-          <UInput
-            v-model="formData.fromName"
-            class="w-full"
-            :placeholder="$t('gift_plus_sender_name_placeholder')"
-            type="text"
-            size="xl"
-            :disabled="isProcessing"
-          />
-        </UFormField>
-      </div>
+      <!-- Sender Name (signature position) -->
+      <UFormField
+        :label="$t('gift_plus_sender_name')"
+        :error="errors.fromName"
+        :required="true"
+        :help="$t('gift_plus_sender_name_hint_text')"
+      >
+        <UInput
+          v-model="formData.fromName"
+          class="w-full"
+          :placeholder="$t('gift_plus_sender_name_placeholder')"
+          type="text"
+          size="xl"
+          :disabled="isProcessing"
+        />
+      </UFormField>
     </template>
 
     <template #footer>
