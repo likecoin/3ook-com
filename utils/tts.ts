@@ -16,29 +16,44 @@ export function isSpeakableText(text: string): boolean {
   return /[\p{L}\p{N}]/u.test(sanitizeTTSText(text))
 }
 
-export function splitTextIntoSegments(text: string): string[] {
-  if (!text) return []
-  const punctuationRegex = /([.!?;*。！？；：，、＊][\s\u200B]*)/
-  const segments = text.split(punctuationRegex)
-  const result: string[] = []
+const SENTENCE_REGEX = /([.!?。！？][\s\u200B]*)/
+const CLAUSE_REGEX = /([;；：，、][\s\u200B]*)/
+const MAX_SEGMENT_LENGTH = 100
 
-  let currentSegment = ''
-  for (let i = 0; i < segments.length; i++) {
-    const segment = segments[i]?.trim() || ''
-    if (!segment) continue
-    if (segment.length === 1 || currentSegment.length + segment.length < 100) {
-      currentSegment += segment
+function mergeParts(parts: string[]): string[] {
+  const result: string[] = []
+  let current = ''
+  for (const part of parts) {
+    const trimmed = part.replace(/[\s\u200B]+/g, ' ').trim()
+    if (!trimmed) continue
+    if (trimmed.length === 1 || current.length + trimmed.length < MAX_SEGMENT_LENGTH) {
+      current += trimmed
     }
     else {
-      if (isSpeakableText(currentSegment)) {
-        result.push(currentSegment)
-      }
-      currentSegment = segment
+      if (isSpeakableText(current)) result.push(current)
+      current = trimmed
     }
   }
+  if (isSpeakableText(current)) result.push(current)
+  return result
+}
 
-  if (isSpeakableText(currentSegment)) {
-    result.push(currentSegment)
+export function splitTextIntoSegments(text: string): string[] {
+  if (!text) return []
+
+  const sanitized = sanitizeTTSText(text)
+
+  // Split at sentence-ending punctuation first (preferred boundaries)
+  const sentences = mergeParts(sanitized.split(SENTENCE_REGEX))
+
+  // Sub-split long segments at clause-level punctuation (，、；：;)
+  const result: string[] = []
+  for (const sentence of sentences) {
+    if (sentence.length <= MAX_SEGMENT_LENGTH) {
+      result.push(sentence)
+      continue
+    }
+    result.push(...mergeParts(sentence.split(CLAUSE_REGEX)))
   }
 
   return result
