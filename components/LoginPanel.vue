@@ -101,8 +101,9 @@ const emit = defineEmits<{ connect: [{ id: string, email?: string }] }>()
 const { t: $t } = useI18n()
 const { connectors, error } = useConnect()
 const { isApp } = useAppDetection()
+const getRouteQuery = useRouteQuery()
 
-const emailInput = ref('')
+const emailInput = ref(getRouteQuery('email'))
 
 const isEmailValid = computed(() => validateEmail(emailInput.value.trim()))
 
