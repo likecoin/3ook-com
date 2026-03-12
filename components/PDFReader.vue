@@ -25,7 +25,6 @@
 
           <UButtonGroup>
             <UButton
-              class="max-phone:hidden"
               icon="i-material-symbols-zoom-out"
               :disabled="scale <= scaleMin"
               color="neutral"
@@ -33,6 +32,7 @@
               @click="zoomOut"
             />
             <UDropdownMenu
+              class="max-phone:hidden"
               :items="scaleMenuItems"
               :ui="{
                 item: 'justify-center',
@@ -41,7 +41,7 @@
               }"
             >
               <UButton
-                class="justify-center min-w-[64px] max-phone:!rounded-md"
+                class="justify-center min-w-[64px]"
                 :label="`${Math.round(scale * 100)}%`"
                 color="neutral"
                 variant="outline"
@@ -49,7 +49,6 @@
               />
             </UDropdownMenu>
             <UButton
-              class="max-phone:hidden"
               icon="i-material-symbols-zoom-in"
               :disabled="scale >= scaleMax"
               color="neutral"
