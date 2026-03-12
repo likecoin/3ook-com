@@ -1,4 +1,4 @@
-import { useDebounceFn, useEventListener, useStorage } from '@vueuse/core'
+import { useEventListener, useStorage } from '@vueuse/core'
 import type { CustomVoiceData } from '~/shared/types/custom-voice'
 
 export const TTS_ERROR_NOT_ALLOWED = 'NotAllowedError'
@@ -217,6 +217,8 @@ export function useTextToSpeech(options: TTSOptions = {}) {
     isOffline.value = !navigator.onLine
   })
 
+  onScopeDispose(() => cancelPendingSkip())
+
   // Media Session (web only)
   function updatePositionState() {
     if (!('mediaSession' in navigator)) return
@@ -371,6 +373,7 @@ export function useTextToSpeech(options: TTSOptions = {}) {
   }
 
   function playNextElement() {
+    cancelPendingSkip()
     if (currentTTSSegmentIndex.value + 1 >= ttsSegments.value.length) {
       options.onAllSegmentsPlayed?.()
       return
@@ -454,10 +457,23 @@ export function useTextToSpeech(options: TTSOptions = {}) {
     ttsSegments.value = elements
   }
 
-  const debouncedSkipTo = useDebounceFn((index: number) => {
-    if (!isTextToSpeechOn.value) return
-    player.skipTo(index)
-  }, 500)
+  let skipTimer: ReturnType<typeof setTimeout> | null = null
+
+  function cancelPendingSkip() {
+    if (skipTimer) {
+      clearTimeout(skipTimer)
+      skipTimer = null
+    }
+  }
+
+  function debouncedSkipTo(index: number) {
+    cancelPendingSkip()
+    skipTimer = setTimeout(() => {
+      skipTimer = null
+      if (!isTextToSpeechOn.value) return
+      player.skipTo(index)
+    }, 500)
+  }
 
   function skipForward() {
     if (!isTextToSpeechOn.value) return
@@ -506,6 +522,7 @@ export function useTextToSpeech(options: TTSOptions = {}) {
   }
 
   function stopTextToSpeech() {
+    cancelPendingSkip()
     showOfflineModal.value = false
     shouldResumeWhenOnline.value = false
     player.stop()
