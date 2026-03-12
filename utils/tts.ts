@@ -13,11 +13,12 @@ export function sanitizeTTSText(text: string): string {
 }
 
 export function isSpeakableText(text: string): boolean {
-  return /[\p{L}\p{N}]/u.test(sanitizeTTSText(text))
+  return SPEAKABLE_REGEX.test(sanitizeTTSText(text))
 }
 
 const SENTENCE_REGEX = /([.!?。！？][\s\u200B]*)/
 const CLAUSE_REGEX = /([;；：，、][\s\u200B]*)/
+const SPEAKABLE_REGEX = /[\p{L}\p{N}]/u
 const MAX_SEGMENT_LENGTH = 100
 
 function mergeParts(parts: string[]): string[] {
@@ -30,11 +31,11 @@ function mergeParts(parts: string[]): string[] {
       current += trimmed
     }
     else {
-      if (isSpeakableText(current)) result.push(current)
+      if (SPEAKABLE_REGEX.test(current)) result.push(current)
       current = trimmed
     }
   }
-  if (isSpeakableText(current)) result.push(current)
+  if (SPEAKABLE_REGEX.test(current)) result.push(current)
   return result
 }
 
