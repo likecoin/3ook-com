@@ -3,6 +3,7 @@
     v-model:open="model"
     :ui="{ content: 'sm:max-w-md' }"
     :title="$t('gift_book_modal_title')"
+    :dismissible="!isProcessing"
   >
     <template #header>
       <div class="flex items-center gap-3">
