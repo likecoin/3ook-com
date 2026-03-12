@@ -258,6 +258,7 @@ const scaleMenuItems = computed<DropdownMenuItem[]>(() => {
 const pdfDocument = shallowRef<PDFDocumentProxy>()
 const renderQueue = ref<(() => Promise<void>)[]>([])
 const isRendering = ref(false)
+const hasAutoFittedScale = ref(false)
 const isDualPageMode = useSyncedBookSettings({
   nftClassId: props.nftClassId,
   key: 'isDualPageMode',
@@ -422,11 +423,59 @@ async function loadPDF() {
 
     emit('pdfLoaded', pdfDocument.value)
 
+    await maybeAutoFitScale()
     renderPages()
   }
   catch (error) {
     emit('error', error as Error)
   }
+}
+
+function clampScale(value: number) {
+  return Math.min(scaleMax, Math.max(scaleMin, value))
+}
+
+async function maybeAutoFitScale() {
+  if (!pdfDocument.value || hasAutoFittedScale.value) return
+  if (scale.value !== 1.0) return
+
+  await nextTick()
+  await new Promise(resolve => requestAnimationFrame(() => resolve(true)))
+
+  const container = scrollableContainer.value
+  if (!container) return
+
+  const containerWidth = container.clientWidth
+  const containerHeight = container.clientHeight
+  if (!containerWidth || !containerHeight) return
+
+  const isDual = isDualPageMode.value && totalPages.value > 1 && !isCoverPage.value
+  if (isDual) {
+    const rightPageNum = dualRightPage.value
+    const pagePromises = [pdfDocument.value.getPage(currentPage.value)]
+    if (rightPageNum) pagePromises.push(pdfDocument.value.getPage(rightPageNum))
+    const pages = await Promise.all(pagePromises)
+
+    const viewports = pages.map(page => page.getViewport({ scale: 1 }))
+    const totalWidth = viewports.reduce((sum, viewport) => sum + viewport.width, 0)
+    const maxHeight = Math.max(...viewports.map(viewport => viewport.height))
+    const effectiveScale = Math.min(containerWidth / totalWidth, containerHeight / maxHeight)
+    const fitScale = clampScale(Math.sqrt(effectiveScale))
+
+    scale.value = fitScale
+    hasAutoFittedScale.value = true
+    pages.forEach(page => page.cleanup())
+    return
+  }
+
+  const page = await pdfDocument.value.getPage(currentPage.value)
+  const viewport = page.getViewport({ scale: 1 })
+  const effectiveScale = Math.min(containerWidth / viewport.width, containerHeight / viewport.height)
+  const fitScale = clampScale(Math.sqrt(effectiveScale))
+
+  scale.value = fitScale
+  hasAutoFittedScale.value = true
+  page.cleanup()
 }
 
 async function renderPages() {
