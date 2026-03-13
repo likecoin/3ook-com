@@ -927,6 +927,9 @@ async function extractTTSSegments(book: Book) {
   const segments: TTSSegment[] = []
   const chapterTitles: Record<number, string> = {}
 
+  const FOOTNOTE_CLASS_RE = /\b(footnote|endnote|fn\w*)\b/i
+  const FOOTNOTE_SUP_RE = /^\(?\d+\)?$/
+
   for (const section of sections) {
     if (!loadedBook.value) break
     try {
@@ -946,10 +949,30 @@ async function extractTTSSegments(book: Book) {
 
       const elements = Array.from(
         chapter.querySelectorAll('h1, h2, h3, h4, h5, h6, p, li'),
-      ).filter(el => !!el.textContent?.trim())
+      ).filter((el) => {
+        if (!el.textContent?.trim()) return false
+        // Skip footnote/endnote sections (EPUB3 semantic roles or class-based)
+        if (el.closest('[role="doc-endnotes"], [role="doc-footnote"]')) return false
+        const ancestor = el.closest('section, aside')
+        if (ancestor?.getAttribute('epub:type')?.match(/footnote|endnote/i)) return false
+        if (FOOTNOTE_CLASS_RE.test(el.className || '')) return false
+        return true
+      })
 
       elements.forEach((el, elIndex) => {
-        const text = el.textContent?.trim() || ''
+        const clone = el.cloneNode(true) as Element
+        // Remove inline footnote markers in a single pass
+        clone.querySelectorAll('a[role="doc-noteref"], .footnote-number, a > sup').forEach((node) => {
+          if (node.tagName === 'SUP') {
+            if (FOOTNOTE_SUP_RE.test(node.textContent?.trim() || '')) node.parentElement?.remove()
+          }
+          else { node.remove() }
+        })
+        // Remove epub:type="noteref" elements (namespaced attr not selectable via CSS)
+        clone.querySelectorAll('a, span').forEach((child) => {
+          if (child.getAttribute('epub:type') === 'noteref') child.remove()
+        })
+        const text = clone.textContent?.trim() || ''
         const cfi = section.cfiFromElement(el)
         segments.push(
           ...splitTextIntoSegments(text).map((segment, segIndex) => ({
