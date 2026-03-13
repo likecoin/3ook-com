@@ -21,6 +21,7 @@ declare interface BookstoreItemList {
   isFetchingItems: boolean
   hasFetchedItems: boolean
   nextItemsKey: number | string | undefined
+  mayHaveMore?: boolean
 }
 
 declare interface BookstorePrice {

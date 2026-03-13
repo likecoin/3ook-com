@@ -743,7 +743,7 @@ const products = computed<BookstoreItemList>(() => {
 })
 
 const itemsCount = computed(() => products.value.items.length)
-const hasMoreItems = computed(() => !!products.value.nextItemsKey || !products.value.hasFetchedItems)
+const hasMoreItems = computed(() => !!products.value.nextItemsKey || !!products.value.mayHaveMore || !products.value.hasFetchedItems)
 
 const itemsForStructuredData = computed(() => products.value.items.slice(0, Math.min(20, itemsCount.value)))
 const structuredData = useStorePageStructuredData({

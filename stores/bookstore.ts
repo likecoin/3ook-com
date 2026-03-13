@@ -5,6 +5,7 @@ interface BookstoreCMSTagProducts {
   isFetching: boolean
   hasFetched: boolean
   offset?: string
+  mayHaveMore?: boolean
   ts?: number
 }
 
@@ -46,13 +47,17 @@ export const useBookstoreStore = defineStore('bookstore', () => {
 
   const bookstoreCMSProductsByTagIdMap = ref<Record<string, BookstoreCMSTagProducts>>({})
   const getBookstoreCMSProductsByTagId = computed(() => (tagId: string) => {
+    const state = bookstoreCMSProductsByTagIdMap.value[tagId]
     return {
-      items: bookstoreCMSProductsByTagIdMap.value[tagId]?.items || [],
-      isFetchingItems: bookstoreCMSProductsByTagIdMap.value[tagId]?.isFetching || false,
-      hasFetchedItems: bookstoreCMSProductsByTagIdMap.value[tagId]?.hasFetched || false,
-      nextItemsKey: bookstoreCMSProductsByTagIdMap.value[tagId]?.offset || undefined,
+      items: state?.items || [],
+      isFetchingItems: state?.isFetching || false,
+      hasFetchedItems: state?.hasFetched || false,
+      nextItemsKey: state?.offset || undefined,
+      mayHaveMore: state?.mayHaveMore || false,
     }
   })
+
+  const DEFAULT_PAGE_SIZE = 100
 
   async function fetchCMSProductsByTagId(tagId: string, {
     isRefresh = false,
@@ -62,7 +67,17 @@ export const useBookstoreStore = defineStore('bookstore', () => {
     if (bookstoreCMSProductsByTagIdMap.value[tagId]?.isFetching) {
       return
     }
-    if (!bookstoreCMSProductsByTagIdMap.value[tagId] || isRefresh) {
+
+    // If offset expired but more pages likely exist, re-fetch page 1 to get fresh offset
+    const state = bookstoreCMSProductsByTagIdMap.value[tagId]
+    const needsOffsetRefresh = !isRefresh && state?.hasFetched && !state?.offset && state?.mayHaveMore
+
+    // Bump ts so the retry bypasses the browser HTTP cache (same URL otherwise)
+    if (needsOffsetRefresh && state) {
+      state.ts = Date.now()
+    }
+
+    if (!bookstoreCMSProductsByTagIdMap.value[tagId] || (isRefresh && !needsOffsetRefresh)) {
       bookstoreCMSProductsByTagIdMap.value[tagId] = {
         items: [],
         isFetching: false,
@@ -73,18 +88,26 @@ export const useBookstoreStore = defineStore('bookstore', () => {
     }
     try {
       bookstoreCMSProductsByTagIdMap.value[tagId].isFetching = true
+      const fetchOffset = (isRefresh || needsOffsetRefresh) ? undefined : bookstoreCMSProductsByTagIdMap.value[tagId]?.offset
       const result = await fetchBookstoreCMSProductsByTagId(tagId, {
-        offset: isRefresh ? undefined : bookstoreCMSProductsByTagIdMap.value[tagId]?.offset,
+        offset: fetchOffset,
         ts: bookstoreCMSProductsByTagIdMap.value[tagId].ts,
       })
 
-      if (isRefresh) {
+      if (isRefresh || needsOffsetRefresh) {
         bookstoreCMSProductsByTagIdMap.value[tagId].items = result.records
       }
       else {
         bookstoreCMSProductsByTagIdMap.value[tagId].items.push(...result.records)
       }
       bookstoreCMSProductsByTagIdMap.value[tagId].offset = result.offset
+      // After an offset-refresh attempt that still returns no offset, stop retrying
+      if (needsOffsetRefresh && !result.offset) {
+        bookstoreCMSProductsByTagIdMap.value[tagId].mayHaveMore = false
+      }
+      else {
+        bookstoreCMSProductsByTagIdMap.value[tagId].mayHaveMore = result.hasMore ?? (!result.offset && result.records.length >= DEFAULT_PAGE_SIZE)
+      }
       bookstoreCMSProductsByTagIdMap.value[tagId].hasFetched = true
     }
     catch (error) {

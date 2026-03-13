@@ -1,3 +1,49 @@
+const AIRTABLE_RECORDS_TTL = 86400 // 1 day
+const AIRTABLE_OFFSET_TTL = 120 // 2 minutes (Airtable offsets expire ~5 min)
+
+/**
+ * Dual-TTL cache for Airtable paginated responses.
+ * Records are cached with a long TTL; offset cursor and hasMore flag are cached separately.
+ * When offset expires, cached records are still served with hasMore to signal the client
+ * should refresh page 1 for a new cursor.
+ */
+export async function fetchWithAirtableCache<T>(
+  cacheKey: string,
+  fetcher: () => Promise<{ records: T[], offset?: string }>,
+): Promise<{ records: T[], offset?: string, hasMore: boolean }> {
+  const storage = useStorage('airtable')
+  const recordsKey = `${cacheKey}:records`
+  const offsetKey = `${cacheKey}:offset`
+  const hasMoreKey = `${cacheKey}:hasMore`
+
+  const [cachedRecords, cachedOffset, cachedHasMore] = await Promise.all([
+    storage.getItem<T[]>(recordsKey),
+    storage.getItem<string>(offsetKey),
+    storage.getItem<boolean>(hasMoreKey),
+  ])
+
+  if (cachedRecords) {
+    return {
+      records: cachedRecords,
+      offset: cachedOffset ?? undefined,
+      hasMore: cachedHasMore ?? !!cachedOffset,
+    }
+  }
+
+  const result = await fetcher()
+  const hasMore = !!result.offset
+
+  // Fire-and-forget cache writes
+  const logCacheError = (key: string) => (err: unknown) => console.error(`[airtable-cache] failed to write ${key}:`, err)
+  storage.setItem(recordsKey, result.records, { ttl: AIRTABLE_RECORDS_TTL }).catch(logCacheError(recordsKey))
+  storage.setItem(hasMoreKey, hasMore, { ttl: AIRTABLE_RECORDS_TTL }).catch(logCacheError(hasMoreKey))
+  if (result.offset) {
+    storage.setItem(offsetKey, result.offset, { ttl: AIRTABLE_OFFSET_TTL }).catch(logCacheError(offsetKey))
+  }
+
+  return { ...result, hasMore }
+}
+
 export function getAirtableCMSFetch() {
   const config = useRuntimeConfig()
   return $fetch.create({

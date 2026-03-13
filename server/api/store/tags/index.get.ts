@@ -7,11 +7,17 @@ export default defineEventHandler(async (event) => {
     const query = await getValidatedQuery(event, createValidator(StoreTagsQuerySchema))
     const pageSize = Number((Array.isArray(query.limit) ? query.limit[0] : query.limit)) || 100
     const offset = (Array.isArray(query.offset) ? query.offset[0] : query.offset) || undefined
-    const result = await fetchAirtableCMSTagsForAll({
-      pageSize,
-      offset,
-    })
-    setHeader(event, 'cache-control', 'public, max-age=3600, stale-while-revalidate=86400')
+
+    if (offset) {
+      setHeader(event, 'cache-control', 'no-store')
+      return await fetchAirtableCMSTagsForAll({ pageSize, offset })
+    }
+
+    const result = await fetchWithAirtableCache(
+      `tags:${pageSize}`,
+      () => fetchAirtableCMSTagsForAll({ pageSize }),
+    )
+    setHeader(event, 'cache-control', 'public, max-age=3600')
     return result
   }
   catch (error) {

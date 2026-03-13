@@ -19,6 +19,7 @@ export interface BookstoreCMSProduct {
 export interface FetchBookstoreCMSProductsResponseData {
   records: Array<BookstoreCMSProduct>
   offset?: string
+  hasMore?: boolean
 }
 
 export interface BookstoreCMSTag {
