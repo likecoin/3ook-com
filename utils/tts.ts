@@ -16,8 +16,9 @@ export function isSpeakableText(text: string): boolean {
   return SPEAKABLE_REGEX.test(sanitizeTTSText(text))
 }
 
-const SENTENCE_REGEX = /([.!?。！？][\s\u200B]*)/
-const CLAUSE_REGEX = /([;；：，、][\s\u200B]*)/
+const CLOSING_PUNCT = '[」』】》）)\u2019\u201D]'
+const SENTENCE_REGEX = new RegExp(`([.!?。！？]${CLOSING_PUNCT}*[\\s\\u200B]*)`)
+const CLAUSE_REGEX = new RegExp(`([;；：，、]${CLOSING_PUNCT}*[\\s\\u200B]*)`)
 const SPEAKABLE_REGEX = /[\p{L}\p{N}]/u
 const MAX_SEGMENT_LENGTH = 100
 
