@@ -62,7 +62,7 @@ const {
 const { handleError } = useErrorHandler()
 
 const pdfProgress = ref(0)
-function updatePdfProgress(page: number) {
+function updatePDFProgress(page: number) {
   const totalPages = loadedPDFDocument.value?.numPages || 1
   pdfProgress.value = Math.round((page / totalPages) * 100)
 }
@@ -142,7 +142,7 @@ function handlePDFLoaded(pdfDocument: PDFDocumentProxy) {
   isPDFReady.value = true
   loadedPDFDocument.value = pdfDocument
   currentPageIndex.value = pdfReaderRef.value?.currentPage || 1
-  updatePdfProgress(currentPageIndex.value)
+  updatePDFProgress(currentPageIndex.value)
   // Release the ArrayBuffer — PDF.js has its own internal copy
   fileBuffer.value = null
 }
@@ -201,7 +201,7 @@ async function extractTTSSegmentsFromPDF(pdfDocument: PDFDocumentProxy) {
 function handlePageChanged(pageNumber: number) {
   currentPageIndex.value = pageNumber
   activeTTSElementIndex.value = undefined
-  updatePdfProgress(pageNumber)
+  updatePDFProgress(pageNumber)
 }
 
 let ttsExtractionPromise: Promise<void> | undefined

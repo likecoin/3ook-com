@@ -9,10 +9,11 @@ interface ReadingSessionOptions {
   progress: Ref<number>
   isTextToSpeechPlaying?: Ref<boolean>
   chapterIndex?: Ref<number | undefined>
+  pageIndex?: Ref<number | undefined>
 }
 
 export function useReadingSession(options: ReadingSessionOptions) {
-  const { readerType, progress, isTextToSpeechPlaying, chapterIndex } = options
+  const { readerType, progress, isTextToSpeechPlaying, chapterIndex, pageIndex } = options
   const nftClassId = toRef(options.nftClassId)
 
   const { loggedIn } = useUserSession()
@@ -24,7 +25,7 @@ export function useReadingSession(options: ReadingSessionOptions) {
   let activeReadingTimeMs = 0
   let ttsActiveTimeMs = 0
   let sessionActiveReadingTimeMs = 0
-  let sessionTtsActiveTimeMs = 0
+  let sessionTTSActiveTimeMs = 0
   let lastActiveTimestamp: number | null = null
   let lastTTSTimestamp: number | null = null
 
@@ -36,7 +37,7 @@ export function useReadingSession(options: ReadingSessionOptions) {
     activeReadingTimeMs = 0
     ttsActiveTimeMs = 0
     sessionActiveReadingTimeMs = 0
-    sessionTtsActiveTimeMs = 0
+    sessionTTSActiveTimeMs = 0
     lastActiveTimestamp = null
     lastTTSTimestamp = null
   }
@@ -62,30 +63,31 @@ export function useReadingSession(options: ReadingSessionOptions) {
     }
   }, { immediate: true })
 
-  if (isTextToSpeechPlaying) {
-    watch(isTextToSpeechPlaying, (playing) => {
-      if (playing) {
-        lastTTSTimestamp = Date.now()
-      }
-      else if (lastTTSTimestamp) {
-        ttsActiveTimeMs += Date.now() - lastTTSTimestamp
-        lastTTSTimestamp = null
-      }
-    }, { immediate: true })
-  }
+  watch(() => isTextToSpeechPlaying?.value, (playing) => {
+    if (playing) {
+      lastTTSTimestamp = Date.now()
+    }
+    else if (lastTTSTimestamp) {
+      ttsActiveTimeMs += Date.now() - lastTTSTimestamp
+      lastTTSTimestamp = null
+    }
+  }, { immediate: true })
 
-  if (chapterIndex) {
-    watch(chapterIndex, (index) => {
-      if (index !== undefined) {
-        pagesViewed.add(`ch:${index}`)
-      }
-    }, { immediate: true })
-  }
+  watch(() => chapterIndex?.value, (index) => {
+    if (index !== undefined) {
+      pagesViewed.add(`ch:${index}`)
+    }
+  }, { immediate: true })
+  watch(() => pageIndex?.value, (index) => {
+    if (index !== undefined) {
+      pagesViewed.add(`pg:${index}`)
+    }
+  }, { immediate: true })
   watch(progress, () => {
     if (startProgress === 0 && progress.value !== 0 && sessionActiveReadingTimeMs === 0) {
       startProgress = progress.value
     }
-    if (!chapterIndex) {
+    if (!chapterIndex && !pageIndex) {
       pagesViewed.add(Math.floor(progress.value))
     }
   }, { immediate: true })
@@ -110,7 +112,7 @@ export function useReadingSession(options: ReadingSessionOptions) {
     }
 
     sessionActiveReadingTimeMs += capped.activeReadingTimeMs
-    sessionTtsActiveTimeMs += capped.ttsActiveTimeMs
+    sessionTTSActiveTimeMs += capped.ttsActiveTimeMs
 
     activeReadingTimeMs = Math.max(0, drainedActiveTime - capped.activeReadingTimeMs)
     ttsActiveTimeMs = Math.max(0, drainedTTSTime - capped.ttsActiveTimeMs)
@@ -121,14 +123,14 @@ export function useReadingSession(options: ReadingSessionOptions) {
   function buildSessionPayload() {
     const finalDelta = drainAccumulators(MAX_SESSION_DURATION_MS)
     const totalActiveReadingTimeMs = Math.min(sessionActiveReadingTimeMs, MAX_SESSION_DURATION_MS)
-    const totalTtsActiveTimeMs = Math.min(sessionTtsActiveTimeMs, MAX_SESSION_DURATION_MS)
-    if (totalActiveReadingTimeMs < 1000 && totalTtsActiveTimeMs < 1000) return null
+    const totalTTSActiveTimeMs = Math.min(sessionTTSActiveTimeMs, MAX_SESSION_DURATION_MS)
+    if (totalActiveReadingTimeMs < 1000 && totalTTSActiveTimeMs < 1000) return null
 
     return {
       nftClassId: toValue(nftClassId),
       sessionId,
       activeReadingTimeMs: totalActiveReadingTimeMs,
-      ttsActiveTimeMs: totalTtsActiveTimeMs,
+      ttsActiveTimeMs: totalTTSActiveTimeMs,
       activeReadingTimeMsDelta: finalDelta.activeReadingTimeMs,
       ttsActiveTimeMsDelta: finalDelta.ttsActiveTimeMs,
       pagesViewed: pagesViewed.size,

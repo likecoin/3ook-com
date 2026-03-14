@@ -17,7 +17,7 @@
 
 ### Firestore Schema Additions
 - **`book-users/{wallet}`:** `totalReadingTimeMs`, `totalTTSListeningTimeMs`, `totalBooksCompleted`, `readingStreak { currentDays, longestDays, lastActiveDate }`
-- **`book-users/{wallet}/books/{nftClassId}`:** `totalReadingTimeMs`, `totalTTSTimeMs`, `ttsCharactersUsed`, `completedAt`, `sessionCount`
+- **`book-users/{wallet}/books/{nftClassId}`:** `totalReadingTimeMs`, `totalTTSListeningTimeMs`, `ttsCharactersUsed`, `completedAt`, `sessionCount`
 
 ---
 
