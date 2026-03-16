@@ -6,11 +6,12 @@
     <!-- Hero Section with Banner -->
     <section
       id="hero"
+      v-gsap.entrance.slide-bottom.stagger
       class="flex flex-col justify-center items-center text-center space-y-16 min-h-[70vh] px-8 py-20 bg-theme-black bg-center"
     >
       <NuxtLink
         :to="localeRoute({ name: 'store' })"
-        class="w-full max-w-lg"
+        class="w-full max-w-sm"
         @click="onClickHeroLogo"
       >
         <div class="relative flex justify-center items-center">
@@ -28,32 +29,43 @@
 
       <div class="space-y-4 text-gray-100">
         <h1
-          class="text-4xl md:text-5xl font-bold"
+          class="text-3xl md:text-5xl font-bold"
           v-text="$t('about_page_hero_title')"
         />
         <p
-          class="text-xl max-w-3xl mx-auto leading-relaxed"
+          class="text-lg max-w-3xl mx-auto leading-relaxed"
           v-text="$t('about_page_hero_subtitle')"
         />
       </div>
 
-      <div class="flex flex-row flex-wrap gap-4 justify-center items-center">
+      <img
+        class="w-full max-w-xl -mt-10 mb-10"
+        src="~/assets/images/mockup.png"
+        alt="3ook.com"
+      >
+
+      <div class="grid sm:grid-cols-2 gap-4 justify-center items-center">
         <UButton
+          class="text-theme-cyan ring-theme-cyan hover:bg-theme-cyan/20"
           :to="localeRoute({ name: 'store' })"
           :label="$t('about_page_hero_cta_store')"
-          color="primary"
+          color="neutral"
+          variant="outline"
           size="xl"
           icon="i-material-symbols-storefront"
+          block
           @click="onClickHeroCtaStore"
         />
         <UButton
           v-if="!isApp"
+          class="text-theme-white hover:bg-theme-white/20"
           :to="localeRoute({ name: 'member', query: { ll_source: 'about-page' } })"
           :label="$t('about_page_hero_cta_plus')"
-          variant="link"
-          class="text-gray-300 hover:text-white"
+          color="neutral"
+          variant="outline"
           size="xl"
           icon="i-material-symbols-star-rounded"
+          block
           @click="onClickHeroCtaPlus"
         />
       </div>
