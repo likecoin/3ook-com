@@ -717,6 +717,12 @@
           />
         </form>
       </section>
+
+      <USeparator />
+      <p
+        class="text-sm text-muted text-center leading-relaxed max-w-2xl mx-auto"
+        v-text="$t('app_description')"
+      />
     </div>
   </NuxtLayout>
 </template>
@@ -943,7 +949,7 @@ function onSubmitNewsletter() {
 }
 
 const pageTitle = computed(() => $t('about_page_title'))
-const pageDescription = computed(() => $t('about_page_hero_subtitle'))
+const pageDescription = computed(() => $t('app_description'))
 const canonicalURL = computed(() => `${baseURL}/about`)
 
 useHead({
