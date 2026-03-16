@@ -86,9 +86,9 @@ env:
   - variable: POSTHOG_PUBLIC_KEY
     value: phc_VOXrU28p44Z0coehNjKThwVPK5dO0A6xwQTQqThWI1c
   - variable: POSTHOG_HOST
-    value: https://us.i.posthog.com
+    value: https://t.3ook.com
   - variable: POSTHOG_DEFAULTS
-    value: 2025-05-24
+    value: 2026-01-30
   - variable: PUBLISH_BOOK_ENDPOINT
     value: https://publish.3ook.com
   - variable: GA_TRACKING_ID

@@ -86,9 +86,9 @@ env:
   - variable: POSTHOG_PUBLIC_KEY
     value: phc_pL5jZEutoxpgLzr8b0ixLk6okAoYFNmnwnDzbUAftpq
   - variable: POSTHOG_HOST
-    value: https://us.i.posthog.com
+    value: https://t.3ook.com
   - variable: POSTHOG_DEFAULTS
-    value: 2025-05-24
+    value: 2026-01-30
   - variable: PUBLISH_BOOK_ENDPOINT
     value: https://publish.sepolia.3ook.com
   - variable: GCLOUD_PUBSUB_ENABLE
