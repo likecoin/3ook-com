@@ -70,14 +70,14 @@ export const useBookstoreStore = defineStore('bookstore', () => {
 
     // If offset expired but more pages likely exist, re-fetch page 1 to get fresh offset
     const state = bookstoreCMSProductsByTagIdMap.value[tagId]
-    const needsOffsetRefresh = !isRefresh && state?.hasFetched && !state?.offset && state?.mayHaveMore
+    const shouldRefreshOffset = !isRefresh && state?.hasFetched && !state?.offset && state?.mayHaveMore
 
     // Bump ts so the retry bypasses the browser HTTP cache (same URL otherwise)
-    if (needsOffsetRefresh && state) {
+    if (shouldRefreshOffset && state) {
       state.ts = Date.now()
     }
 
-    if (!bookstoreCMSProductsByTagIdMap.value[tagId] || (isRefresh && !needsOffsetRefresh)) {
+    if (!bookstoreCMSProductsByTagIdMap.value[tagId] || (isRefresh && !shouldRefreshOffset)) {
       bookstoreCMSProductsByTagIdMap.value[tagId] = {
         items: [],
         isFetching: false,
@@ -88,13 +88,13 @@ export const useBookstoreStore = defineStore('bookstore', () => {
     }
     try {
       bookstoreCMSProductsByTagIdMap.value[tagId].isFetching = true
-      const fetchOffset = (isRefresh || needsOffsetRefresh) ? undefined : bookstoreCMSProductsByTagIdMap.value[tagId]?.offset
+      const fetchOffset = (isRefresh || shouldRefreshOffset) ? undefined : bookstoreCMSProductsByTagIdMap.value[tagId]?.offset
       const result = await fetchBookstoreCMSProductsByTagId(tagId, {
         offset: fetchOffset,
         ts: bookstoreCMSProductsByTagIdMap.value[tagId].ts,
       })
 
-      if (isRefresh || needsOffsetRefresh) {
+      if (isRefresh || shouldRefreshOffset) {
         bookstoreCMSProductsByTagIdMap.value[tagId].items = result.records
       }
       else {
@@ -102,7 +102,7 @@ export const useBookstoreStore = defineStore('bookstore', () => {
       }
       bookstoreCMSProductsByTagIdMap.value[tagId].offset = result.offset
       // After an offset-refresh attempt that still returns no offset, stop retrying
-      if (needsOffsetRefresh && !result.offset) {
+      if (shouldRefreshOffset && !result.offset) {
         bookstoreCMSProductsByTagIdMap.value[tagId].mayHaveMore = false
       }
       else {
