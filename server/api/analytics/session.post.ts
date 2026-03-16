@@ -18,17 +18,14 @@ export default defineEventHandler(async (event) => {
     endProgress,
     readerType,
     chapterIndex,
+    pageIndex,
   } = body
 
   const hasActivity = activeReadingTimeMs > 0 || ttsActiveTimeMs > 0
 
-  if (hasActivity) {
-    // Run batch write first to avoid Firestore transaction contention on user doc
-    await incrementBookReadingTime(wallet, nftClassId, activeReadingTimeMsDelta, ttsActiveTimeMsDelta, { countSession: true })
-  }
-
   const tasks: Promise<unknown>[] = []
   if (hasActivity) {
+    tasks.push(incrementBookReadingTime(wallet, nftClassId, activeReadingTimeMsDelta, ttsActiveTimeMsDelta, { countSession: true }))
     tasks.push(updateReadingStreak(wallet))
   }
 
@@ -53,6 +50,7 @@ export default defineEventHandler(async (event) => {
       endProgress,
       readerType,
       chapterIndex,
+      pageIndex,
     })
 
     if (isNewCompletion) {

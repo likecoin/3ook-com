@@ -138,6 +138,7 @@ export function useReadingSession(options: ReadingSessionOptions) {
       endProgress: progress.value,
       readerType,
       chapterIndex: chapterIndex?.value,
+      pageIndex: pageIndex?.value,
     }
   }
 

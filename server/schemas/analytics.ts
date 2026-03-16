@@ -49,6 +49,11 @@ export const ReadingSessionSchema = v.object({
     v.minValue(0, 'INVALID_CHAPTER_INDEX'),
     v.integer('INVALID_CHAPTER_INDEX'),
   )),
+  pageIndex: v.optional(v.pipe(
+    v.number('INVALID_PAGE_INDEX'),
+    v.minValue(0, 'INVALID_PAGE_INDEX'),
+    v.integer('INVALID_PAGE_INDEX'),
+  )),
 })
 
 export const HeartbeatSchema = v.object({

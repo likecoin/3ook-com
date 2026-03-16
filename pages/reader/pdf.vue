@@ -66,12 +66,14 @@ function updatePDFProgress(page: number) {
   const totalPages = loadedPDFDocument.value?.numPages || 1
   pdfProgress.value = Math.round((page / totalPages) * 100)
 }
+const currentPageIndex = ref(1)
 const { isTTSPlaying } = useTTSPlayingState()
 useReadingSession({
   nftClassId,
   readerType: 'pdf',
   progress: pdfProgress,
   isTextToSpeechPlaying: isTTSPlaying,
+  pageIndex: currentPageIndex,
 })
 
 const fileBuffer = ref<ArrayBuffer | null>(null)
@@ -79,7 +81,6 @@ const isPDFReady = ref(false)
 const loadedPDFDocument = shallowRef<PDFDocumentProxy>()
 const isTTSExtracting = ref(false)
 const activeTTSElementIndex = ref<number | undefined>()
-const currentPageIndex = ref(1)
 const pdfReaderRef = ref()
 
 const { setTTSSegments, setChapterTitles, openPlayer } = useTTSPlayerModal({
