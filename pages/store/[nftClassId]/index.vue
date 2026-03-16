@@ -274,6 +274,7 @@
                       />
                     </div>
                     <UButton
+                      v-if="!isApp"
                       :label="$t('staking_claim_rewards')"
                       color="primary"
                       variant="outline"
@@ -333,6 +334,7 @@
             <StakingControl
               class="max-tablet:-mt-8"
               :nft-class-id="nftClassId"
+              :is-control-hidden="isApp"
             />
           </template>
 

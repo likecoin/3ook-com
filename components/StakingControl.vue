@@ -81,6 +81,7 @@
         </div>
 
         <UButton
+          v-if="!isControlHidden"
           :label="$t('staking_claim_rewards')"
           color="primary"
           size="lg"
@@ -90,7 +91,10 @@
       </template>
     </UCard>
 
-    <footer class="grid grid-cols-2 gap-2">
+    <footer
+      v-if="!isControlHidden"
+      class="grid grid-cols-2 gap-2"
+    >
       <template v-if="hasLoggedIn">
         <UButton
           class="col-span-1"
@@ -149,6 +153,7 @@ import { AmountInputModal } from '#components'
 
 const props = defineProps<{
   nftClassId: string
+  isControlHidden?: boolean
 }>()
 
 const config = useRuntimeConfig()
