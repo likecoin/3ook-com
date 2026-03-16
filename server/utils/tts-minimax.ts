@@ -40,8 +40,16 @@ export function getTTSPronunciationDictionary(language: string) {
   }
 }
 
-export function getMinimaxModel(customMiniMaxVoiceId?: string, language?: string): string {
-  return customMiniMaxVoiceId && language !== 'zh-TW' ? 'speech-2.8-hd' : 'speech-2.6-hd'
+export function getMinimaxModel(options: {
+  customVoiceId?: string
+  language?: string
+  preferredModel?: '2.6' | '2.8'
+} = {}): string {
+  const { customVoiceId, language, preferredModel } = options
+  if (language === 'zh-HK') {
+    return preferredModel === '2.8' ? 'speech-2.8-hd' : 'speech-2.6-hd'
+  }
+  return customVoiceId && language !== 'zh-TW' ? 'speech-2.8-hd' : 'speech-2.6-hd'
 }
 
 export class MinimaxTTSProvider implements BaseTTSProvider {
@@ -49,7 +57,7 @@ export class MinimaxTTSProvider implements BaseTTSProvider {
   format = 'audio/mpeg'
 
   async processRequest(params: TTSRequestParams): Promise<Buffer> {
-    const { text, language, voiceId, customMiniMaxVoiceId } = params
+    const { text, language, voiceId, customMiniMaxVoiceId, preferredModel } = params
 
     if (!customMiniMaxVoiceId && !VOICE_MAPPING[voiceId]) {
       throw createError({
@@ -60,7 +68,7 @@ export class MinimaxTTSProvider implements BaseTTSProvider {
 
     const client = getMiniMaxSpeechClient()
     const resolvedVoiceId = (customMiniMaxVoiceId || VOICE_MAPPING[voiceId]) as string
-    const model = getMinimaxModel(customMiniMaxVoiceId, language)
+    const model = getMinimaxModel({ customVoiceId: customMiniMaxVoiceId, language, preferredModel })
 
     const result = await client.synthesize({
       text,
@@ -79,7 +87,7 @@ export class MinimaxTTSProvider implements BaseTTSProvider {
   }
 
   async processRequestStream(params: TTSRequestParams): Promise<ReadableStream<Buffer>> {
-    const { text, language, voiceId, customMiniMaxVoiceId } = params
+    const { text, language, voiceId, customMiniMaxVoiceId, preferredModel } = params
 
     if (!customMiniMaxVoiceId && !VOICE_MAPPING[voiceId]) {
       throw createError({
@@ -90,7 +98,7 @@ export class MinimaxTTSProvider implements BaseTTSProvider {
 
     const client = getMiniMaxSpeechClient()
     const resolvedVoiceId = (customMiniMaxVoiceId || VOICE_MAPPING[voiceId]) as string
-    const model = getMinimaxModel(customMiniMaxVoiceId, language)
+    const model = getMinimaxModel({ customVoiceId: customMiniMaxVoiceId, language, preferredModel })
 
     return await client.synthesizeStream({
       text,

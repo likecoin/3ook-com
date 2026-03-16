@@ -114,7 +114,14 @@ export default defineEventHandler(async (event) => {
     })
   }
   const config = useRuntimeConfig()
-  const { text, language, voice_id: voiceId, blocking, nft_class_id: nftClassId } = await getValidatedQuery(event, createValidator(TTSQuerySchema))
+  const {
+    text,
+    language,
+    voice_id: voiceId,
+    blocking,
+    nft_class_id: nftClassId,
+    minimax_model: minimaxModel,
+  } = await getValidatedQuery(event, createValidator(TTSQuerySchema))
 
   const isCustomVoice = voiceId === 'custom'
   let customMiniMaxVoiceId: string | undefined
@@ -148,8 +155,8 @@ export default defineEventHandler(async (event) => {
   }
 
   const ttsModel = isCustomVoice
-    ? getMinimaxModel(customMiniMaxVoiceId, language)
-    : (VOICE_PROVIDER_MAPPING[voiceId] === TTSProvider.MINIMAX ? getMinimaxModel() : 'azure')
+    ? getMinimaxModel({ customVoiceId: customMiniMaxVoiceId, language, preferredModel: minimaxModel })
+    : (VOICE_PROVIDER_MAPPING[voiceId] === TTSProvider.MINIMAX ? getMinimaxModel({ language, preferredModel: minimaxModel }) : 'azure')
   const bucket = getTTSCacheBucket()
   const isCacheEnabled = !!bucket
   const cacheKey = isCacheEnabled
@@ -227,6 +234,7 @@ export default defineEventHandler(async (event) => {
     language,
     voiceId,
     customMiniMaxVoiceId,
+    preferredModel: minimaxModel,
     session,
     config,
   }

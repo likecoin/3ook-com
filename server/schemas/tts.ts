@@ -13,4 +13,5 @@ export const TTSQuerySchema = v.object({
   ),
   blocking: v.optional(v.string()),
   nft_class_id: v.optional(nftClassIdField),
+  minimax_model: v.optional(v.picklist(['2.6', '2.8'])),
 })

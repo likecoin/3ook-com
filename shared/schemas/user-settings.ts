@@ -6,6 +6,7 @@ export const UserSettingsUpdateSchema = v.pipe(
     currency: v.optional(v.picklist(['auto', 'hkd', 'twd', 'usd'])),
     colorMode: v.optional(v.picklist(['light', 'dark', 'system'])),
     isAdultContentEnabled: v.optional(v.boolean()),
+    ttsCantoneseModel: v.optional(v.picklist(['2.6', '2.8'])),
   }, 'INVALID_KEYS'),
   v.check(input => Object.keys(input).length > 0, 'MISSING_BODY'),
 )
