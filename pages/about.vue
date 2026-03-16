@@ -582,7 +582,7 @@
       </section>
     </div>
 
-    <!-- 3ook Plus Membership Section -->
+    <!-- 3ook.com Plus Membership Section -->
     <section
       id="plus"
       class="w-full bg-gradient-to-r from-primary/10 to-secondary/20 py-12 px-4"
@@ -596,66 +596,65 @@
           class="text-lg text-gray-700 leading-relaxed max-w-2xl mx-auto"
           v-text="$t('about_page_plus_description')"
         />
-        <div
+        <ul
           v-gsap.whenVisible.once.stagger.from="{ y: 30, opacity: 0, duration: 0.4, stagger: 0.1 }"
-          class="grid sm:grid-cols-2 md:grid-cols-5 gap-4 text-left max-w-3xl mx-auto"
+          :class="[
+            'grid',
+            'sm:grid-cols-2',
+            'gap-x-10',
+            'gap-y-4',
+            'text-left',
+            'w-fit',
+            'max-w-3xl',
+            'mx-auto',
+
+            '*:flex',
+            '*:items-center',
+            '*:gap-2',
+
+            '[&_span:first-child]:text-primary',
+            '[&_span:first-child]:shrink-0',
+
+            '[&_span:last-child]:text-sm',
+            '[&_span:last-child]:text-gray-700',
+          ]"
         >
-          <div class="flex items-start gap-2">
+          <li>
             <UIcon
               name="i-material-symbols-volume-up-rounded"
               size="20"
-              class="text-primary mt-0.5 shrink-0"
             />
-            <span
-              class="text-sm text-gray-700"
-              v-text="$t('about_page_plus_feature_tts')"
-            />
-          </div>
-          <div class="flex items-start gap-2">
+            <span v-text="$t('about_page_plus_feature_tts')" />
+          </li>
+          <li>
             <UIcon
               name="i-material-symbols-record-voice-over-rounded"
               size="20"
-              class="text-primary mt-0.5 shrink-0"
             />
-            <span
-              class="text-sm text-gray-700"
-              v-text="$t('about_page_plus_feature_custom_voice')"
-            />
-          </div>
-          <div class="flex items-start gap-2">
+            <span v-text="$t('about_page_plus_feature_custom_voice')" />
+          </li>
+          <li>
             <UIcon
               name="i-material-symbols-percent-discount-outline-rounded"
               size="20"
-              class="text-primary mt-0.5 shrink-0"
             />
-            <span
-              class="text-sm text-gray-700"
-              v-text="$t('about_page_plus_feature_discount')"
-            />
-          </div>
-          <div class="flex items-start gap-2">
+            <span v-text="$t('about_page_plus_feature_discount')" />
+          </li>
+          <li>
             <UIcon
               name="i-material-symbols-dark-mode-outline-rounded"
               size="20"
-              class="text-primary mt-0.5 shrink-0"
             />
-            <span
-              class="text-sm text-gray-700"
-              v-text="$t('about_page_plus_feature_early_access')"
-            />
-          </div>
-          <div class="flex items-start gap-2">
+            <span v-text="$t('about_page_plus_feature_early_access')" />
+          </li>
+          <li>
             <UIcon
               name="i-material-symbols-support-agent-rounded"
               size="20"
-              class="text-primary mt-0.5 shrink-0"
             />
-            <span
-              class="text-sm text-gray-700"
-              v-text="$t('about_page_plus_feature_support')"
-            />
-          </div>
-        </div>
+            <span v-text="$t('about_page_plus_feature_support')" />
+          </li>
+        </ul>
         <UButton
           v-if="!isApp"
           :to="localeRoute({ name: 'member', query: { ll_source: 'about-page' } })"
