@@ -3,6 +3,7 @@
     <AppLogo
       class="mx-auto"
       :height="44"
+      @click="logoClickCount++"
     />
 
     <form
@@ -26,7 +27,7 @@
       />
     </form>
 
-    <template v-if="!isApp && othersConnectors.length">
+    <template v-if="shouldShowOthersConnectors">
       <USeparator
         class="my-4"
         :label="$t('login_panel_or_separator')"
@@ -103,15 +104,26 @@ const { connectors, error } = useConnect()
 const { isApp } = useAppDetection()
 const getRouteQuery = useRouteQuery()
 
+const UNLOCK_CLICK_THRESHOLD = 10
+
+const logoClickCount = ref(0)
+
+watch(logoClickCount, (count) => {
+  if (count === UNLOCK_CLICK_THRESHOLD) {
+    useLogEvent('login_panel_unlocked')
+  }
+})
+
 const emailInput = ref(getRouteQuery('email'))
 
 const isEmailValid = computed(() => validateEmail(emailInput.value.trim()))
 
 const othersConnectors = computed(() => {
-  // Disable others connectors for app
-  return isApp.value
-    ? []
-    : connectors.filter(c => !['magic', 'injected'].includes(c.id))
+  return connectors.filter(c => !['magic', 'injected'].includes(c.id))
+})
+
+const shouldShowOthersConnectors = computed(() => {
+  return (!isApp.value || logoClickCount.value >= UNLOCK_CLICK_THRESHOLD) && othersConnectors.value.length > 0
 })
 
 function handleConnect({ id = '', email }: { id?: string, email?: string } = {}) {
