@@ -7,6 +7,7 @@ export interface LikerInfoResponseData {
   evmWallet: string
   description: string
   isLikerPlus?: boolean
+  isExpiredLikerPlus?: boolean
 }
 
 export interface LikerProfileResponseData extends LikerInfoResponseData {

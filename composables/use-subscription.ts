@@ -13,7 +13,12 @@ export function useSubscription() {
 
   const isLikerPlus = computed(() => {
     if (!hasLoggedIn.value) return false
-    return user.value?.isLikerPlus
+    return user.value?.isLikerPlus ?? false
+  })
+
+  const isExpiredLikerPlus = computed(() => {
+    if (!hasLoggedIn.value) return false
+    return user.value?.isExpiredLikerPlus ?? false
   })
 
   const likerPlusPeriod = computed(() => {
@@ -41,6 +46,7 @@ export function useSubscription() {
     currency,
 
     isLikerPlus,
+    isExpiredLikerPlus,
     likerPlusPeriod,
     hasLoggedIn,
     getPlusDiscountPrice,

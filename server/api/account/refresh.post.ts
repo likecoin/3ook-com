@@ -33,6 +33,7 @@ export default defineEventHandler(async (event) => {
       description: userInfoRes.description,
       avatar: userInfoRes.avatar,
       isLikerPlus: userInfoRes.isLikerPlus || false,
+      isExpiredLikerPlus: userInfoRes.isExpiredLikerPlus || false,
       likerPlusPeriod: userInfoRes.likerPlusPeriod,
     },
   })

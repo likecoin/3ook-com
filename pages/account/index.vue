@@ -15,11 +15,11 @@
           />
 
           <template
-            v-if="!isApp && user?.isLikerPlus"
+            v-if="!isApp && (user?.isLikerPlus || user?.isExpiredLikerPlus)"
             #right
           >
             <UButton
-              :label="user?.isLikerPlus ? $t('account_page_manage_subscription') : $t('account_page_upgrade_to_plus')"
+              :label="user?.isLikerPlus ? $t('account_page_manage_subscription') : $t('account_page_renew_subscription')"
               :variant="user?.isLikerPlus ? 'outline' : 'solid'"
               color="primary"
               :loading="isOpeningBillingPortal"
@@ -600,6 +600,14 @@ const route = useRoute()
 
 watchImmediate(hasLoggedIn, async (loggedIn) => {
   if (loggedIn) {
+    if (!user.value?.isLikerPlus) {
+      try {
+        await callOnce('account-refresh-session', () => accountStore.refreshSessionInfo())
+      }
+      catch (error) {
+        console.error('Failed to refresh session info:', error)
+      }
+    }
     const isCustomVoiceAction = route.query.action === 'custom-voice'
     if (isCustomVoiceAction) {
       blockingModal.open({ title: $t('common_processing') })
@@ -642,6 +650,9 @@ const subscriptionStateLabel = computed(() => {
     // TODO: Support Trial
     return $t('account_page_subscription_plus')
   }
+  if (user.value.isExpiredLikerPlus) {
+    return $t('account_page_subscription_expired')
+  }
   return $t('account_page_subscription_free')
 })
 
@@ -681,7 +692,7 @@ const isOpeningBillingPortal = ref(false)
 async function handleLikerPlusButtonClick() {
   useLogEvent('account_liker_plus_button_click')
 
-  if (!user.value?.isLikerPlus) {
+  if (!user.value?.isLikerPlus && !user.value?.isExpiredLikerPlus) {
     await navigateTo(localeRoute({ name: 'member' }))
     return
   }

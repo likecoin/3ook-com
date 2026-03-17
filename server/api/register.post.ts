@@ -69,6 +69,7 @@ export default defineEventHandler(async (event) => {
     email: body.email,
     loginMethod: body.loginMethod,
     isLikerPlus: userInfoRes.isLikerPlus || false,
+    isExpiredLikerPlus: userInfoRes.isExpiredLikerPlus || false,
   }
   await setUserSession(event, { user: userInfo })
 
