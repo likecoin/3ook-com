@@ -47,7 +47,7 @@ export function getMinimaxModel(options: {
 } = {}): string {
   const { customVoiceId, language, preferredModel } = options
   if (language === 'zh-HK') {
-    return preferredModel === '2.8' ? 'speech-2.8-hd' : 'speech-2.6-hd'
+    return preferredModel === '2.6' ? 'speech-2.6-hd' : 'speech-2.8-hd'
   }
   return customVoiceId && language !== 'zh-TW' ? 'speech-2.8-hd' : 'speech-2.6-hd'
 }
