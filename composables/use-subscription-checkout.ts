@@ -69,6 +69,7 @@ export function useSubscriptionCheckout() {
     const isSubscribed = await redirectIfSubscribed(plan)
     if (isSubscribed) return
     if (!hasLoggedIn.value) {
+      useLogEvent('subscription_login_required')
       await accountStore.login()
       if (!hasLoggedIn.value) return
     }
@@ -118,6 +119,9 @@ export function useSubscriptionCheckout() {
       }
     }
     catch (error) {
+      useLogEvent('subscription_checkout_error', {
+        error_message: getErrorMessage(error),
+      })
       handleError(error)
     }
     finally {

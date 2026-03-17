@@ -1467,6 +1467,10 @@ async function handlePurchaseButtonClick() {
     await navigateTo(url, { external: true })
   }
   catch (error) {
+    useLogEvent('checkout_error', {
+      nft_class_id: nftClassId.value,
+      error_message: getErrorMessage(error),
+    })
     await handleError(error)
   }
   finally {

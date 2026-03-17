@@ -85,7 +85,16 @@ export function useLogEvent(eventName: string, eventParams: EventParams = {}) {
   if ($posthog) {
     try {
       const posthog = $posthog()
-      posthog.capture(eventName, eventParams)
+      const posthogParams = { ...eventParams }
+      if (Array.isArray(posthogParams.items)) {
+        const classIds = posthogParams.items
+          .map((item: { id?: string }) => item.id?.split('-')[0])
+          .filter((id): id is string => !!id && id.startsWith('0x'))
+        if (classIds.length) {
+          posthogParams.nft_class_ids = classIds.join(',')
+        }
+      }
+      posthog.capture(eventName, posthogParams)
     }
     catch (error) {
       console.error(`Failed to log event to PostHog: ${eventName}`, error)

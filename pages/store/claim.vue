@@ -302,6 +302,7 @@ async function waitForItemsDelivery({ timeout = 30000, interval = 3000 } = {}) {
     }
 
     const start = Date.now()
+    let hasLoggedTimeout = false
     while (!canStartReading.value) {
       try {
         await checkItemsDeliveryThroughIndexer()
@@ -312,6 +313,10 @@ async function waitForItemsDelivery({ timeout = 30000, interval = 3000 } = {}) {
       if (canStartReading.value) break
       await sleep(interval)
       if ((Date.now() - start) > timeout) {
+        if (!hasLoggedTimeout) {
+          useLogEvent('claim_timeout', { nft_class_id: nftClassId.value })
+          hasLoggedTimeout = true
+        }
         try {
           await bookshelfStore.fetchNFTByNFTClassIdAndOwnerWalletAddressThroughContract(nftClassId.value as string, claimingWallet.value as string)
         }
@@ -348,6 +353,7 @@ async function startClaimingItems() {
   try {
     isClaiming.value = true
     startLoadingLabelAnimation()
+    useLogEvent('claim_started', { nft_class_id: nftClassId.value, cart_id: cartId.value })
 
     if (!claimingWallet.value) {
       throw createError({
@@ -386,6 +392,10 @@ async function startClaimingItems() {
       isClaimed.value = true
     }
     else {
+      useLogEvent('claim_error', {
+        nft_class_id: nftClassId.value,
+        error_message: getErrorMessage(error),
+      })
       await handleError(error, {
         title: $t('claim_page_claim_error'),
         customHandlerMap: {

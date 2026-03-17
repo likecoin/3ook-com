@@ -372,6 +372,10 @@ async function handleCheckout() {
     await navigateTo(url, { external: true })
   }
   catch (error) {
+    useLogEvent('checkout_error', {
+      ...eventPayload.value,
+      error_message: getErrorMessage(error),
+    })
     isPurchasing.value = false
     await handleError(error)
   }

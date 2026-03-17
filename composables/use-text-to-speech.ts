@@ -132,6 +132,7 @@ export function useTextToSpeech(options: TTSOptions = {}) {
 
   player.on('allEnded', () => {
     isTextToSpeechPlaying.value = false
+    useLogEvent('tts_completed', { nft_class_id: nftClassId })
     options.onAllSegmentsPlayed?.()
   })
 
@@ -176,6 +177,7 @@ export function useTextToSpeech(options: TTSOptions = {}) {
     options.onError?.(error)
     if (consecutiveAudioErrors.value >= MAX_CONSECUTIVE_ERRORS) {
       console.warn(`TTS paused after ${MAX_CONSECUTIVE_ERRORS} consecutive audio errors`)
+      useLogEvent('tts_error', { nft_class_id: nftClassId, consecutive_errors: consecutiveAudioErrors.value })
       pauseTextToSpeech()
       return
     }

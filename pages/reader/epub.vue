@@ -1064,7 +1064,11 @@ function turnPageRight() {
 
 function adjustFontSize(size: number) {
   const index = fontSize.value ? FONT_SIZE_OPTIONS.indexOf(fontSize.value) : DEFAULT_FONT_SIZE_INDEX
-  fontSize.value = FONT_SIZE_OPTIONS[index + size] || fontSize.value
+  const newValue = FONT_SIZE_OPTIONS[index + size]
+  if (newValue && newValue !== fontSize.value) {
+    fontSize.value = newValue
+    useLogEvent('reader_setting_changed', { nft_class_id: nftClassId.value, setting: 'font_size', value: newValue })
+  }
 }
 
 function increaseFontSize() {
@@ -1076,8 +1080,11 @@ function decreaseFontSize() {
 }
 
 function adjustLineHeight(delta: number) {
-  const newHeight = lineHeight.value + delta
-  lineHeight.value = Math.round(newHeight * 10) / 10
+  const newHeight = Math.round((lineHeight.value + delta) * 10) / 10
+  if (newHeight !== lineHeight.value) {
+    lineHeight.value = newHeight
+    useLogEvent('reader_setting_changed', { nft_class_id: nftClassId.value, setting: 'line_height', value: newHeight })
+  }
 }
 
 function increaseLineHeight() {
@@ -1332,6 +1339,7 @@ async function handleAnnotationColorSelect(color: AnnotationColor) {
 
     const saved = await saveAnnotation(newAnnotation.id, createData)
     if (saved) {
+      useLogEvent('annotation_created', { nft_class_id: nftClassId.value })
       // Re-render with server-assigned ID
       removeAnnotationHighlight(newAnnotation.cfi)
       addAnnotationHighlight(saved)
@@ -1463,7 +1471,10 @@ async function handleAnnotationModalDelete() {
   if (!current) return
 
   const success = await deleteAnnotation(current.id)
-  if (!success) {
+  if (success) {
+    useLogEvent('annotation_deleted', { nft_class_id: nftClassId.value })
+  }
+  else {
     addAnnotationHighlight(current)
     toast.add({
       title: $t('reader_annotations_delete_failed'),

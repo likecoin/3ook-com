@@ -186,7 +186,16 @@ export function useReadingSession(options: ReadingSessionOptions) {
 
   const { pause: pauseHeartbeat, resume: resumeHeartbeat } = useIntervalFn(sendHeartbeat, HEARTBEAT_INTERVAL_MS, { immediate: false })
 
+  function logSessionStart() {
+    if (!loggedIn.value) return
+    useLogEvent('reading_session_start', {
+      nft_class_id: toValue(nftClassId),
+      reader_type: readerType,
+    })
+  }
+
   onMounted(() => {
+    logSessionStart()
     resumeHeartbeat()
   })
 
@@ -197,6 +206,7 @@ export function useReadingSession(options: ReadingSessionOptions) {
     }
     else {
       resetSession()
+      logSessionStart()
       resumeHeartbeat()
     }
   })
