@@ -6,7 +6,7 @@ export default defineEventHandler(async (event) => {
   try {
     const query = await getValidatedQuery(event, createValidator(StoreSearchQuerySchema))
     const searchTerm = (Array.isArray(query.q) ? query.q[0] : query.q)!
-    const pageSize = Number((Array.isArray(query.limit) ? query.limit[0] : query.limit)) || 100
+    const pageSize = Math.min(Math.max(1, Number((Array.isArray(query.limit) ? query.limit[0] : query.limit)) || 100), 100)
     const offset = (Array.isArray(query.offset) ? query.offset[0] : query.offset) || undefined
 
     const result = await fetchAirtableCMSPublicationsBySearchTerm(searchTerm, {
