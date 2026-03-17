@@ -1,5 +1,4 @@
 import type { BaseTTSProvider, TTSRequestParams } from './api-tts'
-import { TTSProvider } from './api-tts'
 
 export const LANG_MAPPING = {
   'en-US': 'English',
@@ -53,7 +52,7 @@ export function getMinimaxModel(options: {
 }
 
 export class MinimaxTTSProvider implements BaseTTSProvider {
-  provider = TTSProvider.MINIMAX
+  provider = 'minimax'
   format = 'audio/mpeg'
 
   async processRequest(params: TTSRequestParams): Promise<Buffer> {

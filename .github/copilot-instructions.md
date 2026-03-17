@@ -121,7 +121,7 @@ npm run generate:pwa-assets  # Generate PWA icons
 - `/plugins/` - Nuxt plugins (wagmi, gtag, farcaster, polyfill, uet)
 - `/server/` - Server-side code
   - `/api/` - API endpoints (login, register, store, book-list, reader/tts, etc.)
-  - `/utils/` - Server utilities (airtable, firebase, firestore, tts-azure, tts-minimax)
+  - `/utils/` - Server utilities (airtable, firebase, firestore, tts-minimax)
 - `/utils/` - Shared utilities
 - `/types/` - TypeScript type definitions
 - `/constants/` - Application constants
@@ -140,7 +140,7 @@ npm run generate:pwa-assets  # Generate PWA icons
 **Required Environment Variables:**
 - See `.env.example` for full list (45+ variables)
 - Critical for build: None (all have defaults or are optional)
-- Critical for runtime: `NUXT_SESSION_PASSWORD` (min 32 chars), API keys for Magic Link, WalletConnect, Airtable, Azure TTS, etc.
+- Critical for runtime: `NUXT_SESSION_PASSWORD` (min 32 chars), API keys for Magic Link, WalletConnect, Airtable, Minimax TTS, etc.
 
 **Testnet vs Mainnet:**
 - Set `IS_TESTNET=TRUE` for Base Sepolia (testnet)

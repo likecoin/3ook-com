@@ -9,8 +9,6 @@ export default defineNitroPlugin(() => {
   const optionalVars: Record<string, string | undefined> = {
     minimaxAPIKey: config.minimaxAPIKey as string | undefined,
     minimaxGroupId: config.minimaxGroupId as string | undefined,
-    azureSubscriptionKey: config.azureSubscriptionKey as string | undefined,
-    azureServiceRegion: config.azureServiceRegion as string | undefined,
     airtableAPISecret: config.airtableAPISecret as string | undefined,
   }
 

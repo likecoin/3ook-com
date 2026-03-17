@@ -44,7 +44,7 @@ GitHub Actions runs on push/PR: `npm ci` → `npm run lint` → `npm run typeche
 
 ### Server Backend (`/server/`)
 - `/server/api/` — REST endpoints for auth, book lists, store products, TTS, user settings
-- `/server/utils/` — Airtable CMS client, Firebase/Firestore, Azure TTS, Minimax TTS, cloud storage
+- `/server/utils/` — Airtable CMS client, Firebase/Firestore, Minimax TTS, cloud storage
 - Auth flow: Magic Link (email/social) or wallet signature → server session (30-day cookie)
 
 ### Web3 Layer
@@ -61,7 +61,7 @@ GitHub Actions runs on push/PR: `npm ci` → `npm run lint` → `npm run typeche
 ### Key Integrations
 - **Airtable** — CMS for bookstore products, tags, publications
 - **Firebase** — Firestore for user data/book lists, Cloud Storage for TTS cache
-- **Azure Cognitive Services + Minimax** — Text-to-speech (server-side generation)
+- **Minimax** — Text-to-speech (server-side generation)
 - **Sentry** — Error tracking (warnings about missing auth token are non-blocking)
 - **PostHog** — Product analytics
 - **Intercom** — Customer support

@@ -2,10 +2,6 @@ import type { H3Event } from 'h3'
 
 const TTS_TRIAL_CHARACTER_LIMIT = 1000
 
-export enum TTSProvider {
-  MINIMAX = 'minimax',
-  AZURE = 'azure',
-}
 export interface TTSRequestParams {
   text: string
   language: string
@@ -17,7 +13,7 @@ export interface TTSRequestParams {
 }
 
 export interface BaseTTSProvider {
-  provider: TTSProvider
+  provider: string
   format: string
   processRequest(params: TTSRequestParams): Promise<Buffer>
   processRequestStream(params: TTSRequestParams): Promise<ReadableStream<Buffer>>

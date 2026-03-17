@@ -1,7 +1,6 @@
 import { createHash } from 'node:crypto'
 import type { Writable } from 'node:stream'
 import type { H3Event } from 'h3'
-import { AzureTTSProvider } from '~/server/utils/tts-azure'
 import { TTSQuerySchema } from '~/server/schemas/tts'
 
 // Coalesces concurrent identical TTS requests (e.g. browser range probes)
@@ -32,37 +31,16 @@ function parseRangeHeader(rangeHeader: string, totalSize: number): { start: numb
   return { start, end }
 }
 
-// Voice mapping with provider information
-const VOICE_PROVIDER_MAPPING: Record<string, TTSProvider> = {
-  0: TTSProvider.MINIMAX,
-  1: TTSProvider.MINIMAX,
-  aurora: TTSProvider.MINIMAX,
-  pazu: TTSProvider.MINIMAX,
-  phoebe: TTSProvider.MINIMAX,
-  xiaochen: TTSProvider.AZURE,
-}
+const KNOWN_VOICE_IDS = new Set(['0', '1', 'aurora', 'pazu', 'phoebe'])
 
-// Provider factory
-function getTTSProvider(voiceId: string): BaseTTSProvider {
-  const voiceProvider = VOICE_PROVIDER_MAPPING[voiceId]
-  if (!voiceProvider) {
+function getTTSProvider(voiceId: string): MinimaxTTSProvider {
+  if (!KNOWN_VOICE_IDS.has(voiceId)) {
     throw createError({
       status: 400,
       message: 'INVALID_VOICE_ID',
     })
   }
-
-  switch (voiceProvider) {
-    case TTSProvider.MINIMAX:
-      return new MinimaxTTSProvider()
-    case TTSProvider.AZURE:
-      return new AzureTTSProvider()
-    default:
-      throw createError({
-        status: 500,
-        message: 'UNSUPPORTED_TTS_PROVIDER',
-      })
-  }
+  return new MinimaxTTSProvider()
 }
 
 async function serveCachedTTS(
@@ -145,7 +123,7 @@ export default defineEventHandler(async (event) => {
 
   const customVoiceWallet = isCustomVoice ? session.user.evmWallet : undefined
   const logText = text.replace(/(\r\n|\n|\r)/gm, ' ')
-  console.log(`[Speech] User ${session.user.evmWallet} requested conversion. Language: ${language}, Text: "${logText.substring(0, 50)}${logText.length > 50 ? '...' : ''}", Voice: ${voiceId}${isCustomVoice ? ` (${customMiniMaxVoiceId})` : ''}, Provider: ${isCustomVoice ? 'minimax' : VOICE_PROVIDER_MAPPING[voiceId]}`)
+  console.log(`[Speech] User ${session.user.evmWallet} requested conversion. Language: ${language}, Text: "${logText.substring(0, 50)}${logText.length > 50 ? '...' : ''}", Voice: ${voiceId}${isCustomVoice ? ` (${customMiniMaxVoiceId})` : ''}`)
 
   if (!await getUserTTSAvailable(event)) {
     throw createError({
@@ -154,9 +132,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const ttsModel = isCustomVoice
-    ? getMinimaxModel({ customVoiceId: customMiniMaxVoiceId, language, preferredModel: minimaxModel })
-    : (VOICE_PROVIDER_MAPPING[voiceId] === TTSProvider.MINIMAX ? getMinimaxModel({ language, preferredModel: minimaxModel }) : 'azure')
+  const ttsModel = getMinimaxModel({ customVoiceId: customMiniMaxVoiceId, language, preferredModel: minimaxModel })
   const bucket = getTTSCacheBucket()
   const isCacheEnabled = !!bucket
   const cacheKey = isCacheEnabled
