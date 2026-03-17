@@ -1,4 +1,6 @@
 {
+  "about_page_app_description": "Read and listen to your books anytime, anywhere. Download 3ook Reader for a better experience.",
+  "about_page_app_title": "Download 3ook Reader",
   "about_page_author_dung_kai_cheung": "DUNG Kai Cheung",
   "about_page_author_dung_kai_cheung_desc": "DUNG Kai Cheung shares his insights on publishing NFT books on blockchain: fair revenue sharing and reconnecting authors with readers.",
   "about_page_author_fu_yue_an": "Fu Yue'an",
@@ -124,6 +126,8 @@
   "amount_input_max": "Max",
   "amount_input_modal_title": "Enter amount",
   "app_description": "3ook.com — Read, Listen, Own. The 3rd-gen bookstore ecosystem where authors and readers co-create a decentralized home for books and periodicals. By merging AI-enhanced experiences with Web3 ownership, we safeguard the freedom to read and the integrity of our shared history.",
+  "app_download_buttons_app_store": "App Store",
+  "app_download_buttons_google_play": "Google Play",
   "app_header_shelf": "3ookShelf",
   "app_header_store": "3ookStore",
   "app_title": "3ook.com",

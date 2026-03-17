@@ -1,4 +1,6 @@
 {
+  "about_page_app_description": "隨時隨地閱讀和聆聽你的書籍，下載 3ook Reader 享受更好的體驗。",
+  "about_page_app_title": "下載 3ook Reader",
   "about_page_author_dung_kai_cheung": "董啟章",
   "about_page_author_dung_kai_cheung_desc": "董啟章分享在區塊鏈上發行 NFT 書籍的心得：公平收益分配，重新連結作者與讀者。",
   "about_page_author_fu_yue_an": "傅月庵",
@@ -124,6 +126,8 @@
   "amount_input_max": "最大",
   "amount_input_modal_title": "輸入數量",
   "app_description": "3ook.com 第３代電子書店，可讀、可聽、可擁有。滙聚讀者、作者與書店，共同策展、發布與銷售多元書籍及刊物，運用 AI 及 Web3，保育文化，守護歷史。",
+  "app_download_buttons_app_store": "App Store",
+  "app_download_buttons_google_play": "Google Play",
   "app_header_shelf": "書架",
   "app_header_store": "書店",
   "app_title": "3ook.com",

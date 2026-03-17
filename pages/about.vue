@@ -667,6 +667,55 @@
       </div>
     </section>
 
+    <!-- App Section -->
+    <section
+      v-if="!isApp"
+      id="app"
+      class="relative w-full px-6 md:px-12 bg-theme-black overflow-hidden"
+    >
+      <div class="grid md:grid-cols-2 items-center w-full max-w-4xl mx-auto">
+        <div
+          v-gsap.entrance.slide-left.stagger
+          class="relative max-md:order-2 flex flex-col items-center md:items-start space-y-6 py-16 text-center md:text-left"
+        >
+          <div class="flex items-center justify-center md:justify-start gap-4">
+            <img
+              src="~assets/images/about/app-icon.webp"
+              alt="3ook Reader App"
+              class="size-16 md:size-20 rounded-2xl"
+            >
+            <h2
+              class="text-2xl md:text-3xl font-bold text-white"
+              v-text="$t('about_page_app_title')"
+            />
+          </div>
+
+          <p
+            class="text-lg text-gray-300 leading-relaxed max-w-lg"
+            v-text="$t('about_page_app_description')"
+          />
+
+          <AppDownloadButtons
+            class="*:text-theme-white *:ring-theme-white *:hover:bg-theme-white/20"
+            @click-app-store="onClickAppStoreButton"
+            @click-google-play="onClickGooglePlayButton"
+          />
+        </div>
+
+        <aside
+          v-gsap.entrance.slide-right="{ delay: 0.5, duration: 1, ease: 'power1.out' }"
+          class="max-md:absolute inset-0 flex justify-center self-stretch opacity-10! md:opacity-100! max-md:pointer-events-none"
+        >
+          <img
+            v-gsap.entrance.fade="{ delay: 0.5, duration: 1, ease: 'power1.out' }"
+            class="-my-40 max-md:scale-200 origin-center object-contain"
+            src="~assets/images/about/app-mockup.png"
+            alt="3ook Reader App"
+          >
+        </aside>
+      </div>
+    </section>
+
     <!-- Contact Section -->
     <section
       id="contact"
@@ -962,6 +1011,14 @@ function onClickCtaStore() {
 
 function onClickPlusCta() {
   useLogEvent('about_plus_cta_click')
+}
+
+function onClickAppStoreButton() {
+  useLogEvent('about_app_cta_app_store_click')
+}
+
+function onClickGooglePlayButton() {
+  useLogEvent('about_app_cta_google_play_click')
 }
 
 function onSubmitNewsletter() {
