@@ -6,6 +6,7 @@
     size="lg"
     :loading="accountStore.isLoggingIn"
     :disabled="hasLoggedIn"
+    :block="block"
     @click="handleLogin"
   />
 </template>
@@ -15,6 +16,10 @@ const { t: $t } = useI18n()
 const accountStore = useAccountStore()
 const { loggedIn: hasLoggedIn } = useUserSession()
 const { isApp } = useAppDetection()
+
+defineProps<{
+  block?: boolean
+}>()
 
 async function handleLogin() {
   if (hasLoggedIn.value) return
