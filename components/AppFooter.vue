@@ -129,6 +129,13 @@
         </li>
       </ul>
     </div>
+
+    <AppDownloadButtons
+      v-if="!isApp"
+      class="mx-auto"
+      @click-app-store="onClickAppStoreButton"
+      @click-google-play="onClickGooglePlayButton"
+    />
   </footer>
 </template>
 
@@ -142,11 +149,20 @@ const props = defineProps({
 
 const { t: $t } = useI18n()
 const localeRoute = useLocaleRoute()
+const { isApp } = useAppDetection()
 
 function onClickContactUs(event: MouseEvent) {
   if (window?.Intercom) {
     window.Intercom('show')
     event.preventDefault()
   }
+}
+
+function onClickAppStoreButton() {
+  useLogEvent('footer_app_store_click')
+}
+
+function onClickGooglePlayButton() {
+  useLogEvent('footer_google_play_click')
 }
 </script>
