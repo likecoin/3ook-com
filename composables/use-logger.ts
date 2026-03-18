@@ -94,7 +94,7 @@ export function useLogEvent(eventName: string, eventParams: EventParams = {}) {
           posthogParams.nft_class_ids = classIds.join(',')
         }
       }
-      posthog.capture(eventName, posthogParams)
+      posthog.capture(eventName, { app: '3ook', ...posthogParams })
     }
     catch (error) {
       console.error(`Failed to log event to PostHog: ${eventName}`, error)
