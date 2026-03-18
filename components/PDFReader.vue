@@ -140,8 +140,7 @@
       >
         <div
           v-if="isDualPageMode"
-          class="flex origin-top-left"
-          :style="{ transform: `scale(${scale})` }"
+          class="flex"
         >
           <div
             :class="[
@@ -174,9 +173,7 @@
           <div
             :class="[
               ...pagePaddingClasses,
-              'origin-top-left',
             ]"
-            :style="{ transform: `scale(${scale})` }"
           >
             <canvas
               ref="singleCanvas"
@@ -460,7 +457,7 @@ async function maybeAutoFitScale() {
     const totalWidth = viewports.reduce((sum, viewport) => sum + viewport.width, 0)
     const maxHeight = Math.max(...viewports.map(viewport => viewport.height))
     const effectiveScale = Math.min(containerWidth / totalWidth, containerHeight / maxHeight)
-    const fitScale = clampScale(Math.sqrt(effectiveScale))
+    const fitScale = clampScale(effectiveScale)
 
     scale.value = fitScale
     hasAutoFittedScale.value = true
@@ -471,7 +468,7 @@ async function maybeAutoFitScale() {
   const page = await pdfDocument.value.getPage(currentPage.value)
   const viewport = page.getViewport({ scale: 1 })
   const effectiveScale = Math.min(containerWidth / viewport.width, containerHeight / viewport.height)
-  const fitScale = clampScale(Math.sqrt(effectiveScale))
+  const fitScale = clampScale(effectiveScale)
 
   scale.value = fitScale
   hasAutoFittedScale.value = true
