@@ -255,7 +255,7 @@ const scaleMenuItems = computed<DropdownMenuItem[]>(() => {
 const pdfDocument = shallowRef<PDFDocumentProxy>()
 const renderQueue = ref<(() => Promise<void>)[]>([])
 const isRendering = ref(false)
-const hasAutoFittedScale = ref(false)
+const hasAutoZoomedToPage = ref(false)
 const isDualPageMode = useSyncedBookSettings({
   nftClassId: props.nftClassId,
   key: 'isDualPageMode',
@@ -420,7 +420,7 @@ async function loadPDF() {
 
     emit('pdfLoaded', pdfDocument.value)
 
-    await maybeAutoFitScale()
+    await autoZoomToPageIfNeeded()
     renderPages()
   }
   catch (error) {
@@ -432,8 +432,8 @@ function clampScale(value: number) {
   return Math.min(scaleMax, Math.max(scaleMin, value))
 }
 
-async function maybeAutoFitScale() {
-  if (!pdfDocument.value || hasAutoFittedScale.value) return
+async function autoZoomToPageIfNeeded() {
+  if (!pdfDocument.value || hasAutoZoomedToPage.value) return
   if (scale.value !== 1.0) return
 
   await nextTick()
@@ -460,7 +460,7 @@ async function maybeAutoFitScale() {
     const fitScale = clampScale(effectiveScale)
 
     scale.value = fitScale
-    hasAutoFittedScale.value = true
+    hasAutoZoomedToPage.value = true
     pages.forEach(page => page.cleanup())
     return
   }
@@ -471,7 +471,7 @@ async function maybeAutoFitScale() {
   const fitScale = clampScale(effectiveScale)
 
   scale.value = fitScale
-  hasAutoFittedScale.value = true
+  hasAutoZoomedToPage.value = true
   page.cleanup()
 }
 
