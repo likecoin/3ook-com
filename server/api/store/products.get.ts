@@ -38,6 +38,12 @@ export default defineEventHandler(async (event) => {
           message: 'TAG_NOT_FOUND',
         })
       }
+      if (code === 422) {
+        throw createError({
+          status: 422,
+          message: 'OFFSET_EXPIRED',
+        })
+      }
     }
     console.error(error)
     throw createError({

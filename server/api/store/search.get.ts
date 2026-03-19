@@ -26,6 +26,12 @@ export default defineEventHandler(async (event) => {
           message: 'INVALID_API_SECRET',
         })
       }
+      if (code === 422) {
+        throw createError({
+          status: 422,
+          message: 'OFFSET_EXPIRED',
+        })
+      }
     }
     console.error(error)
     throw createError({

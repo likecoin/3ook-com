@@ -86,9 +86,9 @@ export const useBookstoreStore = defineStore('bookstore', () => {
         ts: getTimestampRoundedToMinute(),
       }
     }
+    const fetchOffset = (isRefresh || shouldRefreshOffset) ? undefined : bookstoreCMSProductsByTagIdMap.value[tagId]?.offset
     try {
       bookstoreCMSProductsByTagIdMap.value[tagId].isFetching = true
-      const fetchOffset = (isRefresh || shouldRefreshOffset) ? undefined : bookstoreCMSProductsByTagIdMap.value[tagId]?.offset
       const result = await fetchBookstoreCMSProductsByTagId(tagId, {
         offset: fetchOffset,
         ts: bookstoreCMSProductsByTagIdMap.value[tagId].ts,
@@ -111,6 +111,14 @@ export const useBookstoreStore = defineStore('bookstore', () => {
       bookstoreCMSProductsByTagIdMap.value[tagId].hasFetched = true
     }
     catch (error) {
+      // If a paginated request failed with expired offset, clear it and retry from page 1
+      if (fetchOffset && getErrorStatusCode(error) === 422) {
+        bookstoreCMSProductsByTagIdMap.value[tagId].offset = undefined
+        bookstoreCMSProductsByTagIdMap.value[tagId].mayHaveMore = true
+        bookstoreCMSProductsByTagIdMap.value[tagId].isFetching = false
+        // Must await so the finally block doesn't clobber isFetching mid-retry
+        return await fetchCMSProductsByTagId(tagId)
+      }
       // HACK: When `hasFetched` is placed inside the finally block, it will execute before `items` are updated.
       bookstoreCMSProductsByTagIdMap.value[tagId].hasFetched = true
       throw error
