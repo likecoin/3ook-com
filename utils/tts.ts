@@ -17,8 +17,8 @@ export function isSpeakableText(text: string): boolean {
 }
 
 const CLOSING_PUNCT = '[」』】》）)\u2019\u201D]'
-const SENTENCE_REGEX = new RegExp(`([.!?。！？]${CLOSING_PUNCT}*[\\s\\u200B]*)`)
-const CLAUSE_REGEX = new RegExp(`([;；：，、]${CLOSING_PUNCT}*[\\s\\u200B]*)`)
+const SENTENCE_REGEX = new RegExp(`([.!?。！？…⋯︙]${CLOSING_PUNCT}*[\\s\\u200B]*)`)
+const CLAUSE_REGEX = new RegExp(`([;；：，、—─―︱⸺]${CLOSING_PUNCT}*[\\s\\u200B]*)`)
 const SPEAKABLE_REGEX = /[\p{L}\p{N}]/u
 const MAX_SEGMENT_LENGTH = 100
 
@@ -43,10 +43,8 @@ function mergeParts(parts: string[]): string[] {
 export function splitTextIntoSegments(text: string): string[] {
   if (!text) return []
 
-  const sanitized = sanitizeTTSText(text)
-
   // Split at sentence-ending punctuation first (preferred boundaries)
-  const sentences = mergeParts(sanitized.split(SENTENCE_REGEX))
+  const sentences = mergeParts(text.split(SENTENCE_REGEX))
 
   // Sub-split long segments at clause-level punctuation (，、；：;)
   const result: string[] = []
