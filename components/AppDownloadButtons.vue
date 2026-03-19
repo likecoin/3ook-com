@@ -3,7 +3,7 @@
     <UButton
       :label="$t('app_download_buttons_app_store')"
       icon="i-simple-icons-apple"
-      to="https://apps.apple.com/hk/app/id6757783481"
+      to="https://apps.apple.com/app/id6757783481"
       target="_blank"
       rel="noopener"
       color="neutral"
