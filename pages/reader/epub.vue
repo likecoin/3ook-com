@@ -1000,7 +1000,7 @@ async function extractTTSSegments(book: Book) {
     }
   }
 
-  return { segments, chapterTitles }
+  return { segments: mergeShortTTSSegments(segments), chapterTitles }
 }
 
 async function setActiveNavItem(item: NavItem, { isSilentError = false } = {}) {

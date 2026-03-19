@@ -196,7 +196,7 @@ async function extractTTSSegmentsFromPDF(pdfDocument: PDFDocumentProxy) {
     }
   }
 
-  return { segments, chapterTitles }
+  return { segments: mergeShortTTSSegments(segments), chapterTitles }
 }
 
 function handlePageChanged(pageNumber: number) {

@@ -21,6 +21,7 @@ const SENTENCE_REGEX = new RegExp(`([.!?。！？]${CLOSING_PUNCT}*[\\s\\u200B]*
 const CLAUSE_REGEX = new RegExp(`([;；：，、]${CLOSING_PUNCT}*[\\s\\u200B]*)`)
 const SPEAKABLE_REGEX = /[\p{L}\p{N}]/u
 const MAX_SEGMENT_LENGTH = 100
+const MIN_SEGMENT_LENGTH = 15
 
 function mergeParts(parts: string[]): string[] {
   const result: string[] = []
@@ -28,7 +29,11 @@ function mergeParts(parts: string[]): string[] {
   for (const part of parts) {
     const trimmed = part.replace(/[\s\u200B]+/g, ' ').trim()
     if (!trimmed) continue
-    if (trimmed.length === 1 || current.length + trimmed.length < MAX_SEGMENT_LENGTH) {
+    if (
+      trimmed.length === 1
+      || current.length + trimmed.length < MAX_SEGMENT_LENGTH
+      || (trimmed.length < MIN_SEGMENT_LENGTH && current.length + trimmed.length <= MAX_SEGMENT_LENGTH * 1.5)
+    ) {
       current += trimmed
     }
     else {
@@ -36,7 +41,16 @@ function mergeParts(parts: string[]): string[] {
       current = trimmed
     }
   }
-  if (SPEAKABLE_REGEX.test(current)) result.push(current)
+  if (SPEAKABLE_REGEX.test(current)) {
+    // Merge short trailing text into the previous segment
+    if (current.length < MIN_SEGMENT_LENGTH && result.length > 0
+      && result[result.length - 1]!.length + current.length <= MAX_SEGMENT_LENGTH) {
+      result[result.length - 1] += current
+    }
+    else {
+      result.push(current)
+    }
+  }
   return result
 }
 
@@ -56,6 +70,35 @@ export function splitTextIntoSegments(text: string): string[] {
       continue
     }
     result.push(...mergeParts(sentence.split(CLAUSE_REGEX)))
+  }
+
+  return result
+}
+
+/**
+ * Merge short TTSSegments with adjacent segments within the same section.
+ * Reduces the number of TTS API calls for short text fragments.
+ */
+export function mergeShortTTSSegments(segments: TTSSegment[]): TTSSegment[] {
+  if (segments.length <= 1) return segments
+
+  const result: TTSSegment[] = []
+
+  for (const segment of segments) {
+    const prev = result[result.length - 1]
+    if (
+      prev
+      && prev.sectionIndex === segment.sectionIndex
+      && prev.cfi === segment.cfi
+      && prev.elementIndex === segment.elementIndex
+      && (prev.text.length < MIN_SEGMENT_LENGTH || segment.text.length < MIN_SEGMENT_LENGTH)
+      && prev.text.length + segment.text.length <= MAX_SEGMENT_LENGTH
+    ) {
+      prev.text += segment.text
+    }
+    else {
+      result.push(segment)
+    }
   }
 
   return result
