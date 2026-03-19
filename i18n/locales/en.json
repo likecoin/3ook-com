@@ -574,6 +574,7 @@
   "product_page_buy_again_button_label": "Buy Again",
   "product_page_buyer_messages_tab": "Reader Messages",
   "product_page_checkout_button_label": "Buy Now",
+  "product_page_claim_button_label": "Claim",
   "product_page_description_summary_label": "Companion's Note",
   "product_page_edition_title": "{name}* Signed by the author, shipping will be slightly delayed.",
   "product_page_fetch_metadata_failed_error": "Failed to fetch the book metadata",

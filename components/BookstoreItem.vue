@@ -36,7 +36,7 @@
 
     <!-- Price info for store mode -->
     <div
-      v-if="!isApp"
+      v-if="!isApp || price === 0"
       class="h-5 mt-3 text-sm text-theme-black dark:text-highlighted"
     >
       <span

@@ -340,7 +340,7 @@
 
           <template v-else>
             <div
-              v-if="!isApp && pricingItems.length"
+              v-if="pricingItems.length"
               class="bg-white dark:bg-neutral-900 space-y-6 p-4 pt-6 pb-8 rounded-lg shadow-[0px_10px_20px_0px_rgba(0,0,0,0.04)]"
             >
               <ul
@@ -629,7 +629,7 @@
         />
       </template>
 
-      <template v-else-if="!isApp && pricingItems.length">
+      <template v-else-if="pricingItems.length">
         <span class="text-theme-cyan">
           <span
             v-if="selectedPricingItem?.discountedPrice"
@@ -1028,16 +1028,18 @@ const pricingItemsElement = useTemplateRef<HTMLLIElement>('pricing')
 const isPricingItemsVisible = useElementVisibility(pricingItemsElement)
 
 const pricingItems = computed(() => {
-  return bookInfo.pricingItems.value.map((item, index) => {
-    const shouldShowDiscount = !from.value && isLikerPlus.value && item.price > 0
-    return {
-      ...item,
-      originalPrice: formatPrice(item.price),
-      discountedPrice: shouldShowDiscount ? formatDiscountedPrice(item.price, PLUS_BOOK_PURCHASE_DISCOUNT) : null,
-      isSelected: index === selectedPricingItemIndex.value,
-      renderedDescription: renderDescription(item.description || ''),
-    }
-  })
+  return bookInfo.pricingItems.value
+    .filter(item => !isApp.value || item.price === 0)
+    .map((item, index) => {
+      const shouldShowDiscount = !from.value && isLikerPlus.value && item.price > 0
+      return {
+        ...item,
+        originalPrice: formatPrice(item.price),
+        discountedPrice: shouldShowDiscount ? formatDiscountedPrice(item.price, PLUS_BOOK_PURCHASE_DISCOUNT) : null,
+        isSelected: index === selectedPricingItemIndex.value,
+        renderedDescription: renderDescription(item.description || ''),
+      }
+    })
 })
 
 const selectedPricingItem = computed(() => {
@@ -1151,11 +1153,14 @@ const checkoutButtonProps = computed<{
   variant: 'subtle' | 'solid' | 'outline'
   label: string
 }>(() => {
+  const isFree = selectedPricingItem.value?.price === 0
   const label = isSelectedPricingItemSoldOut.value
     ? $t('product_page_sold_out_button_label')
     : isUserBookOwner.value
       ? $t('product_page_buy_again_button_label')
-      : $t('product_page_checkout_button_label')
+      : isFree
+        ? $t('product_page_claim_button_label')
+        : $t('product_page_checkout_button_label')
   const variant = isSelectedPricingItemSoldOut.value
     ? 'subtle'
     : isUserBookOwner.value
@@ -1416,7 +1421,7 @@ async function handlePurchaseButtonClick() {
 
     let customPrice: number | undefined = undefined
 
-    if (quantity.value === 1 && selectedPricingItem.value.canTip) {
+    if (!isApp.value && quantity.value === 1 && selectedPricingItem.value.canTip) {
       const tippingResult = await openTippingModal({
         // TODO: Check if classOwner is always the book's publisher
         avatar: bookInfo.publisherName.value ? bookInfo.nftClassOwnerAvatar.value : '',
