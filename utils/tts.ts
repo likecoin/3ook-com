@@ -1,11 +1,14 @@
 export function sanitizeTTSText(text: string): string {
   if (!text) return ''
   return text
+    // Normalize fullwidth ASCII (U+FF01–U+FF5E) to basic ASCII
+    .replace(/[\uFF01-\uFF5E]/g, c =>
+      String.fromCharCode(c.charCodeAt(0) - 0xFEE0))
     .replace(/^\s*-{2,}\s*$/gm, '')
     .replace(/^\s*\.+\s*$/gm, '')
-    .replace(/[*＊]/g, '')
+    .replace(/[*]/g, '')
     .replace(/[⋯︙…]+/g, '。')
-    .replace(/[—─―︱⸺]+/g, '，')
+    .replace(/[—─―︱⸺]+/g, ',')
     .replace(/﹁/g, '「')
     .replace(/﹂/g, '」')
     .replace(/﹃/g, '『')
@@ -18,7 +21,7 @@ export function isSpeakableText(text: string): boolean {
 
 const CLOSING_PUNCT = '[」』】》）)\u2019\u201D]'
 const SENTENCE_REGEX = new RegExp(`([.!?。！？…⋯︙]${CLOSING_PUNCT}*[\\s\\u200B]*)`)
-const CLAUSE_REGEX = new RegExp(`([;；：，、—─―︱⸺]${CLOSING_PUNCT}*[\\s\\u200B]*)`)
+const CLAUSE_REGEX = new RegExp(`([;:,，；：、—─―︱⸺]${CLOSING_PUNCT}*[\\s\\u200B]*)`)
 const SPEAKABLE_REGEX = /[\p{L}\p{N}]/u
 const MAX_SEGMENT_LENGTH = 100
 const MIN_SEGMENT_LENGTH = 15
