@@ -136,6 +136,17 @@
       @click-app-store="onClickAppStoreButton"
       @click-google-play="onClickGooglePlayButton"
     />
+
+    <ULink
+      v-if="commitSHA"
+      class="text-muted text-center text-xs font-mono border-y border-t-transparent leading-5 self-center"
+      :href="`https://github.com/likecoin/3ook-com/commit/${commitSHA}`"
+      target="_blank"
+      rel="noopener noreferrer"
+      :external="true"
+    >
+      {{ commitSHA }}
+    </ULink>
   </footer>
 </template>
 
@@ -147,6 +158,7 @@ const props = defineProps({
   },
 })
 
+const { commitSHA } = useRuntimeConfig().public
 const { t: $t } = useI18n()
 const localeRoute = useLocaleRoute()
 const { isApp } = useAppDetection()

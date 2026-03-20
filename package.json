@@ -7,7 +7,7 @@
   },
   "type": "module",
   "scripts": {
-    "build": "nuxt build",
+    "build": "COMMIT_SHA=$(git rev-parse --short HEAD) nuxt build",
     "dev": "nuxt dev",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
