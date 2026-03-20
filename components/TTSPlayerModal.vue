@@ -54,7 +54,7 @@
 
         <!-- Content -->
         <div class="relative flex-1 w-full max-w-[670px] min-h-0 mx-auto px-4 sm:px-6">
-          <div class="relative flex flex-col gap-4 items-start h-full py-6 overflow-y-auto hide-scrollbar">
+          <div class="relative flex flex-col gap-4 items-start h-full py-6 overflow-y-auto hide-scrollbar text-lg laptop:text-2xl text-justify leading-normal">
             <p
               v-for="paragraph in visibleParagraphs"
               :key="paragraph.key"
@@ -489,8 +489,8 @@ function setSegmentRef(
 
 function getSegmentClass(index: number) {
   const base = 'transition-opacity duration-300 cursor-pointer'
-  const active = 'text-lg laptop:text-2xl text-(--ui-text) opacity-100 font-bold'
-  const inactive = 'text-sm laptop:text-lg opacity-40 text-muted hover:opacity-90'
+  const active = 'text-default opacity-100 font-bold'
+  const inactive = 'opacity-40 text-muted hover:opacity-90'
 
   return `${base} ${index === currentTTSSegmentIndex.value ? active : inactive}`
 }
