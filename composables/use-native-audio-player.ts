@@ -34,9 +34,15 @@ export function useNativeAudioPlayer(isActive: Ref<boolean | undefined>): TTSAud
         if (detail.state === 'playing') {
           handlers.play?.()
         }
+        else if (detail.state === 'buffering') {
+          handlers.buffering?.()
+        }
         else if (detail.state === 'paused' || detail.state === 'stopped') {
           handlers.pause?.()
         }
+        break
+      case 'ended':
+        handlers.ended?.()
         break
       case 'trackChanged':
         if (typeof detail.index === 'number') {

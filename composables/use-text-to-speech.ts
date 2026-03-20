@@ -108,6 +108,10 @@ export function useTextToSpeech(options: TTSOptions = {}) {
     isTextToSpeechLoading.value = false
   })
 
+  player.on('buffering', () => {
+    isTextToSpeechLoading.value = true
+  })
+
   player.on('pause', () => {
     isTextToSpeechPlaying.value = false
   })
@@ -132,6 +136,7 @@ export function useTextToSpeech(options: TTSOptions = {}) {
 
   player.on('allEnded', () => {
     isTextToSpeechPlaying.value = false
+    isTextToSpeechLoading.value = false
     useLogEvent('tts_completed', { nft_class_id: nftClassId })
     options.onAllSegmentsPlayed?.()
   })
@@ -410,7 +415,6 @@ export function useTextToSpeech(options: TTSOptions = {}) {
   function playNextElement() {
     cancelPendingSkip()
     if (currentTTSSegmentIndex.value + 1 >= ttsSegments.value.length) {
-      options.onAllSegmentsPlayed?.()
       return
     }
     isTextToSpeechLoading.value = true

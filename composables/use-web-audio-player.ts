@@ -68,6 +68,11 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
       handlers.play?.()
     }
 
+    audio.onwaiting = () => {
+      if (audio !== getActiveAudio() || swapping) return
+      handlers.buffering?.()
+    }
+
     audio.onpause = () => {
       if (audio !== getActiveAudio() || swapping) return
       audible = false
@@ -160,6 +165,7 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
     audio.load()
     audio.onplay = null
     audio.onplaying = null
+    audio.onwaiting = null
     audio.onpause = null
     audio.onended = null
     audio.onerror = null

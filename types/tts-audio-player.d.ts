@@ -1,6 +1,7 @@
 declare interface TTSAudioPlayerEvents {
   play: () => void
   pause: () => void
+  buffering: () => void
   ended: () => void
   trackChanged: (index: number) => void
   allEnded: () => void
