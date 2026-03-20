@@ -92,7 +92,7 @@
           <div class="flex items-center justify-center gap-6">
             <UButton
               :ui="{ leadingIcon: 'size-10' }"
-              icon="i-ic-round-skip-previous"
+              icon="i-material-symbols-skip-previous-rounded"
               variant="ghost"
               color="neutral"
               :disabled="!isTextToSpeechOn"
@@ -101,7 +101,7 @@
             <UButton
               v-if="isTextToSpeechPlaying || isTextToSpeechLoading"
               :ui="{ leadingIcon: 'size-10' }"
-              icon="i-line-md-pause"
+              icon="i-material-symbols-pause-rounded"
               :loading="isTextToSpeechLoading"
               variant="ghost"
               color="neutral"
@@ -117,7 +117,7 @@
             />
             <UButton
               :ui="{ leadingIcon: 'size-10' }"
-              icon="i-ic-round-skip-next"
+              icon="i-material-symbols-skip-next-rounded"
               variant="ghost"
               color="neutral"
               :disabled="!isTextToSpeechOn"
