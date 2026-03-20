@@ -952,7 +952,7 @@ async function extractTTSSegments(book: Book) {
       }
 
       const titleText = chapter.querySelector('title')?.textContent?.trim() || ''
-      const chapterTitle = (titleText && titleText.toLowerCase() !== 'unknown')
+      const chapterTitle = (titleText && titleText.toLowerCase() !== 'unknown' && titleText !== '未知')
         ? titleText
         : chapter.querySelector('h1, h2, h3')?.textContent?.trim() || ''
       chapterTitles[section.index ?? 0] = chapterTitle
