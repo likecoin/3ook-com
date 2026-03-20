@@ -672,14 +672,6 @@ const cmsProducts = computed<BookstoreItemList>(() => {
     }
   })
 
-  if (tagId.value !== 'latest') {
-    items.sort((a, b) => {
-      const aTotalStaked = a.totalStaked ?? 0n
-      const bTotalStaked = b.totalStaked ?? 0n
-      return Number(bTotalStaked - aTotalStaked)
-    })
-  }
-
   return {
     ...listingProducts,
     items,
@@ -900,7 +892,8 @@ async function fetchTags() {
 }
 
 async function fetchTagItems({ isRefresh = false } = {}) {
-  const apiSortValue = mapTagIdToAPIStakingSortValue(isStakingTagId.value ? tagId.value : STAKING_TAG_DEFAULT)
+  const currentTagId = tagId.value
+  const apiSortValue = mapTagIdToAPIStakingSortValue(isStakingTagId.value ? currentTagId : STAKING_TAG_DEFAULT)
 
   if (isStakingTagId.value) {
     await bookstoreStore.fetchStakingBooks(apiSortValue, { isRefresh, limit: 100 })
@@ -911,7 +904,32 @@ async function fetchTagItems({ isRefresh = false } = {}) {
   await bookstoreStore.fetchStakingBooks(apiSortValue, { isRefresh, limit: 100 }).catch((error) => {
     console.warn('[store] Failed to fetch staking data for CMS tag sorting:', error)
   })
-  await bookstoreStore.fetchCMSProductsByTagId(tagId.value, { isRefresh })
+
+  // Capture the items array reference before fetch so we can detect
+  // if the store replaced it (e.g. on refresh or expired-offset retry)
+  const itemsBefore = bookstoreStore.bookstoreCMSProductsByTagIdMap[currentTagId]?.items
+  const countBefore = isRefresh ? 0 : (itemsBefore?.length ?? 0)
+  await bookstoreStore.fetchCMSProductsByTagId(currentTagId, { isRefresh })
+
+  // Sort only the new batch by staking amount (skip 'latest' which preserves Airtable order)
+  if (currentTagId !== 'latest') {
+    const items = bookstoreStore.bookstoreCMSProductsByTagIdMap[currentTagId]?.items
+    if (items === itemsBefore && items?.length === countBefore) return
+    // If the array was replaced (refresh or offset-refresh), sort from 0
+    const sortingFromIndex = (items === itemsBefore) ? countBefore : 0
+    if (items && sortingFromIndex < items.length) {
+      const stakingItems = bookstoreStore.getStakingBooks(apiSortValue).items
+      const stakingMap = new Map(stakingItems.map(item => [item.nftClassId.toLowerCase(), item.totalStaked]))
+      const newBatch = items.slice(sortingFromIndex)
+      newBatch.sort((a, b) => {
+        const aStaked = stakingMap.get(a.classId?.toLowerCase() || '') ?? 0n
+        const bStaked = stakingMap.get(b.classId?.toLowerCase() || '') ?? 0n
+        if (aStaked === bStaked) return 0
+        return aStaked < bStaked ? 1 : -1
+      })
+      items.splice(sortingFromIndex, newBatch.length, ...newBatch)
+    }
+  }
 }
 
 async function fetchItems({ lazy = false, isRefresh = false } = {}) {
