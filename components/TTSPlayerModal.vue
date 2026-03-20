@@ -203,7 +203,7 @@
 
             <UTooltip :text="$t('reader_rate_options_button')">
               <UButton
-                class="rounded-full w-18 h-12"
+                class="rounded-full w-[5em] h-12"
                 :label="getTTSPlaybackRateLabel"
                 size="lg"
                 variant="soft"
