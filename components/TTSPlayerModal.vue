@@ -15,36 +15,27 @@
     @update:open="handleModalUpdateOpen"
   >
     <template #content>
-      <div
-        class="flex flex-col h-full w-full max-w-[670px] mx-auto py-6 px-8 laptop:px-4"
-      >
+      <div class="flex flex-col h-full w-full pb-4 sm:pb-6">
         <!-- Header -->
-        <div class="flex items-center justify-between">
-          <div class="grow overflow-hidden">
-            <h1
-              class="text-center text-sm font-semibold text-muted truncate"
-              v-text="bookTitle"
-            />
-          </div>
+        <header class="flex items-center justify-center gap-1.5 px-16 min-h-16">
+          <h1
+            class="text-highlighted font-semibold text-center truncate"
+            v-text="bookTitle"
+          />
 
           <UButton
-            class="shrink-0"
+            class="absolute top-4 right-4"
             icon="i-material-symbols-close-rounded"
             size="md"
             variant="ghost"
             @click="handleModalClose"
           />
-        </div>
-        <h2
-          v-if="sectionTitle"
-          class="text-sm font-semibold text-muted truncate text-center laptop:my-4"
-          v-text="sectionTitle"
-        />
+        </header>
 
         <!-- Book Cover -->
         <div
           v-if="bookCoverSrc"
-          class="flex justify-center mt-4 laptop:mt-8 laptop:mb-10 z-20"
+          class="flex justify-center laptop:mt-8 laptop:mb-10 z-20"
         >
           <BookCover
             class="w-[120px] tablet:w-[150px] shrink-0"
@@ -55,26 +46,28 @@
           />
         </div>
 
+        <h2
+          v-if="sectionTitle"
+          class="text-sm font-semibold text-muted truncate text-center my-4"
+          v-text="sectionTitle"
+        />
+
         <!-- Content -->
-        <div class="relative flex-1 min-h-0">
-          <div
-            class="overflow-y-auto hide-scrollbar h-full relative"
-          >
-            <div class="flex flex-col gap-4 items-start py-6">
-              <p
-                v-for="paragraph in visibleParagraphs"
-                :key="paragraph.key"
-                v-memo="[paragraph.activeSegmentIndex, paragraph.segments.length]"
-              >
-                <span
-                  v-for="segment in paragraph.segments"
-                  :key="segment.id"
-                  :ref="(el) => setSegmentRef(el, segment.index)"
-                  :class="getSegmentClass(segment.index)"
-                  @click="skipToIndex(segment.index)"
-                >{{ segment.text }} </span>
-              </p>
-            </div>
+        <div class="relative flex-1 w-full max-w-[670px] min-h-0 mx-auto px-4 sm:px-6">
+          <div class="relative flex flex-col gap-4 items-start h-full py-6 overflow-y-auto hide-scrollbar">
+            <p
+              v-for="paragraph in visibleParagraphs"
+              :key="paragraph.key"
+              v-memo="[paragraph.activeSegmentIndex, paragraph.segments.length]"
+            >
+              <span
+                v-for="segment in paragraph.segments"
+                :key="segment.id"
+                :ref="(el) => setSegmentRef(el, segment.index)"
+                :class="getSegmentClass(segment.index)"
+                @click="skipToIndex(segment.index)"
+              >{{ segment.text }} </span>
+            </p>
           </div>
           <div
             :class="[
