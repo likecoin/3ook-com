@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto'
 import { FetchError } from 'ofetch'
 import { FieldValue } from 'firebase-admin/firestore'
 
@@ -70,6 +71,7 @@ export default defineEventHandler(async (event) => {
     loginMethod: body.loginMethod,
     isLikerPlus: userInfoRes.isLikerPlus || false,
     isExpiredLikerPlus: userInfoRes.isExpiredLikerPlus || false,
+    ttsKey: randomBytes(16).toString('hex'),
   }
   await setUserSession(event, { user: userInfo })
 

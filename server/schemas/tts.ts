@@ -1,10 +1,13 @@
 import * as v from 'valibot'
 import { nftClassIdField } from '~/server/schemas/params'
 
+export const TTS_MAX_TEXT_LENGTH = 2000
+
 export const TTSQuerySchema = v.object({
   text: v.pipe(
     v.string('MISSING_TEXT'),
     v.nonEmpty('MISSING_TEXT'),
+    v.maxLength(TTS_MAX_TEXT_LENGTH, 'TEXT_TOO_LONG'),
   ),
   language: v.picklist(['en-US', 'zh-TW', 'zh-HK'], 'INVALID_LANGUAGE'),
   voice_id: v.pipe(
@@ -12,5 +15,9 @@ export const TTSQuerySchema = v.object({
     v.nonEmpty('INVALID_VOICE_ID'),
   ),
   blocking: v.optional(v.string()),
-  nft_class_id: v.optional(nftClassIdField),
+  nft_class_id: nftClassIdField,
+  sig: v.pipe(
+    v.string('MISSING_SIG'),
+    v.nonEmpty('MISSING_SIG'),
+  ),
 })

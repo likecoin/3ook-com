@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto'
 import type { Writable } from 'node:stream'
 import type { H3Event } from 'h3'
 import { TTSQuerySchema } from '~/server/schemas/tts'
+import { computeTTSTextSig } from '~/shared/utils/tts-sig'
 
 // Coalesces concurrent identical TTS requests (e.g. browser range probes)
 const inFlightWrites = new Map<string, Promise<void>>()
@@ -98,7 +99,14 @@ export default defineEventHandler(async (event) => {
     voice_id: voiceId,
     blocking,
     nft_class_id: nftClassId,
+    sig,
   } = await getValidatedQuery(event, createValidator(TTSQuerySchema))
+
+  // Verify text signature — binds request to user + book + exact text content
+  const ttsKey = session.user.ttsKey || session.user.evmWallet
+  if (sig !== computeTTSTextSig(ttsKey, nftClassId, text)) {
+    throw createError({ status: 403, message: 'INVALID_TTS_SIG' })
+  }
 
   const isCustomVoice = voiceId === 'custom'
   let customMiniMaxVoiceId: string | undefined

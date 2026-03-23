@@ -1,5 +1,6 @@
 import { useEventListener, useStorage } from '@vueuse/core'
 import type { CustomVoiceData } from '~/shared/types/custom-voice'
+import { computeTTSTextSig } from '~/shared/utils/tts-sig'
 
 export const TTS_ERROR_NOT_ALLOWED = 'NotAllowedError'
 
@@ -25,6 +26,8 @@ export function useTextToSpeech(options: TTSOptions = {}) {
   } = options || {}
 
   const nftClassId = options.nftClassId
+
+  const { user: sessionUser } = useUserSession()
 
   const config = useRuntimeConfig()
 
@@ -361,40 +364,44 @@ export function useTextToSpeech(options: TTSOptions = {}) {
     })
   })
 
+  function appendCommonParams(params: URLSearchParams, text: string) {
+    if (nftClassId) {
+      params.set('nft_class_id', nftClassId)
+      const ttsKey = sessionUser.value?.ttsKey || sessionUser.value?.evmWallet || ''
+      params.set('sig', computeTTSTextSig(ttsKey, nftClassId, text))
+    }
+    if (isNativeBridge.value) {
+      params.set('blocking', '1')
+    }
+  }
+
+
   function getAudioSrc(element: TTSSegment): string {
     if (element.audioSrc) return element.audioSrc
+
+    const sanitizedText = sanitizeTTSText(element.text)
 
     if (ttsLanguageVoice.value === 'custom') {
       const language = resolveCustomVoiceLanguage()
       const params = new URLSearchParams({
-        text: sanitizeTTSText(element.text),
+        text: sanitizedText,
         language,
         voice_id: 'custom',
       })
-      if (nftClassId) {
-        params.set('nft_class_id', nftClassId)
-      }
+      appendCommonParams(params, sanitizedText)
       if (options.customVoice?.value?.updatedAt) {
         params.set('_t', options.customVoice.value.updatedAt.toString())
-      }
-      if (isNativeBridge.value) {
-        params.set('blocking', '1')
       }
       return `/api/reader/tts?${params.toString()}`
     }
 
     const [language, ...voiceIdParts] = ttsLanguageVoice.value.split('_')
     const params = new URLSearchParams({
-      text: sanitizeTTSText(element.text),
+      text: sanitizedText,
       language: language || 'zh-HK',
       voice_id: voiceIdParts.join('_'),
     })
-    if (nftClassId) {
-      params.set('nft_class_id', nftClassId)
-    }
-    if (isNativeBridge.value) {
-      params.set('blocking', '1')
-    }
+    appendCommonParams(params, sanitizedText)
     return `/api/reader/tts?${params.toString()}`
   }
 
