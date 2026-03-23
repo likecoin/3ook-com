@@ -462,7 +462,7 @@ watch(
     setTTSSegments(newSegments)
     if (newSegments.length > 0 && !hasStartedPlaying.value) {
       hasStartedPlaying.value = true
-      startTextToSpeech(props.startIndex || 0)
+      nextTick(() => startTextToSpeech(props.startIndex || 0))
     }
   },
   { immediate: true },
