@@ -44,7 +44,14 @@ export function useTextToSpeech(options: TTSOptions = {}) {
 
   // Pick player implementation — both are created upfront (inert until load()),
   // and the proxy delegates to the correct one based on the reactive flag.
-  const { isNativeBridge } = useNativeAudioBridge()
+  const { isApp } = useAppDetection()
+  const isNativeBridge = computed(
+    () =>
+      import.meta.client
+      && isApp.value
+      && typeof window !== 'undefined'
+      && !!window.ReactNativeWebView,
+  )
   const nativePlayer = useNativeAudioPlayer(isNativeBridge)
   const webPlayer = useWebAudioPlayer()
   const activePlayer = () => isNativeBridge.value ? nativePlayer : webPlayer
