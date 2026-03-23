@@ -1,25 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 100 100">
-  <path fill="url(#paint0_linear_5423_10631)" d="M50 .279c27.614 0 50 22.385 50 50 0 27.614-22.386 50-50 50s-50-22.386-50-50c0-27.615 22.386-50 50-50Z"/>
-  <path fill="url(#paint1_radial_5423_10631)" d="M50 .279c27.614 0 50 22.385 50 50 0 27.614-22.386 50-50 50s-50-22.386-50-50c0-27.615 22.386-50 50-50Z"/>
-  <path fill="url(#paint2_radial_5423_10631)" d="M50 .279c27.614 0 50 22.385 50 50 0 27.614-22.386 50-50 50s-50-22.386-50-50c0-27.615 22.386-50 50-50Z"/>
-  <path fill="url(#paint3_radial_5423_10631)" d="M50 .279c27.614 0 50 22.385 50 50 0 27.614-22.386 50-50 50s-50-22.386-50-50c0-27.615 22.386-50 50-50Z"/>
-  <path fill="#fff" d="M39.328 77.66V54.464L61.866 77.66h12.539v-.604L48.48 50.638l23.93-25.063v-.296H59.79L39.327 47.426V25.28H29.167v52.38h10.16Z"/>
-  <defs>
-    <radialGradient id="paint1_radial_5423_10631" cx="0" cy="0" r="1" gradientTransform="rotate(-45.156 118.416 42.5) scale(160.368 162.768)" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#232DE3"/>
-      <stop offset="1" stop-color="#232DE3" stop-opacity="0"/>
-    </radialGradient>
-    <radialGradient id="paint2_radial_5423_10631" cx="0" cy="0" r="1" gradientTransform="matrix(-75.04053 -66.50709 101.40455 -114.41565 94.614 99.708)" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#8B4DFF"/>
-      <stop offset="1" stop-color="#8B4DFF" stop-opacity="0"/>
-    </radialGradient>
-    <radialGradient id="paint3_radial_5423_10631" cx="0" cy="0" r="1" gradientTransform="matrix(0 78.8417 -191.291 0 49.167 1.02)" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#24D5FF"/>
-      <stop offset="1" stop-color="#1BB8FF" stop-opacity="0"/>
-    </radialGradient>
-    <linearGradient id="paint0_linear_5423_10631" x1="50" x2="50" y1=".279" y2="100.279" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#1FD1FF"/>
-      <stop offset="1" stop-color="#1BB8FF"/>
-    </linearGradient>
-  </defs>
+<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2" viewBox="0 0 100 100">
+  <path d="M50 .3c27.6 0 50 22.4 50 50s-22.4 50-50 50-50-22.4-50-50S22.4.3 50 .3" style="fill:#14afeb;fill-rule:nonzero"/>
+  <path d="M66.7 41.3c.7 7.5 1.1 11.2 3 13.9.8 1.2 1.9 2.2 3 3 2.8 1.9 6.5 2.2 13.9 2.8l3.2.3v5.4l-3.2.3c-7.4.6-11.1.9-13.9 2.8-1.1.8-2.2 1.8-3 3-1.9 2.7-2.3 6.4-3 13.9h-5.4c-.7-7.5-1.1-11.2-3-13.9-.8-1.2-1.9-2.2-3-3-2.8-1.9-6.5-2.2-13.9-2.8l-3.2-.3v-5.4l3.2-.3c7.4-.6 11.1-.9 13.9-2.8 1.1-.8 2.2-1.8 3-3 1.9-2.7 2.3-6.4 3-13.9z" style="fill:#fff;fill-rule:nonzero" transform="translate(7 7)scale(.67188)"/>
+  <path d="M64 14c41.2 0 50 8.8 50 50s-8.8 50-50 50-50-8.8-50-50 8.8-50 50-50m32.7 17.3C84.6 19.2 60.1 24 42.1 42.1 24 60.1 19.2 84.6 31.3 96.7s36.5 7.3 54.6-10.8 22.9-42.5 10.8-54.6" style="fill:#fff" transform="translate(7 7)scale(.67188)"/>
 </svg>
