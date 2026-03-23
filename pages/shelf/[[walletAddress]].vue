@@ -37,31 +37,45 @@
     <main class="flex flex-col items-center grow w-full max-w-[1440px] mx-auto px-4 laptop:px-12 pb-16">
       <UCard
         v-if="!walletAddress && !hasLoggedIn"
-        class="w-full max-w-sm mt-8"
-        :ui="{ body: 'flex flex-col items-center text-center', footer: 'flex justify-end items-center gap-2' }"
+        class="w-full max-w-(--breakpoint-phone) mt-4"
+        :ui="{
+          header: 'flex justify-center items-center p-4 sm:p-4 bg-theme-black',
+          body: 'flex flex-col items-center text-center',
+          footer: 'grid tablet:grid-cols-2 gap-2',
+        }"
       >
+        <template #header>
+          <AppLogo
+            :is-icon="false"
+            :height="64"
+          />
+        </template>
+
         <UIcon
-          class="opacity-20 mb-4"
+          class="opacity-20"
           name="i-material-symbols-menu-book-outline-rounded"
           size="80"
         />
-        <p
+        <h2
           class="text-lg font-bold text-highlighted"
           v-text="$t('bookshelf_please_login_value')"
         />
         <p
-          class="text-sm text-muted mt-1"
+          class="text-sm text-muted mt-1 mb-4"
           v-text="$t('bookshelf_please_login')"
         />
+
         <template #footer>
           <UButton
+            class="max-tablet:order-last"
             :label="$t('bookshelf_please_login_learn_more')"
             :to="localeRoute({ name: 'about', query: { ll_medium: 'about-link', ll_source: 'shelf' } })"
             variant="link"
             color="neutral"
-            size="sm"
+            size="lg"
+            block
           />
-          <LoginButton />
+          <LoginButton block />
         </template>
       </UCard>
       <div
