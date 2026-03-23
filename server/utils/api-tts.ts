@@ -7,7 +7,6 @@ export interface TTSRequestParams {
   language: string
   voiceId: string
   customMiniMaxVoiceId?: string
-  preferredModel?: '2.6' | '2.8'
   session: Awaited<ReturnType<typeof requireUserSession>>
   config: ReturnType<typeof useRuntimeConfig>
 }

@@ -149,7 +149,6 @@ export async function getUserSettings(
     currency: data.currency,
     colorMode: data.colorMode,
     isAdultContentEnabled: data.isAdultContentEnabled,
-    ttsCantoneseModel: data.ttsCantoneseModel,
     updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toMillis() : undefined,
   }
 }

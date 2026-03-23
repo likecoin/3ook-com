@@ -98,7 +98,6 @@ export default defineEventHandler(async (event) => {
     voice_id: voiceId,
     blocking,
     nft_class_id: nftClassId,
-    minimax_model: minimaxModel,
   } = await getValidatedQuery(event, createValidator(TTSQuerySchema))
 
   const isCustomVoice = voiceId === 'custom'
@@ -132,7 +131,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const ttsModel = getMinimaxModel({ customVoiceId: customMiniMaxVoiceId, language, preferredModel: minimaxModel })
+  const ttsModel = getMinimaxModel({ customVoiceId: customMiniMaxVoiceId, language })
   const bucket = getTTSCacheBucket()
   const isCacheEnabled = !!bucket
   const cacheKey = isCacheEnabled
@@ -210,7 +209,6 @@ export default defineEventHandler(async (event) => {
     language,
     voiceId,
     customMiniMaxVoiceId,
-    preferredModel: minimaxModel,
     session,
     config,
   }

@@ -304,7 +304,6 @@ const {
   bookCoverSrc: props.bookCoverSrc,
   bookLanguage: props.bookLanguage,
   customVoice,
-  ttsCantoneseModel: useTTSCantoneseModel(),
   onError: (error: string | Event | MediaError) => {
     if (
       !user.value?.isLikerPlus

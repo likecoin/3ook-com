@@ -311,26 +311,6 @@
         </AccountSettingsItem>
 
         <AccountSettingsItem
-          v-if="hasLoggedIn"
-          icon="i-material-symbols-graphic-eq-rounded"
-          :label="$t('tts_cantonese_model_section_title')"
-        >
-          <template #right>
-            <UButtonGroup>
-              <UButton
-                v-for="option in cantoneseModelOptions"
-                :key="option.value"
-                :label="option.label"
-                :variant="ttsCantoneseModel === option.value ? 'solid' : 'outline'"
-                color="neutral"
-                size="xs"
-                @click="handleCantoneseModelChange(option.value)"
-              />
-            </UButtonGroup>
-          </template>
-        </AccountSettingsItem>
-
-        <AccountSettingsItem
           icon="i-material-symbols-language"
           :label="$t('account_page_locale')"
         >
@@ -544,8 +524,6 @@
 import { formatUnits } from 'viem'
 import { waitForTransactionReceipt } from '@wagmi/core'
 import { useSignMessage } from '@wagmi/vue'
-import type { TTSCantoneseModel } from '~/shared/types/user-settings'
-
 import { CustomVoiceUploadModal } from '#components'
 import likeCoinTokenImage from '~/assets/images/likecoin-token.png'
 
@@ -587,11 +565,6 @@ function confirmAdultContent() {
 }
 
 const { customVoice, hasCustomVoice, fetchCustomVoice } = useCustomVoice()
-const ttsCantoneseModel = useTTSCantoneseModel()
-const cantoneseModelOptions = computed<{ label: string, value: TTSCantoneseModel }[]>(() => [
-  { label: $t('tts_cantonese_model_option_colloquial'), value: '2.6' },
-  { label: $t('tts_cantonese_model_option_written'), value: '2.8' },
-])
 const overlay = useOverlay()
 const customVoiceModal = overlay.create(CustomVoiceUploadModal)
 const blockingModal = useBlockingModal()
@@ -808,11 +781,6 @@ function handleLikeWalletClick() {
 
 function handleMigrateLegacyBookButtonClick() {
   useLogEvent('migrate_legacy_book_button_click')
-}
-
-function handleCantoneseModelChange(value: TTSCantoneseModel) {
-  ttsCantoneseModel.value = value
-  useLogEvent('tts_cantonese_model_change', { value })
 }
 
 async function handleOpenCustomVoiceModal() {

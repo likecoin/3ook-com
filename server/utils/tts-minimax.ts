@@ -42,11 +42,10 @@ export function getTTSPronunciationDictionary(language: string) {
 export function getMinimaxModel(options: {
   customVoiceId?: string
   language?: string
-  preferredModel?: '2.6' | '2.8'
 } = {}): string {
-  const { customVoiceId, language, preferredModel } = options
+  const { customVoiceId, language } = options
   if (language === 'zh-HK') {
-    return preferredModel === '2.6' ? 'speech-2.6-hd' : 'speech-2.8-hd'
+    return 'speech-2.8-hd'
   }
   return customVoiceId && language !== 'zh-TW' ? 'speech-2.8-hd' : 'speech-2.6-hd'
 }
@@ -56,7 +55,7 @@ export class MinimaxTTSProvider implements BaseTTSProvider {
   format = 'audio/mpeg'
 
   async processRequest(params: TTSRequestParams): Promise<Buffer> {
-    const { text, language, voiceId, customMiniMaxVoiceId, preferredModel } = params
+    const { text, language, voiceId, customMiniMaxVoiceId } = params
 
     if (!customMiniMaxVoiceId && !VOICE_MAPPING[voiceId]) {
       throw createError({
@@ -67,7 +66,7 @@ export class MinimaxTTSProvider implements BaseTTSProvider {
 
     const client = getMiniMaxSpeechClient()
     const resolvedVoiceId = (customMiniMaxVoiceId || VOICE_MAPPING[voiceId]) as string
-    const model = getMinimaxModel({ customVoiceId: customMiniMaxVoiceId, language, preferredModel })
+    const model = getMinimaxModel({ customVoiceId: customMiniMaxVoiceId, language })
 
     const result = await client.synthesize({
       text,
@@ -86,7 +85,7 @@ export class MinimaxTTSProvider implements BaseTTSProvider {
   }
 
   async processRequestStream(params: TTSRequestParams): Promise<ReadableStream<Buffer>> {
-    const { text, language, voiceId, customMiniMaxVoiceId, preferredModel } = params
+    const { text, language, voiceId, customMiniMaxVoiceId } = params
 
     if (!customMiniMaxVoiceId && !VOICE_MAPPING[voiceId]) {
       throw createError({
@@ -97,7 +96,7 @@ export class MinimaxTTSProvider implements BaseTTSProvider {
 
     const client = getMiniMaxSpeechClient()
     const resolvedVoiceId = (customMiniMaxVoiceId || VOICE_MAPPING[voiceId]) as string
-    const model = getMinimaxModel({ customVoiceId: customMiniMaxVoiceId, language, preferredModel })
+    const model = getMinimaxModel({ customVoiceId: customMiniMaxVoiceId, language })
 
     return await client.synthesizeStream({
       text,

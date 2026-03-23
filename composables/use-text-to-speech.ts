@@ -1,6 +1,5 @@
 import { useEventListener, useStorage } from '@vueuse/core'
 import type { CustomVoiceData } from '~/shared/types/custom-voice'
-import type { TTSCantoneseModel } from '~/shared/types/user-settings'
 
 export const TTS_ERROR_NOT_ALLOWED = 'NotAllowedError'
 
@@ -14,7 +13,6 @@ interface TTSOptions {
   bookCoverSrc?: string | Ref<string> | ComputedRef<string>
   bookLanguage?: string | Ref<string> | ComputedRef<string>
   customVoice?: Ref<CustomVoiceData | null>
-  ttsCantoneseModel?: Ref<TTSCantoneseModel | undefined>
 }
 
 export function useTextToSpeech(options: TTSOptions = {}) {
@@ -347,17 +345,6 @@ export function useTextToSpeech(options: TTSOptions = {}) {
     return isEnglish ? 'en-US' : (options.customVoice?.value?.voiceLanguage || 'zh-HK')
   }
 
-  if (options.ttsCantoneseModel) {
-    watch(options.ttsCantoneseModel, () => {
-      if (ttsLanguageVoice.value.startsWith('zh-HK')) {
-        restartTextToSpeech()
-      }
-      else if (ttsLanguageVoice.value === 'custom' && resolveCustomVoiceLanguage() === 'zh-HK') {
-        restartTextToSpeech()
-      }
-    })
-  }
-
   watch(ttsPlaybackRate, (newRate) => {
     effectivePlaybackRate.value = newRate
     player.setRate(newRate)
@@ -366,12 +353,6 @@ export function useTextToSpeech(options: TTSOptions = {}) {
       value: newRate,
     })
   })
-
-  function appendCantoneseModel(params: URLSearchParams, language: string) {
-    if (language === 'zh-HK' && options.ttsCantoneseModel?.value) {
-      params.set('minimax_model', options.ttsCantoneseModel.value)
-    }
-  }
 
   function getAudioSrc(element: TTSSegment): string {
     if (element.audioSrc) return element.audioSrc
@@ -392,7 +373,6 @@ export function useTextToSpeech(options: TTSOptions = {}) {
       if (isNativeBridge.value) {
         params.set('blocking', '1')
       }
-      appendCantoneseModel(params, language)
       return `/api/reader/tts?${params.toString()}`
     }
 
@@ -408,7 +388,6 @@ export function useTextToSpeech(options: TTSOptions = {}) {
     if (isNativeBridge.value) {
       params.set('blocking', '1')
     }
-    appendCantoneseModel(params, language || 'zh-HK')
     return `/api/reader/tts?${params.toString()}`
   }
 
