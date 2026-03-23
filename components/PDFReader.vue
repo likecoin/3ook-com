@@ -14,6 +14,21 @@
               variant="outline"
               @click="previousPage"
             />
+            <div class="flex items-center gap-1 px-2 border border-default rounded-[calc(var(--ui-radius)*1.5)]">
+              <input
+                ref="pageInput"
+                :value="currentPage"
+                type="number"
+                :min="1"
+                :max="totalPages"
+                :aria-label="$t('reader_page_input_label')"
+                :style="{ width: `${Math.max(3, String(totalPages).length)}ch` }"
+                class="text-center text-sm bg-transparent outline-none appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]"
+                @change="onPageInputChange"
+                @keydown.enter="($event.target as HTMLInputElement)?.blur()"
+              >
+              <span class="text-sm text-muted">/ {{ totalPages }}</span>
+            </div>
             <UButton
               icon="i-material-symbols-chevron-right"
               :disabled="isAtLastPage"
@@ -60,6 +75,93 @@
       </template>
       <template #trailing>
         <div class="flex items-center gap-2">
+          <BottomSlideover
+            v-model:open="isMobileTocOpen"
+            :title="$t('reader_toc_title')"
+            :is-disabled="!outlineItems.length"
+          >
+            <UButton
+              class="laptop:hidden"
+              icon="i-material-symbols-format-list-bulleted"
+              :disabled="!outlineItems.length"
+              variant="ghost"
+            />
+
+            <template #body>
+              <ul class="divide-gray-500 divide-y">
+                <li
+                  v-for="(item, index) in outlineItems"
+                  :key="index"
+                >
+                  <UButton
+                    :label="item.title"
+                    variant="link"
+                    :color="item.pageNumber === currentPage ? 'primary' : 'neutral'"
+                    block
+                    :ui="{
+                      label: 'text-left leading-[44px]',
+                      base: 'justify-start pl-6 pr-5.5 py-0',
+                    }"
+                    :style="item.level > 0 ? { paddingLeft: `${(item.level + 1) * 16}px` } : undefined"
+                    @click="() => {
+                      isMobileTocOpen = false
+                      goToPage(item.pageNumber)
+                    }"
+                  />
+                </li>
+              </ul>
+            </template>
+          </BottomSlideover>
+          <USlideover
+            v-model:open="isDesktopTocOpen"
+            :title="$t('reader_toc_title')"
+            side="left"
+            :close="{
+              color: 'neutral',
+              variant: 'soft',
+              class: 'rounded-full',
+            }"
+            :overlay="false"
+            :ui="{
+              header: 'py-3 min-h-14',
+              close: 'top-3',
+              body: 'p-0 sm:p-0',
+              content: 'divide-gray-500 ring-gray-500',
+            }"
+          >
+            <UButton
+              class="max-laptop:hidden"
+              icon="i-material-symbols-format-list-bulleted"
+              :label="$t('reader_toc_button')"
+              :disabled="!outlineItems.length"
+              variant="ghost"
+            />
+
+            <template #body>
+              <ul class="pb-[64px] divide-gray-500 divide-y">
+                <li
+                  v-for="(item, index) in outlineItems"
+                  :key="index"
+                >
+                  <UButton
+                    :label="item.title"
+                    variant="link"
+                    :color="item.pageNumber === currentPage ? 'primary' : 'neutral'"
+                    block
+                    :ui="{
+                      label: 'text-left leading-[44px]',
+                      base: 'justify-start pl-6 pr-5.5 py-0',
+                    }"
+                    :style="item.level > 0 ? { paddingLeft: `${(item.level + 1) * 16}px` } : undefined"
+                    @click="() => {
+                      isDesktopTocOpen = false
+                      goToPage(item.pageNumber)
+                    }"
+                  />
+                </li>
+              </ul>
+            </template>
+          </USlideover>
           <UButton
             :class="[
               'laptop:hidden',
@@ -137,10 +239,11 @@
       <div
         ref="scrollableContainer"
         class="absolute inset-0 overflow-auto"
+        @wheel="handleWheel"
       >
         <div
           v-if="isDualPageMode"
-          class="flex"
+          class="flex w-fit mx-auto"
         >
           <div
             :class="[
@@ -148,10 +251,13 @@
               'pr-2 laptop:pr-2',
             ]"
           >
-            <canvas
-              ref="leftCanvas"
-              class="border shadow-lg bg-white"
-            />
+            <div class="pdf-reader-page relative border shadow-lg bg-white">
+              <canvas ref="leftCanvas" />
+              <div
+                ref="leftTextLayer"
+                class="textLayer"
+              />
+            </div>
           </div>
           <div
             v-show="!isCoverPage"
@@ -160,25 +266,31 @@
               'pl-2 laptop:pl-2',
             ]"
           >
-            <canvas
-              ref="rightCanvas"
-              class="border shadow-lg bg-white"
-            />
+            <div class="pdf-reader-page relative border shadow-lg bg-white">
+              <canvas ref="rightCanvas" />
+              <div
+                ref="rightTextLayer"
+                class="textLayer"
+              />
+            </div>
           </div>
         </div>
         <div
           v-else
-          class="flex"
+          class="flex w-fit mx-auto"
         >
           <div
             :class="[
               ...pagePaddingClasses,
             ]"
           >
-            <canvas
-              ref="singleCanvas"
-              class="border shadow-lg bg-white"
-            />
+            <div class="pdf-reader-page relative border shadow-lg bg-white">
+              <canvas ref="singleCanvas" />
+              <div
+                ref="singleTextLayer"
+                class="textLayer"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -210,7 +322,11 @@ const pdfjsLib = ref<typeof import('pdfjs-dist') | undefined>(undefined)
 const singleCanvas = useTemplateRef<HTMLCanvasElement>('singleCanvas')
 const leftCanvas = useTemplateRef<HTMLCanvasElement>('leftCanvas')
 const rightCanvas = useTemplateRef<HTMLCanvasElement>('rightCanvas')
+const singleTextLayer = useTemplateRef<HTMLDivElement>('singleTextLayer')
+const leftTextLayer = useTemplateRef<HTMLDivElement>('leftTextLayer')
+const rightTextLayer = useTemplateRef<HTMLDivElement>('rightTextLayer')
 const scrollableContainer = useTemplateRef<HTMLDivElement>('scrollableContainer')
+const pageInput = useTemplateRef<HTMLInputElement>('pageInput')
 const pagePaddingClasses = ['p-4', 'laptop:px-12', 'laptop:pt-6', 'pb-[64px]']
 
 const {
@@ -229,8 +345,7 @@ const currentPage = useSyncedBookSettings({
 const totalPages = ref(0)
 const scaleMin = 0.5
 const scaleMax = 3.0
-const scaleStep = 0.25
-const scaleButtonStep = 0.05
+const SCALE_DELTA = 1.1
 const scale = useSyncedBookSettings({
   nftClassId: props.nftClassId,
   key: 'scale',
@@ -238,17 +353,32 @@ const scale = useSyncedBookSettings({
   namespace: 'pdf',
 })
 const scaleMenuItems = computed<DropdownMenuItem[]>(() => {
-  const items: number[] = []
-  let step = scaleStep
-  for (let value = scaleMin; value <= scaleMax; value += step) {
-    items.push(Number(value.toFixed(2)))
-    if (value === 1.5) {
-      step *= 2
-    }
+  const presets: Array<{ label: string, value: number | string }> = [
+    { label: $t('reader_zoom_fit_page'), value: 'page-fit' },
+    { label: $t('reader_zoom_fit_width'), value: 'page-width' },
+  ]
+  const numericValues = [0.5, 0.75, 1, 1.25, 1.5, 2, 3]
+  for (const value of numericValues) {
+    presets.push({ label: `${Math.round(value * 100)}%`, value })
   }
-  return items.map(value => ({
-    label: `${Math.round(value * 100)}%`,
-    onSelect: () => scale.value = value,
+  return presets.map(({ label, value }) => ({
+    label,
+    onSelect: async () => {
+      try {
+        if (value === 'page-fit') {
+          await zoomToFit('page')
+        }
+        else if (value === 'page-width') {
+          await zoomToFit('width')
+        }
+        else {
+          scale.value = value as number
+        }
+      }
+      catch (error) {
+        emit('error', error as Error)
+      }
+    },
   }))
 })
 
@@ -285,6 +415,27 @@ const isRightToLeft = useSyncedBookSettings({
   key: 'isRightToLeft',
   defaultValue: false,
   namespace: 'pdf',
+})
+
+interface OutlineItem {
+  title: string
+  pageNumber: number
+  level: number
+}
+
+const outlineItems = ref<OutlineItem[]>([])
+const isTocOpen = ref(false)
+const isDesktop = useDesktopScreen()
+watch(isDesktop, () => {
+  isTocOpen.value = false
+})
+const isDesktopTocOpen = computed({
+  get: () => isDesktop.value && isTocOpen.value,
+  set: (open) => { isTocOpen.value = open },
+})
+const isMobileTocOpen = computed({
+  get: () => !isDesktop.value && isTocOpen.value,
+  set: (open) => { isTocOpen.value = open },
 })
 
 const emit = defineEmits<{
@@ -390,6 +541,19 @@ watch([currentPage], async () => {
   }
 })
 
+const debouncedAutoZoom = useDebounceFn(async () => {
+  if (!pdfDocument.value) return
+  hasAutoZoomedToPage.value = false
+  try {
+    await autoZoomToPageIfNeeded()
+  }
+  catch (error) {
+    emit('error', error as Error)
+  }
+}, 150)
+
+useResizeObserver(scrollableContainer, debouncedAutoZoom)
+
 async function loadPDF() {
   if (!props.pdfBuffer) return
 
@@ -419,6 +583,7 @@ async function loadPDF() {
     totalPages.value = pdfDocument.value.numPages
 
     emit('pdfLoaded', pdfDocument.value)
+    loadOutline(pdfDocument.value)
 
     await autoZoomToPageIfNeeded()
     renderPages()
@@ -428,8 +593,84 @@ async function loadPDF() {
   }
 }
 
+async function loadOutline(doc: PDFDocumentProxy) {
+  try {
+    const outline = await doc.getOutline()
+    if (!outline?.length) {
+      outlineItems.value = []
+      return
+    }
+
+    type OutlineEntry = Awaited<ReturnType<PDFDocumentProxy['getOutline']>>[number]
+    async function resolvePageNumber(entry: Pick<OutlineEntry, 'dest'>): Promise<number | null> {
+      if (!entry.dest) return null
+      try {
+        const dest = typeof entry.dest === 'string'
+          ? await doc.getDestination(entry.dest)
+          : entry.dest
+        if (dest?.[0]) {
+          return (await doc.getPageIndex(dest[0])) + 1
+        }
+      }
+      catch {
+        // Skip entries with unresolvable destinations
+      }
+      return null
+    }
+
+    async function flatten(
+      entries: typeof outline,
+      level: number,
+    ): Promise<OutlineItem[]> {
+      const resolved = await Promise.all(
+        entries.map(entry => resolvePageNumber(entry)),
+      )
+      const childResults = await Promise.all(
+        entries.map((entry): Promise<OutlineItem[]> | OutlineItem[] =>
+          entry.items?.length ? flatten(entry.items, level + 1) : [],
+        ),
+      )
+      const items: OutlineItem[] = []
+      entries.forEach((entry, i) => {
+        const pageNumber = resolved[i]
+        if (pageNumber != null) {
+          items.push({ title: entry.title, pageNumber, level })
+        }
+        const children = childResults[i]
+        if (children?.length) {
+          items.push(...children)
+        }
+      })
+      return items
+    }
+
+    const items = await flatten(outline, 0)
+    if (pdfDocument.value === doc) {
+      outlineItems.value = items
+    }
+  }
+  catch {
+    if (pdfDocument.value === doc) {
+      outlineItems.value = []
+    }
+  }
+}
+
 function clampScale(value: number) {
   return Math.min(scaleMax, Math.max(scaleMin, value))
+}
+
+function roundScale(value: number) {
+  return Math.round(value * 100) / 100
+}
+
+function getContainerInnerSize() {
+  const container = scrollableContainer.value
+  if (!container) return null
+  const style = getComputedStyle(container)
+  const width = container.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight)
+  const height = container.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom)
+  return (width > 0 && height > 0) ? { width, height } : null
 }
 
 async function autoZoomToPageIfNeeded() {
@@ -439,12 +680,8 @@ async function autoZoomToPageIfNeeded() {
   await nextTick()
   await new Promise(resolve => requestAnimationFrame(() => resolve(true)))
 
-  const container = scrollableContainer.value
-  if (!container) return
-
-  const containerWidth = container.clientWidth
-  const containerHeight = container.clientHeight
-  if (!containerWidth || !containerHeight) return
+  const size = getContainerInnerSize()
+  if (!size) return
 
   const isDual = isDualPageMode.value && totalPages.value > 1 && !isCoverPage.value
   if (isDual) {
@@ -456,8 +693,8 @@ async function autoZoomToPageIfNeeded() {
     const viewports = pages.map(page => page.getViewport({ scale: 1 }))
     const totalWidth = viewports.reduce((sum, viewport) => sum + viewport.width, 0)
     const maxHeight = Math.max(...viewports.map(viewport => viewport.height))
-    const effectiveScale = Math.min(containerWidth / totalWidth, containerHeight / maxHeight)
-    const fitScale = clampScale(effectiveScale)
+    const effectiveScale = Math.min(size.width / totalWidth, size.height / maxHeight)
+    const fitScale = clampScale(roundScale(effectiveScale))
 
     scale.value = fitScale
     hasAutoZoomedToPage.value = true
@@ -467,11 +704,37 @@ async function autoZoomToPageIfNeeded() {
 
   const page = await pdfDocument.value.getPage(currentPage.value)
   const viewport = page.getViewport({ scale: 1 })
-  const effectiveScale = Math.min(containerWidth / viewport.width, containerHeight / viewport.height)
-  const fitScale = clampScale(effectiveScale)
+  const effectiveScale = Math.min(size.width / viewport.width, size.height / viewport.height)
+  const fitScale = clampScale(roundScale(effectiveScale))
 
   scale.value = fitScale
   hasAutoZoomedToPage.value = true
+  page.cleanup()
+}
+
+async function zoomToFit(mode: 'page' | 'width') {
+  if (!pdfDocument.value) return
+
+  const size = getContainerInnerSize()
+  if (!size) return
+
+  const page = await pdfDocument.value.getPage(currentPage.value)
+  const viewport = page.getViewport({ scale: 1 })
+
+  let pageWidthScaleFactor = 1
+  if (isDualPageMode.value && totalPages.value > 1 && !isCoverPage.value) {
+    pageWidthScaleFactor = 2
+  }
+
+  const pageWidthScale = size.width / viewport.width / pageWidthScaleFactor
+  if (mode === 'width') {
+    scale.value = clampScale(roundScale(pageWidthScale))
+  }
+  else {
+    const pageHeightScale = size.height / viewport.height
+    scale.value = clampScale(roundScale(Math.min(pageWidthScale, pageHeightScale)))
+  }
+
   page.cleanup()
 }
 
@@ -510,92 +773,90 @@ async function processRenderQueue() {
   isRendering.value = false
 }
 
-async function renderSinglePage() {
-  if (!pdfDocument.value || !singleCanvas.value) return
+async function renderTextLayer(
+  page: import('pdfjs-dist').PDFPageProxy,
+  viewport: import('pdfjs-dist').PageViewport,
+  container: HTMLDivElement,
+) {
+  if (!pdfjsLib.value) return
+  container.replaceChildren()
+  const textContent = await page.getTextContent()
+  const textLayer = new pdfjsLib.value.TextLayer({
+    textContentSource: textContent,
+    container,
+    viewport,
+  })
+  await textLayer.render()
+}
 
-  const page = await pdfDocument.value.getPage(currentPage.value)
+async function renderPageToCanvas(
+  pageNum: number,
+  canvas: HTMLCanvasElement,
+  textLayerContainer?: HTMLDivElement | null,
+) {
+  if (!pdfDocument.value) return
+  const page = await pdfDocument.value.getPage(pageNum)
   const viewport = page.getViewport({ scale: scale.value })
 
-  const context = singleCanvas.value.getContext('2d')
-  if (!context) return
+  const context = canvas.getContext('2d')
+  if (!context) {
+    page.cleanup()
+    return
+  }
 
-  singleCanvas.value.height = viewport.height * pixelRatio.value
-  singleCanvas.value.width = viewport.width * pixelRatio.value
-  singleCanvas.value.style.width = `${viewport.width}px`
-  singleCanvas.value.style.height = `${viewport.height}px`
+  canvas.height = viewport.height * pixelRatio.value
+  canvas.width = viewport.width * pixelRatio.value
+  canvas.style.width = `${viewport.width}px`
+  canvas.style.height = `${viewport.height}px`
 
-  const renderContext = {
+  await page.render({
     canvasContext: context,
     transform: pixelRatio.value !== 1
       ? [pixelRatio.value, 0, 0, pixelRatio.value, 0, 0]
       : undefined,
-    viewport: viewport,
+    viewport,
+  }).promise
+
+  if (textLayerContainer) {
+    await renderTextLayer(page, viewport, textLayerContainer)
   }
 
-  await page.render(renderContext).promise
   page.cleanup()
 }
 
+async function renderSinglePage() {
+  if (!singleCanvas.value) return
+  await renderPageToCanvas(currentPage.value, singleCanvas.value, singleTextLayer.value)
+}
+
 async function renderDualPages() {
-  if (!pdfDocument.value || !leftCanvas.value || !rightCanvas.value) return
+  if (!leftCanvas.value || !rightCanvas.value) return
 
   const rightPageNum = dualRightPage.value
-
-  const leftContext = leftCanvas.value.getContext('2d')
-  const rightContext = rightCanvas.value.getContext('2d')
-  if (!leftContext || !rightContext) return
-
-  const renderTasks = []
 
   // In RTL mode with a right page, swap left/right display positions
   const actualLeftPageNum = (isRightToLeft.value && rightPageNum) ? rightPageNum : currentPage.value
   const actualRightPageNum = (isRightToLeft.value && rightPageNum) ? currentPage.value : rightPageNum
 
-  const leftPageTask = pdfDocument.value.getPage(actualLeftPageNum).then(async (leftPage) => {
-    const leftViewport = leftPage.getViewport({ scale: scale.value })
-    if (leftCanvas.value) {
-      leftCanvas.value.height = leftViewport.height * pixelRatio.value
-      leftCanvas.value.width = leftViewport.width * pixelRatio.value
-      leftCanvas.value.style.width = `${leftViewport.width}px`
-      leftCanvas.value.style.height = `${leftViewport.height}px`
-    }
-    await leftPage.render({
-      canvasContext: leftContext,
-      transform: pixelRatio.value !== 1
-        ? [pixelRatio.value, 0, 0, pixelRatio.value, 0, 0]
-        : undefined,
-      viewport: leftViewport,
-    }).promise
-    leftPage.cleanup()
-  })
-  renderTasks.push(leftPageTask)
+  const renderTasks: Promise<void>[] = [
+    renderPageToCanvas(actualLeftPageNum, leftCanvas.value, leftTextLayer.value),
+  ]
 
   if (actualRightPageNum) {
-    const rightPageTask = pdfDocument.value.getPage(actualRightPageNum).then(async (rightPage) => {
-      const rightViewport = rightPage.getViewport({ scale: scale.value })
-      if (rightCanvas.value) {
-        rightCanvas.value.height = rightViewport.height * pixelRatio.value
-        rightCanvas.value.width = rightViewport.width * pixelRatio.value
-        rightCanvas.value.style.width = `${rightViewport.width}px`
-        rightCanvas.value.style.height = `${rightViewport.height}px`
-      }
-      await rightPage.render({
-        canvasContext: rightContext,
-        transform: pixelRatio.value !== 1
-          ? [pixelRatio.value, 0, 0, pixelRatio.value, 0, 0]
-          : undefined,
-        viewport: rightViewport,
-      }).promise
-      rightPage.cleanup()
-    })
-    renderTasks.push(rightPageTask)
+    renderTasks.push(
+      renderPageToCanvas(actualRightPageNum, rightCanvas.value, rightTextLayer.value),
+    )
   }
   else {
-    rightContext.clearRect(0, 0, rightCanvas.value.width, rightCanvas.value.height)
+    const rightContext = rightCanvas.value.getContext('2d')
+    if (rightContext) {
+      rightContext.clearRect(0, 0, rightCanvas.value.width, rightCanvas.value.height)
+    }
     rightCanvas.value.width = 0
     rightCanvas.value.height = 0
     rightCanvas.value.style.width = '0px'
     rightCanvas.value.style.height = '0px'
+    rightTextLayer.value?.replaceChildren()
   }
 
   await Promise.all(renderTasks)
@@ -629,15 +890,11 @@ function togglePageMode(value?: 'single' | 'dual') {
 }
 
 function zoomIn() {
-  if (scale.value < scaleMax) {
-    scale.value = clampScale(scale.value + scaleButtonStep)
-  }
+  scale.value = clampScale(roundScale(scale.value * SCALE_DELTA))
 }
 
 function zoomOut() {
-  if (scale.value > scaleMin) {
-    scale.value = clampScale(scale.value - scaleButtonStep)
-  }
+  scale.value = clampScale(roundScale(scale.value / SCALE_DELTA))
 }
 
 function goToPage(pageNumber: number) {
@@ -651,7 +908,26 @@ function goToPage(pageNumber: number) {
   }
 }
 
+function onPageInputChange(event: Event) {
+  const input = event.target as HTMLInputElement
+  const value = Number.parseInt(input.value, 10)
+  if (value && value >= 1 && value <= totalPages.value) {
+    goToPage(value)
+  }
+  input.value = String(currentPage.value)
+}
+
+function isInteractiveElement(el: EventTarget | null): boolean {
+  if (!el || !(el instanceof HTMLElement)) return false
+  const tag = el.tagName
+  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || tag === 'BUTTON' || tag === 'A' || el.isContentEditable
+}
+
 function handleKeydown(event: KeyboardEvent) {
+  if (isInteractiveElement(event.target)) return
+
+  const ctrl = event.ctrlKey || event.metaKey
+
   switch (event.key) {
     case 'ArrowLeft':
       previousPage()
@@ -661,10 +937,22 @@ function handleKeydown(event: KeyboardEvent) {
       break
     case '+':
     case '=':
+      if (ctrl) {
+        event.preventDefault()
+      }
       zoomIn()
       break
     case '-':
+      if (ctrl) {
+        event.preventDefault()
+      }
       zoomOut()
+      break
+    case '0':
+      if (ctrl) {
+        event.preventDefault()
+        scale.value = 1.0
+      }
       break
     case 'd':
     case 'D':
@@ -672,10 +960,75 @@ function handleKeydown(event: KeyboardEvent) {
         togglePageMode()
       }
       break
+    case 'Home':
+      event.preventDefault()
+      goToPage(1)
+      break
+    case 'End':
+      event.preventDefault()
+      goToPage(totalPages.value)
+      break
+    case ' ':
+      event.preventDefault()
+      if (event.shiftKey) {
+        previousPage()
+      }
+      else {
+        nextPage()
+      }
+      break
+    case 'g':
+    case 'G':
+      event.preventDefault()
+      pageInput.value?.focus()
+      pageInput.value?.select()
+      break
   }
 }
 
 useEventListener('keydown', handleKeydown)
+
+let wheelUnusedTicks = 0
+
+function handleWheel(event: WheelEvent) {
+  if (!event.ctrlKey && !event.metaKey) return
+
+  event.preventDefault()
+
+  const isTrackpadPinch
+    = event.ctrlKey
+      && event.deltaMode === WheelEvent.DOM_DELTA_PIXEL
+      && event.deltaX === 0
+
+  if (isTrackpadPinch) {
+    const scaleFactor = Math.exp(-event.deltaY / 100)
+    scale.value = clampScale(roundScale(scale.value * scaleFactor))
+  }
+  else {
+    const PIXELS_PER_LINE_SCALE = 30
+    let delta = -event.deltaY
+    if (event.deltaMode === WheelEvent.DOM_DELTA_LINE || event.deltaMode === WheelEvent.DOM_DELTA_PAGE) {
+      delta = Math.sign(delta)
+    }
+    else {
+      delta /= PIXELS_PER_LINE_SCALE
+    }
+
+    wheelUnusedTicks += delta
+    const wholeTicks = Math.trunc(wheelUnusedTicks)
+    wheelUnusedTicks -= wholeTicks
+
+    if (wholeTicks !== 0) {
+      let s = scale.value
+      const count = Math.abs(wholeTicks)
+      const factor = wholeTicks > 0 ? SCALE_DELTA : 1 / SCALE_DELTA
+      for (let i = 0; i < count; i++) {
+        s = clampScale(roundScale(s * factor))
+      }
+      scale.value = s
+    }
+  }
+}
 
 function handleMobileTTSClick() {
   if (props.isAudioHidden) {
@@ -700,3 +1053,70 @@ defineExpose({
   totalPages: readonly(totalPages),
 })
 </script>
+
+<style>
+.pdf-reader-page .textLayer {
+  position: absolute;
+  text-align: initial;
+  inset: 0;
+  overflow: clip;
+  opacity: 1;
+  line-height: 1;
+  -webkit-text-size-adjust: none;
+  -moz-text-size-adjust: none;
+  text-size-adjust: none;
+  forced-color-adjust: none;
+  transform-origin: 0 0;
+  caret-color: CanvasText;
+  z-index: 0;
+}
+
+.pdf-reader-page .textLayer :is(span, br) {
+  color: transparent;
+  position: absolute;
+  white-space: pre;
+  cursor: text;
+  transform-origin: 0% 0%;
+}
+
+.pdf-reader-page .textLayer > :not(.markedContent),
+.pdf-reader-page .textLayer .markedContent span:not(.markedContent) {
+  z-index: 1;
+}
+
+.pdf-reader-page .textLayer span.markedContent {
+  top: 0;
+  height: 0;
+}
+
+.pdf-reader-page .textLayer span[role='img'] {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+  cursor: default;
+}
+
+.pdf-reader-page .textLayer ::selection {
+  background: rgba(0 0 255 / 0.25);
+  background: color-mix(in srgb, AccentColor, transparent 75%);
+}
+
+.pdf-reader-page .textLayer br::selection {
+  background: transparent;
+}
+
+.pdf-reader-page .textLayer .endOfContent {
+  display: block;
+  position: absolute;
+  inset: 100% 0 0;
+  z-index: 0;
+  cursor: default;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+}
+
+.pdf-reader-page .textLayer.selecting .endOfContent {
+  top: 0;
+}
+</style>
