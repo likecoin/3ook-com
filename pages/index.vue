@@ -11,10 +11,11 @@
 <script setup lang="ts">
 const route = useRoute()
 const localeRoute = useLocaleRoute()
+const { isApp } = useAppDetection()
 
 await navigateTo(
   localeRoute({
-    name: 'store',
+    name: isApp.value ? 'shelf' : 'store',
     query: route.query,
   }),
   { replace: true },
