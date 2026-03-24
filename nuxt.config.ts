@@ -264,7 +264,10 @@ export default defineNuxtConfig({
               'https://td.doubleclick.net',
               'https://www.googletagmanager.com',
               'https://www.facebook.com',
+              'https://verify.walletconnect.com',
               'https://verify.walletconnect.org',
+              'https://secure.walletconnect.com',
+              'https://secure.walletconnect.org',
               'https://www.youtube-nocookie.com',
               'https://www.youtube.com',
             ],
@@ -296,6 +299,7 @@ export default defineNuxtConfig({
           'blob:',
           'https://fonts.gstatic.com',
           'https://fonts.intercomcdn.com',
+          'https://fonts.reown.com',
         ],
         'form-action': [
           '\'self\'',
