@@ -5,7 +5,7 @@ import { computeTTSTextSig } from '~/shared/utils/tts-sig'
 export const TTS_ERROR_NOT_ALLOWED = 'NotAllowedError'
 
 interface TTSOptions {
-  nftClassId?: string
+  nftClassId: string
   onError?: (error: string | Event | MediaError) => void
   onAllSegmentsPlayed?: () => void
   bookName?: string | Ref<string> | ComputedRef<string>
@@ -16,7 +16,7 @@ interface TTSOptions {
   customVoice?: Ref<CustomVoiceData | null>
 }
 
-export function useTextToSpeech(options: TTSOptions = {}) {
+export function useTextToSpeech(options: TTSOptions) {
   const {
     bookName,
     bookChapterName,
@@ -365,11 +365,9 @@ export function useTextToSpeech(options: TTSOptions = {}) {
   })
 
   function appendCommonParams(params: URLSearchParams, text: string) {
-    if (nftClassId) {
-      params.set('nft_class_id', nftClassId)
-      const ttsKey = sessionUser.value?.ttsKey || sessionUser.value?.evmWallet || ''
-      params.set('sig', computeTTSTextSig(ttsKey, nftClassId, text))
-    }
+    params.set('nft_class_id', nftClassId)
+    const ttsKey = sessionUser.value?.ttsKey || sessionUser.value?.evmWallet || ''
+    params.set('sig', computeTTSTextSig(ttsKey, nftClassId, text))
     if (isNativeBridge.value) {
       params.set('blocking', '1')
     }
