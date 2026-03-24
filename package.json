@@ -22,12 +22,12 @@
     "@account-kit/infra": "^4.86.0",
     "@account-kit/wallet-client": "^4.86.0",
     "@breezystack/lamejs": "^1.2.7",
-    "@coinbase/wallet-sdk": "~4.3.6",
+    "@coinbase/wallet-sdk": "~4.3.7",
+    "@metamask/connect-evm": "~0.9.0",
     "@farcaster/miniapp-sdk": "^0.2.1",
     "@google-cloud/pubsub": "^5.3.0",
     "@likecoin/epub-ts": "^0.4.9",
     "@likecoin/wagmi-connector": "2.4.0-like.0",
-    "@metamask/sdk": "~0.33.1",
     "@nuxt/icon": "^1.11.0",
     "@nuxt/scripts": "^0.13.1",
     "@nuxt/ui": "^3.2.0",
@@ -40,9 +40,9 @@
     "@unhead/vue": "^2.0.10",
     "@vite-pwa/nuxt": "^1.0.4",
     "@vueuse/nuxt": "^13.0.0",
-    "@wagmi/core": "3.0.0",
-    "@wagmi/vue": "^0.4.2",
-    "@walletconnect/ethereum-provider": "~2.21.1",
+    "@wagmi/core": "^3.4.1",
+    "@wagmi/vue": "^0.5.1",
+    "@walletconnect/ethereum-provider": "~2.23.8",
     "firebase-admin": "^13.4.0",
     "jwt-decode": "^4.0.0",
     "markdown-it": "^14.1.0",
@@ -57,7 +57,7 @@
     "unstorage": "^1.17.1",
     "v-gsap-nuxt": "^1.4.4",
     "valibot": "^1.2.0",
-    "viem": "^2.45.0",
+    "viem": "^2.47.6",
     "vue": "^3.5.13",
     "vue-router": "^4.5.0"
   },
@@ -73,6 +73,7 @@
   },
   "overrides": {
     "@vercel/nft": "^0.27.4",
-    "@walletconnect/universal-provider": "2.21.10"
+    "@walletconnect/universal-provider": "2.23.8",
+    "ox": "^0.14.7"
   }
 }

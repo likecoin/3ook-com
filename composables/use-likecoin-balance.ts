@@ -19,7 +19,7 @@ export function useLikeCoinBalance(walletAddress: MaybeRefOrGetter<string | unde
     },
   })
 
-  const likeBalance = computed(() => data.value || 0n)
+  const likeBalance = computed<bigint>(() => (data.value as bigint) || 0n)
 
   const formattedLikeBalanceNumber = computed(() => {
     return Number(formatUnits(likeBalance.value, config.public.likeCoinTokenDecimals))
