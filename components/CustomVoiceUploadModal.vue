@@ -416,6 +416,7 @@
 
 <script setup lang="ts">
 import type { CustomVoiceData } from '~/shared/types/custom-voice'
+import { computeTTSTextSig, TTS_PREVIEW_NFT_CLASS_ID } from '~/shared/utils/tts-sig'
 import customDefaultAvatar from '@/assets/images/voice-avatars/custom-default.jpg'
 
 const props = defineProps<{
@@ -429,6 +430,7 @@ const emit = defineEmits<{
 }>()
 
 const { t: $t, locale } = useI18n()
+const { user: sessionUser } = useUserSession()
 const { customVoice, isLoading, uploadCustomVoice, updateCustomVoiceInfo, removeCustomVoice } = useCustomVoice()
 
 const voiceName = ref(props.existingVoice?.voiceName || '')
@@ -686,10 +688,13 @@ async function confirmDelete() {
 
 function getTTSPreviewUrl(language: string): string {
   const text = PREVIEW_TEXT[language] || PREVIEW_TEXT['zh-HK'] || ''
+  const ttsKey = sessionUser.value?.ttsKey || sessionUser.value?.evmWallet || ''
   const params = new URLSearchParams({
     text,
     language,
     voice_id: 'custom',
+    nft_class_id: TTS_PREVIEW_NFT_CLASS_ID,
+    sig: computeTTSTextSig(ttsKey, TTS_PREVIEW_NFT_CLASS_ID, text),
     _t: previewCacheBuster.value.toString(),
   })
   return `/api/reader/tts?${params.toString()}`

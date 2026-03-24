@@ -375,7 +375,6 @@ export function useTextToSpeech(options: TTSOptions = {}) {
     }
   }
 
-
   function getAudioSrc(element: TTSSegment): string {
     if (element.audioSrc) return element.audioSrc
 

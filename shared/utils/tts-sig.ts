@@ -1,3 +1,5 @@
+export const TTS_PREVIEW_NFT_CLASS_ID = 'custom_voice_preview'
+
 export function computeTTSTextSig(token: string, nftClassId: string, text: string): string {
   return cyrb53(`${token}:${nftClassId.toLowerCase()}:${text}`)
 }
