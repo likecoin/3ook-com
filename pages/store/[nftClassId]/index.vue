@@ -1,5 +1,11 @@
 <template>
-  <main class="items-center px-4 laptop:px-12 pb-[100px]">
+  <main
+    :class="[
+      'items-center',
+      'px-4 laptop:px-12',
+      pricingItems.length > 1 ? 'pb-[152px]' : 'pb-[120px]',
+    ]"
+  >
     <div
       :class="[
         'z-10',
@@ -29,7 +35,10 @@
         </template>
       </UButton>
     </div>
-    <section class="grid grid-cols-1 tablet:grid-cols-[1fr_300px] laptop:grid-cols-[1fr_380px] gap-x-[44px] gap-y-0 w-full max-w-[1200px]">
+
+    <!-- Main content -->
+    <section class="grid tablet:grid-cols-[1fr_300px] laptop:grid-cols-[1fr_380px] gap-x-[44px] w-full max-w-[1200px]">
+      <!-- Primary content column -->
       <div class="pt-5">
         <AffiliateAlert class="mb-6" />
 
@@ -95,260 +104,278 @@
         </div>
       </div>
 
-      <div :class="[!isStakingTabActive && 'order-last', 'tablet:order-none']">
-        <UTabs
-          v-if="infoTabItems.length"
-          v-model="activeTabValue"
-          :items="infoTabItems"
-          variant="link"
-          class="gap-6 w-full mt-[52px] tablet:mt-[80px]"
-          :unmount-on-hide="false"
-          :ui="{ list: 'gap-6 border-0', trigger: 'text-lg font-bold pb-0 px-0', indicator: 'border-1 dark:border-theme-cyan' }"
-        >
-          <template #description>
-            <ExpandableContent>
-              <div
-                class="markdown"
-                v-html="bookInfoDescriptionHTML"
-              />
-            </ExpandableContent>
-            <template v-if="bookInfo.descriptionSummary?.value">
-              <h3 class="text-lg font-semibold mt-8 mb-4">
-                {{ $t('product_page_description_summary_label') }}
-              </h3>
-              <ExpandableContent>
-                <div
-                  class="markdown"
-                  v-html="bookInfoDescriptionSummaryHTML"
-                />
-              </ExpandableContent>
-            </template>
-            <template v-if="bookInfo.bookReviewInfo.value?.url">
-              <h3 class="text-lg font-semibold mt-8 mb-4">
-                {{ $t('product_page_review_info_label') }}
-              </h3>
-              <NuxtLink
-                :to="bookReviewURLWithUTM"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="inline-flex items-center text-sm text-primary hover:underline"
-                @click="handleBookReviewClick"
-              >
-                <UIcon
-                  name="i-material-symbols-book-outline-rounded"
-                  size="16"
-                />
-                <span class="mx-2">{{ bookInfo.bookReviewInfo.value?.title || $t('product_page_book_review_link_label') }}</span>
-                <UIcon
-                  name="i-material-symbols-open-in-new-rounded"
-                  size="14"
-                />
-              </NuxtLink>
-            </template>
-            <ul
-              v-if="bookInfo.genre.value || descriptionTags.length"
-              :class="[
-                'flex',
-                'flex-wrap',
-                'gap-x-2',
-                'gap-y-4',
-                'mt-[48px]',
-                { 'max-tablet:hidden': isStakingTabActive },
-              ]"
-            >
-              <li v-if="bookInfo.genre.value">
-                <UButton
-                  :label="bookInfo.localizedGenre.value"
-                  :to="localeRoute({
-                    name: 'store',
-                    query: {
-                      genre: bookInfo.genre.value,
-                      ll_medium: 'genre',
-                      ll_source: 'product-page',
-                    },
-                  })"
-                  variant="soft"
-                  :ui="{ base: 'rounded-full' }"
-                  @click="handleGenreClick"
-                />
-              </li>
-              <li
-                v-for="tag in descriptionTags"
-                :key="tag"
-              >
-                <UButton
-                  :label="tag"
-                  :to="localeRoute({
-                    name: 'store',
-                    query: {
-                      q: tag,
-                      ll_medium: `keyword-${tag}`,
-                      ll_source: 'product-page',
-                    },
-                  })"
-                  variant="soft"
-                  :ui="{ base: 'rounded-full' }"
-                  @click="handleKeywordClick(tag)"
-                />
-              </li>
-            </ul>
-          </template>
-
-          <template #author>
-            <ExpandableContent>
-              <div
-                class="markdown"
-                v-html="authorDescriptionHTML"
-              />
-            </ExpandableContent>
-          </template>
-
-          <template #table-of-contents>
-            <ExpandableContent>
-              <div
-                class="markdown"
-                v-html="tableOfContentsHTML"
-              />
-            </ExpandableContent>
-          </template>
-
-          <template #staking-info>
-            <div class="max-tablet:hidden space-y-4 text-highlighted">
-              <div class="grid grid-cols-1 tablet:grid-cols-3 gap-4">
-                <UCard :ui="{ body: 'p-4' }">
-                  <div class="text-center">
-                    <BalanceLabel
-                      class="text-2xl"
-                      :value="formattedTotalStake"
-                      :is-compact="true"
-                    />
-                    <div
-                      class="mt-1 text-sm text-muted"
-                      v-text="$t('staking_total_staked')"
-                    />
-                  </div>
-                </UCard>
-                <UCard :ui="{ body: 'p-4' }">
-                  <div class="text-center">
-                    <div
-                      class="text-2xl font-semibold"
-                      v-text="numberOfStakers.toLocaleString()"
-                    />
-                    <div
-                      class="mt-1 text-sm text-muted"
-                      v-text="$t('staking_total_stakers')"
-                    />
-                  </div>
-                </UCard>
-                <UCard
-                  v-if="hasLoggedIn"
-                  :ui="{ body: 'p-4' }"
-                >
-                  <div class="text-center">
-                    <BalanceLabel
-                      class="text-2xl"
-                      :value="formattedUserStake"
-                      :is-compact="true"
-                    />
-
-                    <div
-                      class="mt-1 text-sm text-muted"
-                      v-text="$t('staking_your_stake')"
-                    />
-                  </div>
-                </UCard>
-              </div>
-
-              <div
-                v-if="hasLoggedIn && pendingRewards > 0n"
-                class="mt-4"
-              >
-                <UCard :ui="{ body: 'p-4' }">
-                  <div class="flex justify-between items-center">
-                    <div>
-                      <BalanceLabel
-                        class="text-2xl"
-                        :value="formattedPendingRewards"
-                      />
-                      <div
-                        class="mt-1 text-sm text-muted"
-                        v-text="$t('staking_pending_rewards')"
-                      />
-                    </div>
-                    <UButton
-                      v-if="!isApp"
-                      :label="$t('staking_claim_rewards')"
-                      color="primary"
-                      variant="outline"
-                      :loading="isClaimingRewards"
-                      @click="handleClaimRewards"
-                    />
-                  </div>
-                </UCard>
-              </div>
-
-              <div class="mt-6">
-                <NuxtLink
-                  :to="localeRoute({ name: 'about', hash: '#curate-to-earn' })"
-                  class="inline-flex items-center gap-1 text-sm hover:underline"
-                >
-                  <UIcon
-                    name="i-material-symbols-help-outline-rounded"
-                    size="16"
-                  />
-                  <span>{{ $t('staking_learn_more') }}</span>
-                </NuxtLink>
-              </div>
-            </div>
-          </template>
-
-          <template #buyer-messages>
+      <UAccordion
+        v-if="infoTabItems.length"
+        v-model="activeTabValue"
+        class="col-start-1 max-laptop:col-span-full gap-6 w-full mt-[52px] tablet:mt-[80px]"
+        :items="infoTabItems"
+        :unmount-on-hide="false"
+        :ui="{
+          trigger: 'text-lg font-bold',
+          content: '[&>*:last-child]:pb-10',
+        }"
+      >
+        <template #description>
+          <ExpandableContent>
             <div
-              v-for="buyer in buyerMessages"
-              :key="buyer.txHash"
-              class="p-4"
+              class="markdown"
+              v-html="bookInfoDescriptionHTML"
+            />
+          </ExpandableContent>
+          <template v-if="bookInfo.descriptionSummary?.value">
+            <h3 class="text-lg font-semibold mt-8 mb-4">
+              {{ $t('product_page_description_summary_label') }}
+            </h3>
+            <ExpandableContent>
+              <div
+                class="markdown"
+                v-html="bookInfoDescriptionSummaryHTML"
+              />
+            </ExpandableContent>
+          </template>
+          <template v-if="bookInfo.bookReviewInfo.value?.url">
+            <h3 class="text-lg font-semibold mt-8 mb-4">
+              {{ $t('product_page_review_info_label') }}
+            </h3>
+            <NuxtLink
+              :to="bookReviewURLWithUTM"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center text-sm text-primary hover:underline"
+              @click="handleBookReviewClick"
             >
-              <div class="flex flex-col items-start gap-3">
-                <div class="flex items-center gap-2">
-                  <EntityItem
-                    :name="buyer.wallet"
-                    :wallet-address="buyer.wallet"
-                    :is-link-disabled="true"
+              <UIcon
+                name="i-material-symbols-book-outline-rounded"
+                size="16"
+              />
+              <span class="mx-2">{{ bookInfo.bookReviewInfo.value?.title || $t('product_page_book_review_link_label') }}</span>
+              <UIcon
+                name="i-material-symbols-open-in-new-rounded"
+                size="14"
+              />
+            </NuxtLink>
+          </template>
+          <ul
+            v-if="bookInfo.genre.value || descriptionTags.length"
+            :class="[
+              'flex',
+              'flex-wrap',
+              'gap-x-2',
+              'gap-y-4',
+              'mt-[48px]',
+              { 'max-tablet:hidden': isStakingTabActive },
+            ]"
+          >
+            <li v-if="bookInfo.genre.value">
+              <UButton
+                :label="bookInfo.localizedGenre.value"
+                :to="localeRoute({
+                  name: 'store',
+                  query: {
+                    genre: bookInfo.genre.value,
+                    ll_medium: 'genre',
+                    ll_source: 'product-page',
+                  },
+                })"
+                variant="soft"
+                :ui="{ base: 'rounded-full' }"
+                @click="handleGenreClick"
+              />
+            </li>
+            <li
+              v-for="tag in descriptionTags"
+              :key="tag"
+            >
+              <UButton
+                :label="tag"
+                :to="localeRoute({
+                  name: 'store',
+                  query: {
+                    q: tag,
+                    ll_medium: `keyword-${tag}`,
+                    ll_source: 'product-page',
+                  },
+                })"
+                variant="soft"
+                :ui="{ base: 'rounded-full' }"
+                @click="handleKeywordClick(tag)"
+              />
+            </li>
+          </ul>
+        </template>
+
+        <template #author>
+          <ExpandableContent>
+            <div
+              class="markdown"
+              v-html="authorDescriptionHTML"
+            />
+          </ExpandableContent>
+        </template>
+
+        <template #table-of-contents>
+          <ExpandableContent>
+            <div
+              class="markdown"
+              v-html="tableOfContentsHTML"
+            />
+          </ExpandableContent>
+        </template>
+
+        <template #staking-info>
+          <StakingControl
+            class="tablet:hidden"
+            :nft-class-id="nftClassId"
+            :is-control-hidden="isApp"
+          />
+          <div class="max-tablet:hidden space-y-4 text-highlighted">
+            <div class="grid grid-cols-1 tablet:grid-cols-3 gap-4">
+              <UCard :ui="{ body: 'p-4' }">
+                <div class="text-center">
+                  <BalanceLabel
+                    class="text-2xl"
+                    :value="formattedTotalStake"
+                    :is-compact="true"
                   />
-                  <p
-                    class="text-dimmed text-xs"
-                    v-text="new Date(buyer.timestamp).toLocaleString()"
+                  <div
+                    class="mt-1 text-sm text-muted"
+                    v-text="$t('staking_total_staked')"
                   />
                 </div>
+              </UCard>
+              <UCard :ui="{ body: 'p-4' }">
+                <div class="text-center">
+                  <div
+                    class="text-2xl font-semibold"
+                    v-text="numberOfStakers.toLocaleString()"
+                  />
+                  <div
+                    class="mt-1 text-sm text-muted"
+                    v-text="$t('staking_total_stakers')"
+                  />
+                </div>
+              </UCard>
+              <UCard
+                v-if="hasLoggedIn"
+                :ui="{ body: 'p-4' }"
+              >
+                <div class="text-center">
+                  <BalanceLabel
+                    class="text-2xl"
+                    :value="formattedUserStake"
+                    :is-compact="true"
+                  />
+
+                  <div
+                    class="mt-1 text-sm text-muted"
+                    v-text="$t('staking_your_stake')"
+                  />
+                </div>
+              </UCard>
+            </div>
+
+            <div
+              v-if="hasLoggedIn && pendingRewards > 0n"
+              class="mt-4"
+            >
+              <UCard :ui="{ body: 'p-4' }">
+                <div class="flex justify-between items-center">
+                  <div>
+                    <BalanceLabel
+                      class="text-2xl"
+                      :value="formattedPendingRewards"
+                    />
+                    <div
+                      class="mt-1 text-sm text-muted"
+                      v-text="$t('staking_pending_rewards')"
+                    />
+                  </div>
+                  <UButton
+                    v-if="!isApp"
+                    :label="$t('staking_claim_rewards')"
+                    color="primary"
+                    variant="outline"
+                    :loading="isClaimingRewards"
+                    @click="handleClaimRewards"
+                  />
+                </div>
+              </UCard>
+            </div>
+
+            <div class="mt-6">
+              <NuxtLink
+                :to="localeRoute({ name: 'about', hash: '#curate-to-earn' })"
+                class="inline-flex items-center gap-1 text-sm hover:underline"
+              >
+                <UIcon
+                  name="i-material-symbols-help-outline-rounded"
+                  size="16"
+                />
+                <span>{{ $t('staking_learn_more') }}</span>
+              </NuxtLink>
+            </div>
+          </div>
+        </template>
+
+        <template #buyer-messages>
+          <div
+            v-for="buyer in buyerMessages"
+            :key="buyer.txHash"
+            class="py-4"
+          >
+            <div class="flex flex-col items-start gap-3">
+              <div class="flex items-center gap-2">
+                <EntityItem
+                  :name="buyer.wallet"
+                  :wallet-address="buyer.wallet"
+                  :is-link-disabled="true"
+                />
                 <p
-                  class="text-highlighted whitespace-pre-wrap break-words"
-                  v-text="buyer.message"
+                  class="text-dimmed text-xs"
+                  v-text="new Date(buyer.timestamp).toLocaleString()"
                 />
               </div>
+              <p
+                class="text-highlighted whitespace-pre-wrap break-words"
+                v-text="buyer.message"
+              />
             </div>
-          </template>
-        </UTabs>
-      </div>
+          </div>
+        </template>
+      </UAccordion>
 
-      <div class="relative w-full mt-6 tablet:mt-0 tablet:row-span-2 tablet:col-start-2 tablet:row-start-1">
+      <!-- Sticky side panel -->
+      <div
+        :class="[
+          'relative',
+          'w-full',
+          'max-tablet:mt-6',
+          'row-start-2 tablet:row-start-1',
+          'tablet:row-span-2',
+          'tablet:col-start-2',
+        ]"
+      >
         <div class="sticky top-0 flex flex-col gap-4 tablet:pt-5">
-          <template v-if="isStakingTabActive">
-            <StakingControl
-              class="max-tablet:-mt-8"
-              :nft-class-id="nftClassId"
-              :is-control-hidden="isApp"
-            />
-          </template>
+          <StakingControl
+            v-if="isStakingTabActive"
+            class="max-tablet:hidden"
+            :nft-class-id="nftClassId"
+            :is-control-hidden="isApp"
+          />
 
-          <template v-else>
+          <div
+            :class="[
+              'flex',
+              { 'tablet:hidden': isStakingTabActive },
+              'flex-col',
+              'gap-4',
+            ]"
+          >
             <div
               v-if="pricingItems.length"
               class="bg-white dark:bg-neutral-900 space-y-6 p-4 pt-6 pb-8 rounded-lg shadow-[0px_10px_20px_0px_rgba(0,0,0,0.04)]"
             >
-              <ul
-                ref="pricing"
-                class="space-y-2"
-              >
+              <ul class="space-y-2">
                 <li
                   v-for="(item, index) in pricingItems"
                   :key="item.name"
@@ -528,7 +555,7 @@
                   :label="$t('product_page_gift_button_label')"
                   variant="outline"
                   color="primary"
-                  size="xl"
+                  size="lg"
                   leading-icon="i-material-symbols-featured-seasonal-and-gifts-rounded"
                   @click="handleGiftButtonClick"
                 />
@@ -538,14 +565,14 @@
                   :label="isInBookList ? $t('product_page_remove_from_book_list_button_label') : $t('product_page_add_to_book_list_button_label')"
                   variant="outline"
                   color="primary"
-                  size="xl"
+                  size="lg"
                   :leading-icon="isInBookList ? 'i-material-symbols-favorite-rounded' : 'i-material-symbols-favorite-outline-rounded'"
                   :loading="isCheckingBookList || isUpdatingBookList"
                   @click="handleBookListButtonClickDebounced"
                 />
               </div>
             </div>
-          </template>
+          </div>
 
           <ul class="flex justify-center items-center gap-2">
             <li
@@ -576,7 +603,7 @@
       class="w-full max-w-[1200px] mx-auto mt-16 laptop:mt-20"
     >
       <h2
-        class="text-theme-cyan text-lg font-bold"
+        class="text-lg font-bold"
         v-text="$t('product_page_related_books_title')"
       />
 
@@ -602,16 +629,16 @@
       </ul>
     </section>
 
+    <!-- Mobile sticky bottom bar -->
     <aside
+      v-if="isUserBookOwner || pricingItems.length"
       :class="[
         'fixed',
         'bottom-[56px]',
         'inset-x-0',
-        isPricingItemsVisible && !isUserBookOwner ? 'hidden' : 'flex',
-        'tablet:hidden',
-        'gap-4',
-        'justify-between',
-        'items-center',
+        'flex tablet:hidden',
+        'flex-col',
+        'gap-2',
         'mb-safe',
         'px-4',
         'py-3',
@@ -621,94 +648,98 @@
         'z-10',
       ]"
     >
-      <template v-if="isUserBookOwner">
+      <UButton
+        v-if="isUserBookOwner"
+        :label="$t('product_page_read_button_label')"
+        icon="i-material-symbols-auto-stories-outline-rounded"
+        class="cursor-pointer"
+        color="primary"
+        size="xl"
+        block
+        @click="handleReadButtonClick"
+      />
+
+      <template v-else-if="pricingItems.length">
+        <UButtonGroup
+          v-if="pricingItems.length > 1"
+          size="xs"
+        >
+          <UButton
+            :label="selectedPricingItem?.label"
+            color="neutral"
+            variant="outline"
+            :ui="{ base: 'cursor-default' }"
+          />
+          <UDropdownMenu
+            :items="stickyEditionDropdownItems"
+          >
+            <UButton
+              icon="i-material-symbols-arrow-drop-down"
+              color="neutral"
+              variant="outline"
+              class="cursor-pointer"
+            />
+          </UDropdownMenu>
+        </UButtonGroup>
+
+        <div class="flex items-center justify-between">
+          <span class="flex items-center gap-1 shrink-0">
+            <span
+              v-if="selectedPricingItem?.discountedPrice"
+              :class="[
+                { 'text-theme-cyan': selectedPricingItem?.discountedPrice },
+                'text-2xl',
+                'font-semibold',
+                'leading-none',
+              ]"
+              v-text="selectedPricingItem?.discountedPrice"
+            />
+            <span
+              :class="[
+                selectedPricingItem?.discountedPrice
+                  ? 'text-xs text-dimmed line-through'
+                  : 'text-2xl font-semibold',
+                'leading-none',
+              ]"
+              v-text="selectedPricingItem?.originalPrice"
+            />
+            <PlusBadge v-if="isLikerPlus && selectedPricingItem?.discountedPrice" />
+          </span>
+          <div class="flex items-center gap-2">
+            <UButton
+              v-if="canBePurchased"
+              icon="i-material-symbols-featured-seasonal-and-gifts-rounded"
+              color="primary"
+              variant="outline"
+              size="sm"
+              :ui="{ base: 'cursor-pointer rounded-full p-1.5' }"
+              :aria-label="$t('product_page_gift_button_label')"
+              :title="$t('product_page_gift_button_label')"
+              @click="handleGiftButtonClick"
+            />
+            <UButton
+              :icon="isInBookList ? 'i-material-symbols-favorite-rounded' : 'i-material-symbols-favorite-outline-rounded'"
+              color="primary"
+              variant="outline"
+              size="sm"
+              :ui="{ base: 'cursor-pointer rounded-full p-1.5' }"
+              :loading="isCheckingBookList || isUpdatingBookList"
+              :aria-label="$t(isInBookList ? 'product_page_remove_from_book_list_button_label' : 'product_page_add_to_book_list_button_label')"
+              :title="$t(isInBookList ? 'product_page_remove_from_book_list_button_label' : 'product_page_add_to_book_list_button_label')"
+              @click="handleBookListButtonClickDebounced"
+            />
+          </div>
+        </div>
         <UButton
-          :label="$t('product_page_read_button_label')"
-          icon="i-material-symbols-auto-stories-outline-rounded"
+          v-bind="checkoutButtonProps"
           class="cursor-pointer"
           color="primary"
           size="xl"
+          :loading="isPurchasing"
+          :disabled="!canBePurchased"
           block
-          @click="handleReadButtonClick"
+          @click="handleStickyPurchaseButtonClick"
         />
-      </template>
-
-      <template v-else-if="pricingItems.length">
-        <div class="flex flex-col gap-2 w-full">
-          <UButtonGroup
-            v-if="pricingItems.length > 1"
-            size="xs"
-          >
-            <UButton
-              :label="selectedPricingItem?.label"
-              color="neutral"
-              variant="outline"
-              :ui="{ base: 'cursor-default' }"
-            />
-            <UDropdownMenu
-              :items="stickyEditionDropdownItems"
-            >
-              <UButton
-                icon="i-material-symbols-arrow-drop-down"
-                color="neutral"
-                variant="outline"
-                class="cursor-pointer"
-              />
-            </UDropdownMenu>
-          </UButtonGroup>
-          <div class="flex items-center justify-between">
-            <span class="text-theme-cyan shrink-0">
-              <span
-                v-if="selectedPricingItem?.discountedPrice"
-                class="text-2xl font-semibold"
-                v-text="selectedPricingItem?.discountedPrice"
-              />
-              <PlusBadge
-                v-if="selectedPricingItem?.discountedPrice"
-                class="ml-1"
-              />
-              <span
-                v-else
-                class="text-2xl font-semibold"
-                v-text="selectedPricingItem?.originalPrice"
-              />
-            </span>
-            <div class="flex items-center gap-2">
-              <UButton
-                v-if="canBePurchased"
-                icon="i-material-symbols-featured-seasonal-and-gifts-rounded"
-                color="primary"
-                variant="outline"
-                size="sm"
-                :ui="{ base: 'cursor-pointer rounded-full p-1.5' }"
-                :aria-label="$t('product_page_gift_button_label')"
-                :title="$t('product_page_gift_button_label')"
-                @click="handleGiftButtonClick"
-              />
-              <UButton
-                :icon="isInBookList ? 'i-material-symbols-favorite-rounded' : 'i-material-symbols-favorite-outline-rounded'"
-                color="primary"
-                variant="outline"
-                size="sm"
-                :ui="{ base: 'cursor-pointer rounded-full p-1.5' }"
-                :loading="isCheckingBookList || isUpdatingBookList"
-                :aria-label="$t(isInBookList ? 'product_page_remove_from_book_list_button_label' : 'product_page_add_to_book_list_button_label')"
-                :title="$t(isInBookList ? 'product_page_remove_from_book_list_button_label' : 'product_page_add_to_book_list_button_label')"
-                @click="handleBookListButtonClickDebounced"
-              />
-            </div>
-          </div>
-          <UButton
-            v-bind="checkoutButtonProps"
-            class="cursor-pointer"
-            color="primary"
-            size="xl"
-            :loading="isPurchasing"
-            :disabled="!canBePurchased"
-            block
-            @click="handleStickyPurchaseButtonClick"
-          />
-        </div>
       </template>
     </aside>
 
@@ -761,7 +792,7 @@
 </template>
 
 <script setup lang="ts">
-import type { TabsItem } from '@nuxt/ui'
+import type { AccordionItem } from '@nuxt/ui'
 import MarkdownIt from 'markdown-it'
 
 const likeCoinSessionAPI = useLikeCoinSessionAPI()
@@ -1008,7 +1039,7 @@ const buyerMessages = computed(() => {
 })
 
 const infoTabItems = computed(() => {
-  const items: TabsItem[] = []
+  const items: AccordionItem[] = []
 
   if (bookInfo.description.value) {
     items.push({
@@ -1076,9 +1107,6 @@ function initializeTabFromHash() {
     }
   }
 }
-
-const pricingItemsElement = useTemplateRef<HTMLLIElement>('pricing')
-const isPricingItemsVisible = useElementVisibility(pricingItemsElement)
 
 const pricingItems = computed(() => {
   return bookInfo.pricingItems.value
