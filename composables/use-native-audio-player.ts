@@ -3,17 +3,6 @@ import { useEventListener } from '@vueuse/core'
 export function useNativeAudioPlayer(isActive: Ref<boolean | undefined>): TTSAudioPlayer {
   const handlers: Partial<{ [K in keyof TTSAudioPlayerEvents]: TTSAudioPlayerEvents[K] }> = {}
   let loaded = false
-  let cachedSegments: TTSSegment[] = []
-  let cachedGetAudioSrc: ((segment: TTSSegment) => string) | null = null
-
-  function prefetchSegment(index: number) {
-    if (!cachedGetAudioSrc || index < 0 || index >= cachedSegments.length) return
-    const url = cachedGetAudioSrc(cachedSegments[index]!)
-    // Fire-and-forget: warm server-side cache with minimal transfer.
-    // blocking=1 makes the server generate & cache the full buffer; Range
-    // header limits the response to 1 byte so we don't download the audio.
-    fetch(url, { headers: { Range: 'bytes=0-0' } }).catch(() => {})
-  }
 
   function on<K extends keyof TTSAudioPlayerEvents>(event: K, handler: TTSAudioPlayerEvents[K]) {
     handlers[event] = handler
@@ -43,7 +32,6 @@ export function useNativeAudioPlayer(isActive: Ref<boolean | undefined>): TTSAud
       case 'trackChanged':
         if (typeof detail.index === 'number') {
           handlers.trackChanged?.(detail.index)
-          prefetchSegment(detail.index + 1)
         }
         break
       case 'queueEnded':
@@ -53,7 +41,6 @@ export function useNativeAudioPlayer(isActive: Ref<boolean | undefined>): TTSAud
       case 'remotePrevious':
         if (typeof detail.index === 'number') {
           handlers.trackChanged?.(detail.index)
-          prefetchSegment(detail.index + 1)
         }
         break
       case 'error':
@@ -69,9 +56,6 @@ export function useNativeAudioPlayer(isActive: Ref<boolean | undefined>): TTSAud
     rate: number
     metadata: { bookTitle: string, authorName: string, coverUrl: string }
   }) {
-    cachedSegments = options.segments
-    cachedGetAudioSrc = options.getAudioSrc
-
     const origin = window.location.origin
     const tracks = options.segments.map((segment, i) => ({
       index: i,
@@ -87,7 +71,6 @@ export function useNativeAudioPlayer(isActive: Ref<boolean | undefined>): TTSAud
       metadata: options.metadata,
     })
     loaded = true
-    prefetchSegment(options.startIndex + 1)
   }
 
   function resume(): boolean {
@@ -103,8 +86,6 @@ export function useNativeAudioPlayer(isActive: Ref<boolean | undefined>): TTSAud
   function stop() {
     postToNative({ type: 'stop' })
     loaded = false
-    cachedSegments = []
-    cachedGetAudioSrc = null
   }
 
   function skipTo(index: number) {
