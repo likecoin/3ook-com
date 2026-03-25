@@ -66,6 +66,7 @@
         class="flex items-center max-phone:gap-1 gap-2 w-full"
       >
         <UButton
+          v-if="!isApp"
           :to="localeRoute({ name: 'store' })"
           variant="link"
           :ui="{
@@ -80,6 +81,18 @@
             class="w-8 h-8 block"
           >
         </UButton>
+        <UButton
+          v-else-if="!isDefaultTagId"
+          :to="localeRoute({ name: 'store' })"
+          icon="i-material-symbols-arrow-back-ios-new-rounded"
+          variant="outline"
+          :ui="{
+            base: [TAG_BUTTON_CLASS_LIGHT, TAG_BUTTON_CLASS_BASE],
+            leadingIcon: 'laptop:size-6',
+          }"
+          :title="$t('common_back')"
+          @click="handleBackButtonClick"
+        />
 
         <template v-if="!bookstoreStore.hasFetchedBookstoreCMSTags && isDefaultTagId">
           <USkeleton
@@ -384,6 +397,7 @@ const storePageState = useStorePageState()
 const isTablet = useMediaQuery('(max-width: 768px)')
 const isMobile = useMediaQuery('(max-width: 425px)')
 const isAdultContentEnabled = useAdultContentSetting()
+const { isApp } = useAppDetection()
 
 const TAG_BUTTON_CLASS_BASE = 'rounded-full hover:-translate-y-0.5 transition-all'
 const TAG_BUTTON_CLASS_LIGHT = 'bg-(--app-bg) hover:bg-accented/80 hover:dark:bg-muted/80'
@@ -1055,6 +1069,11 @@ function handleAboutTagClick() {
 
 async function handleLogoClick() {
   useLogEvent('store_logo_click')
+  storePageState.clear()
+}
+
+async function handleBackButtonClick() {
+  useLogEvent('store_back_button_click')
   storePageState.clear()
 }
 
