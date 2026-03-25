@@ -20,7 +20,8 @@
                 :value="currentPage"
                 type="number"
                 :min="1"
-                :max="totalPages"
+                :max="Math.max(1, totalPages)"
+                :disabled="totalPages <= 0"
                 :aria-label="$t('reader_page_input_label')"
                 :style="{ width: `${Math.max(3, String(totalPages).length)}ch` }"
                 class="text-center text-sm bg-transparent outline-none appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]"
@@ -96,7 +97,7 @@
                   <UButton
                     :label="item.title"
                     variant="link"
-                    :color="item.pageNumber === currentPage ? 'primary' : 'neutral'"
+                    :color="isTocItemActive(item.pageNumber) ? 'primary' : 'neutral'"
                     block
                     :ui="{
                       label: 'text-left leading-[44px]',
@@ -146,7 +147,7 @@
                   <UButton
                     :label="item.title"
                     variant="link"
-                    :color="item.pageNumber === currentPage ? 'primary' : 'neutral'"
+                    :color="isTocItemActive(item.pageNumber) ? 'primary' : 'neutral'"
                     block
                     :ui="{
                       label: 'text-left leading-[44px]',
@@ -260,7 +261,7 @@
             </div>
           </div>
           <div
-            v-show="!isCoverPage"
+            v-show="!isCoverPage && dualRightPage"
             :class="[
               ...pagePaddingClasses,
               'pl-2 laptop:pl-2',
@@ -463,6 +464,10 @@ const dualRightPage = computed(() => {
   const right = currentPage.value + 1
   return right <= totalPages.value ? right : undefined
 })
+
+function isTocItemActive(pageNumber: number) {
+  return pageNumber === currentPage.value || pageNumber === dualRightPage.value
+}
 
 const pageDisplayText = computed(() => {
   const right = dualRightPage.value
