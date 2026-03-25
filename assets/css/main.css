@@ -102,15 +102,9 @@ body {
 
 /* NOTE: vertical_padding of Intercom launcher is ignored on mobile devices */
 
-/* Launcher element before message frame open */
-.intercom-launcher { 
+.intercom-launcher,
+.intercom-app > [class*="intercom-with-namespace-"] {
   bottom: calc(var(--intercom-launcher-offset) + 20px) !important;
-}
-
-/* Launcher element after message frame open */
-.intercom-launcher-frame,
-.intercom-launcher-frame + div {
-  transform: translateY(calc(-1 * var(--intercom-launcher-offset))) !important;
 }
 
 .logo-glow {
