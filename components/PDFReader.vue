@@ -301,7 +301,7 @@
 
 <script setup lang="ts">
 import type { DropdownMenuItem } from '@nuxt/ui'
-import type { PDFDocumentProxy } from 'pdfjs-dist'
+import type { PDFDocumentProxy, PDFPageProxy, PageViewport } from 'pdfjs-dist'
 
 interface Props {
   bookName?: string
@@ -384,6 +384,7 @@ const scaleMenuItems = computed<DropdownMenuItem[]>(() => {
 })
 
 const pdfDocument = shallowRef<PDFDocumentProxy>()
+const textContentCache = new Map<number, Awaited<ReturnType<PDFPageProxy['getTextContent']>>>()
 const renderQueue = ref<(() => Promise<void>)[]>([])
 const isRendering = ref(false)
 const hasAutoZoomedToPage = ref(false)
@@ -506,6 +507,7 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   renderQueue.value = []
+  textContentCache.clear()
   pdfDocument.value?.destroy()
   pdfDocument.value = undefined
 })
@@ -587,6 +589,8 @@ async function loadPDF() {
     pdfDocument.value = await loadingTask.promise
     totalPages.value = pdfDocument.value.numPages
 
+    outlineItems.value = []
+    textContentCache.clear()
     emit('pdfLoaded', pdfDocument.value)
     loadOutline(pdfDocument.value)
 
@@ -727,7 +731,7 @@ async function zoomToFit(mode: 'page' | 'width') {
   const viewport = page.getViewport({ scale: 1 })
 
   let pageWidthScaleFactor = 1
-  if (isDualPageMode.value && totalPages.value > 1 && !isCoverPage.value) {
+  if (dualRightPage.value) {
     pageWidthScaleFactor = 2
   }
 
@@ -779,13 +783,18 @@ async function processRenderQueue() {
 }
 
 async function renderTextLayer(
-  page: import('pdfjs-dist').PDFPageProxy,
-  viewport: import('pdfjs-dist').PageViewport,
+  page: PDFPageProxy,
+  viewport: PageViewport,
   container: HTMLDivElement,
 ) {
   if (!pdfjsLib.value) return
   container.replaceChildren()
-  const textContent = await page.getTextContent()
+  const pageNum = page.pageNumber
+  let textContent = textContentCache.get(pageNum)
+  if (!textContent) {
+    textContent = await page.getTextContent()
+    textContentCache.set(pageNum, textContent)
+  }
   const textLayer = new pdfjsLib.value.TextLayer({
     textContentSource: textContent,
     container,
