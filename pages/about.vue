@@ -584,6 +584,7 @@
 
     <!-- 3ook.com Plus Membership Section -->
     <section
+      v-if="!isApp"
       id="plus"
       class="w-full bg-gradient-to-r from-primary/10 to-secondary/20 py-12 px-4"
     >
