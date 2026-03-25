@@ -253,7 +253,7 @@
             ]"
           >
             <div class="pdf-reader-page relative border shadow-lg bg-white">
-              <canvas ref="leftCanvas" />
+              <canvas ref="leftCanvas" class="block" />
               <div
                 ref="leftTextLayer"
                 class="textLayer"
@@ -268,7 +268,7 @@
             ]"
           >
             <div class="pdf-reader-page relative border shadow-lg bg-white">
-              <canvas ref="rightCanvas" />
+              <canvas ref="rightCanvas" class="block" />
               <div
                 ref="rightTextLayer"
                 class="textLayer"
@@ -286,7 +286,7 @@
             ]"
           >
             <div class="pdf-reader-page relative border shadow-lg bg-white">
-              <canvas ref="singleCanvas" />
+              <canvas ref="singleCanvas" class="block" />
               <div
                 ref="singleTextLayer"
                 class="textLayer"
