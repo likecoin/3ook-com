@@ -646,7 +646,7 @@ let removeSwipeListener: (() => void) | undefined
 let removeSelectAllByHotkeyListener: (() => void) | undefined
 let removeCopyListener: (() => void) | undefined
 let removeMouseUpListener: (() => void) | undefined
-let removeTouchEndListener: (() => void) | undefined
+let removeSelectionChangeListener: (() => void) | undefined
 const renditionElement = useTemplateRef<HTMLDivElement>('reader')
 const renditionViewWindow = ref<Window | undefined>(undefined)
 
@@ -779,8 +779,8 @@ async function loadEPub() {
         }
       }
 
-      // NOTE: Ignore page-turn if annotation was clicked
-      if (isAnnotationClickInProgress.value) {
+      // NOTE: Ignore page-turn if annotation was clicked or menu is open
+      if (isAnnotationClickInProgress.value || isAnnotationMenuVisible.value) {
         return
       }
 
@@ -806,8 +806,8 @@ async function loadEPub() {
       view.window,
       {
         onSwipeEnd: (_: TouchEvent, direction: UseSwipeDirection) => {
-          if (checkIsSelectingText()) {
-            // Do not navigate when selecting text
+          if (checkIsSelectingText() || isAnnotationMenuVisible.value) {
+            // Do not navigate when selecting text or annotation menu is open
             return
           }
 
@@ -869,26 +869,20 @@ async function loadEPub() {
     if (removeMouseUpListener) {
       removeMouseUpListener()
     }
-    removeMouseUpListener = useEventListener(view.window, 'mouseup', (event: MouseEvent) => {
+    removeMouseUpListener = useEventListener(view.window, 'mouseup', () => {
       // Delay for window.getSelection() reflects the final selection state
       setTimeout(() => {
-        handleTextSelection(event, view.window)
+        handleTextSelection(view.window)
       }, 10)
     })
 
-    if (removeTouchEndListener) {
-      removeTouchEndListener()
+    if (removeSelectionChangeListener) {
+      removeSelectionChangeListener()
     }
-    removeTouchEndListener = useEventListener(view.window, 'touchend', (event: TouchEvent) => {
-      // Delay for touch selection to allow the browser's native selection UI (drag handles) to stabilize
-      setTimeout(() => {
-        const touch = event.changedTouches[0]
-        if (touch) {
-          const mouseEvent = { clientX: touch.clientX, clientY: touch.clientY } as MouseEvent
-          handleTextSelection(mouseEvent, view.window)
-        }
-      }, 300)
-    })
+    const debouncedSelectionChange = useDebounceFn(() => {
+      handleTextSelection(view.window)
+    }, 300)
+    removeSelectionChangeListener = useEventListener(view.window.document, 'selectionchange', debouncedSelectionChange)
 
     renderAnnotations()
   })
@@ -1247,7 +1241,7 @@ function handleAnnotationClick(annotationId: string) {
   }
 }
 
-function handleTextSelection(_event: MouseEvent, viewWindow: Window) {
+function handleTextSelection(viewWindow: Window) {
   const selection = viewWindow.getSelection()
   if (!selection || selection.isCollapsed || !selection.toString().trim()) {
     isAnnotationMenuVisible.value = false
@@ -1542,7 +1536,7 @@ onBeforeUnmount(() => {
   removeSelectAllByHotkeyListener?.()
   removeCopyListener?.()
   removeMouseUpListener?.()
-  removeTouchEndListener?.()
+  removeSelectionChangeListener?.()
   renderedHighlights.clear()
   renditionViewWindow.value = undefined
   rendition.value?.destroy()
