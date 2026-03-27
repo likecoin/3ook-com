@@ -19,10 +19,6 @@ export function useNativeAudioPlayer(isActive: Ref<boolean | undefined>): TTSAud
     handlers[event] = handler
   }
 
-  function postToNative(data: object) {
-    window.ReactNativeWebView?.postMessage(JSON.stringify(data))
-  }
-
   // Listen for events dispatched by the native app (gated on isActive)
   useEventListener(window, 'nativeAudioEvent' as keyof WindowEventMap, ((e: CustomEvent) => {
     if (!isActive.value) return

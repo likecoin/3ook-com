@@ -274,4 +274,21 @@ export function useSetLogUser(user: User | null, locale: string) {
       console.error('Failed to set user data in UET', error)
     }
   }
+
+  // Sync user identity to the native app for its own analytics SDKs
+  if (isNativeWebView()) {
+    if (user) {
+      postToNative({
+        type: 'identifyUser',
+        userId: user.evmWallet,
+        email: user.email || undefined,
+        displayName: user.displayName || user.evmWallet || user.likeWallet,
+        isLikerPlus: !!user.isLikerPlus,
+        loginMethod: user.loginMethod,
+      })
+    }
+    else {
+      postToNative({ type: 'resetUser' })
+    }
+  }
 }
