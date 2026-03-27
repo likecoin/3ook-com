@@ -205,12 +205,28 @@
         </template>
 
         <template #preview-content>
-          <ExpandableContent>
-            <div
-              class="markdown"
-              v-html="previewContentHTML"
+          <template v-if="hasLoggedIn">
+            <ExpandableContent>
+              <div
+                class="markdown"
+                v-html="previewContentHTML"
+              />
+            </ExpandableContent>
+          </template>
+          <div
+            v-else
+            class="flex flex-col items-center gap-4 py-8"
+          >
+            <p
+              class="text-muted"
+              v-text="$t('product_page_preview_content_login_prompt')"
             />
-          </ExpandableContent>
+            <UButton
+              :label="$t('product_page_preview_content_login_button')"
+              color="primary"
+              @click="handlePreviewContentLoginClick"
+            />
+          </div>
         </template>
 
         <template #author>
@@ -1117,6 +1133,9 @@ watch(activeTabValue, (newTabValue) => {
   if (tabValue) {
     router.replace({ hash: `#${tabValue.slot}` })
   }
+  if (newTabValue === 'preview-content') {
+    useLogEvent('product_page_preview_content_tab_click', { nft_class_id: nftClassId.value })
+  }
 })
 
 function initializeTabFromHash() {
@@ -1674,5 +1693,10 @@ function handleBookReviewClick() {
   useLogEvent('book_review_link_click', {
     nft_class_id: nftClassId.value,
   })
+}
+
+async function handlePreviewContentLoginClick() {
+  useLogEvent('product_page_preview_content_login_click', { nft_class_id: nftClassId.value })
+  await accountStore.login()
 }
 </script>

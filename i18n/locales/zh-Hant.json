@@ -586,6 +586,8 @@
   "product_page_info_tab_preview_content": "試閱",
   "product_page_info_tab_table_of_contents": "目錄",
   "product_page_not_found_error": "找不到書本",
+  "product_page_preview_content_login_button": "登入閱讀試閱內容",
+  "product_page_preview_content_login_prompt": "請先登入以閱讀試閱內容",
   "product_page_pricing_title": "購買版本",
   "product_page_publish_date_label": "上架日期",
   "product_page_publisher_label": "出版",
