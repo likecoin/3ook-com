@@ -138,8 +138,7 @@
         />
       </ul>
       <div
-        v-if="bookshelfStore.isFetching || hasMoreItems"
-        ref="infiniteScrollDetector"
+        v-if="bookshelfStore.isFetching"
         class="flex justify-center py-48"
       >
         <UIcon
@@ -179,8 +178,6 @@ const {
   claimFreeBook,
   reset: resetClaimableBooks,
 } = useClaimableBooks()
-const infiniteScrollDetectorElement = useTemplateRef<HTMLLIElement>('infiniteScrollDetector')
-const shouldLoadMore = useElementVisibility(infiniteScrollDetectorElement)
 
 const stakingData = computed(() => {
   return isMyBookshelf.value
@@ -262,7 +259,6 @@ const bookshelfItemsWithStaking = computed<BookshelfItemWithStaking[]>(() => {
 })
 
 const itemsCount = computed(() => bookshelfStore.items.length)
-const hasMoreItems = computed(() => !!bookshelfStore.nextKey)
 const paramWalletAddress = computed(() => getRouteParam('walletAddress'))
 
 if (paramWalletAddress.value && !checkIsEVMAddress(paramWalletAddress.value)) {
@@ -331,18 +327,24 @@ useHead(() => ({
 
 const { gridClasses, getGridItemClassesByIndex, columnMax } = usePaginatedGrid({
   itemsCount,
-  hasMore: hasMoreItems,
 })
+
+async function loadBookshelfData(addr: string, { isRefresh = false } = {}) {
+  const promises: Promise<unknown>[] = [
+    bookshelfStore.fetchAllItems({ walletAddress: addr, isRefresh }),
+  ]
+  if (isMyBookshelf.value) {
+    promises.push(
+      fetchClaimableFreeBooks(),
+      stakingStore.fetchUserStakingData(user.value!.evmWallet),
+    )
+  }
+  await Promise.all(promises)
+}
 
 onMounted(async () => {
   if (walletAddress.value) {
-    if (isMyBookshelf.value) {
-      await Promise.all([
-        fetchClaimableFreeBooks(),
-        stakingStore.fetchUserStakingData(user.value!.evmWallet),
-      ])
-    }
-    await bookshelfStore.fetchItems({ walletAddress: walletAddress.value })
+    await loadBookshelfData(walletAddress.value)
   }
 })
 
@@ -359,27 +361,7 @@ watch(
     bookshelfStore.reset()
     resetClaimableBooks()
     if (value) {
-      if (isMyBookshelf.value) {
-        await Promise.all([
-          fetchClaimableFreeBooks(),
-          stakingStore.fetchUserStakingData(user.value!.evmWallet),
-        ])
-      }
-      await bookshelfStore.fetchItems({ walletAddress: value, isRefresh: true })
-    }
-  },
-)
-
-watch(
-  shouldLoadMore,
-  async (loadMore) => {
-    if (walletAddress.value && loadMore) {
-      do {
-        // HACK: prevent scrollbar stuck at bottom, causing infinite loading
-        window.scrollBy(0, -1)
-        await bookshelfStore.fetchItems({ walletAddress: walletAddress.value })
-        await sleep(100)
-      } while (walletAddress.value && bookshelfStore.nextKey && shouldLoadMore.value)
+      await loadBookshelfData(value, { isRefresh: true })
     }
   },
 )
@@ -415,6 +397,6 @@ function handleBookshelfItemDownload({
 async function handleBookClaim(nftClassId: string) {
   useLogEvent('shelf_claim_free_book', { nft_class_id: nftClassId })
   await claimFreeBook(nftClassId)
-  await bookshelfStore.fetchItems({ walletAddress: walletAddress.value as string, isRefresh: true })
+  await bookshelfStore.fetchAllItems({ walletAddress: walletAddress.value as string, isRefresh: true })
 }
 </script>
