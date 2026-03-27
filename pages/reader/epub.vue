@@ -419,6 +419,8 @@ const isMobileTocOpen = computed({
   },
 })
 
+const { isIOS, isAndroid } = useAppDetection()
+
 const isPageLoading = ref(false)
 
 const isAnnotationMenuVisible = ref(false)
@@ -618,6 +620,9 @@ function applyTheme() {
     textCSS.color = bodyCSS.color as string
     textCSS['background-color'] = 'transparent !important'
   }
+  if (isIOS.value || isAndroid.value) {
+    textCSS['-webkit-touch-callout'] = 'none'
+  }
   const anchorCSS: Record<string, string> = {
     color: isDarkMode ? '#9ecfff !important' : '#0066cc',
   }
@@ -647,6 +652,7 @@ let removeSelectAllByHotkeyListener: (() => void) | undefined
 let removeCopyListener: (() => void) | undefined
 let removeMouseUpListener: (() => void) | undefined
 let removeSelectionChangeListener: (() => void) | undefined
+let removeContextMenuListener: (() => void) | undefined
 const renditionElement = useTemplateRef<HTMLDivElement>('reader')
 const renditionViewWindow = ref<Window | undefined>(undefined)
 
@@ -883,6 +889,15 @@ async function loadEPub() {
       handleTextSelection(view.window)
     }, 300)
     removeSelectionChangeListener = useEventListener(view.window.document, 'selectionchange', debouncedSelectionChange)
+
+    if (removeContextMenuListener) {
+      removeContextMenuListener()
+    }
+    if (isIOS.value || isAndroid.value) {
+      removeContextMenuListener = useEventListener(view.window, 'contextmenu', (event: Event) => {
+        event.preventDefault()
+      })
+    }
 
     renderAnnotations()
   })
@@ -1537,6 +1552,7 @@ onBeforeUnmount(() => {
   removeCopyListener?.()
   removeMouseUpListener?.()
   removeSelectionChangeListener?.()
+  removeContextMenuListener?.()
   renderedHighlights.clear()
   renditionViewWindow.value = undefined
   rendition.value?.destroy()
