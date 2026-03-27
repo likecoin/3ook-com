@@ -67,7 +67,9 @@
       >
         <UButton
           v-if="!isApp"
-          :to="localeRoute({ name: 'store' })"
+          :to="isDefaultTagId
+            ? localeRoute({ name: 'about', query: { ll_medium: 'about-logo' } })
+            : localeRoute({ name: 'store' })"
           variant="link"
           :ui="{
             base: ['shrink-0', 'p-0 sm:p-0'],
@@ -255,23 +257,6 @@
             }"
             :to="localeRoute({ name: 'list' })"
             @click="handleBookListTagClick"
-          />
-        </UTooltip>
-
-        <UTooltip
-          v-if="bookstoreStore.hasFetchedBookstoreCMSTags && isDefaultTagId"
-          :text="$t('about_page_title')"
-        >
-          <UButton
-            icon="i-material-symbols-info-i-rounded"
-            variant="outline"
-            :aria-label="$t('about_page_title')"
-            :ui="{
-              base: [TAG_BUTTON_CLASS_LIGHT, TAG_BUTTON_CLASS_BASE],
-              leadingIcon: 'laptop:size-6',
-            }"
-            :to="localeRoute({ name: 'about', query: { ll_medium: 'about-icon' } })"
-            @click="handleAboutTagClick"
           />
         </UTooltip>
       </div>
@@ -1063,13 +1048,11 @@ async function handleBookListTagClick() {
   useLogEvent('store_tag_book_list_click')
 }
 
-function handleAboutTagClick() {
-  useLogEvent('store_tag_about_click')
-}
-
 async function handleLogoClick() {
   useLogEvent('store_logo_click')
-  storePageState.clear()
+  if (!isDefaultTagId.value) {
+    storePageState.clear()
+  }
 }
 
 async function handleBackButtonClick() {
