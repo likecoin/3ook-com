@@ -41,7 +41,7 @@ export function createWagmiConfig({
           },
         }))
     }
-    connectors.push(dedicatedWalletConnector({
+    const magicConnectorFn = dedicatedWalletConnector({
       chains: [chain],
       options: {
         apiKey,
@@ -58,7 +58,20 @@ export function createWagmiConfig({
           },
         },
       },
-    }) as CreateConnectorFn)
+    }) as CreateConnectorFn
+    // Wrap to make 'magic' non-enumerable on the connector object.
+    // Magic SDK instances have circular references (module.sdk → magic),
+    // and wagmi's deepEqual in getConnections() blows the stack traversing them.
+    connectors.push((config) => {
+      const connector = magicConnectorFn(config)
+      Object.defineProperty(connector, 'magic', {
+        value: undefined,
+        writable: true,
+        enumerable: false,
+        configurable: true,
+      })
+      return connector
+    })
   }
 
   return createConfig({
