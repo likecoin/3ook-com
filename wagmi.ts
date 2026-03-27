@@ -1,6 +1,6 @@
 import { http, createConfig, type CreateConnectorFn, type Config } from '@wagmi/core'
 import { base, baseSepolia } from '@wagmi/vue/chains'
-import { injected, metaMask, walletConnect, coinbaseWallet } from '@wagmi/vue/connectors'
+import { injected, walletConnect, coinbaseWallet } from '@wagmi/vue/connectors'
 import { dedicatedWalletConnector } from '@likecoin/wagmi-connector'
 
 export function createWagmiConfig({
@@ -10,6 +10,7 @@ export function createWagmiConfig({
   customRpcUrl,
   isServer = false,
   isTestnet = false,
+  isApp = false,
 }: {
   apiKey: string
   customLogoURL?: string
@@ -17,17 +18,21 @@ export function createWagmiConfig({
   customRpcUrl?: string
   isServer?: boolean
   isTestnet?: boolean
+  isApp?: boolean
 }): Config {
   const chain = isTestnet ? baseSepolia : base
   const logoURL = customLogoURL || 'https://3ook.com/pwa-64x64.png'
   const connectors: CreateConnectorFn[] = [
     injected(),
-    metaMask(),
-    coinbaseWallet({
-      appName: '3ook.com',
-      appLogoUrl: logoURL,
-    }),
   ]
+  if (import.meta.client && window && !isApp && (!!window.ReactNativeWebView || window !== window.parent)) {
+    connectors.push(
+      coinbaseWallet({
+        appName: '3ook.com',
+        appLogoUrl: logoURL,
+      }),
+    )
+  }
   if (!isServer) {
     if (walletConnectProjectId) {
       connectors.push(
