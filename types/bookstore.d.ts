@@ -80,6 +80,7 @@ declare interface BookstoreInfo {
   thumbnailUrl: string
   usageInfo: string
   tableOfContents?: string
+  previewContent?: string
   recommendedClassIds?: string[]
   promotionalImages?: string[]
   promotionalVideos?: string[]

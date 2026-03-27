@@ -205,6 +205,10 @@ export default function (
     return bookstoreInfo.value?.tableOfContents || ''
   })
 
+  const previewContent = computed(() => {
+    return bookstoreInfo.value?.previewContent || ''
+  })
+
   const genre = computed(() => {
     return bookstoreInfo.value?.genre
   })
@@ -335,6 +339,7 @@ export default function (
     formattedTTSSupportLabel,
     formattedReadingMethods,
     tableOfContents,
+    previewContent,
     genre,
     localizedGenre,
     keywords,

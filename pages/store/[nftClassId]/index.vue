@@ -204,6 +204,15 @@
           </ul>
         </template>
 
+        <template #preview-content>
+          <ExpandableContent>
+            <div
+              class="markdown"
+              v-html="previewContentHTML"
+            />
+          </ExpandableContent>
+        </template>
+
         <template #author>
           <ExpandableContent>
             <div
@@ -1025,6 +1034,10 @@ const tableOfContentsHTML = computed(() => {
   return renderDescription(bookInfo.tableOfContents?.value || '')
 })
 
+const previewContentHTML = computed(() => {
+  return renderDescription(bookInfo.previewContent?.value || '')
+})
+
 const authorDescriptionHTML = computed(() => {
   return renderDescription(bookInfo.authorDescription?.value || '')
 })
@@ -1054,6 +1067,14 @@ const infoTabItems = computed(() => {
       label: $t('product_page_info_tab_table_of_contents'),
       slot: 'table-of-contents',
       value: 'table-of-contents',
+    })
+  }
+
+  if (bookInfo.previewContent.value) {
+    items.push({
+      label: $t('product_page_info_tab_preview_content'),
+      slot: 'preview-content',
+      value: 'preview-content',
     })
   }
 
