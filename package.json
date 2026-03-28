@@ -27,7 +27,7 @@
     "@coinbase/wallet-sdk": "~4.3.7",
     "@farcaster/miniapp-sdk": "^0.2.1",
     "@google-cloud/pubsub": "^5.3.0",
-    "@likecoin/epub-ts": "^0.4.9",
+    "@likecoin/epub-ts": "^0.5.0",
     "@likecoin/wagmi-connector": "2.4.0-like.0",
     "@nuxt/icon": "^1.11.0",
     "@nuxt/scripts": "^0.13.1",
