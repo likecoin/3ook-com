@@ -221,11 +221,7 @@
               class="text-muted"
               v-text="$t('product_page_preview_content_login_prompt')"
             />
-            <UButton
-              :label="$t('product_page_preview_content_login_button')"
-              color="primary"
-              @click="handlePreviewContentLoginClick"
-            />
+            <LoginButton @click="handlePreviewContentLoginClick" />
           </div>
         </template>
 
@@ -1123,6 +1119,7 @@ const infoTabItems = computed(() => {
 })
 
 const activeTabValue = ref(infoTabItems.value[0]?.value || 'description')
+const isTabInitialized = ref(false)
 
 const isStakingTabActive = computed(() => {
   return activeTabValue.value === 'staking-info'
@@ -1133,7 +1130,7 @@ watch(activeTabValue, (newTabValue) => {
   if (tabValue) {
     router.replace({ hash: `#${tabValue.slot}` })
   }
-  if (newTabValue === 'preview-content') {
+  if (isTabInitialized.value && newTabValue === 'preview-content') {
     useLogEvent('product_page_preview_content_tab_click', { nft_class_id: nftClassId.value })
   }
 })
@@ -1359,6 +1356,8 @@ onMounted(async () => {
   checkBookListStatus()
   await loadStakingData()
   initializeTabFromHash()
+  await nextTick()
+  isTabInitialized.value = true
 })
 
 const { copy: copyToClipboard } = useClipboard()
@@ -1695,8 +1694,7 @@ function handleBookReviewClick() {
   })
 }
 
-async function handlePreviewContentLoginClick() {
+function handlePreviewContentLoginClick() {
   useLogEvent('product_page_preview_content_login_click', { nft_class_id: nftClassId.value })
-  await accountStore.login()
 }
 </script>
