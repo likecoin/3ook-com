@@ -32,8 +32,6 @@ function parseRangeHeader(rangeHeader: string, totalSize: number): { start: numb
   return { start, end }
 }
 
-const KNOWN_VOICE_IDS = new Set(['0', '1', 'aurora', 'pazu', 'phoebe'])
-
 function getTTSProvider(voiceId: string): MinimaxTTSProvider {
   if (!KNOWN_VOICE_IDS.has(voiceId)) {
     throw createError({
@@ -139,7 +137,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const ttsModel = getMinimaxModel({ customVoiceId: customMiniMaxVoiceId, language })
+  const ttsModel = getMinimaxModel({ voiceId, customVoiceId: customMiniMaxVoiceId, language })
   const bucket = getTTSCacheBucket()
   const isCacheEnabled = !!bucket
   const cacheKey = isCacheEnabled

@@ -6,15 +6,20 @@ export const LANG_MAPPING = {
   'zh-HK': 'Chinese,Yue',
 }
 
-// Voice mapping with provider information
-const VOICE_MAPPING: Record<string, string> = {
-  // Minimax voices
-  0: 'Chinese (Mandarin)_Warm_Bestie',
-  1: 'Chinese (Mandarin)_Southern_Young_Man',
-  aurora: 'three_book_aurora_v0',
-  pazu: 'book_pazu_v2',
-  phoebe: 'phoebe_v1',
+interface VoiceConfig {
+  minimaxVoiceId: string
+  model?: string
 }
+
+const VOICE_CONFIG: Record<string, VoiceConfig> = {
+  0: { minimaxVoiceId: 'Chinese (Mandarin)_Warm_Bestie' },
+  1: { minimaxVoiceId: 'Chinese (Mandarin)_Southern_Young_Man' },
+  aurora: { minimaxVoiceId: 'three_book_aurora_v0' },
+  pazu: { minimaxVoiceId: 'book_pazu_v2' },
+  phoebe: { minimaxVoiceId: 'phoebe_v1', model: 'speech-2.6-hd' },
+}
+
+export const KNOWN_VOICE_IDS = new Set(Object.keys(VOICE_CONFIG))
 
 export function getTTSPronunciationDictionary(language: string) {
   switch (language) {
@@ -40,10 +45,15 @@ export function getTTSPronunciationDictionary(language: string) {
 }
 
 export function getMinimaxModel(options: {
+  voiceId?: string
   customVoiceId?: string
   language?: string
 } = {}): string {
-  const { customVoiceId, language } = options
+  const { voiceId, customVoiceId, language } = options
+  const voiceModel = voiceId && VOICE_CONFIG[voiceId]?.model
+  if (voiceModel) {
+    return voiceModel
+  }
   if (language === 'zh-HK') {
     return 'speech-2.8-hd'
   }
@@ -57,7 +67,7 @@ export class MinimaxTTSProvider implements BaseTTSProvider {
   async processRequest(params: TTSRequestParams): Promise<Buffer> {
     const { text, language, voiceId, customMiniMaxVoiceId } = params
 
-    if (!customMiniMaxVoiceId && !VOICE_MAPPING[voiceId]) {
+    if (!customMiniMaxVoiceId && !VOICE_CONFIG[voiceId]) {
       throw createError({
         status: 400,
         message: 'INVALID_VOICE_ID',
@@ -65,8 +75,8 @@ export class MinimaxTTSProvider implements BaseTTSProvider {
     }
 
     const client = getMiniMaxSpeechClient()
-    const resolvedVoiceId = (customMiniMaxVoiceId || VOICE_MAPPING[voiceId]) as string
-    const model = getMinimaxModel({ customVoiceId: customMiniMaxVoiceId, language })
+    const resolvedVoiceId = (customMiniMaxVoiceId || VOICE_CONFIG[voiceId]!.minimaxVoiceId) as string
+    const model = getMinimaxModel({ voiceId, customVoiceId: customMiniMaxVoiceId, language })
 
     const result = await client.synthesize({
       text,
@@ -87,7 +97,7 @@ export class MinimaxTTSProvider implements BaseTTSProvider {
   async processRequestStream(params: TTSRequestParams): Promise<ReadableStream<Buffer>> {
     const { text, language, voiceId, customMiniMaxVoiceId } = params
 
-    if (!customMiniMaxVoiceId && !VOICE_MAPPING[voiceId]) {
+    if (!customMiniMaxVoiceId && !VOICE_CONFIG[voiceId]) {
       throw createError({
         status: 400,
         message: 'INVALID_VOICE_ID',
@@ -95,8 +105,8 @@ export class MinimaxTTSProvider implements BaseTTSProvider {
     }
 
     const client = getMiniMaxSpeechClient()
-    const resolvedVoiceId = (customMiniMaxVoiceId || VOICE_MAPPING[voiceId]) as string
-    const model = getMinimaxModel({ customVoiceId: customMiniMaxVoiceId, language })
+    const resolvedVoiceId = (customMiniMaxVoiceId || VOICE_CONFIG[voiceId]!.minimaxVoiceId) as string
+    const model = getMinimaxModel({ voiceId, customVoiceId: customMiniMaxVoiceId, language })
 
     return await client.synthesizeStream({
       text,
