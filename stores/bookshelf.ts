@@ -126,7 +126,11 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
   }) {
     await fetchItems({ walletAddress, isRefresh })
     while (nextKey.value) {
+      const previousNextKey = nextKey.value
       await fetchItems({ walletAddress })
+      if (nextKey.value === previousNextKey) {
+        break
+      }
     }
   }
 
