@@ -1049,8 +1049,11 @@ async function handleBookListTagClick() {
 }
 
 async function handleLogoClick() {
-  useLogEvent('store_logo_click')
-  if (!isDefaultTagId.value) {
+  if (isDefaultTagId.value) {
+    useLogEvent('store_about_logo_click')
+  }
+  else {
+    useLogEvent('store_logo_click')
     storePageState.clear()
   }
 }
