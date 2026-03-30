@@ -8,18 +8,23 @@ export const LANG_MAPPING = {
 
 interface VoiceConfig {
   minimaxVoiceId: string
+  displayName: string
   model?: string
 }
 
 const VOICE_CONFIG: Record<string, VoiceConfig> = {
-  0: { minimaxVoiceId: 'Chinese (Mandarin)_Warm_Bestie' },
-  1: { minimaxVoiceId: 'Chinese (Mandarin)_Southern_Young_Man' },
-  aurora: { minimaxVoiceId: 'three_book_aurora_v0' },
-  pazu: { minimaxVoiceId: 'book_pazu_v2' },
-  phoebe: { minimaxVoiceId: 'phoebe_v1', model: 'speech-2.6-hd' },
+  0: { minimaxVoiceId: 'Chinese (Mandarin)_Warm_Bestie', displayName: 'Female Narrator' },
+  1: { minimaxVoiceId: 'Chinese (Mandarin)_Southern_Young_Man', displayName: 'Male Narrator' },
+  aurora: { minimaxVoiceId: 'three_book_aurora_v0', displayName: 'Aurora' },
+  pazu: { minimaxVoiceId: 'book_pazu_v2', displayName: 'Pazu' },
+  phoebe: { minimaxVoiceId: 'phoebe_v1', model: 'speech-2.6-hd', displayName: 'Phoebe' },
 }
 
 export const KNOWN_VOICE_IDS = new Set(Object.keys(VOICE_CONFIG))
+
+export function getVoiceDisplayName(voiceId: string): string | undefined {
+  return VOICE_CONFIG[voiceId]?.displayName
+}
 
 export function getTTSPronunciationDictionary(language: string) {
   switch (language) {
