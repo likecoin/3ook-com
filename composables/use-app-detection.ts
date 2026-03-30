@@ -1,15 +1,26 @@
-const APP_USER_AGENT_PREFIX = '3ook-com-app'
+// e.g. "3ook-com-app/1.1.0 (iOS 18.0) Build/42"
+const APP_USER_AGENT_REGEX = /^3ook-com-app\/[\d.]+ \((iOS|Android) [\d.]+\)/
 
 export function useAppDetection() {
   const getRouteQuery = useRouteQuery()
 
-  const isAppUserAgent = import.meta.server
-    ? useRequestHeaders(['user-agent'])['user-agent']?.startsWith(APP_USER_AGENT_PREFIX) || false
-    : navigator.userAgent?.startsWith(APP_USER_AGENT_PREFIX) || false
+  const userAgent = import.meta.server
+    ? useRequestHeaders(['user-agent'])['user-agent'] || ''
+    : navigator.userAgent || ''
+
+  const appUAMatches = userAgent.match(APP_USER_AGENT_REGEX)
+  const appOSName = appUAMatches?.[1]
 
   const isApp = computed(() => {
-    return isAppUserAgent || getRouteQuery('app') === '1'
+    return !!appUAMatches || getRouteQuery('app') === '1'
   })
 
-  return { isApp }
+  const isIOS = computed(() => appOSName === 'iOS' || /iPhone|iPad/.test(userAgent))
+  const isAndroid = computed(() => appOSName === 'Android' || /Android/.test(userAgent))
+
+  return {
+    isApp,
+    isIOS,
+    isAndroid,
+  }
 }

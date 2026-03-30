@@ -27,6 +27,8 @@
 <script setup lang="ts">
 import { ANNOTATION_COLORS, ANNOTATION_INDICATOR_COLORS_MAP } from '~/constants/annotations'
 
+const { isIOS } = useAppDetection()
+
 const MENU_PADDING = 8
 
 const props = defineProps<{
@@ -45,7 +47,8 @@ const menuEl = useTemplateRef<HTMLDivElement>('menuEl')
 const { width: menuWidth } = useElementSize(menuEl)
 const { width: viewportWidth, height: viewportHeight } = useWindowSize()
 
-const shouldAppearFromBottom = computed(() => props.position.y > viewportHeight.value / 2)
+const isInBottomHalfViewport = computed(() => props.position.y > viewportHeight.value / 2)
+const shouldAppearFromBottom = computed(() => !isIOS.value || isInBottomHalfViewport.value)
 
 const menuStyle = computed(() => {
   const minX = menuWidth.value / 2 + MENU_PADDING * 2
