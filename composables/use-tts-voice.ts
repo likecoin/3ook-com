@@ -28,7 +28,7 @@ export function useTTSVoice(options: TTSVoiceOptions = {}) {
   // hardcoded voice options for now
   const ttsLanguageVoiceOptions = [
     { label: 'Pazu 薯伯伯 - 粵語', value: 'zh-HK_pazu' },
-    { label: 'Phoebe - 粵語', value: 'zh-HK_phoebe' },
+    { label: 'Phoebe - 粵語口語', value: 'zh-HK_phoebe' },
     { label: 'Aurora - 國語', value: 'zh-TW_aurora' },
     { label: '國語男聲', value: 'zh-TW_1' },
     { label: 'English female', value: 'en-US_0' },
