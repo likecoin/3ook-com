@@ -5,12 +5,8 @@
     v-bind="props"
     v-model:open="open"
     side="bottom"
-    :overlay="false"
-    :close="{
-      color: 'neutral',
-      variant: 'soft',
-      class: 'rounded-full',
-    }"
+    :overlay="!props.showCloseButton"
+    :close="closeButtonProps"
     :ui="{
       content: 'bottom-safe max-w-(--breakpoint-phone) mx-5 phone:mx-auto mb-5 border border-gray-500 divide-gray-500 rounded-2xl overflow-hidden',
       body: 'relative p-0 sm:p-0 overflow-hidden',
@@ -47,10 +43,13 @@
 </template>
 
 <script setup lang="ts">
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   title?: string
   isDisabled?: boolean
-}>()
+  showCloseButton?: boolean
+}>(), {
+  showCloseButton: true,
+})
 
 const open = defineModel<boolean>('open')
 
@@ -77,4 +76,16 @@ const scrollIndicatorClasses = [
   'to-transparent',
   'pointer-events-none',
 ]
+
+const closeButtonProps = computed(() => {
+  if (!props.showCloseButton) {
+    return false
+  }
+
+  return {
+    color: 'neutral' as const,
+    variant: 'soft' as const,
+    class: 'rounded-full',
+  }
+})
 </script>

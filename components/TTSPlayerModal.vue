@@ -130,6 +130,7 @@
             <BottomSlideover
               :title="$t('reader_voice_options_button')"
               :is-disabled="!!props.specificLanguageVoice"
+              :show-close-button="false"
             >
               <UButton
                 :class="[
@@ -145,32 +146,25 @@
 
               <template #body>
                 <div
-                  v-if="!isBookEnglish && (user?.isLikerPlus || !isApp)"
+                  v-if="!isBookEnglish && (user?.isLikerPlus || !isApp) && !hasCustomVoice"
                   class="px-4 py-3 space-y-3 border-b border-b-muted"
                 >
-                  <p
-                    class="text-xs font-semibold text-muted uppercase tracking-wide"
-                    v-text="$t('tts_custom_voice_section_title')"
+                  <UButton
+                    v-if="user?.isLikerPlus"
+                    block
+                    variant="soft"
+                    :label="$t('tts_custom_voice_upload_button')"
+                    icon="i-material-symbols-upload-rounded"
+                    @click="handleCustomVoiceUploadClick"
                   />
-
-                  <template v-if="!hasCustomVoice">
-                    <UButton
-                      v-if="user?.isLikerPlus"
-                      block
-                      variant="soft"
-                      :label="$t('tts_custom_voice_upload_button')"
-                      icon="i-material-symbols-upload-rounded"
-                      @click="handleCustomVoiceUploadClick"
-                    />
-                    <UButton
-                      v-else
-                      block
-                      variant="soft"
-                      :label="$t('tts_custom_voice_upgrade_button')"
-                      icon="i-material-symbols-lock-outline"
-                      @click="subscription.openPaywallModal({ utmSource: 'tts_custom_voice' })"
-                    />
-                  </template>
+                  <UButton
+                    v-else
+                    block
+                    variant="soft"
+                    :label="$t('tts_custom_voice_upgrade_button')"
+                    icon="i-material-symbols-lock-outline"
+                    @click="subscription.openPaywallModal({ utmSource: 'tts_custom_voice' })"
+                  />
                 </div>
 
                 <div class="flex gap-2 items-center w-full">
