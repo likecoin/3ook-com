@@ -79,6 +79,7 @@ export interface ClaimFreeBookResponseData {
 export function useLikeCoinSessionAPI() {
   const config = useRuntimeConfig()
   const { loggedIn: hasLoggedIn, user } = useUserSession()
+  const { isApp } = useAppDetection()
 
   const fetch = computed(() => {
     const fetchOptions: FetchOptions = {
@@ -158,6 +159,7 @@ export function useLikeCoinSessionAPI() {
         gadSource,
         fbClickId,
         site: '3ook.com',
+        isApp: isApp.value || undefined,
       },
     })
   }
@@ -235,6 +237,7 @@ export function useLikeCoinSessionAPI() {
         gadSource,
         fbClickId,
         site: '3ook.com',
+        isApp: isApp.value || undefined,
       },
     })
   }
@@ -309,6 +312,7 @@ export function useLikeCoinSessionAPI() {
         gadSource,
         fbClickId,
         coupon,
+        isApp: isApp.value || undefined,
       },
     })
   }
@@ -389,6 +393,7 @@ export function useLikeCoinSessionAPI() {
         gadSource,
         fbClickId,
         coupon,
+        isApp: isApp.value || undefined,
       },
     })
   }
