@@ -274,6 +274,7 @@ export const useAccountStore = defineStore('account', () => {
     do {
       // Check if registration time exceeds the limit
       if (Date.now() - startTime > REGISTER_TIME_LIMIT_IN_TS) {
+        useLogEvent('register_timeout', { method: loginMethod })
         throw createError({
           statusCode: 408,
           data: { description: $t('account_register_timeout') },
@@ -282,6 +283,7 @@ export const useAccountStore = defineStore('account', () => {
       try {
         // Skip registration modal if email is provided
         if (!payload.email || hasError) {
+          useLogEvent('register_form_open', { method: loginMethod })
           payload = await registrationFormModal.open({
             accountId: payload?.accountId,
             isAccountIdHidden: true,
@@ -389,6 +391,7 @@ export const useAccountStore = defineStore('account', () => {
       await disconnectAsync()
       let magicEmail: string | undefined = preferredEmail
       if (!connectorId || !connectors.some((c: { id: string }) => c.id === connectorId)) {
+        useLogEvent('login_panel_open')
         const result = await loginModal.open().result
         connectorId = result?.id
         magicEmail = result?.email
