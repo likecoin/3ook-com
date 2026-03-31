@@ -784,6 +784,7 @@
   "tts_custom_voice_upload_audio_button": "Choose audio file",
   "tts_custom_voice_upload_button": "Upload audio",
   "tts_free_trial_limit_error_description": "Please subscribe to Plus member to continue using this feature.",
+  "tts_free_trial_limit_error_description_app": "Today's text-to-speech limit has been reached. Please try again tomorrow.",
   "tts_free_trial_limit_error_title": "Text-to-speech usage limit reached",
   "tts_offline_modal_description": "TTS has been paused because the next track could not be loaded without an internet connection. Playback will resume automatically when your connection is restored.",
   "tts_offline_modal_resume_button": "Try Anyway",

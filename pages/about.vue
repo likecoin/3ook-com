@@ -145,7 +145,15 @@
                 size="24"
                 class="text-primary"
               />
-              <h3 class="text-xl font-semibold text-gray-900">
+              <h3
+                v-if="isApp"
+                class="text-xl font-semibold text-gray-900"
+                v-text="$t('about_page_feature_dual_format')"
+              />
+              <h3
+                v-else
+                class="text-xl font-semibold text-gray-900"
+              >
                 <NuxtLink
                   to="https://docs.3ook.com/zh-TW/articles/11905421-成為-3ook-plus-會員後-如何使用朗讀功能"
                   target="_blank"

@@ -784,6 +784,7 @@
   "tts_custom_voice_upload_audio_button": "選擇音檔",
   "tts_custom_voice_upload_button": "上傳音檔",
   "tts_free_trial_limit_error_description": "請訂閱 Plus 會員以繼續享用服務。",
+  "tts_free_trial_limit_error_description_app": "今日朗讀次數已達上限，請明天再試。",
   "tts_free_trial_limit_error_title": "朗讀功能使用已達上限",
   "tts_offline_modal_description": "由於沒有網絡連接，無法載入下一個音軌，朗讀已暫停。網絡連接恢復後將自動繼續播放。",
   "tts_offline_modal_resume_button": "嘗試繼續",

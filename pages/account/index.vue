@@ -6,6 +6,7 @@
     >
       <UCard :ui="{ body: '!p-0 divide-y-1 divide-(--ui-border)' }">
         <AccountSettingsItem
+          v-if="isPlusFeatureVisible"
           icon="i-material-symbols-diamond-outline-rounded"
           :label="$t('account_page_subscription')"
         >
@@ -279,7 +280,7 @@
 
       <UCard :ui="{ body: '!p-0 divide-y-1 divide-(--ui-border)' }">
         <AccountSettingsItem
-          v-if="hasLoggedIn"
+          v-if="hasLoggedIn && isPlusFeatureVisible"
           icon="i-material-symbols-record-voice-over-outline"
           :label="$t('tts_custom_voice_section_title')"
         >
@@ -291,21 +292,10 @@
 
           <template #right>
             <UButton
-              v-if="isPlusFeatureVisible"
               :label="hasCustomVoice ? $t('tts_custom_voice_change_button') : $t('tts_custom_voice_upload_button')"
               :variant="hasCustomVoice ? 'outline' : 'solid'"
-              :icon="isPlusFeatureLocked ? LOCK_ICON : undefined"
               color="primary"
-              :disabled="isPlusFeatureLocked"
               @click="handleOpenCustomVoiceModal"
-            />
-            <UButton
-              v-else
-              :label="$t('account_page_upgrade_to_plus')"
-              :icon="LOCK_ICON"
-              variant="solid"
-              color="primary"
-              :to="localeRoute({ name: 'member', query: { ll_medium: 'custom-voice' } })"
             />
           </template>
         </AccountSettingsItem>
@@ -330,23 +320,12 @@
         </AccountSettingsItem>
 
         <AccountSettingsItem
+          v-if="isPlusFeatureVisible"
           icon="i-material-symbols-dark-mode-outline-rounded"
           :label="$t('account_page_color_mode')"
         >
           <template #right>
-            <ColorModeSwitcher
-              v-if="isPlusFeatureVisible"
-              :icon="isPlusFeatureLocked ? LOCK_ICON : undefined"
-              :disabled="isPlusFeatureLocked"
-            />
-            <UButton
-              v-else
-              :label="$t('account_page_upgrade_to_plus')"
-              :icon="LOCK_ICON"
-              variant="solid"
-              color="primary"
-              :to="localeRoute({ name: 'member', query: { ll_medium: 'color-mode' } })"
-            />
+            <ColorModeSwitcher />
           </template>
         </AccountSettingsItem>
 
@@ -527,8 +506,6 @@ import { useSignMessage } from '@wagmi/vue'
 import { CustomVoiceUploadModal } from '#components'
 import likeCoinTokenImage from '~/assets/images/likecoin-token.png'
 
-const LOCK_ICON = 'i-material-symbols-lock-outline'
-
 const config = useRuntimeConfig()
 const { $wagmiConfig } = useNuxtApp()
 const likeCoinSessionAPI = useLikeCoinSessionAPI()
@@ -547,8 +524,7 @@ const { isApp } = useAppDetection()
 const isAdultContentEnabled = useAdultContentSetting()
 const isAdultContentConfirmOpen = ref(false)
 
-const isPlusFeatureVisible = computed(() => isApp.value || !!user.value?.isLikerPlus)
-const isPlusFeatureLocked = computed(() => isApp.value && !user.value?.isLikerPlus)
+const isPlusFeatureVisible = computed(() => !isApp.value || !!user.value?.isLikerPlus)
 
 function handleAdultContentToggle(value: boolean) {
   if (value) {

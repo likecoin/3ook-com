@@ -42,6 +42,7 @@ const { t: $t } = useI18n()
 const config = useRuntimeConfig()
 const baseURL = config.public.baseURL
 
+const { isApp } = useAppDetection()
 const selectedPlan = ref<SubscriptionPlan>('yearly')
 
 const { memberProgramData } = useMemberProgramStructuredData()
@@ -213,6 +214,10 @@ async function handleSubscribe(payload: {
 }
 
 onMounted(async () => {
+  if (isApp.value) {
+    await navigateTo(localeRoute({ name: 'store' }))
+    return
+  }
   await checkout.redirectIfSubscribed()
 })
 </script>

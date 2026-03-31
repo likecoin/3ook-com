@@ -173,6 +173,7 @@
 <script setup lang="ts">
 const { t: $t } = useI18n()
 const localeRoute = useLocaleRoute()
+const { isApp } = useAppDetection()
 const { handleError } = useErrorHandler()
 const likeCoinSessionAPI = useLikeCoinSessionAPI()
 const { loggedIn: hasLoggedIn, user } = useUserSession()
@@ -269,7 +270,11 @@ function handleCancel() {
   navigateTo(localeRoute({ name: 'store' }))
 }
 
-onMounted(() => {
+onMounted(async () => {
+  if (isApp.value) {
+    await navigateTo(localeRoute({ name: 'store' }))
+    return
+  }
   // Prefill sender name if user is logged in
   if (hasLoggedIn.value && user.value?.displayName) {
     formData.fromName = user.value.displayName

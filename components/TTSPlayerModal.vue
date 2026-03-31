@@ -322,7 +322,7 @@ const {
       if (isApp.value) {
         errorModal.open({
           title: $t('tts_free_trial_limit_error_title'),
-          description: $t('tts_free_trial_limit_error_description'),
+          description: $t('tts_free_trial_limit_error_description_app'),
         })
         return
       }
