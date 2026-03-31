@@ -1,5 +1,5 @@
-// e.g. "3ook-com-app/1.1.0 (iOS 18.0) Build/42"
-const APP_USER_AGENT_REGEX = /^3ook-com-app\/[\d.]+ \((iOS|Android) [\d.]+\)/
+// e.g. "3ook-com-app/1.0.0", "3ook-com-app/1.1.0 (iOS 18.0) Build/42"
+const APP_USER_AGENT_REGEX = /^3ook-com-app\/[\d.]+ ?(?:\((iOS|Android) [\d.]+\))?/
 
 export function useAppDetection() {
   const getRouteQuery = useRouteQuery()
