@@ -117,6 +117,7 @@
           class="mb-4 laptop:mb-6"
           :title="campaignContent?.title"
           :description="campaignContent?.description"
+          :is-compact="isShowTTSSamples"
         />
         <TTSSamplesSection v-if="isShowTTSSamples" />
 

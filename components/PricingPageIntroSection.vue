@@ -25,7 +25,7 @@
     />
     <PricingPlanBenefits
       :is-dark-background="props.isDarkBackground"
-      :is-compact="!!title && !!description"
+      :is-compact="props.isCompact || (!!title && !!description)"
     />
   </div>
 </template>
@@ -33,6 +33,10 @@
 <script setup lang="ts">
 const props = defineProps({
   isDarkBackground: {
+    type: Boolean,
+    default: false,
+  },
+  isCompact: {
     type: Boolean,
     default: false,
   },
