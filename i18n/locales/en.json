@@ -531,6 +531,8 @@
   "maintenance_page_title": "🚧 Under maintenance 🚧",
   "manual_delivery_warning_label": "Await delivery by the author",
   "other_file_type": "Other",
+  "plan_select_then_price_hint": "then",
+  "plan_select_trial_days_unit": "first {days} days",
   "plan_select_trial_for_price_hint": "{currency} ${price} for {days} days, then",
   "plus_subscribe_cta_continue": "Continue",
   "plus_subscribe_cta_enjoy_offer": "Enjoy Offer",

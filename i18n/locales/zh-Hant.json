@@ -531,6 +531,8 @@
   "maintenance_page_title": "🚧 維護中 🚧",
   "manual_delivery_warning_label": "作者親簽，需稍作等候",
   "other_file_type": "其他",
+  "plan_select_then_price_hint": "其後",
+  "plan_select_trial_days_unit": "首 {days} 日",
   "plan_select_trial_for_price_hint": "首 {days} 日 {currency} ${price}，其後",
   "plus_subscribe_cta_continue": "繼續",
   "plus_subscribe_cta_enjoy_offer": "享受優惠",

@@ -1,5 +1,43 @@
 <template>
   <div class="flex flex-col gap-2 laptop:gap-3">
+    <div
+      v-if="!isYearlyHidden && !isMonthlyHidden"
+      class="flex items-center justify-between mb-1 laptop:hidden"
+    >
+      <div
+        v-if="isPaidTrial"
+        class="flex items-center gap-1.5 text-theme-black"
+      >
+        <UIcon
+          name="i-material-symbols-celebration-outline-rounded"
+          :size="20"
+        />
+        <span
+          class="text-sm font-bold"
+          v-text="$t('subscribe_plus_alert_limited_offer')"
+        />
+      </div>
+
+      <div class="inline-flex ml-auto p-0.5 bg-theme-black/8 dark:bg-theme-white/8 rounded-full">
+        <button
+          v-for="option in toggleOptions"
+          :key="option.value"
+          :class="[
+            'px-4 py-1',
+            'text-xs font-semibold',
+            'rounded-full',
+            'transition-all duration-200',
+            'cursor-pointer',
+            selectedPlan === option.value
+              ? 'bg-theme-white dark:bg-theme-black text-theme-black dark:text-theme-white shadow-sm'
+              : 'text-theme-black/40 dark:text-theme-white/40',
+          ]"
+          @click="selectedPlan = option.value"
+          v-text="option.label"
+        />
+      </div>
+    </div>
+
     <label
       v-for="plan in plans"
       :key="plan.value"
@@ -41,6 +79,10 @@
         'before:ease-[inherit]',
         'before:pointer-events-none',
         'hover:before:bg-theme-black/5',
+
+        !plan.isSelected && !isYearlyHidden && !isMonthlyHidden
+          ? 'max-laptop:hidden'
+          : '',
       ]"
     >
       <aside
@@ -73,6 +115,7 @@
             plan.isSelected
               ? 'bg-theme-black dark:bg-theme-cyan border-theme-black dark:border-theme-cyan'
               : 'bg-transparent border-theme-black/40 dark:border-theme-cyan/40',
+            !isYearlyHidden && !isMonthlyHidden ? 'max-laptop:hidden' : '',
           ]"
         >
           <UIcon
@@ -90,28 +133,44 @@
       </div>
 
       <div class="flex flex-col justify-center min-h-[52px] text-xs laptop:text-sm text-right">
-        <div
-          v-if="plan.hint"
-          class="text-theme-black/60"
-          v-text="plan.hint"
-        />
-
-        <span
-          v-if="plan.hasDiscount"
-          class="text-theme-black/60 after:content-['_']"
-        >
-          <span>{{ $t('pricing_page_original_price') }}&nbsp;</span>
-          <span class="line-through">{{ currency }} ${{ plan.originalPrice }}</span>
-        </span>
-
-        <span class="font-bold whitespace-nowrap">
-          <span>{{ currency }}&nbsp;</span>
-          <span
-            class="text-lg laptop:text-2xl"
-            v-text="`$${plan.price}`"
+        <template v-if="isPaidTrial && plan.showTrialPrice">
+          <span class="font-bold whitespace-nowrap text-theme-black dark:text-theme-white">
+            <span>{{ currency }}&nbsp;</span>
+            <span
+              class="text-lg laptop:text-2xl"
+              v-text="`$${convertedTrialPrice}`"
+            />
+            <span> /{{ $t('plan_select_trial_days_unit', { days: trialPeriodDays }) }}</span>
+          </span>
+          <span class="text-theme-black/40 dark:text-theme-white/40 whitespace-nowrap">
+            <span>{{ $t('plan_select_then_price_hint') }}&nbsp;</span>
+            <span>{{ currency }} ${{ plan.price }}/{{ plan.perUnit }}</span>
+          </span>
+        </template>
+        <template v-else>
+          <div
+            v-if="plan.hint"
+            class="text-theme-black/60"
+            v-text="plan.hint"
           />
-          <span>/{{ plan.perUnit }}</span>
-        </span>
+
+          <span
+            v-if="plan.hasDiscount"
+            class="text-theme-black/60 after:content-['_']"
+          >
+            <span>{{ $t('pricing_page_original_price') }}&nbsp;</span>
+            <span class="line-through">{{ currency }} ${{ plan.originalPrice }}</span>
+          </span>
+
+          <span class="font-bold whitespace-nowrap">
+            <span>{{ currency }}&nbsp;</span>
+            <span
+              class="text-lg laptop:text-2xl"
+              v-text="`$${plan.price}`"
+            />
+            <span>/{{ plan.perUnit }}</span>
+          </span>
+        </template>
       </div>
 
       <input
@@ -168,6 +227,7 @@ const selectedPlan = defineModel({
 })
 
 const isPaidTrial = computed(() => props.trialPeriodDays && props.trialPeriodDays >= PAID_TRIAL_PERIOD_DAYS_THRESHOLD)
+const convertedTrialPrice = computed(() => convertToDisplayCurrency(props.trialPrice))
 
 const plans = computed(() => {
   const values: SubscriptionPlan[] = []
@@ -180,7 +240,7 @@ const plans = computed(() => {
   return values.map((value) => {
     const isMonthly = value === 'monthly'
     let hint: string | undefined
-    if (isPaidTrial.value && (isMonthly || props.isAllowYearlyTrial)) {
+    if (!isPaidTrial.value && props.trialPeriodDays && (isMonthly || props.isAllowYearlyTrial)) {
       hint = $t('plan_select_trial_for_price_hint', {
         days: props.trialPeriodDays,
         currency: currency.value,
@@ -196,6 +256,8 @@ const plans = computed(() => {
       badgeText = $t('subscribe_plus_alert_limited_offer')
     }
 
+    const showTrialPrice = isMonthly || props.isAllowYearlyTrial
+
     return {
       isSelected: selectedPlan.value === value,
       value,
@@ -208,7 +270,10 @@ const plans = computed(() => {
       price: isMonthly ? monthlyPrice.value : yearlyPrice.value,
       originalPrice: isMonthly ? originalMonthlyPrice.value : originalYearlyPrice.value,
       hasDiscount: isMonthly ? hasMonthlyDiscount.value : hasYearlyDiscount.value,
+      showTrialPrice,
     }
   })
 })
+
+const toggleOptions = computed(() => plans.value.map(p => ({ value: p.value, label: p.label })))
 </script>

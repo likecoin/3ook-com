@@ -120,13 +120,10 @@
         />
         <TTSSamplesSection v-if="isShowTTSSamples" />
 
-        <!-- Price Select -->
         <div class="flex flex-col w-full mt-6 laptop:mt-8">
           <PricingLimitedOfferAlert
             v-if="!isApp"
-            class="laptop:pt-5 rounded-xl"
             :is-hidden="!isPaidTrial"
-            :trial-period-days="trialPeriodDays"
           >
             <PricingPlanSelect
               v-model="selectedPlan"
