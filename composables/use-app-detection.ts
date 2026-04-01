@@ -1,5 +1,5 @@
 // e.g. "3ook-com-app/1.0.0", "3ook-com-app/1.1.0 (iOS 18.0) Build/42"
-const APP_USER_AGENT_REGEX = /^3ook-com-app\/[\d.]+ ?(?:\((iOS|Android) [\d.]+\))?/
+const APP_USER_AGENT_REGEX = /^3ook-com-app\/[\d.]+ ?(?:\((iOS|Android) [\d.]+\))? ?(?:Build\/(\d+))?/
 
 export function useAppDetection() {
   const getRouteQuery = useRouteQuery()
@@ -17,10 +17,15 @@ export function useAppDetection() {
 
   const isIOS = computed(() => appOSName === 'iOS' || /iPhone|iPad/.test(userAgent))
   const isAndroid = computed(() => appOSName === 'Android' || /Android/.test(userAgent))
+  const buildVersion = computed(() => {
+    const buildVersionStr = appUAMatches?.[2]
+    return buildVersionStr ? parseInt(buildVersionStr, 10) : undefined
+  })
 
   return {
     isApp,
     isIOS,
     isAndroid,
+    buildVersion,
   }
 }

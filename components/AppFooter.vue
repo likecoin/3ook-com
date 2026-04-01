@@ -137,16 +137,48 @@
       @click-google-play="onClickGooglePlayButton"
     />
 
-    <ULink
-      v-if="commitSHA"
-      class="text-muted text-center text-xs font-mono border-y border-t-transparent leading-5 self-center"
-      :href="`https://github.com/likecoin/3ook-com/commit/${commitSHA}`"
-      target="_blank"
-      rel="noopener noreferrer"
-      :external="true"
+    <div
+      v-if="commitSHA || buildVersion !== undefined"
+      :class="[
+        'flex',
+        'justify-center',
+        'items-center',
+        'self-center',
+        'text-muted',
+        'text-xs',
+        'border-2',
+        'border-accented',
+        'divide-x-2',
+        'divide-accented',
+        'rounded-sm',
+        '*:px-1',
+        '*:py-0.5',
+      ]"
     >
-      {{ commitSHA }}
-    </ULink>
+      <ULink
+        v-if="commitSHA"
+        class="font-mono"
+        :href="`https://github.com/likecoin/3ook-com/commit/${commitSHA}`"
+        target="_blank"
+        rel="noopener noreferrer"
+        :external="true"
+      >
+        {{ commitSHA }}
+      </ULink>
+
+      <i18n-t
+        v-if="buildVersion !== undefined"
+        keypath="build_version"
+        tag="span"
+      >
+        <template #buildVersion>
+          <span
+            class="font-mono"
+            v-text="buildVersion"
+          />
+        </template>
+      </i18n-t>
+    </div>
   </footer>
 </template>
 
@@ -161,7 +193,7 @@ const props = defineProps({
 const { commitSHA } = useRuntimeConfig().public
 const { t: $t } = useI18n()
 const localeRoute = useLocaleRoute()
-const { isApp } = useAppDetection()
+const { isApp, buildVersion } = useAppDetection()
 
 function onClickContactUs(event: MouseEvent) {
   if (window?.Intercom) {

@@ -228,6 +228,7 @@
   "breadcrumb_account": "Account",
   "breadcrumb_account_burn": "Burn Books",
   "breadcrumb_account_deposit": "LikeCoin Deposit",
+  "build_version": "App Build {buildVersion}",
   "burn_page_burn_button": "Burn",
   "burn_page_class_id": "Class ID",
   "burn_page_confirm_burn": "Burn Book",

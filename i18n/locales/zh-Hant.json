@@ -228,6 +228,7 @@
   "breadcrumb_account": "帳戶",
   "breadcrumb_account_burn": "銷毀書籍",
   "breadcrumb_account_deposit": "LikeCoin 存倉",
+  "build_version": "App 建置版本 {buildVersion}",
   "burn_page_burn_button": "銷毀",
   "burn_page_class_id": "Class ID",
   "burn_page_confirm_burn": "確認銷毀",
