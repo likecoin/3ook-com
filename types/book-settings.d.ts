@@ -7,6 +7,7 @@ export type BookSettingKey =
   | 'cfi'
   | 'fontSize'
   | 'lineHeight'
+  | 'writingMode'
   | 'activeTTSElementIndex'
   | 'currentPage'
   | 'scale'

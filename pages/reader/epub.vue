@@ -204,6 +204,32 @@
                       />
                     </div>
                   </div>
+                  <div class="flex-1">
+                    <p
+                      class="block text-sm font-medium mb-2"
+                      v-text="$t('reader_display_orientation_label')"
+                    />
+                    <div class="grid grid-cols-2 gap-2">
+                      <UButton
+                        :variant="writingMode === EPUB_WRITING_MODES.horizontal ? 'solid' : 'outline'"
+                        :label="$t('reader_display_orientation_horizontal')"
+                        @click="setWritingMode(EPUB_WRITING_MODES.horizontal)"
+                      />
+                      <UButton
+                        :variant="writingMode === EPUB_WRITING_MODES.vertical ? 'solid' : 'outline'"
+                        :label="$t('reader_display_orientation_vertical')"
+                        @click="setWritingMode(EPUB_WRITING_MODES.vertical)"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div class="px-6 pb-6">
+                  <UButton
+                    class="w-full justify-center"
+                    variant="outline"
+                    :label="$t('reader_display_restore_defaults_button')"
+                    @click="restoreDefaultDisplayOptions"
+                  />
                 </div>
               </template>
             </BottomSlideover>
@@ -601,15 +627,65 @@ const lineHeight = useSyncedBookSettings({
   namespace: 'epub',
 })
 
+const EPUB_WRITING_MODES = {
+  horizontal: 'horizontal-tb',
+  vertical: 'vertical-rl',
+} as const
+type EpubWritingMode = typeof EPUB_WRITING_MODES[keyof typeof EPUB_WRITING_MODES]
+
+const DEFAULT_WRITING_MODE = EPUB_WRITING_MODES.horizontal
+const writingMode = useSyncedBookSettings<EpubWritingMode>({
+  nftClassId: nftClassId.value,
+  key: 'writingMode',
+  defaultValue: DEFAULT_WRITING_MODE,
+  namespace: 'epub',
+})
+
+function getWritingModeStyles() {
+  const isVerticalWritingMode = writingMode.value === EPUB_WRITING_MODES.vertical
+
+  return {
+    'writing-mode': writingMode.value,
+    '-webkit-writing-mode': writingMode.value,
+    'text-orientation': 'mixed',
+    '-webkit-text-orientation': 'mixed',
+    'line-break': isVerticalWritingMode ? 'strict' : 'auto',
+  } satisfies Record<string, string>
+}
+
+function applyWritingModeToDocument(document: Document) {
+  const documentElement = document.documentElement
+  const body = document.body
+  if (!documentElement || !body) return
+
+  const writingModeStyles = getWritingModeStyles()
+  Object.entries(writingModeStyles).forEach(([property, value]) => {
+    documentElement.style.setProperty(property, value)
+    body.style.setProperty(property, value)
+  })
+}
+
+type SectionWithDocument = Section & { document?: Document }
+
+function applyWritingModeToLoadedSections() {
+  loadedBook.value?.spine?.each((section: SectionWithDocument) => {
+    if (section.document instanceof Document) {
+      applyWritingModeToDocument(section.document)
+    }
+  })
+}
+
 function applyTheme() {
   if (!rendition.value) return
 
   const isDarkMode = colorModeValue.value === 'dark'
+  const writingModeStyles = getWritingModeStyles()
   const bodyCSS: Record<string, string> = {
     'color': isDarkMode ? '#f9f9f9 !important' : '#333',
     '-webkit-text-size-adjust': 'none',
     'text-size-adjust': 'none',
     'direction': 'ltr',
+    ...writingModeStyles,
   }
   if (isDarkMode) {
     bodyCSS['background-color'] = '#131313 !important'
@@ -628,6 +704,7 @@ function applyTheme() {
     color: isDarkMode ? '#9ecfff !important' : '#0066cc',
   }
   rendition.value.themes.default({
+    'html': writingModeStyles,
     'body': bodyCSS,
     'p, div, span, h1, h2, h3, h4, h5, h6, li': textCSS,
     'a': anchorCSS,
@@ -656,6 +733,21 @@ let removeSelectionChangeListener: (() => void) | undefined
 let removeContextMenuListener: (() => void) | undefined
 const renditionElement = useTemplateRef<HTMLDivElement>('reader')
 const renditionViewWindow = ref<Window | undefined>(undefined)
+
+async function rerenderRenditionAtCurrentLocation() {
+  if (!rendition.value) return
+
+  const target = currentCfi.value || currentPageStartCfi.value || activeNavItemHref.value
+  renderedHighlights.clear()
+  isPageLoading.value = true
+  rendition.value.clear()
+  await nextTick()
+
+  const hasDisplayed = await displayRendition(target, { isSilentError: true })
+  if (!hasDisplayed) {
+    await displayRendition(undefined)
+  }
+}
 
 async function displayRendition(href?: string, { isSilentError = false } = {}) {
   if (rendition.value) {
@@ -744,6 +836,9 @@ async function loadEPub() {
     height: '100%',
     allowScriptedContent: true,
     spread: 'none',
+  })
+  book.spine!.hooks.content.register((document: Document) => {
+    applyWritingModeToDocument(document)
   })
   applyTheme()
   isPageLoading.value = true
@@ -1103,6 +1198,57 @@ function increaseLineHeight() {
 
 function decreaseLineHeight() {
   adjustLineHeight(-0.1)
+}
+
+async function setWritingMode(mode: EpubWritingMode) {
+  if (mode === writingMode.value) return
+
+  writingMode.value = mode
+  applyWritingModeToLoadedSections()
+  applyTheme()
+  await rerenderRenditionAtCurrentLocation()
+  useLogEvent('reader_setting_changed', { nft_class_id: nftClassId.value, setting: 'writing_mode', value: mode })
+}
+
+async function restoreDefaultDisplayOptions() {
+  const previousFontSize = fontSize.value
+  const previousLineHeight = lineHeight.value
+  const previousWritingMode = writingMode.value
+
+  fontSize.value = FONT_SIZE_OPTIONS[DEFAULT_FONT_SIZE_INDEX]
+  lineHeight.value = DEFAULT_LINE_HEIGHT
+  const hasFontSizeChanged = previousFontSize !== fontSize.value
+  const hasLineHeightChanged = previousLineHeight !== lineHeight.value
+  const hasWritingModeChanged = previousWritingMode !== writingMode.value
+
+  applyWritingModeToLoadedSections()
+  applyTheme()
+
+  if (hasFontSizeChanged || hasLineHeightChanged || hasWritingModeChanged) {
+    await rerenderRenditionAtCurrentLocation()
+  }
+
+  if (hasFontSizeChanged) {
+    useLogEvent('reader_setting_changed', {
+      nft_class_id: nftClassId.value,
+      setting: 'font_size',
+      value: fontSize.value,
+    })
+  }
+  if (hasLineHeightChanged) {
+    useLogEvent('reader_setting_changed', {
+      nft_class_id: nftClassId.value,
+      setting: 'line_height',
+      value: lineHeight.value,
+    })
+  }
+  if (previousWritingMode !== writingMode.value) {
+    useLogEvent('reader_setting_changed', {
+      nft_class_id: nftClassId.value,
+      setting: 'writing_mode',
+      value: writingMode.value,
+    })
+  }
 }
 
 const desktopActiveNavItemElements = useTemplateRef<HTMLLIElement[]>('desktopActiveNavItemElements')

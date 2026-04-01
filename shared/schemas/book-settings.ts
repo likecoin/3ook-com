@@ -5,6 +5,7 @@ export const BookSettingsUpdateSchema = v.pipe(
     'epub-cfi': v.optional(v.string()),
     'epub-fontSize': v.optional(v.number()),
     'epub-lineHeight': v.optional(v.number()),
+    'epub-writingMode': v.optional(v.picklist(['horizontal-tb', 'vertical-rl'])),
     'epub-activeTTSElementIndex': v.optional(v.number()),
     'pdf-currentPage': v.optional(v.number()),
     'pdf-scale': v.optional(v.number()),
