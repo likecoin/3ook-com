@@ -1,5 +1,5 @@
 /**
- * Minimal ID3v2.3 tag builder for embedding metadata into MP3 audio.
+ * Minimal ID3v2.4 tag builder for embedding metadata into MP3 audio.
  * Produces a standalone ID3v2 header buffer that can be prepended to raw MP3 frames.
  */
 
@@ -11,7 +11,7 @@ function encodeTextFrame(frameId: string, text: string): Buffer {
 
   const header = Buffer.alloc(10)
   header.write(frameId, 0, 4, 'ascii')
-  header.writeUInt32BE(payload.length, 4)
+  writeSynchsafe(header, 4, payload.length)
   return Buffer.concat([header, payload])
 }
 
@@ -25,7 +25,7 @@ function encodeCommentFrame(text: string, language = 'eng'): Buffer {
 
   const header = Buffer.alloc(10)
   header.write('COMM', 0, 4, 'ascii')
-  header.writeUInt32BE(payload.length, 4)
+  writeSynchsafe(header, 4, payload.length)
   return Buffer.concat([header, payload])
 }
 
@@ -51,7 +51,7 @@ export function buildID3v2Tag(fields: {
 
   const header = Buffer.alloc(10)
   header.write('ID3', 0, 3, 'ascii')
-  header[3] = 0x03 // v2.3
+  header[3] = 0x04 // v2.4
   writeSynchsafe(header, 6, body.length)
 
   return Buffer.concat([header, body])
