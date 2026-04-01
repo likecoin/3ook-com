@@ -119,37 +119,47 @@
           :description="campaignContent?.description"
           :is-compact="isShowTTSSamples"
         />
-        <TTSSamplesSection v-if="isShowTTSSamples" />
+        <TTSSamplesSection :class="{ 'laptop:hidden': !isShowTTSSamples }" />
 
         <div class="flex flex-col w-full mt-6 laptop:mt-8">
-          <PricingLimitedOfferAlert
-            v-if="!isApp"
-            :is-hidden="!isPaidTrial"
+          <div
+            v-if="$slots['pricing-mobile']"
+            class="laptop:hidden"
           >
-            <PricingPlanSelect
-              v-model="selectedPlan"
-              :trial-period-days="trialPeriodDays"
-            />
+            <slot name="pricing-mobile" />
+          </div>
+          <div :class="$slots['pricing-mobile'] ? 'hidden laptop:contents' : undefined">
+            <slot name="pricing">
+              <PricingLimitedOfferAlert
+                v-if="!isApp"
+                :is-hidden="!isPaidTrial"
+              >
+                <PricingPlanSelect
+                  v-model="selectedPlan"
+                  :trial-period-days="trialPeriodDays"
+                />
 
-            <UButton
-              class="mt-4"
-              :label="subscribeButtonLabel"
-              block
-              size="xl"
-              :loading="props.isProcessingSubscription"
-              :ui="{ base: 'py-2 laptop:py-3 cursor-pointer', label: 'font-bold' }"
-              @click="handleSubscribeButtonClick"
-            />
-          </PricingLimitedOfferAlert>
+                <UButton
+                  class="mt-4"
+                  :label="subscribeButtonLabel"
+                  block
+                  size="xl"
+                  :loading="props.isProcessingSubscription"
+                  :ui="{ base: 'py-2 laptop:py-3 cursor-pointer', label: 'font-bold' }"
+                  @click="handleSubscribeButtonClick"
+                />
+              </PricingLimitedOfferAlert>
 
-          <UButton
-            class="mt-2 self-center"
-            :label="$t('pricing_page_learn_more')"
-            :to="learnMoreRoute"
-            variant="link"
-            color="neutral"
-            size="sm"
-          />
+              <UButton
+                class="mt-2 self-center"
+                :label="$t('pricing_page_learn_more')"
+                :to="learnMoreRoute"
+                variant="link"
+                color="neutral"
+                size="sm"
+              />
+            </slot>
+          </div>
         </div>
       </div>
     </div>
