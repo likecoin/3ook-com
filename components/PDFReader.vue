@@ -1038,7 +1038,7 @@ function handleTouchMove(event: TouchEvent) {
     pinchStartScale = scale.value
   }
 
-  event.preventDefault()
+  if (event.cancelable) event.preventDefault()
   const ratio = currentDistance / pinchStartDistance
   const newScale = clampScale(roundScale(pinchStartScale * ratio))
   if (newScale !== scale.value) {
