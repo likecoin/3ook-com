@@ -5,7 +5,7 @@
       class="flex items-center justify-between mb-1 laptop:hidden"
     >
       <div
-        v-if="isPaidTrial"
+        v-if="isPaidTrial && !props.isLimitedOfferBadgeHidden"
         class="flex items-center gap-1.5 text-theme-black"
       >
         <UIcon
@@ -22,6 +22,7 @@
         <button
           v-for="option in toggleOptions"
           :key="option.value"
+          type="button"
           :class="[
             'px-4 py-1',
             'text-xs font-semibold',
