@@ -1028,10 +1028,17 @@ function handleTouchStart(event: TouchEvent) {
 }
 
 function handleTouchMove(event: TouchEvent) {
-  if (event.touches.length !== 2 || pinchStartDistance === 0) return
+  if (event.touches.length !== 2) return
+
+  const currentDistance = getTouchDistance(event.touches)
+
+  if (pinchStartDistance === 0) {
+    if (currentDistance === 0) return
+    pinchStartDistance = currentDistance
+    pinchStartScale = scale.value
+  }
 
   event.preventDefault()
-  const currentDistance = getTouchDistance(event.touches)
   const ratio = currentDistance / pinchStartDistance
   const newScale = clampScale(roundScale(pinchStartScale * ratio))
   if (newScale !== scale.value) {
