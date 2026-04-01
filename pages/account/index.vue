@@ -361,7 +361,7 @@
           variant="link"
           class="cursor-pointer"
           leading-icon="i-material-symbols-contact-support"
-          trailing-icon="i-material-symbols-chat-bubble-outline-rounded"
+          :trailing-icon="isApp ? 'i-material-symbols-mail-outline' : 'i-material-symbols-chat-bubble-outline-rounded'"
           color="neutral"
           size="lg"
           block
@@ -667,7 +667,7 @@ async function handleLikerPlusButtonClick() {
 }
 
 function openIntercomWithEmailFallback(prefillMessage?: string) {
-  if (window?.Intercom) {
+  if (!isApp.value && window?.Intercom) {
     if (prefillMessage) {
       window.Intercom('showNewMessage', prefillMessage)
     }
