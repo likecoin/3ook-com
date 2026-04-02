@@ -325,7 +325,15 @@
           :label="$t('account_page_color_mode')"
         >
           <template #right>
-            <ColorModeSwitcher />
+            <ColorModeSwitcher v-if="user?.isLikerPlus" />
+            <UButton
+              v-else
+              :label="$t('account_page_upgrade_to_plus')"
+              icon="i-material-symbols-lock-outline"
+              variant="solid"
+              color="primary"
+              :to="localeRoute({ name: 'member', query: { ll_medium: 'color-mode' } })"
+            />
           </template>
         </AccountSettingsItem>
 
