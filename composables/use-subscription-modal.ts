@@ -108,12 +108,7 @@ export function useSubscriptionModal() {
     if (!props.bookPrice || props.bookPrice > yearlyPrice.value) {
       nftClassId = undefined
     }
-    const shouldShowMonthlyPlan = !isLikerPlus.value && !props.from
-    const shouldShowYearlyPlan = (!isLikerPlus.value || (likerPlusPeriod.value === 'month' && nftClassId)) && (!props.from || nftClassId)
-    if (shouldShowMonthlyPlan || shouldShowYearlyPlan) {
-      // Only pass nftClassId if book price is <= Plus yearly price
-      // This way expensive books won't show the "gift book" option, only 20% off
-
+    if (!isLikerPlus.value && (!props.from || nftClassId)) {
       const upsellModalProps: UpsellPlusModalProps = {
         ...props,
         ...getUpsellPlusModalProps(),
