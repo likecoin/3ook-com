@@ -42,6 +42,17 @@
       <div class="pt-5">
         <AffiliateAlert class="mb-6" />
 
+        <UAlert
+          v-if="utmCampaignMessage"
+          :description="utmCampaignMessage"
+          color="info"
+          variant="subtle"
+          :ui="{
+            root: 'mb-6 rounded-2xl items-center py-2',
+            description: 'font-bold',
+          }"
+        />
+
         <div class="flex flex-col laptop:flex-row gap-6 laptop:gap-8">
           <BookCoverCarousel
             class="w-[150px] tablet:w-[130px] laptop:w-[220px] shrink-0"
@@ -1035,6 +1046,12 @@ const isCheckingBookList = ref(false)
 const isUpdatingBookList = ref(false)
 
 const from = computed(() => getRouteQuery('from') || undefined)
+const utmCampaignMessage = computed(() => {
+  switch (getRouteQuery('utm_campaign')) {
+    case 'custom-voice-free': return $t('product_page_campaign_custom_voice_free')
+    default: return undefined
+  }
+})
 const coupon = computed(() => getRouteQuery('coupon') || undefined)
 const quantity = computed(() => Math.max(parseInt(getRouteQuery('quantity'), 10) || 1, 1))
 const isRedirectedFromUpsell = computed(() => getRouteQuery('upsell') === '1')

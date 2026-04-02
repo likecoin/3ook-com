@@ -196,8 +196,12 @@ const props = withDefaults(
   },
 )
 
+const isCustomVoiceCampaign = computed(() => {
+  return getRouteQuery('utm_campaign').includes('custom-voice')
+})
+
 const shouldShowTTSSamples = computed(() => {
-  return getRouteQuery('samples') === '1'
+  return getRouteQuery('samples') === '1' || isCustomVoiceCampaign.value
 })
 
 const abTest = shouldShowTTSSamples.value
@@ -238,6 +242,9 @@ const learnMoreRoute = computed(() => {
 })
 
 const subscribeButtonLabel = computed(() => {
+  if (isCustomVoiceCampaign.value) {
+    return $t('plus_subscribe_cta_custom_voice_free')
+  }
   if (props.trialPeriodDays) {
     if (isPaidTrial.value) {
       return $t('plus_subscribe_cta_enjoy_offer')
