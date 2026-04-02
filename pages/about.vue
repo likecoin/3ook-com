@@ -904,7 +904,7 @@ const mediaCoverage = [
 
 const featuredPublishers = [
   { name: '突破出版', likerId: 'breakthrough_publish' },
-  { name: '風簷出版', likerId: '0xpioneer' },
+  { name: '義守書店', likerId: '0xpioneer' },
   { name: '飛地出版', likerId: 'nowherebooks' },
   { name: '端點出版', likerId: 'terminus2046' },
   { name: '本土研究社', likerId: 'liber-research' },
