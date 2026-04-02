@@ -177,7 +177,8 @@
                     ll_source: 'product-page',
                   },
                 })"
-                variant="soft"
+                variant="subtle"
+                color="neutral"
                 :ui="{ base: 'rounded-full' }"
                 @click="handleGenreClick"
               />
@@ -196,19 +197,20 @@
                     ll_source: 'product-page',
                   },
                 })"
-                variant="soft"
+                variant="subtle"
+                color="neutral"
                 :ui="{ base: 'rounded-full' }"
                 @click="handleKeywordClick(tag)"
               />
             </li>
             <li v-if="!bookInfo.isAudioHidden.value">
               <UButton
-                :label="ttsLabel"
+                :label="ttsTagLabel"
                 :to="ttsTagRoute"
-                variant="soft"
-                :color="ttsColor"
+                variant="subtle"
+                :color="ttsTagColor"
                 :ui="{ base: 'rounded-full' }"
-                @click="handleTtsTagClick"
+                @click="handleTTSTagClick"
               />
             </li>
           </ul>
@@ -532,7 +534,7 @@
                           v-if="!bookInfo.isAudioHidden.value"
                           :label="$t('product_page_support_tts_label')"
                           variant="subtle"
-                          :color="ttsColor"
+                          :color="ttsTagColor"
                           size="sm"
                         />
                       </div>
@@ -629,21 +631,28 @@
       </div>
     </section>
 
-    <p
+    <UAlert
       v-if="!bookInfo.isAudioHidden.value && !isLikerPlus && !isApp"
-      class="w-full max-w-[1200px] mx-auto mt-8 text-sm text-dimmed"
+      :description="$t('product_page_tts_plus_explainer')"
+      color="neutral"
+      variant="outline"
+      orientation="horizontal"
+      :ui="{
+        root: 'w-full max-w-[1200px] mt-4 max-tablet:flex-col max-tablet:text-center text-sm text-muted bg-transparent',
+      }"
     >
-      {{ $t('product_page_tts_plus_explainer') }}
-      <UButton
-        :label="$t('product_page_tts_plus_explainer_cta')"
-        :to="ttsExplainerRoute"
-        variant="link"
-        :color="ttsColor"
-        size="sm"
-        :ui="{ base: 'inline' }"
-        @click="handleTtsExplainerClick"
-      />
-    </p>
+      <template #actions>
+        <UButton
+          :label="$t('product_page_tts_plus_explainer_cta')"
+          :to="ttsExplainerRoute"
+          trailing-icon="i-material-symbols-arrow-forward-rounded"
+          variant="soft"
+          color="secondary"
+          size="sm"
+          @click="handleTTSExplainerClick"
+        />
+      </template>
+    </UAlert>
 
     <section
       v-if="filteredRecommendedClassIds.length"
@@ -885,15 +894,15 @@ const {
 } = useSubscriptionModal()
 
 const colorMode = useColorMode()
-const ttsColor = computed(() => colorMode.value === 'dark' ? 'primary' : 'success')
-const ttsLabel = computed(() => $t('product_page_support_tts_label'))
+const ttsTagColor = computed(() => colorMode.value === 'dark' ? 'primary' : 'secondary')
+const ttsTagLabel = computed(() => $t('product_page_support_tts_label'))
 const ttsTagRoute = computed(() =>
   isLikerPlus.value || isApp.value
     ? localeRoute({
         name: 'store',
         query: {
-          q: ttsLabel.value,
-          ll_medium: `keyword-${ttsLabel.value}`,
+          q: ttsTagLabel.value,
+          ll_medium: `keyword-${ttsTagLabel.value}`,
           ll_source: 'product-page',
         },
       })
@@ -1731,16 +1740,16 @@ function handleKeywordClick(keyword: string) {
   useLogEvent('keyword_click', { keyword })
 }
 
-function handleTtsTagClick() {
+function handleTTSTagClick() {
   if (isLikerPlus.value || isApp.value) {
-    handleKeywordClick(ttsLabel.value)
+    handleKeywordClick(ttsTagLabel.value)
   }
   else {
     useLogEvent('tts_plus_tag_click', { nft_class_id: nftClassId.value })
   }
 }
 
-function handleTtsExplainerClick() {
+function handleTTSExplainerClick() {
   useLogEvent('tts_plus_explainer_click', { nft_class_id: nftClassId.value })
 }
 
