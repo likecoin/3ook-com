@@ -68,12 +68,20 @@ async function fetchPlusGiftStatus() {
       giftCartId,
       giftPaymentId,
       giftClaimToken,
+      affiliateVoiceId,
+      affiliateVoiceName,
+      affiliateVoiceLanguage,
+      affiliateFrom,
     } = await likeCoinSessionAPI.fetchLikerPlusGiftStatus()
     return {
       giftNFTClassId,
       giftCartId,
       giftPaymentId,
       giftClaimToken,
+      affiliateVoiceId,
+      affiliateVoiceName,
+      affiliateVoiceLanguage,
+      affiliateFrom,
     }
   }
   catch (error) {
@@ -100,6 +108,10 @@ onMounted(async () => {
       giftCartId,
       giftPaymentId,
       giftClaimToken,
+      affiliateVoiceId,
+      affiliateVoiceName,
+      affiliateVoiceLanguage,
+      affiliateFrom,
     } = await fetchPlusGiftStatus()
     if (isRedirected.value) {
       const isTrial = getRouteQuery('trial') !== '0'
@@ -138,6 +150,23 @@ onMounted(async () => {
     }
 
     if (giftNFTClassId && giftCartId && giftPaymentId && giftClaimToken) {
+      if (affiliateVoiceId && affiliateVoiceName && affiliateFrom) {
+        try {
+          await $fetch('/api/user/affiliate-voice', {
+            method: 'POST',
+            body: {
+              nftClassId: giftNFTClassId,
+              voiceId: affiliateVoiceId,
+              voiceName: affiliateVoiceName,
+              voiceLanguage: affiliateVoiceLanguage,
+              affiliateFrom,
+            },
+          })
+        }
+        catch (err) {
+          console.warn('[PlusSuccess] Failed to save affiliate voice:', err)
+        }
+      }
       accountStore.savePlusRedirectRoute(null)
       await navigateTo(localeRoute({
         name: 'claim-page',

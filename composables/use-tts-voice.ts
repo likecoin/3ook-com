@@ -1,5 +1,6 @@
 import { useStorage } from '@vueuse/core'
-import type { CustomVoiceData } from '~/shared/types/custom-voice'
+import { encodeAffiliateVoiceId, isAffiliateVoiceId } from '~/shared/utils/tts-sig'
+import type { CustomVoiceData, AffiliateVoiceData } from '~/shared/types/custom-voice'
 import phoebeAvatar from '@/assets/images/voice-avatars/phoebe.jpg'
 import auroraAvatar from '@/assets/images/voice-avatars/aurora.jpg'
 import astroAvatar from '@/assets/images/voice-avatars/astro.jpg'
@@ -10,10 +11,12 @@ import customDefaultAvatar from '@/assets/images/voice-avatars/custom-default.jp
 interface TTSVoiceOptions {
   bookLanguage?: string | Ref<string> | ComputedRef<string>
   customVoice?: Ref<CustomVoiceData | null>
+  affiliateVoice?: Ref<AffiliateVoiceData | null>
+  nftClassId?: string
 }
 
 export function useTTSVoice(options: TTSVoiceOptions = {}) {
-  const { bookLanguage, customVoice } = options
+  const { bookLanguage, customVoice, affiliateVoice, nftClassId } = options
 
   const config = useRuntimeConfig()
   const { detectedCountry } = useDetectedGeolocation()
@@ -63,12 +66,20 @@ export function useTTSVoice(options: TTSVoiceOptions = {}) {
     return language ? language.toLowerCase().startsWith('en') : false
   })
 
+  const affiliateVoiceValue = computed(() =>
+    affiliateVoice?.value?.voiceId && nftClassId ? encodeAffiliateVoiceId(nftClassId) : undefined,
+  )
+
   const ttsLanguageVoiceValues = computed(() => {
     const values = availableTTSLanguageVoiceOptions.value.map(option => option.value)
-    if (customVoice?.value?.voiceId && !isBookEnglish.value) {
-      return ['custom', ...values]
+    const result: string[] = []
+    if (affiliateVoiceValue.value && !isBookEnglish.value) {
+      result.push(affiliateVoiceValue.value)
     }
-    return values
+    if (customVoice?.value?.voiceId && !isBookEnglish.value) {
+      result.push('custom')
+    }
+    return [...result, ...values]
   })
 
   function getDefaultTTSVoiceByLocale(): string {
@@ -107,21 +118,31 @@ export function useTTSVoice(options: TTSVoiceOptions = {}) {
       avatar: getVoiceAvatar(option.value),
     }))
 
-    if (customVoice?.value?.voiceId && !isBookEnglish.value) {
-      return [
-        {
-          label: customVoice.value.voiceName,
-          value: 'custom',
-          avatar: getVoiceAvatar('custom'),
-        },
-        ...builtInOptions,
-      ]
+    const extraOptions: { label: string, value: string, avatar: string }[] = []
+
+    if (affiliateVoiceValue.value && !isBookEnglish.value && affiliateVoice?.value) {
+      extraOptions.push({
+        label: `★ ${affiliateVoice.value.voiceName}`,
+        value: affiliateVoiceValue.value,
+        avatar: getVoiceAvatar(affiliateVoiceValue.value),
+      })
     }
 
-    return builtInOptions
+    if (customVoice?.value?.voiceId && !isBookEnglish.value) {
+      extraOptions.push({
+        label: customVoice.value.voiceName,
+        value: 'custom',
+        avatar: getVoiceAvatar('custom'),
+      })
+    }
+
+    return [...extraOptions, ...builtInOptions]
   })
 
   function getVoiceAvatar(languageVoice: string): string {
+    if (isAffiliateVoiceId(languageVoice)) {
+      return customDefaultAvatar
+    }
     if (languageVoice === 'custom') {
       const raw = customVoice?.value?.avatarUrl
       return raw ? getResizedImageURL(raw, { size: 128 }) : customDefaultAvatar

@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto'
 import type { Writable } from 'node:stream'
 import type { H3Event } from 'h3'
 import { TTSQuerySchema } from '~/server/schemas/tts'
-import { computeLegacyTTSTextSig, computeTTSTextSig } from '~/shared/utils/tts-sig'
+import { computeLegacyTTSTextSig, computeTTSTextSig, decodeAffiliateVoiceId, isAffiliateVoiceId } from '~/shared/utils/tts-sig'
 
 // Coalesces concurrent identical TTS requests (e.g. browser range probes)
 const inFlightWrites = new Map<string, Promise<void>>()
@@ -24,11 +24,19 @@ async function serveCachedTTS(
   cacheKey: string,
   contentFormat: string,
   wallet: string,
-) {
+): Promise<unknown | null> {
   const file = bucket.file(cacheKey)
-  const metadata = await file.getMetadata()
-  const totalSize = Number(metadata[0].size)
-  const contentType = metadata[0].contentType || contentFormat
+  let totalSize: number
+  let contentType: string
+  try {
+    const metadata = await file.getMetadata()
+    totalSize = Number(metadata[0].size)
+    contentType = metadata[0].contentType || contentFormat
+  }
+  catch (error: unknown) {
+    if ((error as { code?: number })?.code === 404) return null
+    throw error
+  }
   const rangeHeader = getHeader(event, 'range')
 
   const etag = `"${createHash('sha256').update(cacheKey).digest('hex').substring(0, 16)}"`
@@ -76,24 +84,28 @@ export default defineEventHandler(async (event) => {
   } = await getValidatedQuery(event, createValidator(TTSQuerySchema))
 
   const isCustomVoice = voiceId === 'custom'
+  const isAffiliateVoice = isAffiliateVoiceId(voiceId)
+  const isPrivateVoice = isCustomVoice || isAffiliateVoice
 
   const ttsEventBase = {
     evmWallet: session.user.evmWallet,
     language,
     voiceId,
     isCustomVoice,
+    isAffiliateVoice,
     textLength: text.length,
     nftClassId,
   }
 
   // Verify text signature — binds the request to voice + language + book +
   // exact text. System voices use an empty token so URLs converge across
-  // users and can be shared-cached at Cloudflare. Custom voices additionally
-  // bind to the user via ttsKey, keeping URLs unique per wallet so
-  // cross-user cache collision cannot serve one user's cloned voice to
-  // another. Sig check always runs regardless of whether ttsKey is present,
-  // so legacy sessions without a key can't be fingerprinted by response shape.
-  const sigToken = isCustomVoice ? (session.user.ttsKey ?? '') : ''
+  // users and can be shared-cached at Cloudflare. Private voices (custom +
+  // affiliate) additionally bind to the user via ttsKey, keeping URLs unique
+  // per wallet so the edge cache cannot serve one user's cloned/exclusive
+  // voice audio to another. Sig check always runs regardless of whether
+  // ttsKey is present, so legacy sessions without a key can't be
+  // fingerprinted by response shape.
+  const sigToken = isPrivateVoice ? (session.user.ttsKey ?? '') : ''
   let sigOk = sig === computeTTSTextSig({ token: sigToken, voiceId, language, nftClassId, text })
 
   if (!sigOk && session.user.ttsKey) {
@@ -112,18 +124,35 @@ export default defineEventHandler(async (event) => {
     throw createError({ status: 403, message: 'INVALID_TTS_SIG' })
   }
 
-  // Custom voices require a secret per-user token so sigs are unforgeable
+  // Private voices require a secret per-user token so sigs are unforgeable
   // even for an attacker who knows the public wallet. Legacy sessions that
-  // pre-date ttsKey must re-login before custom voice will work.
-  if (isCustomVoice && !session.user.ttsKey) {
+  // pre-date ttsKey must re-login before private voices will work.
+  if (isPrivateVoice && !session.user.ttsKey) {
     throw createError({ status: 403, message: 'MISSING_TTS_KEY' })
   }
 
+  const affiliateVoiceClassId = isAffiliateVoice ? decodeAffiliateVoiceId(voiceId) : undefined
   let customMiniMaxVoiceId: string | undefined
   let voiceDisplayName: string | undefined
   let provider: BaseTTSProvider
 
-  if (isCustomVoice) {
+  if (isAffiliateVoice) {
+    const isLikerPlus = session.user.isLikerPlus || false
+    if (!isLikerPlus) {
+      throw createError({ status: 402, message: 'REQUIRE_LIKER_PLUS' })
+    }
+    if (!affiliateVoiceClassId) {
+      throw createError({ status: 400, message: 'INVALID_AFFILIATE_VOICE' })
+    }
+    const affiliateVoice = await getAffiliateVoice(session.user.evmWallet, affiliateVoiceClassId)
+    if (!affiliateVoice?.voiceId) {
+      throw createError({ status: 404, message: 'NO_AFFILIATE_VOICE' })
+    }
+    customMiniMaxVoiceId = affiliateVoice.voiceId
+    voiceDisplayName = affiliateVoice.voiceName
+    provider = new MinimaxTTSProvider()
+  }
+  else if (isCustomVoice) {
     const isLikerPlus = session.user.isLikerPlus || false
     if (!isLikerPlus) {
       throw createError({ status: 402, message: 'REQUIRE_LIKER_PLUS' })
@@ -143,7 +172,7 @@ export default defineEventHandler(async (event) => {
 
   const customVoiceWallet = isCustomVoice ? session.user.evmWallet : undefined
   const logText = text.replace(/(\r\n|\n|\r)/gm, ' ')
-  console.log(`[Speech] User ${session.user.evmWallet} requested conversion. Language: ${language}, Text: "${logText.substring(0, 50)}${logText.length > 50 ? '...' : ''}", Voice: ${voiceId}${isCustomVoice ? ` (${customMiniMaxVoiceId})` : ''}`)
+  console.log(`[Speech] User ${session.user.evmWallet} requested conversion. Language: ${language}, Text: "${logText.substring(0, 50)}${logText.length > 50 ? '...' : ''}", Voice: ${voiceId}${customMiniMaxVoiceId ? ` (${customMiniMaxVoiceId})` : ''}`)
 
   if (!await getUserTTSAvailable(event)) {
     throw createError({
@@ -156,19 +185,19 @@ export default defineEventHandler(async (event) => {
   const bucket = getTTSCacheBucket()
   const isCacheEnabled = !!bucket
   const cacheKey = isCacheEnabled
-    ? (customVoiceWallet
-        ? generateCustomVoiceTTSCacheKey(customVoiceWallet, language, text, ttsModel)
-        : generateTTSCacheKey(language, voiceId, text, ttsModel))
+    ? (isAffiliateVoice && customMiniMaxVoiceId
+        ? generateAffiliateVoiceTTSCacheKey(customMiniMaxVoiceId, language, text, ttsModel)
+        : customVoiceWallet
+          ? generateCustomVoiceTTSCacheKey(customVoiceWallet, language, text, ttsModel)
+          : generateTTSCacheKey(language, voiceId, text, ttsModel))
     : null
 
   if (isCacheEnabled) {
-    const file = bucket.file(cacheKey!)
-
     try {
-      const [exists] = await file.exists()
-      if (exists) {
+      const result = await serveCachedTTS(event, bucket, cacheKey!, provider.format, session.user.evmWallet)
+      if (result !== null) {
         publishEvent(event, 'TTSCacheHit', ttsEventBase)
-        return await serveCachedTTS(event, bucket, cacheKey!, provider.format, session.user.evmWallet)
+        return result
       }
     }
     catch (error) {

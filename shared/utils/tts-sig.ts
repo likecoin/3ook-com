@@ -1,5 +1,19 @@
 export const TTS_PREVIEW_NFT_CLASS_ID = 'custom_voice_preview'
 
+export const AFFILIATE_VOICE_PREFIX = 'affiliate:'
+
+export function encodeAffiliateVoiceId(nftClassId: string): string {
+  return `${AFFILIATE_VOICE_PREFIX}${nftClassId}`
+}
+
+export function isAffiliateVoiceId(voiceId: string): boolean {
+  return voiceId.startsWith(AFFILIATE_VOICE_PREFIX)
+}
+
+export function decodeAffiliateVoiceId(voiceId: string): string | undefined {
+  return isAffiliateVoiceId(voiceId) ? voiceId.slice(AFFILIATE_VOICE_PREFIX.length) : undefined
+}
+
 export function computeTTSTextSig(params: {
   token: string
   voiceId: string

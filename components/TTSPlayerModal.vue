@@ -244,6 +244,10 @@ const props = withDefaults(
   },
 )
 
+const { affiliateVoice, fetchAffiliateVoice } = useAffiliateVoice(
+  computed(() => props.nftClassId),
+)
+
 const { isApp } = useAppDetection()
 const isDesktopScreen = useDesktopScreen()
 
@@ -299,6 +303,7 @@ const {
   bookCoverSrc: props.bookCoverSrc,
   bookLanguage: props.bookLanguage,
   customVoice,
+  affiliateVoice,
   onError: (error: string | Event | MediaError) => {
     if (
       !user.value?.isLikerPlus
@@ -469,6 +474,9 @@ onMounted(() => {
   setTTSLanguageVoice(props.specificLanguageVoice)
   if (user.value) {
     fetchCustomVoice()
+  }
+  if (user.value && props.nftClassId) {
+    fetchAffiliateVoice()
   }
 })
 

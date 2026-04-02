@@ -1,6 +1,6 @@
 import { useDocumentVisibility, useEventListener, useStorage } from '@vueuse/core'
-import type { CustomVoiceData } from '~/shared/types/custom-voice'
-import { computeTTSTextSig } from '~/shared/utils/tts-sig'
+import type { CustomVoiceData, AffiliateVoiceData } from '~/shared/types/custom-voice'
+import { computeTTSTextSig, isAffiliateVoiceId } from '~/shared/utils/tts-sig'
 
 export const TTS_ERROR_NOT_ALLOWED = 'NotAllowedError'
 
@@ -14,6 +14,7 @@ interface TTSOptions {
   bookCoverSrc?: string | Ref<string> | ComputedRef<string>
   bookLanguage?: string | Ref<string> | ComputedRef<string>
   customVoice?: Ref<CustomVoiceData | null>
+  affiliateVoice?: Ref<AffiliateVoiceData | null>
 }
 
 export function useTextToSpeech(options: TTSOptions) {
@@ -44,7 +45,12 @@ export function useTextToSpeech(options: TTSOptions) {
     ttsLanguageVoiceOptionsWithAvatars,
     ttsLanguageVoiceValues,
     setTTSLanguageVoice,
-  } = useTTSVoice({ bookLanguage, customVoice: options.customVoice })
+  } = useTTSVoice({
+    bookLanguage,
+    customVoice: options.customVoice,
+    affiliateVoice: options.affiliateVoice,
+    nftClassId,
+  })
 
   function parseLanguageVoice(languageVoice: string) {
     const [language = '', ...voiceIdParts] = languageVoice.split('_')
@@ -384,10 +390,9 @@ export function useTextToSpeech(options: TTSOptions) {
     }
   })
 
-  function resolveCustomVoiceLanguage(): string {
+  function resolvePrivateVoiceLanguage(voiceLanguage?: string): string {
     const lang = toValue(bookLanguage) || 'zh-HK'
-    const isEnglish = lang.toLowerCase().startsWith('en')
-    return isEnglish ? 'en-US' : (options.customVoice?.value?.voiceLanguage || 'zh-HK')
+    return lang.toLowerCase().startsWith('en') ? 'en-US' : (voiceLanguage || 'zh-HK')
   }
 
   watch(ttsPlaybackRate, (newRate) => {
@@ -401,18 +406,19 @@ export function useTextToSpeech(options: TTSOptions) {
 
   function appendCommonParams(
     params: URLSearchParams,
-    { text, voiceId, language, isCustomVoice }: {
+    { text, voiceId, language, isPrivateVoice }: {
       text: string
       voiceId: string
       language: string
-      isCustomVoice: boolean
+      isPrivateVoice: boolean
     },
   ) {
     params.set('nft_class_id', nftClassId)
     // System voices use an empty-token sig so URLs converge across users,
-    // enabling shared Cloudflare edge caching. Custom voices require a
-    // secret per-user ttsKey so sigs remain unforgeable and URLs unique.
-    const sigToken = isCustomVoice ? (sessionUser.value?.ttsKey || '') : ''
+    // enabling shared Cloudflare edge caching. Private voices (custom +
+    // affiliate) use a per-user ttsKey so URLs stay unique per wallet — the
+    // edge cannot serve one user's cloned/exclusive voice audio to another.
+    const sigToken = isPrivateVoice ? (sessionUser.value?.ttsKey || '') : ''
     params.set('sig', computeTTSTextSig({ token: sigToken, voiceId, language, nftClassId, text }))
     if (isNativeBridge.value) {
       params.set('blocking', '1')
@@ -441,14 +447,25 @@ export function useTextToSpeech(options: TTSOptions) {
     const sanitizedText = sanitizeTTSText(element.text)
     recordOptimisticSegmentUsage(sanitizedText)
 
+    if (isAffiliateVoiceId(ttsLanguageVoice.value)) {
+      const language = resolvePrivateVoiceLanguage(options.affiliateVoice?.value?.voiceLanguage)
+      const params = new URLSearchParams({
+        text: sanitizedText,
+        language,
+        voice_id: ttsLanguageVoice.value,
+      })
+      appendCommonParams(params, { text: sanitizedText, voiceId: ttsLanguageVoice.value, language, isPrivateVoice: true })
+      return `/api/reader/tts?${params.toString()}`
+    }
+
     if (ttsLanguageVoice.value === 'custom') {
-      const language = resolveCustomVoiceLanguage()
+      const language = resolvePrivateVoiceLanguage(options.customVoice?.value?.voiceLanguage)
       const params = new URLSearchParams({
         text: sanitizedText,
         language,
         voice_id: 'custom',
       })
-      appendCommonParams(params, { text: sanitizedText, voiceId: 'custom', language, isCustomVoice: true })
+      appendCommonParams(params, { text: sanitizedText, voiceId: 'custom', language, isPrivateVoice: true })
       if (options.customVoice?.value?.updatedAt) {
         params.set('_t', options.customVoice.value.updatedAt.toString())
       }
@@ -463,7 +480,7 @@ export function useTextToSpeech(options: TTSOptions) {
       language,
       voice_id: voiceId,
     })
-    appendCommonParams(params, { text: sanitizedText, voiceId, language, isCustomVoice: false })
+    appendCommonParams(params, { text: sanitizedText, voiceId, language, isPrivateVoice: false })
     return `/api/reader/tts?${params.toString()}`
   }
 

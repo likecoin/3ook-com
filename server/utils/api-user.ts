@@ -36,6 +36,7 @@ export interface UserDocData {
   accessTimestamp?: typeof FieldValue.serverTimestamp
   loginMethod?: string
   customVoice?: CustomVoiceDocData
+  affiliateVoices?: Record<string, AffiliateVoiceData>
   totalReadingTimeMs?: number
   totalTTSListeningTimeMs?: number
   totalBooksCompleted?: number
@@ -298,6 +299,29 @@ export async function markBookCompleted(
   })
 
   return isNewCompletion
+}
+
+export async function getAffiliateVoice(
+  userWallet: string,
+  nftClassId: string,
+): Promise<AffiliateVoiceData | undefined> {
+  const doc = await getUserDoc(userWallet)
+  return doc?.affiliateVoices?.[nftClassId.toLowerCase()]
+}
+
+export async function setAffiliateVoice(
+  userWallet: string,
+  nftClassId: string,
+  data: AffiliateVoiceData,
+): Promise<void> {
+  await getUserCollection().doc(userWallet).set({
+    [`affiliateVoices.${nftClassId.toLowerCase()}`]: {
+      voiceId: data.voiceId,
+      voiceName: data.voiceName,
+      ...(data.voiceLanguage && { voiceLanguage: data.voiceLanguage }),
+      affiliateFrom: data.affiliateFrom,
+    },
+  }, { merge: true })
 }
 
 export async function incrementBookTTSCharacterUsage(

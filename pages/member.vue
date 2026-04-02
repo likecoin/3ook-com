@@ -25,6 +25,43 @@
     </template>
 
     <template
+      v-if="affiliateLikerId"
+      #affiliate-promo
+    >
+      <AffiliateAlert class="mt-6" />
+
+      <div
+        v-if="affiliateInfo?.active"
+        class="mt-4 p-4 rounded-xl bg-elevated text-center"
+      >
+        <p class="text-sm font-medium text-toned mb-3">
+          {{ $t('pricing_page_affiliate_gift_label') }}
+        </p>
+        <div class="flex items-center justify-center gap-3">
+          <BookCover
+            class="w-12 shrink-0"
+            :src="giftBookCoverSrc"
+            :alt="affiliateInfo.giftBookName"
+            has-shadow
+          />
+          <div class="text-left">
+            <p
+              v-if="affiliateInfo.giftBookName"
+              class="text-sm font-bold text-highlighted"
+              v-text="affiliateInfo.giftBookName"
+            />
+            <p
+              v-if="affiliateInfo.customVoiceName"
+              class="text-xs text-muted"
+            >
+              {{ $t('pricing_page_affiliate_voice_label', { name: affiliateInfo.customVoiceName }) }}
+            </p>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <template
       v-if="!hasLoggedIn && isMobileRegisterCTATestVariant"
       #pricing-mobile
     >
@@ -75,6 +112,32 @@ const selectedPlan = ref<SubscriptionPlan>(initialPlan)
 
 const { memberProgramData } = useMemberProgramStructuredData()
 
+interface AffiliateInfo {
+  active: boolean
+  giftClassId?: string
+  giftBookName?: string
+  giftBookCover?: string
+  customVoiceName?: string
+}
+const affiliateInfo = ref<AffiliateInfo | null>(null)
+const affiliateLikerId = computed(() => {
+  const from = getRouteQuery('from') as string | undefined
+  return from?.startsWith('@') ? from.slice(1) : from
+})
+
+const { getResizedNormalizedImageURL } = useImageResize()
+const giftBookCoverSrc = computed(() => {
+  const src = affiliateInfo.value?.giftBookCover
+  return src ? getResizedNormalizedImageURL(src, { size: 300 }) : ''
+})
+
+async function fetchAffiliateInfo() {
+  if (!affiliateLikerId.value) return
+  try {
+    affiliateInfo.value = await $fetch<AffiliateInfo>(`/api/affiliate/${affiliateLikerId.value}`)
+  }
+  catch { /* ignore */ }
+}
 const productGroup = 'plus'
 const monthlyProductId = 'plus-monthly'
 
@@ -251,6 +314,7 @@ onMounted(async () => {
     await navigateTo(localeRoute({ name: 'store' }))
     return
   }
+  fetchAffiliateInfo()
   await checkout.redirectIfSubscribed()
 })
 </script>

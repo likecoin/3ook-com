@@ -117,9 +117,11 @@
           class="mb-4 laptop:mb-6"
           :title="campaignContent?.title"
           :description="campaignContent?.description"
-          :is-compact="isShowTTSSamples"
+          :is-compact="isShowTTSSamples || !!$slots['affiliate-promo']"
         />
         <TTSSamplesSection v-if="isShowTTSSamples" />
+
+        <slot name="affiliate-promo" />
 
         <div class="flex flex-col w-full mt-6 laptop:mt-8">
           <div

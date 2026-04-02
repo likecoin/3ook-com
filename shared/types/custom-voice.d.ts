@@ -6,3 +6,10 @@ export interface CustomVoiceData {
   createdAt?: number
   updatedAt?: number
 }
+
+export interface AffiliateVoiceData {
+  voiceId: string
+  voiceName: string
+  voiceLanguage?: string
+  affiliateFrom: string
+}

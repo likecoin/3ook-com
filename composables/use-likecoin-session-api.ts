@@ -59,6 +59,10 @@ export interface FetchLikerPlusGiftStatusResponseData {
   giftCartId?: string
   giftPaymentId?: string
   giftClaimToken?: string
+  affiliateVoiceId?: string
+  affiliateVoiceName?: string
+  affiliateVoiceLanguage?: string
+  affiliateFrom?: string
 }
 
 export interface MigrateMagicEmailUserResponseData {

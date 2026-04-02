@@ -26,13 +26,21 @@ export function getTTSCacheBucket() {
   return getDefaultBucket()
 }
 
-export function generateCustomVoiceTTSCacheKey(wallet: string, language: string, text: string, model: string): string {
+function generateVoiceTTSCacheKey(subfolder: string, id: string, language: string, text: string, model: string): string {
   const config = useRuntimeConfig()
   if (!config.ttsCacheBucketPrefix) {
     throw new Error('TTS cache bucket is not configured')
   }
   const textHash = createHash('sha256').update(text).digest('hex')
-  return `${config.ttsCacheBucketPrefix}/custom-voices/${wallet}/${model}/${language}/${textHash}.mp3`
+  return `${config.ttsCacheBucketPrefix}/${subfolder}/${id}/${model}/${language}/${textHash}.mp3`
+}
+
+export function generateCustomVoiceTTSCacheKey(wallet: string, language: string, text: string, model: string): string {
+  return generateVoiceTTSCacheKey('custom-voices', wallet, language, text, model)
+}
+
+export function generateAffiliateVoiceTTSCacheKey(affiliateVoiceId: string, language: string, text: string, model: string): string {
+  return generateVoiceTTSCacheKey('affiliate-voices', affiliateVoiceId, language, text, model)
 }
 
 export function getCustomVoiceTTSCachePrefix(wallet: string): string {
