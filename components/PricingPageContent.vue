@@ -124,7 +124,7 @@
         <div class="flex flex-col w-full mt-6 laptop:mt-8">
           <div
             v-if="$slots['pricing-mobile']"
-            class="laptop:hidden"
+            class="contents laptop:hidden"
           >
             <slot name="pricing-mobile" />
           </div>

@@ -28,9 +28,10 @@
       #pricing-mobile
     >
       <div class="flex flex-col items-center gap-3">
-        <span class="text-sm text-theme-black/60 dark:text-theme-white/60">
-          {{ $t('pricing_page_login_cta_description') }}
-        </span>
+        <span
+          class="text-sm text-muted"
+          v-text="$t('pricing_page_login_cta_description')"
+        />
         <UButton
           :label="$t('pricing_page_login_cta_button')"
           icon="i-material-symbols-login-rounded"
