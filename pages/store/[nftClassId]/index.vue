@@ -391,6 +391,38 @@
         </template>
       </UAccordion>
 
+      <UAlert
+        v-if="!bookInfo.isAudioHidden.value && !isLikerPlus && !isApp"
+        :description="$t('product_page_tts_plus_explainer')"
+        color="neutral"
+        variant="outline"
+        orientation="horizontal"
+        :ui="{
+          root: [
+            'w-full',
+            'max-w-[1200px]',
+            'mt-4',
+            'max-tablet:flex-col',
+            'max-tablet:text-center',
+            'text-sm',
+            'text-muted',
+            'bg-transparent',
+          ],
+        }"
+      >
+        <template #actions>
+          <UButton
+            :label="$t('product_page_tts_plus_explainer_cta')"
+            :to="ttsExplainerRoute"
+            trailing-icon="i-material-symbols-arrow-forward-rounded"
+            variant="soft"
+            color="secondary"
+            size="sm"
+            @click="handleTTSExplainerClick"
+          />
+        </template>
+      </UAlert>
+
       <!-- Sticky side panel -->
       <div
         :class="[
@@ -398,7 +430,7 @@
           'w-full',
           'max-tablet:mt-6',
           'row-start-2 tablet:row-start-1',
-          'tablet:row-span-2',
+          'tablet:row-end-[9999]',
           'tablet:col-start-2',
         ]"
       >
@@ -644,29 +676,6 @@
         </div>
       </div>
     </section>
-
-    <UAlert
-      v-if="!bookInfo.isAudioHidden.value && !isLikerPlus && !isApp"
-      :description="$t('product_page_tts_plus_explainer')"
-      color="neutral"
-      variant="outline"
-      orientation="horizontal"
-      :ui="{
-        root: 'w-full max-w-[1200px] mt-4 max-tablet:flex-col max-tablet:text-center text-sm text-muted bg-transparent',
-      }"
-    >
-      <template #actions>
-        <UButton
-          :label="$t('product_page_tts_plus_explainer_cta')"
-          :to="ttsExplainerRoute"
-          trailing-icon="i-material-symbols-arrow-forward-rounded"
-          variant="soft"
-          color="secondary"
-          size="sm"
-          @click="handleTTSExplainerClick"
-        />
-      </template>
-    </UAlert>
 
     <section
       v-if="filteredRecommendedClassIds.length"
