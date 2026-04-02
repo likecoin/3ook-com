@@ -119,7 +119,10 @@
           :description="campaignContent?.description"
           :is-compact="isShowTTSSamples"
         />
-        <TTSSamplesSection :class="{ 'laptop:hidden': !isShowTTSSamples }" />
+        <TTSSamplesSection
+          v-if="isShowTTSSamples || props.forceShowTTSOnMobile"
+          :class="{ 'laptop:hidden': !isShowTTSSamples }"
+        />
 
         <div class="flex flex-col w-full mt-6 laptop:mt-8">
           <div
