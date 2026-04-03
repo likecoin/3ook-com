@@ -1644,7 +1644,8 @@ async function handlePurchaseButtonClick() {
       if (tippingAmount) {
         customPrice = calculateCustomPrice(tippingAmount, selectedPricingItem.value.price)
         if (getPlusDiscountRate()) {
-          customPrice = Math.round(customPrice * (1 / getPlusDiscountRate()) * 100) / 100
+          const scaledTip = Math.round(tippingAmount * (1 / getPlusDiscountRate()) * 100) / 100
+          customPrice = Math.round((selectedPricingItem.value.price + scaledTip) * 100) / 100
         }
       }
     }
