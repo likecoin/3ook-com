@@ -505,8 +505,11 @@ function isSegmentOnCurrentPage(segmentCfi: string): boolean {
   }
 }
 
+const { setTTSQueryParam } = useTTSQueryParam()
+
 const { setTTSSegments, setChapterTitles, openPlayer } = useTTSPlayerModal({
   nftClassId: nftClassId.value,
+  onClose: () => setTTSQueryParam(false),
   onSegmentChange: async (segment) => {
     if (!segment?.cfi) return
     activeTTSElementIndex.value = segment.index
@@ -917,14 +920,34 @@ async function loadEPub() {
     readingProgress.value = percentage.value
   })
 
-  if (shouldShowTTSTryModal.value && !bookInfo.isAudioHidden.value) {
-    showTTSTryModal({
-      nftClassId: nftClassId.value,
-      onVoiceSelected: () => {
-        onClickTTSPlay()
-      },
-    })
+  if (route.query.tts) {
+    if (bookInfo.isAudioHidden.value) {
+      toast.add({
+        title: $t('reader_text_to_speech_button_disabled_tooltip'),
+        duration: 3000,
+        progress: false,
+      })
+      setTTSQueryParam(false)
+    }
+    else if (shouldShowTTSTryModal.value) {
+      openTTSTryModal()
+    }
+    else {
+      onClickTTSPlay()
+    }
   }
+  else if (shouldShowTTSTryModal.value && !bookInfo.isAudioHidden.value) {
+    openTTSTryModal()
+  }
+}
+
+function openTTSTryModal() {
+  showTTSTryModal({
+    nftClassId: nftClassId.value,
+    onVoiceSelected: () => {
+      onClickTTSPlay()
+    },
+  })
 }
 function findNextNavItemAfterTOC(navItems: NavItem[]): NavItem | undefined {
   const firstChapter = navItems[0]
@@ -1156,6 +1179,7 @@ async function ensureTTSExtracted() {
 
 async function onClickTTSPlay() {
   await ensureTTSExtracted()
+  setTTSQueryParam(true)
   openPlayer({
     ttsIndex: activeTTSElementIndex.value,
     sectionIndex: currentSectionIndex.value,

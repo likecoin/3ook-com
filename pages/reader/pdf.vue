@@ -83,8 +83,11 @@ const isTTSExtracting = ref(false)
 const activeTTSElementIndex = ref<number | undefined>()
 const pdfReaderRef = ref()
 
+const { setTTSQueryParam } = useTTSQueryParam()
+
 const { setTTSSegments, setChapterTitles, openPlayer } = useTTSPlayerModal({
   nftClassId: nftClassId.value,
+  onClose: () => setTTSQueryParam(false),
   onSegmentChange: (segment) => {
     if (segment) {
       const newPageIndex = segment.sectionIndex
@@ -146,6 +149,15 @@ function handlePDFLoaded(pdfDocument: PDFDocumentProxy) {
   updatePDFProgress(currentPageIndex.value)
   // Release the ArrayBuffer — PDF.js has its own internal copy
   fileBuffer.value = null
+
+  if (route.query.tts) {
+    if (bookInfo.isAudioHidden.value) {
+      setTTSQueryParam(false)
+    }
+    else {
+      handleTTSPlay()
+    }
+  }
 }
 
 async function extractTTSSegmentsFromPDF(pdfDocument: PDFDocumentProxy) {
@@ -228,6 +240,7 @@ async function ensureTTSExtracted() {
 
 async function handleTTSPlay() {
   await ensureTTSExtracted()
+  setTTSQueryParam(true)
   openPlayer({
     ttsIndex: activeTTSElementIndex.value,
     sectionIndex: currentPageIndex.value,

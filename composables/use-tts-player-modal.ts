@@ -5,6 +5,7 @@ import type { TTSPlayerModalProps } from '~/components/TTSPlayerModal.props'
 interface TTSPlayerOptions {
   nftClassId: MaybeRef<string>
   onSegmentChange?: (segment: TTSSegment & { index: number }) => void
+  onClose?: () => void
 }
 
 export function useTTSPlayerModal(options: TTSPlayerOptions) {
@@ -27,6 +28,7 @@ export function useTTSPlayerModal(options: TTSPlayerOptions) {
     chapterTitlesBySection: chapterTitlesBySection.value,
     startIndex: startIndex.value,
     onSegmentChange: options.onSegmentChange,
+    onClose: options.onClose,
   }))
 
   const overlay = useOverlay()
