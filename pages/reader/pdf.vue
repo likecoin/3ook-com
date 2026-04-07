@@ -83,7 +83,7 @@ const isTTSExtracting = ref(false)
 const activeTTSElementIndex = ref<number | undefined>()
 const pdfReaderRef = ref()
 
-const { setTTSQueryParam } = useTTSQueryParam()
+const { isTTSQueryParam, setTTSQueryParam } = useTTSQueryParam()
 
 const { setTTSSegments, setChapterTitles, openPlayer } = useTTSPlayerModal({
   nftClassId: nftClassId.value,
@@ -150,7 +150,7 @@ function handlePDFLoaded(pdfDocument: PDFDocumentProxy) {
   // Release the ArrayBuffer — PDF.js has its own internal copy
   fileBuffer.value = null
 
-  if (route.query.tts) {
+  if (isTTSQueryParam.value) {
     if (bookInfo.isAudioHidden.value) {
       setTTSQueryParam(false)
     }

@@ -505,7 +505,7 @@ function isSegmentOnCurrentPage(segmentCfi: string): boolean {
   }
 }
 
-const { setTTSQueryParam } = useTTSQueryParam()
+const { isTTSQueryParam, setTTSQueryParam } = useTTSQueryParam()
 
 const { setTTSSegments, setChapterTitles, openPlayer } = useTTSPlayerModal({
   nftClassId: nftClassId.value,
@@ -920,7 +920,7 @@ async function loadEPub() {
     readingProgress.value = percentage.value
   })
 
-  if (route.query.tts) {
+  if (isTTSQueryParam.value) {
     if (bookInfo.isAudioHidden.value) {
       toast.add({
         title: $t('reader_text_to_speech_button_disabled_tooltip'),
