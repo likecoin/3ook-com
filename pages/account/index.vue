@@ -552,6 +552,7 @@ const { customVoice, hasCustomVoice, fetchCustomVoice } = useCustomVoice()
 const overlay = useOverlay()
 const customVoiceModal = overlay.create(CustomVoiceUploadModal)
 const blockingModal = useBlockingModal()
+const subscription = useSubscriptionModal()
 
 const route = useRoute()
 
@@ -567,6 +568,12 @@ watchImmediate(hasLoggedIn, async (loggedIn) => {
     }
     const isCustomVoiceAction = route.query.action === 'custom-voice'
     if (isCustomVoiceAction) {
+      if (!user.value?.isLikerPlus) {
+        if (!isApp.value) {
+          subscription.openPaywallModal({ utmSource: 'custom_voice' })
+        }
+        return
+      }
       blockingModal.open({ title: $t('common_processing') })
     }
     try {
