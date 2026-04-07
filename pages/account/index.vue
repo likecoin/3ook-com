@@ -292,10 +292,19 @@
 
           <template #right>
             <UButton
+              v-if="user?.isLikerPlus"
               :label="hasCustomVoice ? $t('tts_custom_voice_change_button') : $t('tts_custom_voice_upload_button')"
               :variant="hasCustomVoice ? 'outline' : 'solid'"
               color="primary"
               @click="handleOpenCustomVoiceModal"
+            />
+            <UButton
+              v-else
+              :label="$t('account_page_upgrade_to_plus')"
+              icon="i-material-symbols-lock-outline"
+              variant="solid"
+              color="primary"
+              :to="localeRoute({ name: 'member', query: { ll_medium: 'custom-voice' } })"
             />
           </template>
         </AccountSettingsItem>
