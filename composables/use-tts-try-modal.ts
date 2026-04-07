@@ -46,6 +46,8 @@ export function useTTSTryModal() {
   function showTTSTryModal(options: {
     nftClassId: string
     onVoiceSelected?: (languageVoice: string) => void
+    onSnooze?: () => void
+    onDismiss?: () => void
   }) {
     const modal = overlay.create(TTSTryModal, {
       props: {
@@ -65,6 +67,7 @@ export function useTTSTryModal() {
             nft_class_id: options.nftClassId,
           })
           modal.close()
+          options.onSnooze?.()
         },
         onDismiss: () => {
           dismissTTSTryModal()
@@ -72,6 +75,7 @@ export function useTTSTryModal() {
             nft_class_id: options.nftClassId,
           })
           modal.close()
+          options.onDismiss?.()
         },
       },
     })

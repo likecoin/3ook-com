@@ -947,6 +947,8 @@ function openTTSTryModal() {
     onVoiceSelected: () => {
       onClickTTSPlay()
     },
+    onSnooze: () => setTTSQueryParam(false),
+    onDismiss: () => setTTSQueryParam(false),
   })
 }
 function findNextNavItemAfterTOC(navItems: NavItem[]): NavItem | undefined {
