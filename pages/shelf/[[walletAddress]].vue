@@ -367,15 +367,18 @@ watch(
 function handleBookshelfItemOpen({
   type,
   nftClassId,
+  isTTS,
 }: {
   type: string
   name: string
   nftClassId?: string
   index?: number
+  isTTS?: boolean
 }) {
   useLogEvent('shelf_open_book', {
     content_type: type,
     nft_class_id: nftClassId,
+    ...(isTTS && { tts: '1' }),
   })
 }
 

@@ -66,7 +66,7 @@
               :ui="{ header: 'text-center font-bold' }"
             >
               <template #header>
-                {{ $t('bookshelf_more_menu_title') }}
+                {{ bookInfo.name.value }}
               </template>
               <UButton
                 v-for="item in menuItems"
@@ -76,6 +76,7 @@
                 :label="item.label"
                 :href="item.href"
                 :to="item.to"
+                :disabled="item.disabled"
                 variant="link"
                 color="neutral"
                 size="xl"
@@ -147,6 +148,7 @@ const getContentTypeLabel = useContentTypeLabel()
 const { getResizedImageURL } = useImageResize()
 const { checkOwnership } = useUserBookOwnership(props.nftClassId)
 const toast = useToast()
+const { errorModal } = useErrorHandler()
 
 const bookCoverSrc = computed(() => getResizedImageURL(bookInfo.coverSrc.value, { size: 300 }))
 
@@ -155,30 +157,69 @@ const progressPercentage = computed(() => Math.round(props.progress * 100))
 const isDesktopScreen = useDesktopScreen()
 
 const menuItems = computed<DropdownMenuItem[]>(() => {
-  const genericItems: DropdownMenuItem[] = []
-  const readerItems: DropdownMenuItem[] = []
-  const downloadItems: DropdownMenuItem[] = []
+  const items: DropdownMenuItem[] = []
 
   if (props.isClaimable) {
-    genericItems.push({
-      label: $t('bookshelf_claim_book'),
+    items.push({
+      label: $t('bookshelf_item_menu_claim_book'),
       icon: 'i-material-symbols-add-circle-outline-rounded',
       onSelect: claimBook,
     })
+    // NOTE: No other actions are available for claimable items
+    return items
   }
-  else if (props.isOwned) {
-    bookInfo.sortedContentURLs.value.forEach((contentURL) => {
-      const label = getContentTypeLabel(contentURL.type)
 
-      readerItems.push({
-        label,
-        icon: 'i-material-symbols-book-5-outline',
+  // Reader items: only show if more than one content file
+  if (props.isOwned && bookInfo.sortedContentURLs.value.length > 1) {
+    bookInfo.sortedContentURLs.value.forEach((contentURL) => {
+      items.push({
+        label: getContentTypeLabel(contentURL.type),
+        icon: 'i-material-symbols-book-5-outline-rounded',
         onSelect: () => openContentURL(contentURL),
       })
+    })
+  }
 
-      if (bookInfo.isDownloadable.value) {
-        downloadItems.push({
-          label: $t('bookshelf_download_file', { type: contentURL.type.toUpperCase() }),
+  // TTS
+  if (props.isOwned) {
+    if (bookInfo.isAudioHidden.value) {
+      items.push({
+        label: $t('bookshelf_item_menu_tts_disabled'),
+        icon: 'i-material-symbols-graphic-eq-rounded',
+        disabled: true,
+      })
+    }
+    else {
+      items.push({
+        label: $t('bookshelf_item_menu_tts'),
+        icon: 'i-material-symbols-graphic-eq-rounded',
+        onSelect: openTTSPlayer,
+      })
+    }
+  }
+
+  // Staking
+  items.push({
+    label: $t('bookshelf_item_menu_staking'),
+    icon: 'i-material-symbols-handshake-outline-rounded',
+    to: bookInfo.getProductPageRoute({
+      hash: '#staking-info',
+    }),
+  })
+
+  // Book info
+  items.push({
+    label: $t('bookshelf_item_menu_view_book_info'),
+    icon: 'i-material-symbols-info-outline-rounded',
+    to: bookInfo.productPageRoute.value,
+  })
+
+  // Download
+  if (props.isOwned) {
+    if (bookInfo.isDownloadable.value) {
+      bookInfo.sortedContentURLs.value.forEach((contentURL) => {
+        items.push({
+          label: $t('bookshelf_item_menu_download_file', { type: contentURL.type.toUpperCase() }),
           icon: 'i-material-symbols-download-rounded',
           onSelect: () =>
             downloadURL({
@@ -187,37 +228,27 @@ const menuItems = computed<DropdownMenuItem[]>(() => {
               fileIndex: contentURL.index,
             }),
         })
-      }
-    })
+      })
+    }
+    else {
+      items.push({
+        label: $t('bookshelf_item_menu_download_disabled'),
+        icon: 'i-material-symbols-download-rounded',
+        disabled: true,
+      })
+    }
   }
 
+  // Export annotations
   if (props.isOwned) {
-    genericItems.push({
-      label: $t('bookshelf_export_annotations'),
-      icon: 'i-material-symbols-download-rounded',
+    items.push({
+      label: $t('bookshelf_item_menu_export_annotations'),
+      icon: 'i-material-symbols-upload-rounded',
       onSelect: exportAnnotations,
     })
   }
 
-  genericItems.push({
-    label: $t('bookshelf_view_book_product_page'),
-    icon: 'i-material-symbols-visibility-outline',
-    to: bookInfo.productPageRoute.value,
-  })
-
-  genericItems.push({
-    label: $t('bookshelf_view_book_staking_page'),
-    icon: 'i-material-symbols-visibility-outline',
-    to: bookInfo.getProductPageRoute({
-      hash: '#staking-info',
-    }),
-  })
-
-  return [
-    ...readerItems,
-    ...downloadItems,
-    ...genericItems,
-  ]
+  return items
 })
 
 if (!props.lazy) {
@@ -246,18 +277,29 @@ function fetchBookInfo() {
   }
 }
 
-function openContentURL(contentURL: ContentURL) {
+function openContentURL(contentURL: ContentURL, { isTTS = false } = {}) {
   // TODO: UI to select specific NFT Id
   const nftId = props.nftIds?.[0]
   const readerRoute = bookInfo.getReaderRoute.value({ nftId, contentURL })
-  navigateTo(readerRoute)
+  if (!readerRoute) {
+    errorModal.open({ description: $t('bookshelf_item_open_content_failed') })
+    return
+  }
+  navigateTo(isTTS ? { ...readerRoute, query: { ...readerRoute.query, tts: '1' } } : readerRoute)
   emit('open', {
     nftClassId: props.nftClassId,
     type: contentURL.type,
     url: contentURL.url,
     name: contentURL.name,
     index: contentURL.index,
+    isTTS,
   })
+}
+
+function openTTSPlayer() {
+  const contentURL = bookInfo.defaultContentURL.value
+  if (!contentURL) return
+  openContentURL(contentURL, { isTTS: true })
 }
 
 async function downloadURL({ name, type, fileIndex }: { name: string, type: string, fileIndex?: number }) {
