@@ -168,6 +168,10 @@ export function useSetLogUser(user: User | null, locale: string) {
     })
   }
 
+  const hashedWallet = user
+    ? sha256(user.evmWallet as `0x${string}`)
+    : undefined
+
   // Set user ID in Google Analytics
   const { gtag } = useGtag()
   try {
@@ -178,7 +182,7 @@ export function useSetLogUser(user: User | null, locale: string) {
     }
     else {
       gtag('set', {
-        user_id: sha256(user.evmWallet as `0x${string}`),
+        user_id: hashedWallet,
         user_data: { email: user.email || undefined },
       })
       gtag('set', 'user_properties', {
@@ -198,7 +202,7 @@ export function useSetLogUser(user: User | null, locale: string) {
     try {
       proxy.fbq('init', metaPixelId, {
         em: user?.email,
-        external_id: sha256(user?.evmWallet as `0x${string}`),
+        external_id: hashedWallet,
       })
     }
     catch (error) {
@@ -281,10 +285,12 @@ export function useSetLogUser(user: User | null, locale: string) {
       postToNative({
         type: 'identifyUser',
         userId: user.evmWallet,
+        gaUserId: hashedWallet,
         email: user.email || undefined,
         displayName: user.displayName || user.evmWallet || user.likeWallet,
         isLikerPlus: !!user.isLikerPlus,
         loginMethod: user.loginMethod,
+        locale,
       })
     }
     else {
