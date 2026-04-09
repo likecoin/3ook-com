@@ -467,6 +467,10 @@ const isDefaultTagId = computed(() => getIsDefaultTagId(tagId.value))
 const isStakingTagId = computed(() => getIsStakingTagId(tagId.value))
 
 await callOnce(async () => {
+  if (getIsLocalHistoriesTagId(tagId.value)) {
+    await navigateTo(localeRoute({ name: 'local-histories' }), { replace: true })
+    return
+  }
   if (!tagId.value || isDefaultTagId.value || isStakingTagId.value) return
   await bookstoreStore.fetchBookstoreCMSTag(tagId.value)
 })
@@ -983,11 +987,6 @@ async function fetchItems({ lazy = false, isRefresh = false } = {}) {
 }
 
 onMounted(async () => {
-  if (getIsLocalHistoriesTagId(tagId.value)) {
-    await navigateTo(localeRoute({ name: 'local-histories' }), { replace: true })
-    return
-  }
-
   if (!route.query.tag && !isSearchMode.value) {
     await storePageState.restoreIfNeeded()
   }
