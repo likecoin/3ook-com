@@ -45,7 +45,7 @@
         <UAlert
           v-if="utmCampaignMessage"
           :description="utmCampaignMessage"
-          color="info"
+          color="secondary"
           variant="subtle"
           :ui="{
             root: 'mb-6 rounded-2xl items-center py-2',
