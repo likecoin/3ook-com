@@ -69,7 +69,9 @@ const { loggedIn: hasLoggedIn } = useUserSession()
 const accountStore = useAccountStore()
 const mobileRegisterCTATest = useABTest({ experimentKey: 'pricing-page-mobile-register-cta' })
 const isMobileRegisterCTATestVariant = computed(() => mobileRegisterCTATest.isVariant('test'))
-const selectedPlan = ref<SubscriptionPlan>('yearly')
+
+const initialPlan: SubscriptionPlan = getRouteQuery('plan') === 'monthly' ? 'monthly' : 'yearly'
+const selectedPlan = ref<SubscriptionPlan>(initialPlan)
 
 const { memberProgramData } = useMemberProgramStructuredData()
 
