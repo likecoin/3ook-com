@@ -97,16 +97,38 @@ export function getFirebaseStorageDownloadURL(bucketName: string, filePath: stri
 
 export type StorageFile = ReturnType<NonNullable<ReturnType<typeof getTTSCacheBucket>>['file']>
 
+// Narrow a possibly comma-separated token list (Firebase supports multiple
+// tokens per file for rotation) to one usable token.
+function firstToken(raw: unknown): string | undefined {
+  if (typeof raw !== 'string') return undefined
+  return raw.split(',').map(t => t.trim()).find(Boolean)
+}
+
+// Optimistic concurrency: concurrent first-time mints on the same file would
+// otherwise race on setMetadata and hand out URLs for tokens that get
+// immediately overwritten.
+const TOKEN_MINT_MAX_ATTEMPTS = 3
+
 export async function getOrCreatePersistentDownloadURL(file: StorageFile): Promise<string> {
-  const [metadata] = await file.getMetadata()
-  let token = metadata.metadata?.firebaseStorageDownloadTokens as string | undefined
-  if (!token) {
-    token = generateFirebaseDownloadToken()
-    await file.setMetadata({
-      metadata: { firebaseStorageDownloadTokens: token },
-    })
+  for (let attempt = 1; ; attempt++) {
+    const [metadata] = await file.getMetadata()
+    const existingToken = firstToken(metadata.metadata?.firebaseStorageDownloadTokens)
+    if (existingToken) {
+      return getFirebaseStorageDownloadURL(file.bucket.name, file.name, existingToken)
+    }
+    const newToken = generateFirebaseDownloadToken()
+    try {
+      await file.setMetadata(
+        { metadata: { ...metadata.metadata, firebaseStorageDownloadTokens: newToken } },
+        { ifMetagenerationMatch: metadata.metageneration },
+      )
+      return getFirebaseStorageDownloadURL(file.bucket.name, file.name, newToken)
+    }
+    catch (error) {
+      const code = (error as { code?: number }).code
+      if (code !== 412 || attempt >= TOKEN_MINT_MAX_ATTEMPTS) throw error
+    }
   }
-  return getFirebaseStorageDownloadURL(file.bucket.name, file.name, token)
 }
 
 const CUSTOM_VOICE_SIGNED_URL_TTL_MS = 60 * 60 * 1000

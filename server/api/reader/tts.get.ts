@@ -16,8 +16,11 @@ async function redirectToCachedAudio(
   const downloadURL = isCustomVoice
     ? await getEphemeralSignedDownloadURL(file)
     : await getOrCreatePersistentDownloadURL(file)
-  // Per-play revalidation keeps analytics and Liker+ enforcement on this endpoint.
-  setHeader(event, 'cache-control', 'private, max-age=0, must-revalidate')
+  // Short-lived cache so Safari/AVPlayer can reuse the 302 for range probes
+  // within a single segment playback instead of re-auth'ing on every probe.
+  // Each TTS segment has a distinct text+sig, so a new segment still mints
+  // a fresh redirect and runs analytics + Liker+ checks.
+  setHeader(event, 'cache-control', 'private, max-age=60')
   return sendRedirect(event, downloadURL, 302)
 }
 
@@ -256,6 +259,7 @@ export default defineEventHandler(async (event) => {
 
   const cacheMetadata = {
     contentType: provider.format,
+    cacheControl: isCustomVoice ? 'private, max-age=604800' : 'public, max-age=604800',
     metadata: {
       language,
       voiceId,
