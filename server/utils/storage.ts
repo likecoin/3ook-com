@@ -94,3 +94,28 @@ export function generateFirebaseDownloadToken(): string {
 export function getFirebaseStorageDownloadURL(bucketName: string, filePath: string, token: string): string {
   return `https://firebasestorage.googleapis.com/v0/b/${bucketName}/o/${encodeURIComponent(filePath)}?alt=media&token=${token}`
 }
+
+export type StorageFile = ReturnType<NonNullable<ReturnType<typeof getTTSCacheBucket>>['file']>
+
+export async function getOrCreatePersistentDownloadURL(file: StorageFile): Promise<string> {
+  const [metadata] = await file.getMetadata()
+  let token = metadata.metadata?.firebaseStorageDownloadTokens as string | undefined
+  if (!token) {
+    token = generateFirebaseDownloadToken()
+    await file.setMetadata({
+      metadata: { firebaseStorageDownloadTokens: token },
+    })
+  }
+  return getFirebaseStorageDownloadURL(file.bucket.name, file.name, token)
+}
+
+const CUSTOM_VOICE_SIGNED_URL_TTL_MS = 60 * 60 * 1000
+
+export async function getEphemeralSignedDownloadURL(file: StorageFile): Promise<string> {
+  const [url] = await file.getSignedUrl({
+    version: 'v4',
+    action: 'read',
+    expires: Date.now() + CUSTOM_VOICE_SIGNED_URL_TTL_MS,
+  })
+  return url
+}
