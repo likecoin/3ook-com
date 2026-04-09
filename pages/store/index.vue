@@ -437,6 +437,10 @@ function getIsDefaultTagId(id: string) {
   return id === TAG_DEFAULT
 }
 
+function getIsLocalHistoriesTagId(id: string) {
+  return id === 'local-histories'
+}
+
 function getIsStakingTagId(id: string) {
   return id.startsWith(STAKING_SORT_TAG_PREFIX)
 }
@@ -444,6 +448,10 @@ function getIsStakingTagId(id: string) {
 const tagId = computed({
   get: () => getRouteQuery('tag', TAG_DEFAULT),
   set: async (id) => {
+    if (getIsLocalHistoriesTagId(id)) {
+      await navigateTo(localeRoute({ name: 'local-histories' }))
+      return
+    }
     await navigateTo(localeRoute({
       name: 'store',
       query: {
@@ -975,6 +983,11 @@ async function fetchItems({ lazy = false, isRefresh = false } = {}) {
 }
 
 onMounted(async () => {
+  if (getIsLocalHistoriesTagId(tagId.value)) {
+    await navigateTo(localeRoute({ name: 'local-histories' }), { replace: true })
+    return
+  }
+
   if (!route.query.tag && !isSearchMode.value) {
     await storePageState.restoreIfNeeded()
   }
