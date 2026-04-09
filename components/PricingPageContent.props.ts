@@ -7,5 +7,5 @@ export interface PricingPageContentProps {
   utmMedium?: string
   utmSource?: string
   coupon?: string
-  forceShowTTSOnMobile?: boolean
+  mustShowTtsOnMobile?: boolean
 }

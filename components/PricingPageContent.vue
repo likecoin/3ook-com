@@ -120,7 +120,7 @@
           :is-compact="isShowTTSSamples"
         />
         <TTSSamplesSection
-          v-if="isShowTTSSamples || props.forceShowTTSOnMobile"
+          v-if="isShowTTSSamples || props.mustShowTtsOnMobile"
           :class="{ 'laptop:hidden': !isShowTTSSamples }"
         />
 

@@ -9,7 +9,7 @@
     utm-source="website"
     utm-medium="web"
     :coupon="coupon"
-    :force-show-t-t-s-on-mobile="isMobileRegisterCTATestVariant"
+    :must-show-tts-on-mobile="isMobileRegisterCTATestVariant"
     @open="handleOpen"
     @subscribe="handleSubscribe"
   >
