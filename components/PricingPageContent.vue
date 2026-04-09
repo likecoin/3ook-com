@@ -119,10 +119,7 @@
           :description="campaignContent?.description"
           :is-compact="isShowTTSSamples"
         />
-        <TTSSamplesSection
-          v-if="isShowTTSSamples || props.mustShowTtsOnMobile"
-          :class="{ 'laptop:hidden': !isShowTTSSamples }"
-        />
+        <TTSSamplesSection v-if="isShowTTSSamples" />
 
         <div class="flex flex-col w-full mt-6 laptop:mt-8">
           <div
@@ -209,7 +206,7 @@ const abTest = shouldShowTTSSamples.value
       experimentKey: 'pricing-page-tts-sample',
     })
 
-const isShowTTSSamples = computed(() => shouldShowTTSSamples.value || abTest?.isVariant('tts-sample'))
+const isShowTTSSamples = computed(() => shouldShowTTSSamples.value || abTest?.isVariant('tts-sample') || props.mustShowTtsOnMobile)
 
 const utmCampaign = computed(() => {
   return getRouteQuery('utm_campaign') || props.utmCampaign
