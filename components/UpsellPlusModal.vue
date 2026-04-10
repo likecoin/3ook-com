@@ -39,7 +39,6 @@
         :trial-period-days="trialPeriodDays"
         :yearly-description="yearlyDescription"
         :monthly-description="monthlyDescription"
-        :is-limited-offer-badge-hidden="true"
       />
     </template>
     <template #footer>

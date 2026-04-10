@@ -131,14 +131,44 @@
 
           <div :class="$slots['pricing-mobile'] ? 'hidden laptop:contents' : undefined">
             <slot name="pricing">
-              <PricingLimitedOfferAlert
+              <div
                 v-if="!isApp"
-                :is-hidden="!isPaidTrial"
+                :class="{ 'bg-theme-cyan p-3 rounded-xl': isPaidTrial }"
               >
+                <header
+                  v-if="isPaidTrial"
+                  class="hidden laptop:flex items-center gap-2 mb-3 text-theme-black"
+                >
+                  <UIcon
+                    name="i-material-symbols-celebration-outline-rounded"
+                    :size="24"
+                  />
+                  <span
+                    class="font-bold"
+                    v-text="$t('subscribe_plus_alert_limited_offer')"
+                  />
+                </header>
+
                 <PricingPlanSelect
                   v-model="selectedPlan"
                   :trial-period-days="trialPeriodDays"
-                />
+                >
+                  <template #header-left>
+                    <div
+                      v-if="isPaidTrial"
+                      class="flex items-center gap-1.5 text-theme-black"
+                    >
+                      <UIcon
+                        name="i-material-symbols-celebration-outline-rounded"
+                        :size="20"
+                      />
+                      <span
+                        class="text-sm font-bold"
+                        v-text="$t('subscribe_plus_alert_limited_offer')"
+                      />
+                    </div>
+                  </template>
+                </PricingPlanSelect>
 
                 <UButton
                   class="mt-4"
@@ -149,7 +179,7 @@
                   :ui="{ base: 'py-2 laptop:py-3 cursor-pointer', label: 'font-bold' }"
                   @click="handleSubscribeButtonClick"
                 />
-              </PricingLimitedOfferAlert>
+              </div>
 
               <UButton
                 class="mt-2 self-center"

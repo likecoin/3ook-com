@@ -1,22 +1,10 @@
 <template>
   <div class="flex flex-col gap-2 laptop:gap-3">
-    <div
+    <header
       v-if="!isYearlyHidden && !isMonthlyHidden"
       class="flex items-center justify-between mb-1 laptop:hidden"
     >
-      <div
-        v-if="isPaidTrial && !props.isLimitedOfferBadgeHidden"
-        class="flex items-center gap-1.5 text-theme-black"
-      >
-        <UIcon
-          name="i-material-symbols-celebration-outline-rounded"
-          :size="20"
-        />
-        <span
-          class="text-sm font-bold"
-          v-text="$t('subscribe_plus_alert_limited_offer')"
-        />
-      </div>
+      <slot name="header-left" />
 
       <div class="inline-flex ml-auto p-0.5 bg-theme-black/8 dark:bg-theme-white/8 rounded-full">
         <button
@@ -37,7 +25,7 @@
           v-text="option.label"
         />
       </div>
-    </div>
+    </header>
 
     <label
       v-for="plan in plans"
@@ -196,7 +184,6 @@ const props = withDefaults(defineProps<{
   trialPrice?: number
   yearlyDescription?: string
   monthlyDescription?: string
-  isLimitedOfferBadgeHidden?: boolean
 }>(), {
   isYearlyHidden: false,
   isMonthlyHidden: false,
@@ -205,7 +192,6 @@ const props = withDefaults(defineProps<{
   trialPrice: PAID_TRIAL_PRICE,
   yearlyDescription: undefined,
   monthlyDescription: undefined,
-  isLimitedOfferBadgeHidden: false,
 })
 
 const { t: $t } = useI18n()
@@ -252,9 +238,6 @@ const plans = computed(() => {
     let badgeText: string | undefined
     if (!isMonthly) {
       badgeText = $t('pricing_page_yearly_discount', { discount: yearlyDiscountPercent.value })
-    }
-    else if (!props.isLimitedOfferBadgeHidden && !props.isAllowYearlyTrial && isPaidTrial.value) {
-      badgeText = $t('subscribe_plus_alert_limited_offer')
     }
 
     const showTrialPrice = isMonthly || props.isAllowYearlyTrial
