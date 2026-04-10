@@ -15,42 +15,38 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, message: 'NO_CUSTOM_VOICE' })
   }
 
-  try {
-    const client = getMiniMaxSpeechClient()
-    await client.deleteVoice({
+  const client = getMiniMaxSpeechClient()
+  const bucket = getCustomVoiceStorageBucket()
+  const ttsBucket = getTTSCacheBucket()
+
+  await Promise.all([
+    client.deleteVoice({
       voiceType: 'voice_cloning',
       voiceId: customVoice.voiceId,
-    })
-  }
-  catch (error) {
-    console.warn('[CustomVoice] Failed to delete Minimax voice:', error)
-  }
-
-  const bucket = getCustomVoiceStorageBucket()
-  if (bucket) {
-    try {
-      if (customVoice.audioPath) {
-        await bucket.file(customVoice.audioPath).delete().catch(() => {})
-      }
-      if (customVoice.avatarPath) {
-        await bucket.file(customVoice.avatarPath).delete().catch(() => {})
-      }
-    }
-    catch (error) {
-      console.warn('[CustomVoice] Failed to delete storage files:', error)
-    }
-  }
-
-  const ttsBucket = getTTSCacheBucket()
-  if (ttsBucket) {
-    try {
-      const prefix = getCustomVoiceTTSCachePrefix(wallet)
-      await ttsBucket.deleteFiles({ prefix })
-    }
-    catch (error) {
-      console.warn('[CustomVoice] Failed to delete TTS cache files:', error)
-    }
-  }
+    }).catch((error) => {
+      console.warn('[CustomVoice] Failed to delete Minimax voice:', error)
+    }),
+    bucket
+      ? bucket.deleteFiles({ prefix: getCustomVoiceAudioPrefix(wallet) }).catch((error) => {
+          console.warn('[CustomVoice] Failed to delete audio files:', error)
+        })
+      : Promise.resolve(),
+    bucket
+      ? bucket.deleteFiles({ prefix: getCustomVoiceAvatarPrefix(wallet) }).catch((error) => {
+          console.warn('[CustomVoice] Failed to delete avatar files:', error)
+        })
+      : Promise.resolve(),
+    bucket
+      ? bucket.deleteFiles({ prefix: getCustomVoicePromptAudioPrefix(wallet) }).catch((error) => {
+          console.warn('[CustomVoice] Failed to delete prompt audio files:', error)
+        })
+      : Promise.resolve(),
+    ttsBucket
+      ? ttsBucket.deleteFiles({ prefix: getCustomVoiceTTSCachePrefix(wallet) }).catch((error) => {
+          console.warn('[CustomVoice] Failed to delete TTS cache files:', error)
+        })
+      : Promise.resolve(),
+  ])
 
   await deleteCustomVoice(wallet)
 

@@ -67,12 +67,16 @@ export function getCustomVoicePromptAudioPath(wallet: string, ext: string): stri
   return `${getCustomVoicePromptAudioPrefix(wallet)}${ext}`
 }
 
-export function getCustomVoiceAvatarPath(wallet: string, ext: string): string {
+export function getCustomVoiceAvatarPrefix(wallet: string): string {
   const config = useRuntimeConfig()
   if (!config.customVoiceBucketPrefix) {
     throw new Error('Custom voice bucket is not configured')
   }
-  return `${config.customVoiceBucketPrefix}/${wallet}/avatar.${ext}`
+  return `${config.customVoiceBucketPrefix}/${wallet}/avatar.`
+}
+
+export function getCustomVoiceAvatarPath(wallet: string, ext: string): string {
+  return `${getCustomVoiceAvatarPrefix(wallet)}${ext}`
 }
 
 export function getCustomVoiceStorageBucket() {

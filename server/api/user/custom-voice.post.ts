@@ -86,60 +86,65 @@ export default defineEventHandler(async (event): Promise<CustomVoiceData> => {
     errorMessages: { invalidFormat: 'INVALID_PROMPT_AUDIO_FORMAT', tooLarge: 'PROMPT_AUDIO_TOO_LARGE' },
   })
 
-  const existingVoice = await getCustomVoice(wallet)
-  if (existingVoice?.voiceId) {
-    try {
-      const client = getMiniMaxSpeechClient()
-      await client.deleteVoice({
-        voiceType: 'voice_cloning',
-        voiceId: existingVoice.voiceId,
+  const client = getMiniMaxSpeechClient()
+  const voiceBucket = getCustomVoiceStorageBucket()
+  const ttsBucket = getTTSCacheBucket()
+
+  const existingVoicePromise = getCustomVoice(wallet)
+
+  void existingVoicePromise.then((existing) => {
+    if (!existing?.voiceId) return
+    void client.deleteVoice({
+      voiceType: 'voice_cloning',
+      voiceId: existing.voiceId,
+    }).catch((error) => {
+      console.warn('[CustomVoice] Failed to delete old Minimax voice:', error)
+    })
+    if (ttsBucket) {
+      void ttsBucket.deleteFiles({ prefix: getCustomVoiceTTSCachePrefix(wallet) }).catch((error) => {
+        console.warn('[CustomVoice] Failed to delete TTS cache files:', error)
       })
     }
-    catch (error) {
-      console.warn('[CustomVoice] Failed to delete old Minimax voice:', error)
-    }
+  }).catch(() => {})
 
-    const ttsBucket = getTTSCacheBucket()
-    if (ttsBucket) {
-      try {
-        const prefix = getCustomVoiceTTSCachePrefix(wallet)
-        await ttsBucket.deleteFiles({ prefix })
-      }
-      catch (error) {
-        console.warn('[CustomVoice] Failed to delete TTS cache files:', error)
-      }
-    }
+  const oldAudioDeleted: Promise<void> = existingVoicePromise.then(async (existing) => {
+    if (!existing?.voiceId || !voiceBucket) return
+    await voiceBucket.deleteFiles({ prefix: getCustomVoiceAudioPrefix(wallet) }).catch((error) => {
+      console.warn('[CustomVoice] Failed to delete old audio files:', error)
+    })
+  })
 
-    const voiceBucket = getCustomVoiceStorageBucket()
-    if (voiceBucket) {
-      try {
-        const sourcePrefix = getCustomVoiceAudioPrefix(wallet)
-        const promptPrefix = getCustomVoicePromptAudioPrefix(wallet)
-        await Promise.all([
-          voiceBucket.deleteFiles({ prefix: sourcePrefix }),
-          voiceBucket.deleteFiles({ prefix: promptPrefix }),
-        ])
-      }
-      catch (error) {
-        console.warn('[CustomVoice] Failed to delete old voice files:', error)
-      }
-    }
-  }
+  const oldPromptDeleted: Promise<void> = existingVoicePromise.then(async (existing) => {
+    if (!existing?.voiceId || !voiceBucket) return
+    await voiceBucket.deleteFiles({ prefix: getCustomVoicePromptAudioPrefix(wallet) }).catch((error) => {
+      console.warn('[CustomVoice] Failed to delete old prompt audio files:', error)
+    })
+  })
 
-  const client = getMiniMaxSpeechClient()
+  const oldAvatarDeleted: Promise<void> = existingVoicePromise.then(async (existing) => {
+    if (!existing?.voiceId || !voiceBucket) return
+    await voiceBucket.deleteFiles({ prefix: getCustomVoiceAvatarPrefix(wallet) }).catch((error) => {
+      console.warn('[CustomVoice] Failed to delete old avatar files:', error)
+    })
+  })
+
   const audioExt = getExtFromMime(audioPart!.type!)
   const audioBlob = new File([audioPart!.data], `voice.${audioExt}`, { type: audioPart!.type })
-
   const audioUploadPromise = client.uploadFile(audioBlob, 'voice_clone')
 
-  let promptUploadResult: FileUploadResult | undefined
+  let promptUploadPromise: Promise<FileUploadResult | undefined> = Promise.resolve(undefined)
   if (promptAudioPart?.data && promptAudioPart.type) {
     const promptExt = getExtFromMime(promptAudioPart.type)
     const promptBlob = new File([promptAudioPart.data], `prompt.${promptExt}`, { type: promptAudioPart.type })
-    promptUploadResult = await client.uploadFile(promptBlob, 'prompt_audio')
+    promptUploadPromise = client.uploadFile(promptBlob, 'prompt_audio')
   }
+  // Prevent orphan rejection if audio upload rejects first in Promise.all
+  promptUploadPromise.catch(() => {})
 
-  const uploadResult = await audioUploadPromise
+  const [uploadResult, promptUploadResult] = await Promise.all([
+    audioUploadPromise,
+    promptUploadPromise,
+  ])
   if (!uploadResult) throw createError({ statusCode: 500, message: 'UPLOAD_FAILED' })
   const fileId = uploadResult.file.fileId
 
@@ -155,7 +160,7 @@ export default defineEventHandler(async (event): Promise<CustomVoiceData> => {
     ? { promptAudio: promptUploadResult.file.fileId, promptText: promptText || '' }
     : undefined
 
-  await client.cloneVoice({
+  const cloneVoicePromise = client.cloneVoice({
     fileId,
     voiceId: minimaxVoiceId,
     clonePrompt,
@@ -164,52 +169,62 @@ export default defineEventHandler(async (event): Promise<CustomVoiceData> => {
     needVolumeNormalization: true,
   })
 
-  const bucket = getCustomVoiceStorageBucket()
-  let audioPath: string | undefined
-  let avatarPath: string | undefined
-  let avatarUrl: string | undefined
-
-  if (bucket) {
-    audioPath = getCustomVoiceAudioPath(wallet, audioExt)
-    const audioFile = bucket.file(audioPath)
-    await audioFile.save(audioPart!.data, {
+  const audioSavePromise: Promise<string | undefined> = (async () => {
+    await oldAudioDeleted
+    if (!voiceBucket) return undefined
+    const path = getCustomVoiceAudioPath(wallet, audioExt)
+    await voiceBucket.file(path).save(audioPart!.data, {
       metadata: { contentType: audioPart!.type },
     })
+    return path
+  })()
 
-    if (promptAudioPart?.data && promptAudioPart.type) {
-      try {
-        const promptStorageExt = getExtFromMime(promptAudioPart.type)
-        const promptPath = getCustomVoicePromptAudioPath(wallet, promptStorageExt)
-        const promptStorageFile = bucket.file(promptPath)
-        await promptStorageFile.save(promptAudioPart.data, {
-          metadata: { contentType: promptAudioPart.type },
-        })
-      }
-      catch (error) {
-        console.warn('[CustomVoice] Failed to save prompt audio:', error)
+  const promptSavePromise: Promise<void> = (async () => {
+    await oldPromptDeleted
+    if (!voiceBucket || !promptAudioPart?.data || !promptAudioPart.type) return
+    try {
+      const promptStorageExt = getExtFromMime(promptAudioPart.type)
+      const promptPath = getCustomVoicePromptAudioPath(wallet, promptStorageExt)
+      await voiceBucket.file(promptPath).save(promptAudioPart.data, {
+        metadata: { contentType: promptAudioPart.type },
+      })
+    }
+    catch (error) {
+      console.warn('[CustomVoice] Failed to save prompt audio:', error)
+    }
+  })()
+
+  const avatarSavePromise: Promise<{ avatarPath?: string, avatarUrl?: string }> = (async () => {
+    await oldAvatarDeleted
+    if (!voiceBucket || !avatarPart?.data || !avatarPart.type) return {}
+    try {
+      const avatarExt = getExtFromMime(avatarPart.type)
+      const avatarPath = getCustomVoiceAvatarPath(wallet, avatarExt)
+      const downloadToken = generateFirebaseDownloadToken()
+      await voiceBucket.file(avatarPath).save(avatarPart.data, {
+        metadata: {
+          contentType: avatarPart.type,
+          metadata: { firebaseStorageDownloadTokens: downloadToken },
+        },
+      })
+      return {
+        avatarPath,
+        avatarUrl: getFirebaseStorageDownloadURL(voiceBucket.name, avatarPath, downloadToken),
       }
     }
-
-    if (avatarPart?.data && avatarPart.type) {
-      try {
-        const avatarExt = getExtFromMime(avatarPart.type)
-        avatarPath = getCustomVoiceAvatarPath(wallet, avatarExt)
-        const avatarFile = bucket.file(avatarPath)
-        const downloadToken = generateFirebaseDownloadToken()
-        await avatarFile.save(avatarPart.data, {
-          metadata: {
-            contentType: avatarPart.type,
-            metadata: { firebaseStorageDownloadTokens: downloadToken },
-          },
-        })
-        avatarUrl = getFirebaseStorageDownloadURL(bucket.name, avatarPath, downloadToken)
-      }
-      catch (error) {
-        console.warn('[CustomVoice] Failed to save avatar:', error)
-        avatarPath = undefined
-      }
+    catch (error) {
+      console.warn('[CustomVoice] Failed to save avatar:', error)
+      return {}
     }
-  }
+  })()
+
+  const [, audioPath, , avatarResult] = await Promise.all([
+    cloneVoicePromise,
+    audioSavePromise,
+    promptSavePromise,
+    avatarSavePromise,
+  ])
+  const { avatarPath, avatarUrl } = avatarResult
 
   await setCustomVoice(wallet, {
     voiceId: minimaxVoiceId,
