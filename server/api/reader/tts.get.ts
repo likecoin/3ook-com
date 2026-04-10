@@ -18,8 +18,9 @@ async function redirectToCachedAudio(
     : await getOrCreatePersistentDownloadURL(file)
   // Short-lived cache so Safari/AVPlayer can reuse the 302 for range probes
   // within a single segment playback instead of re-auth'ing on every probe.
-  // Each TTS segment has a distinct text+sig, so a new segment still mints
-  // a fresh redirect and runs analytics + Liker+ checks.
+  // Tradeoff: same-segment replays within 60s skip the Liker+ quota check
+  // and TTSCacheHit analytics. Per-segment text+sig means new segments still
+  // mint a fresh redirect and re-run both checks.
   setHeader(event, 'cache-control', 'private, max-age=60')
   return sendRedirect(event, downloadURL, 302)
 }
