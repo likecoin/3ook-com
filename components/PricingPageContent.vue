@@ -128,6 +128,7 @@
           >
             <slot name="pricing-mobile" />
           </div>
+
           <div :class="$slots['pricing-mobile'] ? 'hidden laptop:contents' : undefined">
             <slot name="pricing">
               <PricingLimitedOfferAlert
@@ -156,8 +157,35 @@
                 :to="learnMoreRoute"
                 variant="link"
                 color="neutral"
+                block
                 size="sm"
               />
+
+              <UAlert
+                v-if="!isApp && coupon"
+                class="mt-4"
+                color="secondary"
+                variant="soft"
+                icon="i-material-symbols-percent-discount-outline-rounded"
+                :description="$t('pricing_page_coupon_applied_description')"
+                :ui="{
+                  root: 'rounded-xl',
+                  title: 'font-bold',
+                }"
+              >
+                <template #title>
+                  <i18n-t keypath="pricing_page_coupon_applied_title">
+                    <template #code>
+                      <UBadge
+                        class="font-bold font-mono"
+                        :label="coupon"
+                        color="primary"
+                        variant="soft"
+                      />
+                    </template>
+                  </i18n-t>
+                </template>
+              </UAlert>
             </slot>
           </div>
         </div>

@@ -547,6 +547,7 @@
   "plus_subscribe_cta_yearly_gift": "Subscribe yearly — this book is free",
   "price_free": "Free",
   "pricing_page_coupon_applied_description": "The final discount will be calculated and shown at checkout.",
+  "pricing_page_coupon_applied_title": "Coupon {code} has been applied",
   "pricing_page_description": "3ook.com — Read, Listen, Own. The 3rd-gen bookstore ecosystem. Become Plus member to listen to books with a custom voice, receive a free book of your choice and get 20% off on all titles.",
   "pricing_page_feature_1": "Custom voice narration — or create your own private voice actor",
   "pricing_page_feature_2": "20% off all books",
