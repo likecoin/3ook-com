@@ -3,7 +3,7 @@
     :title="$t('product_page_plus_promo_title')"
     :description="$t('product_page_plus_promo_description')"
     icon="i-material-symbols-celebration-outline-rounded"
-    color="neutral"
+    color="secondary"
     variant="subtle"
     orientation="horizontal"
     :ui="{

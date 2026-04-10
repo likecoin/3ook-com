@@ -7,10 +7,12 @@
       pricingItems.length > 1 ? 'pb-[152px]' : 'pb-[120px]',
     ]"
   >
-    <BookPlusPromoAlert
+    <aside
       v-if="isPlusPromoBannerVisible"
-      class="tablet:hidden sticky max-w-[1280px] rounded-t-none top-0 z-20 bg-theme-white shadow-lg"
-    />
+      class="tablet:hidden sticky top-0 z-20 w-full max-w-[1280px] bg-(--app-bg) shadow-lg rounded-b-xl"
+    >
+      <BookPlusPromoAlert class="rounded-t-none" />
+    </aside>
 
     <div
       :class="[
