@@ -15,6 +15,7 @@ interface VoiceConfig {
 const VOICE_CONFIG: Record<string, VoiceConfig> = {
   0: { minimaxVoiceId: 'Chinese (Mandarin)_Warm_Bestie', displayName: 'Female Narrator' },
   1: { minimaxVoiceId: 'Chinese (Mandarin)_Southern_Young_Man', displayName: 'Male Narrator' },
+  astro: { minimaxVoiceId: 'three_book_astro_v0', displayName: 'Astro' },
   aurora: { minimaxVoiceId: 'three_book_aurora_v0', displayName: 'Aurora' },
   pazu: { minimaxVoiceId: 'book_pazu_v2', displayName: 'Pazu' },
   phoebe: { minimaxVoiceId: 'phoebe_v1', model: 'speech-2.6-hd', displayName: 'Phoebe' },

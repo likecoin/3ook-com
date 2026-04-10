@@ -2,6 +2,7 @@ import { useStorage } from '@vueuse/core'
 import type { CustomVoiceData } from '~/shared/types/custom-voice'
 import phoebeAvatar from '@/assets/images/voice-avatars/phoebe.jpg'
 import auroraAvatar from '@/assets/images/voice-avatars/aurora.jpg'
+import astroAvatar from '@/assets/images/voice-avatars/astro.jpg'
 import pazuAvatar from '@/assets/images/voice-avatars/pazu.jpg'
 import defaultAvatar from '@/assets/images/voice-avatars/default.jpg'
 import customDefaultAvatar from '@/assets/images/voice-avatars/custom-default.jpg'
@@ -29,11 +30,20 @@ export function useTTSVoice(options: TTSVoiceOptions = {}) {
   const ttsLanguageVoiceOptions = [
     { label: 'Pazu 薯伯伯 - 粵語', value: 'zh-HK_pazu' },
     { label: 'Phoebe - 粵語口語', value: 'zh-HK_phoebe' },
+    { label: '許明恩 - 國語', value: 'zh-TW_astro' },
     { label: 'Aurora - 國語', value: 'zh-TW_aurora' },
-    { label: '國語男聲', value: 'zh-TW_1' },
     { label: 'English female', value: 'en-US_0' },
     { label: 'English male', value: 'en-US_1' },
   ]
+
+  if (config.public.isTestnet) {
+    ttsLanguageVoiceOptions.push(
+      { label: '粵語男聲', value: 'zh-HK_1' },
+      { label: '粵語女聲', value: 'zh-HK_0' },
+      { label: '國語男聲', value: 'zh-TW_1' },
+      { label: '國語女聲', value: 'zh-TW_0' },
+    )
+  }
 
   const availableTTSLanguageVoiceOptions = computed(() => {
     const language = toValue(bookLanguage)
@@ -126,6 +136,9 @@ export function useTTSVoice(options: TTSVoiceOptions = {}) {
 
       case 'zh-TW_aurora':
         return auroraAvatar
+
+      case 'zh-TW_astro':
+        return astroAvatar
 
       default:
         return defaultAvatar
