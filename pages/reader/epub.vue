@@ -266,7 +266,7 @@
                 'flex-1',
                 'h-full',
                 'cursor-pointer',
-                { 'opacity-0 pointer-events-none': isRightToLeft ? isAtLastPage : isAtFirstPage },
+                { 'opacity-0 pointer-events-none': isDefaultRightToLeft ? isAtLastPage : isAtFirstPage },
               ]"
               @click="handleLeftArrowButtonClick"
             >
@@ -292,7 +292,7 @@
                 'flex-1',
                 'h-full',
                 'cursor-pointer',
-                { 'opacity-0 pointer-events-none': isRightToLeft ? isAtFirstPage : isAtLastPage },
+                { 'opacity-0 pointer-events-none': isDefaultRightToLeft ? isAtFirstPage : isAtLastPage },
               ]"
               @click="handleRightArrowButtonClick"
             >
@@ -595,7 +595,8 @@ const isAtLastPage = computed(() => {
 const isAtFirstPage = computed(() => {
   return currentSectionIndex.value === 0 && percentage.value === 0
 })
-const isRightToLeft = ref(false)
+const isDefaultRightToLeft = ref(false)
+const hasCapturedDefaultPageTurnDirection = ref(false)
 const currentPageStartCfi = ref<string>('')
 const currentPageEndCfi = ref<string>('')
 const currentPageHref = ref<string>('')
@@ -866,7 +867,10 @@ async function loadEPub() {
 
   rendition.value.on('rendered', (section: Section, view: EpubView) => {
     currentSectionIndex.value = section.index ?? 0
-    isRightToLeft.value = view.settings.direction === 'rtl'
+    if (!hasCapturedDefaultPageTurnDirection.value) {
+      isDefaultRightToLeft.value = view.settings.direction === 'rtl'
+      hasCapturedDefaultPageTurnDirection.value = true
+    }
     renditionViewWindow.value = view.window
     isPageLoading.value = false
 
@@ -1150,7 +1154,7 @@ function prevPage() {
 }
 
 function turnPageLeft() {
-  if (isRightToLeft.value) {
+  if (isDefaultRightToLeft.value) {
     nextPage()
   }
   else {
@@ -1159,7 +1163,7 @@ function turnPageLeft() {
 }
 
 function turnPageRight() {
-  if (isRightToLeft.value) {
+  if (isDefaultRightToLeft.value) {
     prevPage()
   }
   else {
