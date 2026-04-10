@@ -92,20 +92,22 @@ export default defineEventHandler(async (event): Promise<CustomVoiceData> => {
 
   const existingVoicePromise = getCustomVoice(wallet)
 
-  void existingVoicePromise.then((existing) => {
+  const oldMinimaxVoiceDeleted: Promise<void> = existingVoicePromise.then(async (existing) => {
     if (!existing?.voiceId) return
-    void client.deleteVoice({
+    await client.deleteVoice({
       voiceType: 'voice_cloning',
       voiceId: existing.voiceId,
     }).catch((error) => {
       console.warn('[CustomVoice] Failed to delete old Minimax voice:', error)
     })
-    if (ttsBucket) {
-      void ttsBucket.deleteFiles({ prefix: getCustomVoiceTTSCachePrefix(wallet) }).catch((error) => {
-        console.warn('[CustomVoice] Failed to delete TTS cache files:', error)
-      })
-    }
-  }).catch(() => {})
+  })
+
+  const oldTTSCacheDeleted: Promise<void> = existingVoicePromise.then(async (existing) => {
+    if (!existing?.voiceId || !ttsBucket) return
+    await ttsBucket.deleteFiles({ prefix: getCustomVoiceTTSCachePrefix(wallet) }).catch((error) => {
+      console.warn('[CustomVoice] Failed to delete TTS cache files:', error)
+    })
+  })
 
   const oldAudioDeleted: Promise<void> = existingVoicePromise.then(async (existing) => {
     if (!existing?.voiceId || !voiceBucket) return
@@ -223,6 +225,8 @@ export default defineEventHandler(async (event): Promise<CustomVoiceData> => {
     audioSavePromise,
     promptSavePromise,
     avatarSavePromise,
+    oldMinimaxVoiceDeleted,
+    oldTTSCacheDeleted,
   ])
   const { avatarPath, avatarUrl } = avatarResult
 
