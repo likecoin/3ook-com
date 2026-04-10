@@ -230,7 +230,7 @@ export default defineEventHandler(async (event) => {
 
   const cacheMetadata = {
     contentType: provider.format,
-    customMetadata: {
+    metadata: {
       language,
       voiceId,
       provider: provider.provider,
