@@ -12,6 +12,79 @@ declare global {
   }
 }
 
+// Intercom caps unique event names at 120 per workspace. Only forward events
+// that give CS agents meaningful context for a user's ticket; all other events
+// still reach PostHog / GA4 / Meta Pixel / UET unchanged.
+const INTERCOM_EVENT_ALLOWLIST = new Set<string>([
+  // Auth & account state
+  'sign_up',
+  'login',
+  'login_error',
+  'login_wallet_rejected',
+  'login_email_already_used',
+  'register_email_already_used',
+  'register_invalid_account_id',
+  'login_panel_open',
+  'login_register_cancelled',
+
+  // Commerce funnel
+  'view_item',
+  'add_to_cart',
+  'remove_from_cart',
+  'view_cart',
+  'begin_checkout',
+  'purchase',
+  'checkout_error',
+
+  // Gift & claim flows
+  'claim_started',
+  'claim_error',
+  'claim_timeout',
+  'plus_gift_claimed',
+  'shelf_claim_free_book',
+
+  // Subscription
+  'start_trial',
+  'subscribe',
+  'subscription_button_click',
+  'subscription_login_required',
+  'subscription_checkout_error',
+
+  // Reader engagement
+  'reading_session_start',
+  'reading_session_end',
+  'shelf_open_book',
+  'shelf_download_book',
+
+  // TTS outcomes
+  'tts_start',
+  'tts_completed',
+  'tts_error',
+  'tts_try_modal_open',
+
+  // Annotations
+  'annotation_created',
+  'export_annotations',
+
+  // Wallet / high-stakes on-chain
+  'burn_nft_success',
+  'burn_nft_error',
+  'stake_success',
+  'unstake_amount_success',
+  'donate_reward_success',
+  'claim_rewards_success',
+  'staking_claim_all_rewards_success',
+  'migrate_legacy_book_button_click',
+  'account_delete_account_success',
+  'export_private_key',
+  'customer_service',
+
+  // Deposit / withdraw actions
+  'deposit_button_click',
+  'deposit_withdraw_button_click',
+  'deposit_claim_rewards_button_click',
+])
+
 export function useLogEvent(eventName: string, eventParams: EventParams = {}) {
   try {
     useTrackEvent(eventName, eventParams)
@@ -68,7 +141,7 @@ export function useLogEvent(eventName: string, eventParams: EventParams = {}) {
     console.error(`Failed to track event with Meta Pixel: ${eventName}`, eventParams)
   }
 
-  if (window?.Intercom) {
+  if (window?.Intercom && INTERCOM_EVENT_ALLOWLIST.has(eventName)) {
     try {
       const { items, ...params } = eventParams
       if (items) {
