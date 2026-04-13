@@ -266,7 +266,7 @@
                 'flex-1',
                 'h-full',
                 'cursor-pointer',
-                { 'opacity-0 pointer-events-none': isDefaultRightToLeft ? isAtLastPage : isAtFirstPage },
+                { 'opacity-0 pointer-events-none': isRightToLeft ? isAtLastPage : isAtFirstPage },
               ]"
               @click="handleLeftArrowButtonClick"
             >
@@ -292,7 +292,7 @@
                 'flex-1',
                 'h-full',
                 'cursor-pointer',
-                { 'opacity-0 pointer-events-none': isDefaultRightToLeft ? isAtFirstPage : isAtLastPage },
+                { 'opacity-0 pointer-events-none': isRightToLeft ? isAtFirstPage : isAtLastPage },
               ]"
               @click="handleRightArrowButtonClick"
             >
@@ -595,8 +595,6 @@ const isAtLastPage = computed(() => {
 const isAtFirstPage = computed(() => {
   return currentSectionIndex.value === 0 && percentage.value === 0
 })
-const isDefaultRightToLeft = ref(false)
-const hasCapturedDefaultPageTurnDirection = ref(false)
 const currentPageStartCfi = ref<string>('')
 const currentPageEndCfi = ref<string>('')
 const currentPageHref = ref<string>('')
@@ -641,6 +639,7 @@ const writingMode = useSyncedBookSettings<EpubWritingMode>({
   defaultValue: DEFAULT_WRITING_MODE,
   namespace: 'epub',
 })
+const isRightToLeft = computed(() => writingMode.value === EPUB_WRITING_MODES.vertical)
 
 function getWritingModeStyles() {
   const isVerticalWritingMode = writingMode.value === EPUB_WRITING_MODES.vertical
@@ -867,10 +866,6 @@ async function loadEPub() {
 
   rendition.value.on('rendered', (section: Section, view: EpubView) => {
     currentSectionIndex.value = section.index ?? 0
-    if (!hasCapturedDefaultPageTurnDirection.value) {
-      isDefaultRightToLeft.value = view.settings.direction === 'rtl'
-      hasCapturedDefaultPageTurnDirection.value = true
-    }
     renditionViewWindow.value = view.window
     isPageLoading.value = false
 
@@ -1154,7 +1149,7 @@ function prevPage() {
 }
 
 function turnPageLeft() {
-  if (isDefaultRightToLeft.value) {
+  if (isRightToLeft.value) {
     nextPage()
   }
   else {
@@ -1163,7 +1158,7 @@ function turnPageLeft() {
 }
 
 function turnPageRight() {
-  if (isDefaultRightToLeft.value) {
+  if (isRightToLeft.value) {
     prevPage()
   }
   else {
