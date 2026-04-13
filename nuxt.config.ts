@@ -239,7 +239,6 @@ export default defineNuxtConfig({
     registry: {
       intercom: true,
       metaPixel: true,
-      stripe: true,
     },
   },
 
