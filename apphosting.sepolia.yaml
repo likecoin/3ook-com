@@ -79,10 +79,6 @@ env:
     value: j0ryap5a
   - variable: NUXT_SESSION_PASSWORD
     secret: V3_NUXT_SESSION_PASSWORD
-  - variable: PDF_VIEWER_ORIGIN
-    value: https://likecoin.github.io
-  - variable: PDF_VIEWER_PATH
-    value: /pdf.js/legacy/web/viewer.html
   - variable: POSTHOG_DEFAULTS
     value: 2026-01-30
   - variable: POSTHOG_HOST

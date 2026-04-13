@@ -100,8 +100,6 @@ export default defineNuxtConfig({
       ipfsEndpoint: process.env.IPFS_ENDPOINT,
       isMaintenanceMode: process.env.IS_MAINTENANCE_MODE !== undefined,
       isTestnet: process.env.IS_TESTNET,
-      pdfViewerOrigin: process.env.PDF_VIEWER_ORIGIN,
-      pdfViewerURL: `${process.env.PDF_VIEWER_ORIGIN}${process.env.PDF_VIEWER_PATH}`,
       posthogPublicKey: process.env.POSTHOG_PUBLIC_KEY,
       posthogHost: process.env.POSTHOG_HOST,
       posthogDefaults: process.env.POSTHOG_DEFAULTS,
@@ -258,12 +256,10 @@ export default defineNuxtConfig({
         'frame-src': isDevelopment
           ? ['*']
           : [
-              process.env.PDF_VIEWER_ORIGIN || '',
               'https://auth.magic.link',
               'https://js.stripe.com',
               'https://td.doubleclick.net',
               'https://www.googletagmanager.com',
-              'https://www.facebook.com',
               'https://verify.walletconnect.com',
               'https://verify.walletconnect.org',
               'https://secure.walletconnect.com',
@@ -303,7 +299,6 @@ export default defineNuxtConfig({
         ],
         'form-action': [
           '\'self\'',
-          'https://www.facebook.com',
         ],
         'frame-ancestors': [
           '\'self\'',
@@ -319,7 +314,7 @@ export default defineNuxtConfig({
         // NOTE: Resolve Safari force HTTPS in development
         'upgrade-insecure-requests': isDevelopment ? false : true,
       },
-      // NOTE: Allow Magic Link/PDF.js iframes
+      // NOTE: Allow Magic Link iframes
       crossOriginEmbedderPolicy: 'unsafe-none',
       crossOriginOpenerPolicy: 'same-origin-allow-popups',
       referrerPolicy: 'strict-origin-when-cross-origin',
