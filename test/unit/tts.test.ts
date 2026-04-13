@@ -192,11 +192,16 @@ describe('splitTextIntoSegments', () => {
     const text = `${clause}。${clause}。${clause}。${clause}。${clause}。${clause}。${clause}。${clause}。`
     const result = splitTextIntoSegments(text)
     expect(result.join('')).toBe(text)
-    const target = text.length / result.length
-    for (const seg of result) {
-      expect(seg.length).toBeLessThanOrEqual(100)
-      expect(Math.abs(seg.length - target)).toBeLessThan(target * 0.5)
+    const lengths = result.map(seg => seg.length)
+    for (const length of lengths) {
+      expect(length).toBeLessThanOrEqual(100)
     }
+    // Tight spread catches regressions to a greedy fill pattern (e.g.
+    // 100/100/40) which a weaker 50%-variance bound would silently accept.
+    const maxLen = Math.max(...lengths)
+    const minLen = Math.min(...lengths)
+    expect(maxLen - minLen).toBeLessThanOrEqual(30)
+    expect(minLen).toBeGreaterThanOrEqual(60)
   })
 })
 

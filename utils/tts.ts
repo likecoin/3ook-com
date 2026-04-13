@@ -75,7 +75,7 @@ function mergeParts(parts: string[]): string[] {
     const splits: number[] = [0]
     for (let j = 1; j < k; j++) {
       const goal = j * target
-      const prev = splits.at(-1)!
+      const prev = splits[splits.length - 1]!
       const maxIdx = n - (k - j)
       let best = prev + 1
       let bestDiff = Math.abs(prefix[best]! - goal)
@@ -106,7 +106,10 @@ function mergeParts(parts: string[]): string[] {
   const initialK = Math.min(n, Math.ceil(totalLength / MAX_SEGMENT_LENGTH))
 
   // If a single atomic part is already larger than MAX, no amount of
-  // re-partitioning fits it — let the caller re-split via a finer delimiter.
+  // re-partitioning fits it. Return the initialK split; when called with
+  // sentence parts, splitTextIntoSegments retries via CLAUSE_REGEX. At the
+  // clause level there is no finer delimiter, so oversize segments pass
+  // through — the TTS backend must tolerate them.
   if (maxPartLen > MAX_SEGMENT_LENGTH) return buildSegments(initialK).segments
 
   for (let k = initialK; k <= n; k++) {
