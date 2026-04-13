@@ -8,8 +8,8 @@ export interface CustomVoiceData {
 }
 
 export interface AffiliateVoiceData {
-  voiceId: string
-  voiceName: string
-  voiceLanguage?: string
-  affiliateFrom: string
+  id: string
+  name: string
+  language?: string
+  avatarUrl?: string
 }

@@ -1,10 +1,4 @@
-import { fetchLikeCoinNFTClassAggregatedMetadataById, getLikeCoinAPIFetch } from '~/shared/utils/api'
-
-interface AffiliateConfigResponse {
-  active: boolean
-  giftClassId?: string
-  customVoiceName?: string
-}
+import { fetchLikeCoinNFTClassAggregatedMetadataById } from '~/shared/utils/api'
 
 export default defineEventHandler(async (event) => {
   const likerId = getRouterParam(event, 'likerId')
@@ -12,32 +6,35 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'MISSING_LIKER_ID' })
   }
 
-  const affiliateData = await getLikeCoinAPIFetch()<AffiliateConfigResponse>(
-    `/plus/affiliate/${likerId}`,
-  ).catch(() => null)
-
-  if (!affiliateData?.active || !affiliateData.giftClassId) {
-    return { active: false }
-  }
+  const config = await getAffiliateConfig(likerId)
+  if (!config?.active) return { active: false }
 
   let giftBookName: string | undefined
   let giftBookCover: string | undefined
 
-  try {
-    const metadata = await fetchLikeCoinNFTClassAggregatedMetadataById(
-      affiliateData.giftClassId,
-      { include: ['bookstore'] },
-    )
-    giftBookName = metadata?.bookstoreInfo?.name
-    giftBookCover = metadata?.bookstoreInfo?.thumbnailUrl
+  if (config.giftClassId) {
+    try {
+      const metadata = await fetchLikeCoinNFTClassAggregatedMetadataById(
+        config.giftClassId,
+        { include: ['bookstore'] },
+      )
+      giftBookName = metadata?.bookstoreInfo?.name
+      giftBookCover = metadata?.bookstoreInfo?.thumbnailUrl
+    }
+    catch { /* ignore */ }
   }
-  catch { /* ignore */ }
 
   return {
     active: true,
-    giftClassId: affiliateData.giftClassId,
+    giftClassId: config.giftClassId,
     giftBookName,
     giftBookCover,
-    customVoiceName: affiliateData.customVoiceName,
+    affiliateClassIds: config.affiliateClassIds,
+    customVoices: config.customVoices.map(v => ({
+      id: v.id,
+      name: v.name,
+      language: v.language,
+      avatarUrl: v.avatarUrl,
+    })),
   }
 })

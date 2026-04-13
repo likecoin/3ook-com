@@ -1,6 +1,6 @@
 import { useDocumentVisibility, useEventListener, useStorage } from '@vueuse/core'
 import type { CustomVoiceData, AffiliateVoiceData } from '~/shared/types/custom-voice'
-import { computeTTSTextSig, isAffiliateVoiceId } from '~/shared/utils/tts-sig'
+import { computeTTSTextSig, decodeAffiliateVoiceId, isAffiliateVoiceId } from '~/shared/utils/tts-sig'
 
 export const TTS_ERROR_NOT_ALLOWED = 'NotAllowedError'
 
@@ -14,7 +14,7 @@ interface TTSOptions {
   bookCoverSrc?: string | Ref<string> | ComputedRef<string>
   bookLanguage?: string | Ref<string> | ComputedRef<string>
   customVoice?: Ref<CustomVoiceData | null>
-  affiliateVoice?: Ref<AffiliateVoiceData | null>
+  affiliateVoices?: Ref<AffiliateVoiceData[]> | ComputedRef<AffiliateVoiceData[]>
 }
 
 export function useTextToSpeech(options: TTSOptions) {
@@ -48,8 +48,7 @@ export function useTextToSpeech(options: TTSOptions) {
   } = useTTSVoice({
     bookLanguage,
     customVoice: options.customVoice,
-    affiliateVoice: options.affiliateVoice,
-    nftClassId,
+    affiliateVoices: options.affiliateVoices,
   })
 
   function parseLanguageVoice(languageVoice: string) {
@@ -448,7 +447,11 @@ export function useTextToSpeech(options: TTSOptions) {
     recordOptimisticSegmentUsage(sanitizedText)
 
     if (isAffiliateVoiceId(ttsLanguageVoice.value)) {
-      const language = resolvePrivateVoiceLanguage(options.affiliateVoice?.value?.voiceLanguage)
+      const slot = decodeAffiliateVoiceId(ttsLanguageVoice.value)
+      const voice = slot
+        ? options.affiliateVoices?.value?.find(v => v.id === slot)
+        : undefined
+      const language = resolvePrivateVoiceLanguage(voice?.language)
       const params = new URLSearchParams({
         text: sanitizedText,
         language,

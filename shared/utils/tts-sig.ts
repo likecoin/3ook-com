@@ -2,8 +2,8 @@ export const TTS_PREVIEW_NFT_CLASS_ID = 'custom_voice_preview'
 
 export const AFFILIATE_VOICE_PREFIX = 'affiliate:'
 
-export function encodeAffiliateVoiceId(nftClassId: string): string {
-  return `${AFFILIATE_VOICE_PREFIX}${nftClassId}`
+export function encodeAffiliateVoiceId(voiceSlot: string): string {
+  return `${AFFILIATE_VOICE_PREFIX}${voiceSlot}`
 }
 
 export function isAffiliateVoiceId(voiceId: string): boolean {

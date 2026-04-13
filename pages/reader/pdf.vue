@@ -62,11 +62,11 @@ const {
   bookProgressKeyPrefix,
 } = useReader()
 const { fetchCustomVoice } = useCustomVoice()
-const { fetchAffiliateVoice } = useAffiliateVoice(nftClassId)
+const { fetchConfig: fetchPlusAffiliateConfig } = usePlusAffiliate()
 onMounted(() => {
   if (hasLoggedIn.value) {
     fetchCustomVoice()
-    fetchAffiliateVoice()
+    fetchPlusAffiliateConfig()
   }
 })
 const { handleError } = useErrorHandler()

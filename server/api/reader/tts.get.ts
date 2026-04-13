@@ -131,7 +131,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ status: 403, message: 'MISSING_TTS_KEY' })
   }
 
-  const affiliateVoiceClassId = isAffiliateVoice ? decodeAffiliateVoiceId(voiceId) : undefined
+  const affiliateVoiceSlot = isAffiliateVoice ? decodeAffiliateVoiceId(voiceId) : undefined
   let customMiniMaxVoiceId: string | undefined
   let voiceDisplayName: string | undefined
   let provider: BaseTTSProvider
@@ -141,15 +141,31 @@ export default defineEventHandler(async (event) => {
     if (!isLikerPlus) {
       throw createError({ status: 402, message: 'REQUIRE_LIKER_PLUS' })
     }
-    if (!affiliateVoiceClassId) {
+    const plusAffiliateFrom = session.user.plusAffiliateFrom
+    if (!plusAffiliateFrom) {
+      throw createError({ status: 403, message: 'NO_PLUS_AFFILIATE' })
+    }
+    if (!affiliateVoiceSlot) {
       throw createError({ status: 400, message: 'INVALID_AFFILIATE_VOICE' })
     }
-    const affiliateVoice = await getAffiliateVoice(session.user.evmWallet, affiliateVoiceClassId)
-    if (!affiliateVoice?.voiceId) {
-      throw createError({ status: 404, message: 'NO_AFFILIATE_VOICE' })
+    if (!nftClassId) {
+      throw createError({ status: 400, message: 'MISSING_NFT_CLASS_ID' })
     }
-    customMiniMaxVoiceId = affiliateVoice.voiceId
-    voiceDisplayName = affiliateVoice.voiceName
+    const affiliateConfig = await getAffiliateConfig(plusAffiliateFrom)
+    if (!affiliateConfig?.active) {
+      throw createError({ status: 403, message: 'AFFILIATE_INACTIVE' })
+    }
+    // Ownership is gated at the reader-page level; this check is a sanity
+    // boundary to stop an arbitrary book from riding an affiliate voice URL.
+    if (!isBookInAffiliateVoiceScope(affiliateConfig, nftClassId)) {
+      throw createError({ status: 403, message: 'BOOK_NOT_IN_AFFILIATE' })
+    }
+    const affiliateVoice = affiliateConfig.customVoices.find(v => v.id === affiliateVoiceSlot)
+    if (!affiliateVoice?.providerVoiceId) {
+      throw createError({ status: 404, message: 'AFFILIATE_VOICE_NOT_FOUND' })
+    }
+    customMiniMaxVoiceId = affiliateVoice.providerVoiceId
+    voiceDisplayName = affiliateVoice.name
     provider = new MinimaxTTSProvider()
   }
   else if (isCustomVoice) {

@@ -71,6 +71,7 @@ export default defineEventHandler(async (event) => {
     isLikerPlus: userInfoRes.isLikerPlus || false,
     isExpiredLikerPlus: userInfoRes.isExpiredLikerPlus || false,
     likerPlusPeriod: userInfoRes.likerPlusPeriod,
+    plusAffiliateFrom: userInfoRes.plusAffiliateFrom,
     ttsKey: generateTTSKey(),
   }
   await setUserSession(event, { user: userInfo })

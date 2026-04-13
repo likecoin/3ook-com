@@ -51,10 +51,10 @@
               v-text="affiliateInfo.giftBookName"
             />
             <p
-              v-if="affiliateInfo.customVoiceName"
+              v-if="affiliateVoiceNames"
               class="text-xs text-muted"
             >
-              {{ $t('pricing_page_affiliate_voice_label', { name: affiliateInfo.customVoiceName }) }}
+              {{ $t('pricing_page_affiliate_voice_label', { name: affiliateVoiceNames }) }}
             </p>
           </div>
         </div>
@@ -117,12 +117,23 @@ interface AffiliateInfo {
   giftClassId?: string
   giftBookName?: string
   giftBookCover?: string
-  customVoiceName?: string
+  affiliateClassIds?: string[]
+  customVoices?: Array<{
+    id: string
+    name: string
+    language?: string
+    avatarUrl?: string
+  }>
 }
 const affiliateInfo = ref<AffiliateInfo | null>(null)
 const affiliateLikerId = computed(() => {
   const from = getRouteQuery('from') as string | undefined
   return from?.startsWith('@') ? from.slice(1) : from
+})
+const affiliateVoiceNames = computed(() => {
+  const voices = affiliateInfo.value?.customVoices
+  if (!voices?.length) return undefined
+  return voices.map(v => v.name).join($t('text_separator_comma'))
 })
 
 const { getResizedNormalizedImageURL } = useImageResize()
@@ -132,12 +143,19 @@ const giftBookCoverSrc = computed(() => {
 })
 
 async function fetchAffiliateInfo() {
-  if (!affiliateLikerId.value) return
+  if (!affiliateLikerId.value) {
+    affiliateInfo.value = null
+    return
+  }
   try {
     affiliateInfo.value = await $fetch<AffiliateInfo>(`/api/affiliate/${affiliateLikerId.value}`)
   }
   catch { /* ignore */ }
 }
+
+watchImmediate(affiliateLikerId, () => {
+  fetchAffiliateInfo()
+})
 const productGroup = 'plus'
 const monthlyProductId = 'plus-monthly'
 
@@ -314,7 +332,6 @@ onMounted(async () => {
     await navigateTo(localeRoute({ name: 'store' }))
     return
   }
-  fetchAffiliateInfo()
   await checkout.redirectIfSubscribed()
 })
 </script>
