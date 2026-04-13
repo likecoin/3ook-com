@@ -177,6 +177,27 @@ describe('splitTextIntoSegments', () => {
     const result = splitTextIntoSegments(text)
     expect(result.join('')).toBe(text)
   })
+
+  // Regression: balanced splitter must not strand consecutive punctuation in
+  // its own segment (which would then be filtered as non-speakable and lost)
+  it('preserves consecutive punctuation between long passages', () => {
+    const long = 'あ'.repeat(100)
+    const text = `${long}。。${long}`
+    const result = splitTextIntoSegments(text)
+    expect(result.join('')).toBe(text)
+  })
+
+  it('produces segments with uniform length variance to smooth TTS playback', () => {
+    const clause = 'あ'.repeat(29)
+    const text = `${clause}。${clause}。${clause}。${clause}。${clause}。${clause}。${clause}。${clause}。`
+    const result = splitTextIntoSegments(text)
+    expect(result.join('')).toBe(text)
+    const target = text.length / result.length
+    for (const seg of result) {
+      expect(seg.length).toBeLessThanOrEqual(100)
+      expect(Math.abs(seg.length - target)).toBeLessThan(target * 0.5)
+    }
+  })
 })
 
 describe('mergeShortTTSSegments', () => {

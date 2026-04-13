@@ -33,18 +33,34 @@ const MIN_SEGMENT_LENGTH = 15
  * smooths streaming playback.
  */
 function mergeParts(parts: string[]): string[] {
+  // Keep every entry speakable so the balanced splitter can't strand a
+  // punctuation-only segment, which would be filtered and break the
+  // `result.join('') === text` integrity invariant.
   const cleaned: string[] = []
-  let totalLength = 0
-  let maxPartLen = 0
+  let pendingPrefix = ''
   for (const part of parts) {
     const trimmed = part.replace(/[\s\u200B]+/g, ' ').trim()
     if (!trimmed) continue
-    cleaned.push(trimmed)
-    totalLength += trimmed.length
-    if (trimmed.length > maxPartLen) maxPartLen = trimmed.length
+    if (SPEAKABLE_REGEX.test(trimmed)) {
+      cleaned.push(pendingPrefix + trimmed)
+      pendingPrefix = ''
+    }
+    else if (cleaned.length > 0) {
+      cleaned[cleaned.length - 1] += trimmed
+    }
+    else {
+      pendingPrefix += trimmed
+    }
   }
   const n = cleaned.length
   if (!n) return []
+
+  let totalLength = 0
+  let maxPartLen = 0
+  for (const p of cleaned) {
+    totalLength += p.length
+    if (p.length > maxPartLen) maxPartLen = p.length
+  }
 
   const prefix: number[] = new Array(n + 1)
   prefix[0] = 0
@@ -82,8 +98,7 @@ function mergeParts(parts: string[]): string[] {
     for (let j = 0; j < splits.length - 1; j++) {
       const len = prefix[splits[j + 1]!]! - prefix[splits[j]!]!
       if (len > maxLen) maxLen = len
-      const segment = cleaned.slice(splits[j]!, splits[j + 1]!).join('')
-      if (SPEAKABLE_REGEX.test(segment)) segments.push(segment)
+      segments.push(cleaned.slice(splits[j]!, splits[j + 1]!).join(''))
     }
     return { segments, maxLen }
   }
