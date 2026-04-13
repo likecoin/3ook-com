@@ -360,15 +360,21 @@ export function useTextToSpeech(options: TTSOptions) {
     })
   })
 
-  function appendCommonParams(params: URLSearchParams, text: string, isCustomVoice: boolean) {
+  function appendCommonParams(
+    params: URLSearchParams,
+    { text, voiceId, language, isCustomVoice }: {
+      text: string
+      voiceId: string
+      language: string
+      isCustomVoice: boolean
+    },
+  ) {
     params.set('nft_class_id', nftClassId)
     // System voices use an empty-token sig so URLs converge across users,
-    // enabling shared Cloudflare edge caching. Custom voices keep the per-user
-    // token so per-user URLs remain unique (no cross-user cache collision).
-    const sigToken = isCustomVoice
-      ? (sessionUser.value?.ttsKey || sessionUser.value?.evmWallet || '')
-      : ''
-    params.set('sig', computeTTSTextSig(sigToken, nftClassId, text))
+    // enabling shared Cloudflare edge caching. Custom voices require a
+    // secret per-user ttsKey so sigs remain unforgeable and URLs unique.
+    const sigToken = isCustomVoice ? (sessionUser.value?.ttsKey || '') : ''
+    params.set('sig', computeTTSTextSig({ token: sigToken, voiceId, language, nftClassId, text }))
     if (isNativeBridge.value) {
       params.set('blocking', '1')
     }
@@ -386,20 +392,22 @@ export function useTextToSpeech(options: TTSOptions) {
         language,
         voice_id: 'custom',
       })
-      appendCommonParams(params, sanitizedText, true)
+      appendCommonParams(params, { text: sanitizedText, voiceId: 'custom', language, isCustomVoice: true })
       if (options.customVoice?.value?.updatedAt) {
         params.set('_t', options.customVoice.value.updatedAt.toString())
       }
       return `/api/reader/tts?${params.toString()}`
     }
 
-    const [language, ...voiceIdParts] = ttsLanguageVoice.value.split('_')
+    const [languagePart, ...voiceIdParts] = ttsLanguageVoice.value.split('_')
+    const language = languagePart || 'zh-HK'
+    const voiceId = voiceIdParts.join('_')
     const params = new URLSearchParams({
       text: sanitizedText,
-      language: language || 'zh-HK',
-      voice_id: voiceIdParts.join('_'),
+      language,
+      voice_id: voiceId,
     })
-    appendCommonParams(params, sanitizedText, false)
+    appendCommonParams(params, { text: sanitizedText, voiceId, language, isCustomVoice: false })
     return `/api/reader/tts?${params.toString()}`
   }
 

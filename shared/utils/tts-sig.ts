@@ -1,6 +1,21 @@
 export const TTS_PREVIEW_NFT_CLASS_ID = 'custom_voice_preview'
 
-export function computeTTSTextSig(token: string, nftClassId: string, text: string): string {
+export function computeTTSTextSig(params: {
+  token: string
+  voiceId: string
+  language: string
+  nftClassId: string
+  text: string
+}): string {
+  const { token, voiceId, language, nftClassId, text } = params
+  return cyrb53(`${token}:${voiceId}:${language}:${nftClassId.toLowerCase()}:${text}`)
+}
+
+// Pre-voice/language-binding sig shape. Server-only during rollout so PWA-
+// cached and long-lived client tabs keep working until they reload. Remove
+// this helper (and its call site) once the TTSLegacySig analytics event has
+// drained to zero — typically 1–2 weeks after deploy.
+export function computeLegacyTTSTextSig(token: string, nftClassId: string, text: string): string {
   return cyrb53(`${token}:${nftClassId.toLowerCase()}:${text}`)
 }
 

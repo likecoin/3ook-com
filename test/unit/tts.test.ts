@@ -8,6 +8,10 @@ import {
   getTTSConfigKeyWithSuffix,
   TTS_CONFIG_KEY,
 } from '~/utils/tts'
+import {
+  computeLegacyTTSTextSig,
+  computeTTSTextSig,
+} from '~/shared/utils/tts-sig'
 
 describe('sanitizeTTSText', () => {
   it('returns empty string for falsy input', () => {
@@ -308,5 +312,68 @@ describe('TTS config helpers', () => {
   it('getTTSConfigKeyWithSuffix joins key and suffix', () => {
     expect(getTTSConfigKeyWithSuffix('tts-config', 'voice')).toBe('tts-config-voice')
     expect(getTTSConfigKeyWithSuffix('tts-config', 'playback-rate')).toBe('tts-config-playback-rate')
+  })
+})
+
+describe('computeTTSTextSig', () => {
+  const baseParams = {
+    token: '',
+    voiceId: 'female-qn-qingse',
+    language: 'zh',
+    nftClassId: '0xAbC123',
+    text: '你好世界',
+  }
+
+  it('normalizes nftClassId case so mixed-case addresses converge', () => {
+    const lower = computeTTSTextSig({ ...baseParams, nftClassId: '0xabc123' })
+    const upper = computeTTSTextSig({ ...baseParams, nftClassId: '0xABC123' })
+    expect(lower).toBe(upper)
+  })
+
+  it('produces the same sig across users for system voices (empty token)', () => {
+    const userA = computeTTSTextSig({ ...baseParams, token: '' })
+    const userB = computeTTSTextSig({ ...baseParams, token: '' })
+    expect(userA).toBe(userB)
+  })
+
+  it('diverges per user when a ttsKey token is supplied', () => {
+    const alice = computeTTSTextSig({ ...baseParams, token: 'alice-tts-key' })
+    const bob = computeTTSTextSig({ ...baseParams, token: 'bob-tts-key' })
+    expect(alice).not.toBe(bob)
+  })
+
+  // Regression: 7a6bc55a — voice and language must be part of the binding so
+  // a client cannot reuse a sig across voices/languages.
+  it.each([
+    ['voiceId', { voiceId: 'male-qn-qingse' }],
+    ['language', { language: 'en' }],
+    ['text', { text: '再見' }],
+    ['nftClassId', { nftClassId: '0xdeadbeef' }],
+  ])('changes when %s changes', (_field, overrides) => {
+    expect(computeTTSTextSig({ ...baseParams, ...overrides })).not.toBe(
+      computeTTSTextSig(baseParams),
+    )
+  })
+})
+
+describe('computeLegacyTTSTextSig', () => {
+  it('normalizes nftClassId case', () => {
+    const lower = computeLegacyTTSTextSig('tok', '0xabc', 'hello')
+    const upper = computeLegacyTTSTextSig('tok', '0xABC', 'hello')
+    expect(lower).toBe(upper)
+  })
+
+  // Regression: 6e685d38 — legacy sig shape (no voice/language binding) must
+  // stay stable so stale PWA clients keep working during the rollout window.
+  it('differs from the new voice/language-bound sig shape', () => {
+    const legacy = computeLegacyTTSTextSig('tok', '0xabc', 'hello')
+    const current = computeTTSTextSig({
+      token: 'tok',
+      voiceId: 'female-qn-qingse',
+      language: 'zh',
+      nftClassId: '0xabc',
+      text: 'hello',
+    })
+    expect(legacy).not.toBe(current)
   })
 })

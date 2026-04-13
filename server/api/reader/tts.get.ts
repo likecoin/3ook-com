@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto'
 import type { Writable } from 'node:stream'
 import type { H3Event } from 'h3'
 import { TTSQuerySchema } from '~/server/schemas/tts'
-import { computeTTSTextSig } from '~/shared/utils/tts-sig'
+import { computeLegacyTTSTextSig, computeTTSTextSig } from '~/shared/utils/tts-sig'
 
 // Coalesces concurrent identical TTS requests (e.g. browser range probes)
 const inFlightWrites = new Map<string, Promise<void>>()
@@ -101,14 +101,46 @@ export default defineEventHandler(async (event) => {
 
   const isCustomVoice = voiceId === 'custom'
 
-  // Verify text signature — binds request to user + book + exact text content
-  // System voices use an empty-token sig so URLs converge across users and can
-  // be shared-cached at Cloudflare. Custom voices keep the per-user token so
-  // per-user URLs remain unique, preventing cross-user cache collision on
-  // content that is genuinely per-user (each wallet's cloned voice).
-  const sigToken = isCustomVoice ? (session.user.ttsKey || session.user.evmWallet) : ''
-  if (sig !== computeTTSTextSig(sigToken, nftClassId, text)) {
+  const ttsEventBase = {
+    evmWallet: session.user.evmWallet,
+    language,
+    voiceId,
+    isCustomVoice,
+    textLength: text.length,
+    nftClassId,
+  }
+
+  // Verify text signature — binds the request to voice + language + book +
+  // exact text. System voices use an empty token so URLs converge across
+  // users and can be shared-cached at Cloudflare. Custom voices additionally
+  // bind to the user via ttsKey, keeping URLs unique per wallet so
+  // cross-user cache collision cannot serve one user's cloned voice to
+  // another. Sig check always runs regardless of whether ttsKey is present,
+  // so legacy sessions without a key can't be fingerprinted by response shape.
+  const sigToken = isCustomVoice ? (session.user.ttsKey ?? '') : ''
+  let sigOk = sig === computeTTSTextSig({ token: sigToken, voiceId, language, nftClassId, text })
+
+  if (!sigOk && session.user.ttsKey) {
+    // Transitional: accept pre-voice/language-binding sig shape so stale
+    // clients (PWA cache, long-lived tabs) keep working until they reload.
+    // Only honored on sessions with ttsKey — legacy clients that fell back
+    // to evmWallet remain rejected so the wallet-derivable-sig gap stays
+    // closed. Remove once `TTSLegacySig` event volume flatlines.
+    if (sig === computeLegacyTTSTextSig(session.user.ttsKey, nftClassId, text)) {
+      sigOk = true
+      publishEvent(event, 'TTSLegacySig', ttsEventBase)
+    }
+  }
+
+  if (!sigOk) {
     throw createError({ status: 403, message: 'INVALID_TTS_SIG' })
+  }
+
+  // Custom voices require a secret per-user token so sigs are unforgeable
+  // even for an attacker who knows the public wallet. Legacy sessions that
+  // pre-date ttsKey must re-login before custom voice will work.
+  if (isCustomVoice && !session.user.ttsKey) {
+    throw createError({ status: 403, message: 'MISSING_TTS_KEY' })
   }
 
   let customMiniMaxVoiceId: string | undefined
@@ -152,15 +184,6 @@ export default defineEventHandler(async (event) => {
         ? generateCustomVoiceTTSCacheKey(customVoiceWallet, language, text, ttsModel)
         : generateTTSCacheKey(language, voiceId, text, ttsModel))
     : null
-
-  const ttsEventBase = {
-    evmWallet: session.user.evmWallet,
-    language,
-    voiceId,
-    isCustomVoice,
-    textLength: text.length,
-    nftClassId,
-  }
 
   if (isCacheEnabled) {
     const file = bucket.file(cacheKey!)

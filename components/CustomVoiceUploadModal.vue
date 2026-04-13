@@ -688,13 +688,13 @@ async function confirmDelete() {
 
 function getTTSPreviewUrl(language: string): string {
   const text = PREVIEW_TEXT[language] || PREVIEW_TEXT['zh-HK'] || ''
-  const ttsKey = sessionUser.value?.ttsKey || sessionUser.value?.evmWallet || ''
+  const ttsKey = sessionUser.value?.ttsKey || ''
   const params = new URLSearchParams({
     text,
     language,
     voice_id: 'custom',
     nft_class_id: TTS_PREVIEW_NFT_CLASS_ID,
-    sig: computeTTSTextSig(ttsKey, TTS_PREVIEW_NFT_CLASS_ID, text),
+    sig: computeTTSTextSig({ token: ttsKey, voiceId: 'custom', language, nftClassId: TTS_PREVIEW_NFT_CLASS_ID, text }),
     _t: previewCacheBuster.value.toString(),
   })
   return `/api/reader/tts?${params.toString()}`
