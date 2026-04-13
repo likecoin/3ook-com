@@ -42,9 +42,9 @@ if (!hasLoggedIn.value) {
   await navigateTo(localeRoute({ name: 'account', query: route.query }))
 }
 
-const { customVoice, isLoading: isCustomVoiceLoading, fetchCustomVoice } = useCustomVoice()
+const { fetchCustomVoice } = useCustomVoice()
 onMounted(() => {
-  if (hasLoggedIn.value && !customVoice.value && !isCustomVoiceLoading.value) {
+  if (hasLoggedIn.value) {
     fetchCustomVoice()
   }
 })

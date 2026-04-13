@@ -2,22 +2,32 @@ import type { CustomVoiceData } from '~/shared/types/custom-voice'
 
 export function useCustomVoice() {
   const customVoice = useState<CustomVoiceData | null>('custom-voice', () => null)
+  const isLoaded = useState<boolean>('custom-voice-loaded', () => false)
   const isLoading = useState<boolean>('custom-voice-loading', () => false)
+  const inflightFetch = useState<Promise<void> | null>('custom-voice-inflight', () => null)
 
   const hasCustomVoice = computed(() => !!customVoice.value?.voiceId)
 
-  async function fetchCustomVoice() {
-    isLoading.value = true
-    try {
-      const data = await $fetch<CustomVoiceData | null>('/api/user/custom-voice')
-      customVoice.value = data
-    }
-    catch (error) {
-      console.error('[CustomVoice] Failed to fetch:', error)
-    }
-    finally {
-      isLoading.value = false
-    }
+  function fetchCustomVoice(): Promise<void> {
+    if (isLoaded.value) return Promise.resolve()
+    if (inflightFetch.value) return inflightFetch.value
+    const task = (async () => {
+      isLoading.value = true
+      try {
+        const data = await $fetch<CustomVoiceData | null>('/api/user/custom-voice')
+        customVoice.value = data
+      }
+      catch (error) {
+        console.error('[CustomVoice] Failed to fetch:', error)
+      }
+      finally {
+        isLoaded.value = true
+        isLoading.value = false
+        inflightFetch.value = null
+      }
+    })()
+    inflightFetch.value = task
+    return task
   }
 
   async function uploadCustomVoice(params: { audio: File, voiceName: string, voiceLanguage?: string, avatar?: File, promptAudio?: File, promptText?: string }) {
@@ -44,6 +54,7 @@ export function useCustomVoice() {
         body: formData,
       })
       customVoice.value = data
+      isLoaded.value = true
       return data
     }
     finally {
@@ -74,6 +85,7 @@ export function useCustomVoice() {
     try {
       await $fetch('/api/user/custom-voice', { method: 'DELETE' })
       customVoice.value = null
+      isLoaded.value = true
     }
     finally {
       isLoading.value = false

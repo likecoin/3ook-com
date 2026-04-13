@@ -219,7 +219,7 @@ const { user } = useUserSession()
 const subscription = useSubscriptionModal()
 const { errorModal, handleError } = useErrorHandler()
 
-const { customVoice, hasCustomVoice, isLoading: isCustomVoiceLoading, fetchCustomVoice } = useCustomVoice()
+const { customVoice, hasCustomVoice, fetchCustomVoice } = useCustomVoice()
 const localeRoute = useLocaleRoute()
 
 const emit = defineEmits<{
@@ -463,7 +463,7 @@ watch(
 
 onMounted(() => {
   setTTSLanguageVoice(props.specificLanguageVoice)
-  if (user.value && !customVoice.value && !isCustomVoiceLoading.value) {
+  if (user.value) {
     fetchCustomVoice()
   }
 })
