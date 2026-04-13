@@ -212,12 +212,12 @@
                     <div class="grid grid-cols-2 gap-2">
                       <UButton
                         :variant="writingMode === EPUB_WRITING_MODES.horizontal ? 'solid' : 'outline'"
-                        :label="$t('reader_display_orientation_horizontal')"
+                        icon="i-material-symbols-text-rotation-none-rounded"
                         @click="setWritingMode(EPUB_WRITING_MODES.horizontal)"
                       />
                       <UButton
                         :variant="writingMode === EPUB_WRITING_MODES.vertical ? 'solid' : 'outline'"
-                        :label="$t('reader_display_orientation_vertical')"
+                        icon="i-material-symbols-text-rotation-vertical-rounded"
                         @click="setWritingMode(EPUB_WRITING_MODES.vertical)"
                       />
                     </div>
