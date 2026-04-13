@@ -1221,6 +1221,7 @@ async function restoreDefaultDisplayOptions() {
 
   fontSize.value = FONT_SIZE_OPTIONS[DEFAULT_FONT_SIZE_INDEX]
   lineHeight.value = DEFAULT_LINE_HEIGHT
+  writingMode.value = DEFAULT_WRITING_MODE
   const hasFontSizeChanged = previousFontSize !== fontSize.value
   const hasLineHeightChanged = previousLineHeight !== lineHeight.value
   const hasWritingModeChanged = previousWritingMode !== writingMode.value
