@@ -1,4 +1,3 @@
-import { randomBytes } from 'node:crypto'
 import { jwtDecode } from 'jwt-decode'
 import { FieldValue } from 'firebase-admin/firestore'
 
@@ -72,7 +71,7 @@ export default defineEventHandler(async (event) => {
     isLikerPlus: userInfoRes.isLikerPlus || false,
     isExpiredLikerPlus: userInfoRes.isExpiredLikerPlus || false,
     likerPlusPeriod: userInfoRes.likerPlusPeriod,
-    ttsKey: randomBytes(16).toString('hex'),
+    ttsKey: generateTTSKey(),
   }
   await setUserSession(event, { user: userInfo })
 

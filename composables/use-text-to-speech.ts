@@ -360,10 +360,15 @@ export function useTextToSpeech(options: TTSOptions) {
     })
   })
 
-  function appendCommonParams(params: URLSearchParams, text: string) {
+  function appendCommonParams(params: URLSearchParams, text: string, isCustomVoice: boolean) {
     params.set('nft_class_id', nftClassId)
-    const ttsKey = sessionUser.value?.ttsKey || sessionUser.value?.evmWallet || ''
-    params.set('sig', computeTTSTextSig(ttsKey, nftClassId, text))
+    // System voices use an empty-token sig so URLs converge across users,
+    // enabling shared Cloudflare edge caching. Custom voices keep the per-user
+    // token so per-user URLs remain unique (no cross-user cache collision).
+    const sigToken = isCustomVoice
+      ? (sessionUser.value?.ttsKey || sessionUser.value?.evmWallet || '')
+      : ''
+    params.set('sig', computeTTSTextSig(sigToken, nftClassId, text))
     if (isNativeBridge.value) {
       params.set('blocking', '1')
     }
@@ -381,7 +386,7 @@ export function useTextToSpeech(options: TTSOptions) {
         language,
         voice_id: 'custom',
       })
-      appendCommonParams(params, sanitizedText)
+      appendCommonParams(params, sanitizedText, true)
       if (options.customVoice?.value?.updatedAt) {
         params.set('_t', options.customVoice.value.updatedAt.toString())
       }
@@ -394,7 +399,7 @@ export function useTextToSpeech(options: TTSOptions) {
       language: language || 'zh-HK',
       voice_id: voiceIdParts.join('_'),
     })
-    appendCommonParams(params, sanitizedText)
+    appendCommonParams(params, sanitizedText, false)
     return `/api/reader/tts?${params.toString()}`
   }
 

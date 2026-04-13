@@ -35,6 +35,10 @@ export default defineEventHandler(async (event) => {
       isLikerPlus: userInfoRes.isLikerPlus || false,
       isExpiredLikerPlus: userInfoRes.isExpiredLikerPlus || false,
       likerPlusPeriod: userInfoRes.likerPlusPeriod,
+      // Backfill ttsKey for sessions that pre-date its introduction so they
+      // can use the per-user TTS sig path without re-login. Safe no-op for
+      // sessions that already have one.
+      ttsKey: session.user.ttsKey ?? generateTTSKey(),
     },
   })
 

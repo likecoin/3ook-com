@@ -8,23 +8,6 @@ import { computeTTSTextSig } from '~/shared/utils/tts-sig'
 const inFlightWrites = new Map<string, Promise<void>>()
 const IN_FLIGHT_TIMEOUT_MS = 120_000
 
-async function redirectToCachedAudio(
-  event: H3Event,
-  file: StorageFile,
-  isCustomVoice: boolean,
-) {
-  const downloadURL = isCustomVoice
-    ? await getEphemeralSignedDownloadURL(file)
-    : await getOrCreatePersistentDownloadURL(file)
-  // Short-lived cache so Safari/AVPlayer can reuse the 302 for range probes
-  // within a single segment playback instead of re-auth'ing on every probe.
-  // Tradeoff: same-segment replays within 60s skip the Liker+ quota check
-  // and TTSCacheHit analytics. Per-segment text+sig means new segments still
-  // mint a fresh redirect and re-run both checks.
-  setHeader(event, 'cache-control', 'private, max-age=60')
-  return sendRedirect(event, downloadURL, 302)
-}
-
 function parseRangeHeader(rangeHeader: string, totalSize: number): { start: number, end: number } | null {
   const match = rangeHeader.match(/^bytes=(\d*)-(\d*)$/)
   if (!match) return null
@@ -64,7 +47,6 @@ async function serveCachedTTS(
   bucket: NonNullable<ReturnType<typeof getTTSCacheBucket>>,
   cacheKey: string,
   contentFormat: string,
-  isCustomVoice: boolean,
   wallet: string,
 ) {
   const file = bucket.file(cacheKey)
@@ -75,7 +57,7 @@ async function serveCachedTTS(
 
   const etag = `"${createHash('sha256').update(cacheKey).digest('hex').substring(0, 16)}"`
   setHeader(event, 'content-type', contentType)
-  setHeader(event, 'cache-control', isCustomVoice ? 'private, max-age=604800' : 'public, max-age=604800')
+  setHeader(event, 'cache-control', 'public, max-age=604800')
   setHeader(event, 'accept-ranges', 'bytes')
   setHeader(event, 'vary', 'Range')
   setHeader(event, 'etag', etag)
@@ -117,13 +99,18 @@ export default defineEventHandler(async (event) => {
     sig,
   } = await getValidatedQuery(event, createValidator(TTSQuerySchema))
 
+  const isCustomVoice = voiceId === 'custom'
+
   // Verify text signature — binds request to user + book + exact text content
-  const ttsKey = session.user.ttsKey || session.user.evmWallet
-  if (sig !== computeTTSTextSig(ttsKey, nftClassId, text)) {
+  // System voices use an empty-token sig so URLs converge across users and can
+  // be shared-cached at Cloudflare. Custom voices keep the per-user token so
+  // per-user URLs remain unique, preventing cross-user cache collision on
+  // content that is genuinely per-user (each wallet's cloned voice).
+  const sigToken = isCustomVoice ? (session.user.ttsKey || session.user.evmWallet) : ''
+  if (sig !== computeTTSTextSig(sigToken, nftClassId, text)) {
     throw createError({ status: 403, message: 'INVALID_TTS_SIG' })
   }
 
-  const isCustomVoice = voiceId === 'custom'
   let customMiniMaxVoiceId: string | undefined
   let voiceDisplayName: string | undefined
   let provider: BaseTTSProvider
@@ -182,13 +169,7 @@ export default defineEventHandler(async (event) => {
       const [exists] = await file.exists()
       if (exists) {
         publishEvent(event, 'TTSCacheHit', ttsEventBase)
-        try {
-          return await redirectToCachedAudio(event, file, isCustomVoice)
-        }
-        catch (error) {
-          console.warn(`[Speech] Failed to mint download URL for ${cacheKey}, falling back to proxy:`, error)
-        }
-        return await serveCachedTTS(event, bucket, cacheKey!, provider.format, isCustomVoice, session.user.evmWallet)
+        return await serveCachedTTS(event, bucket, cacheKey!, provider.format, session.user.evmWallet)
       }
     }
     catch (error) {
@@ -204,14 +185,7 @@ export default defineEventHandler(async (event) => {
       console.log(`[Speech] In-flight dedup for user ${session.user.evmWallet}: ${cacheKey}`)
       try {
         await pending
-        const cachedFile = bucket!.file(cacheKey)
-        try {
-          return await redirectToCachedAudio(event, cachedFile, isCustomVoice)
-        }
-        catch (error) {
-          console.warn(`[Speech] Dedup redirect failed for ${cacheKey}, falling back to proxy:`, error)
-          return await serveCachedTTS(event, bucket!, cacheKey, provider.format, isCustomVoice, session.user.evmWallet)
-        }
+        return await serveCachedTTS(event, bucket!, cacheKey, provider.format, session.user.evmWallet)
       }
       catch {
         console.warn(`[Speech] In-flight request failed, generating own for user ${session.user.evmWallet}`)
@@ -260,7 +234,7 @@ export default defineEventHandler(async (event) => {
 
   const cacheMetadata = {
     contentType: provider.format,
-    cacheControl: isCustomVoice ? 'private, max-age=604800' : 'public, max-age=604800',
+    cacheControl: 'public, max-age=604800',
     metadata: {
       language,
       voiceId,
@@ -273,38 +247,33 @@ export default defineEventHandler(async (event) => {
 
   try {
     if (isBlocking) {
+      // Blocking path: full buffer with content-length (needed by native app)
       const rawBuffer = await provider.processRequest(requestParams)
       const buffer = Buffer.concat([id3Tag, rawBuffer])
-
-      publishEvent(event, 'TTSComplete', { ...ttsEventBase, audioSize: buffer.length, mode: 'blocking' })
-
-      // Prefer redirecting to the freshly-cached file so the native app
-      // streams from a CDN. Awaiting the cache write costs a small amount
-      // of latency but lets us share the cache-hit redirect path.
-      if (isCacheEnabled) {
-        const cacheFile = bucket.file(cacheKey!)
-        try {
-          await cacheFile.save(buffer, { metadata: cacheMetadata })
-          resolveInFlight?.()
-          return await redirectToCachedAudio(event, cacheFile, isCustomVoice)
-        }
-        catch (error) {
-          console.warn(`[Speech] Blocking cache write or redirect failed for user ${session.user.evmWallet}, falling back to inline buffer:`, error)
-          rejectInFlight?.(error)
-        }
-      }
-      else {
-        resolveInFlight?.()
-      }
 
       const etag = cacheKey
         ? `"${createHash('sha256').update(cacheKey).digest('hex').substring(0, 16)}"`
         : `"${createHash('sha256').update(buffer).digest('hex').substring(0, 16)}"`
       setHeader(event, 'content-type', provider.format)
-      setHeader(event, 'cache-control', isCustomVoice ? 'private, max-age=604800' : 'public, max-age=604800')
+      setHeader(event, 'cache-control', 'public, max-age=604800')
       setHeader(event, 'accept-ranges', 'bytes')
       setHeader(event, 'vary', 'Range')
       setHeader(event, 'etag', etag)
+
+      if (isCacheEnabled) {
+        const cacheFile = bucket.file(cacheKey!)
+        cacheFile.save(buffer, { metadata: cacheMetadata })
+          .then(() => resolveInFlight?.())
+          .catch((error: unknown) => {
+            console.warn(`[Speech] Cache write failed for user ${session.user.evmWallet}:`, error)
+            rejectInFlight?.(error)
+          })
+      }
+      else {
+        resolveInFlight?.()
+      }
+
+      publishEvent(event, 'TTSComplete', { ...ttsEventBase, audioSize: buffer.length, mode: 'blocking' })
 
       const rangeHeader = getHeader(event, 'range')
       if (rangeHeader) {
@@ -330,7 +299,7 @@ export default defineEventHandler(async (event) => {
       setHeader(event, 'etag', etag)
     }
     setHeader(event, 'content-type', provider.format)
-    setHeader(event, 'cache-control', isCustomVoice ? 'private, max-age=604800' : 'public, max-age=604800')
+    setHeader(event, 'cache-control', 'public, max-age=604800')
 
     let cacheWriteStream: Writable | null = null
     if (isCacheEnabled) {
