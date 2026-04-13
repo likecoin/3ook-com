@@ -59,7 +59,7 @@ export function useBookDownload() {
       }
 
       const blob = new Blob([buffer], { type: getMimeType(type) })
-      saveAs(blob, filename)
+      await saveAs(blob, filename)
 
       toast.add({
         title: $t('bookshelf_file_downloaded', { filename }),

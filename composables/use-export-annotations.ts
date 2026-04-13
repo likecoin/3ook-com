@@ -29,7 +29,7 @@ export default function useExportAnnotations(options: {
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/ld+json' })
       const rawName = toValue(options.bookName) || ''
       const filename = rawName.replace(/[<>:"/\\|?*\n\r]+/g, '_').trim() || bookId
-      saveAs(blob, `${filename}-annotations.json`)
+      await saveAs(blob, `${filename}-annotations.json`)
       toast.add({
         title: $t('bookshelf_export_annotations_success'),
         duration: 3000,
