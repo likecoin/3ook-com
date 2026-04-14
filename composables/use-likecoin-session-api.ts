@@ -46,6 +46,7 @@ export interface ClaimCartByIdResponseData {
 export interface FetchLikerPlusCheckoutLinkResponseData {
   sessionId: string
   url: string
+  paymentId: string
 }
 
 export interface FetchLikerPlusBillingPortalLinkResponseData {

@@ -88,10 +88,9 @@ export function useSubscriptionCheckout() {
         isProcessingSubscription.value = false
         return
       }
-      useLogEvent('begin_checkout', eventPayloadWithCoupon)
-
       const analyticsParams = getAnalyticsParameters()
       if (isLikerPlus.value) {
+        useLogEvent('begin_checkout', eventPayloadWithCoupon)
         await likeCoinSessionAPI.updateLikerPlusSubscription({
           period: plan,
           giftNFTClassId: isYearly ? nftClassId : undefined,
@@ -99,7 +98,7 @@ export function useSubscriptionCheckout() {
         await navigateTo(localeRoute({ name: 'plus-success', query: { period: plan } }))
       }
       else {
-        const { url } = await likeCoinSessionAPI.fetchLikerPlusCheckoutLink({
+        const { url, paymentId } = await likeCoinSessionAPI.fetchLikerPlusCheckoutLink({
           period: plan,
           from: getRouteQuery('from'),
           currency: getCheckoutCurrency(),
@@ -111,6 +110,10 @@ export function useSubscriptionCheckout() {
           utmMedium: analyticsParams.utmMedium || utmMedium,
           utmSource: analyticsParams.utmSource || utmSource,
           coupon,
+        })
+        useLogEvent('begin_checkout', {
+          ...eventPayloadWithCoupon,
+          transaction_id: paymentId,
         })
         if (redirectRoute && redirectRoute.name) {
           accountStore.savePlusRedirectRoute(redirectRoute)
