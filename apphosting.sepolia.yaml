@@ -93,6 +93,8 @@ env:
     value: https://publish.sepolia.3ook.com
   - variable: TTS_CACHE_BUCKET_PREFIX
     value: tts-cache
+  - variable: UPLOADED_BOOKS_BUCKET_PREFIX
+    value: uploaded-books
   - variable: WALLET_CONNECT_PROJECT_ID
     value: 526a2e1c9bf37fb75a7e0a4b11d6008e
   # Grant access to secrets in Cloud Secret Manager.

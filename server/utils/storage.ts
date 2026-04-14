@@ -87,6 +87,63 @@ export function getCustomVoiceStorageBucket() {
   return getDefaultBucket()
 }
 
+export function getUploadedBookStoragePath(wallet: string, bookId: string, ext: string): string {
+  const config = useRuntimeConfig()
+  if (!config.uploadedBooksBucketPrefix) {
+    throw createError({ statusCode: 500, message: 'STORAGE_NOT_CONFIGURED' })
+  }
+  return `${config.uploadedBooksBucketPrefix}/${wallet}/${bookId}.${ext}`
+}
+
+export function getUploadedBookCoverStoragePath(wallet: string, bookId: string, ext: string): string {
+  const config = useRuntimeConfig()
+  if (!config.uploadedBooksBucketPrefix) {
+    throw createError({ statusCode: 500, message: 'STORAGE_NOT_CONFIGURED' })
+  }
+  return `${config.uploadedBooksBucketPrefix}/${wallet}/${bookId}.cover.${ext}`
+}
+
+export function getUploadedBooksStorageBucket() {
+  const config = useRuntimeConfig()
+  if (!config.uploadedBooksBucketPrefix) {
+    return null
+  }
+  return getDefaultBucket()
+}
+
+const UPLOADED_BOOK_SIGNED_URL_EXPIRY_MS = 10 * 60 * 1000
+
+export async function createUploadedBookSignedUploadURL(
+  storagePath: string,
+  mimeType: string,
+  fileSize: number,
+): Promise<{ uploadURL: string, expiresAt: number }> {
+  const bucket = getUploadedBooksStorageBucket()
+  if (!bucket) {
+    throw createError({ statusCode: 500, message: 'STORAGE_NOT_CONFIGURED' })
+  }
+  const expiresAt = Date.now() + UPLOADED_BOOK_SIGNED_URL_EXPIRY_MS
+  // Bind the declared size into the signed URL so GCS rejects any PUT whose
+  // body exceeds it — prevents a client from uploading a multi-GB body under
+  // a URL minted for a small file. Client must echo the same range header.
+  const contentLengthRange = `0,${fileSize}`
+  const [uploadURL] = await bucket.file(storagePath).getSignedUrl({
+    version: 'v4',
+    action: 'write',
+    expires: expiresAt,
+    contentType: mimeType,
+    extensionHeaders: {
+      'x-goog-content-length-range': contentLengthRange,
+      // Create-only: the URL can upload the object exactly once. Prevents
+      // anyone holding the still-valid signed URL from overwriting the
+      // content after finalize (which would undermine our stored size /
+      // ETag assumptions and the immutability the reader relies on).
+      'x-goog-if-generation-match': '0',
+    },
+  })
+  return { uploadURL, expiresAt }
+}
+
 export function generateFirebaseDownloadToken(): string {
   return randomUUID()
 }

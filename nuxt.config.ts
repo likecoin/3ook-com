@@ -61,6 +61,7 @@ export default defineNuxtConfig({
     minimaxAPIKey: process.env.MINIMAX_API_KEY,
     ttsCacheBucketPrefix: process.env.TTS_CACHE_BUCKET_PREFIX,
     customVoiceBucketPrefix: process.env.CUSTOM_VOICE_BUCKET_PREFIX,
+    uploadedBooksBucketPrefix: process.env.UPLOADED_BOOKS_BUCKET_PREFIX,
     public: {
       scripts: {
         intercom: {

@@ -1,5 +1,5 @@
 import * as v from 'valibot'
-import { nftClassIdField } from '~/server/schemas/params'
+import { bookIdField } from '~/server/schemas/params'
 import { TTS_PREVIEW_NFT_CLASS_ID } from '~/shared/utils/tts-sig'
 
 export const TTS_MAX_TEXT_LENGTH = 2000
@@ -16,7 +16,7 @@ export const TTSQuerySchema = v.object({
     v.nonEmpty('INVALID_VOICE_ID'),
   ),
   blocking: v.optional(v.string()),
-  nft_class_id: v.union([nftClassIdField, v.literal(TTS_PREVIEW_NFT_CLASS_ID)]),
+  nft_class_id: v.union([bookIdField, v.literal(TTS_PREVIEW_NFT_CLASS_ID)]),
   sig: v.pipe(
     v.string('MISSING_SIG'),
     v.nonEmpty('MISSING_SIG'),

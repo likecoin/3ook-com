@@ -1,0 +1,12 @@
+[
+  {
+    "origin": [
+      "https://3ook.com",
+      "https://sepolia.3ook.com",
+      "http://localhost:3000"
+    ],
+    "method": ["PUT", "GET", "HEAD", "OPTIONS"],
+    "responseHeader": ["Content-Type", "Content-Length", "ETag", "x-goog-resumable", "x-goog-content-length-range", "x-goog-if-generation-match"],
+    "maxAgeSeconds": 3600
+  }
+]
