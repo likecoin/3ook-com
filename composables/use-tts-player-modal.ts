@@ -1,6 +1,7 @@
 import { EpubCFI } from '@likecoin/epub-ts'
 import { TTSPlayerModal } from '#components'
 import type { TTSPlayerModalProps } from '~/components/TTSPlayerModal.props'
+import { isUploadedBookId } from '~/shared/utils/uploaded-book'
 
 interface TTSPlayerOptions {
   nftClassId: MaybeRef<string>
@@ -12,7 +13,12 @@ export function useTTSPlayerModal(options: TTSPlayerOptions) {
   const ttsSegments = ref<TTSSegment[]>([])
   const chapterTitlesBySection = ref<Record<number, string>>({})
   const startIndex = ref(0)
-  const bookInfo = useBookInfo({ nftClassId: options.nftClassId })
+  // Uploaded books aren't on-chain, so `useBookInfo` has no bookstore/NFT
+  // record to read — dispatch to the uploaded-book composable so the TTS
+  // player header shows the correct title/cover/author.
+  const bookInfo = isUploadedBookId(toValue(options.nftClassId))
+    ? useUploadedBookInfo({ bookId: options.nftClassId })
+    : useBookInfo({ nftClassId: options.nftClassId })
   const { getResizedImageURL } = useImageResize()
   const bookCoverSrc = computed(() =>
     getResizedImageURL(bookInfo.coverSrc.value, { size: 300 }),

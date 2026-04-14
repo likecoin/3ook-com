@@ -1,4 +1,5 @@
 import { BookIdParamsSchema } from '~/server/schemas/params'
+import { isUploadedBookId } from '~/shared/utils/uploaded-book'
 
 export default defineEventHandler(async (event) => {
   const session = await requireUserSession(event)
@@ -15,17 +16,20 @@ export default defineEventHandler(async (event) => {
   setHeader(event, 'Cache-Control', 'private, no-cache, no-store, must-revalidate')
 
   try {
-    const [annotationsResult, nftClassResult] = await Promise.allSettled([
+    const isUploaded = isUploadedBookId(nftClassId)
+    const [annotationsResult, titleResult] = await Promise.allSettled([
       getAnnotations(walletAddress, nftClassId),
-      fetchLikeCoinNFTClassChainMetadataById(nftClassId),
+      isUploaded
+        ? getUploadedBook(walletAddress, nftClassId).then(book => book?.name)
+        : fetchLikeCoinNFTClassChainMetadataById(nftClassId).then(result => result?.metadata?.name),
     ])
 
     if (annotationsResult.status === 'rejected') {
       throw annotationsResult.reason
     }
 
-    const metadata = nftClassResult.status === 'fulfilled' ? nftClassResult.value?.metadata : undefined
-    const bookTitle = metadata?.name || nftClassId
+    const resolvedTitle = titleResult.status === 'fulfilled' ? titleResult.value : undefined
+    const bookTitle = resolvedTitle || nftClassId
     const collection = composeOpenAnnotationCollection({
       nftClassId,
       title: bookTitle,

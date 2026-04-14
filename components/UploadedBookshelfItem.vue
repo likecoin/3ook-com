@@ -136,6 +136,10 @@ const { t: $t } = useI18n()
 const bookInfo = useUploadedBookInfo({ bookId: props.bookId })
 const isDesktopScreen = useDesktopScreen()
 const { getResizedImageURL } = useImageResize()
+const { exportAnnotations } = useExportAnnotations({
+  bookId: computed(() => props.bookId),
+  bookName: bookInfo.name,
+})
 const bookCoverSrc = computed(() => getResizedImageURL(bookInfo.coverSrc.value, { size: 300 }))
 
 const progressPercentage = computed(() => Math.round(props.progress * 100))
@@ -149,6 +153,18 @@ const menuItems = computed<DropdownMenuItem[]>(() => {
       icon: 'i-material-symbols-book-5-outline',
       onSelect: openBook,
     })
+
+    items.push({
+      label: $t('bookshelf_item_menu_tts'),
+      icon: 'i-material-symbols-graphic-eq-rounded',
+      onSelect: openTTSPlayer,
+    })
+
+    items.push({
+      label: $t('bookshelf_item_menu_export_annotations'),
+      icon: 'i-material-symbols-upload-rounded',
+      onSelect: exportAnnotations,
+    })
   }
 
   items.push({
@@ -160,11 +176,18 @@ const menuItems = computed<DropdownMenuItem[]>(() => {
   return items
 })
 
-function openBook() {
+function navigateToReader({ isTTS = false } = {}) {
   const route = bookInfo.getReaderRoute.value({})
-  if (route) {
-    navigateTo(route)
-  }
+  if (!route) return
+  navigateTo(isTTS ? { ...route, query: { ...route.query, tts: '1' } } : route)
+}
+
+function openBook() {
+  navigateToReader()
+}
+
+function openTTSPlayer() {
+  navigateToReader({ isTTS: true })
 }
 
 function handleCoverClick() {
