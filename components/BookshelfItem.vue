@@ -52,6 +52,7 @@
         </UDropdownMenu>
         <UDrawer
           v-else
+          v-model:open="isMobileMenuOpen"
           :handle="false"
         >
           <UButton
@@ -82,7 +83,10 @@
                 size="xl"
                 block
                 :ui="{ base: 'justify-start' }"
-                @click="item.onSelect"
+                @click="(e) => {
+                  isMobileMenuOpen = false
+                  item.onSelect?.(e)
+                }"
               />
             </UCard>
           </template>
@@ -155,6 +159,8 @@ const bookCoverSrc = computed(() => getResizedImageURL(bookInfo.coverSrc.value, 
 const progressPercentage = computed(() => Math.round(props.progress * 100))
 
 const isDesktopScreen = useDesktopScreen()
+
+const isMobileMenuOpen = ref(false)
 
 const menuItems = computed<DropdownMenuItem[]>(() => {
   const items: DropdownMenuItem[] = []
