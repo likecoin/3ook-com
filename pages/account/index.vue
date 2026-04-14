@@ -783,13 +783,10 @@ function handleMigrateLegacyBookButtonClick() {
   useLogEvent('migrate_legacy_book_button_click')
 }
 
-async function handleOpenCustomVoiceModal() {
-  await customVoiceModal.open({
+function handleOpenCustomVoiceModal() {
+  customVoiceModal.open({
     existingVoice: customVoice.value,
-    onUploaded: () => fetchCustomVoice(),
-    onDeleted: () => fetchCustomVoice(),
-  }).result
-  fetchCustomVoice()
+  })
 }
 
 async function handleClaimStakingRewardButtonClick() {

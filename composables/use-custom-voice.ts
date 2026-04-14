@@ -6,29 +6,38 @@ export function useCustomVoice() {
   const isLoading = useState<boolean>('custom-voice-loading', () => false)
   const inflightFetch = useState<Promise<void> | null>('custom-voice-inflight', () => null)
 
+  const { loggedIn: hasLoggedIn } = useUserSession()
+
   const hasCustomVoice = computed(() => !!customVoice.value?.voiceId)
 
   function fetchCustomVoice(): Promise<void> {
     if (isLoaded.value) return Promise.resolve()
     if (inflightFetch.value) return inflightFetch.value
     const task = (async () => {
-      isLoading.value = true
       try {
         const data = await $fetch<CustomVoiceData | null>('/api/user/custom-voice')
+        if (!hasLoggedIn.value) return
         customVoice.value = data
+        isLoaded.value = true
       }
       catch (error) {
         console.error('[CustomVoice] Failed to fetch:', error)
       }
       finally {
-        isLoaded.value = true
-        isLoading.value = false
         inflightFetch.value = null
       }
     })()
     inflightFetch.value = task
     return task
   }
+
+  watch(hasLoggedIn, (loggedIn, wasLoggedIn) => {
+    if (!loggedIn && wasLoggedIn) {
+      customVoice.value = null
+      isLoaded.value = false
+      inflightFetch.value = null
+    }
+  })
 
   async function uploadCustomVoice(params: { audio: File, voiceName: string, voiceLanguage?: string, avatar?: File, promptAudio?: File, promptText?: string }) {
     if (isLoading.value) return
