@@ -213,11 +213,13 @@
                       <UButton
                         :variant="writingMode === EPUB_WRITING_MODES.horizontal ? 'solid' : 'outline'"
                         icon="i-material-symbols-text-rotation-none-rounded"
+                        class="w-full justify-center"
                         @click="setWritingMode(EPUB_WRITING_MODES.horizontal)"
                       />
                       <UButton
                         :variant="writingMode === EPUB_WRITING_MODES.vertical ? 'solid' : 'outline'"
-                        icon="i-material-symbols-text-rotation-vertical-rounded"
+                        icon="i-material-symbols-text-rotate-vertical-rounded"
+                        class="w-full justify-center"
                         @click="setWritingMode(EPUB_WRITING_MODES.vertical)"
                       />
                     </div>
