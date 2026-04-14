@@ -9,11 +9,7 @@
       footer: 'flex items-center justify-end gap-2',
     }"
   >
-    <UButton
-      :label="$t('uploaded_book_upload_button')"
-      icon="i-material-symbols-upload-rounded"
-      v-bind="$attrs"
-    />
+    <slot />
 
     <template #body>
       <div>
@@ -186,7 +182,6 @@ import {
   UPLOADED_BOOK_MAX_FILE_SIZE,
 } from '~/shared/utils/uploaded-book'
 
-defineOptions({ inheritAttrs: false })
 const emit = defineEmits(['uploaded'])
 
 const { t: $t } = useI18n()

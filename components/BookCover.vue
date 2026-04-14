@@ -12,7 +12,7 @@
         'group',
         {
           'cursor-pointer': isClickable,
-          'relative': isShowPlaceholder || (hasShadow && hasLoaded) || isClaimable,
+          'relative': isShowPlaceholder || (hasShadow && hasLoaded) || isShowRibbon,
           'w-full h-full': isShowPlaceholder,
         },
       ]"
@@ -104,11 +104,11 @@
             'mt-6 laptop:mt-8',
             'mr-6 laptop:mr-8',
             'p-0.5 laptop:p-1',
-            ribbonTextColorClass,
+            'text-theme-black',
             'text-center',
             'text-[10px] laptop:text-sm',
             'font-bold',
-            ribbonBgColorClass,
+            'bg-theme-cyan',
           ]"
           v-text="ribbonText"
         />
@@ -147,18 +147,12 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-  isClaimable: {
-    type: Boolean,
-    default: false,
-  },
-  isStaked: {
-    type: Boolean,
-    default: false,
+  ribbonText: {
+    type: String,
+    default: '',
   },
 })
 const emit = defineEmits(['click'])
-
-const { t: $t } = useI18n()
 
 const hasLoaded = ref(false)
 const hasError = ref(false)
@@ -169,34 +163,7 @@ const borderRadiusClass = 'rounded-lg'
 
 const isClickable = computed(() => !!props.to || !!getCurrentInstance()?.vnode.props?.onClick)
 
-const isShowRibbon = computed(() => props.isClaimable || props.isStaked)
-const ribbonText = computed(() => {
-  if (props.isStaked) {
-    return $t('staking_dashboard_staked')
-  }
-  if (props.isClaimable) {
-    return $t('bookshelf_claimable_label')
-  }
-  return ''
-})
-const ribbonTextColorClass = computed(() => {
-  if (props.isStaked) {
-    return 'text-theme-cyan'
-  }
-  if (props.isClaimable) {
-    return 'text-theme-black'
-  }
-  return ''
-})
-const ribbonBgColorClass = computed(() => {
-  if (props.isStaked) {
-    return 'bg-theme-black'
-  }
-  if (props.isClaimable) {
-    return 'bg-theme-cyan'
-  }
-  return ''
-})
+const isShowRibbon = computed(() => !!props.ribbonText)
 
 const coverHoverScaleAnimationClass = [
   'group-hover:scale-105',

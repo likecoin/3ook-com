@@ -78,51 +78,125 @@
           <LoginButton block />
         </template>
       </UCard>
-      <div
-        v-else-if="isEmpty"
-        class="flex flex-col items-center m-auto py-12"
-      >
-        <UIcon
-          class="opacity-20"
-          name="i-material-symbols-menu-book-outline-rounded"
-          size="128"
-        />
-
-        <span
-          class="font-bold opacity-20"
-          v-text="$t('bookshelf_no_items')"
-        />
-
-        <UButton
-          class="mt-4"
-          leading-icon="i-material-symbols-storefront-outline"
-          :label="$t('bookshelf_no_items_cta_button')"
-          :to="localeRoute({ name: 'store' })"
-        />
-      </div>
       <template v-else>
-        <div
-          v-if="isUploadedBookFeatureEnabled && isMyBookshelf && (hasUploadedBooks || (isLikerPlus && !isExpiredLikerPlus))"
-          :class="['w-full mt-4', !hasUploadedBooks && 'max-tablet:hidden']"
+        <!-- Tab selector -->
+        <header
+          v-if="isMyBookshelf"
+          class="flex items-center gap-2 w-full mt-4"
         >
-          <div class="flex items-center justify-between mb-3">
-            <h2
-              v-if="hasUploadedBooks"
-              class="text-sm font-bold text-highlighted"
-            >
-              {{ $t('uploaded_book_section_title') }}
-            </h2>
-            <UploadBookModal
-              v-if="isLikerPlus && !isExpiredLikerPlus"
-              class="ml-auto max-tablet:hidden"
-              size="sm"
-              variant="soft"
-              @uploaded="loadBookshelfData(walletAddress!, { isRefresh: true })"
+          <template v-if="isTabsLoading">
+            <USkeleton
+              v-for="(widthClass, i) in ['w-20', 'w-18', 'w-24']"
+              :key="`tab-skeleton-${i + 1}`"
+              :class="[
+                'shrink-0',
+                widthClass,
+                'h-8 laptop:h-9',
+                'rounded-full',
+                'border-2',
+                'border-muted',
+              ]"
             />
-          </div>
+          </template>
+          <template v-else>
+            <UButton
+              v-for="tab in shelfTabs"
+              :key="tab.value"
+              :label="tab.label"
+              variant="outline"
+              :ui="{
+                base: [
+                  activeTab === tab.value ? TAB_BUTTON_CLASS_DARK : TAB_BUTTON_CLASS_LIGHT,
+                  TAB_BUTTON_CLASS_BASE,
+                  'px-2.5 laptop:px-4',
+                  '!ring-theme-black dark:!ring-muted',
+                ],
+                label: 'text-sm laptop:text-base',
+              }"
+              @click="handleTabClick(tab.value)"
+            />
+          </template>
+          <UploadBookModal
+            v-if="canUploadBook"
+            @uploaded="loadBookshelfData(walletAddress!, { isRefresh: true })"
+          >
+            <UButton
+              :label="$t('uploaded_book_upload_button')"
+              class="ml-auto"
+              icon="i-material-symbols-upload-rounded"
+              variant="soft"
+            />
+          </UploadBookModal>
+        </header>
+
+        <!-- Empty state -->
+        <div
+          v-if="isCurrentTabEmpty && !isCurrentTabFetching"
+          class="flex flex-col items-center m-auto py-12"
+        >
+          <UIcon
+            class="opacity-20"
+            name="i-material-symbols-menu-book-outline-rounded"
+            size="128"
+          />
+          <span
+            class="font-bold opacity-20"
+            v-text="currentTabEmptyMessage"
+          />
+
+          <UButton
+            v-if="activeTab !== 'uploads'"
+            class="mt-4"
+            leading-icon="i-material-symbols-storefront-outline"
+            :label="$t('bookshelf_no_items_cta_button')"
+            :to="localeRoute({ name: 'store' })"
+          />
+        </div>
+        <template v-else>
+          <!-- Reading tab -->
           <ul
-            v-if="hasUploadedBooks"
-            :class="[...gridClasses, 'w-full']"
+            v-if="activeTab === 'reading'"
+            :class="[
+              ...gridClasses,
+              'w-full',
+              'mt-4',
+            ]"
+          >
+            <template v-if="isMyBookshelf">
+              <BookshelfItem
+                v-for="(nftClassId, index) in claimableNFTClassIds"
+                :id="nftClassId"
+                :key="nftClassId"
+                :class="getGridItemClassesByIndex(index)"
+                :nft-class-id="nftClassId"
+                :lazy="index >= columnMax"
+                :is-claimable="true"
+                @claim="handleBookClaim"
+              />
+            </template>
+            <BookshelfItem
+              v-for="(item, index) in readingItems"
+              :id="item.nftClassId"
+              :key="item.nftClassId"
+              :class="getGridItemClassesByIndex(claimableNFTClassIds.length + index)"
+              :nft-class-id="item.nftClassId"
+              :nft-ids="item.nftIds"
+              :is-owned="true"
+              :progress="item.progress"
+              :lazy="(claimableNFTClassIds.length + index) >= columnMax"
+              @open="handleBookshelfItemOpen"
+              @download="handleBookshelfItemDownload"
+            />
+          </ul>
+
+          <!-- Uploads tab -->
+          <ul
+            v-else-if="activeTab === 'uploads'"
+            :class="[
+              ...gridClasses,
+              'w-full',
+              'mt-4',
+            ]"
           >
             <UploadedBookshelfItem
               v-for="(item, index) in uploadedBookItems"
@@ -136,53 +210,44 @@
               @delete="handleDeleteUploadedBook"
             />
           </ul>
-        </div>
 
-        <ul
-          :class="[
-            ...gridClasses,
-
-            'w-full',
-            'mt-4',
-          ]"
-        >
-          <template v-if="isMyBookshelf">
+          <!-- Staking tab -->
+          <ul
+            v-else-if="activeTab === 'staking'"
+            :class="[
+              ...gridClasses,
+              'w-full',
+              'mt-4',
+            ]"
+          >
             <BookshelfItem
-              v-for="(nftClassId, index) in claimableNFTClassIds"
-              :id="nftClassId"
-              :key="nftClassId"
+              v-for="(item, index) in stakingItems"
+              :id="item.nftClassId"
+              :key="item.nftClassId"
               :class="getGridItemClassesByIndex(index)"
-              :nft-class-id="nftClassId"
+              :nft-class-id="item.nftClassId"
+              :nft-ids="item.nftIds"
+              :is-owned="item.isOwned"
+              :progress="item.progress"
+              :staked-like="item.stakedAmount"
               :lazy="index >= columnMax"
-              :is-claimable="true"
-              @claim="handleBookClaim"
+              @open="handleBookshelfItemOpen"
+              @download="handleBookshelfItemDownload"
             />
-          </template>
-          <BookshelfItem
-            v-for="(item, index) in bookshelfItemsWithStaking"
-            :id="item.nftClassId"
-            :key="item.nftClassId"
-            :class="getGridItemClassesByIndex(index)"
-            :nft-class-id="item.nftClassId"
-            :nft-ids="item.nftIds"
-            :is-owned="item.isOwned"
-            :progress="item.progress"
-            :lazy="index >= columnMax"
-            @open="handleBookshelfItemOpen"
-            @download="handleBookshelfItemDownload"
-          />
-        </ul>
+          </ul>
+
+          <div
+            v-if="isCurrentTabFetching"
+            class="flex justify-center py-48"
+          >
+            <UIcon
+              class="animate-spin"
+              name="material-symbols-progress-activity"
+              size="48"
+            />
+          </div>
+        </template>
       </template>
-      <div
-        v-if="bookshelfStore.isFetching"
-        class="flex justify-center py-48"
-      >
-        <UIcon
-          class="animate-spin"
-          name="material-symbols-progress-activity"
-          size="48"
-        />
-      </div>
     </main>
   </div>
 </template>
@@ -194,22 +259,33 @@ import { DeleteUploadedBookModal } from '#components'
 import type { BookshelfItem } from '~/stores/bookshelf'
 import type { StakingItem } from '~/stores/staking'
 
+type ShelfTab = 'reading' | 'uploads' | 'staking'
+
 interface BookshelfItemWithStaking extends BookshelfItem {
   stakedAmount: number
   pendingRewards: number
   isOwned: boolean
 }
 
+const TAB_BUTTON_CLASS_BASE = 'rounded-full hover:-translate-y-0.5 transition-all'
+const TAB_BUTTON_CLASS_LIGHT = 'bg-(--app-bg) hover:bg-accented/80 hover:dark:bg-muted/80'
+const TAB_BUTTON_CLASS_DARK = 'bg-theme-black dark:bg-theme-cyan hover:bg-theme-black/80 hover:dark:bg-theme-cyan/80 text-theme-cyan dark:text-theme-black'
+
 const { likeCoinTokenDecimals } = useRuntimeConfig().public
 const { t: $t } = useI18n()
 const { loggedIn: hasLoggedIn, user } = useUserSession()
 const localeRoute = useLocaleRoute()
+const route = useRoute()
+const router = useRouter()
+const getRouteQuery = useRouteQuery()
 const getRouteParam = useRouteParam()
 const bookshelfStore = useBookshelfStore()
 const uploadedBooksStore = useUploadedBooksStore()
 const metadataStore = useMetadataStore()
 const stakingStore = useStakingStore()
 const { isLikerPlus, isExpiredLikerPlus } = useSubscription()
+const isDesktopScreen = useDesktopScreen()
+const { isApp } = useAppDetection()
 const isUploadedBookFeatureEnabled = useFeatureFlagEnabled('plus-upload-files')
 const {
   isLoading: isLoadingClaimableFreeBooks,
@@ -223,6 +299,37 @@ const {
 const overlay = useOverlay()
 const deleteModal = overlay.create(DeleteUploadedBookModal)
 
+const isUploadedBookAccessible = computed(() => isLikerPlus.value && !isExpiredLikerPlus.value)
+const canUploadBook = computed(() => isUploadedBookFeatureEnabled.value && isUploadedBookAccessible.value && !isApp.value && isDesktopScreen.value)
+const isUploadedBookVisible = computed(() => isUploadedBookFeatureEnabled.value && hasUploadedBooks.value)
+
+const queryTab = computed(() => getRouteQuery('tab'))
+const defaultTab = computed<ShelfTab>(() => shelfTabs.value[0]?.value || 'reading')
+
+function resolveTabId(tabId: string): ShelfTab {
+  if (tabId === 'uploads') {
+    if (isUploadedBookVisible.value || canUploadBook.value) return 'uploads'
+    return defaultTab.value
+  }
+  if (tabId && shelfTabs.value.some(t => t.value === tabId)) return tabId as ShelfTab
+  return defaultTab.value
+}
+
+const activeTab = computed<ShelfTab>({
+  get: () => {
+    if (!isMyBookshelf.value) return defaultTab.value
+    return resolveTabId(queryTab.value)
+  },
+  set: (tab: ShelfTab) => {
+    router.replace({
+      query: {
+        ...route.query,
+        tab: resolveTabId(tab),
+      },
+    })
+  },
+})
+
 const stakingData = computed(() => {
   return isMyBookshelf.value
     ? stakingStore.getUserStakingData(user.value!.evmWallet)
@@ -234,14 +341,8 @@ const stakingData = computed(() => {
       }
 })
 
-const bookshelfItemsWithStaking = computed<BookshelfItemWithStaking[]>(() => {
-  const ownedItemsByNFTClassId = new Map(
-    bookshelfStore.items.map(item => [
-      item.nftClassId.toLowerCase(),
-      item,
-    ]),
-  )
-
+// All owned bookshelf items (for other user's shelf or as base data)
+const bookshelfItemsAll = computed<BookshelfItemWithStaking[]>(() => {
   const stakedItemsByNFTClassId = new Map(
     stakingData.value.items.map(item => [
       item.nftClassId.toLowerCase(),
@@ -249,7 +350,7 @@ const bookshelfItemsWithStaking = computed<BookshelfItemWithStaking[]>(() => {
     ]),
   )
 
-  const items = bookshelfStore.items.map((bookshelfItem) => {
+  return bookshelfStore.items.map((bookshelfItem) => {
     const normalizedNFTClassId = bookshelfItem.nftClassId.toLowerCase()
     const stakedItem = stakedItemsByNFTClassId.get(normalizedNFTClassId)
 
@@ -260,49 +361,129 @@ const bookshelfItemsWithStaking = computed<BookshelfItemWithStaking[]>(() => {
       isOwned: true,
     }
   })
+})
 
-  stakingData.value.items.forEach((stakedItem: StakingItem) => {
-    const normalizedNFTClassId = stakedItem.nftClassId.toLowerCase()
-    if (!ownedItemsByNFTClassId.has(normalizedNFTClassId)) {
-      items.push({
-        nftClassId: stakedItem.nftClassId,
-        nftIds: [],
-        stakedAmount: Number(formatUnits(stakedItem.stakedAmount, likeCoinTokenDecimals)),
-        pendingRewards: Number(formatUnits(stakedItem.pendingRewards, likeCoinTokenDecimals)),
-        isOwned: false,
-        lastOpenedTime: 0,
-        progress: 0,
-      })
-    }
-  })
-
-  // Sort: owned books first, then by staked amount (desc), then by original order
-  return items.sort((a, b) => {
-    // If not my bookshelf, don't sort by staking
-    if (!isMyBookshelf.value) return 0
-
-    if (a.isOwned !== b.isOwned) {
-      return a.isOwned ? -1 : 1
-    }
-
+// Reading tab: owned books sorted by last opened time (opened first), then the rest
+const readingItems = computed(() => {
+  return [...bookshelfItemsAll.value].sort((a, b) => {
     const aOpened = a.progress > 0
     const bOpened = b.progress > 0
-    // Opened books come before unopened books
-    if (aOpened !== bOpened) {
-      return aOpened ? -1 : 1
-    }
-
-    // Both opened (or both unopened): for opened, sort by lastOpenedTime (desc)
+    if (aOpened !== bOpened) return aOpened ? -1 : 1
     if (aOpened && bOpened && a.lastOpenedTime !== b.lastOpenedTime) {
       return b.lastOpenedTime - a.lastOpenedTime
     }
-
-    // Finally sort by staked amount
-    return b.stakedAmount - a.stakedAmount
+    return 0
   })
 })
 
-const itemsCount = computed(() => bookshelfStore.items.length)
+// Staking tab: books user has staked on, sorted by staked amount desc
+const stakingItems = computed<BookshelfItemWithStaking[]>(() => {
+  const ownedItemsByNFTClassId = new Map(
+    bookshelfStore.items.map(item => [
+      item.nftClassId.toLowerCase(),
+      item,
+    ]),
+  )
+
+  const items: BookshelfItemWithStaking[] = []
+
+  stakingData.value.items.forEach((stakedItem: StakingItem) => {
+    const normalizedNFTClassId = stakedItem.nftClassId.toLowerCase()
+    const ownedItem = ownedItemsByNFTClassId.get(normalizedNFTClassId)
+
+    items.push({
+      nftClassId: stakedItem.nftClassId,
+      nftIds: ownedItem?.nftIds || [],
+      stakedAmount: Number(formatUnits(stakedItem.stakedAmount, likeCoinTokenDecimals)),
+      pendingRewards: Number(formatUnits(stakedItem.pendingRewards, likeCoinTokenDecimals)),
+      isOwned: !!ownedItem,
+      lastOpenedTime: ownedItem?.lastOpenedTime || 0,
+      progress: ownedItem?.progress || 0,
+    })
+  })
+
+  return items.sort((a, b) => b.stakedAmount - a.stakedAmount)
+})
+
+const shelfTabs = computed(() => {
+  const tabs: { value: ShelfTab, label: string }[] = []
+  if (bookshelfItemsAll.value.length > 0 || claimableFreeBooksCount.value > 0) {
+    tabs.push({ value: 'reading', label: $t('bookshelf_tab_reading') })
+  }
+  if (stakingItems.value.length > 0) {
+    tabs.push({ value: 'staking', label: $t('bookshelf_tab_staking') })
+  }
+  if (isUploadedBookVisible.value || (queryTab.value === 'uploads' && canUploadBook.value)) {
+    tabs.push({ value: 'uploads', label: $t('bookshelf_tab_uploads') })
+  }
+  return tabs
+})
+
+const isTabsLoading = computed(() => (
+  !bookshelfStore.hasFetched
+  || !uploadedBooksStore.hasFetched
+  || !stakingData.value.hasFetched
+))
+
+const isCurrentTabFetching = computed(() => {
+  switch (activeTab.value) {
+    case 'reading':
+      return bookshelfStore.isFetching || isLoadingClaimableFreeBooks.value
+    case 'uploads':
+      return uploadedBooksStore.isFetching
+    case 'staking':
+      return stakingData.value.isFetching
+    default:
+      return false
+  }
+})
+
+const isCurrentTabEmpty = computed(() => {
+  switch (activeTab.value) {
+    case 'reading':
+      if (!bookshelfStore.hasFetched || isLoadingClaimableFreeBooks.value) return false
+      return bookshelfItemsAll.value.length === 0 && claimableFreeBooksCount.value === 0
+    case 'uploads':
+      if (!uploadedBooksStore.hasFetched) return false
+      return !hasUploadedBooks.value
+    case 'staking':
+      if (!stakingData.value.hasFetched) return false
+      return stakingItems.value.length === 0
+    default:
+      return false
+  }
+})
+
+const currentTabEmptyMessage = computed(() => {
+  switch (activeTab.value) {
+    case 'reading':
+      return $t('bookshelf_no_items_reading')
+    case 'uploads':
+      return $t('bookshelf_no_items_uploads')
+    case 'staking':
+      return $t('bookshelf_no_items_staking')
+    default:
+      return $t('bookshelf_no_items')
+  }
+})
+
+function handleTabClick(tab: ShelfTab) {
+  activeTab.value = tab
+}
+
+const itemsCount = computed(() => {
+  switch (activeTab.value) {
+    case 'reading':
+      return claimableFreeBooksCount.value + readingItems.value.length
+    case 'uploads':
+      return uploadedBookItems.value.length
+    case 'staking':
+      return stakingItems.value.length
+    default:
+      return bookshelfStore.items.length
+  }
+})
+
 const paramWalletAddress = computed(() => getRouteParam('walletAddress'))
 
 if (paramWalletAddress.value && !checkIsEVMAddress(paramWalletAddress.value)) {
@@ -344,21 +525,6 @@ const shelfOwnerWalletAddress = computed(() => {
   return shelfOwner.value?.evmWallet || walletAddress.value
 })
 
-const totalItemsCount = computed(() => {
-  const uploadedCount = isMyBookshelf.value ? uploadedBookItems.value.length : 0
-  return claimableFreeBooksCount.value + itemsCount.value + uploadedCount
-})
-
-const isEmpty = computed(() => {
-  return (
-    totalItemsCount.value === 0
-    && !bookshelfStore.isFetching
-    && bookshelfStore.hasFetched
-    && !isLoadingClaimableFreeBooks
-    && (!isMyBookshelf.value || uploadedBooksStore.hasFetched)
-  )
-})
-
 useHead(() => ({
   title: isMyBookshelf.value
     ? $t('shelf_page_title')
@@ -391,7 +557,6 @@ async function loadBookshelfData(addr: string, { isRefresh = false } = {}) {
 
 const uploadedBookItems = computed(() => uploadedBooksStore.items)
 const hasUploadedBooks = computed(() => uploadedBookItems.value.length > 0)
-const isUploadedBookAccessible = computed(() => isLikerPlus.value && !isExpiredLikerPlus.value)
 
 function handleDeleteUploadedBook(bookId: string) {
   deleteModal.open({ bookId })

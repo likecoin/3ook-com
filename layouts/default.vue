@@ -26,7 +26,7 @@
     </div>
 
     <div
-      class="grow"
+      class="flex flex-col grow"
       :style="contentStyle"
     >
       <slot />

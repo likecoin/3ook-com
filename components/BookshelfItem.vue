@@ -8,15 +8,25 @@
       :src="bookCoverSrc"
       :alt="bookInfo.name.value"
       :lazy="props.lazy"
-      :is-claimable="isClaimable"
-      :is-staked="false"
+      :ribbon-text="props.isClaimable ? $t('bookshelf_claimable_label') : ''"
       :has-shadow="true"
       @click="handleCoverClick"
     />
 
     <div class="mt-2 mb-1 w-full h-[24px]">
       <div
-        v-if="progressPercentage > 0 && progressPercentage <= 100"
+        v-if="props.stakedLike > 0"
+        class="flex justify-between items-center gap-1 text-xs text-toned"
+      >
+        <span v-text="$t('staking_explore_total_staked')" />
+        <BalanceLabel
+          :value="props.stakedLike"
+          :is-compact="true"
+          :is-bold="false"
+        />
+      </div>
+      <div
+        v-else-if="progressPercentage > 0 && progressPercentage <= 100"
         class="w-full"
       >
         <div
@@ -136,6 +146,10 @@ const props = defineProps({
     default: true,
   },
   progress: {
+    type: Number,
+    default: 0,
+  },
+  stakedLike: {
     type: Number,
     default: 0,
   },

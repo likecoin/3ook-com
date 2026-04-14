@@ -383,7 +383,7 @@ const { isApp } = useAppDetection()
 
 const TAG_BUTTON_CLASS_BASE = 'rounded-full hover:-translate-y-0.5 transition-all'
 const TAG_BUTTON_CLASS_LIGHT = 'bg-(--app-bg) hover:bg-accented/80 hover:dark:bg-muted/80'
-const TAG_BUTTON_CLASS_DARK = 'bg-theme-black hover:bg-theme-black/80 hover:dark:bg-accented/80 text-theme-cyan'
+const TAG_BUTTON_CLASS_DARK = 'bg-theme-black dark:bg-theme-cyan hover:bg-theme-black/80 hover:dark:bg-theme-cyan/80 text-theme-cyan dark:text-theme-black'
 
 const querySearchTerm = computed(() => getRouteQuery('q', ''))
 const queryAuthorName = computed(() => getRouteQuery('author', ''))
