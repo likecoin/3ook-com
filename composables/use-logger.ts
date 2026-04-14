@@ -167,6 +167,10 @@ export function useLogEvent(eventName: string, eventParams: EventParams = {}) {
           posthogParams.nft_class_ids = classIds.join(',')
         }
       }
+      // Dedupe against the backend-fired counterpart (posthog-node) for the same transaction.
+      if (typeof eventParams.transaction_id === 'string' && eventParams.transaction_id) {
+        posthogParams.$insert_id = `${eventName}_${eventParams.transaction_id}`
+      }
       posthog.capture(eventName, { app: '3ook', ...posthogParams })
     }
     catch (error) {

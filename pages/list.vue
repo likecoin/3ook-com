@@ -177,7 +177,7 @@ async function handleCheckoutButtonClick() {
         ...getAnalyticsParameters({ utmSource: '3ook-list' }),
       },
     )
-    useLogEvent('begin_checkout', { payment_id: paymentId })
+    useLogEvent('begin_checkout', { transaction_id: paymentId })
     await navigateTo(url, { external: true })
   }
   catch (error) {
