@@ -35,6 +35,14 @@
 import type { PDFDocumentProxy } from 'pdfjs-dist'
 import type { TextItem, TextMarkedContent } from 'pdfjs-dist/types/src/display/api'
 
+// Force a fresh page instance when switching between NFT and uploaded books:
+// useReader() branches on the `source` query at setup, so a within-route
+// navigation that flips source would otherwise leave `bookInfo` pointing at
+// the wrong composable.
+definePageMeta({
+  key: route => `reader-pdf-${route.query.source === 'upload' ? 'upload' : 'nft'}`,
+})
+
 const { loggedIn: hasLoggedIn } = useUserSession()
 const route = useRoute()
 const localeRoute = useLocaleRoute()
@@ -53,6 +61,7 @@ const { t: $t } = useI18n()
 const nftStore = useNFTStore()
 const {
   nftClassId,
+  isUploadedBook,
   bookInfo,
   bookCoverSrc,
   bookFileURLWithCORS,
@@ -68,13 +77,17 @@ function updatePDFProgress(page: number) {
 }
 const currentPageIndex = ref(1)
 const { isTTSPlaying } = useTTSPlayingState()
-useReadingSession({
-  nftClassId,
-  readerType: 'pdf',
-  progress: pdfProgress,
-  isTextToSpeechPlaying: isTTSPlaying,
-  pageIndex: currentPageIndex,
-})
+// Uploaded books aren't on-chain, so they have no publisher analytics
+// pipeline to feed — skip per-book reading session reporting for them.
+if (!isUploadedBook.value) {
+  useReadingSession({
+    nftClassId,
+    readerType: 'pdf',
+    progress: pdfProgress,
+    isTextToSpeechPlaying: isTTSPlaying,
+    pageIndex: currentPageIndex,
+  })
+}
 
 const fileBuffer = ref<ArrayBuffer | null>(null)
 const isPDFReady = ref(false)
@@ -108,7 +121,15 @@ const { loadingLabel, loadingPercentage, loadFileAsBuffer } = useBookFileLoader(
 onMounted(async () => {
   isReaderLoading.value = true
   try {
-    await nftStore.lazyFetchNFTClassAggregatedMetadataById(nftClassId.value)
+    if (isUploadedBook.value) {
+      const uploadedBooksStore = useUploadedBooksStore()
+      if (!uploadedBooksStore.hasFetched) {
+        await uploadedBooksStore.fetchItems()
+      }
+    }
+    else {
+      await nftStore.lazyFetchNFTClassAggregatedMetadataById(nftClassId.value)
+    }
   }
   catch (error) {
     await handleError(error, {

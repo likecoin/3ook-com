@@ -338,6 +338,14 @@ import ePub, {
 } from '@likecoin/epub-ts'
 import { ANNOTATION_COLORS_MAP, ANNOTATION_TEXT_MAX_LENGTH } from '~/constants/annotations'
 
+// Force a fresh page instance when switching between NFT and uploaded books:
+// useReader() branches on the `source` query at setup, so a within-route
+// navigation that flips source would otherwise leave `bookInfo` pointing at
+// the wrong composable.
+definePageMeta({
+  key: route => `reader-epub-${route.query.source === 'upload' ? 'upload' : 'nft'}`,
+})
+
 declare interface EpubView {
   window: Window
   settings: {
@@ -366,6 +374,7 @@ const nftStore = useNFTStore()
 const bookSettingsStore = useBookSettingsStore()
 const {
   nftClassId,
+  isUploadedBook,
   bookInfo,
   bookCoverSrc,
   bookFileURLWithCORS,
@@ -442,11 +451,20 @@ const { loadingLabel, loadingPercentage, loadFileAsBuffer } = useBookFileLoader(
 onMounted(async () => {
   isReaderLoading.value = true
   try {
-    await Promise.all([
-      nftStore.lazyFetchNFTClassAggregatedMetadataById(nftClassId.value),
+    const initPromises: Promise<unknown>[] = [
       bookSettingsStore.ensureInitialized(nftClassId.value),
       fetchAnnotations(),
-    ])
+    ]
+    if (isUploadedBook.value) {
+      const uploadedBooksStore = useUploadedBooksStore()
+      if (!uploadedBooksStore.hasFetched) {
+        initPromises.push(uploadedBooksStore.fetchItems())
+      }
+    }
+    else {
+      initPromises.push(nftStore.lazyFetchNFTClassAggregatedMetadataById(nftClassId.value))
+    }
+    await Promise.all(initPromises)
   }
   catch (error) {
     await handleError(error, {
@@ -555,13 +573,17 @@ const {
 const currentSectionIndex = ref(0)
 
 const { isTTSPlaying } = useTTSPlayingState()
-useReadingSession({
-  nftClassId,
-  readerType: 'epub',
-  progress: computed(() => Math.min(readingProgress.value * 100, 100)),
-  isTextToSpeechPlaying: isTTSPlaying,
-  chapterIndex: currentSectionIndex,
-})
+// Uploaded books aren't on-chain, so they have no publisher analytics
+// pipeline to feed — skip per-book reading session reporting for them.
+if (!isUploadedBook.value) {
+  useReadingSession({
+    nftClassId,
+    readerType: 'epub',
+    progress: computed(() => Math.min(readingProgress.value * 100, 100)),
+    isTextToSpeechPlaying: isTTSPlaying,
+    chapterIndex: currentSectionIndex,
+  })
+}
 
 const lastSectionIndex = ref(0)
 const percentage = ref(0)

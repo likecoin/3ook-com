@@ -10,29 +10,37 @@ export default function (params: {
     getRouteQuery('nft_class_id') || toValue(params.nftClassId) || '',
   )
 
-  const bookInfo = useBookInfo({ nftClassId })
+  const isUploadedBook = computed(() => getRouteQuery('source') === 'upload')
+
+  const bookInfo = isUploadedBook.value
+    ? useUploadedBookInfo({ bookId: nftClassId })
+    : useBookInfo({ nftClassId })
 
   const nftId = computed(() => {
+    if (isUploadedBook.value) return undefined
     const id = getRouteQuery('nft_id')
-    return id || bookInfo.firstUserOwnedNFTId.value
+    return id || ('firstUserOwnedNFTId' in bookInfo ? bookInfo.firstUserOwnedNFTId.value : undefined)
   })
   const fileIndex = computed(() => getRouteQuery('index', '0'))
   const shouldCustomMessageDisabled = computed(() => getRouteQuery('custom_message') === '0')
 
   const bookCoverSrc = computed(() => getResizedImageURL(bookInfo.coverSrc.value, { size: 300 }))
 
-  const bookFileCacheKey = computed(() =>
-    [
+  const bookFileCacheKey = computed(() => {
+    if (isUploadedBook.value) {
+      return [config.public.cacheKeyPrefix, READER_CACHE_KEY, 'upload', nftClassId.value].join('-')
+    }
+    return [
       config.public.cacheKeyPrefix,
       READER_CACHE_KEY,
       nftClassId.value,
       nftId.value,
       fileIndex.value,
       bookInfo.isCustomMessageEnabled.value ? '1' : '0',
-    ].filter(value => value !== undefined).join('-'),
-  )
+    ].filter(value => value !== undefined).join('-')
+  })
 
-  // Progress/config key prefix - per NFT class only (not per NFT ID or custom message)
+  // Progress/config key prefix - per book ID (NFT class or uploaded book)
   const bookProgressKeyPrefix = computed(() =>
     getBookProgressKeyPrefix({
       nftClassId: nftClassId.value,
@@ -40,19 +48,23 @@ export default function (params: {
     }),
   )
 
-  const bookFileURLWithCORS = computed(() =>
-    getBookFileURLWithCORS({
+  const bookFileURLWithCORS = computed(() => {
+    if (isUploadedBook.value) {
+      return `/api/uploaded-books/${nftClassId.value}/file`
+    }
+    return getBookFileURLWithCORS({
       nftClassId: nftClassId.value,
       nftId: nftId.value,
       fileIndex: fileIndex.value,
       isCustomMessageEnabled: !shouldCustomMessageDisabled.value && bookInfo.isCustomMessageEnabled.value,
-    }),
-  )
+    })
+  })
 
   return {
     nftClassId,
     nftId,
     fileIndex,
+    isUploadedBook,
 
     bookInfo,
     bookCoverSrc,

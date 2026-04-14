@@ -69,7 +69,7 @@
         <UIcon
           :class="[
             'text-dimmed/50',
-            hasError ? 'opacity-100' : 'opacity-0',
+            hasError || !props.src ? 'opacity-100' : 'opacity-0',
             'transition-opacity',
             'duration-300',
             'ease-out',

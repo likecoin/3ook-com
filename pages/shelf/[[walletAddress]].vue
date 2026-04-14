@@ -100,41 +100,79 @@
           :to="localeRoute({ name: 'store' })"
         />
       </div>
-      <ul
-        v-else
-        :class="[
-          ...gridClasses,
+      <template v-else>
+        <div
+          v-if="isUploadedBookFeatureEnabled && isMyBookshelf && (hasUploadedBooks || (isLikerPlus && !isExpiredLikerPlus))"
+          class="w-full mt-4"
+        >
+          <div class="flex items-center justify-between mb-3">
+            <h2
+              v-if="hasUploadedBooks"
+              class="text-sm font-bold text-highlighted"
+            >
+              {{ $t('uploaded_book_section_title') }}
+            </h2>
+            <UploadBookModal
+              v-if="isLikerPlus && !isExpiredLikerPlus"
+              class="ml-auto"
+              size="sm"
+              variant="soft"
+              @uploaded="loadBookshelfData(walletAddress!, { isRefresh: true })"
+            />
+          </div>
+          <ul
+            v-if="hasUploadedBooks"
+            :class="[...gridClasses, 'w-full']"
+          >
+            <UploadedBookshelfItem
+              v-for="(item, index) in uploadedBookItems"
+              :key="item.id"
+              :class="getGridItemClassesByIndex(index)"
+              :book-id="item.id"
+              :content-type="item.contentType"
+              :progress="item.progress"
+              :lazy="index >= columnMax"
+              :is-accessible="isUploadedBookAccessible"
+              @delete="handleDeleteUploadedBook"
+            />
+          </ul>
+        </div>
 
-          'w-full',
-          'mt-4',
-        ]"
-      >
-        <template v-if="isMyBookshelf">
+        <ul
+          :class="[
+            ...gridClasses,
+
+            'w-full',
+            'mt-4',
+          ]"
+        >
+          <template v-if="isMyBookshelf">
+            <BookshelfItem
+              v-for="(nftClassId, index) in claimableNFTClassIds"
+              :id="nftClassId"
+              :key="nftClassId"
+              :class="getGridItemClassesByIndex(index)"
+              :nft-class-id="nftClassId"
+              :lazy="index >= columnMax"
+              :is-claimable="true"
+              @claim="handleBookClaim"
+            />
+          </template>
           <BookshelfItem
-            v-for="(nftClassId, index) in claimableNFTClassIds"
-            :id="nftClassId"
-            :key="nftClassId"
+            v-for="(item, index) in bookshelfItemsWithStaking"
+            :id="item.nftClassId"
+            :key="item.nftClassId"
             :class="getGridItemClassesByIndex(index)"
-            :nft-class-id="nftClassId"
+            :nft-class-id="item.nftClassId"
+            :nft-ids="item.nftIds"
+            :is-owned="item.isOwned"
+            :progress="item.progress"
             :lazy="index >= columnMax"
-            :is-claimable="true"
-            @claim="handleBookClaim"
+            @open="handleBookshelfItemOpen"
+            @download="handleBookshelfItemDownload"
           />
-        </template>
-        <BookshelfItem
-          v-for="(item, index) in bookshelfItemsWithStaking"
-          :id="item.nftClassId"
-          :key="item.nftClassId"
-          :class="getGridItemClassesByIndex(index)"
-          :nft-class-id="item.nftClassId"
-          :nft-ids="item.nftIds"
-          :is-owned="item.isOwned"
-          :progress="item.progress"
-          :lazy="index >= columnMax"
-          @open="handleBookshelfItemOpen"
-          @download="handleBookshelfItemDownload"
-        />
-      </ul>
+        </ul>
+      </template>
       <div
         v-if="bookshelfStore.isFetching"
         class="flex justify-center py-48"
@@ -166,8 +204,12 @@ const { loggedIn: hasLoggedIn, user } = useUserSession()
 const localeRoute = useLocaleRoute()
 const getRouteParam = useRouteParam()
 const bookshelfStore = useBookshelfStore()
+const uploadedBooksStore = useUploadedBooksStore()
 const metadataStore = useMetadataStore()
 const stakingStore = useStakingStore()
+const { isLikerPlus, isExpiredLikerPlus } = useSubscription()
+const isUploadedBookFeatureEnabled = useFeatureFlagEnabled('plus-upload-files')
+const toast = useToast()
 const {
   isLoading: isLoadingClaimableFreeBooks,
   nftClassIds: claimableNFTClassIds,
@@ -299,7 +341,8 @@ const shelfOwnerWalletAddress = computed(() => {
 })
 
 const totalItemsCount = computed(() => {
-  return claimableFreeBooksCount.value + itemsCount.value
+  const uploadedCount = isMyBookshelf.value ? uploadedBookItems.value.length : 0
+  return claimableFreeBooksCount.value + itemsCount.value + uploadedCount
 })
 
 const isEmpty = computed(() => {
@@ -308,6 +351,7 @@ const isEmpty = computed(() => {
     && !bookshelfStore.isFetching
     && bookshelfStore.hasFetched
     && !isLoadingClaimableFreeBooks
+    && (!isMyBookshelf.value || uploadedBooksStore.hasFetched)
   )
 })
 
@@ -335,9 +379,24 @@ async function loadBookshelfData(addr: string, { isRefresh = false } = {}) {
     promises.push(
       fetchClaimableFreeBooks(),
       stakingStore.fetchUserStakingData(user.value!.evmWallet),
+      uploadedBooksStore.fetchItems({ force: isRefresh }),
     )
   }
   await Promise.all(promises)
+}
+
+const uploadedBookItems = computed(() => uploadedBooksStore.items)
+const hasUploadedBooks = computed(() => uploadedBookItems.value.length > 0)
+const isUploadedBookAccessible = computed(() => isLikerPlus.value && !isExpiredLikerPlus.value)
+
+async function handleDeleteUploadedBook(bookId: string) {
+  try {
+    await uploadedBooksStore.deleteBook(bookId)
+    toast.add({ title: $t('uploaded_book_delete_success') })
+  }
+  catch {
+    toast.add({ title: $t('uploaded_book_delete_failed'), color: 'error' })
+  }
 }
 
 onMounted(async () => {
@@ -358,11 +417,24 @@ watch(
   async (value) => {
     bookshelfStore.reset()
     resetClaimableBooks()
+    // Drop the previous viewer's uploads so they don't leak into another
+    // user's shelf (affects `totalItemsCount` and the empty-state logic).
+    uploadedBooksStore.reset()
     if (value) {
       await loadBookshelfData(value, { isRefresh: true })
     }
   },
 )
+
+// If the session hydrates after the page mounts with an explicit
+// `/shelf/0xMyAddr` URL, `isMyBookshelf` flips from false → true without
+// `walletAddress` changing, so the initial `loadBookshelfData` skipped the
+// my-only fetches (uploads, staking, claimables). Re-trigger once here.
+watch(isMyBookshelf, async (isMine, wasMine) => {
+  if (isMine && !wasMine && walletAddress.value) {
+    await loadBookshelfData(walletAddress.value)
+  }
+})
 
 function handleBookshelfItemOpen({
   type,
