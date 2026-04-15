@@ -1,12 +1,22 @@
 import type { AffiliateVoiceData } from '~/shared/types/custom-voice'
 
-interface AffiliatePublicConfig {
+export interface AffiliatePublicConfig {
   active: boolean
   giftClassId?: string
   giftBookName?: string
   giftBookCover?: string
+  giftOnTrial?: boolean
   affiliateClassIds: string[]
   customVoices: AffiliateVoiceData[]
+}
+
+export function getAffiliateVoicesForBook(
+  config: AffiliatePublicConfig | null,
+  nftClassId: string | undefined,
+): AffiliateVoiceData[] {
+  if (!config?.active || !nftClassId) return []
+  if (!config.affiliateClassIds.includes(nftClassId.toLowerCase())) return []
+  return config.customVoices
 }
 
 export function usePlusAffiliate() {
@@ -43,10 +53,7 @@ export function usePlusAffiliate() {
   }
 
   function voicesForBook(nftClassId: MaybeRefOrGetter<string | undefined>): AffiliateVoiceData[] {
-    const classId = toValue(nftClassId)
-    if (!state.value?.active || !classId) return []
-    if (!state.value.affiliateClassIds.includes(classId.toLowerCase())) return []
-    return state.value.customVoices
+    return getAffiliateVoicesForBook(state.value, toValue(nftClassId))
   }
 
   return {
