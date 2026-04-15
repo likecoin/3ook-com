@@ -211,13 +211,13 @@
                     />
                     <div class="grid grid-cols-2 gap-2">
                       <UButton
-                        :variant="writingMode === EPUB_WRITING_MODES.horizontal ? 'solid' : 'outline'"
+                        :variant="activeWritingMode === EPUB_WRITING_MODES.horizontal ? 'solid' : 'outline'"
                         icon="i-material-symbols-text-rotation-none-rounded"
                         class="w-full justify-center"
                         @click="setWritingMode(EPUB_WRITING_MODES.horizontal)"
                       />
                       <UButton
-                        :variant="writingMode === EPUB_WRITING_MODES.vertical ? 'solid' : 'outline'"
+                        :variant="activeWritingMode === EPUB_WRITING_MODES.vertical ? 'solid' : 'outline'"
                         icon="i-material-symbols-text-rotate-vertical-rounded"
                         class="w-full justify-center"
                         @click="setWritingMode(EPUB_WRITING_MODES.vertical)"
@@ -659,21 +659,36 @@ const EPUB_WRITING_MODES = {
 } as const
 type EpubWritingMode = typeof EPUB_WRITING_MODES[keyof typeof EPUB_WRITING_MODES]
 
-const DEFAULT_WRITING_MODE = EPUB_WRITING_MODES.horizontal
+const FALLBACK_WRITING_MODE = EPUB_WRITING_MODES.horizontal
+const EPUB_WRITING_MODE_SETTING_KEY = 'epub-writingMode'
+const epubDefaultWritingMode = ref<EpubWritingMode>(FALLBACK_WRITING_MODE)
 const writingMode = useSyncedBookSettings<EpubWritingMode>({
   nftClassId: nftClassId.value,
   key: 'writingMode',
-  defaultValue: DEFAULT_WRITING_MODE,
+  defaultValue: FALLBACK_WRITING_MODE,
   namespace: 'epub',
 })
-const isRightToLeft = computed(() => writingMode.value === EPUB_WRITING_MODES.vertical)
+const hasSavedWritingMode = computed(() => {
+  return bookSettingsStore.getSettings(nftClassId.value)?.[EPUB_WRITING_MODE_SETTING_KEY] !== undefined
+})
+const activeWritingMode = computed(() => {
+  return hasSavedWritingMode.value ? writingMode.value : epubDefaultWritingMode.value
+})
+const isRightToLeft = computed(() => activeWritingMode.value === EPUB_WRITING_MODES.vertical)
+
+function getDefaultWritingModeFromBook(book: Book): EpubWritingMode {
+  const direction = book.package?.metadata?.direction || book.packaging?.metadata?.direction
+  return direction?.toLowerCase() === 'rtl'
+    ? EPUB_WRITING_MODES.vertical
+    : FALLBACK_WRITING_MODE
+}
 
 function getWritingModeStyles() {
-  const isVerticalWritingMode = writingMode.value === EPUB_WRITING_MODES.vertical
+  const isVerticalWritingMode = activeWritingMode.value === EPUB_WRITING_MODES.vertical
 
   return {
-    'writing-mode': writingMode.value,
-    '-webkit-writing-mode': writingMode.value,
+    'writing-mode': activeWritingMode.value,
+    '-webkit-writing-mode': activeWritingMode.value,
     'text-orientation': 'mixed',
     '-webkit-text-orientation': 'mixed',
     'line-break': isVerticalWritingMode ? 'strict' : 'auto',
@@ -802,6 +817,7 @@ async function loadEPub() {
   const book = ePub(buffer)
   await book.ready
   loadedBook.value = book
+  epubDefaultWritingMode.value = getDefaultWritingModeFromBook(book)
   const toc = await book.loaded!.navigation.then(async (navigation) => {
     return navigation.toc.flatMap((item) => {
       if (item.subitems) {
@@ -1249,7 +1265,7 @@ function decreaseLineHeight() {
 }
 
 async function setWritingMode(mode: EpubWritingMode) {
-  if (mode === writingMode.value) return
+  if (mode === activeWritingMode.value && hasSavedWritingMode.value) return
 
   writingMode.value = mode
   applyWritingModeToLoadedSections()
@@ -1261,14 +1277,14 @@ async function setWritingMode(mode: EpubWritingMode) {
 async function restoreDefaultDisplayOptions() {
   const previousFontSize = fontSize.value
   const previousLineHeight = lineHeight.value
-  const previousWritingMode = writingMode.value
+  const previousWritingMode = activeWritingMode.value
 
   fontSize.value = FONT_SIZE_OPTIONS[DEFAULT_FONT_SIZE_INDEX]
   lineHeight.value = DEFAULT_LINE_HEIGHT
-  writingMode.value = DEFAULT_WRITING_MODE
+  writingMode.value = epubDefaultWritingMode.value
   const hasFontSizeChanged = previousFontSize !== fontSize.value
   const hasLineHeightChanged = previousLineHeight !== lineHeight.value
-  const hasWritingModeChanged = previousWritingMode !== writingMode.value
+  const hasWritingModeChanged = previousWritingMode !== activeWritingMode.value
 
   applyWritingModeToLoadedSections()
   applyTheme()
@@ -1291,11 +1307,11 @@ async function restoreDefaultDisplayOptions() {
       value: lineHeight.value,
     })
   }
-  if (previousWritingMode !== writingMode.value) {
+  if (previousWritingMode !== activeWritingMode.value) {
     useLogEvent('reader_setting_changed', {
       nft_class_id: nftClassId.value,
       setting: 'writing_mode',
-      value: writingMode.value,
+      value: activeWritingMode.value,
     })
   }
 }
