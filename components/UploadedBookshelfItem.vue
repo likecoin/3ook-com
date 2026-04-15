@@ -75,7 +75,7 @@
               :ui="{ header: 'text-center font-bold' }"
             >
               <template #header>
-                {{ $t('bookshelf_more_menu_title') }}
+                {{ bookInfo.name.value }}
               </template>
               <UButton
                 v-for="item in menuItems"
