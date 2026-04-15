@@ -1,7 +1,13 @@
 <template>
   <UModal
     v-model:open="isOpen"
+    :title="$t('uploaded_book_upload_title')"
     :dismissible="!isBusy"
+    :close="{ disabled: isBusy }"
+    :ui="{
+      body: 'flex flex-col gap-4',
+      footer: 'flex items-center justify-end gap-2',
+    }"
   >
     <UButton
       :label="$t('uploaded_book_upload_button')"
@@ -9,152 +15,149 @@
       v-bind="$attrs"
     />
 
-    <template #content>
-      <UCard :ui="{ header: 'font-bold' }">
-        <template #header>
-          {{ $t('uploaded_book_upload_title') }}
-        </template>
+    <template #body>
+      <div>
+        <p class="text-sm text-muted">
+          {{ $t('uploaded_book_upload_description') }}
+        </p>
+        <p class="text-xs text-toned mt-1">
+          {{ $t('uploaded_book_quota_label', { count: quota.count, max: quota.maxCount }) }}
+        </p>
+      </div>
 
-        <div class="flex flex-col gap-4">
-          <div>
-            <p class="text-sm text-muted">
-              {{ $t('uploaded_book_upload_description') }}
-            </p>
-            <p class="text-xs text-toned mt-1">
-              {{ $t('uploaded_book_quota_label', { count: quota.count, max: quota.maxCount }) }}
-            </p>
-          </div>
+      <div
+        v-if="!selectedFile"
+        class="flex flex-col items-center justify-center gap-2 border border-accented hover:border-inverted border-dashed rounded-lg p-8 cursor-pointer transition-colors"
+        @click="openFilePicker"
+        @dragover.prevent
+        @drop.prevent="handleDrop"
+      >
+        <UIcon
+          name="i-material-symbols-light-upload-file-outline-rounded"
+          size="48"
+          class="text-muted"
+        />
+        <span class="text-sm text-muted">{{ $t('uploaded_book_drop_or_click') }}</span>
+        <span class="text-xs text-dimmed">EPUB, PDF ({{ $t('uploaded_book_max_size', { size: '100MB' }) }})</span>
+      </div>
 
+      <div
+        v-else
+        class="flex items-center gap-3 p-3 border border-accented rounded-lg"
+      >
+        <UIcon
+          :name="selectedFile.type === 'application/pdf' ? 'i-material-symbols-picture-as-pdf-rounded' : 'i-material-symbols-book-5-outline-rounded'"
+          size="24"
+        />
+        <div class="flex-1 min-w-0">
           <div
-            v-if="!selectedFile"
-            class="flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-lg p-8 cursor-pointer hover:border-primary transition-colors"
-            @click="openFilePicker"
-            @dragover.prevent
-            @drop.prevent="handleDrop"
-          >
-            <UIcon
-              name="i-material-symbols-upload-file-outline"
-              size="48"
-              class="text-muted"
-            />
-            <span class="text-sm text-muted">{{ $t('uploaded_book_drop_or_click') }}</span>
-            <span class="text-xs text-dimmed">EPUB, PDF ({{ $t('uploaded_book_max_size', { size: '100MB' }) }})</span>
-          </div>
-
+            class="text-sm font-medium truncate"
+            v-text="selectedFile.name"
+          />
           <div
-            v-else
-            class="flex items-center gap-3 p-3 border rounded-lg"
-          >
-            <UIcon
-              :name="selectedFile.type === 'application/pdf' ? 'i-material-symbols-picture-as-pdf' : 'i-material-symbols-book-5-outline'"
-              size="24"
-            />
-            <div class="flex-1 min-w-0">
-              <div class="text-sm font-medium truncate">
-                {{ selectedFile.name }}
-              </div>
-              <div class="text-xs text-muted">
-                {{ formatFileSize(selectedFile.size) }}
-              </div>
-            </div>
-            <UButton
-              icon="i-material-symbols-close"
-              variant="ghost"
-              color="neutral"
-              size="xs"
+            class="text-xs text-muted"
+            v-text="formatFileSize(selectedFile.size)"
+          />
+        </div>
+        <UButton
+          icon="i-material-symbols-close"
+          variant="ghost"
+          color="neutral"
+          size="xs"
+          :disabled="isBusy"
+          @click="clearFile"
+        />
+      </div>
+
+      <div
+        v-if="isParsing"
+        class="text-xs text-toned"
+        v-text="$t('uploaded_book_parsing')"
+      />
+
+      <template v-if="selectedFile">
+        <UFormField
+          :label="$t('uploaded_book_name_label')"
+          required
+        >
+          <UInput
+            v-model="bookName"
+            class="w-full"
+            :placeholder="$t('uploaded_book_name_placeholder')"
+            :maxlength="200"
+            :disabled="isBusy"
+          />
+        </UFormField>
+
+        <UFormField :label="$t('uploaded_book_cover_label')">
+          <div class="relative inline-block">
+            <button
+              type="button"
+              class="flex items-center justify-center w-24 h-32 rounded-md overflow-hidden bg-muted hover:border-inverted border border-dashed hover:opacity-70 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              :aria-label="coverBlob ? $t('uploaded_book_cover_change') : undefined"
               :disabled="isBusy"
-              @click="clearFile"
-            />
-          </div>
-
-          <div
-            v-if="isParsing"
-            class="text-xs text-toned"
-          >
-            {{ $t('uploaded_book_parsing') }}
-          </div>
-
-          <template v-if="selectedFile">
-            <UFormField
-              :label="$t('uploaded_book_name_label')"
-              required
+              @click="openCoverPicker"
             >
-              <UInput
-                v-model="bookName"
-                class="w-full"
-                :placeholder="$t('uploaded_book_name_placeholder')"
-                :maxlength="200"
-                :disabled="isBusy"
-              />
-            </UFormField>
-
-            <UFormField :label="$t('uploaded_book_cover_label')">
-              <div class="relative inline-block">
-                <button
-                  type="button"
-                  class="flex items-center justify-center w-24 h-32 rounded-md overflow-hidden bg-theme-black/5 dark:bg-theme-white/5 border border-dashed hover:border-primary hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                  :aria-label="coverBlob ? $t('uploaded_book_cover_change') : undefined"
-                  :disabled="isBusy"
-                  @click="openCoverPicker"
-                >
-                  <img
-                    v-if="coverPreviewUrl"
-                    :src="coverPreviewUrl"
-                    class="w-full h-full object-cover"
-                    alt=""
-                  >
-                  <div
-                    v-else
-                    class="flex flex-col items-center gap-1 text-dimmed px-2 text-center"
-                  >
-                    <UIcon
-                      name="i-material-symbols-image-outline"
-                      size="28"
-                    />
-                    <span class="text-xs">{{ $t('uploaded_book_cover_select') }}</span>
-                  </div>
-                </button>
-                <UButton
-                  v-if="coverBlob"
-                  icon="i-material-symbols-close"
-                  size="xs"
-                  color="neutral"
-                  variant="solid"
-                  class="absolute -top-2 -right-2 rounded-full shadow"
-                  :aria-label="$t('uploaded_book_cover_remove')"
-                  :disabled="isBusy"
-                  @click.stop="clearCover"
+              <img
+                v-if="coverPreviewURL"
+                :src="coverPreviewURL"
+                class="w-full h-full object-cover"
+                alt=""
+              >
+              <div
+                v-else
+                class="flex flex-col items-center gap-1 text-dimmed px-2 text-center"
+              >
+                <UIcon
+                  name="i-material-symbols-image-outline"
+                  size="28"
+                />
+                <span
+                  class="text-xs"
+                  v-text="$t('uploaded_book_cover_select')"
                 />
               </div>
-            </UFormField>
-          </template>
-
-          <div
-            v-if="errorMessage"
-            class="text-sm text-red-500"
-          >
-            {{ errorMessage }}
-          </div>
-        </div>
-
-        <template #footer>
-          <div class="flex justify-end gap-2">
+            </button>
             <UButton
-              :label="$t('common_cancel')"
-              variant="ghost"
+              v-if="coverBlob"
+              class="absolute top-0 right-0 rounded-full shadow translate-x-1/2 -translate-y-1/2"
+              icon="i-material-symbols-close"
+              size="xs"
               color="neutral"
+              variant="solid"
+              :aria-label="$t('uploaded_book_cover_remove')"
               :disabled="isBusy"
-              @click="isOpen = false"
-            />
-            <UButton
-              :label="$t('uploaded_book_upload_confirm')"
-              :loading="isUploading"
-              :disabled="!canSubmit"
-              @click="handleUpload"
+              @click.stop="clearCover"
             />
           </div>
-        </template>
-      </UCard>
+        </UFormField>
+      </template>
+
+      <UAlert
+        v-if="errorMessage"
+        icon="i-material-symbols-error-circle-rounded"
+        color="error"
+        variant="subtle"
+        :description="errorMessage"
+      />
+    </template>
+
+    <template #footer>
+      <UButton
+        :label="$t('common_cancel')"
+        variant="ghost"
+        color="neutral"
+        :disabled="isBusy"
+        size="lg"
+        @click="isOpen = false"
+      />
+      <UButton
+        :label="$t('uploaded_book_upload_confirm')"
+        :loading="isUploading"
+        :disabled="!canSubmit"
+        size="lg"
+        @click="handleUpload"
+      />
     </template>
   </UModal>
 
@@ -202,7 +205,7 @@ const coverInputRef = ref<HTMLInputElement>()
 
 const isBusy = computed(() => isParsing.value || isUploading.value)
 const quota = computed(() => uploadedBooksStore.quota)
-const coverPreviewUrl = useObjectUrl(coverBlob)
+const coverPreviewURL = useObjectUrl(coverBlob)
 const canSubmit = computed(() =>
   !!selectedFile.value
   && !!bookName.value.trim()
