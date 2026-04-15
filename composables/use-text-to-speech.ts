@@ -46,14 +46,26 @@ export function useTextToSpeech(options: TTSOptions) {
     setTTSLanguageVoice,
   } = useTTSVoice({ bookLanguage, customVoice: options.customVoice })
 
-  function buildTTSEventBase(extras: Record<string, unknown> = {}) {
+  function parseLanguageVoice(languageVoice: string) {
+    const [language = '', ...voiceIdParts] = languageVoice.split('_')
+    return { language, voiceId: voiceIdParts.join('_') }
+  }
+
+  function buildTTSEventPayload(extras: Record<string, unknown> = {}) {
+    const languageVoice = ttsLanguageVoice.value || ''
+    const { voiceId } = parseLanguageVoice(languageVoice)
     return {
       nft_class_id: nftClassId,
       is_liker_plus_at_event_time: !!sessionUser.value?.isLikerPlus,
-      cumulative_chars_used: ttsTrialUsage.charactersUsed.value,
-      chars_remaining: ttsTrialUsage.charactersRemaining.value,
+      ...(ttsTrialUsage.isLoaded.value
+        ? {
+            cumulative_chars_used: ttsTrialUsage.charactersUsed.value,
+            chars_remaining: ttsTrialUsage.charactersRemaining.value,
+          }
+        : {}),
       book_language: toValue(bookLanguage) || undefined,
-      voice_id: ttsLanguageVoice.value,
+      voice_id: voiceId || languageVoice || undefined,
+      language_voice: languageVoice || undefined,
       ...extras,
     }
   }
@@ -157,7 +169,7 @@ export function useTextToSpeech(options: TTSOptions) {
   player.on('allEnded', () => {
     isTextToSpeechPlaying.value = false
     isTextToSpeechLoading.value = false
-    useLogEvent('tts_completed', buildTTSEventBase())
+    useLogEvent('tts_completed', buildTTSEventPayload())
     options.onAllSegmentsPlayed?.()
   })
 
@@ -202,7 +214,7 @@ export function useTextToSpeech(options: TTSOptions) {
     options.onError?.(error)
     if (consecutiveAudioErrors.value >= MAX_CONSECUTIVE_ERRORS) {
       console.warn(`TTS paused after ${MAX_CONSECUTIVE_ERRORS} consecutive audio errors`)
-      useLogEvent('tts_error', buildTTSEventBase({ consecutive_errors: consecutiveAudioErrors.value }))
+      useLogEvent('tts_error', buildTTSEventPayload({ consecutive_errors: consecutiveAudioErrors.value }))
       pauseTextToSpeech()
       return
     }
@@ -440,9 +452,9 @@ export function useTextToSpeech(options: TTSOptions) {
       return `/api/reader/tts?${params.toString()}`
     }
 
-    const [languagePart, ...voiceIdParts] = ttsLanguageVoice.value.split('_')
-    const language = languagePart || 'zh-HK'
-    const voiceId = voiceIdParts.join('_')
+    const parsed = parseLanguageVoice(ttsLanguageVoice.value)
+    const language = parsed.language || 'zh-HK'
+    const voiceId = parsed.voiceId
     const params = new URLSearchParams({
       text: sanitizedText,
       language,
@@ -494,7 +506,7 @@ export function useTextToSpeech(options: TTSOptions) {
       consecutiveAudioErrors.value = 0
       isTextToSpeechOn.value = true
 
-      useLogEvent('tts_start', buildTTSEventBase())
+      useLogEvent('tts_start', buildTTSEventPayload())
 
       isTextToSpeechLoading.value = true
       player.load({
@@ -652,5 +664,6 @@ export function useTextToSpeech(options: TTSOptions) {
     stopTextToSpeech,
     cyclePlaybackRate,
     forceResume,
+    buildTTSEventPayload,
   }
 }

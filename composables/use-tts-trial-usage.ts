@@ -6,15 +6,16 @@ export function useTTSTrialUsage() {
 
   const { loggedIn: hasLoggedIn, user } = useUserSession()
 
+  const isLoaded = computed(() => data.value !== null)
   const charactersUsed = computed(() => data.value?.charactersUsed ?? 0)
   const limit = computed(() => data.value?.limit ?? 0)
   const charactersRemaining = computed(() => data.value?.charactersRemaining ?? null)
   const isExhausted = computed(() => data.value?.isExhausted ?? false)
 
   function fetchUsage(): Promise<void> {
-    if (!hasLoggedIn.value) return Promise.resolve()
-    if (user.value?.isLikerPlus) return Promise.resolve()
-    if (data.value !== null) return Promise.resolve()
+    if (!hasLoggedIn.value || user.value?.isLikerPlus || data.value !== null) {
+      return Promise.resolve()
+    }
     if (inflightFetch.value) return inflightFetch.value
     const task = (async () => {
       try {
@@ -53,6 +54,7 @@ export function useTTSTrialUsage() {
   })
 
   return {
+    isLoaded,
     charactersUsed,
     limit,
     charactersRemaining,
