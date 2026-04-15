@@ -13,6 +13,10 @@ export function useTTSTrialUsage() {
   const isExhausted = computed(() => data.value?.isExhausted ?? false)
 
   function fetchUsage(): Promise<void> {
+    // Client-only: SSR fetch would hit Firestore for data that's consumed
+    // only in client-side analytics payloads, and a pending Promise cannot
+    // round-trip through the SSR payload into inflightFetch.
+    if (!import.meta.client) return Promise.resolve()
     if (!hasLoggedIn.value || user.value?.isLikerPlus || data.value !== null) {
       return Promise.resolve()
     }
@@ -50,6 +54,10 @@ export function useTTSTrialUsage() {
     if (!hasLoggedIn.value || user.value?.isLikerPlus) {
       data.value = null
       inflightFetch.value = null
+      return
+    }
+    if (data.value === null) {
+      void fetchUsage()
     }
   })
 
