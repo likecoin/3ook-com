@@ -419,20 +419,19 @@ export function useTextToSpeech(options: TTSOptions) {
     }
   }
 
-  // Mirrors the server's per-segment `updateUserTTSCharacterUsage` charge.
-  // Key includes voiceId because switching voice invalidates the server's
-  // TTS cache and produces a new charge.
-  const optimisticallyCountedSegments = new Set<string>()
+  // Estimate only: the server charges on cache miss, so we dedupe by the
+  // same shape (language+voice+text) that determines its cache key.
+  const optimisticallyCountedRequests = new Set<string>()
 
-  function recordOptimisticSegmentUsage(element: TTSSegment, sanitizedText: string) {
+  function recordOptimisticSegmentUsage(sanitizedText: string) {
     if (sessionUser.value?.isLikerPlus) return
     // Custom voice is gated to Plus; the server rejects non-Plus requests
     // before charging, so decrementing here would drift the local counter.
     if (ttsLanguageVoice.value === 'custom') return
     if (!ttsTrialUsage.isLoaded.value) return
-    const key = `${ttsLanguageVoice.value}:${element.id}`
-    if (optimisticallyCountedSegments.has(key)) return
-    optimisticallyCountedSegments.add(key)
+    const key = `${ttsLanguageVoice.value}:${sanitizedText}`
+    if (optimisticallyCountedRequests.has(key)) return
+    optimisticallyCountedRequests.add(key)
     ttsTrialUsage.recordOptimisticUsage(sanitizedText.length)
   }
 
@@ -440,7 +439,7 @@ export function useTextToSpeech(options: TTSOptions) {
     if (element.audioSrc) return element.audioSrc
 
     const sanitizedText = sanitizeTTSText(element.text)
-    recordOptimisticSegmentUsage(element, sanitizedText)
+    recordOptimisticSegmentUsage(sanitizedText)
 
     if (ttsLanguageVoice.value === 'custom') {
       const language = resolveCustomVoiceLanguage()
