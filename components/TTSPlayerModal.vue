@@ -313,6 +313,10 @@ const {
       )
     ) {
       stopTextToSpeech()
+      useLogEvent('tts_trial_exhausted', {
+        nft_class_id: props.nftClassId,
+        is_app: isApp.value,
+      })
       if (isApp.value) {
         errorModal.open({
           title: $t('tts_free_trial_limit_error_title'),

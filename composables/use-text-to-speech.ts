@@ -31,6 +31,9 @@ export function useTextToSpeech(options: TTSOptions) {
 
   const config = useRuntimeConfig()
 
+  const ttsTrialUsage = useTTSTrialUsage()
+  ttsTrialUsage.fetchUsage()
+
   // Use the TTS voice composable
   const {
     isBookEnglish,
@@ -42,6 +45,18 @@ export function useTextToSpeech(options: TTSOptions) {
     ttsLanguageVoiceValues,
     setTTSLanguageVoice,
   } = useTTSVoice({ bookLanguage, customVoice: options.customVoice })
+
+  function buildTTSEventBase(extras: Record<string, unknown> = {}) {
+    return {
+      nft_class_id: nftClassId,
+      is_liker_plus_at_event_time: !!sessionUser.value?.isLikerPlus,
+      cumulative_chars_used: ttsTrialUsage.charactersUsed.value,
+      chars_remaining: ttsTrialUsage.charactersRemaining.value,
+      book_language: toValue(bookLanguage) || undefined,
+      voice_id: ttsLanguageVoice.value,
+      ...extras,
+    }
+  }
 
   // Pick player implementation — both are created upfront (inert until load()),
   // and the proxy delegates to the correct one based on the reactive flag.
@@ -142,7 +157,7 @@ export function useTextToSpeech(options: TTSOptions) {
   player.on('allEnded', () => {
     isTextToSpeechPlaying.value = false
     isTextToSpeechLoading.value = false
-    useLogEvent('tts_completed', { nft_class_id: nftClassId })
+    useLogEvent('tts_completed', buildTTSEventBase())
     options.onAllSegmentsPlayed?.()
   })
 
@@ -187,7 +202,7 @@ export function useTextToSpeech(options: TTSOptions) {
     options.onError?.(error)
     if (consecutiveAudioErrors.value >= MAX_CONSECUTIVE_ERRORS) {
       console.warn(`TTS paused after ${MAX_CONSECUTIVE_ERRORS} consecutive audio errors`)
-      useLogEvent('tts_error', { nft_class_id: nftClassId, consecutive_errors: consecutiveAudioErrors.value })
+      useLogEvent('tts_error', buildTTSEventBase({ consecutive_errors: consecutiveAudioErrors.value }))
       pauseTextToSpeech()
       return
     }
@@ -392,10 +407,24 @@ export function useTextToSpeech(options: TTSOptions) {
     }
   }
 
+  // Mirrors the server's per-segment `updateUserTTSCharacterUsage` charge.
+  // Key includes voiceId because switching voice invalidates the server's
+  // TTS cache and produces a new charge.
+  const optimisticallyCountedSegments = new Set<string>()
+
+  function recordOptimisticSegmentUsage(element: TTSSegment, sanitizedText: string) {
+    if (sessionUser.value?.isLikerPlus) return
+    const key = `${ttsLanguageVoice.value}:${element.id}`
+    if (optimisticallyCountedSegments.has(key)) return
+    optimisticallyCountedSegments.add(key)
+    ttsTrialUsage.recordOptimisticUsage(sanitizedText.length)
+  }
+
   function getAudioSrc(element: TTSSegment): string {
     if (element.audioSrc) return element.audioSrc
 
     const sanitizedText = sanitizeTTSText(element.text)
+    recordOptimisticSegmentUsage(element, sanitizedText)
 
     if (ttsLanguageVoice.value === 'custom') {
       const language = resolveCustomVoiceLanguage()
@@ -465,9 +494,7 @@ export function useTextToSpeech(options: TTSOptions) {
       consecutiveAudioErrors.value = 0
       isTextToSpeechOn.value = true
 
-      useLogEvent('tts_start', {
-        nft_class_id: nftClassId,
-      })
+      useLogEvent('tts_start', buildTTSEventBase())
 
       isTextToSpeechLoading.value = true
       player.load({
