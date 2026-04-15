@@ -288,6 +288,8 @@
   "claim_page_login_cta_description": "Only one step away from reading your book",
   "claim_page_missing_parameters": "Invalid URL",
   "claim_page_no_wallet_connected": "No wallet connected",
+  "claim_page_plus_promo_description": "We'll email you a Plus coupon code shortly. Redeem it to activate your free month of 3ook.com Plus.",
+  "claim_page_plus_promo_title": "Free month of Plus included",
   "claim_page_purchase_successful_label": "You've purchased successfully",
   "claim_page_start_reading_button_label": "Start Reading",
   "claim_page_start_reading_footer_label": "Your book is ready",

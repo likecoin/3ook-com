@@ -1,7 +1,14 @@
+<script setup lang="ts">
+defineProps<{
+  title: string
+  description: string
+}>()
+</script>
+
 <template>
   <UAlert
-    :title="$t('product_page_plus_promo_title')"
-    :description="$t('product_page_plus_promo_description')"
+    :title="title"
+    :description="description"
     icon="i-material-symbols-celebration-outline-rounded"
     color="secondary"
     variant="subtle"

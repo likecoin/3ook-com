@@ -11,7 +11,11 @@
       v-if="isPlusPromoBannerVisible"
       class="tablet:hidden sticky top-0 z-20 w-full max-w-[1280px] bg-(--app-bg) shadow-lg rounded-b-xl"
     >
-      <BookPlusPromoAlert class="rounded-t-none" />
+      <BookPlusPromoAlert
+        class="rounded-t-none"
+        :title="$t('product_page_plus_promo_title')"
+        :description="$t('product_page_plus_promo_description')"
+      />
     </aside>
 
     <div
@@ -457,6 +461,8 @@
           <BookPlusPromoAlert
             v-if="isPlusPromoBannerVisible"
             class="max-tablet:hidden"
+            :title="$t('product_page_plus_promo_title')"
+            :description="$t('product_page_plus_promo_description')"
           />
 
           <StakingControl

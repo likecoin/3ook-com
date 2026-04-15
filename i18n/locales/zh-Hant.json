@@ -288,6 +288,8 @@
   "claim_page_login_cta_description": "距離閲讀只差一步",
   "claim_page_missing_parameters": "網址不正確",
   "claim_page_no_wallet_connected": "沒有連接錢包",
+  "claim_page_plus_promo_description": "我們將盡快以電郵發送 Plus 優惠碼給您，兌換後即可啟用一個月免費 3ook.com Plus 會籍。",
+  "claim_page_plus_promo_title": "加贈一個月免費 Plus 會籍",
   "claim_page_purchase_successful_label": "你已成功購買",
   "claim_page_start_reading_button_label": "開始閱讀",
   "claim_page_start_reading_footer_label": "書籍已抵達您的書架！",

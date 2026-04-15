@@ -31,6 +31,13 @@
         />
       </div>
 
+      <BookPlusPromoAlert
+        v-if="isPlusPromoBannerVisible"
+        class="w-full max-w-[348px] mb-6"
+        :title="$t('claim_page_plus_promo_title')"
+        :description="$t('claim_page_plus_promo_description')"
+      />
+
       <BookLoadingScreen
         :book-name="bookInfo?.name.value"
         :book-cover-src="bookCoverSrc"
@@ -96,6 +103,7 @@ const likeCoinSessionAPI = useLikeCoinSessionAPI()
 const localeRoute = useLocaleRoute()
 const getRouteQuery = useRouteQuery()
 const { loggedIn: hasLoggedIn, user } = useUserSession()
+const { isApp } = useAppDetection()
 const accountStore = useAccountStore()
 const nftStore = useNFTStore()
 const bookshelfStore = useBookshelfStore()
@@ -213,6 +221,10 @@ const receivedNFTId = computed(() => bookInfo.firstUserOwnedNFTId.value)
 const canStartReading = computed(() => !!receivedNFTId.value)
 const isCheckingItemsDelivery = ref(false)
 const hasBypassedIndexer = ref(false)
+
+const isPlusPromoBannerVisible = computed(() => {
+  return bookInfo.isPlusPromoEnabled.value && !user.value?.isLikerPlus && !isApp.value
+})
 
 onMounted(async () => {
   isLoading.value = true
