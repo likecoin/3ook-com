@@ -426,6 +426,7 @@ export function useTextToSpeech(options: TTSOptions) {
 
   function recordOptimisticSegmentUsage(element: TTSSegment, sanitizedText: string) {
     if (sessionUser.value?.isLikerPlus) return
+    if (!ttsTrialUsage.isLoaded.value) return
     const key = `${ttsLanguageVoice.value}:${element.id}`
     if (optimisticallyCountedSegments.has(key)) return
     optimisticallyCountedSegments.add(key)

@@ -35,7 +35,7 @@ export function useTTSTrialUsage() {
   }
 
   function recordOptimisticUsage(charactersDelta: number): void {
-    if (!data.value || data.value.isLikerPlus) return
+    if (!data.value || data.value.isLikerPlus || user.value?.isLikerPlus) return
     const newUsed = data.value.charactersUsed + charactersDelta
     const newRemaining = Math.max(data.value.limit - newUsed, 0)
     data.value = {
@@ -46,8 +46,8 @@ export function useTTSTrialUsage() {
     }
   }
 
-  watch(hasLoggedIn, (loggedIn, wasLoggedIn) => {
-    if (!loggedIn && wasLoggedIn) {
+  watch([hasLoggedIn, () => user.value?.isLikerPlus], () => {
+    if (!hasLoggedIn.value || user.value?.isLikerPlus) {
       data.value = null
       inflightFetch.value = null
     }
