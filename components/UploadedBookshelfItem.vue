@@ -84,7 +84,7 @@
                 :icon="item.icon"
                 :label="item.label"
                 variant="link"
-                color="neutral"
+                :color="item.color || 'neutral'"
                 size="xl"
                 block
                 :ui="{ base: 'justify-start' }"
@@ -170,6 +170,7 @@ const menuItems = computed<DropdownMenuItem[]>(() => {
   items.push({
     label: $t('uploaded_book_delete'),
     icon: 'i-material-symbols-delete-outline',
+    color: 'error',
     onSelect: () => emit('delete', props.bookId),
   })
 
