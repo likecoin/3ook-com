@@ -25,7 +25,7 @@
     </template>
 
     <template
-      v-if="affiliateLikerId"
+      v-if="affiliateInfo?.active"
       #affiliate-promo
     >
       <AffiliateAlert class="mt-6" />
@@ -290,6 +290,8 @@ const trialPeriodDays = computed(() => {
 
 const isAffiliateGiftRedeemable = computed(() => {
   if (!affiliateInfo.value?.active) return false
+  if (!affiliateInfo.value.giftClassId) return false
+  if (selectedPlan.value !== 'yearly') return false
   if (affiliateInfo.value.giftOnTrial === false && trialPeriodDays.value !== 0) return false
   return true
 })

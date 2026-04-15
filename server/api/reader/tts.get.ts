@@ -148,9 +148,6 @@ export default defineEventHandler(async (event) => {
     if (!affiliateVoiceSlot) {
       throw createError({ status: 400, message: 'INVALID_AFFILIATE_VOICE' })
     }
-    if (!nftClassId) {
-      throw createError({ status: 400, message: 'MISSING_NFT_CLASS_ID' })
-    }
     const affiliateConfig = await getAffiliateConfig(plusAffiliateFrom)
     if (!affiliateConfig?.active) {
       throw createError({ status: 403, message: 'AFFILIATE_INACTIVE' })

@@ -39,8 +39,8 @@ export function generateCustomVoiceTTSCacheKey(wallet: string, language: string,
   return generateVoiceTTSCacheKey('custom-voices', wallet, language, text, model)
 }
 
-export function generateAffiliateVoiceTTSCacheKey(affiliateVoiceId: string, language: string, text: string, model: string): string {
-  return generateVoiceTTSCacheKey('affiliate-voices', affiliateVoiceId, language, text, model)
+export function generateAffiliateVoiceTTSCacheKey(providerVoiceId: string, language: string, text: string, model: string): string {
+  return generateVoiceTTSCacheKey('affiliate-voices', providerVoiceId, language, text, model)
 }
 
 export function getCustomVoiceTTSCachePrefix(wallet: string): string {
