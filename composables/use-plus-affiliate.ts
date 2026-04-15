@@ -1,14 +1,16 @@
 import type { AffiliateVoiceData } from '~/shared/types/custom-voice'
 
-export interface AffiliatePublicConfig {
-  active: boolean
-  giftClassId?: string
-  giftBookName?: string
-  giftBookCover?: string
-  giftOnTrial?: boolean
-  affiliateClassIds: string[]
-  customVoices: AffiliateVoiceData[]
-}
+export type AffiliatePublicConfig =
+  | { active: false }
+  | {
+    active: true
+    giftClassId?: string
+    giftBookName?: string
+    giftBookCover?: string
+    giftOnTrial?: boolean
+    affiliateClassIds: string[]
+    customVoices: AffiliateVoiceData[]
+  }
 
 export function getAffiliateVoicesForBook(
   config: AffiliatePublicConfig | null,

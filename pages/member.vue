@@ -41,7 +41,7 @@
           <BookCover
             class="w-12 shrink-0"
             :src="giftBookCoverSrc"
-            :alt="affiliateInfo?.giftBookName"
+            :alt="affiliateInfo?.giftBookName || $t('pricing_page_affiliate_gift_label')"
             has-shadow
           />
           <div class="text-left">

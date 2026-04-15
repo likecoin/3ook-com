@@ -229,7 +229,9 @@ export default defineEventHandler(async (event) => {
       console.log(`[Speech] In-flight dedup for user ${session.user.evmWallet}: ${cacheKey}`)
       try {
         await pending
-        return await serveCachedTTS(event, bucket!, cacheKey, provider.format, session.user.evmWallet)
+        const result = await serveCachedTTS(event, bucket!, cacheKey, provider.format, session.user.evmWallet)
+        if (result !== null) return result
+        console.warn(`[Speech] In-flight dedup cache miss after wait, generating own for user ${session.user.evmWallet}: ${cacheKey}`)
       }
       catch {
         console.warn(`[Speech] In-flight request failed, generating own for user ${session.user.evmWallet}`)
