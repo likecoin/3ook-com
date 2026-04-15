@@ -426,6 +426,9 @@ export function useTextToSpeech(options: TTSOptions) {
 
   function recordOptimisticSegmentUsage(element: TTSSegment, sanitizedText: string) {
     if (sessionUser.value?.isLikerPlus) return
+    // Custom voice is gated to Plus; the server rejects non-Plus requests
+    // before charging, so decrementing here would drift the local counter.
+    if (ttsLanguageVoice.value === 'custom') return
     if (!ttsTrialUsage.isLoaded.value) return
     const key = `${ttsLanguageVoice.value}:${element.id}`
     if (optimisticallyCountedSegments.has(key)) return
