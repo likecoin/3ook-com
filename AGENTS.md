@@ -82,7 +82,7 @@ GitHub Actions runs on push/PR: `npm ci` → `npm run lint` → `npm run typeche
 - **Commit messages** — [Gitmoji](https://github.com/carloscuesta/gitmoji) prefix (e.g., 💬, 🚸, 📈, 👔)
 - **ESLint** — `@nuxt/eslint` with stylistic rules enabled
 - **Runtime config** — access env vars via `useRuntimeConfig()`, never hardcode
-- **Env vars** — keep variables sorted alphabetically in `.env` and `apphosting.*.yaml` files
+- **Env vars** — keep variables sorted alphabetically in `.env.example` and `apphosting.*.yaml` files
 
 ### Nuxt
 - **Route middleware** — `/middleware/query.global.ts` persists UTM/tracking params across navigation
