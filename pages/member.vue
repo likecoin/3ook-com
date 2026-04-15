@@ -31,7 +31,7 @@
       <AffiliateAlert class="mt-6" />
 
       <div
-        v-if="affiliateInfo?.active"
+        v-if="isAffiliateGiftRedeemable"
         class="mt-4 p-4 rounded-xl bg-elevated text-center"
       >
         <p class="text-sm font-medium text-toned mb-3">
@@ -41,14 +41,14 @@
           <BookCover
             class="w-12 shrink-0"
             :src="giftBookCoverSrc"
-            :alt="affiliateInfo.giftBookName"
+            :alt="affiliateInfo?.giftBookName"
             has-shadow
           />
           <div class="text-left">
             <p
-              v-if="affiliateInfo.giftBookName"
+              v-if="affiliateInfo?.giftBookName"
               class="text-sm font-bold text-highlighted"
-              v-text="affiliateInfo.giftBookName"
+              v-text="affiliateInfo?.giftBookName"
             />
             <p
               v-if="affiliateVoiceNames"
@@ -117,6 +117,7 @@ interface AffiliateInfo {
   giftClassId?: string
   giftBookName?: string
   giftBookCover?: string
+  giftOnTrial?: boolean
   affiliateClassIds?: string[]
   customVoices?: Array<{
     id: string
@@ -281,8 +282,16 @@ const trialPeriodDays = computed(() => {
     case '7d': return 7
     case '14d': return 14
     case '30d': return 30
-    default: return DEFAULT_TRIAL_PERIOD_DAYS
+    default:
+      if (affiliateInfo.value?.active && affiliateInfo.value.giftOnTrial === false) return 0
+      return DEFAULT_TRIAL_PERIOD_DAYS
   }
+})
+
+const isAffiliateGiftRedeemable = computed(() => {
+  if (!affiliateInfo.value?.active) return false
+  if (affiliateInfo.value.giftOnTrial === false && trialPeriodDays.value !== 0) return false
+  return true
 })
 
 const coupon = computed(() => getRouteQuery('coupon') as string | undefined)

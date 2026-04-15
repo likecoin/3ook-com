@@ -29,6 +29,7 @@ export default defineEventHandler(async (event) => {
     giftClassId: config.giftClassId,
     giftBookName,
     giftBookCover,
+    giftOnTrial: config.giftOnTrial,
     affiliateClassIds: config.affiliateClassIds,
     customVoices: config.customVoices.map(v => ({
       id: v.id,
