@@ -162,6 +162,23 @@ npm run generate:pwa-assets  # Generate PWA icons
 - Locales: en, zh-Hant
 - Flat key style, sorted keys
 
+**Vue Templates:**
+- Prefer `v-text` directive over mustache interpolation: `<span v-text="'Text'" />` not `<span>{{ 'Text' }}</span>`
+
+**Nuxt UI:**
+- Use Nuxt UI semantic color classes (`text-muted`, `bg-elevated`), not hardcoded colors (`text-gray-500`, `bg-white`)
+- Use [Material Symbols](https://github.com/google/material-design-icons) `i-material-symbols` with rounded style (e.g., `i-material-symbols-search-rounded`)
+- **UModal** — for standard dialogs, prefer built-in `title`/`description` props with `#body`/`#footer` slots. Use `#content` only when the modal needs full layout control (e.g., custom chrome, fullscreen, or non-dialog layouts). Use `:ui` prop to customize slot classes (e.g., `body`, `footer`, `content`) instead of wrapping content in extra divs.
+
+**Naming Conventions:**
+- Acronyms (multi-word initialisms) stay uppercase: `bookURL`, `isPDF`
+- Abbreviations (shortened single words) follow normal camelCase: `bookId`, `maxLen`
+- First word is always lowercase: `url`, `id`, `pdf`
+- Booleans — prefix with `is`/`has`/`should`/`must`: `isDeleted` not `deleted`, `hasLoggedIn` not `loggedIn`
+- Functions always start with a verb: `handleClick` not `onClick`
+- `fetch*` — async, calls an API, requires `await`
+- `get*` — synchronous getter, no `await`
+
 **Nuxt Best Practices:**
 - Use auto-imports for composables, components, utils
 - Use `definePageMeta` for page-level configuration

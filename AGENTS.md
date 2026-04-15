@@ -78,8 +78,33 @@ GitHub Actions runs on push/PR: `npm ci` → `npm run lint` → `npm run typeche
 
 ## Code Conventions
 
-- **Commit messages** use gitmoji prefix (e.g., 💬, 🚸, 📈, 👔)
-- **ESLint** with `@nuxt/eslint` and stylistic rules enabled
-- **Runtime config** for env vars — access via `useRuntimeConfig()`, never hardcode
-- **Route middleware** `/middleware/query.global.ts` persists UTM/tracking params across navigation
-- **CSP** configured via `nuxt-security` in `nuxt.config.ts` — update allowlists when adding external services
+### Style & Tooling
+- **Commit messages** — [Gitmoji](https://github.com/carloscuesta/gitmoji) prefix (e.g., 💬, 🚸, 📈, 👔)
+- **ESLint** — `@nuxt/eslint` with stylistic rules enabled
+- **Runtime config** — access env vars via `useRuntimeConfig()`, never hardcode
+- **Env vars** — keep variables sorted alphabetically in `.env` and `apphosting.*.yaml` files
+
+### Nuxt
+- **Route middleware** — `/middleware/query.global.ts` persists UTM/tracking params across navigation
+- **CSP** — configured via `nuxt-security` in `nuxt.config.ts`, update allowlists when adding external services
+
+### Vue Templates
+- **Text rendering** — prefer `v-text` directive over mustache interpolation: `<span v-text="'Text'" />` not `<span>{{ 'Text' }}</span>`
+
+### Nuxt UI
+- **Colors** — use Nuxt UI semantic color classes (`text-muted`, `bg-elevated`), not hardcoded colors (`text-gray-500`, `bg-white`)
+- **Icons** — use [Material Symbols](https://github.com/google/material-design-icons) `i-material-symbols` with rounded style (e.g., `i-material-symbols-search-rounded`)
+- **UModal** — for standard dialogs, prefer built-in `title`/`description` props with `#body`/`#footer` slots. Use `#content` only when the modal needs full layout control (e.g., custom chrome, fullscreen, or non-dialog layouts). Use `:ui` prop to customize slot classes (e.g., `body`, `footer`, `content`) instead of wrapping content in extra divs.
+
+### Naming Conventions
+
+#### Variables
+- **Acronyms** (multi-word initialisms) stay uppercase: `bookURL`, `isPDF`
+- **Abbreviations** (shortened single words) follow normal camelCase: `bookId`, `maxLen`
+- First word is always lowercase: `url`, `id`, `pdf`
+- **Booleans** — prefix with `is`/`has`/`should`/`must`: `isDeleted` not `deleted`, `hasLoggedIn` not `loggedIn`
+
+#### Functions
+- Always start with a verb: `handleClick` not `onClick`
+- `fetch*` — async, calls an API, requires `await`
+- `get*` — synchronous getter, no `await`
