@@ -189,6 +189,8 @@
 
 <script setup lang="ts">
 import { formatUnits } from 'viem'
+import { DeleteUploadedBookModal } from '#components'
+
 import type { BookshelfItem } from '~/stores/bookshelf'
 import type { StakingItem } from '~/stores/staking'
 
@@ -209,7 +211,6 @@ const metadataStore = useMetadataStore()
 const stakingStore = useStakingStore()
 const { isLikerPlus, isExpiredLikerPlus } = useSubscription()
 const isUploadedBookFeatureEnabled = useFeatureFlagEnabled('plus-upload-files')
-const toast = useToast()
 const {
   isLoading: isLoadingClaimableFreeBooks,
   nftClassIds: claimableNFTClassIds,
@@ -218,6 +219,9 @@ const {
   claimFreeBook,
   reset: resetClaimableBooks,
 } = useClaimableBooks()
+
+const overlay = useOverlay()
+const deleteModal = overlay.create(DeleteUploadedBookModal)
 
 const stakingData = computed(() => {
   return isMyBookshelf.value
@@ -389,14 +393,8 @@ const uploadedBookItems = computed(() => uploadedBooksStore.items)
 const hasUploadedBooks = computed(() => uploadedBookItems.value.length > 0)
 const isUploadedBookAccessible = computed(() => isLikerPlus.value && !isExpiredLikerPlus.value)
 
-async function handleDeleteUploadedBook(bookId: string) {
-  try {
-    await uploadedBooksStore.deleteBook(bookId)
-    toast.add({ title: $t('uploaded_book_delete_success') })
-  }
-  catch {
-    toast.add({ title: $t('uploaded_book_delete_failed'), color: 'error' })
-  }
+function handleDeleteUploadedBook(bookId: string) {
+  deleteModal.open({ bookId })
 }
 
 onMounted(async () => {

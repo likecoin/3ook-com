@@ -828,6 +828,8 @@
   "uploaded_book_cover_remove": "Remove cover",
   "uploaded_book_cover_select": "Select cover",
   "uploaded_book_delete": "Delete",
+  "uploaded_book_delete_confirm_description": "Are you sure you want to delete this book? This action cannot be undone.",
+  "uploaded_book_delete_confirm_title": "Delete Book",
   "uploaded_book_delete_failed": "Failed to delete book",
   "uploaded_book_delete_success": "Book deleted",
   "uploaded_book_drop_or_click": "Drop a file here or click to browse",

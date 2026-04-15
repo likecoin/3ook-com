@@ -828,6 +828,8 @@
   "uploaded_book_cover_remove": "移除封面",
   "uploaded_book_cover_select": "選擇封面",
   "uploaded_book_delete": "刪除",
+  "uploaded_book_delete_confirm_description": "確定要刪除這本書嗎？此操作無法復原。",
+  "uploaded_book_delete_confirm_title": "刪除書籍",
   "uploaded_book_delete_failed": "刪除書籍失敗",
   "uploaded_book_delete_success": "已刪除書籍",
   "uploaded_book_drop_or_click": "拖放檔案到此處或點擊選擇",
