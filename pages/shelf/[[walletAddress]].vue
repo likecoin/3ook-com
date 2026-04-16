@@ -103,7 +103,7 @@
       <template v-else>
         <div
           v-if="isUploadedBookFeatureEnabled && isMyBookshelf && (hasUploadedBooks || (isLikerPlus && !isExpiredLikerPlus))"
-          class="w-full mt-4"
+          :class="['w-full mt-4', !hasUploadedBooks && 'max-tablet:hidden']"
         >
           <div class="flex items-center justify-between mb-3">
             <h2
@@ -114,7 +114,7 @@
             </h2>
             <UploadBookModal
               v-if="isLikerPlus && !isExpiredLikerPlus"
-              class="ml-auto"
+              class="ml-auto max-tablet:hidden"
               size="sm"
               variant="soft"
               @uploaded="loadBookshelfData(walletAddress!, { isRefresh: true })"

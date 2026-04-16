@@ -5,7 +5,7 @@ export function isUploadedBookId(id: string): boolean {
 }
 
 export const UPLOADED_BOOK_MAX_FILE_SIZE = 100 * 1024 * 1024 // 100 MB
-export const UPLOADED_BOOK_MAX_COUNT = 2
+export const UPLOADED_BOOK_MAX_COUNT = 5
 export const UPLOADED_BOOK_ALLOWED_TYPES = ['application/epub+zip', 'application/pdf']
 
 export type UploadedBookMimeType = 'application/epub+zip' | 'application/pdf'
