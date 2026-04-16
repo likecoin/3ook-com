@@ -760,6 +760,12 @@ let removeMouseUpListener: (() => void) | undefined
 let removeSelectionChangeListener: (() => void) | undefined
 let removeContextMenuListener: (() => void) | undefined
 let hasRegisteredIntercomHide = false
+const isIntercomVisible = ref(false)
+useHead({
+  htmlAttrs: {
+    class: computed(() => (isIntercomVisible.value ? 'intercom-visible' : '')),
+  },
+})
 const renditionElement = useTemplateRef<HTMLDivElement>('reader')
 const renditionViewWindow = ref<Window | undefined>(undefined)
 
@@ -1676,11 +1682,11 @@ function handleAnnotationReportIssue() {
   })
 
   if (!isApp.value && window?.Intercom) {
-    document.documentElement.classList.add('intercom-visible')
+    isIntercomVisible.value = true
     if (!hasRegisteredIntercomHide) {
       // Intercom('onHide') appends listeners — register once to avoid leaking closures across clicks
       window.Intercom('onHide', () => {
-        document.documentElement.classList.remove('intercom-visible')
+        isIntercomVisible.value = false
       })
       hasRegisteredIntercomHide = true
     }
@@ -1838,7 +1844,6 @@ onBeforeUnmount(() => {
   renditionViewWindow.value = undefined
   rendition.value?.destroy()
   loadedBook.value = undefined
-  document.documentElement.classList.remove('intercom-visible')
 })
 </script>
 
