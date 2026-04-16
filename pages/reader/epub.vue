@@ -759,8 +759,7 @@ let removeCopyListener: (() => void) | undefined
 let removeMouseUpListener: (() => void) | undefined
 let removeSelectionChangeListener: (() => void) | undefined
 let removeContextMenuListener: (() => void) | undefined
-let hasRegisteredIntercomHide = false
-const isIntercomVisible = ref(false)
+const { isIntercomVisible, markIntercomVisible } = useIntercomVisibility()
 useHead({
   htmlAttrs: {
     class: computed(() => (isIntercomVisible.value ? 'intercom-visible' : '')),
@@ -1682,14 +1681,7 @@ function handleAnnotationReportIssue() {
   })
 
   if (!isApp.value && window?.Intercom) {
-    isIntercomVisible.value = true
-    if (!hasRegisteredIntercomHide) {
-      // Intercom('onHide') appends listeners — register once to avoid leaking closures across clicks
-      window.Intercom('onHide', () => {
-        isIntercomVisible.value = false
-      })
-      hasRegisteredIntercomHide = true
-    }
+    markIntercomVisible()
     window.Intercom('showNewMessage', prefillMessage)
   }
   else {
