@@ -46,7 +46,7 @@
     "@walletconnect/ethereum-provider": "~2.23.8",
     "firebase-admin": "^13.4.0",
     "jwt-decode": "^4.0.0",
-    "markdown-it": "^14.1.0",
+    "markdown-it": "^14.1.1",
     "minimax-speech-ts": "^0.1.0",
     "nuxt": "^3.20.1",
     "nuxt-auth-utils": "^0.5.17",
