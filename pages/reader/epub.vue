@@ -340,6 +340,7 @@
       :position="annotationMenuPosition"
       @select="handleAnnotationColorSelect"
       @create-note="handleAnnotationAddNote"
+      @report-issue="handleAnnotationReportIssue"
     />
 
     <AnnotationModal
@@ -456,7 +457,7 @@ const isMobileTocOpen = computed({
   },
 })
 
-const { isIOS, isAndroid } = useAppDetection()
+const { isIOS, isAndroid, isApp } = useAppDetection()
 
 const isPageLoading = ref(false)
 
@@ -758,6 +759,7 @@ let removeCopyListener: (() => void) | undefined
 let removeMouseUpListener: (() => void) | undefined
 let removeSelectionChangeListener: (() => void) | undefined
 let removeContextMenuListener: (() => void) | undefined
+let hasRegisteredIntercomHide = false
 const renditionElement = useTemplateRef<HTMLDivElement>('reader')
 const renditionViewWindow = ref<Window | undefined>(undefined)
 
@@ -1662,6 +1664,42 @@ async function handleAnnotationAddNote() {
   }
 }
 
+function handleAnnotationReportIssue() {
+  isAnnotationMenuVisible.value = false
+
+  const prefillMessage = $t('reader_annotation_report_issue_prefill', {
+    text: selectedText.value,
+    bookName: bookInfo.name.value,
+    chapter: selectedChapterTitle.value,
+    bookId: nftClassId.value,
+    cfi: selectedCfi.value,
+  })
+
+  if (!isApp.value && window?.Intercom) {
+    document.documentElement.classList.add('intercom-visible')
+    if (!hasRegisteredIntercomHide) {
+      // Intercom('onHide') appends listeners — register once to avoid leaking closures across clicks
+      window.Intercom('onHide', () => {
+        document.documentElement.classList.remove('intercom-visible')
+      })
+      hasRegisteredIntercomHide = true
+    }
+    window.Intercom('showNewMessage', prefillMessage)
+  }
+  else {
+    const subject = $t('reader_annotation_report_issue_email_subject', { bookName: bookInfo.name.value })
+    const mailto = `mailto:cs@3ook.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(prefillMessage)}`
+    window.open(mailto, '_blank')
+  }
+
+  useLogEvent('reader_annotation_report_issue', {
+    nft_class_id: nftClassId.value,
+    is_uploaded_book: isUploadedBook.value,
+  })
+
+  renditionViewWindow.value?.getSelection()?.removeAllRanges()
+}
+
 async function handleAnnotationModalSave(data: { color: AnnotationColor, note: string }) {
   if (!editingAnnotation.value) return
 
@@ -1800,6 +1838,7 @@ onBeforeUnmount(() => {
   renditionViewWindow.value = undefined
   rendition.value?.destroy()
   loadedBook.value = undefined
+  document.documentElement.classList.remove('intercom-visible')
 })
 </script>
 

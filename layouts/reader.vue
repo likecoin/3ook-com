@@ -26,9 +26,9 @@ useHead({
   transform: translateX(100%);
 }
 
-html.reader #intercom-container,
-html.reader .intercom-lightweight-app {
-  /* Hide Intercom in reader */
+html.reader:not(.intercom-visible) #intercom-container,
+html.reader:not(.intercom-visible) .intercom-lightweight-app {
+  /* Hide Intercom in reader unless explicitly shown (e.g. report-issue prefill) */
   display: none !important;
 }
 </style>

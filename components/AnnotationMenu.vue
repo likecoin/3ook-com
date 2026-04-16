@@ -21,6 +21,14 @@
       size="sm"
       @click="handleCreateNote"
     />
+    <UButton
+      :label="$t('reader_annotation_report_issue')"
+      icon="i-material-symbols-flag-rounded"
+      color="neutral"
+      variant="ghost"
+      size="sm"
+      @click="handleReportIssue"
+    />
   </div>
 </template>
 
@@ -38,7 +46,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'select', color: AnnotationColor): void
-  (e: 'create-note'): void
+  (e: 'create-note' | 'report-issue'): void
 }>()
 
 const { t: $t } = useI18n()
@@ -70,5 +78,9 @@ function handleColorSelect(color: AnnotationColor) {
 
 function handleCreateNote() {
   emit('create-note')
+}
+
+function handleReportIssue() {
+  emit('report-issue')
 }
 </script>
