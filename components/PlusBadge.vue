@@ -1,7 +1,7 @@
 <template>
   <PlusBadgeIcon
     style="width: 35px; height: 15px;"
-    class="text-gray-400"
+    class="text-dimmed dark:text-theme-cyan"
   />
 </template>
 

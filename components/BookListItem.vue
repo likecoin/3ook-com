@@ -43,7 +43,7 @@
         />
         <div
           v-if="!isApp"
-          class="mt-1 text-sm text-gray-900"
+          class="mt-1 text-sm text-default"
         >
           <span
             v-if="isSoldOut"
@@ -56,7 +56,7 @@
                 v-text="formattedDiscountedPrice"
               />
               <PlusBadge class="inline ml-1" />
-              <span class="block text-xs text-gray-400 line-through">
+              <span class="block text-xs text-dimmed line-through">
                 <span v-text="formattedOriginalPrice" />
               </span>
             </template>
