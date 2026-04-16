@@ -32,7 +32,7 @@
     "@nuxt/icon": "^1.11.0",
     "@nuxt/scripts": "^0.13.2",
     "@nuxt/ui": "^3.2.0",
-    "@nuxtjs/i18n": "^9.3.4",
+    "@nuxtjs/i18n": "^9.5.6",
     "@nuxtjs/sitemap": "^7.3.1",
     "@pinia/nuxt": "^0.11.1",
     "@posthog/nuxt": "^1.5.97",
@@ -78,6 +78,7 @@
     "vue-tsc": "^2.2.10"
   },
   "overrides": {
+    "@intlify/core-base": "^10.0.8",
     "@vercel/nft": "^0.27.4",
     "@walletconnect/universal-provider": "2.23.8",
     "ox": "^0.14.7"
