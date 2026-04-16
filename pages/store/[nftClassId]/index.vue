@@ -675,7 +675,7 @@
                   variant="outline"
                   color="primary"
                   size="lg"
-                  :leading-icon="isInBookList ? 'i-material-symbols-favorite-rounded' : 'i-material-symbols-favorite-outline-rounded'"
+                  :leading-icon="isInBookList ? 'i-material-symbols-favorite-rounded' : 'i-material-symbols-add-2-rounded'"
                   :loading="isCheckingBookList || isUpdatingBookList"
                   @click="handleBookListButtonClickDebounced"
                 />
@@ -827,7 +827,7 @@
               @click="handleGiftButtonClick"
             />
             <UButton
-              :icon="isInBookList ? 'i-material-symbols-favorite-rounded' : 'i-material-symbols-favorite-outline-rounded'"
+              :icon="isInBookList ? 'i-material-symbols-favorite-rounded' : 'i-material-symbols-add-2-rounded'"
               color="primary"
               variant="outline"
               size="sm"
