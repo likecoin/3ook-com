@@ -1183,7 +1183,8 @@ async function setActiveNavItem(item: NavItem, { isSilentError = false } = {}) {
   if (hasDisplayed) return
 
   // Try replacing nav item's href with spine's href if section cannot be found
-  const [filename, anchor] = item.href.split('#')
+  const anchor = item.href.split('#')[1]
+  const filename = getHrefBaseFilename(item.href)
   if (filename) {
     let spineHref = sectionHrefByFilename.value[filename]
     if (spineHref) {
