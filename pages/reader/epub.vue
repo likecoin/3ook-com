@@ -842,8 +842,7 @@ async function loadEPub() {
 
   book.spine!.each((section: Section) => {
     if (!section.href) return
-    const directories = section.href.split('/')
-    const filename = directories.pop()
+    const filename = getHrefBaseFilename(section.href)
     if (!filename) return
     sectionHrefByFilename.value[filename] = section.href
   })
@@ -1030,9 +1029,7 @@ async function loadEPub() {
     currentPageEndCfi.value = location.end.cfi
     const href = location.start.href
     currentPageHref.value = href
-    if (navItems.value.some(item => item.href === href)) {
-      activeNavItemHref.value = href
-    }
+    activeNavItemHref.value = resolveActiveNavItemHref(href)
     percentage.value = book.locations!.percentageFromCfi(location.start.cfi) ?? 0
     currentCfi.value = location.start.cfi
     readingProgress.value = percentage.value
@@ -1069,6 +1066,27 @@ function openTTSTryModal() {
     onDismiss: () => setTTSQueryParam(false),
   })
 }
+function getHrefBaseFilename(href: string): string {
+  const path = href.split('#')[0] ?? href
+  return path.split('/').pop() ?? path
+}
+
+// TOC hrefs and spine hrefs often disagree (TOC may use anchors like
+// `ch5.xhtml#sec-1` while the spine lists `OEBPS/ch5.xhtml`), so strict
+// equality can't be relied on to locate the active chapter. Fall back to
+// filename matching, preferring the unanchored (chapter-start) entry.
+function resolveActiveNavItemHref(pageHref: string): string | undefined {
+  if (!pageHref) return undefined
+  if (navItems.value.some(item => item.href === pageHref)) return pageHref
+
+  const pageFilename = getHrefBaseFilename(pageHref)
+  const sectionItems = navItems.value.filter(item => getHrefBaseFilename(item.href) === pageFilename)
+  if (!sectionItems.length) return undefined
+
+  const unanchored = sectionItems.find(item => !item.href.includes('#'))
+  return (unanchored ?? sectionItems[0])?.href
+}
+
 function findNextNavItemAfterTOC(navItems: NavItem[]): NavItem | undefined {
   const firstChapter = navItems[0]
   if (!firstChapter) return undefined
