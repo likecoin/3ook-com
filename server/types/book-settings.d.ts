@@ -6,6 +6,7 @@ export interface BookSettingsFirestoreData extends BaseBookSettingsData {
   totalTTSListeningTimeMs?: number
   ttsCharactersUsed?: number
   completedAt?: Timestamp | null
+  didNotFinishAt?: Timestamp | null
   archivedAt?: Timestamp | null
   sessionCount?: number
 }

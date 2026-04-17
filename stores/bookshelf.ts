@@ -3,6 +3,8 @@ export interface BookshelfItem {
   nftIds: string[]
   lastOpenedTime: number
   progress: number
+  completedAt?: number | null
+  didNotFinishAt?: number | null
   archivedAt?: number | null
 }
 
@@ -51,6 +53,8 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
           nftIds,
           lastOpenedTime: progressData.lastOpenedTime,
           progress: progressData.progress,
+          completedAt: settings?.completedAt,
+          didNotFinishAt: settings?.didNotFinishAt,
           archivedAt: settings?.archivedAt,
         }
       })
@@ -212,6 +216,24 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
     bookSettingsStore.queueUpdate(normalizedNFTClassId, 'lastOpenedTime', lastOpenedTime)
   }
 
+  function markBookAsFinished(nftClassId: string) {
+    const normalizedNFTClassId = nftClassId.toLowerCase()
+    bookSettingsStore.queueUpdate(normalizedNFTClassId, 'completedAt', Date.now())
+    bookSettingsStore.queueUpdate(normalizedNFTClassId, 'didNotFinishAt', null)
+  }
+
+  function markBookAsDidNotFinish(nftClassId: string) {
+    const normalizedNFTClassId = nftClassId.toLowerCase()
+    bookSettingsStore.queueUpdate(normalizedNFTClassId, 'didNotFinishAt', Date.now())
+    bookSettingsStore.queueUpdate(normalizedNFTClassId, 'completedAt', null)
+  }
+
+  function markBookAsReading(nftClassId: string) {
+    const normalizedNFTClassId = nftClassId.toLowerCase()
+    bookSettingsStore.queueUpdate(normalizedNFTClassId, 'completedAt', null)
+    bookSettingsStore.queueUpdate(normalizedNFTClassId, 'didNotFinishAt', null)
+  }
+
   function archiveBook(nftClassId: string) {
     const normalizedNFTClassId = nftClassId.toLowerCase()
     bookSettingsStore.queueUpdate(normalizedNFTClassId, 'archivedAt', Date.now())
@@ -259,6 +281,9 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
     getFirstTokenIdByNFTClassId,
     fetchNFTByNFTClassIdAndOwnerWalletAddressThroughContract,
     updateProgress,
+    markBookAsFinished,
+    markBookAsDidNotFinish,
+    markBookAsReading,
     archiveBook,
     unarchiveBook,
     reset,

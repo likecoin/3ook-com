@@ -1,6 +1,5 @@
 export interface BookSettingsData extends BaseBookSettingsData {
   updatedAt?: number
-  completedAt?: number
 }
 
 export type BookSettingKey =

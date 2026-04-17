@@ -10,5 +10,7 @@ export interface BaseBookSettingsData {
   'pdf-isRightToLeft'?: boolean
   'progress'?: number
   'lastOpenedTime'?: number
+  'completedAt'?: number | null
+  'didNotFinishAt'?: number | null
   'archivedAt'?: number | null
 }

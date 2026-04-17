@@ -161,6 +161,18 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  canEditReadingState: {
+    type: Boolean,
+    default: false,
+  },
+  isFinished: {
+    type: Boolean,
+    default: false,
+  },
+  isDidNotFinish: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 const emit = defineEmits([
@@ -168,6 +180,9 @@ const emit = defineEmits([
   'open',
   'download',
   'claim',
+  'mark-as-reading',
+  'mark-as-finished',
+  'mark-as-did-not-finish',
   'archive',
   'unarchive',
 ])
@@ -244,6 +259,31 @@ const menuItems = computed<DropdownMenuItem[]>(() => {
       hash: '#staking-info',
     }),
   })
+
+  // Reading state
+  if (props.isOwned && props.canEditReadingState) {
+    if (props.isFinished || props.isDidNotFinish) {
+      items.push({
+        label: $t('bookshelf_item_menu_mark_reading'),
+        icon: 'i-material-symbols-book-5-outline-rounded',
+        onSelect: () => emit('mark-as-reading', props.nftClassId),
+      })
+    }
+    if (!props.isFinished) {
+      items.push({
+        label: $t('bookshelf_item_menu_mark_finished'),
+        icon: 'i-material-symbols-check-circle-outline-rounded',
+        onSelect: () => emit('mark-as-finished', props.nftClassId),
+      })
+    }
+    if (!props.isDidNotFinish) {
+      items.push({
+        label: $t('bookshelf_item_menu_mark_dnf'),
+        icon: 'i-material-symbols-cancel-outline-rounded',
+        onSelect: () => emit('mark-as-did-not-finish', props.nftClassId),
+      })
+    }
+  }
 
   // Archive / Unarchive
   if (props.isOwned && props.canArchive) {

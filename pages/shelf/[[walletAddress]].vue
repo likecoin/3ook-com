@@ -192,10 +192,76 @@
               :nft-ids="item.nftIds"
               :is-owned="isMyBookshelf"
               :can-archive="isMyBookshelf"
+              :can-edit-reading-state="isMyBookshelf"
+              :is-finished="item.completedAt != null"
+              :is-did-not-finish="item.didNotFinishAt != null"
               :progress="item.progress"
               :lazy="(claimableNFTClassIds.length + index) >= columnMax"
               @open="handleBookshelfItemOpen"
               @download="handleBookshelfItemDownload"
+              @mark-as-reading="handleMarkBookAsReading"
+              @mark-as-finished="handleMarkBookAsFinished"
+              @mark-as-did-not-finish="handleMarkBookAsDidNotFinish"
+              @archive="handleArchiveBook"
+            />
+          </ul>
+
+          <!-- Finished tab -->
+          <ul
+            v-else-if="activeTab === 'finished'"
+            :class="[
+              ...gridClasses,
+              'w-full',
+              'mt-4',
+            ]"
+          >
+            <BookshelfItem
+              v-for="(item, index) in finishedItems"
+              :id="item.nftClassId"
+              :key="item.nftClassId"
+              :class="getGridItemClassesByIndex(index)"
+              :nft-class-id="item.nftClassId"
+              :nft-ids="item.nftIds"
+              :is-owned="isMyBookshelf"
+              :can-archive="isMyBookshelf"
+              :can-edit-reading-state="isMyBookshelf"
+              :is-finished="true"
+              :progress="item.progress"
+              :lazy="index >= columnMax"
+              @open="handleBookshelfItemOpen"
+              @download="handleBookshelfItemDownload"
+              @mark-as-reading="handleMarkBookAsReading"
+              @mark-as-did-not-finish="handleMarkBookAsDidNotFinish"
+              @archive="handleArchiveBook"
+            />
+          </ul>
+
+          <!-- DNF tab -->
+          <ul
+            v-else-if="activeTab === 'dnf'"
+            :class="[
+              ...gridClasses,
+              'w-full',
+              'mt-4',
+            ]"
+          >
+            <BookshelfItem
+              v-for="(item, index) in dnfItems"
+              :id="item.nftClassId"
+              :key="item.nftClassId"
+              :class="getGridItemClassesByIndex(index)"
+              :nft-class-id="item.nftClassId"
+              :nft-ids="item.nftIds"
+              :is-owned="isMyBookshelf"
+              :can-archive="isMyBookshelf"
+              :can-edit-reading-state="isMyBookshelf"
+              :is-did-not-finish="true"
+              :progress="item.progress"
+              :lazy="index >= columnMax"
+              @open="handleBookshelfItemOpen"
+              @download="handleBookshelfItemDownload"
+              @mark-as-reading="handleMarkBookAsReading"
+              @mark-as-finished="handleMarkBookAsFinished"
               @archive="handleArchiveBook"
             />
           </ul>
@@ -239,7 +305,7 @@
               :nft-class-id="item.nftClassId"
               :nft-ids="item.nftIds"
               :is-owned="item.isOwned"
-              :is-archived="!!item.archivedAt"
+              :is-archived="item.archivedAt != null"
               :can-archive="isMyBookshelf"
               :progress="item.progress"
               :staked-like="item.stakedAmount"
@@ -270,10 +336,16 @@
               :is-owned="isMyBookshelf"
               :is-archived="true"
               :can-archive="isMyBookshelf"
+              :can-edit-reading-state="isMyBookshelf"
+              :is-finished="item.completedAt != null"
+              :is-did-not-finish="item.didNotFinishAt != null"
               :progress="item.progress"
               :lazy="index >= columnMax"
               @open="handleBookshelfItemOpen"
               @download="handleBookshelfItemDownload"
+              @mark-as-reading="handleMarkBookAsReading"
+              @mark-as-finished="handleMarkBookAsFinished"
+              @mark-as-did-not-finish="handleMarkBookAsDidNotFinish"
               @unarchive="handleUnarchiveBook"
             />
           </ul>
@@ -301,7 +373,7 @@ import { DeleteUploadedBookModal } from '#components'
 import type { BookshelfItem } from '~/stores/bookshelf'
 import type { StakingItem } from '~/stores/staking'
 
-type ShelfTab = 'reading' | 'uploads' | 'staking' | 'archived'
+type ShelfTab = 'reading' | 'finished' | 'dnf' | 'uploads' | 'staking' | 'archived'
 
 interface BookshelfItemWithStaking extends BookshelfItem {
   stakedAmount: number
@@ -380,6 +452,20 @@ const bookshelfItemsAll = computed<BookshelfItemWithStaking[]>(() => {
   })
 })
 
+// Finished tab: books with completedAt set (not archived), sorted by completedAt desc
+const finishedItems = computed(() => {
+  return bookshelfItemsAll.value
+    .filter(item => item.completedAt != null && item.archivedAt == null)
+    .sort((a, b) => (b.completedAt ?? 0) - (a.completedAt ?? 0))
+})
+
+// DNF tab: books with didNotFinishAt set (not archived), sorted by didNotFinishAt desc
+const dnfItems = computed(() => {
+  return bookshelfItemsAll.value
+    .filter(item => item.didNotFinishAt != null && item.archivedAt == null)
+    .sort((a, b) => (b.didNotFinishAt ?? 0) - (a.didNotFinishAt ?? 0))
+})
+
 // Archived tab: books with archivedAt set, sorted by archivedAt desc
 const archivedItems = computed(() => {
   if (!isMyBookshelf.value) return []
@@ -391,6 +477,14 @@ const archivedItems = computed(() => {
 function resolveTabId(tabId: string): ShelfTab {
   if (tabId === 'uploads') {
     if (isUploadedBookVisible.value || canUploadBook.value) return 'uploads'
+    return defaultTab.value
+  }
+  if (tabId === 'finished') {
+    if (finishedItems.value.length > 0) return 'finished'
+    return defaultTab.value
+  }
+  if (tabId === 'dnf') {
+    if (dnfItems.value.length > 0) return 'dnf'
     return defaultTab.value
   }
   if (tabId === 'archived') {
@@ -416,10 +510,10 @@ const activeTab = computed<ShelfTab>({
   },
 })
 
-// Reading tab: owned books (excluding archived) sorted by last opened time (opened first), then the rest
+// Reading tab: owned books (excluding archived, finished, DNF) sorted by last opened time (opened first), then the rest
 const readingItems = computed(() => {
   return bookshelfItemsAll.value
-    .filter(item => !isMyBookshelf.value || item.archivedAt == null)
+    .filter(item => !isMyBookshelf.value || (item.archivedAt == null && item.completedAt == null && item.didNotFinishAt == null))
     .sort((a, b) => {
       const aOpened = a.progress > 0
       const bOpened = b.progress > 0
@@ -476,6 +570,12 @@ const shelfTabs = computed(() => {
       label: $t('bookshelf_tab_uploads'),
     })
   }
+  if (finishedItems.value.length > 0) {
+    tabs.push({ value: 'finished', label: $t('bookshelf_tab_finished') })
+  }
+  if (dnfItems.value.length > 0) {
+    tabs.push({ value: 'dnf', label: $t('bookshelf_tab_dnf') })
+  }
   if (archivedItems.value.length > 0) {
     tabs.push({ value: 'archived', label: $t('bookshelf_tab_archived') })
   }
@@ -495,6 +595,9 @@ const isCurrentTabFetching = computed(() => {
   switch (activeTab.value) {
     case 'reading':
       return bookshelfStore.isFetching || isLoadingClaimableFreeBooks.value
+    case 'finished':
+    case 'dnf':
+      return bookshelfStore.isFetching
     case 'uploads':
       return uploadedBooksStore.isFetching
     case 'staking':
@@ -511,6 +614,12 @@ const isCurrentTabEmpty = computed(() => {
     case 'reading':
       if (!bookshelfStore.hasFetched || isLoadingClaimableFreeBooks.value) return false
       return readingItems.value.length === 0 && claimableFreeBooksCount.value === 0
+    case 'finished':
+      if (!bookshelfStore.hasFetched) return false
+      return finishedItems.value.length === 0
+    case 'dnf':
+      if (!bookshelfStore.hasFetched) return false
+      return dnfItems.value.length === 0
     case 'uploads':
       if (!uploadedBooksStore.hasFetched) return false
       return !hasUploadedBooks.value
@@ -529,6 +638,10 @@ const currentTabEmptyMessage = computed(() => {
   switch (activeTab.value) {
     case 'reading':
       return $t('bookshelf_no_items_reading')
+    case 'finished':
+      return $t('bookshelf_no_items_finished')
+    case 'dnf':
+      return $t('bookshelf_no_items_dnf')
     case 'uploads':
       return $t('bookshelf_no_items_uploads')
     case 'staking':
@@ -548,6 +661,10 @@ const itemsCount = computed(() => {
   switch (activeTab.value) {
     case 'reading':
       return claimableFreeBooksCount.value + readingItems.value.length
+    case 'finished':
+      return finishedItems.value.length
+    case 'dnf':
+      return dnfItems.value.length
     case 'uploads':
       return uploadedBookItems.value.length
     case 'staking':
@@ -760,6 +877,24 @@ function handleBookshelfItemDownload({
     content_type: type,
     nft_class_id: nftClassId,
   })
+}
+
+function handleMarkBookAsReading(nftClassId: string) {
+  if (!isMyBookshelf.value) return
+  useLogEvent('shelf_mark_book_reading', { nft_class_id: nftClassId })
+  bookshelfStore.markBookAsReading(nftClassId)
+}
+
+function handleMarkBookAsFinished(nftClassId: string) {
+  if (!isMyBookshelf.value) return
+  useLogEvent('shelf_mark_book_finished', { nft_class_id: nftClassId })
+  bookshelfStore.markBookAsFinished(nftClassId)
+}
+
+function handleMarkBookAsDidNotFinish(nftClassId: string) {
+  if (!isMyBookshelf.value) return
+  useLogEvent('shelf_mark_book_dnf', { nft_class_id: nftClassId })
+  bookshelfStore.markBookAsDidNotFinish(nftClassId)
 }
 
 function handleArchiveBook(nftClassId: string) {

@@ -81,6 +81,7 @@ export async function getBookSettings(
     ...data,
     updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toMillis() : undefined,
     completedAt: data.completedAt instanceof Timestamp ? data.completedAt.toMillis() : undefined,
+    didNotFinishAt: data.didNotFinishAt instanceof Timestamp ? data.didNotFinishAt.toMillis() : undefined,
     archivedAt: data.archivedAt instanceof Timestamp ? data.archivedAt.toMillis() : undefined,
   } as BookSettingsData
 }
@@ -95,10 +96,26 @@ export async function updateBookSettings(
     .collection('books')
     .doc(nftClassId.toLowerCase())
 
-  const { updatedAt, archivedAt, ...restSettings } = settings
+  const {
+    updatedAt: _,
+    completedAt,
+    didNotFinishAt,
+    archivedAt,
+    ...restSettings
+  } = settings
 
   await bookDocRef.set({
     ...restSettings,
+    ...(completedAt !== undefined && {
+      completedAt: completedAt === null
+        ? FieldValue.delete()
+        : Timestamp.fromMillis(completedAt),
+    }),
+    ...(didNotFinishAt !== undefined && {
+      didNotFinishAt: didNotFinishAt === null
+        ? FieldValue.delete()
+        : Timestamp.fromMillis(didNotFinishAt),
+    }),
     ...(archivedAt !== undefined && {
       archivedAt: archivedAt === null
         ? FieldValue.delete()
@@ -137,6 +154,7 @@ export async function getBatchBookSettings(
         ...data,
         updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toMillis() : undefined,
         completedAt: data.completedAt instanceof Timestamp ? data.completedAt.toMillis() : undefined,
+        didNotFinishAt: data.didNotFinishAt instanceof Timestamp ? data.didNotFinishAt.toMillis() : undefined,
         archivedAt: data.archivedAt instanceof Timestamp ? data.archivedAt.toMillis() : undefined,
       } as BookSettingsData
     })
