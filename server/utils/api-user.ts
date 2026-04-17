@@ -81,6 +81,7 @@ export async function getBookSettings(
     ...data,
     updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toMillis() : undefined,
     completedAt: data.completedAt instanceof Timestamp ? data.completedAt.toMillis() : undefined,
+    archivedAt: data.archivedAt instanceof Timestamp ? data.archivedAt.toMillis() : undefined,
   } as BookSettingsData
 }
 
@@ -94,10 +95,15 @@ export async function updateBookSettings(
     .collection('books')
     .doc(nftClassId.toLowerCase())
 
-  const { updatedAt, ...restSettings } = settings
+  const { updatedAt, archivedAt, ...restSettings } = settings
 
   await bookDocRef.set({
     ...restSettings,
+    ...(archivedAt !== undefined && {
+      archivedAt: archivedAt === null
+        ? FieldValue.delete()
+        : Timestamp.fromMillis(archivedAt),
+    }),
     updatedAt: FieldValue.serverTimestamp(),
   }, { merge: true })
 }
@@ -131,6 +137,7 @@ export async function getBatchBookSettings(
         ...data,
         updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toMillis() : undefined,
         completedAt: data.completedAt instanceof Timestamp ? data.completedAt.toMillis() : undefined,
+        archivedAt: data.archivedAt instanceof Timestamp ? data.archivedAt.toMillis() : undefined,
       } as BookSettingsData
     })
   }

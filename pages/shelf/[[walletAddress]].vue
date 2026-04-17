@@ -190,11 +190,13 @@
               :class="getGridItemClassesByIndex(claimableNFTClassIds.length + index)"
               :nft-class-id="item.nftClassId"
               :nft-ids="item.nftIds"
-              :is-owned="true"
+              :is-owned="isMyBookshelf"
+              :can-archive="isMyBookshelf"
               :progress="item.progress"
               :lazy="(claimableNFTClassIds.length + index) >= columnMax"
               @open="handleBookshelfItemOpen"
               @download="handleBookshelfItemDownload"
+              @archive="handleArchiveBook"
             />
           </ul>
 
@@ -237,11 +239,42 @@
               :nft-class-id="item.nftClassId"
               :nft-ids="item.nftIds"
               :is-owned="item.isOwned"
+              :is-archived="!!item.archivedAt"
+              :can-archive="isMyBookshelf"
               :progress="item.progress"
               :staked-like="item.stakedAmount"
               :lazy="index >= columnMax"
               @open="handleBookshelfItemOpen"
               @download="handleBookshelfItemDownload"
+              @archive="handleArchiveBook"
+              @unarchive="handleUnarchiveBook"
+            />
+          </ul>
+
+          <!-- Archived tab -->
+          <ul
+            v-else-if="activeTab === 'archived'"
+            :class="[
+              ...gridClasses,
+              'w-full',
+              'mt-4',
+            ]"
+          >
+            <BookshelfItem
+              v-for="(item, index) in archivedItems"
+              :id="item.nftClassId"
+              :key="item.nftClassId"
+              :class="getGridItemClassesByIndex(index)"
+              :nft-class-id="item.nftClassId"
+              :nft-ids="item.nftIds"
+              :is-owned="isMyBookshelf"
+              :is-archived="true"
+              :can-archive="isMyBookshelf"
+              :progress="item.progress"
+              :lazy="index >= columnMax"
+              @open="handleBookshelfItemOpen"
+              @download="handleBookshelfItemDownload"
+              @unarchive="handleUnarchiveBook"
             />
           </ul>
 
@@ -268,7 +301,7 @@ import { DeleteUploadedBookModal } from '#components'
 import type { BookshelfItem } from '~/stores/bookshelf'
 import type { StakingItem } from '~/stores/staking'
 
-type ShelfTab = 'reading' | 'uploads' | 'staking'
+type ShelfTab = 'reading' | 'uploads' | 'staking' | 'archived'
 
 interface BookshelfItemWithStaking extends BookshelfItem {
   stakedAmount: number
@@ -314,30 +347,6 @@ const isUploadedBookVisible = computed(() => isMyBookshelf.value && isUploadedBo
 const queryTab = computed(() => getRouteQuery('tab'))
 const defaultTab = computed<ShelfTab>(() => shelfTabs.value[0]?.value || 'reading')
 
-function resolveTabId(tabId: string): ShelfTab {
-  if (tabId === 'uploads') {
-    if (isUploadedBookVisible.value || canUploadBook.value) return 'uploads'
-    return defaultTab.value
-  }
-  if (tabId && shelfTabs.value.some(t => t.value === tabId)) return tabId as ShelfTab
-  return defaultTab.value
-}
-
-const activeTab = computed<ShelfTab>({
-  get: () => {
-    if (!isMyBookshelf.value) return defaultTab.value
-    return resolveTabId(queryTab.value)
-  },
-  set: (tab: ShelfTab) => {
-    router.replace({
-      query: {
-        ...route.query,
-        tab: resolveTabId(tab),
-      },
-    })
-  },
-})
-
 const stakingData = computed(() => {
   return isMyBookshelf.value
     ? stakingStore.getUserStakingData(user.value!.evmWallet)
@@ -371,17 +380,55 @@ const bookshelfItemsAll = computed<BookshelfItemWithStaking[]>(() => {
   })
 })
 
-// Reading tab: owned books sorted by last opened time (opened first), then the rest
+// Archived tab: books with archivedAt set, sorted by archivedAt desc
+const archivedItems = computed(() => {
+  if (!isMyBookshelf.value) return []
+  return bookshelfItemsAll.value
+    .filter(item => item.archivedAt != null)
+    .sort((a, b) => (b.archivedAt ?? 0) - (a.archivedAt ?? 0))
+})
+
+function resolveTabId(tabId: string): ShelfTab {
+  if (tabId === 'uploads') {
+    if (isUploadedBookVisible.value || canUploadBook.value) return 'uploads'
+    return defaultTab.value
+  }
+  if (tabId === 'archived') {
+    if (archivedItems.value.length > 0) return 'archived'
+    return defaultTab.value
+  }
+  if (tabId && shelfTabs.value.some(t => t.value === tabId)) return tabId as ShelfTab
+  return defaultTab.value
+}
+
+const activeTab = computed<ShelfTab>({
+  get: () => {
+    if (!isMyBookshelf.value) return defaultTab.value
+    return resolveTabId(queryTab.value)
+  },
+  set: (tab: ShelfTab) => {
+    router.replace({
+      query: {
+        ...route.query,
+        tab: resolveTabId(tab),
+      },
+    })
+  },
+})
+
+// Reading tab: owned books (excluding archived) sorted by last opened time (opened first), then the rest
 const readingItems = computed(() => {
-  return [...bookshelfItemsAll.value].sort((a, b) => {
-    const aOpened = a.progress > 0
-    const bOpened = b.progress > 0
-    if (aOpened !== bOpened) return aOpened ? -1 : 1
-    if (aOpened && bOpened && a.lastOpenedTime !== b.lastOpenedTime) {
-      return b.lastOpenedTime - a.lastOpenedTime
-    }
-    return 0
-  })
+  return bookshelfItemsAll.value
+    .filter(item => !isMyBookshelf.value || item.archivedAt == null)
+    .sort((a, b) => {
+      const aOpened = a.progress > 0
+      const bOpened = b.progress > 0
+      if (aOpened !== bOpened) return aOpened ? -1 : 1
+      if (aOpened && bOpened && a.lastOpenedTime !== b.lastOpenedTime) {
+        return b.lastOpenedTime - a.lastOpenedTime
+      }
+      return 0
+    })
 })
 
 // Staking tab: books user has staked on, sorted by staked amount desc
@@ -407,6 +454,7 @@ const stakingItems = computed<BookshelfItemWithStaking[]>(() => {
       isOwned: !!ownedItem,
       lastOpenedTime: ownedItem?.lastOpenedTime || 0,
       progress: ownedItem?.progress || 0,
+      archivedAt: ownedItem?.archivedAt ?? null,
     })
   })
 
@@ -415,7 +463,7 @@ const stakingItems = computed<BookshelfItemWithStaking[]>(() => {
 
 const shelfTabs = computed(() => {
   const tabs: { value: ShelfTab, label: string }[] = []
-  if (bookshelfItemsAll.value.length > 0 || claimableFreeBooksCount.value > 0) {
+  if (readingItems.value.length > 0 || claimableFreeBooksCount.value > 0) {
     tabs.push({ value: 'reading', label: $t('bookshelf_tab_reading') })
   }
   if (stakingItems.value.length > 0) {
@@ -427,6 +475,9 @@ const shelfTabs = computed(() => {
       value: 'uploads',
       label: $t('bookshelf_tab_uploads'),
     })
+  }
+  if (archivedItems.value.length > 0) {
+    tabs.push({ value: 'archived', label: $t('bookshelf_tab_archived') })
   }
   return tabs
 })
@@ -448,6 +499,8 @@ const isCurrentTabFetching = computed(() => {
       return uploadedBooksStore.isFetching
     case 'staking':
       return stakingData.value.isFetching
+    case 'archived':
+      return bookshelfStore.isFetching
     default:
       return false
   }
@@ -457,13 +510,16 @@ const isCurrentTabEmpty = computed(() => {
   switch (activeTab.value) {
     case 'reading':
       if (!bookshelfStore.hasFetched || isLoadingClaimableFreeBooks.value) return false
-      return bookshelfItemsAll.value.length === 0 && claimableFreeBooksCount.value === 0
+      return readingItems.value.length === 0 && claimableFreeBooksCount.value === 0
     case 'uploads':
       if (!uploadedBooksStore.hasFetched) return false
       return !hasUploadedBooks.value
     case 'staking':
       if (!stakingData.value.hasFetched) return false
       return stakingItems.value.length === 0
+    case 'archived':
+      if (!bookshelfStore.hasFetched) return false
+      return archivedItems.value.length === 0
     default:
       return false
   }
@@ -477,6 +533,8 @@ const currentTabEmptyMessage = computed(() => {
       return $t('bookshelf_no_items_uploads')
     case 'staking':
       return $t('bookshelf_no_items_staking')
+    case 'archived':
+      return $t('bookshelf_no_items_archived')
     default:
       return $t('bookshelf_no_items')
   }
@@ -494,6 +552,8 @@ const itemsCount = computed(() => {
       return uploadedBookItems.value.length
     case 'staking':
       return stakingItems.value.length
+    case 'archived':
+      return archivedItems.value.length
     default:
       return bookshelfStore.items.length
   }
@@ -683,6 +743,18 @@ function handleBookshelfItemDownload({
     content_type: type,
     nft_class_id: nftClassId,
   })
+}
+
+function handleArchiveBook(nftClassId: string) {
+  if (!isMyBookshelf.value) return
+  useLogEvent('shelf_archive_book', { nft_class_id: nftClassId })
+  bookshelfStore.archiveBook(nftClassId)
+}
+
+function handleUnarchiveBook(nftClassId: string) {
+  if (!isMyBookshelf.value) return
+  useLogEvent('shelf_unarchive_book', { nft_class_id: nftClassId })
+  bookshelfStore.unarchiveBook(nftClassId)
 }
 
 async function handleBookClaim(nftClassId: string) {

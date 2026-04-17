@@ -153,9 +153,24 @@ const props = defineProps({
     type: Number,
     default: 0,
   },
+  isArchived: {
+    type: Boolean,
+    default: false,
+  },
+  canArchive: {
+    type: Boolean,
+    default: false,
+  },
 })
 
-const emit = defineEmits(['visible', 'open', 'download', 'claim'])
+const emit = defineEmits([
+  'visible',
+  'open',
+  'download',
+  'claim',
+  'archive',
+  'unarchive',
+])
 
 const { t: $t } = useI18n()
 const nftStore = useNFTStore()
@@ -229,6 +244,24 @@ const menuItems = computed<DropdownMenuItem[]>(() => {
       hash: '#staking-info',
     }),
   })
+
+  // Archive / Unarchive
+  if (props.isOwned && props.canArchive) {
+    if (props.isArchived) {
+      items.push({
+        label: $t('bookshelf_item_menu_unarchive'),
+        icon: 'i-material-symbols-unarchive-outline-rounded',
+        onSelect: () => emit('unarchive', props.nftClassId),
+      })
+    }
+    else {
+      items.push({
+        label: $t('bookshelf_item_menu_archive'),
+        icon: 'i-material-symbols-archive-outline-rounded',
+        onSelect: () => emit('archive', props.nftClassId),
+      })
+    }
+  }
 
   // Book info
   items.push({
