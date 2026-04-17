@@ -33,7 +33,7 @@ export function useBookOwnerAffiliate(
       await metadataStore.lazyFetchLikerInfoByWalletAddress(wallet)
       const likerId = ownerLikerId.value
       if (!likerId || loadedLikerId.value === likerId) return
-      const data = await $fetch<AffiliatePublicConfig>(`/api/affiliate/${likerId}`)
+      const data = await $fetch<AffiliatePublicConfig>(`/api/affiliate/${encodeURIComponent(likerId)}`)
       loadedConfig.value = data?.active ? data : null
       loadedLikerId.value = likerId
     }

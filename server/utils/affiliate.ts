@@ -26,7 +26,7 @@ export async function getAffiliateConfig(likerId: string): Promise<AffiliateConf
   if (cached && cached.expiresAt > Date.now()) return cached.data
 
   const upstream = await getLikeCoinAPIFetch()<UpstreamAffiliateResponse>(
-    `/plus/affiliate/${key}`,
+    `/plus/affiliate/${encodeURIComponent(key)}`,
   ).catch(() => null)
 
   const data: AffiliateConfig | null = upstream?.active
