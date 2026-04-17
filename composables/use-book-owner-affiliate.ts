@@ -1,5 +1,5 @@
-import type { AffiliatePublicConfig } from './use-plus-affiliate'
 import { getAffiliateVoicesForBook } from './use-plus-affiliate'
+import type { AffiliatePublicConfig } from '~/shared/types/affiliate'
 
 export function useBookOwnerAffiliate(
   nftClassId: MaybeRefOrGetter<string | undefined>,
@@ -7,11 +7,11 @@ export function useBookOwnerAffiliate(
   const { user } = useUserSession()
   const metadataStore = useMetadataStore()
 
-  const classIdRef = computed(() => toValue(nftClassId) || '')
-  const { nftClassOwnerWalletAddress } = useEVMBookInfo({ nftClassId: classIdRef })
+  const nftClassIdRef = computed(() => toValue(nftClassId) || '')
+  const { nftClassOwnerWalletAddress } = useEVMBookInfo({ nftClassId: nftClassIdRef })
 
-  const config = useState<AffiliatePublicConfig | null>('book-owner-affiliate-config', () => null)
-  const loadedForLikerId = useState<string | null>('book-owner-affiliate-loaded-for', () => null)
+  const loadedConfig = useState<AffiliatePublicConfig | null>('book-owner-affiliate-config', () => null)
+  const loadedLikerId = useState<string | null>('book-owner-affiliate-loaded-liker-id', () => null)
   const isLoading = useState<boolean>('book-owner-affiliate-loading', () => false)
 
   const ownerLikerId = computed(() => {
@@ -22,8 +22,8 @@ export function useBookOwnerAffiliate(
 
   async function fetchConfig() {
     if (user.value?.isLikerPlus) {
-      config.value = null
-      loadedForLikerId.value = null
+      loadedConfig.value = null
+      loadedLikerId.value = null
       return
     }
     const wallet = nftClassOwnerWalletAddress.value
@@ -32,10 +32,10 @@ export function useBookOwnerAffiliate(
     try {
       await metadataStore.lazyFetchLikerInfoByWalletAddress(wallet)
       const likerId = ownerLikerId.value
-      if (!likerId || loadedForLikerId.value === likerId) return
+      if (!likerId || loadedLikerId.value === likerId) return
       const data = await $fetch<AffiliatePublicConfig>(`/api/affiliate/${likerId}`)
-      config.value = data?.active ? data : null
-      loadedForLikerId.value = likerId
+      loadedConfig.value = data?.active ? data : null
+      loadedLikerId.value = likerId
     }
     catch (error) {
       console.error('[BookOwnerAffiliate] Failed to fetch:', error)
@@ -49,10 +49,10 @@ export function useBookOwnerAffiliate(
     fetchConfig()
   })
 
-  const upsellVoices = computed(() => getAffiliateVoicesForBook(config.value, classIdRef.value))
+  const upsellVoices = computed(() => getAffiliateVoicesForBook(loadedConfig.value, nftClassIdRef.value))
 
   return {
-    config,
+    config: loadedConfig,
     ownerLikerId,
     upsellVoices,
     fetchConfig,

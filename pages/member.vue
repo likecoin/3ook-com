@@ -25,7 +25,7 @@
     </template>
 
     <template
-      v-if="affiliateInfo?.active"
+      v-if="activeAffiliate"
       #affiliate-promo
     >
       <AffiliateAlert class="mt-6" />
@@ -34,28 +34,28 @@
         v-if="isAffiliateGiftRedeemable"
         class="mt-4 p-4 rounded-xl bg-elevated text-center"
       >
-        <p class="text-sm font-medium text-toned mb-3">
-          {{ $t('pricing_page_affiliate_gift_label') }}
-        </p>
+        <p
+          class="text-sm font-medium text-toned mb-3"
+          v-text="$t('pricing_page_affiliate_gift_label')"
+        />
         <div class="flex items-center justify-center gap-3">
           <BookCover
             class="w-12 shrink-0"
             :src="giftBookCoverSrc"
-            :alt="affiliateInfo?.giftBookName || $t('pricing_page_affiliate_gift_label')"
+            :alt="activeAffiliate.giftBookName || $t('pricing_page_affiliate_gift_label')"
             has-shadow
           />
           <div class="text-left">
             <p
-              v-if="affiliateInfo?.giftBookName"
+              v-if="activeAffiliate.giftBookName"
               class="text-sm font-bold text-highlighted"
-              v-text="affiliateInfo?.giftBookName"
+              v-text="activeAffiliate.giftBookName"
             />
             <p
               v-if="affiliateVoiceNames"
               class="text-xs text-muted"
-            >
-              {{ $t('pricing_page_affiliate_voice_label', { name: affiliateVoiceNames }) }}
-            </p>
+              v-text="$t('pricing_page_affiliate_voice_label', { name: affiliateVoiceNames })"
+            />
           </div>
         </div>
       </div>
@@ -87,6 +87,9 @@
 <script setup lang="ts">
 import type { ResolvableArray, ResolvableLink } from '@unhead/vue'
 
+import type { AffiliatePublicConfig } from '~/shared/types/affiliate'
+import { normalizeLikerId } from '~/shared/utils/liker-id'
+
 import { DEFAULT_TRIAL_PERIOD_DAYS } from '~/constants/pricing'
 
 import backdrop from '~/assets/images/paywall/bg-bookstore.jpg'
@@ -112,34 +115,23 @@ const selectedPlan = ref<SubscriptionPlan>(initialPlan)
 
 const { memberProgramData } = useMemberProgramStructuredData()
 
-interface AffiliateInfo {
-  active: boolean
-  giftClassId?: string
-  giftBookName?: string
-  giftBookCover?: string
-  giftOnTrial?: boolean
-  affiliateClassIds?: string[]
-  customVoices?: Array<{
-    id: string
-    name: string
-    language?: string
-    avatarUrl?: string
-  }>
-}
-const affiliateInfo = ref<AffiliateInfo | null>(null)
+const affiliateInfo = ref<AffiliatePublicConfig | null>(null)
+const activeAffiliate = computed(() =>
+  affiliateInfo.value?.active ? affiliateInfo.value : null,
+)
 const affiliateLikerId = computed(() => {
-  const from = getRouteQuery('from') as string | undefined
-  return from?.startsWith('@') ? from.slice(1) : from
+  const from = getRouteQuery('from')
+  return from ? normalizeLikerId(from) : undefined
 })
 const affiliateVoiceNames = computed(() => {
-  const voices = affiliateInfo.value?.customVoices
+  const voices = activeAffiliate.value?.customVoices
   if (!voices?.length) return undefined
   return voices.map(v => v.name).join($t('text_separator_comma'))
 })
 
 const { getResizedNormalizedImageURL } = useImageResize()
 const giftBookCoverSrc = computed(() => {
-  const src = affiliateInfo.value?.giftBookCover
+  const src = activeAffiliate.value?.giftBookCover
   return src ? getResizedNormalizedImageURL(src, { size: 300 }) : ''
 })
 
@@ -149,7 +141,7 @@ async function fetchAffiliateInfo() {
     return
   }
   try {
-    affiliateInfo.value = await $fetch<AffiliateInfo>(`/api/affiliate/${affiliateLikerId.value}`)
+    affiliateInfo.value = await $fetch<AffiliatePublicConfig>(`/api/affiliate/${affiliateLikerId.value}`)
   }
   catch { /* ignore */ }
 }
@@ -283,16 +275,16 @@ const trialPeriodDays = computed(() => {
     case '14d': return 14
     case '30d': return 30
     default:
-      if (affiliateInfo.value?.active && affiliateInfo.value.giftOnTrial === false) return 0
+      if (activeAffiliate.value?.giftOnTrial === false) return 0
       return DEFAULT_TRIAL_PERIOD_DAYS
   }
 })
 
 const isAffiliateGiftRedeemable = computed(() => {
-  if (!affiliateInfo.value?.active) return false
-  if (!affiliateInfo.value.giftClassId) return false
+  const info = activeAffiliate.value
+  if (!info?.giftClassId) return false
   if (selectedPlan.value !== 'yearly') return false
-  if (affiliateInfo.value.giftOnTrial === false && trialPeriodDays.value !== 0) return false
+  if (info.giftOnTrial === false && trialPeriodDays.value !== 0) return false
   return true
 })
 

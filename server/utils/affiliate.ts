@@ -1,23 +1,18 @@
 import type { AffiliateConfig, AffiliateCustomVoice } from '~/server/types/affiliate'
 import { getLikeCoinAPIFetch } from '~/shared/utils/api'
+import { normalizeLikerId } from '~/shared/utils/liker-id'
 
-interface UpstreamAffiliateResponse {
-  active: boolean
-  giftClassId?: string
-  affiliateClassIds?: string[]
-  giftPriceIndex?: number
-  giftOnTrial?: boolean
-  customVoices?: Partial<AffiliateCustomVoice>[]
-}
+type UpstreamAffiliateResponse =
+  & Omit<AffiliateConfig, 'affiliateClassIds' | 'customVoices'>
+  & {
+    affiliateClassIds?: string[]
+    customVoices?: Partial<AffiliateCustomVoice>[]
+  }
 
 const CACHE_TTL_MS = 5 * 60 * 1000
 const NEGATIVE_CACHE_TTL_MS = 30 * 1000
 const CACHE_MAX_ENTRIES = 500
 const cache = new Map<string, { data: AffiliateConfig | null, expiresAt: number }>()
-
-function normalizeLikerId(likerId: string): string {
-  return likerId.startsWith('@') ? likerId.slice(1) : likerId
-}
 
 function isValidCustomVoice(voice: Partial<AffiliateCustomVoice>): voice is AffiliateCustomVoice {
   return typeof voice.id === 'string' && !!voice.id

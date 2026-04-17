@@ -1,6 +1,8 @@
+import type { AffiliatePublicConfig } from '~/shared/types/affiliate'
+import { getAffiliateConfig } from '~/server/utils/affiliate'
 import { fetchLikeCoinNFTClassAggregatedMetadataById } from '~/shared/utils/api'
 
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async (event): Promise<AffiliatePublicConfig> => {
   const likerId = getRouterParam(event, 'likerId')
   if (!likerId) {
     throw createError({ statusCode: 400, message: 'MISSING_LIKER_ID' })
