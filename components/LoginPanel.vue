@@ -15,6 +15,7 @@
         type="email"
         :placeholder="$t('login_panel_email_placeholder')"
         size="lg"
+        @input.once="useLogEvent('login_panel_email_input')"
       />
       <UButton
         type="submit"

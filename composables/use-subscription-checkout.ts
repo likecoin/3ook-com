@@ -80,6 +80,7 @@ export function useSubscriptionCheckout() {
       blockingModal.open({ title: $t('common_processing') })
 
       if (!user.value?.likerId) {
+        useLogEvent('subscription_liker_id_required')
         toast.add({
           title: $t('pricing_page_liker_id_required'),
           description: $t('pricing_page_liker_id_required_description'),

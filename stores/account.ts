@@ -388,7 +388,9 @@ export const useAccountStore = defineStore('account', () => {
       isLoggingIn.value = true
 
       // Disconnect any existing connection
-      await disconnectAsync()
+      if (isConnected.value) {
+        await disconnectAsync().catch(() => {})
+      }
       let magicEmail: string | undefined = preferredEmail
       if (!connectorId || !connectors.some((c: { id: string }) => c.id === connectorId)) {
         useLogEvent('login_panel_open')
