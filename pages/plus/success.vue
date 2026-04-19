@@ -37,6 +37,7 @@ const localeRoute = useLocaleRoute()
 const accountStore = useAccountStore()
 const { handleError } = useErrorHandler()
 const { currency, yearlyPrice, monthlyPrice } = useSubscription()
+const { convertPrice } = useCurrency()
 const { user } = useUserSession()
 const likeCoinSessionAPI = useLikeCoinSessionAPI()
 
@@ -103,21 +104,24 @@ onMounted(async () => {
     } = await fetchPlusGiftStatus()
     if (isRedirected.value) {
       const isTrial = getRouteQuery('trial') !== '0'
-      const subscriptionPrice = isYearly.value ? yearlyPrice.value : monthlyPrice.value
 
-      const predictedLTV = 120
+      const PREDICTED_LTV_USD = 100
+      const TRIAL_TO_PAID_CONVERSION = 0.5
 
       if (isTrial) {
+        const trialExpectedValue = convertPrice(PREDICTED_LTV_USD * TRIAL_TO_PAID_CONVERSION)
         useLogEvent('start_trial', {
           transaction_id: paymentId.value,
           currency: currency.value,
-          value: 0,
-          predicted_ltv: predictedLTV * 0.3, // 30% conversion rate
+          value: trialExpectedValue,
+          predicted_ltv: trialExpectedValue,
           promotion_id: coupon.value,
           promotion_name: coupon.value,
         })
       }
       else {
+        const subscriptionPrice = isYearly.value ? yearlyPrice.value : monthlyPrice.value
+        const predictedLTV = convertPrice(PREDICTED_LTV_USD)
         useLogEvent('subscribe', {
           transaction_id: paymentId.value,
           currency: currency.value,
