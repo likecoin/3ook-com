@@ -1,4 +1,6 @@
 import type { UpsellPlusModalSubscribeEventPayload } from '~/components/UpsellPlusModal.props'
+import type { CheckoutUIMode } from '~/composables/use-likecoin-session-api'
+import { usePlusCheckoutStore } from '~/stores/plus-checkout'
 
 export function useSubscriptionCheckout() {
   const {
@@ -14,12 +16,16 @@ export function useSubscriptionCheckout() {
   const likeCoinSessionAPI = useLikeCoinSessionAPI()
   const { t: $t } = useI18n()
   const accountStore = useAccountStore()
+  const plusCheckoutStore = usePlusCheckoutStore()
   const { user } = useUserSession()
   const localeRoute = useLocaleRoute()
   const getRouteQuery = useRouteQuery()
   const toast = useToast()
   const blockingModal = useBlockingModal()
   const { getAnalyticsParameters } = useAnalytics()
+  const { isApp } = useAppDetection()
+  const runtimeConfig = useRuntimeConfig()
+  const isEmbedCheckoutFlagEnabled = useFeatureFlagEnabled('plus-embed-checkout')
 
   const isProcessingSubscription = ref(false)
 
@@ -99,7 +105,11 @@ export function useSubscriptionCheckout() {
         await navigateTo(localeRoute({ name: 'plus-success', query: { period: plan } }))
       }
       else {
-        const { url, paymentId } = await likeCoinSessionAPI.fetchLikerPlusCheckoutLink({
+        const canUseEmbedCheckout = !isApp.value
+          && !!isEmbedCheckoutFlagEnabled.value
+          && !!runtimeConfig.public.stripePublishableKey
+        const uiMode: CheckoutUIMode = canUseEmbedCheckout ? 'embedded' : 'hosted'
+        const { url, clientSecret, paymentId } = await likeCoinSessionAPI.fetchLikerPlusCheckoutLink({
           period: plan,
           from: getRouteQuery('from'),
           currency: getCheckoutCurrency(),
@@ -111,15 +121,31 @@ export function useSubscriptionCheckout() {
           utmMedium: analyticsParams.utmMedium || utmMedium,
           utmSource: analyticsParams.utmSource || utmSource,
           coupon,
+          uiMode,
         })
         useLogEvent('begin_checkout', {
           ...eventPayloadWithCoupon,
           transaction_id: paymentId,
+          checkout_mode: uiMode,
         })
         if (redirectRoute && redirectRoute.name) {
           accountStore.savePlusRedirectRoute(redirectRoute)
         }
-        await navigateTo(url, { external: true })
+        if (uiMode === 'embedded' && clientSecret) {
+          plusCheckoutStore.setSession({
+            clientSecret,
+            paymentId,
+            period: plan,
+            coupon,
+          })
+          await navigateTo(localeRoute({ name: 'plus-checkout' }))
+        }
+        else if (url) {
+          await navigateTo(url, { external: true })
+        }
+        else {
+          throw new Error('Checkout session missing both url and clientSecret')
+        }
       }
     }
     catch (error) {

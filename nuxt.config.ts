@@ -106,6 +106,7 @@ export default defineNuxtConfig({
       posthogDefaults: process.env.POSTHOG_DEFAULTS,
       publishBookEndpoint: process.env.PUBLISH_BOOK_ENDPOINT,
       sentryDsn: process.env.SENTRY_DSN,
+      stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY,
       subscription: {
         pricing: {
           monthly: {
@@ -260,6 +261,7 @@ export default defineNuxtConfig({
           ? ['*']
           : [
               'https://auth.magic.link',
+              'https://checkout.stripe.com',
               'https://js.stripe.com',
               'https://td.doubleclick.net',
               'https://www.googletagmanager.com',

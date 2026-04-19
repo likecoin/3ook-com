@@ -93,6 +93,8 @@ env:
     secret: SENTRY_AUTH_TOKEN
   - variable: SENTRY_DSN
     value: https://07b4bd03c1d828f7e241ccc9e47a2f80@o149940.ingest.us.sentry.io/4509350693240832
+  - variable: STRIPE_PUBLISHABLE_KEY
+    value: pk_live_51KLaAPJ1N9Zit6QVZCdaYNWGMnDqCRT3rJ0x7lMMbdFMQMcRDykMbSFERAG8HOfaQw4K8lz0lrSSAdenvKRd4qZZ00OCt0Elji
   - variable: TTS_CACHE_BUCKET_PREFIX
     value: tts-cache
   - variable: UET_TAG_ID

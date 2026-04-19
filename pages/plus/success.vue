@@ -48,7 +48,7 @@ const getRouteBaseName = useRouteBaseName()
 const isRedirected = computed(() => !!getRouteQuery('redirect'))
 const targetPeriod = computed(() => getRouteQuery('period'))
 const isYearly = computed(() => targetPeriod.value === 'yearly')
-const paymentId = computed(() => getRouteQuery('payment_id'))
+const paymentId = computed(() => getRouteQuery('payment_id') || getRouteQuery('session_id'))
 const coupon = computed(() => getRouteQuery('coupon'))
 
 const isRefreshing = ref(true)

@@ -43,10 +43,13 @@ export interface ClaimCartByIdResponseData {
   errors?: { error: string }[]
 }
 
+export type CheckoutUIMode = 'hosted' | 'embedded'
+
 export interface FetchLikerPlusCheckoutLinkResponseData {
   sessionId: string
-  url: string
   paymentId: string
+  url?: string
+  clientSecret?: string
 }
 
 export interface FetchLikerPlusBillingPortalLinkResponseData {
@@ -288,6 +291,7 @@ export function useLikeCoinSessionAPI() {
     fbp,
     fbc,
     coupon,
+    uiMode,
   }: {
     period: SubscriptionPlan
     trialPeriodDays?: number
@@ -309,6 +313,7 @@ export function useLikeCoinSessionAPI() {
     fbp?: string
     fbc?: string
     coupon?: string
+    uiMode?: CheckoutUIMode
   }) {
     return fetch.value<FetchLikerPlusCheckoutLinkResponseData>(`/plus/new`, {
       method: 'POST',
@@ -331,6 +336,7 @@ export function useLikeCoinSessionAPI() {
         fbp,
         fbc,
         coupon,
+        uiMode,
         isApp: isApp.value || undefined,
       },
     })

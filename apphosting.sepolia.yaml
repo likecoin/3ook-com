@@ -87,6 +87,8 @@ env:
     value: phc_pL5jZEutoxpgLzr8b0ixLk6okAoYFNmnwnDzbUAftpq
   - variable: PUBLISH_BOOK_ENDPOINT
     value: https://publish.sepolia.3ook.com
+  - variable: STRIPE_PUBLISHABLE_KEY
+    value: pk_test_51KLaAPJ1N9Zit6QVKlJkKW3h3fJhgCh2dKI5Kr2vwDp3RYZyjkbMnoOdw2GVnzCwcUMlOLBUlWaWGZxlYUT0gF8C00srUgPCrD
   - variable: TTS_CACHE_BUCKET_PREFIX
     value: tts-cache
   - variable: UPLOADED_BOOKS_BUCKET_PREFIX
