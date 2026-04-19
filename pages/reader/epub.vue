@@ -573,6 +573,19 @@ const { setTTSSegments, setChapterTitles, openPlayer } = useTTSPlayerModal({
     if (!segment?.cfi) return
     activeTTSElementIndex.value = segment.index
 
+    // `relocated` can fire with stale location data while the TTS modal
+    // covers the reader (fullscreen on native), so persist progress from
+    // the segment CFI directly. Guard on cfi change to avoid no-op
+    // Firestore writes when TTS stays within the same paragraph.
+    if (segment.cfi !== currentCfi.value) {
+      currentCfi.value = segment.cfi
+      const locations = loadedBook.value?.locations
+      if (locations) {
+        percentage.value = locations.percentageFromCfi(segment.cfi) ?? 0
+        readingProgress.value = percentage.value
+      }
+    }
+
     // Skip navigation if the segment is already visible on the current page
     if (isSegmentOnCurrentPage(segment.cfi)) return
 
