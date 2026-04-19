@@ -56,6 +56,25 @@ export function useTextToSpeech(options: TTSOptions) {
     return { language, voiceId: voiceIdParts.join('_') }
   }
 
+  function resolveVoiceTier(languageVoice: string): 'system' | 'affiliate' | 'custom' {
+    if (languageVoice === 'custom') return 'custom'
+    if (isAffiliateVoiceId(languageVoice)) return 'affiliate'
+    return 'system'
+  }
+
+  // Pick player implementation — both are created upfront (inert until load()),
+  // and the proxy delegates to the correct one based on the reactive flag.
+  const { isApp, isIOS, isAndroid } = useAppDetection()
+  const isNativeBridge = computed(
+    () => isApp.value && isNativeWebView(),
+  )
+  const appPlatform = computed<'ios' | 'android' | 'web'>(() => {
+    if (!isNativeBridge.value) return 'web'
+    if (isIOS.value) return 'ios'
+    if (isAndroid.value) return 'android'
+    return 'web'
+  })
+
   function buildTTSEventPayload(extras: Record<string, unknown> = {}) {
     const languageVoice = ttsLanguageVoice.value || ''
     const { voiceId } = parseLanguageVoice(languageVoice)
@@ -71,16 +90,12 @@ export function useTextToSpeech(options: TTSOptions) {
       book_language: toValue(bookLanguage) || undefined,
       voice_id: voiceId || languageVoice || undefined,
       language_voice: languageVoice || undefined,
+      voice_tier: resolveVoiceTier(languageVoice),
+      app_platform: appPlatform.value,
       ...extras,
     }
   }
 
-  // Pick player implementation — both are created upfront (inert until load()),
-  // and the proxy delegates to the correct one based on the reactive flag.
-  const { isApp } = useAppDetection()
-  const isNativeBridge = computed(
-    () => isApp.value && isNativeWebView(),
-  )
   const nativePlayer = useNativeAudioPlayer(isNativeBridge)
   const webPlayer = useWebAudioPlayer()
   const activePlayer = () => isNativeBridge.value ? nativePlayer : webPlayer
@@ -132,6 +147,50 @@ export function useTextToSpeech(options: TTSOptions) {
   const MAX_CONSECUTIVE_ERRORS = 3
   const currentTTSSegmentIndex = ref(0)
   const ttsSegments = ref<TTSSegment[]>([])
+
+  // hadBuffering survives past play, so it can't be derived from
+  // isTextToSpeechLoading (which play resets before we read the timer).
+  let segmentLoadStart: { index: number, startedAt: number, hadBuffering: boolean } | null = null
+
+  function startSegmentLoadTimer(index: number) {
+    segmentLoadStart = {
+      index,
+      startedAt: performance.now(),
+      hadBuffering: false,
+    }
+  }
+
+  function markSegmentBuffering(index: number) {
+    if (segmentLoadStart?.index === index) {
+      segmentLoadStart.hadBuffering = true
+    }
+  }
+
+  function consumeSegmentLoadTimer() {
+    if (!segmentLoadStart) return null
+    const loadMs = Math.round(performance.now() - segmentLoadStart.startedAt)
+    const snapshot = { ...segmentLoadStart, loadMs }
+    segmentLoadStart = null
+    return snapshot
+  }
+
+  function clearSegmentLoadTimer() {
+    segmentLoadStart = null
+  }
+
+  const MEDIA_ERROR_NAMES: Record<number, string> = {
+    1: 'MEDIA_ERR_ABORTED',
+    2: 'MEDIA_ERR_NETWORK',
+    3: 'MEDIA_ERR_DECODE',
+    4: 'MEDIA_ERR_SRC_NOT_SUPPORTED',
+  }
+
+  function formatTTSError(error: string | Event | MediaError): string {
+    if (typeof error === 'string') return error
+    if (error instanceof MediaError) return MEDIA_ERROR_NAMES[error.code] || `MEDIA_ERR_${error.code}`
+    if (error instanceof Event) return error.type || 'event'
+    return 'unknown'
+  }
   const currentTTSSegment = computed(() => {
     return ttsSegments.value[currentTTSSegmentIndex.value]
   })
@@ -143,14 +202,25 @@ export function useTextToSpeech(options: TTSOptions) {
   player.on('play', () => {
     isTextToSpeechPlaying.value = true
     isTextToSpeechLoading.value = false
+    const timing = consumeSegmentLoadTimer()
+    if (timing && timing.index === currentTTSSegmentIndex.value) {
+      useLogEvent('tts_segment_loaded', buildTTSEventPayload({
+        segment_index: timing.index,
+        load_time_ms: timing.loadMs,
+        had_buffering: timing.hadBuffering,
+        is_first_segment: timing.index === 0,
+      }))
+    }
   })
 
   player.on('buffering', () => {
     isTextToSpeechLoading.value = true
+    markSegmentBuffering(currentTTSSegmentIndex.value)
   })
 
   player.on('pause', () => {
     isTextToSpeechPlaying.value = false
+    clearSegmentLoadTimer()
   })
 
   player.on('ended', () => {
@@ -169,6 +239,7 @@ export function useTextToSpeech(options: TTSOptions) {
       consecutiveAudioErrors.value = 0
     }
     currentTTSSegmentIndex.value = index
+    startSegmentLoadTimer(index)
   })
 
   player.on('allEnded', () => {
@@ -181,6 +252,17 @@ export function useTextToSpeech(options: TTSOptions) {
   player.on('error', (error) => {
     isTextToSpeechLoading.value = false
     console.warn('Audio playback error:', error)
+
+    const timing = consumeSegmentLoadTimer()
+    if (timing && timing.index === currentTTSSegmentIndex.value) {
+      useLogEvent('tts_segment_load_failed', buildTTSEventPayload({
+        segment_index: timing.index,
+        load_time_ms: timing.loadMs,
+        had_buffering: timing.hadBuffering,
+        is_first_segment: timing.index === 0,
+        error: formatTTSError(error),
+      }))
+    }
 
     if (error === TTS_ERROR_NOT_ALLOWED) {
       stopTextToSpeech()
@@ -635,6 +717,7 @@ export function useTextToSpeech(options: TTSOptions) {
 
   function stopTextToSpeech() {
     cancelPendingSkip()
+    clearSegmentLoadTimer()
     showOfflineModal.value = false
     shouldResumeWhenOnline.value = false
     player.stop()
