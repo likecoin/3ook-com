@@ -1,7 +1,12 @@
+import type { RouteLocationAsRelativeGeneric } from 'vue-router'
 import { PaywallModal, UpsellPlusModal } from '#components'
 import type { PaywallModalProps } from '~/components/PaywallModal.props'
 import type { UpsellPlusModalProps } from '~/components/UpsellPlusModal.props'
 import { DEFAULT_TRIAL_PERIOD_DAYS } from '~/constants/pricing'
+
+type OpenPaywallModalOptions = PaywallModalProps & {
+  redirectRoute?: RouteLocationAsRelativeGeneric
+}
 
 export function useSubscriptionModal() {
   const subscriptionData = useSubscription()
@@ -73,14 +78,20 @@ export function useSubscriptionModal() {
     if (upsellPlusModal.isOpen) upsellPlusModal.close()
   })
 
-  async function openPaywallModal(props: PaywallModalProps = {}) {
+  async function openPaywallModal(options: OpenPaywallModalOptions = {}) {
     if (paywallModal.isOpen) {
       paywallModal.close()
     }
 
+    const { redirectRoute, ...modalProps } = options
+    const baseProps = getPaywallModalProps()
     paywallModalProps.value = {
-      ...getPaywallModalProps(),
-      ...props,
+      ...baseProps,
+      ...modalProps,
+      onSubscribe: (payload) => {
+        paywallModal.close()
+        startSubscription({ ...payload, redirectRoute })
+      },
     }
     return paywallModal.open(paywallModalProps.value).result
   }
