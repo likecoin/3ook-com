@@ -6,6 +6,8 @@ export function useAnalytics() {
   const gaClientId = ref('')
   const gaSessionId = ref('')
   const referrer = ref('')
+  const fbp = useCookie('_fbp', { readonly: true })
+  const fbc = useCookie('_fbc', { readonly: true })
   onMounted(() => {
     referrer.value = document.referrer
     if (gtag && googleAnalyticsTrackingId) {
@@ -48,6 +50,8 @@ export function useAnalytics() {
       gadClickId: getRouteQuery('gclid'),
       gadSource: getRouteQuery('gad_source'),
       fbClickId: getRouteQuery('fbclid'),
+      fbp: fbp.value || undefined,
+      fbc: fbc.value || undefined,
     }
   }
 

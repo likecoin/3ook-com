@@ -113,6 +113,8 @@ export function useLikeCoinSessionAPI() {
     gadClickId,
     gadSource,
     fbClickId,
+    fbp,
+    fbc,
   }: {
     email?: string
     nftClassId: string
@@ -134,6 +136,8 @@ export function useLikeCoinSessionAPI() {
     gadClickId?: string
     gadSource?: string
     fbClickId?: string
+    fbp?: string
+    fbc?: string
   }) {
     return fetch.value<{ url: string, paymentId: string }>(`/likernft/book/purchase/${nftClassId}/new`, {
       method: 'POST',
@@ -159,6 +163,8 @@ export function useLikeCoinSessionAPI() {
         gadClickId,
         gadSource,
         fbClickId,
+        fbp,
+        fbc,
         site: '3ook.com',
         isApp: isApp.value || undefined,
       },
@@ -186,6 +192,8 @@ export function useLikeCoinSessionAPI() {
       gadClickId,
       gadSource,
       fbClickId,
+      fbp,
+      fbc,
     }: {
       email?: string
       coupon?: string
@@ -205,6 +213,8 @@ export function useLikeCoinSessionAPI() {
       gadClickId?: string
       gadSource?: string
       fbClickId?: string
+      fbp?: string
+      fbc?: string
     },
   ) {
     return fetch.value<{ url: string, paymentId: string }>(`/likernft/book/purchase/cart/new`, {
@@ -237,6 +247,8 @@ export function useLikeCoinSessionAPI() {
         gadClickId,
         gadSource,
         fbClickId,
+        fbp,
+        fbc,
         site: '3ook.com',
         isApp: isApp.value || undefined,
       },
@@ -273,6 +285,8 @@ export function useLikeCoinSessionAPI() {
     gadClickId,
     gadSource,
     fbClickId,
+    fbp,
+    fbc,
     coupon,
   }: {
     period: SubscriptionPlan
@@ -292,6 +306,8 @@ export function useLikeCoinSessionAPI() {
     gadClickId?: string
     gadSource?: string
     fbClickId?: string
+    fbp?: string
+    fbc?: string
     coupon?: string
   }) {
     return fetch.value<FetchLikerPlusCheckoutLinkResponseData>(`/plus/new`, {
@@ -312,6 +328,8 @@ export function useLikeCoinSessionAPI() {
         gadClickId,
         gadSource,
         fbClickId,
+        fbp,
+        fbc,
         coupon,
         isApp: isApp.value || undefined,
       },
@@ -354,6 +372,8 @@ export function useLikeCoinSessionAPI() {
     gadClickId,
     gadSource,
     fbClickId,
+    fbp,
+    fbc,
   }: {
     period?: SubscriptionPlan
     giftInfo: {
@@ -376,6 +396,8 @@ export function useLikeCoinSessionAPI() {
     gadClickId?: string
     gadSource?: string
     fbClickId?: string
+    fbp?: string
+    fbc?: string
   }) {
     return fetch.value<FetchLikerPlusCheckoutLinkResponseData>(`/plus/gift/new`, {
       method: 'POST',
@@ -393,6 +415,8 @@ export function useLikeCoinSessionAPI() {
         gadClickId,
         gadSource,
         fbClickId,
+        fbp,
+        fbc,
         coupon,
         isApp: isApp.value || undefined,
       },
