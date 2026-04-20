@@ -137,6 +137,7 @@ export function useSubscriptionCheckout() {
             paymentId,
             period: plan,
             coupon,
+            isTrial: trialPeriodDays > 0,
           })
           await navigateTo(localeRoute({ name: 'plus-checkout' }))
         }

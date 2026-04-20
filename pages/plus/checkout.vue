@@ -105,6 +105,7 @@ async function mountCheckout() {
   const clientSecret = plusCheckoutStore.clientSecret
 
   if (!publishableKey || !clientSecret) {
+    plusCheckoutStore.clear()
     await navigateTo(localeRoute({ name: 'plus' }), { replace: true })
     return
   }
@@ -138,7 +139,7 @@ async function mountCheckout() {
 }
 
 function handleComplete() {
-  const { paymentId, period, coupon } = plusCheckoutStore
+  const { paymentId, period, coupon, isTrial } = plusCheckoutStore
   plusCheckoutStore.clear()
   navigateTo(localeRoute({
     name: 'plus-success',
@@ -147,7 +148,7 @@ function handleComplete() {
       payment_id: paymentId || undefined,
       coupon: coupon || undefined,
       redirect: '1',
-      trial: '1',
+      trial: isTrial ? '1' : '0',
     },
   }), { replace: true })
 }

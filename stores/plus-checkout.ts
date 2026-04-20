@@ -3,17 +3,20 @@ export const usePlusCheckoutStore = defineStore('plus-checkout', () => {
   const paymentId = ref<string | null>(null)
   const period = ref<SubscriptionPlan | null>(null)
   const coupon = ref<string | null>(null)
+  const isTrial = ref(false)
 
   function setSession(payload: {
     clientSecret: string
     paymentId: string
     period: SubscriptionPlan
     coupon?: string | null
+    isTrial: boolean
   }) {
     clientSecret.value = payload.clientSecret
     paymentId.value = payload.paymentId
     period.value = payload.period
     coupon.value = payload.coupon ?? null
+    isTrial.value = payload.isTrial
   }
 
   function clear() {
@@ -21,6 +24,7 @@ export const usePlusCheckoutStore = defineStore('plus-checkout', () => {
     paymentId.value = null
     period.value = null
     coupon.value = null
+    isTrial.value = false
   }
 
   return {
@@ -28,6 +32,7 @@ export const usePlusCheckoutStore = defineStore('plus-checkout', () => {
     paymentId,
     period,
     coupon,
+    isTrial,
     setSession,
     clear,
   }
