@@ -11,9 +11,13 @@ const MEDIA_ERROR_NAMES: Record<number, string> = {
   4: 'MEDIA_ERR_SRC_NOT_SUPPORTED',
 }
 
-function formatTTSError(error: string | Event | MediaError): string {
+export function formatTTSError(error: string | Event | MediaError): string {
   if (typeof error === 'string') return error
-  if (error instanceof MediaError) return MEDIA_ERROR_NAMES[error.code] || `MEDIA_ERR_${error.code}`
+  if (error instanceof MediaError) {
+    const name = MEDIA_ERROR_NAMES[error.code] || `MEDIA_ERR_${error.code}`
+    const message = error.message?.trim()
+    return message ? `${name}: ${message}` : name
+  }
   if (error instanceof Event) return error.type || 'event'
   return 'unknown'
 }
