@@ -4,6 +4,20 @@ import { computeTTSTextSig, decodeAffiliateVoiceId, isAffiliateVoiceId } from '~
 
 export const TTS_ERROR_NOT_ALLOWED = 'NotAllowedError'
 
+const MEDIA_ERROR_NAMES: Record<number, string> = {
+  1: 'MEDIA_ERR_ABORTED',
+  2: 'MEDIA_ERR_NETWORK',
+  3: 'MEDIA_ERR_DECODE',
+  4: 'MEDIA_ERR_SRC_NOT_SUPPORTED',
+}
+
+function formatTTSError(error: string | Event | MediaError): string {
+  if (typeof error === 'string') return error
+  if (error instanceof MediaError) return MEDIA_ERROR_NAMES[error.code] || `MEDIA_ERR_${error.code}`
+  if (error instanceof Event) return error.type || 'event'
+  return 'unknown'
+}
+
 interface TTSOptions {
   nftClassId: string
   onError?: (error: string | Event | MediaError) => void
@@ -62,18 +76,7 @@ export function useTextToSpeech(options: TTSOptions) {
     return 'system'
   }
 
-  // Pick player implementation — both are created upfront (inert until load()),
-  // and the proxy delegates to the correct one based on the reactive flag.
-  const { isApp, isIOS, isAndroid } = useAppDetection()
-  const isNativeBridge = computed(
-    () => isApp.value && isNativeWebView(),
-  )
-  const appPlatform = computed<'ios' | 'android' | 'web'>(() => {
-    if (!isNativeBridge.value) return 'web'
-    if (isIOS.value) return 'ios'
-    if (isAndroid.value) return 'android'
-    return 'web'
-  })
+  const { isNativeBridge, appPlatform } = useAppDetection()
 
   function buildTTSEventPayload(extras: Record<string, unknown> = {}) {
     const languageVoice = ttsLanguageVoice.value || ''
@@ -96,6 +99,8 @@ export function useTextToSpeech(options: TTSOptions) {
     }
   }
 
+  // Both players are created upfront (inert until load()); the proxy below
+  // delegates to the correct one based on the reactive isNativeBridge flag.
   const nativePlayer = useNativeAudioPlayer(isNativeBridge)
   const webPlayer = useWebAudioPlayer()
   const activePlayer = () => isNativeBridge.value ? nativePlayer : webPlayer
@@ -178,19 +183,6 @@ export function useTextToSpeech(options: TTSOptions) {
     segmentLoadStart = null
   }
 
-  const MEDIA_ERROR_NAMES: Record<number, string> = {
-    1: 'MEDIA_ERR_ABORTED',
-    2: 'MEDIA_ERR_NETWORK',
-    3: 'MEDIA_ERR_DECODE',
-    4: 'MEDIA_ERR_SRC_NOT_SUPPORTED',
-  }
-
-  function formatTTSError(error: string | Event | MediaError): string {
-    if (typeof error === 'string') return error
-    if (error instanceof MediaError) return MEDIA_ERROR_NAMES[error.code] || `MEDIA_ERR_${error.code}`
-    if (error instanceof Event) return error.type || 'event'
-    return 'unknown'
-  }
   const currentTTSSegment = computed(() => {
     return ttsSegments.value[currentTTSSegmentIndex.value]
   })

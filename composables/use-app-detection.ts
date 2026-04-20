@@ -22,10 +22,21 @@ export function useAppDetection() {
     return buildVersionStr ? parseInt(buildVersionStr, 10) : undefined
   })
 
+  const isNativeBridge = computed(() => isApp.value && isNativeWebView())
+
+  const appPlatform = computed<'ios' | 'android' | 'web'>(() => {
+    if (!isNativeBridge.value) return 'web'
+    if (isIOS.value) return 'ios'
+    if (isAndroid.value) return 'android'
+    return 'web'
+  })
+
   return {
     isApp,
     isIOS,
     isAndroid,
     buildVersion,
+    isNativeBridge,
+    appPlatform,
   }
 }
