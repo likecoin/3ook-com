@@ -426,7 +426,10 @@ const shelfTabs = computed(() => {
 
 const isTabsLoading = computed(() => (
   !bookshelfStore.hasFetched
-  || !uploadedBooksStore.hasFetched
+  || (
+    isUploadedBookFeatureEnabled.value
+    && !uploadedBooksStore.hasFetched
+  )
   || !stakingData.value.hasFetched
 ))
 
@@ -554,8 +557,10 @@ async function loadBookshelfData(addr: string, { isRefresh = false } = {}) {
     promises.push(
       fetchClaimableFreeBooks(),
       stakingStore.fetchUserStakingData(user.value!.evmWallet),
-      uploadedBooksStore.fetchItems({ force: isRefresh }),
     )
+    if (isUploadedBookFeatureEnabled.value) {
+      promises.push(uploadedBooksStore.fetchItems({ force: isRefresh }))
+    }
   }
   await Promise.all(promises)
 }
