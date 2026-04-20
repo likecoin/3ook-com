@@ -24,6 +24,24 @@ export function createWagmiConfig({
   const logoURL = customLogoURL || 'https://3ook.com/pwa-64x64.png'
   const connectors: CreateConnectorFn[] = [
     injected(),
+    dedicatedWalletConnector({
+      chains: [chain],
+      options: {
+        apiKey,
+        accentColor: '#131313',
+        customHeaderText: '3ook.com',
+        customLogo: logoURL,
+        isDarkMode: false,
+        isCustomModal: true,
+        magicSdkConfiguration: {
+          deferPreload: true,
+          network: {
+            rpcUrl: chain.rpcUrls.default.http[0],
+            chainId: chain.id,
+          },
+        },
+      },
+    }) as CreateConnectorFn,
   ]
   if (import.meta.client && window && !isApp && (!!window.ReactNativeWebView || window !== window.parent)) {
     connectors.push(
@@ -46,37 +64,6 @@ export function createWagmiConfig({
           },
         }))
     }
-    const magicConnectorFn = dedicatedWalletConnector({
-      chains: [chain],
-      options: {
-        apiKey,
-        accentColor: '#131313',
-        customHeaderText: '3ook.com',
-        customLogo: logoURL,
-        isDarkMode: false,
-        isCustomModal: true,
-        magicSdkConfiguration: {
-          deferPreload: true,
-          network: {
-            rpcUrl: chain.rpcUrls.default.http[0],
-            chainId: chain.id,
-          },
-        },
-      },
-    }) as CreateConnectorFn
-    // Wrap to make 'magic' non-enumerable on the connector object.
-    // Magic SDK instances have circular references (module.sdk → magic),
-    // and wagmi's deepEqual in getConnections() blows the stack traversing them.
-    connectors.push((config) => {
-      const connector = magicConnectorFn(config)
-      Object.defineProperty(connector, 'magic', {
-        value: undefined,
-        writable: true,
-        enumerable: false,
-        configurable: true,
-      })
-      return connector
-    })
   }
 
   return createConfig({
