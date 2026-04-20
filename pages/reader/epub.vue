@@ -268,7 +268,7 @@
                 'flex-1',
                 'h-full',
                 'cursor-pointer',
-                { 'opacity-0 pointer-events-none': isRightToLeft ? isAtLastPage : isAtFirstPage },
+                { 'opacity-0 pointer-events-none': shouldFlipFromRightToLeft ? isAtLastPage : isAtFirstPage },
               ]"
               @click="handleLeftArrowButtonClick"
             >
@@ -294,7 +294,7 @@
                 'flex-1',
                 'h-full',
                 'cursor-pointer',
-                { 'opacity-0 pointer-events-none': isRightToLeft ? isAtFirstPage : isAtLastPage },
+                { 'opacity-0 pointer-events-none': shouldFlipFromRightToLeft ? isAtFirstPage : isAtLastPage },
               ]"
               @click="handleRightArrowButtonClick"
             >
@@ -681,9 +681,9 @@ const writingMode = computed(() => {
 })
 // Tracks EPUB `page-progression-direction` so horizontal RTL books (Arabic,
 // Hebrew) still get RTL page turns without being forced into vertical layout.
-const bookDirectionIsRTL = ref(false)
-const isRightToLeft = computed(() =>
-  writingMode.value === EPUB_WRITING_MODES.vertical || bookDirectionIsRTL.value,
+const isWrittenFromRightToLeft = ref(false)
+const shouldFlipFromRightToLeft = computed(() =>
+  writingMode.value === EPUB_WRITING_MODES.vertical || isWrittenFromRightToLeft.value,
 )
 
 function detectWritingModeFromDocument(doc: Document): EpubWritingMode {
@@ -756,14 +756,14 @@ function applyTheme() {
   const anchorCSS: Record<string, string> = {
     color: isDarkMode ? '#9ecfff !important' : '#0066cc',
   }
-  // Only layer a writing-mode rule on top of the book's own CSS when the user
-  // has explicitly picked a mode; otherwise it changes the initial column
-  // layout calc and can skew textWidth/textHeight on the first rendered page.
   const themeRules: Record<string, Record<string, string>> = {
     'body': bodyCSS,
     'p, div, span, h1, h2, h3, h4, h5, h6, li': textCSS,
     'a': anchorCSS,
   }
+  // Only layer a writing-mode rule on top of the book's own CSS when the user
+  // has explicitly picked a mode; otherwise it changes the initial column
+  // layout calc and can skew textWidth/textHeight on the first rendered page.
   if (hasSavedWritingMode.value) {
     const writingModeStyles = getWritingModeStyles()
     themeRules.html = writingModeStyles
@@ -929,7 +929,7 @@ async function loadEPub() {
     currentSectionIndex.value = section.index ?? 0
     renditionViewWindow.value = view.window
     isPageLoading.value = false
-    bookDirectionIsRTL.value = view.settings.direction === 'rtl'
+    isWrittenFromRightToLeft.value = view.settings.direction === 'rtl'
     if (!hasSavedWritingMode.value && view.window?.document) {
       originalWritingMode.value = detectWritingModeFromDocument(view.window.document)
     }
@@ -1236,7 +1236,7 @@ function prevPage() {
 }
 
 function turnPageLeft() {
-  if (isRightToLeft.value) {
+  if (shouldFlipFromRightToLeft.value) {
     nextPage()
   }
   else {
@@ -1245,7 +1245,7 @@ function turnPageLeft() {
 }
 
 function turnPageRight() {
-  if (isRightToLeft.value) {
+  if (shouldFlipFromRightToLeft.value) {
     prevPage()
   }
   else {
