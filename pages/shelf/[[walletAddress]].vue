@@ -106,6 +106,7 @@
               variant="outline"
               :ui="{
                 base: [
+                  tab.class,
                   activeTab === tab.value ? TAB_BUTTON_CLASS_DARK : TAB_BUTTON_CLASS_LIGHT,
                   TAB_BUTTON_CLASS_BASE,
                   'px-2.5 laptop:px-4',
@@ -121,8 +122,8 @@
             @uploaded="loadBookshelfData(walletAddress!, { isRefresh: true })"
           >
             <UButton
+              class="max-laptop:hidden ml-auto"
               :label="$t('uploaded_book_upload_button')"
-              class="ml-auto"
               icon="i-material-symbols-upload-rounded"
               variant="soft"
             />
@@ -284,7 +285,6 @@ const uploadedBooksStore = useUploadedBooksStore()
 const metadataStore = useMetadataStore()
 const stakingStore = useStakingStore()
 const { isLikerPlus, isExpiredLikerPlus } = useSubscription()
-const isDesktopScreen = useDesktopScreen()
 const { isApp } = useAppDetection()
 const isUploadedBookFeatureEnabled = useFeatureFlagEnabled('plus-upload-files')
 const {
@@ -300,7 +300,7 @@ const overlay = useOverlay()
 const deleteModal = overlay.create(DeleteUploadedBookModal)
 
 const isUploadedBookAccessible = computed(() => isLikerPlus.value && !isExpiredLikerPlus.value)
-const canUploadBook = computed(() => isUploadedBookFeatureEnabled.value && isUploadedBookAccessible.value && !isApp.value && isDesktopScreen.value)
+const canUploadBook = computed(() => isUploadedBookFeatureEnabled.value && isUploadedBookAccessible.value && !isApp.value)
 const isUploadedBookVisible = computed(() => isUploadedBookFeatureEnabled.value && hasUploadedBooks.value)
 
 const queryTab = computed(() => getRouteQuery('tab'))
@@ -406,15 +406,20 @@ const stakingItems = computed<BookshelfItemWithStaking[]>(() => {
 })
 
 const shelfTabs = computed(() => {
-  const tabs: { value: ShelfTab, label: string }[] = []
+  const tabs: { value: ShelfTab, label: string, class?: string }[] = []
   if (bookshelfItemsAll.value.length > 0 || claimableFreeBooksCount.value > 0) {
     tabs.push({ value: 'reading', label: $t('bookshelf_tab_reading') })
   }
   if (stakingItems.value.length > 0) {
     tabs.push({ value: 'staking', label: $t('bookshelf_tab_staking') })
   }
+  const isUploadedTab = queryTab.value === 'uploads'
   if (isUploadedBookVisible.value || (queryTab.value === 'uploads' && canUploadBook.value)) {
-    tabs.push({ value: 'uploads', label: $t('bookshelf_tab_uploads') })
+    tabs.push({
+      value: 'uploads',
+      label: $t('bookshelf_tab_uploads'),
+      class: isUploadedTab ? '' : 'max-laptop:hidden',
+    })
   }
   return tabs
 })
