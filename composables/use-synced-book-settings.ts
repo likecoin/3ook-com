@@ -7,6 +7,20 @@ interface UseSyncedBookSettingsOptions<T> {
   namespace?: string
 }
 
+export function getBookSettingDbKey<
+  K extends BookSettingKey,
+  N extends string | undefined = undefined,
+>({
+  key,
+  namespace,
+}: {
+  key: K
+  namespace?: N
+}): N extends string ? `${N}-${K}` : K {
+  const namespacePrefix = namespace ? `${namespace}-` : ''
+  return `${namespacePrefix}${String(key)}` as N extends string ? `${N}-${K}` : K
+}
+
 export function useSyncedBookSettings<T>({
   nftClassId,
   key,
@@ -16,8 +30,7 @@ export function useSyncedBookSettings<T>({
   const { loggedIn: hasLoggedIn } = useUserSession()
   const bookSettingsStore = useBookSettingsStore()
 
-  const namespacePrefix = namespace ? `${namespace}-` : ''
-  const dbKey = `${namespacePrefix}${String(key)}`
+  const dbKey = getBookSettingDbKey({ key, namespace })
 
   const localState = ref<T>(defaultValue)
 
