@@ -179,6 +179,7 @@ const likeCoinSessionAPI = useLikeCoinSessionAPI()
 const { loggedIn: hasLoggedIn, user } = useUserSession()
 const accountStore = useAccountStore()
 const { getCheckoutCurrency } = usePaymentCurrency()
+const { getAnalyticsParameters } = useAnalytics()
 
 useHead({
   title: $t('gift_plus_page_title'),
@@ -236,6 +237,7 @@ async function handleCheckout() {
   try {
     isProcessing.value = true
 
+    const analyticsParams = getAnalyticsParameters()
     const { url } = await likeCoinSessionAPI.fetchLikerPlusGiftCheckoutLink({
       period: selectedPlan.value,
       giftInfo: {
@@ -245,9 +247,10 @@ async function handleCheckout() {
         message: formData.message?.trim() || undefined,
       },
       currency: getCheckoutCurrency(),
-      utmCampaign: 'gift_plus',
-      utmSource: 'website',
-      utmMedium: 'web',
+      ...analyticsParams,
+      utmCampaign: analyticsParams.utmCampaign || 'gift_plus',
+      utmSource: analyticsParams.utmSource || 'website',
+      utmMedium: analyticsParams.utmMedium || 'web',
     })
 
     // Redirect to Stripe checkout
