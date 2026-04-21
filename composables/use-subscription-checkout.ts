@@ -25,7 +25,7 @@ export function useSubscriptionCheckout() {
   const { getAnalyticsParameters } = useAnalytics()
   const { isApp } = useAppDetection()
   const runtimeConfig = useRuntimeConfig()
-  const isEmbedCheckoutFlagEnabled = useFeatureFlagEnabled('plus-embed-checkout')
+  const isEmbeddedCheckoutFlagEnabled = useFeatureFlagEnabled('plus-embedded-checkout')
 
   const isProcessingSubscription = ref(false)
 
@@ -105,10 +105,12 @@ export function useSubscriptionCheckout() {
         await navigateTo(localeRoute({ name: 'plus-success', query: { period: plan } }))
       }
       else {
-        const canUseEmbedCheckout = !isApp.value
-          && !!isEmbedCheckoutFlagEnabled.value
+        const canUseEmbeddedCheckout = (
+          !isApp.value
+          && !!isEmbeddedCheckoutFlagEnabled.value
           && !!runtimeConfig.public.stripePublishableKey
-        const uiMode: CheckoutUIMode = canUseEmbedCheckout ? 'embedded' : 'hosted'
+        )
+        const uiMode: CheckoutUIMode = canUseEmbeddedCheckout ? 'embedded' : 'hosted'
         const { url, clientSecret, paymentId } = await likeCoinSessionAPI.fetchLikerPlusCheckoutLink({
           period: plan,
           from: getRouteQuery('from'),

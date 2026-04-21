@@ -132,14 +132,14 @@ async function mountCheckout() {
     await nextTick()
     if (containerRef.value) {
       embeddedCheckout.mount(containerRef.value)
-      useLogEvent('subscription_embed_checkout_mounted', {
+      useLogEvent('subscription_embedded_checkout_mounted', {
         transaction_id: plusCheckoutStore.paymentId || undefined,
       })
     }
   }
   catch (error) {
     const errorMessage = getErrorMessage(error)
-    useLogEvent('subscription_embed_checkout_error', {
+    useLogEvent('subscription_embedded_checkout_error', {
       error_message: errorMessage,
       transaction_id: plusCheckoutStore.paymentId || undefined,
     })
@@ -165,7 +165,7 @@ function handleComplete() {
 }
 
 function handleCancel() {
-  useLogEvent('subscription_embed_cancelled', {
+  useLogEvent('subscription_embedded_checkout_cancelled', {
     transaction_id: plusCheckoutStore.paymentId || undefined,
   })
   plusCheckoutStore.clear()
