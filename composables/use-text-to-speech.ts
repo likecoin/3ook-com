@@ -516,9 +516,9 @@ export function useTextToSpeech(options: TTSOptions) {
     }
   }
 
-  // Custom voice is gated to Plus; the server rejects non-Plus requests
-  // before charging, so decrementing here would drift the local counter.
   function recordOptimisticSegmentUsage(sanitizedText: string) {
+    // Custom voice is gated to Plus; the server rejects non-Plus requests,
+    // so counting here would drift the local trial counter.
     if (ttsLanguageVoice.value === 'custom') return
     const dedupKey = `${ttsLanguageVoice.value}:${sanitizedText}`
     ttsTrialUsage.recordOptimisticSegmentUsage(dedupKey, sanitizedText.length)
