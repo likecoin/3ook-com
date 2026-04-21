@@ -89,16 +89,13 @@
 
         <!-- Controls -->
         <div class="px-4 py-2 pb-safe">
-          <div
+          <TTSTrialUsageChip
             v-if="shouldShowTrialChip"
-            class="flex justify-center mb-3"
-          >
-            <TTSTrialUsageChip
-              :minutes-remaining="trialMinutesRemaining"
-              :is-exhausted="trialIsExhausted"
-              @click="handleTrialChipClick"
-            />
-          </div>
+            class="mb-3"
+            :minutes-remaining="trialMinutesRemaining"
+            :is-exhausted="isTrialExhausted"
+            @click="handleTrialChipClick"
+          />
 
           <div class="flex items-center justify-center gap-6">
             <UButton
@@ -237,7 +234,7 @@ const {
   isLoaded: isTrialUsageLoaded,
   charactersUsed: trialCharactersUsed,
   charactersRemaining: trialCharactersRemaining,
-  isExhausted: trialIsExhausted,
+  isExhausted: isTrialExhausted,
 } = useTTSTrialUsage()
 const localeRoute = useLocaleRoute()
 
@@ -595,7 +592,7 @@ const currentVoiceLanguage = computed(() => {
 })
 
 // Floor at 1 so the chip never reads "0 分鐘" in the sub-minute window
-// before `trialIsExhausted` flips.
+// before `isTrialExhausted` flips.
 const trialMinutesRemaining = computed(() => Math.max(
   1,
   Math.round(estimateTTSMinutes(trialCharactersRemaining.value, currentVoiceLanguage.value)),
@@ -606,7 +603,7 @@ function buildChipEventPayload() {
     nft_class_id: props.nftClassId,
     characters_used: trialCharactersUsed.value,
     chars_remaining: trialCharactersRemaining.value,
-    is_exhausted: trialIsExhausted.value,
+    is_exhausted: isTrialExhausted.value,
     voice_language: currentVoiceLanguage.value,
   }
 }
