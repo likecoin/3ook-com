@@ -43,8 +43,8 @@ export function useTTSPlayerModal(options: TTSPlayerOptions) {
   })
 
   const route = useRoute()
-  watch(() => [route.name, route.params], () => {
-    if (modal.isOpen) modal.close()
+  watch(() => route.path, () => {
+    modal.close()
   })
 
   function setTTSSegments(elements: TTSSegment[]) {
