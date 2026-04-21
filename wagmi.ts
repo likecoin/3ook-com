@@ -24,25 +24,29 @@ export function createWagmiConfig({
   const logoURL = customLogoURL || 'https://3ook.com/pwa-64x64.png'
   const connectors: CreateConnectorFn[] = [
     injected(),
-    dedicatedWalletConnector({
-      chains: [chain],
-      options: {
-        apiKey,
-        accentColor: '#131313',
-        customHeaderText: '3ook.com',
-        customLogo: logoURL,
-        isDarkMode: false,
-        isCustomModal: true,
-        magicSdkConfiguration: {
-          deferPreload: true,
-          network: {
-            rpcUrl: chain.rpcUrls.default.http[0],
-            chainId: chain.id,
+  ]
+  if (!isServer) {
+    connectors.push(
+      dedicatedWalletConnector({
+        chains: [chain],
+        options: {
+          apiKey,
+          accentColor: '#131313',
+          customHeaderText: '3ook.com',
+          customLogo: logoURL,
+          isDarkMode: false,
+          isCustomModal: true,
+          magicSdkConfiguration: {
+            deferPreload: true,
+            network: {
+              rpcUrl: chain.rpcUrls.default.http[0],
+              chainId: chain.id,
+            },
           },
         },
-      },
-    }) as CreateConnectorFn,
-  ]
+      }) as CreateConnectorFn,
+    )
+  }
   if (import.meta.client && window && !isApp && (!!window.ReactNativeWebView || window !== window.parent)) {
     connectors.push(
       coinbaseWallet({
