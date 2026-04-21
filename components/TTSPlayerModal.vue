@@ -381,10 +381,7 @@ const {
 
 function handleTrialExhausted(source: 'server_402' | 'client_gate') {
   stopTextToSpeech()
-  useLogEvent('tts_trial_exhausted', buildTTSEventPayload({
-    is_app: isApp.value,
-    source,
-  }))
+  useLogEvent('tts_trial_exhausted', buildTTSEventPayload({ source }))
   if (isApp.value) {
     errorModal.open({
       title: $t('tts_free_trial_limit_error_title'),
@@ -581,8 +578,7 @@ function handleCustomVoiceUploadClick() {
 }
 
 function handleTTSPlaybackRateButton() {
-  const rate = cyclePlaybackRate()
-  useLogEvent('tts_playback_rate_change', { rate })
+  cyclePlaybackRate()
 }
 
 const shouldShowTrialChip = computed(() =>

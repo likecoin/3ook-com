@@ -80,13 +80,16 @@ export function useTextToSpeech(options: TTSOptions) {
     return 'system'
   }
 
-  const { isNativeBridge, appPlatform } = useAppDetection()
+  const { isApp, isNativeBridge, appPlatform } = useAppDetection()
+
+  const ttsSessionId = ref('')
 
   function buildTTSEventPayload(extras: Record<string, unknown> = {}) {
     const languageVoice = ttsLanguageVoice.value || ''
     const { voiceId } = parseLanguageVoice(languageVoice)
     return {
       nft_class_id: nftClassId,
+      tts_session_id: ttsSessionId.value || undefined,
       is_liker_plus_at_event_time: !!sessionUser.value?.isLikerPlus,
       ...(ttsTrialUsage.isLoaded.value
         ? {
@@ -98,7 +101,11 @@ export function useTextToSpeech(options: TTSOptions) {
       voice_id: voiceId || languageVoice || undefined,
       language_voice: languageVoice || undefined,
       voice_tier: resolveVoiceTier(languageVoice),
+      playback_rate: effectivePlaybackRate.value,
+      current_segment_index: currentTTSSegmentIndex.value,
+      total_segments: ttsSegments.value.length,
       app_platform: appPlatform.value,
+      is_app: isApp.value,
       ...extras,
     }
   }
@@ -123,6 +130,22 @@ export function useTextToSpeech(options: TTSOptions) {
       nativePlayer.on(event, handler)
       webPlayer.on(event, handler)
     },
+  }
+
+  function getPositionMs() {
+    const pos = player.getPosition()
+    return pos ? Math.round(pos.position * 1000) : undefined
+  }
+
+  function logSkip(
+    event: 'tts_skip_forward' | 'tts_skip_backward' | 'tts_skip_to_index',
+    fromIndex: number,
+    toIndex: number,
+  ) {
+    useLogEvent(event, buildTTSEventPayload({
+      from_index: fromIndex,
+      to_index: toIndex,
+    }))
   }
 
   // Playback rate options and storage
@@ -256,6 +279,7 @@ export function useTextToSpeech(options: TTSOptions) {
     isTextToSpeechPlaying.value = false
     isTextToSpeechLoading.value = false
     useLogEvent('tts_completed', buildTTSEventPayload())
+    ttsSessionId.value = ''
     options.onAllSegmentsPlayed?.()
   })
 
@@ -479,9 +503,10 @@ export function useTextToSpeech(options: TTSOptions) {
   watch(ttsLanguageVoice, (newLanguage, oldLanguage) => {
     if (newLanguage !== oldLanguage) {
       restartTextToSpeech()
-      useLogEvent('tts_language_change', {
-        nft_class_id: nftClassId,
-      })
+      useLogEvent('tts_language_change', buildTTSEventPayload({
+        from_voice: oldLanguage || undefined,
+        to_voice: newLanguage || undefined,
+      }))
     }
   })
 
@@ -490,13 +515,12 @@ export function useTextToSpeech(options: TTSOptions) {
     return lang.toLowerCase().startsWith('en') ? 'en-US' : (voiceLanguage || 'zh-HK')
   }
 
-  watch(ttsPlaybackRate, (newRate) => {
+  watch(ttsPlaybackRate, (newRate, oldRate) => {
     effectivePlaybackRate.value = newRate
     player.setRate(newRate)
-    useLogEvent('tts_playback_rate_change', {
-      nft_class_id: nftClassId,
-      value: newRate,
-    })
+    useLogEvent('tts_playback_rate_change', buildTTSEventPayload({
+      previous_rate: oldRate,
+    }))
   })
 
   function appendCommonParams(
@@ -604,9 +628,9 @@ export function useTextToSpeech(options: TTSOptions) {
       }
       else if (isTextToSpeechOn.value) {
         if (player.resume()) {
-          useLogEvent('tts_resume', {
-            nft_class_id: nftClassId,
-          })
+          useLogEvent('tts_resume', buildTTSEventPayload({
+            position_ms: getPositionMs(),
+          }))
           return
         }
       }
@@ -621,6 +645,7 @@ export function useTextToSpeech(options: TTSOptions) {
       consecutiveAudioErrors.value = 0
       isTextToSpeechOn.value = true
 
+      ttsSessionId.value = crypto.randomUUID()
       useLogEvent('tts_start', buildTTSEventPayload())
 
       isTextToSpeechLoading.value = true
@@ -649,11 +674,12 @@ export function useTextToSpeech(options: TTSOptions) {
 
   function pauseTextToSpeech() {
     if (isTextToSpeechOn.value) {
+      const positionMs = getPositionMs()
       isTextToSpeechLoading.value = false
       player.pause()
-      useLogEvent('tts_pause', {
-        nft_class_id: nftClassId,
-      })
+      useLogEvent('tts_pause', buildTTSEventPayload({
+        position_ms: positionMs,
+      }))
     }
   }
 
@@ -685,15 +711,13 @@ export function useTextToSpeech(options: TTSOptions) {
       options.onTrialExhausted?.()
       return
     }
-    useLogEvent('tts_skip_forward', {
-      nft_class_id: nftClassId,
-    })
+    const fromIndex = currentTTSSegmentIndex.value
+    const toIndex = Math.max(Math.min(fromIndex + 1, ttsSegments.value.length - 1), 0)
+    logSkip('tts_skip_forward', fromIndex, toIndex)
     isTextToSpeechLoading.value = true
     player.pause()
-    if (currentTTSSegmentIndex.value + 1 < ttsSegments.value.length) {
-      currentTTSSegmentIndex.value += 1
-    }
-    debouncedSkipTo(currentTTSSegmentIndex.value)
+    currentTTSSegmentIndex.value = toIndex
+    debouncedSkipTo(toIndex)
   }
 
   function skipToIndex(segmentIndex: number) {
@@ -702,26 +726,24 @@ export function useTextToSpeech(options: TTSOptions) {
       options.onTrialExhausted?.()
       return
     }
-    useLogEvent('tts_skip_to_index', {
-      nft_class_id: nftClassId,
-    })
+    const fromIndex = currentTTSSegmentIndex.value
+    const toIndex = Math.max(Math.min(segmentIndex, ttsSegments.value.length - 1), 0)
+    logSkip('tts_skip_to_index', fromIndex, toIndex)
     isTextToSpeechLoading.value = true
     player.pause()
-    currentTTSSegmentIndex.value = Math.max(Math.min(segmentIndex, ttsSegments.value.length - 1), 0)
-    debouncedSkipTo(currentTTSSegmentIndex.value)
+    currentTTSSegmentIndex.value = toIndex
+    debouncedSkipTo(toIndex)
   }
 
   function skipBackward() {
     if (!isTextToSpeechOn.value) return
-    useLogEvent('tts_skip_backward', {
-      nft_class_id: nftClassId,
-    })
+    const fromIndex = currentTTSSegmentIndex.value
+    const toIndex = Math.max(fromIndex - 1, 0)
+    logSkip('tts_skip_backward', fromIndex, toIndex)
     isTextToSpeechLoading.value = true
     player.pause()
-    if (currentTTSSegmentIndex.value > 0) {
-      currentTTSSegmentIndex.value -= 1
-    }
-    debouncedSkipTo(currentTTSSegmentIndex.value)
+    currentTTSSegmentIndex.value = toIndex
+    debouncedSkipTo(toIndex)
   }
 
   function restartTextToSpeech() {
@@ -744,6 +766,7 @@ export function useTextToSpeech(options: TTSOptions) {
     isTextToSpeechLoading.value = false
     isShowTextToSpeechOptions.value = false
     effectivePlaybackRate.value = ttsPlaybackRate.value
+    ttsSessionId.value = ''
 
     if (!isNativeBridge.value && 'mediaSession' in navigator) {
       navigator.mediaSession.playbackState = 'none'
