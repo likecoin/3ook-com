@@ -73,9 +73,9 @@ export function useSubscriptionModal() {
   })
 
   const route = useRoute()
-  watch(() => [route.name, route.params], () => {
-    if (paywallModal.isOpen) paywallModal.close()
-    if (upsellPlusModal.isOpen) upsellPlusModal.close()
+  watch(() => route.path, () => {
+    paywallModal.close()
+    upsellPlusModal.close()
   })
 
   async function openPaywallModal(options: OpenPaywallModalOptions = {}) {
