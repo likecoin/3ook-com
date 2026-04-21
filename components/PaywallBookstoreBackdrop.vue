@@ -11,6 +11,7 @@
       'opacity-50',
       'blur-[1px]',
       'paywall-bookstore-backdrop-scroll-animation',
+      'pointer-events-none',
     ]"
     :style="{ backgroundImage: `url(${backdrop})` }"
   />

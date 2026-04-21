@@ -1,12 +1,32 @@
 <template>
   <NuxtLayout
     name="default"
+    class="!pb-0"
     :is-tab-bar-visible="false"
   >
-    <main class="w-full max-w-6xl mx-auto p-4">
-      <header class="mb-6">
+    <div class="max-laptop:hidden fixed inset-0 overflow-hidden">
+      <PaywallBookstoreBackdrop class="!left-0 !right-1/2" />
+      <PaywallBookstoreBackdrop class="!left-1/2 !right-0" />
+    </div>
+
+    <main class="relative w-full max-w-6xl mx-auto p-4 laptop:pt-6 laptop:px-6 bg-(--app-bg) grow">
+      <header class="flex items-center gap-2 mb-4 laptop:mb-6">
+        <UButton
+          v-if="!isLoading && !loadError"
+          :title="$t('plus_checkout_cancel_button')"
+          :aria-label="$t('plus_checkout_cancel_button')"
+          variant="link"
+          :ui="{ base: ['group', 'shrink-0', 'p-0 sm:p-0', 'cursor-pointer'] }"
+          @click="handleCancel"
+        >
+          <img
+            src="/logo.svg"
+            class="w-8 h-8 block pointer-events-none group-hover:scale-110 transition-transform"
+          >
+        </UButton>
+
         <h1
-          class="text-2xl font-bold text-highlighted"
+          class="text-2xl font-bold text-theme-cyan"
           v-text="$t('plus_checkout_title')"
         />
       </header>
@@ -48,20 +68,8 @@
       <div
         v-show="!isLoading && !loadError"
         ref="containerRef"
-        class="w-full max-w-7xl mx-auto rounded-xl overflow-hidden shadow-sm"
+        class="w-full max-w-7xl mx-auto rounded-xl overflow-hidden"
       />
-
-      <div
-        v-if="!isLoading && !loadError"
-        class="mt-6 flex justify-center"
-      >
-        <UButton
-          color="neutral"
-          variant="ghost"
-          :label="$t('plus_checkout_cancel_button')"
-          @click="handleCancel"
-        />
-      </div>
     </main>
   </NuxtLayout>
 </template>
@@ -69,7 +77,10 @@
 <script setup lang="ts">
 import { usePlusCheckoutStore } from '~/stores/plus-checkout'
 
-definePageMeta({ layout: false })
+definePageMeta({
+  layout: false,
+  colorMode: 'dark',
+})
 
 interface StripeEmbeddedCheckout {
   mount: (el: HTMLElement | string) => void
