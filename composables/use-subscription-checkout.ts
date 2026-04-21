@@ -147,7 +147,13 @@ export function useSubscriptionCheckout() {
           await navigateTo(url, { external: true })
         }
         else {
-          throw new Error('Checkout session missing both url and clientSecret')
+          throw createError({
+            statusCode: 502,
+            message: 'Checkout session missing both url and clientSecret',
+            data: {
+              description: $t('plus_checkout_error_description'),
+            },
+          })
         }
       }
     }

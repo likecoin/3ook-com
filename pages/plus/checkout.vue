@@ -21,6 +21,7 @@
         >
           <img
             src="/logo.svg"
+            alt=""
             class="w-8 h-8 block pointer-events-none group-hover:scale-110 transition-transform"
           >
         </UButton>
@@ -99,7 +100,6 @@ const { t: $t } = useI18n()
 const localeRoute = useLocaleRoute()
 const runtimeConfig = useRuntimeConfig()
 const plusCheckoutStore = usePlusCheckoutStore()
-const { handleError } = useErrorHandler()
 const stripeScript = useScriptStripe()
 
 const containerRef = ref<HTMLElement | null>(null)
@@ -145,7 +145,7 @@ async function mountCheckout() {
     })
     loadError.value = errorMessage
     isLoading.value = false
-    handleError(error)
+    console.error('[plus-checkout]', error)
   }
 }
 
