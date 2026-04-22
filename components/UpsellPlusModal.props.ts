@@ -29,5 +29,5 @@ export interface UpsellPlusModalProps {
   from?: string
   onSubscribe?: (payload: UpsellPlusModalSubscribeEventPayload) => void
   onOpen?: () => void
-  onClose?: () => void
+  onClose?: (isSuccess: boolean) => void
 }

@@ -58,9 +58,6 @@ export function useSubscriptionModal() {
       isLikerPlus: isLikerPlus.value,
       likerPlusPeriod: likerPlusPeriod.value,
       onSubscribe: startSubscription,
-      onClose: () => {
-        useLogEvent('subscription_button_click_skip')
-      },
     }
   }
 
@@ -120,10 +117,23 @@ export function useSubscriptionModal() {
       nftClassId = undefined
     }
     if (!isLikerPlus.value && (!props.from || nftClassId)) {
+      const upsellEventPayload = {
+        nft_class_id: nftClassId,
+        source_nft_class_id: props.nftClassId,
+        book_price: props.bookPrice,
+        from: props.from,
+        selected_pricing_item_index: props.selectedPricingItemIndex,
+      }
       const upsellModalProps: UpsellPlusModalProps = {
         ...props,
         ...getUpsellPlusModalProps(),
         nftClassId,
+        onClose: (isSuccess: boolean) => {
+          if (!isSuccess) {
+            useLogEvent('subscription_button_click_skip', upsellEventPayload)
+          }
+          props.onClose?.(isSuccess)
+        },
       }
       if (props.nftClassId) {
         shownUpsellClassIds.value = [...shownUpsellClassIds.value, props.nftClassId]
@@ -131,7 +141,7 @@ export function useSubscriptionModal() {
       else {
         hasShownGenericUpsell.value = true
       }
-      useLogEvent('upsell_plus_modal_open')
+      useLogEvent('upsell_plus_modal_open', upsellEventPayload)
       return upsellPlusModal.open(upsellModalProps).result
     }
   }
