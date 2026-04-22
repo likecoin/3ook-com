@@ -380,8 +380,9 @@ const {
 })
 
 function handleTrialExhausted(source: 'server_402' | 'client_gate') {
+  const payload = buildTTSEventPayload({ source })
   stopTextToSpeech()
-  useLogEvent('tts_trial_exhausted', buildTTSEventPayload({ source }))
+  useLogEvent('tts_trial_exhausted', payload)
   if (isApp.value) {
     errorModal.open({
       title: $t('tts_free_trial_limit_error_title'),

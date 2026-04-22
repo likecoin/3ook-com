@@ -279,7 +279,6 @@ export function useTextToSpeech(options: TTSOptions) {
     isTextToSpeechPlaying.value = false
     isTextToSpeechLoading.value = false
     useLogEvent('tts_completed', buildTTSEventPayload())
-    ttsSessionId.value = ''
     options.onAllSegmentsPlayed?.()
   })
 
@@ -502,11 +501,12 @@ export function useTextToSpeech(options: TTSOptions) {
 
   watch(ttsLanguageVoice, (newLanguage, oldLanguage) => {
     if (newLanguage !== oldLanguage) {
-      restartTextToSpeech()
-      useLogEvent('tts_language_change', buildTTSEventPayload({
+      const payload = buildTTSEventPayload({
         from_voice: oldLanguage || undefined,
         to_voice: newLanguage || undefined,
-      }))
+      })
+      restartTextToSpeech()
+      useLogEvent('tts_language_change', payload)
     }
   })
 
