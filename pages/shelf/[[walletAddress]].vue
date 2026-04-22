@@ -106,7 +106,6 @@
               variant="outline"
               :ui="{
                 base: [
-                  tab.class,
                   activeTab === tab.value ? TAB_BUTTON_CLASS_DARK : TAB_BUTTON_CLASS_LIGHT,
                   TAB_BUTTON_CLASS_BASE,
                   'px-2.5 laptop:px-4',
@@ -300,8 +299,8 @@ const overlay = useOverlay()
 const deleteModal = overlay.create(DeleteUploadedBookModal)
 
 const isUploadedBookAccessible = computed(() => isLikerPlus.value && !isExpiredLikerPlus.value)
-const canUploadBook = computed(() => isUploadedBookFeatureEnabled.value && isUploadedBookAccessible.value && !isApp.value)
-const isUploadedBookVisible = computed(() => isUploadedBookFeatureEnabled.value && hasUploadedBooks.value)
+const canUploadBook = computed(() => isMyBookshelf.value && isUploadedBookFeatureEnabled.value && isUploadedBookAccessible.value && !isApp.value)
+const isUploadedBookVisible = computed(() => isMyBookshelf.value && isUploadedBookFeatureEnabled.value && hasUploadedBooks.value)
 
 const queryTab = computed(() => getRouteQuery('tab'))
 const defaultTab = computed<ShelfTab>(() => shelfTabs.value[0]?.value || 'reading')
@@ -406,19 +405,18 @@ const stakingItems = computed<BookshelfItemWithStaking[]>(() => {
 })
 
 const shelfTabs = computed(() => {
-  const tabs: { value: ShelfTab, label: string, class?: string }[] = []
+  const tabs: { value: ShelfTab, label: string }[] = []
   if (bookshelfItemsAll.value.length > 0 || claimableFreeBooksCount.value > 0) {
     tabs.push({ value: 'reading', label: $t('bookshelf_tab_reading') })
   }
   if (stakingItems.value.length > 0) {
     tabs.push({ value: 'staking', label: $t('bookshelf_tab_staking') })
   }
-  const isUploadedTab = queryTab.value === 'uploads'
-  if (isUploadedBookVisible.value || (queryTab.value === 'uploads' && canUploadBook.value)) {
+  const isUploadedTabViaURL = queryTab.value === 'uploads'
+  if (isUploadedBookVisible.value || (isUploadedTabViaURL && canUploadBook.value)) {
     tabs.push({
       value: 'uploads',
       label: $t('bookshelf_tab_uploads'),
-      class: isUploadedTab ? '' : 'max-laptop:hidden',
     })
   }
   return tabs
