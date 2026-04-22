@@ -84,6 +84,7 @@ export function useLikeCoinSessionAPI() {
   const config = useRuntimeConfig()
   const { loggedIn: hasLoggedIn, user } = useUserSession()
   const { isApp } = useAppDetection()
+  const { detectedCountry } = useDetectedGeolocation()
 
   const fetch = computed(() => {
     const fetchOptions: FetchOptions = {
@@ -168,6 +169,7 @@ export function useLikeCoinSessionAPI() {
         fbClickId,
         fbp,
         fbc,
+        ipCountry: detectedCountry.value || undefined,
         site: '3ook.com',
         isApp: isApp.value || undefined,
       },
@@ -252,6 +254,7 @@ export function useLikeCoinSessionAPI() {
         fbClickId,
         fbp,
         fbc,
+        ipCountry: detectedCountry.value || undefined,
         site: '3ook.com',
         isApp: isApp.value || undefined,
       },
@@ -337,6 +340,7 @@ export function useLikeCoinSessionAPI() {
         fbc,
         coupon,
         uiMode,
+        ipCountry: detectedCountry.value || undefined,
         isApp: isApp.value || undefined,
       },
     })
@@ -424,6 +428,7 @@ export function useLikeCoinSessionAPI() {
         fbp,
         fbc,
         coupon,
+        ipCountry: detectedCountry.value || undefined,
         isApp: isApp.value || undefined,
       },
     })
