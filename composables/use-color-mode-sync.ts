@@ -1,3 +1,11 @@
+export function getColorModeOptions($t: (key: string) => string): Array<{ label: string, value: ColorMode }> {
+  return [
+    { label: $t('color_mode_light'), value: 'light' },
+    { label: $t('color_mode_dark'), value: 'dark' },
+    { label: $t('color_mode_system'), value: 'system' },
+  ]
+}
+
 export function useColorModeSync() {
   const colorMode = useColorMode()
   const { loggedIn: hasLoggedIn, user } = useUserSession()

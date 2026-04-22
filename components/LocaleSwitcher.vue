@@ -1,25 +1,31 @@
 <template>
-  <USelect
-    :model-value="locale"
-    :items="localesItems"
-    class="w-32"
-    :icon="props.isIconHidden ? undefined : 'i-material-symbols-language'"
-    trailing-icon="i-material-symbols-keyboard-arrow-down-rounded"
-    size="md"
-    @update:model-value="handleLocaleChange"
-  />
+  <UDropdownMenu
+    :items="menuItems"
+    :content="{ align: 'end' }"
+  >
+    <UButton
+      :label="$t('account_page_locale_button')"
+      variant="outline"
+      color="neutral"
+      trailing-icon="i-material-symbols-keyboard-arrow-down-rounded"
+    />
+  </UDropdownMenu>
 </template>
 
 <script setup lang="ts">
-const props = defineProps({
-  isIconHidden: Boolean,
-})
+import type { DropdownMenuItem } from '@nuxt/ui'
 
-const { locale, locales, setLocale } = useAutoLocale()
+const { t: $t } = useI18n()
+const { locales, setLocale } = useAutoLocale()
 
-const localesItems = computed(() => locales.value.map(l => ({ label: l.name, value: l.code })))
-
-function handleLocaleChange(value: string) {
-  setLocale(value as 'en' | 'zh-Hant')
-}
+const menuItems = computed<DropdownMenuItem[]>(() =>
+  locales.value.map((l) => {
+    const code = typeof l === 'string' ? l : l.code
+    const name = typeof l === 'string' ? l : l.name
+    return {
+      label: name,
+      onSelect: () => setLocale(code as LocaleCode),
+    }
+  }),
+)
 </script>

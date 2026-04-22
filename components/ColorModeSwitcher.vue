@@ -1,47 +1,30 @@
 <template>
-  <USelect
-    class="min-w-32"
-    :model-value="selectedColorMode"
-    :items="colorModeOptions"
-    :icon="icon"
-    trailing-icon="i-material-symbols-keyboard-arrow-down-rounded"
-    size="md"
-    :disabled="disabled"
-    @update:model-value="handleColorModeChange"
-  />
+  <UDropdownMenu
+    :items="menuItems"
+    :content="{ align: 'end' }"
+  >
+    <UButton
+      :label="$t('account_page_color_mode_button')"
+      variant="outline"
+      color="neutral"
+      trailing-icon="i-material-symbols-keyboard-arrow-down-rounded"
+    />
+  </UDropdownMenu>
 </template>
 
 <script setup lang="ts">
+import type { DropdownMenuItem } from '@nuxt/ui'
+
 const { t: $t } = useI18n()
 const { preference } = useColorModeSync()
 
-withDefaults(defineProps<{
-  icon?: string
-  disabled?: boolean
-}>(), {
-  icon: undefined,
-  disabled: false,
-})
-
-const colorModeOptions = computed(() => [
-  {
-    label: $t('color_mode_light'),
-    value: 'light',
-  },
-  {
-    label: $t('color_mode_dark'),
-    value: 'dark',
-  },
-  {
-    label: $t('color_mode_system'),
-    value: 'system',
-  },
-])
-
-const selectedColorMode = computed(() => preference.value)
-
-function handleColorModeChange(value: string) {
-  preference.value = value as ColorMode
-  useLogEvent('color_mode_switch', { colorMode: value })
-}
+const menuItems = computed<DropdownMenuItem[]>(() =>
+  getColorModeOptions($t).map(option => ({
+    label: option.label,
+    onSelect: () => {
+      preference.value = option.value
+      useLogEvent('color_mode_switch', { colorMode: option.value })
+    },
+  })),
+)
 </script>

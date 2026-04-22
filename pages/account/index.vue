@@ -313,8 +313,13 @@
           icon="i-material-symbols-language"
           :label="$t('account_page_locale')"
         >
+          <div
+            class="text-sm text-muted"
+            v-text="localeLabel"
+          />
+
           <template #right>
-            <LocaleSwitcher :is-icon-hidden="true" />
+            <LocaleSwitcher />
           </template>
         </AccountSettingsItem>
 
@@ -323,8 +328,13 @@
           icon="i-material-symbols-payments-outline-rounded"
           :label="$t('account_page_payment_currency')"
         >
+          <div
+            class="text-sm text-muted"
+            v-text="currencyLabel"
+          />
+
           <template #right>
-            <CurrencySwitcher :is-icon-hidden="true" />
+            <CurrencySwitcher />
           </template>
         </AccountSettingsItem>
 
@@ -333,6 +343,12 @@
           icon="i-material-symbols-dark-mode-outline-rounded"
           :label="$t('account_page_color_mode')"
         >
+          <div
+            v-if="user?.isLikerPlus"
+            class="text-sm text-muted"
+            v-text="colorModeLabel"
+          />
+
           <template #right>
             <ColorModeSwitcher v-if="user?.isLikerPlus" />
             <UButton
@@ -540,6 +556,22 @@ const { isApp } = useAppDetection()
 
 const isAdultContentEnabled = useAdultContentSetting()
 const isAdultContentConfirmOpen = ref(false)
+
+const { locales } = useAutoLocale()
+const { currency } = usePaymentCurrency()
+const { preference: colorModePreference } = useColorModeSync()
+
+const localeLabel = computed(() => {
+  const found = locales.value.find(l => (typeof l === 'string' ? l : l.code) === locale.value)
+  if (!found) return ''
+  return typeof found === 'string' ? found : found.name
+})
+const currencyLabel = computed(
+  () => getCurrencyOptions($t).find(o => o.value === currency.value)?.label ?? '',
+)
+const colorModeLabel = computed(
+  () => getColorModeOptions($t).find(o => o.value === colorModePreference.value)?.label ?? '',
+)
 
 const isPlusFeatureVisible = computed(() => !isApp.value || !!user.value?.isLikerPlus)
 
