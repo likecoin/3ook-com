@@ -11,6 +11,9 @@ interface TTSTryModalState {
 export function useTTSTryModal() {
   const { user } = useUserSession()
   const overlay = useOverlay()
+  const cantoneseVoiceABTest = useABTest({
+    experimentKey: 'tts-try-modal-cantonese-voice',
+  })
 
   const state = useStorage<TTSTryModalState>(TTS_TRY_MODAL_KEY, {
     shouldOffer: true,
@@ -54,10 +57,6 @@ export function useTTSTryModal() {
         nftClassId: options.nftClassId,
         onVoiceSelected: (languageVoice: string) => {
           dismissTTSTryModal()
-          useLogEvent('tts_try_voice_selected', {
-            nft_class_id: options.nftClassId,
-            languageVoice,
-          })
           modal.close()
           options.onVoiceSelected?.(languageVoice)
         },
@@ -65,6 +64,7 @@ export function useTTSTryModal() {
           snoozeTTSTryModal()
           useLogEvent('tts_try_snoozed', {
             nft_class_id: options.nftClassId,
+            ab_variant: cantoneseVoiceABTest.variant.value,
           })
           modal.close()
           options.onSnooze?.()
@@ -73,6 +73,7 @@ export function useTTSTryModal() {
           dismissTTSTryModal()
           useLogEvent('tts_try_dismissed', {
             nft_class_id: options.nftClassId,
+            ab_variant: cantoneseVoiceABTest.variant.value,
           })
           modal.close()
           options.onDismiss?.()
