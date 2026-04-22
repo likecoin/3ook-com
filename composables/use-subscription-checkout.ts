@@ -25,7 +25,7 @@ export function useSubscriptionCheckout() {
   const { getAnalyticsParameters } = useAnalytics()
   const { isApp } = useAppDetection()
   const runtimeConfig = useRuntimeConfig()
-  const isEmbeddedCheckoutFlagEnabled = useFeatureFlagEnabled('plus-embedded-checkout')
+  const embeddedCheckoutABTest = useABTest({ experimentKey: 'plus-embedded-checkout' })
 
   const isProcessingSubscription = ref(false)
 
@@ -107,7 +107,7 @@ export function useSubscriptionCheckout() {
       else {
         const canUseEmbeddedCheckout = (
           !isApp.value
-          && !!isEmbeddedCheckoutFlagEnabled.value
+          && embeddedCheckoutABTest.isVariant('test')
           && !!runtimeConfig.public.stripePublishableKey
         )
         const uiMode: CheckoutUIMode = canUseEmbeddedCheckout ? 'embedded' : 'hosted'
