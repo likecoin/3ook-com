@@ -1,6 +1,7 @@
 export function useAnalytics() {
   const getRouteQuery = useRouteQuery()
   const { gtag } = useGtag()
+  const { $posthog } = useNuxtApp()
   const googleAnalyticsTrackingId: string | undefined = useRuntimeConfig().public.googleAnalyticsTrackingId
 
   const gaClientId = ref('')
@@ -52,6 +53,7 @@ export function useAnalytics() {
       fbClickId: getRouteQuery('fbclid'),
       fbp: fbp.value || undefined,
       fbc: fbc.value || undefined,
+      posthogDistinctId: $posthog?.()?.get_distinct_id?.() || undefined,
     }
   }
 
