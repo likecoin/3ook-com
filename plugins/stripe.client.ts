@@ -5,5 +5,9 @@ export default defineNuxtPlugin(() => {
     return
   }
 
-  useScriptStripe()
+  useScriptStripe({
+    scriptOptions: {
+      trigger: 'onNuxtReady',
+    },
+  })
 })
