@@ -9,7 +9,6 @@
     utm-source="website"
     utm-medium="web"
     :coupon="coupon"
-    :must-show-tts-on-mobile="isMobileRegisterCTATestVariant"
     @open="handleOpen"
     @subscribe="handleSubscribe"
   >
