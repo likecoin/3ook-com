@@ -15,11 +15,10 @@
 <script setup lang="ts">
 import type { DropdownMenuItem } from '@nuxt/ui'
 
-const { t: $t } = useI18n()
-const { preference } = useColorModeSync()
+const { preference, options } = useColorModeSync()
 
 const menuItems = computed<DropdownMenuItem[]>(() =>
-  getColorModeOptions($t).map(option => ({
+  options.value.map(option => ({
     label: option.label,
     onSelect: () => {
       preference.value = option.value

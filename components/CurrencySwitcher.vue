@@ -15,11 +15,10 @@
 <script setup lang="ts">
 import type { DropdownMenuItem } from '@nuxt/ui'
 
-const { t: $t } = useI18n()
-const { setCurrency } = usePaymentCurrency()
+const { setCurrency, options } = usePaymentCurrency()
 
 const menuItems = computed<DropdownMenuItem[]>(() =>
-  getCurrencyOptions($t).map(option => ({
+  options.value.map(option => ({
     label: option.label,
     onSelect: () => {
       setCurrency(option.value)

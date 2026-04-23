@@ -558,8 +558,8 @@ const isAdultContentEnabled = useAdultContentSetting()
 const isAdultContentConfirmOpen = ref(false)
 
 const { locales } = useAutoLocale()
-const { currency } = usePaymentCurrency()
-const { preference: colorModePreference } = useColorModeSync()
+const { currency, options: currencyOptions } = usePaymentCurrency()
+const { preference: colorModePreference, options: colorModeOptions } = useColorModeSync()
 
 const localeLabel = computed(() => {
   const found = locales.value.find(l => (typeof l === 'string' ? l : l.code) === locale.value)
@@ -567,10 +567,10 @@ const localeLabel = computed(() => {
   return typeof found === 'string' ? found : found.name
 })
 const currencyLabel = computed(
-  () => getCurrencyOptions($t).find(o => o.value === currency.value)?.label ?? '',
+  () => currencyOptions.value.find(o => o.value === currency.value)?.label ?? '',
 )
 const colorModeLabel = computed(
-  () => getColorModeOptions($t).find(o => o.value === colorModePreference.value)?.label ?? '',
+  () => colorModeOptions.value.find(o => o.value === colorModePreference.value)?.label ?? '',
 )
 
 const isPlusFeatureVisible = computed(() => !isApp.value || !!user.value?.isLikerPlus)

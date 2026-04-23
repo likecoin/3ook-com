@@ -2,15 +2,6 @@ import { useStorage } from '@vueuse/core'
 import type { PaymentCurrency } from '~/shared/types/user-settings'
 import type { PricingCurrency } from '~/utils/pricing'
 
-export function getCurrencyOptions($t: (key: string) => string): Array<{ label: string, value: PaymentCurrency }> {
-  return [
-    { label: `🌐 ${$t('currency_auto')}`, value: 'auto' },
-    { label: '🇭🇰 HKD', value: 'hkd' },
-    { label: '🇹🇼 TWD', value: 'twd' },
-    { label: '🇺🇸 USD', value: 'usd' },
-  ]
-}
-
 function getDefaultCurrencyFromCountry(country: string | null): PricingCurrency {
   switch (country) {
     case 'HK':
@@ -23,9 +14,17 @@ function getDefaultCurrencyFromCountry(country: string | null): PricingCurrency 
 }
 
 export function usePaymentCurrency() {
+  const { t: $t } = useI18n()
   const userSettingsStore = useUserSettingsStore()
   const { loggedIn: hasLoggedIn } = useUserSession()
   const { detectedCountry, initializeClientGeolocation } = useDetectedGeolocation()
+
+  const options = computed<Array<{ label: string, value: PaymentCurrency }>>(() => [
+    { label: `🌐 ${$t('currency_auto')}`, value: 'auto' },
+    { label: '🇭🇰 HKD', value: 'hkd' },
+    { label: '🇹🇼 TWD', value: 'twd' },
+    { label: '🇺🇸 USD', value: 'usd' },
+  ])
 
   const syncedCurrency = useSyncedUserSettings({
     key: 'currency',
@@ -78,6 +77,7 @@ export function usePaymentCurrency() {
     currency: readonly(currency),
     detectedCurrency: readonly(detectedCurrency),
     displayCurrency: readonly(displayCurrency),
+    options,
     setCurrency,
     getCheckoutCurrency,
     initializePaymentCurrency,
