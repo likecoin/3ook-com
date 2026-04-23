@@ -71,7 +71,6 @@ export default defineNuxtConfig({
           id: '',
         },
       },
-      uetTagId: process.env.UET_TAG_ID,
       airtableCMSBaseId: process.env.AIRTABLE_CMS_BASE_ID,
       airtableCMSProductsTableId: process.env.AIRTABLE_CMS_PRODUCTS_TABLE_ID,
       airtableCMSPublicationsTableId: process.env.AIRTABLE_CMS_PUBLICATIONS_TABLE_ID,
@@ -286,8 +285,6 @@ export default defineNuxtConfig({
           'https://downloads.intercomcdn.com',
           'https://static.intercomassets.com',
           'https://explorer-api.walletconnect.com',
-          'https://bat.bing.com',
-          'https://bat.bing.net',
           'https://i.ytimg.com',
           ...[
             process.env.LIKECOIN_API_ENDPOINT,

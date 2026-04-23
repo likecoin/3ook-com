@@ -97,8 +97,6 @@ env:
     value: pk_live_51KLaAPJ1N9Zit6QVZCdaYNWGMnDqCRT3rJ0x7lMMbdFMQMcRDykMbSFERAG8HOfaQw4K8lz0lrSSAdenvKRd4qZZ00OCt0Elji
   - variable: TTS_CACHE_BUCKET_PREFIX
     value: tts-cache
-  - variable: UET_TAG_ID
-    value: 343221602
   - variable: UPLOADED_BOOKS_BUCKET_PREFIX
     value: uploaded-books
   - variable: WALLET_CONNECT_PROJECT_ID

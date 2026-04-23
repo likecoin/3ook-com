@@ -6,15 +6,9 @@ interface EventParams {
   [key: string]: unknown
 }
 
-declare global {
-  interface Window {
-    uetq?: unknown[]
-  }
-}
-
 // Intercom caps unique event names at 120 per workspace. Only forward events
 // that give CS agents meaningful context for a user's ticket; all other events
-// still reach PostHog / GA4 / Meta Pixel / UET unchanged.
+// still reach PostHog / GA4 / Meta Pixel unchanged.
 const INTERCOM_EVENT_ALLOWLIST = new Set<string>([
   // Auth & account state
   'sign_up',
@@ -180,59 +174,6 @@ export function useLogEvent(eventName: string, eventParams: EventParams = {}) {
       console.error(`Failed to log event to PostHog: ${eventName}`, error)
     }
   }
-
-  if (window?.uetq) {
-    try {
-      const eventData: Record<string, unknown> = {}
-
-      // Remap simple fields
-      const fieldMap: Record<string, string> = {
-        category: 'event_category',
-        label: 'event_label',
-        value: 'event_value',
-        currency: 'currency',
-        ecomm_category: 'ecomm_category',
-        ecomm_query: 'ecomm_query',
-        ecomm_pagetype: 'ecomm_pagetype',
-      }
-      Object.entries(fieldMap).forEach(([key, uetKey]) => {
-        if (eventParams[key]) eventData[uetKey] = eventParams[key]
-      })
-
-      if (typeof eventParams.currency === 'string') {
-        eventData.currency = eventParams.currency.toUpperCase()
-      }
-      if (eventParams.value) eventData.revenue_value = eventParams.value
-
-      if (Array.isArray(eventParams.items) && eventParams.items.length) {
-        eventData.ecomm_prodid = eventParams.items.map((item: Record<string, unknown>) => item.id || item.item_id).filter(Boolean)
-        eventData.items = eventParams.items.map((item: Record<string, unknown>) => ({ id: item.id || item.item_id, quantity: item.quantity || 1, price: item.price }))
-        const total = eventParams.items.reduce((sum: number, item: Record<string, unknown>) => sum + (((item.price as number) || 0) * (((item.quantity as number) || 1))), 0)
-        if (total > 0) eventData.ecomm_totalvalue = total
-      }
-
-      // Page type - use provided value or default based on event type
-      const pageTypeDefaults: Record<string, string> = {
-        view_item: 'product',
-        select_item: 'product',
-        add_to_cart: 'product',
-        begin_checkout: 'cart',
-        purchase: 'purchase',
-      }
-      if (!eventData.ecomm_pagetype && pageTypeDefaults[eventName]) {
-        eventData.ecomm_pagetype = pageTypeDefaults[eventName]
-      }
-
-      if (eventName === 'purchase') {
-        eventData.transaction_id = eventParams.transaction_id
-      }
-
-      window.uetq.push('event', eventName, eventData)
-    }
-    catch (error) {
-      console.error(`Failed to track event to UET: ${eventName}`, error)
-    }
-  }
 }
 
 export function useSetLogUser(user: User | null, locale: string) {
@@ -342,20 +283,6 @@ export function useSetLogUser(user: User | null, locale: string) {
     }
     catch (error) {
       console.error('Failed to set user data in PostHog', error)
-    }
-  }
-
-  if (window?.uetq) {
-    try {
-      if (!user) {
-        window.uetq.push('set', { pid: {} })
-      }
-      else if (user.email) {
-        window.uetq.push('set', { pid: { em: user.email } })
-      }
-    }
-    catch (error) {
-      console.error('Failed to set user data in UET', error)
     }
   }
 
