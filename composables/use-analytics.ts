@@ -1,8 +1,8 @@
 export function useAnalytics() {
   const getRouteQuery = useRouteQuery()
-  const { gtag } = useGtag()
+  const { proxy } = useScriptGoogleAnalytics()
   const { $posthog } = useNuxtApp()
-  const googleAnalyticsTrackingId: string | undefined = useRuntimeConfig().public.googleAnalyticsTrackingId
+  const googleAnalyticsTrackingId = useRuntimeConfig().public.scripts.googleAnalytics.id
 
   const gaClientId = ref('')
   const gaSessionId = ref('')
@@ -11,12 +11,12 @@ export function useAnalytics() {
   const fbc = useCookie('_fbc', { readonly: true })
   onMounted(() => {
     referrer.value = document.referrer
-    if (gtag && googleAnalyticsTrackingId) {
-      gtag('get', googleAnalyticsTrackingId, 'client_id', (clientId) => {
+    if (googleAnalyticsTrackingId) {
+      proxy.gtag('get', googleAnalyticsTrackingId, 'client_id', (clientId) => {
         gaClientId.value = clientId as string
       })
-      gtag('get', googleAnalyticsTrackingId, 'session_id', (clientId) => {
-        gaSessionId.value = clientId as string
+      proxy.gtag('get', googleAnalyticsTrackingId, 'session_id', (sessionId) => {
+        gaSessionId.value = sessionId as string
       })
     }
   })

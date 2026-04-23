@@ -84,15 +84,8 @@ const INTERCOM_EVENT_ALLOWLIST = new Set<string>([
 
 export function useLogEvent(eventName: string, eventParams: EventParams = {}) {
   try {
-    useTrackEvent(eventName, eventParams)
-    const googleAdConversionId = useRuntimeConfig().public.googleAdConversionId
-    if (googleAdConversionId && eventName === 'purchase') {
-      const { gtag } = useGtag()
-      gtag('event', 'conversion', {
-        send_to: googleAdConversionId,
-        ...eventParams,
-      })
-    }
+    const { proxy } = useScriptGoogleAnalytics()
+    proxy.gtag('event', eventName, eventParams)
   }
   catch {
     console.error(`Failed to track event: ${eventName}`, eventParams)
@@ -194,19 +187,19 @@ export function useSetLogUser(user: User | null, locale: string) {
     : undefined
 
   // Set user ID in Google Analytics
-  const { gtag } = useGtag()
   try {
+    const { proxy } = useScriptGoogleAnalytics()
     if (!user) {
-      gtag('set', {
+      proxy.gtag('set', {
         user_id: null,
       })
     }
     else {
-      gtag('set', {
+      proxy.gtag('set', {
         user_id: hashedWallet,
         user_data: { email: user.email || undefined },
       })
-      gtag('set', 'user_properties', {
+      ;(proxy.gtag as (...args: unknown[]) => void)('set', 'user_properties', {
         is_liker_plus: !!user.isLikerPlus,
         login_method: user.loginMethod,
         locale,
