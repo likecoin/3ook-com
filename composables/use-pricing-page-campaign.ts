@@ -30,7 +30,7 @@ const CAMPAIGNS: Record<string, PricingPageCampaign> = {
 export function usePricingPageCampaign(options: {
   campaignId: MaybeRefOrGetter<string | undefined>
 } = { campaignId: undefined }) {
-  const { $posthog } = useNuxtApp()
+  const { onLoaded } = useScriptPostHog()
   const { locale } = useI18n()
   const campaignId = computed(() => toValue(options.campaignId))
   const isChineseLocale = computed(() => locale.value === 'zh-Hant')
@@ -65,17 +65,17 @@ export function usePricingPageCampaign(options: {
     return resolvedCampaignId.value === 'blocktrend-plus'
   })
   const overrideFeatureFlag = () => {
-    if ($posthog && campaignId.value) {
-      const posthog = $posthog()
-      // If campaignId is explicitly set via query string, override the feature flag
+    const currentCampaignId = campaignId.value
+    if (!currentCampaignId) return
+    onLoaded(({ posthog }) => {
       posthog.featureFlags.overrideFeatureFlags({
-        'pricing-page-campaign': campaignId.value,
+        'pricing-page-campaign': currentCampaignId,
       })
-    }
+    })
   }
 
-  watch(campaignId, () => overrideFeatureFlag)
-  onMounted(() => overrideFeatureFlag)
+  watch(campaignId, overrideFeatureFlag)
+  onMounted(overrideFeatureFlag)
 
   return {
     campaignContent,

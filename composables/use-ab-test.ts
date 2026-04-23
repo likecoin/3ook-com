@@ -13,15 +13,18 @@ export function useABTest(config: ABTestConfig) {
     variant.value = typeof flag === 'string' ? flag : null
   }
 
+  let unsubscribe: (() => void) | undefined
   onMounted(() => {
-    const { $posthog } = useNuxtApp()
-    if ($posthog) {
-      const posthog = $posthog()
-      posthog.onFeatureFlags(() => {
+    const { onLoaded } = useScriptPostHog()
+    onLoaded(({ posthog }) => {
+      unsubscribe = posthog.onFeatureFlags(() => {
         updateVariant(posthog)
       })
       updateVariant(posthog)
-    }
+    })
+  })
+  onScopeDispose(() => {
+    unsubscribe?.()
   })
 
   function isVariant(variantName: string): boolean {

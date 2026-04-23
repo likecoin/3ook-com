@@ -151,28 +151,25 @@ export function useLogEvent(eventName: string, eventParams: EventParams = {}) {
     }
   }
 
-  const { $posthog } = useNuxtApp()
-  if ($posthog) {
-    try {
-      const posthog = $posthog()
-      const posthogParams = { ...eventParams }
-      if (Array.isArray(posthogParams.items)) {
-        const classIds = posthogParams.items
-          .map((item: { id?: string }) => item.id?.split('-')[0])
-          .filter((id): id is string => !!id && id.startsWith('0x'))
-        if (classIds.length) {
-          posthogParams.nft_class_ids = classIds.join(',')
-        }
+  try {
+    const { proxy } = useScriptPostHog()
+    const posthogParams = { ...eventParams }
+    if (Array.isArray(posthogParams.items)) {
+      const classIds = posthogParams.items
+        .map((item: { id?: string }) => item.id?.split('-')[0])
+        .filter((id): id is string => !!id && id.startsWith('0x'))
+      if (classIds.length) {
+        posthogParams.nft_class_ids = classIds.join(',')
       }
-      // Dedupe against the backend-fired counterpart (posthog-node) for the same transaction.
-      if (typeof eventParams.transaction_id === 'string' && eventParams.transaction_id) {
-        posthogParams.$insert_id = `${eventName}_${eventParams.transaction_id}`
-      }
-      posthog.capture(eventName, { app: '3ook', ...posthogParams })
     }
-    catch (error) {
-      console.error(`Failed to log event to PostHog: ${eventName}`, error)
+    // Dedupe against the backend-fired counterpart (posthog-node) for the same transaction.
+    if (typeof eventParams.transaction_id === 'string' && eventParams.transaction_id) {
+      posthogParams.$insert_id = `${eventName}_${eventParams.transaction_id}`
     }
+    proxy.posthog.capture(eventName, { app: '3ook', ...posthogParams })
+  }
+  catch (error) {
+    console.error(`Failed to log event to PostHog: ${eventName}`, error)
   }
 }
 
@@ -264,26 +261,23 @@ export function useSetLogUser(user: User | null, locale: string) {
     }
   }
 
-  const { $posthog } = useNuxtApp()
-  if ($posthog) {
-    try {
-      const posthog = $posthog()
-      posthog.identify(
-        user?.evmWallet,
-        user
-          ? {
-              email: user?.email || undefined,
-              name: user?.displayName || user?.evmWallet || user?.likeWallet,
-              locale,
-              is_liker_plus: !!user.isLikerPlus,
-              login_method: user.loginMethod,
-            }
-          : undefined,
-      )
-    }
-    catch (error) {
-      console.error('Failed to set user data in PostHog', error)
-    }
+  try {
+    const { proxy } = useScriptPostHog()
+    proxy.posthog.identify(
+      user?.evmWallet,
+      user
+        ? {
+            email: user?.email || undefined,
+            name: user?.displayName || user?.evmWallet || user?.likeWallet,
+            locale,
+            is_liker_plus: !!user.isLikerPlus,
+            login_method: user.loginMethod,
+          }
+        : undefined,
+    )
+  }
+  catch (error) {
+    console.error('Failed to set user data in PostHog', error)
   }
 
   // Sync user identity to the native app for its own analytics SDKs
