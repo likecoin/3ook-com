@@ -13,6 +13,7 @@ export const BookSettingsUpdateSchema = v.pipe(
     'pdf-isRightToLeft': v.optional(v.boolean()),
     'progress': v.optional(v.number()),
     'lastOpenedTime': v.optional(v.number()),
+    'archivedAt': v.optional(v.nullable(v.number())),
   }, 'INVALID_KEYS'),
   v.check(input => Object.keys(input).length > 0, 'MISSING_BODY'),
 )

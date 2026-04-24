@@ -3,6 +3,9 @@ import type { ConfigDefaults } from 'posthog-js'
 
 const {
   NODE_ENV,
+  POSTHOG_PUBLIC_KEY,
+  POSTHOG_HOST,
+  POSTHOG_DEFAULTS,
 } = process.env
 
 const isDevelopment = NODE_ENV === 'development'
@@ -24,7 +27,6 @@ export default defineNuxtConfig({
     '@nuxtjs/sitemap',
     'v-gsap-nuxt',
     '@vite-pwa/nuxt',
-    '@posthog/nuxt',
   ],
 
   devtools: { enabled: true },
@@ -98,9 +100,7 @@ export default defineNuxtConfig({
       ipfsEndpoint: process.env.IPFS_ENDPOINT,
       isMaintenanceMode: process.env.IS_MAINTENANCE_MODE !== undefined,
       isTestnet: process.env.IS_TESTNET,
-      posthogPublicKey: process.env.POSTHOG_PUBLIC_KEY,
       posthogHost: process.env.POSTHOG_HOST,
-      posthogDefaults: process.env.POSTHOG_DEFAULTS,
       publishBookEndpoint: process.env.PUBLISH_BOOK_ENDPOINT,
       sentryDsn: process.env.SENTRY_DSN,
       stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY,
@@ -202,15 +202,6 @@ export default defineNuxtConfig({
     detectBrowserLanguage: false,
   },
 
-  posthogConfig: {
-    publicKey: process.env.POSTHOG_PUBLIC_KEY || 'placeholder_key_to_avoid_nuxt_module_error',
-    host: process.env.POSTHOG_HOST,
-    clientConfig: {
-      defaults: process.env.POSTHOG_DEFAULTS as ConfigDefaults | undefined,
-      person_profiles: 'identified_only',
-    },
-  },
-
   pwa: {
     registerType: 'autoUpdate',
     manifest: {
@@ -234,6 +225,17 @@ export default defineNuxtConfig({
       googleAnalytics: true,
       intercom: true,
       metaPixel: true,
+      posthog: POSTHOG_PUBLIC_KEY
+        ? {
+            trigger: 'onNuxtReady',
+            apiKey: POSTHOG_PUBLIC_KEY,
+            apiHost: POSTHOG_HOST,
+            config: {
+              defaults: POSTHOG_DEFAULTS as ConfigDefaults | undefined,
+              person_profiles: 'identified_only',
+            },
+          }
+        : undefined,
     },
   },
 

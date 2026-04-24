@@ -1,12 +1,13 @@
 export function useAnalytics() {
   const getRouteQuery = useRouteQuery()
   const { proxy } = useScriptGoogleAnalytics()
-  const { $posthog } = useNuxtApp()
+  const { onLoaded: onPostHogLoaded } = useScriptPostHog()
   const googleAnalyticsTrackingId = useRuntimeConfig().public.scripts.googleAnalytics.id
 
   const gaClientId = ref('')
   const gaSessionId = ref('')
   const referrer = ref('')
+  const posthogDistinctId = ref<string | undefined>(undefined)
   const fbp = useCookie('_fbp', { readonly: true })
   const fbc = useCookie('_fbc', { readonly: true })
   onMounted(() => {
@@ -19,6 +20,9 @@ export function useAnalytics() {
         gaSessionId.value = sessionId as string
       })
     }
+    onPostHogLoaded(({ posthog }) => {
+      posthogDistinctId.value = posthog.get_distinct_id?.() || undefined
+    })
   })
 
   function getAnalyticsParameters({
@@ -53,7 +57,7 @@ export function useAnalytics() {
       fbClickId: getRouteQuery('fbclid'),
       fbp: fbp.value || undefined,
       fbc: fbc.value || undefined,
-      posthogDistinctId: $posthog?.()?.get_distinct_id?.() || undefined,
+      posthogDistinctId: posthogDistinctId.value,
     }
   }
 

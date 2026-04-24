@@ -3,6 +3,7 @@ export interface BookshelfItem {
   nftIds: string[]
   lastOpenedTime: number
   progress: number
+  archivedAt?: number | null
 }
 
 export const useBookshelfStore = defineStore('bookshelf', () => {
@@ -50,6 +51,7 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
           nftIds,
           lastOpenedTime: progressData.lastOpenedTime,
           progress: progressData.progress,
+          archivedAt: settings?.archivedAt,
         }
       })
   })
@@ -210,6 +212,16 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
     bookSettingsStore.queueUpdate(normalizedNFTClassId, 'lastOpenedTime', lastOpenedTime)
   }
 
+  function archiveBook(nftClassId: string) {
+    const normalizedNFTClassId = nftClassId.toLowerCase()
+    bookSettingsStore.queueUpdate(normalizedNFTClassId, 'archivedAt', Date.now())
+  }
+
+  function unarchiveBook(nftClassId: string) {
+    const normalizedNFTClassId = nftClassId.toLowerCase()
+    bookSettingsStore.queueUpdate(normalizedNFTClassId, 'archivedAt', null)
+  }
+
   function reset() {
     resetGeneration += 1
     isFetching.value = false
@@ -247,6 +259,8 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
     getFirstTokenIdByNFTClassId,
     fetchNFTByNFTClassIdAndOwnerWalletAddressThroughContract,
     updateProgress,
+    archiveBook,
+    unarchiveBook,
     reset,
   }
 }, {
