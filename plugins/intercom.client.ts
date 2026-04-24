@@ -16,12 +16,24 @@ export default defineNuxtPlugin(() => {
     ;(window as unknown as { Intercom: (...args: unknown[]) => void }).Intercom = noop
   }
 
-  // Hide Intercom UI elements via CSS in case it loads later
-  const styleId = 'intercom-hide-style'
-  if (!document.getElementById(styleId)) {
-    const style = document.createElement('style')
-    style.id = styleId
-    style.textContent = '#intercom-container, .intercom-lightweight-app, .intercom-namespace { display: none !important; }'
-    document.head.appendChild(style)
+  // Hide certain Intercom UI elements via CSS in case it loads later
+  const styleId = 'intercom-visibility-overrides'
+  if (document.getElementById(styleId)) {
+    return
   }
+
+  const style = document.createElement('style')
+  style.id = styleId
+  style.textContent = `
+    .intercom-launcher-frame,
+    .intercom-launcher-badge-frame,
+    .intercom-lightweight-app,
+    .intercom-lightweight-app-launcher,
+    .intercom-messenger-frame,
+    [name="intercom-notification-stack-frame"],
+    [class^="intercom-with-namespace-"]:not([name="intercom-banner-frame"]) {
+      display: none !important;
+    }
+  `
+  document.head.appendChild(style)
 })
