@@ -1,18 +1,21 @@
 import type { CustomVoiceData } from '~/shared/types/custom-voice'
 
+let inflightFetch: Promise<void> | null = null
+
 export function useCustomVoice() {
   const customVoice = useState<CustomVoiceData | null>('custom-voice', () => null)
   const isLoaded = useState<boolean>('custom-voice-loaded', () => false)
   const isLoading = useState<boolean>('custom-voice-loading', () => false)
-  const inflightFetch = useState<Promise<void> | null>('custom-voice-inflight', () => null)
 
   const { loggedIn: hasLoggedIn } = useUserSession()
 
   const hasCustomVoice = computed(() => !!customVoice.value?.voiceId)
 
   function fetchCustomVoice(): Promise<void> {
-    if (isLoaded.value) return Promise.resolve()
-    if (inflightFetch.value) return inflightFetch.value
+    if (import.meta.server || isLoaded.value) {
+      return Promise.resolve()
+    }
+    if (inflightFetch) return inflightFetch
     const task = (async () => {
       try {
         const data = await $fetch<CustomVoiceData | null>('/api/user/custom-voice')
@@ -24,10 +27,10 @@ export function useCustomVoice() {
         console.error('[CustomVoice] Failed to fetch:', error)
       }
       finally {
-        inflightFetch.value = null
+        inflightFetch = null
       }
     })()
-    inflightFetch.value = task
+    inflightFetch = task
     return task
   }
 
@@ -35,7 +38,7 @@ export function useCustomVoice() {
     if (!loggedIn && wasLoggedIn) {
       customVoice.value = null
       isLoaded.value = false
-      inflightFetch.value = null
+      inflightFetch = null
     }
   })
 
