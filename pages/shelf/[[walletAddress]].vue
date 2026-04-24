@@ -678,6 +678,23 @@ onMounted(async () => {
   }
 })
 
+// PostHog loads lazily via @nuxt/scripts, so the flag may resolve after onMounted.
+watch(
+  [isUploadedBookFeatureEnabled, hasLoggedIn, walletAddress],
+  ([isEnabled, hasLoggedInValue, walletAddressValue]) => {
+    if (
+      isEnabled
+      && hasLoggedInValue
+      && walletAddressValue
+      && isMyBookshelf.value
+      && !uploadedBooksStore.hasFetched
+      && !uploadedBooksStore.isFetching
+    ) {
+      uploadedBooksStore.fetchItems()
+    }
+  },
+)
+
 onUnmounted(() => {
   if (paramWalletAddress.value) {
     bookshelfStore.reset()
