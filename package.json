@@ -37,7 +37,7 @@
     "@pinia/nuxt": "^0.11.1",
     "@sentry/nuxt": "^10.46.0",
     "@tanstack/vue-query": "^5.91.4",
-    "@unhead/vue": "^2.0.10",
+    "@unhead/vue": "^2.1.13",
     "@vite-pwa/nuxt": "^1.0.4",
     "@vueuse/nuxt": "^13.0.0",
     "@wagmi/core": "^3.4.1",
