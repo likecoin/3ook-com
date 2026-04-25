@@ -27,6 +27,7 @@
           :src="item.src"
           :alt="props.alt"
           :is-vertical-center="true"
+          :priority="true"
         />
 
         <img
@@ -123,6 +124,7 @@
     :alt="props.alt"
     :is-vertical-center="true"
     :has-shadow="props.hasShadow"
+    :priority="true"
     @click="handleSingleCoverClick"
   />
 </template>

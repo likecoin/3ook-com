@@ -49,6 +49,7 @@
         :src="props.src"
         :alt="props.alt"
         :loading="props.lazy ? 'lazy' : 'eager'"
+        :fetchpriority="props.priority ? 'high' : undefined"
         @load="handleImageLoad"
         @error="handleImageError"
       >
@@ -144,6 +145,10 @@ const props = defineProps({
     default: false,
   },
   lazy: {
+    type: Boolean,
+    default: false,
+  },
+  priority: {
     type: Boolean,
     default: false,
   },
