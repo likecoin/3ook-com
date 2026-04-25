@@ -7,7 +7,7 @@ export default defineNuxtPlugin(() => {
 
   useScriptStripe({
     scriptOptions: {
-      trigger: 'onNuxtReady',
+      trigger: useScriptTriggerIdleTimeout({ timeout: 1000 }),
     },
   })
 })
