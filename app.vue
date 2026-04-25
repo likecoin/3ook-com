@@ -20,6 +20,7 @@ const ogURL = config.public.baseURL
 const ogImage = `${ogURL}/images/og/default.jpg`
 const isTestnet = !!config.public.isTestnet
 const likeCoinAPIEndpoint = config.public.likeCoinAPIEndpoint as string | undefined
+const likeCoinStaticEndpoint = config.public.likeCoinStaticEndpoint as string | undefined
 const posthogHost = config.public.posthogHost as string | undefined
 
 const { memberProgramData } = useMemberProgramStructuredData()
@@ -27,6 +28,7 @@ const { memberProgramData } = useMemberProgramStructuredData()
 const { initializeServerGeolocation, initializeClientGeolocation } = useDetectedGeolocation()
 const { initializePaymentCurrency } = usePaymentCurrency()
 const { initializeLocale } = useAutoLocale()
+const { isApp } = useAppDetection()
 
 callOnce(() => {
   initializeServerGeolocation()
@@ -140,8 +142,14 @@ useHead({
           { rel: 'preconnect', href: likeCoinAPIEndpoint, crossorigin: '' },
         ]
       : []),
+    ...(likeCoinStaticEndpoint
+      ? [{ rel: 'preconnect', href: likeCoinStaticEndpoint }]
+      : []),
     ...(posthogHost
       ? [{ rel: 'preconnect', href: posthogHost, crossorigin: '' }]
+      : []),
+    ...(!isApp.value
+      ? [{ rel: 'preconnect', href: 'https://js.stripe.com', crossorigin: '' }]
       : []),
     ...(i18nHead.value.link || []),
   ],

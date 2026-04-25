@@ -1142,7 +1142,6 @@ useHead(() => ({
   title: ogTitle.value,
   meta,
   link: [
-    { rel: 'preconnect', href: config.public.likeCoinStaticEndpoint },
     { rel: 'canonical', href: canonicalURL.value },
     { rel: 'preload', href: bookCoverSrc.value, as: 'image' },
   ],

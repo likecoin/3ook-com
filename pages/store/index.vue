@@ -797,10 +797,6 @@ useHead(() => {
 
   const link = [
     {
-      rel: 'preconnect',
-      href: runtimeConfig.public.likeCoinStaticEndpoint,
-    },
-    {
       rel: 'canonical',
       href: canonicalURL.value,
     },
