@@ -1125,22 +1125,19 @@ const structuredData = computed(() => {
   return generateBookStructuredData({ canonicalURL: canonicalURL.value })
 })
 
-const meta = [
-  { name: 'description', content: ogDescription.value },
-  { property: 'og:title', content: ogTitle.value },
-  { property: 'og:description', content: ogDescription.value },
-  { property: 'og:image', content: bookInfo.coverSrc.value },
-  { property: 'og:url', content: canonicalURL.value },
-  ...generateOGMetaTags({ selectedPricingItemIndex: selectedPricingItemIndex.value }),
-]
-
-if (bookInfo.isHidden.value || !bookInfo.isApprovedForIndexing.value) {
-  meta.push({ name: 'robots', content: 'noindex, nofollow' })
-}
-
 useHead(() => ({
   title: ogTitle.value,
-  meta,
+  meta: [
+    { name: 'description', content: ogDescription.value },
+    { property: 'og:title', content: ogTitle.value },
+    { property: 'og:description', content: ogDescription.value },
+    { property: 'og:image', content: bookInfo.coverSrc.value },
+    { property: 'og:url', content: canonicalURL.value },
+    ...generateOGMetaTags({ selectedPricingItemIndex: selectedPricingItemIndex.value }),
+    ...(bookInfo.isHidden.value || !bookInfo.isApprovedForIndexing.value
+      ? [{ name: 'robots', content: 'noindex, nofollow' }]
+      : []),
+  ],
   link: [
     { rel: 'preconnect', href: config.public.likeCoinStaticEndpoint },
     { rel: 'canonical', href: canonicalURL.value },
