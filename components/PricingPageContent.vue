@@ -267,7 +267,9 @@ const shouldShowTTSSamples = computed(() => {
 const abTest = shouldShowTTSSamples.value
   ? undefined
   : useABTest({
-      experimentKey: 'pricing-page-tts-sample',
+      experimentKey: isDesktopScreen.value
+        ? 'pricing-page-tts-sample-desktop'
+        : 'pricing-page-tts-sample-mobile',
     })
 
 const isShowTTSSamples = computed(() => shouldShowTTSSamples.value || abTest?.isVariant('tts-sample'))
