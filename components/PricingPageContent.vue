@@ -270,7 +270,7 @@ const abTest = shouldShowTTSSamples.value
       experimentKey: 'pricing-page-tts-sample',
     })
 
-const isShowTTSSamples = computed(() => shouldShowTTSSamples.value || abTest?.isVariant('tts-sample') || props.mustShowTtsOnMobile)
+const isShowTTSSamples = computed(() => shouldShowTTSSamples.value || abTest?.isVariant('tts-sample'))
 
 const utmCampaign = computed(() => {
   return getRouteQuery('utm_campaign') || props.utmCampaign

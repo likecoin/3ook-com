@@ -61,7 +61,7 @@
     </template>
 
     <template
-      v-if="!hasLoggedIn && isMobileRegisterCTATestVariant"
+      v-if="!hasLoggedIn"
       #pricing-mobile
     >
       <div class="flex flex-col items-center gap-3">
@@ -106,8 +106,6 @@ const baseURL = config.public.baseURL
 const { isApp } = useAppDetection()
 const { loggedIn: hasLoggedIn } = useUserSession()
 const accountStore = useAccountStore()
-const mobileRegisterCTATest = useABTest({ experimentKey: 'pricing-page-mobile-register-cta' })
-const isMobileRegisterCTATestVariant = computed(() => mobileRegisterCTATest.isVariant('test'))
 
 const initialPlan: SubscriptionPlan = getRouteQuery('plan') === 'monthly' ? 'monthly' : 'yearly'
 const selectedPlan = ref<SubscriptionPlan>(initialPlan)
