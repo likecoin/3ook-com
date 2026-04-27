@@ -21,13 +21,11 @@
       <!-- Search mode header -->
       <div
         v-if="isSearchMode"
-        class="flex items-center gap-4 w-full"
+        class="flex items-center gap-1 phone:gap-2 w-full"
       >
-        <UButton
+        <PillButton
           :to="localeRoute({ name: 'store' })"
           icon="i-material-symbols-close-rounded"
-          variant="outline"
-          :ui="{ base: [TAG_BUTTON_CLASS_LIGHT, TAG_BUTTON_CLASS_BASE] }"
         />
 
         <div
@@ -41,17 +39,19 @@
             size="lg"
           />
           <div class="flex flex-col min-w-0 flex-1">
-            <p class="text-xs text-gray-500 uppercase tracking-wide">
-              {{ $t('store_owner_wallet_prefix') }}
-            </p>
-            <h1 class="text-xl laptop:text-2xl font-bold text-gray-900 truncate">
-              {{ ownerWalletDisplayName || queryOwnerWallet }}
-            </h1>
+            <p
+              class="text-xs text-muted uppercase tracking-wide"
+              v-text="$t('store_owner_wallet_prefix')"
+            />
+            <h1
+              class="text-xl laptop:text-2xl font-bold text-default truncate"
+              v-text="ownerWalletDisplayName || queryOwnerWallet"
+            />
           </div>
         </div>
         <h1
           v-else
-          class="px-3 py-1 text-theme-cyan font-medium bg-theme-black rounded-full"
+          class="px-3 py-1 text-theme-cyan font-medium bg-theme-black border-1 border-theme-black rounded-full"
         >
           <span v-if="querySearchTerm">{{ $t('store_search_prefix') }}{{ querySearchTerm }}</span>
           <span v-else-if="queryAuthorName">{{ $t('store_author_prefix') }}{{ queryAuthorName }}</span>
@@ -63,7 +63,7 @@
       <!-- Tag selector -->
       <div
         v-else
-        class="flex items-center max-phone:gap-1 gap-2 w-full"
+        class="flex items-center gap-1 phone:gap-2 w-full col-span-full"
       >
         <UButton
           v-if="!isApp"
@@ -83,104 +83,16 @@
             class="w-8 h-8 block"
           >
         </UButton>
-        <UButton
-          v-else-if="!isDefaultTagId"
-          :to="localeRoute({ name: 'store' })"
-          icon="i-material-symbols-arrow-back-ios-new-rounded"
-          variant="outline"
-          :ui="{
-            base: [TAG_BUTTON_CLASS_LIGHT, TAG_BUTTON_CLASS_BASE],
-            leadingIcon: 'laptop:size-6',
-          }"
-          :title="$t('common_back')"
-          @click="handleBackButtonClick"
+
+        <PillButtonGroup
+          :model-value="tagId"
+          :items="allTagItems"
+          :is-loading="!bookstoreStore.hasFetchedBookstoreCMSTags && isDefaultTagId"
+          class="grow min-w-0"
+          @click="(item) => handleTagClick(item.value)"
         />
-
-        <template v-if="!bookstoreStore.hasFetchedBookstoreCMSTags && isDefaultTagId">
-          <USkeleton
-            v-for="(widthClass, i) in ['w-20', 'w-18', 'w-24', 'w-16']"
-            :key="`tag-skeleton-${i + 1}`"
-            :class="[
-              'shrink-0',
-              widthClass,
-              'h-8 laptop:h-9',
-              'rounded-full',
-              'border-2',
-              'border-muted',
-            ]"
-          />
-        </template>
-
-        <UButton
-          v-for="fixedTag in fixedTags"
-          v-else-if="isDefaultTagId"
-          :key="fixedTag.value"
-          :label="fixedTag.label"
-          variant="outline"
-          :ui="{
-            base: [
-              fixedTag.value === TAG_DEFAULT ? TAG_BUTTON_CLASS_DARK : TAG_BUTTON_CLASS_LIGHT,
-              TAG_BUTTON_CLASS_BASE,
-              'px-2.5 laptop:px-4',
-              '!ring-theme-black dark:!ring-muted',
-            ],
-            label: 'text-sm laptop:text-base',
-          }"
-          :to="fixedTag.value === 'local-histories'
-            ? localeRoute({ name: 'local-histories' })
-            : localeRoute({ name: 'store', query: { ...route.query, tag: fixedTag.value } })"
-          @click.prevent="handleTagClick(fixedTag.value)"
-        />
-
-        <div
-          v-if="bookstoreStore.hasFetchedBookstoreCMSTags"
-          class="relative group rounded-full"
-        >
-          <template v-if="isDefaultTagId">
-            <!-- Dummy button -->
-            <UButton
-              icon="i-material-symbols-keyboard-arrow-down-rounded"
-              variant="outline"
-              :ui="{
-                base: [
-                  TAG_BUTTON_CLASS_LIGHT,
-                  TAG_BUTTON_CLASS_BASE,
-                  'group-hover:-translate-y-0.5',
-                  'pointer-events-none',
-                ],
-                leadingIcon: 'laptop:size-6 translate-y-[1px]',
-              }"
-            />
-            <!-- Real select -->
-            <select
-              v-model="tagId"
-              class="absolute inset-0 opacity-0 rounded-full cursor-pointer"
-            >
-              <option
-                v-for="tag in selectorTagItems"
-                :key="tag.value"
-                :value="tag.value"
-                v-text="tag.label"
-              />
-            </select>
-          </template>
-          <!-- Selected tag (dummy button) -->
-          <UButton
-            v-else
-            :label="activeTag?.label"
-            :ui="{
-              base: [
-                TAG_BUTTON_CLASS_BASE,
-                'px-2.5 laptop:px-4',
-                'pointer-events-none',
-              ],
-              label: 'text-sm laptop:text-base',
-            }"
-          />
-        </div>
 
         <UModal
-          v-if="bookstoreStore.hasFetchedBookstoreCMSTags && isDefaultTagId"
           v-model:open="isSearchInputOpen"
           :close="false"
           :ui="{
@@ -197,13 +109,8 @@
             ],
           }"
         >
-          <UButton
+          <PillButton
             icon="i-material-symbols-search-rounded"
-            variant="outline"
-            :ui="{
-              base: [TAG_BUTTON_CLASS_LIGHT, TAG_BUTTON_CLASS_BASE],
-              leadingIcon: 'laptop:size-6',
-            }"
             @click="handleSearchTagClick"
           />
 
@@ -243,18 +150,10 @@
           </template>
         </UModal>
 
-        <UTooltip
-          v-if="bookstoreStore.hasFetchedBookstoreCMSTags && isDefaultTagId"
-          :text="$t('book_list_title')"
-        >
-          <UButton
+        <UTooltip :text="$t('book_list_title')">
+          <PillButton
             icon="i-material-symbols-favorite-outline-rounded"
-            variant="outline"
             :aria-label="$t('book_list_title')"
-            :ui="{
-              base: [TAG_BUTTON_CLASS_LIGHT, TAG_BUTTON_CLASS_BASE],
-              leadingIcon: 'laptop:size-6 translate-y-[1px]',
-            }"
             :to="localeRoute({ name: 'list' })"
             @click="handleBookListTagClick"
           />
@@ -376,14 +275,9 @@ const infiniteScrollDetectorElement = useTemplateRef<HTMLLIElement>('infiniteScr
 const shouldLoadMore = useElementVisibility(infiniteScrollDetectorElement)
 const { handleError } = useErrorHandler()
 const storePageState = useStorePageState()
-const isTablet = useMediaQuery('(max-width: 768px)')
 const isMobile = useMediaQuery('(max-width: 425px)')
 const isAdultContentEnabled = useAdultContentSetting()
 const { isApp } = useAppDetection()
-
-const TAG_BUTTON_CLASS_BASE = 'rounded-full hover:-translate-y-0.5 transition-all'
-const TAG_BUTTON_CLASS_LIGHT = 'bg-(--app-bg) hover:bg-accented/80 hover:dark:bg-muted/80'
-const TAG_BUTTON_CLASS_DARK = 'bg-theme-black dark:bg-theme-cyan hover:bg-theme-black/80 hover:dark:bg-theme-cyan/80 text-theme-cyan dark:text-theme-black'
 
 const querySearchTerm = computed(() => getRouteQuery('q', ''))
 const queryAuthorName = computed(() => getRouteQuery('author', ''))
@@ -490,6 +384,23 @@ function getStakingTagLabel(tagId: string) {
   }
 }
 
+const activeCMSTag = computed(() => {
+  return bookstoreStore.getBookstoreCMSTagById(tagId.value)
+})
+
+function getTagTo(value: string) {
+  if (value === 'local-histories') {
+    return localeRoute({ name: 'local-histories' })
+  }
+  return localeRoute({
+    name: 'store',
+    query: {
+      ...route.query,
+      tag: getIsDefaultTagId(value) ? undefined : value,
+    },
+  })
+}
+
 const allTagItems = computed(() => {
   const stakingTags = STAKING_SORT_OPTIONS
     .map(option => ({
@@ -507,59 +418,33 @@ const allTagItems = computed(() => {
       value: tag.id,
     }))
 
+  // While the full CMS tag list is still loading, surface the active CMS tag
+  // so the bar always renders the current selection.
+  if (
+    !bookstoreStore.hasFetchedBookstoreCMSTags
+    && activeCMSTag.value
+    && !cmsTags.some(t => t.value === activeCMSTag.value!.id)
+  ) {
+    cmsTags.push({
+      label: activeCMSTag.value.name[normalizedLocale.value],
+      value: activeCMSTag.value.id,
+    })
+  }
+
   const localHistoriesTag = {
     label: $t('local_histories_page_title'),
     value: 'local-histories',
     isCustom: true,
   }
 
-  if (isMobile.value) {
-    return [...stakingTags, ...cmsTags, localHistoriesTag]
-  }
-  return [...stakingTags, localHistoriesTag, ...cmsTags]
-})
+  const ordered = isMobile.value
+    ? [...stakingTags, ...cmsTags, localHistoriesTag]
+    : [...stakingTags, localHistoriesTag, ...cmsTags]
 
-const tagsSliceIndex = computed(() => {
-  if (locale.value === 'zh-Hant') {
-    if (isMobile.value) {
-      return 3
-    }
-    if (isTablet.value) {
-      return 4
-    }
-    return 8
-  }
-  if (isMobile.value) {
-    return 2
-  }
-  if (isTablet.value) {
-    return 3
-  }
-  return 5
-})
-
-const fixedTags = computed(() => {
-  return allTagItems.value.slice(0, tagsSliceIndex.value)
-})
-
-const activeTag = computed(() => {
-  return allTagItems.value.find(tag => tag.value === tagId.value)
-})
-
-const activeCMSTag = computed(() => {
-  return bookstoreStore.getBookstoreCMSTagById(tagId.value)
-})
-
-const selectorTagItems = computed(() => {
-  if (!bookstoreStore.hasFetchedBookstoreCMSTags && activeCMSTag.value) {
-    return [
-      {
-        label: activeCMSTag.value.name[normalizedLocale.value],
-        value: activeCMSTag.value.id,
-      },
-    ]
-  }
-  return isDefaultTagId.value ? allTagItems.value.slice(tagsSliceIndex.value) : allTagItems.value
+  return ordered.map(item => ({
+    ...item,
+    to: getTagTo(item.value),
+  }))
 })
 
 function mapTagIdToAPIStakingSortValue(tagId: string): 'staked_amount' | 'last_staked_at' | 'number_of_stakers' {
@@ -1065,11 +950,6 @@ async function handleLogoClick() {
     useLogEvent('store_logo_click')
     storePageState.clear()
   }
-}
-
-async function handleBackButtonClick() {
-  useLogEvent('store_back_button_click')
-  storePageState.clear()
 }
 
 const isSearchInputOpen = ref(false)

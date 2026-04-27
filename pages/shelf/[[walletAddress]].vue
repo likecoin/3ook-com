@@ -93,47 +93,20 @@
           v-if="isMyBookshelf"
           class="flex items-center gap-2 w-full mt-4"
         >
-          <template v-if="isTabsLoading">
-            <USkeleton
-              v-for="(widthClass, i) in ['w-20', 'w-18', 'w-24']"
-              :key="`tab-skeleton-${i + 1}`"
-              :class="[
-                'shrink-0',
-                widthClass,
-                'h-8 laptop:h-9',
-                'rounded-full',
-                'border-2',
-                'border-muted',
-              ]"
-            />
-          </template>
-          <template v-else>
-            <UButton
-              v-for="tab in shelfTabs"
-              :key="tab.value"
-              :label="tab.label"
-              variant="outline"
-              :ui="{
-                base: [
-                  activeTab === tab.value ? TAB_BUTTON_CLASS_DARK : TAB_BUTTON_CLASS_LIGHT,
-                  TAB_BUTTON_CLASS_BASE,
-                  'px-2.5 laptop:px-4',
-                  '!ring-theme-black dark:!ring-muted',
-                ],
-                label: 'text-sm laptop:text-base',
-              }"
-              @click="handleTabClick(tab.value)"
-            />
-          </template>
+          <PillButtonGroup
+            v-model="activeTab"
+            :items="shelfTabs"
+            :is-loading="isTabsLoading"
+            class="grow min-w-0"
+          />
           <UploadBookModal
             v-if="canUploadBook"
             @uploaded="loadBookshelfData(walletAddress!, { isRefresh: true })"
           >
-            <UButton
+            <PillButton
               class="max-laptop:hidden ml-auto"
               :label="$t('uploaded_book_upload_button')"
               icon="i-material-symbols-upload-rounded"
-              variant="soft"
             />
           </UploadBookModal>
         </header>
@@ -380,10 +353,6 @@ interface BookshelfItemWithStaking extends BookshelfItem {
   pendingRewards: number
   isOwned: boolean
 }
-
-const TAB_BUTTON_CLASS_BASE = 'rounded-full hover:-translate-y-0.5 transition-all'
-const TAB_BUTTON_CLASS_LIGHT = 'bg-(--app-bg) hover:bg-accented/80 hover:dark:bg-muted/80'
-const TAB_BUTTON_CLASS_DARK = 'bg-theme-black dark:bg-theme-cyan hover:bg-theme-black/80 hover:dark:bg-theme-cyan/80 text-theme-cyan dark:text-theme-black'
 
 const { likeCoinTokenDecimals } = useRuntimeConfig().public
 const { t: $t } = useI18n()
@@ -652,10 +621,6 @@ const currentTabEmptyMessage = computed(() => {
       return $t('bookshelf_no_items')
   }
 })
-
-function handleTabClick(tab: ShelfTab) {
-  activeTab.value = tab
-}
 
 const itemsCount = computed(() => {
   switch (activeTab.value) {
