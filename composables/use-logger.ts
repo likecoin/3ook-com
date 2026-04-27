@@ -166,6 +166,11 @@ export function useLogEvent(eventName: string, eventParams: EventParams = {}) {
   }
 }
 
+// Guards against `reset()` on the initial null user — stores/account.ts
+// watches with `immediate: true`, so cold loads enter this fn before login
+// state hydrates; resetting then would wipe attribution super-properties.
+let hasIdentifiedPostHog = false
+
 export function useSetLogUser(user: User | null, locale: string) {
   // Set user in Sentry
   if (!user) {
@@ -256,19 +261,38 @@ export function useSetLogUser(user: User | null, locale: string) {
   }
 
   try {
-    const { proxy } = useScriptPostHog()
-    proxy.posthog.identify(
-      user?.evmWallet,
-      user
-        ? {
-            email: user?.email || undefined,
-            name: user?.displayName || user?.evmWallet || user?.likeWallet,
+    const { proxy, onLoaded } = useScriptPostHog()
+    if (user) {
+      hasIdentifiedPostHog = true
+      onLoaded(({ posthog }) => {
+        // Source attribution from persisted super-properties; the URL may have
+        // been stripped by a Magic Link redirect before identify fires.
+        const lastTouch: Record<string, string> = {}
+        const firstTouch: Record<string, string> = {}
+        for (const key of POSTHOG_ATTRIBUTION_KEYS) {
+          const last = posthog.get_property(key)
+          if (typeof last === 'string' && last) lastTouch[key] = last
+          const first = posthog.get_property(`initial_${key}`)
+          if (typeof first === 'string' && first) firstTouch[`initial_${key}`] = first
+        }
+        posthog.identify(
+          user.evmWallet,
+          {
+            email: user.email || undefined,
+            name: user.displayName || user.evmWallet || user.likeWallet,
             locale,
             is_liker_plus: !!user.isLikerPlus,
             login_method: user.loginMethod,
-          }
-        : undefined,
-    )
+            ...lastTouch,
+          },
+          firstTouch,
+        )
+      })
+    }
+    else if (hasIdentifiedPostHog) {
+      hasIdentifiedPostHog = false
+      proxy.posthog.reset()
+    }
   }
   catch (error) {
     console.error('Failed to set user data in PostHog', error)
