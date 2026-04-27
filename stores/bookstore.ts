@@ -107,7 +107,9 @@ export const useBookstoreStore = defineStore('bookstore', () => {
         bookstoreCMSProductsByTagIdMap.value[tagId].mayHaveMore = false
       }
       else {
-        bookstoreCMSProductsByTagIdMap.value[tagId].mayHaveMore = result.hasMore ?? (!result.offset && result.records.length >= DEFAULT_PAGE_SIZE)
+        // The full-page heuristic only applies to page-1 fetches (cache may have dropped the offset).
+        // For paginated requests, trust the server's offset — a missing offset means we've reached the end, even if the page was full.
+        bookstoreCMSProductsByTagIdMap.value[tagId].mayHaveMore = result.hasMore ?? (!fetchOffset && !result.offset && result.records.length >= DEFAULT_PAGE_SIZE)
       }
       bookstoreCMSProductsByTagIdMap.value[tagId].hasFetched = true
     }
