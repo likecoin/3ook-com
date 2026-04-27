@@ -27,11 +27,16 @@
       >
         <AppLogo v-if="props.isShowLogo" />
       </ULink>
-      <ULink
-        class="border-b leading-5"
-        to="https://github.com/likecoin/3ook-com?tab=GPL-3.0-1-ov-file#readme"
-        target="_blank"
-      >{{ $t('footer_license') }}</ULink>
+      <div class="flex items-center gap-2 leading-5">
+        <ULink
+          class="border-b"
+          to="https://github.com/likecoin/3ook-com?tab=GPL-3.0-1-ov-file#readme"
+          target="_blank"
+          rel="noopener noreferrer"
+        >{{ $t('footer_license') }}</ULink>
+        <span>·</span>
+        <span>Liker Land, Inc.</span>
+      </div>
       <nav>
         <ul class="flex justify-center items-center flex-wrap gap-4 gap-y-1">
           <li>

@@ -73,22 +73,18 @@ export function useMemberProgramStructuredData() {
 }
 
 function generateBookOffer({
-  sellerWalletAddress,
   canonicalURL,
   priceIndex,
   price,
   isSoldOut,
-  isAutoDeliver,
   productId,
   baseURL,
   validForMemberTier,
 }: {
-  sellerWalletAddress?: string
   canonicalURL: string
   priceIndex: number
   price: number
   isSoldOut: boolean
-  isAutoDeliver: boolean
   productId: string
   baseURL: string
   validForMemberTier?: Array<{
@@ -103,49 +99,18 @@ function generateBookOffer({
   const offer: Record<string, unknown> = {
     '@context': 'https://schema.org',
     '@type': 'Offer',
-    'seller': sellerWalletAddress
-      ? {
-          '@context': 'https://schema.org',
-          '@type': 'Person',
-          'identifier': sellerWalletAddress,
-        }
-      : undefined,
+    'seller': {
+      '@type': 'Organization',
+      'name': '3ook.com',
+      'legalName': 'Liker Land, Inc.',
+      'url': baseURL,
+    },
     'url': `${canonicalURL}?price_index=${priceIndex}`,
     'price': price,
     'priceCurrency': 'USD',
-    'availability': isSoldOut ? 'https://schema.org/SoldOut' : 'https://schema.org/LimitedAvailability',
+    'availability': isSoldOut ? 'https://schema.org/SoldOut' : 'https://schema.org/InStock',
     'itemCondition': 'https://schema.org/NewCondition',
     'checkoutPageURLTemplate': `${baseURL}/checkout?products=${productId}&utm_medium=structured-data`,
-    'shippingDetails': {
-      '@type': 'OfferShippingDetails',
-      'shippingRate': {
-        '@type': 'MonetaryAmount',
-        'value': 0,
-        'currency': 'USD',
-      },
-      'deliveryTime': {
-        '@type': 'ShippingDeliveryTime',
-        'handlingTime': !isAutoDeliver
-          ? {
-              '@type': 'QuantitativeValue',
-              'minValue': 1,
-              'maxValue': 7,
-              'unitCode': 'DAY',
-            }
-          : {
-              '@type': 'QuantitativeValue',
-              'minValue': 0,
-              'maxValue': 0,
-              'unitCode': 'DAY',
-            },
-        'transitTime': {
-          '@type': 'QuantitativeValue',
-          'minValue': 0,
-          'maxValue': 0,
-          'unitCode': 'DAY',
-        },
-      },
-    },
     'hasMerchantReturnPolicy': {
       '@type': 'MerchantReturnPolicy',
       'returnPolicyCategory': 'https://schema.org/MerchantReturnNotPermitted',
@@ -162,13 +127,13 @@ function generateBookOffer({
 function generateReadAction({
   urlTemplate,
   nftClassId,
-  sellerWalletAddress,
+  baseURL,
   price,
   isSoldOut = false,
 }: {
   urlTemplate: string
   nftClassId: string
-  sellerWalletAddress?: string
+  baseURL: string
   price?: number
   isSoldOut?: boolean
 }) {
@@ -188,14 +153,12 @@ function generateReadAction({
   if (price !== undefined) {
     const productId = `${nftClassId}-${0}`
     const offer = generateBookOffer({
-      sellerWalletAddress: sellerWalletAddress,
       canonicalURL: urlTemplate,
       priceIndex: 0,
       price,
       isSoldOut,
-      isAutoDeliver: true,
       productId,
-      baseURL: urlTemplate,
+      baseURL,
     })
 
     action.expectsAcceptanceOf = offer
@@ -250,6 +213,7 @@ export function useStorePageStructuredData({
             'potentialAction': generateReadAction({
               nftClassId: item.classId!,
               urlTemplate: `${baseURL}/store/${item.classId}`,
+              baseURL,
               price: item.minPrice,
             }),
           },
@@ -327,7 +291,7 @@ export function useStructuredData(
     },
     {
       property: 'product:category',
-      content: 543542, // ebook
+      content: 'Media > Books > E-Books',
     },
     {
       property: 'product:condition',
@@ -459,25 +423,20 @@ export function useStructuredData(
           }),
         }),
         'offers': [
-          // Regular offer for all users
           generateBookOffer({
-            sellerWalletAddress: bookInfo.nftClassOwnerWalletAddress.value,
             canonicalURL,
             priceIndex: pricing.index,
             price: pricing?.price || 0,
             isSoldOut: pricing?.isSoldOut || false,
-            isAutoDeliver: pricing.isAutoDeliver,
             productId,
             baseURL,
           }),
           ...(pricing?.price > 0 && getPlusDiscountRate()
             ? [generateBookOffer({
-                sellerWalletAddress: bookInfo.nftClassOwnerWalletAddress.value,
                 canonicalURL,
                 priceIndex: pricing.index,
                 price: pricing.price * getPlusDiscountRate(),
                 isSoldOut: pricing?.isSoldOut || false,
-                isAutoDeliver: pricing.isAutoDeliver,
                 productId,
                 baseURL,
                 validForMemberTier: memberProgramTiers.value,
@@ -485,9 +444,9 @@ export function useStructuredData(
             : []),
         ],
         'potentialAction': generateReadAction({
-          sellerWalletAddress: bookInfo.nftClassOwnerWalletAddress.value,
           nftClassId: nftClassIdValue,
           urlTemplate: `${baseURL}/store/${nftClassIdValue}`,
+          baseURL,
           price: pricing?.price || 0,
           isSoldOut: pricing?.isSoldOut || false,
         }),

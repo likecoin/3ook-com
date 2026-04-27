@@ -160,8 +160,9 @@ useHead({
         '@context': 'https://schema.org',
         '@type': 'OnlineStore',
         'name': ogTitle,
+        'legalName': 'Liker Land, Inc.',
         'description': ogDescription,
-        'alternateName': ['3ook.com decentralized bookstore', 'Liker Land 電子書店', 'Liker Land'],
+        'alternateName': ['Liker Land 電子書店', 'Liker Land'],
         'sameAs': [
           'https://linktr.ee/3ookcom',
           'https://www.instagram.com/3ookcom',
@@ -169,9 +170,25 @@ useHead({
           'https://review.3ook.com',
           'https://x.com/3ookcom',
           'https://www.threads.com/@3ookcom',
+          'https://www.linkedin.com/company/3ookcom',
         ],
         'url': ogURL,
         'logo': ogImage,
+        'email': 'cs@3ook.com',
+        'contactPoint': [
+          {
+            '@type': 'ContactPoint',
+            'contactType': 'customer service',
+            'email': 'cs@3ook.com',
+            'availableLanguage': ['English', 'Chinese'],
+          },
+          {
+            '@type': 'ContactPoint',
+            'contactType': 'customer service',
+            'url': 'https://wa.me/15558049733',
+            'availableLanguage': ['English', 'Chinese'],
+          },
+        ],
         'brand': [
           {
             '@context': 'https://schema.org',
