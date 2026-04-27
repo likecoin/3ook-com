@@ -82,8 +82,18 @@ body {
   opacity: 0;
 }
 
+.markdown {
+  overflow-wrap: anywhere;
+}
+
 .markdown ul {
   list-style-type: disc;
+  padding-left: 1.25rem;
+  margin-left: 1rem;
+}
+
+.markdown ol {
+  list-style-type: decimal;
   padding-left: 1.25rem;
   margin-left: 1rem;
 }

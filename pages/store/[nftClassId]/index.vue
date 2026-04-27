@@ -914,7 +914,8 @@ const md = new MarkdownIt({
   linkify: true,
   breaks: true,
 })
-md.disable('fence') // Disable code fences (~~~ / ```) — descriptions often contain ~~~ as decorative separators, not code
+// Descriptions use ~~~ as separators and indented lines for layout, not code
+md.disable(['fence', 'code'])
 
 // In app mode, strip all URLs from descriptions:
 // - Plain text URLs (https://..., http://...)
