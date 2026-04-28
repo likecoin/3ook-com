@@ -61,18 +61,24 @@
         v-else-if="campaignContent"
         class="relative max-laptop:shrink-0 w-full min-h-max bg-theme-black"
       >
-        <div class="max-laptop:hidden absolute inset-0 overflow-hidden">
+        <ClientOnly>
+          <div
+            v-if="isDesktopScreen"
+            class="absolute inset-0 overflow-hidden"
+          >
+            <PricingPageCampaignMedia
+              class="absolute inset-x-0 w-full top-1/2 -translate-y-1/2"
+              :campaign-id="campaignContent.id"
+              orientation="portrait"
+            />
+          </div>
           <PricingPageCampaignMedia
-            class="absolute inset-x-0 w-full top-1/2 -translate-y-1/2"
+            v-else
+            class="w-full"
             :campaign-id="campaignContent.id"
-            orientation="portrait"
+            orientation="landscape"
           />
-        </div>
-        <PricingPageCampaignMedia
-          class="laptop:hidden w-full"
-          :campaign-id="campaignContent.id"
-          orientation="landscape"
-        />
+        </ClientOnly>
       </aside>
       <aside
         v-else

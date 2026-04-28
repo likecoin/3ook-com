@@ -3,6 +3,7 @@
     v-if="campaignContent?.isVideo"
     :src="videoSrc"
     :poster="imageSrc"
+    :class="aspectClass"
     :controls="false"
     preload="metadata"
     playsinline
@@ -13,6 +14,7 @@
   <img
     v-else-if="campaignContent?.isImage"
     class="object-contain object-center"
+    :class="aspectClass"
     :src="imageSrc"
     :alt="campaignContent?.title || ''"
   >
@@ -39,4 +41,6 @@ const filepath = computed(() => {
 })
 const videoSrc = computed(() => `${filepath.value}.mp4`)
 const imageSrc = computed(() => `${filepath.value}.jpg`)
+
+const aspectClass = computed(() => props.orientation === 'portrait' ? 'aspect-[9/16]' : 'aspect-video')
 </script>
