@@ -54,7 +54,7 @@
     "pdfjs-dist": "^5.3.31",
     "pinia": "^3.0.1",
     "pinia-plugin-persistedstate": "^4.7.1",
-    "posthog-js": "^1.364.1",
+    "posthog-js": "^1.372.3",
     "unstorage": "^1.17.1",
     "v-gsap-nuxt": "^1.4.4",
     "valibot": "^1.2.0",
