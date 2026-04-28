@@ -254,6 +254,7 @@ export default defineNuxtConfig({
         'frame-src': isDevelopment
           ? ['*']
           : [
+              '\'self\'',
               'https://auth.magic.link',
               'https://checkout.stripe.com',
               'https://js.stripe.com',
