@@ -125,7 +125,7 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
       await bookSettingsStore.fetchBatchSettings(Array.from(progressFetchNFTClassIds), { force: isRefresh })
       if (isStale()) return
 
-      nextKey.value = res.pagination.count < limit ? undefined : res.pagination.next_key
+      nextKey.value = res.data.length < limit ? undefined : res.pagination.next_key
       persistedWalletAddress.value = normalizedWalletAddress ?? null
       lastError.value = null
     }

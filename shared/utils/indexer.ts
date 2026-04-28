@@ -132,24 +132,11 @@ export async function fetchNFTClassesByMetadata(
     const queryOptions = getIndexerQueryOptions(options)
     const actualLimit = parseInt(queryOptions['pagination.limit'] || '30')
 
-    let combinedNextKey: number | undefined
-    if (authorNameResult.pagination.count < actualLimit && authorResult.pagination.count < actualLimit) {
-      combinedNextKey = undefined
-    }
-    else {
-      const authorNameNextKey = authorNameResult.pagination.count === actualLimit ? authorNameResult.pagination.next_key : undefined
-      const authorNextKey = authorResult.pagination.count === actualLimit ? authorResult.pagination.next_key : undefined
-
-      if (authorNameNextKey !== undefined && authorNextKey !== undefined) {
-        combinedNextKey = Math.min(authorNameNextKey, authorNextKey)
-      }
-      else if (authorNameNextKey !== undefined) {
-        combinedNextKey = authorNameNextKey
-      }
-      else if (authorNextKey !== undefined) {
-        combinedNextKey = authorNextKey
-      }
-    }
+    const authorNameNextKey = authorNameResult.data.length >= actualLimit ? authorNameResult.pagination.next_key : undefined
+    const authorNextKey = authorResult.data.length >= actualLimit ? authorResult.pagination.next_key : undefined
+    const combinedNextKey = authorNameNextKey !== undefined && authorNextKey !== undefined
+      ? Math.min(authorNameNextKey, authorNextKey)
+      : authorNameNextKey ?? authorNextKey
 
     return {
       data: combinedData,
