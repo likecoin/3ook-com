@@ -226,7 +226,9 @@ export default defineNuxtConfig({
       intercom: {
         trigger: { idleTimeout: 3000 },
       },
-      metaPixel: true,
+      metaPixel: {
+        proxy: false,
+      },
       posthog: POSTHOG_PUBLIC_KEY
         ? {
             trigger: 'onNuxtReady',
