@@ -23,21 +23,10 @@
             icon="i-material-symbols-person-2-rounded"
             size="lg"
           />
-          <UBadge
+          <UserAvatarPlusBadge
             v-if="user?.isLikerPlus"
-            class="absolute bottom-0 translate-y-1/2"
-            size="xs"
-            :variant="item.isActive ? 'solid' : 'outline'"
-            :ui="{
-              base: [
-                'rounded-full',
-                item.isActive
-                  ? 'bg-theme-black dark:bg-theme-cyan text-theme-cyan dark:text-theme-black'
-                  : 'bg-theme-white dark:bg-theme-black',
-                'font-bold',
-              ],
-            }"
-          >PLUS</UBadge>
+            :is-inverted="item.isActive"
+          />
         </NuxtLink>
         <UButton
           v-else
