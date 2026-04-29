@@ -2,7 +2,7 @@
   <main class="flex flex-col space-y-4">
     <section
       v-if="hasLoggedIn"
-      class="flex flex-col items-center gap-3 pt-2"
+      class="flex flex-col items-center gap-3"
     >
       <div class="relative">
         <UAvatar
@@ -12,15 +12,17 @@
           icon="i-material-symbols-person-2-rounded"
           size="3xl"
         />
-        <UButton
-          class="absolute -bottom-1 -right-1 rounded-full"
-          icon="i-material-symbols-edit-outline-rounded"
-          variant="outline"
-          color="primary"
-          :loading="isUploadingAvatar"
-          :aria-label="$t('account_page_avatar_change_avatar')"
-          @click="handleAvatarEditButtonClick"
-        />
+        <div class="absolute -bottom-1 -right-1 rounded-full bg-(--app-bg)">
+          <UButton
+            class="rounded-[inherit]"
+            icon="i-material-symbols-edit-outline-rounded"
+            variant="outline"
+            color="primary"
+            :loading="isUploadingAvatar"
+            :aria-label="$t('account_page_avatar_change_avatar')"
+            @click="handleAvatarEditButtonClick"
+          />
+        </div>
         <input
           ref="avatarFileInput"
           class="hidden"
@@ -502,7 +504,7 @@
     </template>
 
     <UModal
-      v-model:open="isDisplayNameEditOpen"
+      v-model:open="isDisplayNameEditModalOpen"
       :title="$t('account_page_display_name_edit_title')"
       :dismissible="!isUpdatingDisplayName"
       :close="!isUpdatingDisplayName"
@@ -528,7 +530,7 @@
           variant="outline"
           color="neutral"
           :disabled="isUpdatingDisplayName"
-          @click="isDisplayNameEditOpen = false"
+          @click="isDisplayNameEditModalOpen = false"
         />
         <UButton
           :label="$t('account_page_display_name_edit_save')"
@@ -641,7 +643,7 @@ const AVATAR_MAX_BYTES = 2 * 1024 * 1024
 const avatarFileInput = useTemplateRef<HTMLInputElement>('avatarFileInput')
 const isUploadingAvatar = ref(false)
 
-const isDisplayNameEditOpen = ref(false)
+const isDisplayNameEditModalOpen = ref(false)
 const isUpdatingDisplayName = ref(false)
 const displayNameInput = ref('')
 const isDisplayNameInputValid = computed(() => {
@@ -808,7 +810,7 @@ async function handleLogout() {
 function handleDisplayNameEditButtonClick() {
   useLogEvent('account_display_name_edit_click')
   displayNameInput.value = user.value?.displayName ?? ''
-  isDisplayNameEditOpen.value = true
+  isDisplayNameEditModalOpen.value = true
 }
 
 async function confirmDisplayNameEdit() {
@@ -830,7 +832,7 @@ async function confirmDisplayNameEdit() {
       title: $t('account_page_display_name_update_success'),
       color: 'success',
     })
-    isDisplayNameEditOpen.value = false
+    isDisplayNameEditModalOpen.value = false
     try {
       await accountStore.refreshSessionInfo()
     }

@@ -72,7 +72,7 @@
       </UCard>
     </aside>
 
-    <NuxtPage class="px-4 phone:grow" />
+    <NuxtPage class="px-4 phone:grow not-first:mt-2" />
   </NuxtLayout>
 </template>
 
