@@ -137,10 +137,7 @@ useHead({
       href: 'https://www.threads.com/@3ookcom',
     },
     ...(likeCoinAPIEndpoint
-      ? [
-          { rel: 'preconnect', href: likeCoinAPIEndpoint, key: 'preconnect-like-api' },
-          { rel: 'preconnect', href: likeCoinAPIEndpoint, crossorigin: '', key: 'preconnect-like-api-crossorigin' },
-        ]
+      ? [{ rel: 'preconnect', href: likeCoinAPIEndpoint, crossorigin: '', key: 'preconnect-like-api' }]
       : []),
     ...(likeCoinStaticEndpoint
       ? [{ rel: 'preconnect', href: likeCoinStaticEndpoint, key: 'preconnect-like-static' }]
