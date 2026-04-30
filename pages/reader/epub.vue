@@ -22,94 +22,77 @@
       >
         <template #trailing>
           <div class="relative flex justify-end items-center gap-2">
-            <BottomSlideover
-              v-model:open="isMobileTocOpen"
-              :title="$t('reader_toc_title')"
-              @update:open="handleMobileTocOpen"
-            >
-              <UButton
-                class="laptop:hidden"
-                icon="i-material-symbols-format-list-bulleted"
-                :disabled="isReaderLoading || !navItems.length"
-                variant="ghost"
-              />
-
-              <template #body>
-                <ul class="divide-gray-500 divide-y">
-                  <li
-                    v-for="item in navItems"
-                    :key="item.href"
-                    :ref="item.href === activeNavItemHref ? 'mobileActiveNavItemElements' : undefined"
-                  >
-                    <UButton
-                      :label="item.label"
-                      variant="link"
-                      :color="item.href === activeNavItemHref ? 'primary' : 'neutral'"
-                      :trailing-icon="item.href === activeNavItemHref ? 'i-material-symbols-visibility-rounded' : undefined"
-                      block
-                      :ui="{
-                        label: 'text-left leading-[44px]',
-                        base: 'justify-start pl-6 pr-5.5 py-0',
-                      }"
-                      @click="() => {
-                        isMobileTocOpen = false
-                        setActiveNavItem(item)
-                      }"
-                    />
-                  </li>
-                </ul>
-              </template>
-            </BottomSlideover>
             <USlideover
-              v-model:open="isDesktopTocOpen"
-              :title="$t('reader_toc_title')"
+              v-model:open="isLeftSidebarOpen"
               side="left"
-              :close="{
-                color: 'neutral',
-                variant: 'soft',
-                class: 'rounded-full',
-              }"
-              :overlay="false"
+              :close="false"
               :ui="{
-                header: 'py-3 min-h-14',
-                close: 'top-3',
-                body: 'p-0 sm:p-0',
-                content: 'divide-gray-500 ring-gray-500',
+                body: 'p-0 sm:p-0 flex flex-col overflow-hidden',
+                content: 'max-w-[calc(100vw-44px)] laptop:max-w-[425px] border-r border-gray-500',
               }"
-              @update:open="handleDesktopTocOpen"
             >
               <UButton
-                class="max-laptop:hidden"
+                :aria-label="$t('reader_menu_button')"
                 icon="i-material-symbols-format-list-bulleted"
-                :label="$t('reader_toc_button')"
-                :disabled="!navItems.length"
+                :disabled="isReaderLoading"
                 variant="ghost"
+                color="neutral"
+                @click="handleLeftSidebarTriggerClick"
               />
 
               <template #body>
-                <ul class="pb-[64px] divide-gray-500 divide-y">
-                  <li
-                    v-for="item in navItems"
-                    :ref="item.href === activeNavItemHref ? 'desktopActiveNavItemElements' : undefined"
-                    :key="item.href"
-                  >
-                    <UButton
-                      :label="item.label"
-                      variant="link"
-                      :color="item.href === activeNavItemHref ? 'primary' : 'neutral'"
-                      :ui="{
-                        label: 'text-left leading-[44px]',
-                        base: 'justify-start pl-6 pr-5.5 py-0',
-                      }"
-                      :trailing-icon="item.href === activeNavItemHref ? 'i-material-symbols-visibility-rounded' : undefined"
-                      block
-                      @click="() => {
-                        isDesktopTocOpen = false
-                        setActiveNavItem(item)
-                      }"
+                <UTabs
+                  v-model="leftSidebarTab"
+                  :items="leftSidebarTabItems"
+                  class="h-full"
+                  color="neutral"
+                  :ui="{
+                    root: 'gap-0',
+                    list: 'shrink-0 min-h-[56px] bg-transparent border-b border-gray-500 rounded-none',
+                    content: 'flex-1 min-h-0 overflow-y-auto p-0',
+                  }"
+                >
+                  <template #toc>
+                    <p
+                      v-if="!navItems.length"
+                      class="text-muted py-8 text-center"
+                      v-text="$t('reader_toc_empty')"
                     />
-                  </li>
-                </ul>
+                    <ul
+                      v-else
+                      class="divide-muted divide-y"
+                    >
+                      <li
+                        v-for="item in navItems"
+                        :ref="item.href === activeNavItemHref ? 'activeNavItemElements' : undefined"
+                        :key="item.href"
+                      >
+                        <UButton
+                          :label="item.label"
+                          variant="link"
+                          :color="item.href === activeNavItemHref ? 'primary' : 'neutral'"
+                          :ui="{
+                            label: 'text-left leading-[44px]',
+                            base: 'justify-start pl-6 pr-5.5 py-0',
+                          }"
+                          :trailing-icon="item.href === activeNavItemHref ? 'i-material-symbols-visibility-rounded' : undefined"
+                          block
+                          @click="() => {
+                            isLeftSidebarOpen = false
+                            setActiveNavItem(item)
+                          }"
+                        />
+                      </li>
+                    </ul>
+                  </template>
+
+                  <template #annotations>
+                    <AnnotationsList
+                      :annotations="annotations"
+                      @navigate="handleAnnotationNavigate"
+                    />
+                  </template>
+                </UTabs>
               </template>
             </USlideover>
             <UButton
@@ -240,23 +223,6 @@
                     @click="restoreDefaultDisplayOptions"
                   />
                 </div>
-              </template>
-            </BottomSlideover>
-
-            <BottomSlideover
-              v-model:open="isAnnotationsListOpen"
-              :title="$t('reader_annotations_title')"
-            >
-              <UButton
-                icon="i-material-symbols-edit-note-rounded"
-                variant="ghost"
-              />
-
-              <template #body>
-                <AnnotationsList
-                  :annotations="annotations"
-                  @navigate="handleAnnotationNavigate"
-                />
               </template>
             </BottomSlideover>
           </div>
@@ -448,24 +414,21 @@ function getCacheKeyWithSuffix(suffix: ReaderCacheKeySuffix) {
 
 const isReaderLoading = ref(true)
 
-const isTocOpen = ref(false)
-const isDesktop = useDesktopScreen()
-watch(isDesktop, async () => {
-  // Close the TOC when switching to desktop/mobile
-  isTocOpen.value = false
-})
-const isDesktopTocOpen = computed({
-  get: () => isDesktop.value && isTocOpen.value,
-  set: (open) => {
-    isTocOpen.value = open
+type LeftSidebarTab = 'toc' | 'annotations'
+const isLeftSidebarOpen = ref(false)
+const leftSidebarTab = ref<LeftSidebarTab>('toc')
+const leftSidebarTabItems = computed(() => [
+  {
+    value: 'toc',
+    slot: 'toc' as const,
+    label: $t('reader_toc_title'),
   },
-})
-const isMobileTocOpen = computed({
-  get: () => !isDesktop.value && isTocOpen.value,
-  set: (open) => {
-    isTocOpen.value = open
+  {
+    value: 'annotations',
+    slot: 'annotations' as const,
+    label: $t('reader_annotations_title'),
   },
-})
+])
 
 const { isIOS, isAndroid, isApp } = useAppDetection()
 
@@ -480,7 +443,6 @@ const isAnnotationModalOpen = ref(false)
 const editingAnnotation = ref<Annotation | null>(null)
 const isNewAnnotation = ref(false)
 const pendingAnnotationColor = ref<AnnotationColor>('yellow')
-const isAnnotationsListOpen = ref(false)
 const isSearchOpen = ref(false)
 const readerSearch = useTemplateRef<{ open: () => void } | null>('readerSearch')
 const isAnnotationClickInProgress = ref(false)
@@ -1403,33 +1365,25 @@ async function restoreDefaultDisplayOptions() {
   }
 }
 
-const desktopActiveNavItemElements = useTemplateRef<HTMLLIElement[]>('desktopActiveNavItemElements')
+const activeNavItemElements = useTemplateRef<HTMLLIElement[]>('activeNavItemElements')
 
-async function handleDesktopTocOpen(open: boolean) {
-  if (open) {
-    useLogEvent('reader_toc_open', { nft_class_id: nftClassId.value })
-    await nextTick()
-    const element = desktopActiveNavItemElements.value?.[0]
-    if (element) {
-      // Scroll the active nav item to the center of the desktop screen
-      element.scrollIntoView({ block: 'center', inline: 'center' })
-    }
-  }
+function handleLeftSidebarTriggerClick() {
+  if (isLeftSidebarOpen.value) return
+  leftSidebarTab.value = navItems.value.length ? 'toc' : 'annotations'
 }
 
-const mobileActiveNavItemElements = useTemplateRef<HTMLLIElement[]>('mobileActiveNavItemElements')
-
-async function handleMobileTocOpen(open: boolean) {
-  if (open) {
-    useLogEvent('reader_toc_open', { nft_class_id: nftClassId.value })
-    await nextTick()
-    const element = mobileActiveNavItemElements.value?.[0]
-    if (element) {
-      // Scroll the active nav item to the center of the mobile screen
-      element.scrollIntoView({ block: 'center', inline: 'center' })
-    }
-  }
+async function handleTOCTabShown() {
+  useLogEvent('reader_toc_open', { nft_class_id: nftClassId.value })
+  await nextTick()
+  if (!isLeftSidebarOpen.value || leftSidebarTab.value !== 'toc') return
+  activeNavItemElements.value?.[0]?.scrollIntoView({ block: 'center', inline: 'center' })
 }
+
+watch([isLeftSidebarOpen, leftSidebarTab], ([open, tab]) => {
+  if (!open) return
+  if (tab !== 'toc') return
+  void handleTOCTabShown()
+})
 
 let ttsExtractionPromise: Promise<void> | undefined
 async function ensureTTSExtracted() {
@@ -1953,7 +1907,7 @@ async function handleAnnotationModalDelete() {
 }
 
 async function handleAnnotationNavigate(annotation: Annotation) {
-  isAnnotationsListOpen.value = false
+  isLeftSidebarOpen.value = false
   isPageLoading.value = true
   try {
     const cfi = new EpubCFI(annotation.cfi)

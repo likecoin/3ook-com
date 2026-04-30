@@ -1,19 +1,15 @@
 <template>
-  <div class="flex flex-col h-full">
-    <div
+  <div>
+    <p
       v-if="annotations.length === 0"
-      class="flex-1 flex items-center justify-center text-muted py-8"
+      class="text-muted py-8 text-center"
       v-text="$t('reader_annotations_empty')"
     />
-
-    <div
-      v-else
-      class="flex-1 overflow-y-auto"
-    >
+    <div v-else>
       <button
         v-for="annotation in sortedAnnotations"
         :key="annotation.id"
-        class="w-full text-left px-4 py-3 border-b cursor-pointer hover:bg-muted transition-colors"
+        class="w-full text-left px-4 py-3 border-b border-muted cursor-pointer hover:bg-muted transition-colors"
         @click="handleAnnotationClick(annotation)"
       >
         <div class="flex items-start gap-3">
