@@ -76,70 +76,28 @@
       </template>
       <template #trailing>
         <div class="flex items-center gap-2">
-          <BottomSlideover
-            v-model:open="isMobileTocOpen"
-            :title="$t('reader_toc_title')"
-            :is-disabled="!outlineItems.length"
-          >
-            <UButton
-              class="laptop:hidden"
-              icon="i-material-symbols-format-list-bulleted"
-              :disabled="!outlineItems.length"
-              variant="ghost"
-            />
-
-            <template #body>
-              <ul class="divide-gray-500 divide-y">
-                <li
-                  v-for="(item, index) in outlineItems"
-                  :key="index"
-                >
-                  <UButton
-                    :label="item.title"
-                    variant="link"
-                    :color="isTocItemActive(item.pageNumber) ? 'primary' : 'neutral'"
-                    block
-                    :ui="{
-                      label: 'text-left leading-[44px]',
-                      base: 'justify-start pl-6 pr-5.5 py-0',
-                    }"
-                    :style="item.level > 0 ? { paddingLeft: `${(item.level + 1) * 16}px` } : undefined"
-                    @click="() => {
-                      isMobileTocOpen = false
-                      goToPage(item.pageNumber)
-                    }"
-                  />
-                </li>
-              </ul>
-            </template>
-          </BottomSlideover>
           <USlideover
-            v-model:open="isDesktopTocOpen"
-            :title="$t('reader_toc_title')"
+            v-model:open="isLeftSidebarOpen"
             side="left"
-            :close="{
-              color: 'neutral',
-              variant: 'soft',
-              class: 'rounded-full',
-            }"
-            :overlay="false"
+            :close="false"
             :ui="{
-              header: 'py-3 min-h-14',
-              close: 'top-3',
-              body: 'p-0 sm:p-0',
-              content: 'divide-gray-500 ring-gray-500',
+              body: 'p-0 sm:p-0 flex flex-col overflow-y-auto',
+              content: 'max-w-[calc(100vw-44px)] laptop:max-w-[425px] border-r border-gray-500',
             }"
           >
             <UButton
-              class="max-laptop:hidden"
+              :aria-label="$t('reader_toc_button')"
               icon="i-material-symbols-format-list-bulleted"
-              :label="$t('reader_toc_button')"
               :disabled="!outlineItems.length"
               variant="ghost"
+              color="neutral"
             />
 
             <template #body>
-              <ul class="pb-[64px] divide-gray-500 divide-y">
+              <ul
+                v-if="outlineItems.length"
+                class="divide-gray-500 divide-y"
+              >
                 <li
                   v-for="(item, index) in outlineItems"
                   :key="index"
@@ -155,7 +113,7 @@
                     }"
                     :style="item.level > 0 ? { paddingLeft: `${(item.level + 1) * 16}px` } : undefined"
                     @click="() => {
-                      isDesktopTocOpen = false
+                      isLeftSidebarOpen = false
                       goToPage(item.pageNumber)
                     }"
                   />
@@ -443,20 +401,8 @@ interface OutlineItem {
 }
 
 const outlineItems = ref<OutlineItem[]>([])
-const isTocOpen = ref(false)
+const isLeftSidebarOpen = ref(false)
 const isSearchOpen = ref(false)
-const isDesktop = useDesktopScreen()
-watch(isDesktop, () => {
-  isTocOpen.value = false
-})
-const isDesktopTocOpen = computed({
-  get: () => isDesktop.value && isTocOpen.value,
-  set: (open) => { isTocOpen.value = open },
-})
-const isMobileTocOpen = computed({
-  get: () => !isDesktop.value && isTocOpen.value,
-  set: (open) => { isTocOpen.value = open },
-})
 
 const emit = defineEmits<{
   error: [error: Error]
