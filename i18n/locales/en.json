@@ -872,6 +872,8 @@
   "tts_sample_mandarin_description": "Read by Aurora",
   "tts_samples_section_footer": "Subscribe to Plus and unlock more voices to enjoy.",
   "tts_samples_section_title": "Try Text-to-Speech",
+  "tts_session_expired_description": "Please log in again to continue listening.",
+  "tts_session_expired_title": "Your session has expired",
   "tts_trial_chip_exhausted_label": "Free trial used. Upgrade now!",
   "tts_trial_chip_progress_label": "{minutes} min left in free trial",
   "tts_trial_chip_upgrade_cta": "Upgrade to Plus for unlimited listening and custom voices",

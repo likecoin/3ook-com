@@ -226,7 +226,8 @@ import { TTS_ERROR_NOT_ALLOWED } from '~/composables/use-text-to-speech'
 import { encodeAffiliateVoiceId } from '~/shared/utils/tts-sig'
 import { estimateTTSMinutes } from '~/shared/utils/tts-trial'
 
-const { user, loggedIn: hasLoggedIn } = useUserSession()
+const { user, loggedIn: hasLoggedIn, fetch: refreshSession } = useUserSession()
+const accountStore = useAccountStore()
 const subscription = useSubscriptionModal()
 const { errorModal, handleError } = useErrorHandler()
 
@@ -347,7 +348,7 @@ const {
   bookLanguage: props.bookLanguage,
   customVoice,
   affiliateVoices,
-  onError: (error: string | Event | MediaError) => {
+  onError: async (error: string | Event | MediaError) => {
     // Autoplay was blocked by the browser because the modal auto-started
     // without a user gesture (e.g. reloading the reader with ?tts=1). The
     // composable has already reset playback state — leave the modal open so
@@ -355,21 +356,30 @@ const {
     if (error === TTS_ERROR_NOT_ALLOWED) {
       return
     }
-    if (
-      !user.value?.isLikerPlus
-      && (
-        (
-          typeof error === 'string'
-          && error === 'NotSupportedError'
-        )
-        || (
-          error instanceof MediaError
-          && error.code === MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED
-        )
-      )
-    ) {
-      handleTrialExhausted('server_402')
-      return
+    const isAuthLikeError = (
+      typeof error === 'string' && error === 'NotSupportedError'
+    ) || (
+      error instanceof MediaError && error.code === MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED
+    )
+    if (isAuthLikeError) {
+      // <audio> collapses HTTP 401 / 402 / 403 into MEDIA_ERR_SRC_NOT_SUPPORTED,
+      // so a stale cached `user` would misclassify a logged-out cookie state
+      // as "non-Plus" and wrongly trigger the upsell. Refresh first.
+      try {
+        await refreshSession()
+      }
+      catch {
+        // Tolerate refresh failure — fall through with cached state.
+      }
+      if (!hasLoggedIn.value) {
+        handleSessionExpired()
+        return
+      }
+      if (!user.value?.isLikerPlus) {
+        handleTrialExhausted('server_402')
+        return
+      }
+      // Plus user → real media error, fall through.
     }
     if (error instanceof MediaError) {
       handleError(new Error(`MediaError ${formatTTSError(error)}`))
@@ -405,6 +415,25 @@ function handleTrialExhausted(source: 'server_402' | 'client_gate') {
     utmCampaign: props.nftClassId,
     utmMedium: 'tts',
     redirectRoute: buildSubscribeRedirectRoute(),
+  })
+}
+
+function handleSessionExpired() {
+  stopTextToSpeech()
+  useLogEvent('tts_session_expired', buildTTSEventPayload())
+  errorModal.open({
+    level: 'warning',
+    title: $t('tts_session_expired_title'),
+    description: $t('tts_session_expired_description'),
+    actions: [
+      {
+        label: $t('login_button'),
+        color: 'primary' as const,
+        onClick: () => {
+          accountStore.login()
+        },
+      },
+    ],
   })
 }
 
