@@ -100,12 +100,23 @@ export function useTTSPlayerModal(options: TTSPlayerOptions) {
         segmentIndex = Math.max(segmentIndex, 0)
       }
       if (cfi) {
-        const cfiIndex = ttsSegments.value
-          .slice(segmentIndex)
-          .findIndex(segment => segment.cfi && epubCFI.compare(segment.cfi, cfi) >= 0)
-        if (cfiIndex >= 1) {
+        // Constrain the cfi search to the current section. Without this,
+        // when the user's section has few or no matching segments, the
+        // search would silently resolve into the next chapter.
+        const sectionToStayIn = ttsSegments.value[segmentIndex]?.sectionIndex
+        let foundIndex = -1
+        for (let i = segmentIndex; i < ttsSegments.value.length; i++) {
+          const segment = ttsSegments.value[i]
+          if (!segment) continue
+          if (sectionToStayIn !== undefined && segment.sectionIndex > sectionToStayIn) break
+          if (segment.cfi && epubCFI.compare(segment.cfi, cfi) >= 0) {
+            foundIndex = i
+            break
+          }
+        }
+        if (foundIndex > segmentIndex) {
           // Retrieve the previous segment for better UX, as the segment might span multiple pages
-          segmentIndex += cfiIndex - 1
+          segmentIndex = foundIndex - 1
         }
       }
       startIndex.value = segmentIndex
