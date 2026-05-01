@@ -746,34 +746,47 @@ const isStripeConnectLoading = ref(false)
 
 type StripeConnectState = 'ready' | 'pending' | 'none'
 
-const STRIPE_CONNECT_LABEL_KEYS: Record<StripeConnectState, { status: string, button: string }> = {
-  ready: {
-    status: 'account_page_stripe_connect_status_ready',
-    button: 'account_page_stripe_connect_manage_button',
-  },
-  pending: {
-    status: 'account_page_stripe_connect_status_pending',
-    button: 'account_page_stripe_connect_resume_button',
-  },
-  none: {
-    status: 'account_page_stripe_connect_status_none',
-    button: 'account_page_stripe_connect_setup_button',
-  },
-}
-
 const stripeConnectState = computed<StripeConnectState>(() => {
   if (stripeConnectStatus.value.isReady) return 'ready'
   if (stripeConnectStatus.value.hasAccount) return 'pending'
   return 'none'
 })
 
-const stripeConnectStatusLabel = computed(() =>
-  $t(STRIPE_CONNECT_LABEL_KEYS[stripeConnectState.value].status),
-)
+const stripeConnectStatusLabel = computed(() => {
+  switch (stripeConnectState.value) {
+    case 'ready':
+      return $t('account_page_stripe_connect_status_ready')
+    case 'pending':
+      return $t('account_page_stripe_connect_status_pending')
+    case 'none':
+      return $t('account_page_stripe_connect_status_none')
+  }
+  return ''
+})
 
-const stripeConnectButtonLabel = computed(() =>
-  $t(STRIPE_CONNECT_LABEL_KEYS[stripeConnectState.value].button),
-)
+const stripeConnectButtonLabel = computed(() => {
+  switch (stripeConnectState.value) {
+    case 'ready':
+      return $t('account_page_stripe_connect_manage_button')
+    case 'pending':
+      return $t('account_page_stripe_connect_resume_button')
+    case 'none':
+      return $t('account_page_stripe_connect_setup_button')
+  }
+  return ''
+})
+
+function resetStripeConnectState() {
+  stripeConnectStatus.value = {
+    hasAccount: false,
+    isReady: false,
+  }
+  isStripeConnectLoading.value = false
+}
+
+watch(() => user.value?.evmWallet, () => {
+  resetStripeConnectState()
+})
 
 async function loadStripeConnectStatus() {
   if (!user.value?.evmWallet) return
@@ -856,7 +869,7 @@ watchImmediate(hasLoggedIn, async (loggedIn) => {
       await navigateTo({ query: nextQuery }, { replace: true })
     }
     else {
-      await callOnce('account-stripe-connect-status', loadStripeConnectStatus)
+      await loadStripeConnectStatus()
     }
     if (route.query.action === 'billing-return') {
       if (isPaymentPastDue.value) {
