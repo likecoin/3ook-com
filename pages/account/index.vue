@@ -468,15 +468,14 @@
           icon="i-material-symbols-account-balance-wallet-outline-rounded"
           :label="$t('account_page_stripe_connect')"
         >
-          <div
-            class="text-sm text-muted"
-            v-text="stripeConnectStatusLabel"
-          />
-          <div
-            v-if="stripeConnectStatus.isReady && stripeConnectStatus.email"
-            class="text-xs/5 text-muted font-mono"
-            v-text="stripeConnectStatus.email"
-          />
+          <div class="flex flex-col gap-1 text-sm text-muted">
+            <div v-text="stripeConnectStatusLabel" />
+            <div
+              v-if="stripeConnectStatus.isReady && stripeConnectStatus.email"
+              class="text-xs/5 font-mono"
+              v-text="stripeConnectStatus.email"
+            />
+          </div>
 
           <template #right>
             <UButton
