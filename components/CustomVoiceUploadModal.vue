@@ -1,25 +1,15 @@
 <template>
   <UModal
+    :title="$t('tts_custom_voice_modal_title')"
     :ui="{
-      title: 'text-sm laptop:text-base font-bold text-center',
-      body: 'flex flex-col gap-4 px-6 py-4',
-      footer: 'flex flex-col items-center w-full gap-3',
+      body: 'flex flex-col gap-4',
+      footer: 'flex flex-col items-center gap-3 w-full pb-safe',
     }"
+    :fullscreen="!isDesktopScreen"
+    :dismissible="!(isLoading || isAnyRecording || hasAnyRecordingFile)"
+    :close="!(isLoading || isAnyRecording)"
     @update:open="onOpenUpdate"
   >
-    <template #header>
-      <span
-        class="text-lg font-bold"
-        v-text="$t('tts_custom_voice_modal_title')"
-      />
-      <UIcon
-        name="i-material-symbols-close"
-        class="text-dimmed cursor-pointer ml-auto hover:text-default"
-        size="24"
-        @click="emit('close')"
-      />
-    </template>
-
     <template #body>
       <template v-if="showPreview">
         <div
@@ -94,7 +84,7 @@
             <audio
               controls
               preload="none"
-              class="flex-1 min-w-0 h-8"
+              class="flex-1 w-full min-w-0 h-8"
               :src="previewAudioSrc"
             />
             <UButton
@@ -354,52 +344,47 @@
           class="text-sm text-center text-muted"
           v-text="$t('tts_custom_voice_delete_confirm_description')"
         />
-        <UButton
-          class="w-full"
-          :label="$t('tts_custom_voice_delete_confirm_title')"
-          block
-          size="xl"
-          color="error"
-          :loading="isLoading"
-          @click="confirmDelete"
-        />
-        <UButton
-          :label="$t('tts_custom_voice_done_button')"
-          block
-          size="xl"
-          variant="link"
-          :disabled="isLoading"
-          @click="showDeleteConfirm = false"
-        />
+        <div class="flex gap-[inherit] w-full max-w-lg">
+          <UButton
+            class="w-full"
+            :label="$t('tts_custom_voice_delete_confirm_title')"
+            block
+            size="xl"
+            color="error"
+            :loading="isLoading"
+            @click="confirmDelete"
+          />
+          <UButton
+            :label="$t('common_cancel')"
+            block
+            size="xl"
+            variant="outline"
+            :disabled="isLoading"
+            @click="showDeleteConfirm = false"
+          />
+        </div>
       </template>
       <template v-else-if="showPreview">
-        <UButton
-          v-if="!uploadSuccess"
-          class="w-full"
-          :label="$t('tts_custom_voice_replace_button')"
-          block
-          size="xl"
-          variant="outline"
-          :disabled="isLoading"
-          @click="showUploadForm = true"
-        />
-        <UButton
-          v-if="!uploadSuccess"
-          :label="$t('tts_custom_voice_delete_button')"
-          block
-          size="xl"
-          variant="link"
-          color="error"
-          :disabled="isLoading"
-          @click="handleDelete"
-        />
-        <UButton
-          class="w-full"
-          :label="$t('tts_custom_voice_done_button')"
-          block
-          size="xl"
-          @click="emit('close')"
-        />
+        <div v-if="!uploadSuccess" class="flex gap-[inherit] w-full max-w-lg">
+          <UButton
+            :label="$t('tts_custom_voice_delete_button')"
+            block
+            size="xl"
+            variant="outline"
+            color="error"
+            :disabled="isLoading"
+            @click="handleDelete"
+          />
+          <UButton
+            class="w-full"
+            :label="$t('tts_custom_voice_replace_button')"
+            block
+            size="xl"
+            variant="outline"
+            :disabled="isLoading"
+            @click="showUploadForm = true"
+          />
+        </div>
       </template>
       <template v-else>
         <p
@@ -407,25 +392,28 @@
           class="text-xs text-amber-600"
           v-text="$t('tts_custom_voice_replace_warning')"
         />
-        <UButton
-          class="w-full"
-          :label="existingVoice ? $t('tts_custom_voice_replace_button') : $t('tts_custom_voice_upload_button')"
-          block
-          size="xl"
-          :loading="isLoading"
-          :disabled="!mainAudio.file.value || isLoading || !isAudioDurationValid || !isPromptAudioDurationValid"
-          @click="handleUpload"
-        />
-        <UButton
-          v-if="existingVoice"
-          :label="$t('tts_custom_voice_delete_button')"
-          block
-          size="xl"
-          variant="link"
-          color="error"
-          :disabled="isLoading"
-          @click="handleDelete"
-        />
+        <div class="flex gap-[inherit] w-full max-w-lg">
+          <UButton
+            v-if="existingVoice"
+            :label="$t('tts_custom_voice_delete_button')"
+            block
+            size="xl"
+            variant="outline"
+            color="error"
+            :disabled="isLoading"
+            @click="handleDelete"
+          />
+          <UButton
+            class="w-full"
+            :label="existingVoice ? $t('tts_custom_voice_replace_button') : $t('tts_custom_voice_upload_button')"
+            block
+            size="xl"
+            variant="outline"
+            :loading="isLoading"
+            :disabled="!mainAudio.file.value || isLoading || !isAudioDurationValid || !isPromptAudioDurationValid"
+            @click="handleUpload"
+          />
+        </div>
       </template>
     </template>
   </UModal>
@@ -449,6 +437,7 @@ const emit = defineEmits<{
 const { t: $t, locale } = useI18n()
 const { user: sessionUser } = useUserSession()
 const { customVoice, isLoading, uploadCustomVoice, updateCustomVoiceInfo, removeCustomVoice } = useCustomVoice()
+const isDesktopScreen = useDesktopScreen()
 
 const voiceName = ref(props.existingVoice?.voiceName || '')
 const voiceLanguage = ref(props.existingVoice?.voiceLanguage || (locale.value === 'en' ? 'en-US' : 'zh-HK'))
@@ -482,6 +471,7 @@ const mainAudio = useAudioRecorder({ onError: setError, onClearError: clearError
 const promptAudio = useAudioRecorder({ maxFileSize: 2 * 1024 * 1024, fileTooLargeErrorKey: 'tts_custom_voice_error_prompt_audio_too_large', onError: setError, onClearError: clearError })
 
 const isAnyRecording = computed(() => mainAudio.isRecording.value || promptAudio.isRecording.value)
+const hasAnyRecordingFile = computed(() => !!mainAudio.file.value || !!promptAudio.file.value)
 
 function createPreviewPlayer(getUrl: () => string | null) {
   const el = ref<HTMLAudioElement | null>(null)
