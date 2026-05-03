@@ -7,17 +7,6 @@
       pricingItems.length > 1 ? 'pb-[152px]' : 'pb-[120px]',
     ]"
   >
-    <aside
-      v-if="isPlusPromoBannerVisible"
-      class="tablet:hidden sticky top-0 z-20 w-full max-w-[1280px] bg-(--app-bg) shadow-lg rounded-b-xl"
-    >
-      <BookPlusPromoAlert
-        class="rounded-t-none"
-        :title="$t('product_page_plus_promo_title')"
-        :description="$t('product_page_plus_promo_description')"
-      />
-    </aside>
-
     <div
       :class="[
         'z-10',
@@ -53,6 +42,18 @@
       <!-- Primary content column -->
       <div class="pt-5">
         <AffiliateAlert class="mb-6" />
+
+        <aside
+          v-if="isPlusPromoBannerVisible"
+          class="tablet:hidden z-20 w-full max-w-[1280px] bg-(--app-bg) shadow-lg rounded-2xl mb-4"
+        >
+          <BookPlusPromoAlert
+            :title="$t('product_page_plus_promo_title')"
+            :description="$t('product_page_plus_promo_description')"
+            color="warning"
+            variant="solid"
+          />
+        </aside>
 
         <UAlert
           v-if="utmCampaignMessage"
@@ -461,6 +462,8 @@
           <BookPlusPromoAlert
             v-if="isPlusPromoBannerVisible"
             class="max-tablet:hidden"
+            color="warning"
+            variant="solid"
             :title="$t('product_page_plus_promo_title')"
             :description="$t('product_page_plus_promo_description')"
           />

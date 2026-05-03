@@ -1,8 +1,16 @@
 <script setup lang="ts">
-defineProps<{
+type AlertColor = 'secondary' | 'primary' | 'success' | 'info' | 'warning' | 'error' | 'neutral' | undefined
+type AlertVariant = 'subtle' | 'solid' | 'outline' | 'soft' | undefined
+
+withDefaults(defineProps<{
   title: string
   description: string
-}>()
+  color?: AlertColor
+  variant?: AlertVariant
+}>(), {
+  color: 'secondary',
+  variant: 'subtle',
+})
 </script>
 
 <template>
@@ -10,8 +18,8 @@ defineProps<{
     :title="title"
     :description="description"
     icon="i-material-symbols-celebration-outline-rounded"
-    color="secondary"
-    variant="subtle"
+    :color="color"
+    :variant="variant"
     orientation="horizontal"
     :ui="{
       root: 'rounded-xl items-center gap-3',
