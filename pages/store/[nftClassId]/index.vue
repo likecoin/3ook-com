@@ -50,8 +50,7 @@
           <BookPlusPromoAlert
             :title="$t('product_page_plus_promo_title')"
             :description="$t('product_page_plus_promo_description')"
-            color="warning"
-            variant="solid"
+            theme="cyan"
           />
         </aside>
 
@@ -462,8 +461,7 @@
           <BookPlusPromoAlert
             v-if="isPlusPromoBannerVisible"
             class="max-tablet:hidden"
-            color="warning"
-            variant="solid"
+            theme="cyan"
             :title="$t('product_page_plus_promo_title')"
             :description="$t('product_page_plus_promo_description')"
           />

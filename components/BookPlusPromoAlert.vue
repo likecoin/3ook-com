@@ -1,15 +1,12 @@
 <script setup lang="ts">
-type AlertColor = 'secondary' | 'primary' | 'success' | 'info' | 'warning' | 'error' | 'neutral' | undefined
-type AlertVariant = 'subtle' | 'solid' | 'outline' | 'soft' | undefined
+type AlertTheme = 'default' | 'cyan'
 
 withDefaults(defineProps<{
   title: string
   description: string
-  color?: AlertColor
-  variant?: AlertVariant
+  theme?: AlertTheme
 }>(), {
-  color: 'secondary',
-  variant: 'subtle',
+  theme: 'default',
 })
 </script>
 
@@ -18,14 +15,14 @@ withDefaults(defineProps<{
     :title="title"
     :description="description"
     icon="i-material-symbols-celebration-outline-rounded"
-    :color="color"
-    :variant="variant"
+    :color="theme === 'cyan' ? 'neutral' : 'secondary'"
+    :variant="theme === 'cyan' ? 'soft' : 'subtle'"
     orientation="horizontal"
     :ui="{
-      root: 'rounded-xl items-center gap-3',
-      title: 'text-sm font-bold',
-      description: 'text-xs',
-      icon: 'size-5',
+      root: ['rounded-xl items-center gap-3', theme === 'cyan' ? 'bg-theme-cyan text-theme-black' : ''],
+      title: ['text-sm font-bold', theme === 'cyan' ? 'text-theme-black' : ''],
+      description: ['text-xs', theme === 'cyan' ? 'text-theme-black' : ''],
+      icon: ['size-5', theme === 'cyan' ? 'text-theme-black' : ''],
     }"
   />
 </template>
