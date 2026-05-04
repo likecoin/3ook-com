@@ -44,14 +44,17 @@
           />
         </div>
 
-        <div class="flex flex-col gap-2">
+        <div
+          v-if="!isLegacyEnglishVoice"
+          class="flex flex-col gap-2"
+        >
           <p
             class="text-sm font-medium text-muted"
             v-text="$t('tts_custom_voice_language_label')"
           />
           <URadioGroup
             :model-value="voiceLanguage"
-            :items="VOICE_LANGUAGE_OPTIONS"
+            :items="voiceLanguageOptions"
             :disabled="isLoading"
             orientation="horizontal"
             @update:model-value="handleVoiceLanguageChange"
@@ -130,7 +133,7 @@
           />
           <URadioGroup
             v-model="voiceLanguage"
-            :items="VOICE_LANGUAGE_OPTIONS"
+            :items="voiceLanguageOptions"
             orientation="horizontal"
           />
         </div>
@@ -360,7 +363,7 @@
             size="xl"
             variant="outline"
             :disabled="isLoading"
-            @click="showUploadForm = true"
+            @click="handleReplace"
           />
         </div>
       </template>
@@ -412,14 +415,14 @@ const emit = defineEmits<{
   deleted: []
 }>()
 
-const { t: $t, locale } = useI18n()
+const { t: $t } = useI18n()
 const { user: sessionUser } = useUserSession()
 const { customVoice, isLoading, uploadCustomVoice, updateCustomVoiceInfo, removeCustomVoice } = useCustomVoice()
 const isDesktopScreen = useDesktopScreen()
 const baseModal = useBaseModal()
 
 const voiceName = ref(props.existingVoice?.voiceName || '')
-const voiceLanguage = ref(props.existingVoice?.voiceLanguage || (locale.value === 'en' ? 'en-US' : 'zh-HK'))
+const voiceLanguage = ref(props.existingVoice?.voiceLanguage || 'zh-HK')
 const avatarFile = ref<File | null>(null)
 const avatarPreview = ref<string | null>(null)
 const errorMessage = ref('')
@@ -512,35 +515,26 @@ const audioInputEl = useTemplateRef<HTMLInputElement>('audioInputEl')
 const avatarInputEl = useTemplateRef<HTMLInputElement>('avatarInputEl')
 const promptAudioInputEl = useTemplateRef<HTMLInputElement>('promptAudioInputEl')
 
-const VOICE_LANGUAGE_OPTIONS = [
-  { label: '粵語', value: 'zh-HK' },
-  { label: '國語', value: 'zh-TW' },
-  { label: 'English', value: 'en-US' },
-]
+const voiceLanguageOptions = computed(() => [
+  { label: $t('tts_custom_voice_language_option_cantonese'), value: 'zh-HK' },
+  { label: $t('tts_custom_voice_language_option_mandarin'), value: 'zh-TW' },
+])
 
-const PREVIEW_TEXT: Record<string, string> = {
-  'zh-HK': '歡迎收聽，這是我的私人聲優。',
-  'zh-TW': '歡迎收聽，這是我的私人聲優。',
-  'en-US': 'Welcome, this is my private voice artist.',
-}
+const PREVIEW_TEXT = '歡迎收聽，這是我的私人聲優。'
+const SUGGESTED_READING_TEXT = '其實我一直覺得，閱讀是一件很浪漫的事。不管是手捧著實體書，還是滑著電子螢幕，只要沉浸在故事裡，就能暫時忘掉現實的煩惱，去到一個完全不同的時空。'
+const PROMPT_READING_TEXT = '在未來的世界裡，科技與生活將會深度融合。'
 
-const SUGGESTED_READING_TEXT: Record<string, string> = {
-  'zh-HK': '其實我一直覺得，閱讀是一件很浪漫的事。不管是手捧著實體書，還是滑著電子螢幕，只要沉浸在故事裡，就能暫時忘掉現實的煩惱，去到一個完全不同的時空。',
-  'zh-TW': '其實我一直覺得，閱讀是一件很浪漫的事。不管是手捧著實體書，還是滑著電子螢幕，只要沉浸在故事裡，就能暫時忘掉現實的煩惱，去到一個完全不同的時空。',
-  'en-US': 'I\'ve always felt that reading is something truly romantic. Whether you\'re holding a physical book or scrolling on a screen, as long as you\'re immersed in a story, you can briefly forget your worries and travel to an entirely different world.',
-}
+// Preserved for legacy users whose existing custom voice is in English
+const PREVIEW_TEXT_EN = 'Welcome, this is my private voice artist.'
+const SUGGESTED_READING_TEXT_EN = 'I\'ve always felt that reading is something truly romantic. Whether you\'re holding a physical book or scrolling on a screen, as long as you\'re immersed in a story, you can briefly forget your worries and travel to an entirely different world.'
+const PROMPT_READING_TEXT_EN = 'In the world of the future, technology and daily life will be deeply intertwined.'
 
-const PROMPT_READING_TEXT: Record<string, string> = {
-  'zh-HK': '在未來的世界裡，科技與生活將會深度融合。',
-  'zh-TW': '在未來的世界裡，科技與生活將會深度融合。',
-  'en-US': 'In the world of the future, technology and daily life will be deeply intertwined.',
-}
-
-const suggestedReadingText = computed(() => SUGGESTED_READING_TEXT[voiceLanguage.value] || '')
-const promptReadingText = computed(() => PROMPT_READING_TEXT[voiceLanguage.value] || '')
+const isLegacyEnglishVoice = computed(() => voiceLanguage.value === 'en-US')
+const suggestedReadingText = computed(() => isLegacyEnglishVoice.value ? SUGGESTED_READING_TEXT_EN : SUGGESTED_READING_TEXT)
+const promptReadingText = computed(() => isLegacyEnglishVoice.value ? PROMPT_READING_TEXT_EN : PROMPT_READING_TEXT)
 
 const PREVIEW_MAX_LENGTH = 2000
-const previewText = ref(PREVIEW_TEXT[voiceLanguage.value] || '')
+const previewText = ref(isLegacyEnglishVoice.value ? PREVIEW_TEXT_EN : PREVIEW_TEXT)
 const isDownloadingPreview = ref(false)
 
 const previewAudioSrc = computed(() => {
@@ -552,8 +546,10 @@ const previewAudioSrc = computed(() => {
 watch(voiceLanguage, (newLang, oldLang) => {
   // Preserve any text the user typed themselves; only swap when the textarea
   // still holds the previous language's default phrase (or is empty).
-  if (previewText.value.trim() === '' || previewText.value === PREVIEW_TEXT[oldLang]) {
-    previewText.value = PREVIEW_TEXT[newLang] || ''
+  const oldDefault = oldLang === 'en-US' ? PREVIEW_TEXT_EN : PREVIEW_TEXT
+  const newDefault = newLang === 'en-US' ? PREVIEW_TEXT_EN : PREVIEW_TEXT
+  if (previewText.value.trim() === '' || previewText.value === oldDefault) {
+    previewText.value = newDefault
   }
 })
 
@@ -645,6 +641,13 @@ async function handleVoiceNameBlur() {
     previewVoiceNameInput.value = customVoice.value?.voiceName || props.existingVoice?.voiceName || ''
     console.error('[CustomVoice] Failed to update name:', error)
   }
+}
+
+function handleReplace() {
+  if (isLegacyEnglishVoice.value) {
+    voiceLanguage.value = 'zh-HK'
+  }
+  showUploadForm.value = true
 }
 
 async function handleUpload() {

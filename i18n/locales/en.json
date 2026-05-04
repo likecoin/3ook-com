@@ -839,6 +839,8 @@
   "tts_custom_voice_error_recording_failed": "Failed to process recording. Please try again or upload a file instead.",
   "tts_custom_voice_instructions": "Please provide a 10 second to 5 minute audio recording",
   "tts_custom_voice_language_label": "Language",
+  "tts_custom_voice_language_option_cantonese": "Cantonese",
+  "tts_custom_voice_language_option_mandarin": "Mandarin",
   "tts_custom_voice_modal_title": "Private voice artist",
   "tts_custom_voice_name_label": "Voice name",
   "tts_custom_voice_optional": "Optional",
