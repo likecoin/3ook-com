@@ -33,7 +33,12 @@ const likeCoinSessionAPI = useLikeCoinSessionAPI()
 
 const error = ref(false)
 
-useHead({ title: $t('settings_connect_refresh_title') })
+useHead({
+  title: $t('settings_connect_refresh_title'),
+  meta: [
+    { name: 'robots', content: 'noindex, nofollow' },
+  ],
+})
 
 onMounted(async () => {
   if (!hasLoggedIn.value) {

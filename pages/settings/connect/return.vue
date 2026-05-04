@@ -12,7 +12,12 @@
 const localeRoute = useLocaleRoute()
 const { t: $t } = useI18n()
 
-useHead({ title: $t('settings_connect_return_title') })
+useHead({
+  title: $t('settings_connect_return_title'),
+  meta: [
+    { name: 'robots', content: 'noindex, nofollow' },
+  ],
+})
 
 const target = localeRoute({ name: 'account', query: { action: 'stripe-connect-return' } })
 // SSR needs an awaited navigateTo to emit a 302. On the client we
