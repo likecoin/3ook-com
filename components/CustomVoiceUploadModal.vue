@@ -339,7 +339,10 @@
       </template>
     </template>
 
-    <template #footer>
+    <template
+      v-if="showDeleteConfirm || !showPreview || !uploadSuccess"
+      #footer
+    >
       <template v-if="showDeleteConfirm">
         <p
           class="text-sm text-center text-muted"
@@ -366,7 +369,10 @@
         </div>
       </template>
       <template v-else-if="showPreview">
-        <div v-if="!uploadSuccess" class="flex gap-[inherit] w-full max-w-lg">
+        <div
+          v-if="!uploadSuccess"
+          class="flex gap-[inherit] w-full max-w-lg"
+        >
           <UButton
             :label="$t('tts_custom_voice_delete_button')"
             block
