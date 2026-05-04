@@ -2,8 +2,9 @@
   <UModal
     :title="$t('tts_custom_voice_modal_title')"
     :ui="{
+      content: 'pb-safe',
       body: 'flex flex-col gap-4',
-      footer: 'flex flex-col items-center gap-3 w-full pb-safe',
+      footer: 'flex flex-col items-center gap-3 w-full',
     }"
     :fullscreen="!isDesktopScreen"
     :dismissible="!(isLoading || isAnyRecording || hasAnyRecordingFile)"
