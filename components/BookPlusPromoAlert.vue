@@ -15,14 +15,14 @@ withDefaults(defineProps<{
     :title="title"
     :description="description"
     icon="i-material-symbols-celebration-outline-rounded"
-    :color="theme === 'cyan' ? 'neutral' : 'secondary'"
-    :variant="theme === 'cyan' ? 'soft' : 'subtle'"
+    color="neutral"
+    variant="soft"
     orientation="horizontal"
     :ui="{
-      root: ['rounded-xl items-center gap-3', theme === 'cyan' ? 'bg-theme-cyan text-gray-700' : ''],
-      title: ['text-sm font-bold', theme === 'cyan' ? 'text-theme-black' : ''],
-      description: ['text-xs', theme === 'cyan' ? 'text-gray-700' : ''],
-      icon: ['size-5', theme === 'cyan' ? 'text-gray-700' : ''],
+      root: 'rounded-xl items-center gap-3 bg-theme-cyan text-gray-700',
+      title: 'text-sm font-bold text-theme-black',
+      description: 'text-xs text-gray-700',
+      icon: 'size-5 text-gray-700',
     }"
   />
 </template>
