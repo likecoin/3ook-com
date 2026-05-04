@@ -338,6 +338,8 @@
   "color_mode_system": "System",
   "common_back": "Back",
   "common_cancel": "Cancel",
+  "common_close": "Close",
+  "common_delete": "Delete",
   "common_processing": "Processing",
   "contact_cs": "Contact Us",
   "copy_evm_wallet_failed": "Failed to copy wallet address",

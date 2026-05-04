@@ -340,35 +340,10 @@
     </template>
 
     <template
-      v-if="showDeleteConfirm || !showPreview || !uploadSuccess"
+      v-if="!uploadSuccess || !showPreview"
       #footer
     >
-      <template v-if="showDeleteConfirm">
-        <p
-          class="text-sm text-center text-muted"
-          v-text="$t('tts_custom_voice_delete_confirm_description')"
-        />
-        <div class="flex gap-[inherit] w-full max-w-lg">
-          <UButton
-            class="w-full"
-            :label="$t('tts_custom_voice_delete_confirm_title')"
-            block
-            size="xl"
-            color="error"
-            :loading="isLoading"
-            @click="confirmDelete"
-          />
-          <UButton
-            :label="$t('common_cancel')"
-            block
-            size="xl"
-            variant="outline"
-            :disabled="isLoading"
-            @click="showDeleteConfirm = false"
-          />
-        </div>
-      </template>
-      <template v-else-if="showPreview">
+      <template v-if="showPreview">
         <div
           v-if="!uploadSuccess"
           class="flex gap-[inherit] w-full max-w-lg"
@@ -445,6 +420,7 @@ const { t: $t, locale } = useI18n()
 const { user: sessionUser } = useUserSession()
 const { customVoice, isLoading, uploadCustomVoice, updateCustomVoiceInfo, removeCustomVoice } = useCustomVoice()
 const isDesktopScreen = useDesktopScreen()
+const baseModal = useBaseModal()
 
 const voiceName = ref(props.existingVoice?.voiceName || '')
 const voiceLanguage = ref(props.existingVoice?.voiceLanguage || (locale.value === 'en' ? 'en-US' : 'zh-HK'))
@@ -452,7 +428,6 @@ const avatarFile = ref<File | null>(null)
 const avatarPreview = ref<string | null>(null)
 const errorMessage = ref('')
 const uploadSuccess = ref(false)
-const showDeleteConfirm = ref(false)
 const showUploadForm = ref(!props.existingVoice)
 const previewCacheBuster = ref(Date.now())
 
@@ -692,12 +667,25 @@ async function handleUpload() {
   }
 }
 
-function handleDelete() {
-  showDeleteConfirm.value = true
-}
+async function handleDelete() {
+  const isConfirmed = await baseModal.open({
+    title: $t('tts_custom_voice_delete_confirm_title'),
+    description: $t('tts_custom_voice_delete_confirm_description'),
+    actions: [
+      {
+        label: $t('common_delete'),
+        color: 'error',
+        result: true,
+      },
+      {
+        label: $t('common_cancel'),
+        variant: 'outline',
+        result: false,
+      },
+    ],
+  }).result
+  if (!isConfirmed) return
 
-async function confirmDelete() {
-  showDeleteConfirm.value = false
   try {
     await removeCustomVoice()
     emit('deleted')

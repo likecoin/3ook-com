@@ -338,6 +338,8 @@
   "color_mode_system": "跟隨系統",
   "common_back": "返回",
   "common_cancel": "取消",
+  "common_close": "關閉",
+  "common_delete": "删除",
   "common_processing": "處理中",
   "contact_cs": "聯絡客服",
   "copy_evm_wallet_failed": "複製錢包地址失敗",
