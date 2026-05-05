@@ -303,6 +303,7 @@ export default defineNuxtConfig({
         ],
         'form-action': [
           '\'self\'',
+          'https://www.facebook.com',
         ],
         'frame-ancestors': [
           '\'self\'',
