@@ -1,29 +1,20 @@
 <template>
-  <ul class="flex flex-col gap-3 w-full flex-wrap">
+  <ul class="flex flex-col gap-3.5 w-full flex-wrap">
     <li
       v-for="sample in samples"
       :key="sample.id"
-      class="relative space-y-2"
     >
-      <UBadge
-        v-if="sample.isAffiliateExclusive"
-        class="absolute top-0 right-3 -translate-y-1/2 z-10 pointer-events-none"
-        size="sm"
-        color="warning"
-        variant="solid"
-        :ui="{ base: ['rounded-full', 'font-bold'] }"
-      >
-        <span v-text="$t('tts_samples_section_affiliate_exclusive_badge')" />
-        <span aria-hidden="true">*</span>
-      </UBadge>
       <UButton
         :class="[
+          'relative',
           'w-full',
           'justify-start',
           'p-4',
           'group',
           'text-left',
-          { 'ring-theme-cyan': selectedVoiceId === sample.id },
+          selectedVoiceId === sample.id
+            ? 'ring-theme-cyan'
+            : sample.isAffiliateExclusive ? 'ring-warning' : undefined,
           'rounded-lg',
           'cursor-pointer',
         ]"
@@ -67,6 +58,18 @@
             v-text="sample.description"
           />
         </div>
+
+        <UBadge
+          v-if="sample.isAffiliateExclusive"
+          class="absolute top-0 right-3 -translate-y-1/2 pointer-events-none"
+          size="sm"
+          color="warning"
+          variant="solid"
+          :ui="{ base: 'gap-0 rounded-full font-bold' }"
+        >
+          <span v-text="$t('tts_samples_section_affiliate_exclusive_badge')" />
+          <span aria-hidden="true">*</span>
+        </UBadge>
 
         <template #trailing>
           <img
