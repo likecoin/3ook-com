@@ -17,6 +17,9 @@ declare module '#auth-utils' {
     ttsKey?: string
     likerPlusSubscriptionStatus?: 'active' | 'past_due' | 'canceled'
   }
+  interface SecureSessionData {
+    token?: string
+  }
 }
 
 export {}

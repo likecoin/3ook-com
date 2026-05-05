@@ -74,14 +74,26 @@ export default defineEventHandler(async (event) => {
     plusAffiliateFrom: userInfoRes.plusAffiliateFrom,
     ttsKey: generateTTSKey(),
   }
-  await setUserSession(event, { user: userInfo })
+  await setUserSession(event, {
+    user: userInfo,
+    secure: { token },
+  })
 
   const userDocRef = getUserCollection().doc(body.walletAddress)
-  await userDocRef.set({
-    loginTimestamp: FieldValue.serverTimestamp(),
-    accessTimestamp: FieldValue.serverTimestamp(),
-    loginMethod: body.loginMethod,
-  }, { merge: true })
+  await Promise.all([
+    userDocRef.set({
+      loginTimestamp: FieldValue.serverTimestamp(),
+      accessTimestamp: FieldValue.serverTimestamp(),
+      loginMethod: body.loginMethod,
+    }, { merge: true }),
+    token && jwtId
+      ? saveSessionTokens(body.walletAddress, jwtId, {
+          token,
+          intercomToken,
+          loginMethod: body.loginMethod,
+        })
+      : Promise.resolve(),
+  ])
 
   publishEvent(event, 'UserLogin', {
     evmWallet: body.walletAddress,

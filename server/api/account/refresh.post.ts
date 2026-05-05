@@ -41,10 +41,20 @@ export default defineEventHandler(async (event) => {
       // sessions that already have one.
       ttsKey: session.user.ttsKey ?? generateTTSKey(),
     },
+    secure: { token: session.user.token },
   })
 
   const userDocRef = getUserCollection().doc(walletAddress)
-  await userDocRef.set({
-    accessTimestamp: FieldValue.serverTimestamp(),
-  }, { merge: true })
+  await Promise.all([
+    userDocRef.set({
+      accessTimestamp: FieldValue.serverTimestamp(),
+    }, { merge: true }),
+    session.user.evmWallet && session.user.token && session.user.jwtId
+      ? saveSessionTokens(session.user.evmWallet, session.user.jwtId, {
+          token: session.user.token,
+          intercomToken: session.user.intercomToken,
+          loginMethod: session.user.loginMethod,
+        })
+      : Promise.resolve(),
+  ])
 })
