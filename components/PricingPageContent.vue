@@ -99,14 +99,7 @@
       </aside>
     </template>
 
-    <div
-      :class="[
-        'flex',
-        'w-full',
-        { 'items-center': !isShowTTSSamples || campaignContent },
-        'min-h-max',
-      ]"
-    >
+    <div class="flex w-full items-center min-h-max">
       <div
         :class="[
           'w-full',
