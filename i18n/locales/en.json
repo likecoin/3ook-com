@@ -858,6 +858,7 @@
   "tts_custom_voice_instructions": "Please provide a 10 second to 5 minute audio recording",
   "tts_custom_voice_language_label": "Language",
   "tts_custom_voice_language_option_cantonese": "Cantonese",
+  "tts_custom_voice_language_option_english": "English",
   "tts_custom_voice_language_option_mandarin": "Mandarin",
   "tts_custom_voice_modal_title": "Private voice artist",
   "tts_custom_voice_name_label": "Voice name",

@@ -44,20 +44,14 @@
           />
         </div>
 
-        <div
-          v-if="!isLegacyEnglishVoice"
-          class="flex flex-col gap-2"
-        >
+        <div class="flex flex-col gap-1">
           <p
             class="text-sm font-medium text-muted"
             v-text="$t('tts_custom_voice_language_label')"
           />
-          <URadioGroup
-            :model-value="voiceLanguage"
-            :items="voiceLanguageOptions"
-            :disabled="isLoading"
-            orientation="horizontal"
-            @update:model-value="handleVoiceLanguageChange"
+          <p
+            class="text-sm"
+            v-text="voiceLanguageLabel"
           />
         </div>
 
@@ -532,6 +526,10 @@ const PROMPT_READING_TEXT_EN = 'In the world of the future, technology and daily
 const isLegacyEnglishVoice = computed(() => voiceLanguage.value === 'en-US')
 const suggestedReadingText = computed(() => isLegacyEnglishVoice.value ? SUGGESTED_READING_TEXT_EN : SUGGESTED_READING_TEXT)
 const promptReadingText = computed(() => isLegacyEnglishVoice.value ? PROMPT_READING_TEXT_EN : PROMPT_READING_TEXT)
+const voiceLanguageLabel = computed(() => {
+  if (isLegacyEnglishVoice.value) return $t('tts_custom_voice_language_option_english')
+  return voiceLanguageOptions.value.find(option => option.value === voiceLanguage.value)?.label || ''
+})
 
 const PREVIEW_MAX_LENGTH = 2000
 const previewText = ref(isLegacyEnglishVoice.value ? PREVIEW_TEXT_EN : PREVIEW_TEXT)
@@ -611,20 +609,6 @@ async function handleAvatarChange(e: Event) {
     const message = error instanceof Error ? error.message : String(error)
     errorMessage.value = message
     console.error('[CustomVoice] Avatar resize failed:', error)
-  }
-}
-
-async function handleVoiceLanguageChange(value: string) {
-  const prevLanguage = voiceLanguage.value
-  voiceLanguage.value = value
-  if (props.existingVoice && !showUploadForm.value) {
-    try {
-      await updateCustomVoiceInfo({ voiceLanguage: value })
-    }
-    catch (error) {
-      voiceLanguage.value = prevLanguage
-      console.error('[CustomVoice] Failed to update language:', error)
-    }
   }
 }
 

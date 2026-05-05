@@ -858,6 +858,7 @@
   "tts_custom_voice_instructions": "請提供一段 10 秒至 5 分鐘的錄音",
   "tts_custom_voice_language_label": "語言",
   "tts_custom_voice_language_option_cantonese": "粵語",
+  "tts_custom_voice_language_option_english": "英文",
   "tts_custom_voice_language_option_mandarin": "國語",
   "tts_custom_voice_modal_title": "私人聲優",
   "tts_custom_voice_name_label": "聲優名稱",
