@@ -402,7 +402,6 @@
   "error_insufficient_amount": "Insufficient amount",
   "error_insufficient_amount_description": "You need {amount} LIKE but only have {balance} LIKE",
   "error_internal_server_error": "Internal server error.",
-  "error_modal_footer_cancel": "Cancel",
   "error_modal_title": "Error",
   "error_network_error": "Network error, please try again.",
   "error_page_not_found": "Page not found",
