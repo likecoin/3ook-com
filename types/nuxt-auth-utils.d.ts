@@ -7,7 +7,6 @@ declare module '#auth-utils' {
     intercomToken?: string
     likerId?: string
     displayName?: string
-    description?: string
     avatar?: string
     email?: string
     loginMethod?: string

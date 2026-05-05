@@ -64,7 +64,6 @@ export default defineEventHandler(async (event) => {
     evmWallet: body.walletAddress,
     likerId: userInfoRes.user,
     displayName: userInfoRes.displayName,
-    description: userInfoRes.description,
     avatar: userInfoRes.avatar,
     email: body.email,
     loginMethod: body.loginMethod,
