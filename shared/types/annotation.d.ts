@@ -1,16 +1,18 @@
 export type AnnotationColor = 'yellow' | 'red' | 'green' | 'blue'
+export type AnnotationType = 'highlight' | 'bookmark'
 
 export interface AnnotationBase {
   id: string
-  cfi: string
-  text: string
-  color: AnnotationColor
+  type: AnnotationType
+  cfi?: string
+  page?: number
+  text?: string
+  color?: AnnotationColor
   note?: string
   chapterTitle?: string
 }
 
-export interface Annotation extends AnnotationBase {
-  note: string
+export type Annotation = AnnotationBase & {
   chapterTitle: string
   createdAt: number
   updatedAt: number

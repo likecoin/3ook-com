@@ -7,7 +7,8 @@ const AnnotationColorSchema = v.picklist(
   'MISSING_OR_INVALID_COLOR',
 )
 
-export const AnnotationCreateSchema = v.object({
+const HighlightCreateSchema = v.object({
+  type: v.literal('highlight', 'MISSING_OR_INVALID_TYPE'),
   cfi: v.pipe(
     v.string('MISSING_OR_INVALID_CFI'),
     v.nonEmpty('MISSING_OR_INVALID_CFI'),
@@ -24,6 +25,36 @@ export const AnnotationCreateSchema = v.object({
   )),
   chapterTitle: v.optional(v.string('INVALID_CHAPTER_TITLE')),
 })
+
+const BookmarkCreateSchema = v.pipe(
+  v.object({
+    type: v.literal('bookmark', 'MISSING_OR_INVALID_TYPE'),
+    cfi: v.optional(v.pipe(
+      v.string('MISSING_OR_INVALID_CFI'),
+      v.nonEmpty('MISSING_OR_INVALID_CFI'),
+    )),
+    page: v.optional(v.pipe(
+      v.number('MISSING_OR_INVALID_PAGE'),
+      v.integer('MISSING_OR_INVALID_PAGE'),
+      v.minValue(1, 'MISSING_OR_INVALID_PAGE'),
+    )),
+    text: v.optional(v.pipe(
+      v.string('INVALID_TEXT'),
+      v.maxLength(ANNOTATION_TEXT_MAX_LENGTH, 'TEXT_TOO_LONG'),
+    )),
+    chapterTitle: v.optional(v.string('INVALID_CHAPTER_TITLE')),
+  }),
+  v.check(
+    input => (input.cfi !== undefined) !== (input.page !== undefined),
+    'MISSING_OR_INVALID_ANCHOR',
+  ),
+)
+
+export const AnnotationCreateSchema = v.variant(
+  'type',
+  [HighlightCreateSchema, BookmarkCreateSchema],
+  'MISSING_OR_INVALID_TYPE',
+)
 
 export const AnnotationUpdateSchema = v.pipe(
   v.object({

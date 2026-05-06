@@ -81,46 +81,79 @@
             side="left"
             :close="false"
             :ui="{
-              body: 'p-0 sm:p-0 flex flex-col overflow-y-auto',
+              body: 'p-0 sm:p-0 flex flex-col overflow-hidden',
               content: 'max-w-[calc(100vw-44px)] laptop:max-w-[425px] border-r border-gray-500',
             }"
           >
             <UButton
-              :aria-label="$t('reader_toc_button')"
+              :aria-label="$t('reader_menu_button')"
               icon="i-material-symbols-format-list-bulleted"
-              :disabled="!outlineItems.length"
               variant="ghost"
               color="neutral"
+              @click="leftSidebarTab = 'toc'"
             />
 
             <template #body>
-              <ul
-                v-if="outlineItems.length"
-                class="divide-gray-500 divide-y"
+              <UTabs
+                v-model="leftSidebarTab"
+                :items="leftSidebarTabItems"
+                class="h-full"
+                color="neutral"
+                :ui="{
+                  list: 'shrink-0 min-h-[56px] bg-transparent border-b border-gray-500 rounded-none',
+                  content: 'flex-1 min-h-0 overflow-y-auto p-0',
+                }"
               >
-                <li
-                  v-for="(item, index) in outlineItems"
-                  :key="index"
-                >
-                  <UButton
-                    :label="item.title"
-                    variant="link"
-                    :color="isTocItemActive(item.pageNumber) ? 'primary' : 'neutral'"
-                    block
-                    :ui="{
-                      label: 'text-left leading-[44px]',
-                      base: 'justify-start pl-6 pr-5.5 py-0',
-                    }"
-                    :style="item.level > 0 ? { paddingLeft: `${(item.level + 1) * 16}px` } : undefined"
-                    @click="() => {
-                      isLeftSidebarOpen = false
-                      goToPage(item.pageNumber)
-                    }"
+                <template #toc>
+                  <ul
+                    v-if="outlineItems.length"
+                    class="divide-gray-500 divide-y"
+                  >
+                    <li
+                      v-for="(item, index) in outlineItems"
+                      :key="index"
+                    >
+                      <UButton
+                        :label="item.title"
+                        variant="link"
+                        :color="isTocItemActive(item.pageNumber) ? 'primary' : 'neutral'"
+                        block
+                        :ui="{
+                          label: 'text-left leading-[44px]',
+                          base: 'justify-start pl-6 pr-5.5 py-0',
+                        }"
+                        :style="item.level > 0 ? { paddingLeft: `${(item.level + 1) * 16}px` } : undefined"
+                        @click="() => {
+                          isLeftSidebarOpen = false
+                          goToPage(item.pageNumber)
+                        }"
+                      />
+                    </li>
+                  </ul>
+                  <div
+                    v-else
+                    class="flex items-center justify-center text-muted py-8"
+                    v-text="$t('reader_toc_empty')"
                   />
-                </li>
-              </ul>
+                </template>
+
+                <template #bookmarks>
+                  <BookmarksList
+                    :items="bookmarks"
+                    @navigate="handleBookmarkNavigate"
+                    @delete="handleBookmarkDelete"
+                  />
+                </template>
+              </UTabs>
             </template>
           </USlideover>
+          <UButton
+            :aria-label="$t('reader_bookmark_button')"
+            :icon="isCurrentPageBookmarked ? 'i-material-symbols-bookmark-rounded' : 'i-material-symbols-bookmark-outline-rounded'"
+            variant="ghost"
+            :color="isCurrentPageBookmarked ? 'primary' : 'neutral'"
+            @click="handleBookmarkToggle"
+          />
           <ReaderSearch
             v-model:open="isSearchOpen"
             :search-handler="handleSearchPDF"
@@ -275,6 +308,8 @@
 <script setup lang="ts">
 import type { DropdownMenuItem } from '@nuxt/ui'
 import type { PDFDocumentProxy, PDFPageProxy, PageViewport } from 'pdfjs-dist'
+import type { TextItem, TextMarkedContent } from 'pdfjs-dist/types/src/display/api'
+import { ANNOTATION_TEXT_MAX_LENGTH } from '~/constants/annotations'
 import { SEARCH_EXCERPT_RADIUS, SEARCH_MAX_RESULTS } from '~/constants/reader-search'
 
 interface Props {
@@ -403,6 +438,129 @@ interface OutlineItem {
 const outlineItems = ref<OutlineItem[]>([])
 const isLeftSidebarOpen = ref(false)
 const isSearchOpen = ref(false)
+
+type LeftSidebarTab = 'toc' | 'bookmarks'
+const leftSidebarTab = ref<LeftSidebarTab>('toc')
+const leftSidebarTabItems = computed(() => [
+  {
+    value: 'toc',
+    slot: 'toc' as const,
+    label: $t('reader_toc_title'),
+  },
+  {
+    value: 'bookmarks',
+    slot: 'bookmarks' as const,
+    label: $t('reader_bookmarks_title'),
+  },
+])
+
+const {
+  bookmarks,
+  fetchAnnotations,
+  createAnnotation,
+  saveAnnotation,
+  deleteAnnotation,
+  getBookmarkByPage,
+} = useAnnotations({ nftClassId: toRef(props, 'nftClassId') })
+
+onMounted(() => {
+  fetchAnnotations()
+})
+
+const currentBookmark = computed(() => getBookmarkByPage(currentPage.value))
+const isCurrentPageBookmarked = computed(() => !!currentBookmark.value)
+
+function getNearestOutlineTitle(pageNumber: number): string {
+  let title = ''
+  for (const item of outlineItems.value) {
+    if (item.pageNumber <= pageNumber) {
+      title = item.title
+    }
+    else {
+      break
+    }
+  }
+  return title
+}
+
+async function getBookmarkExcerptForPage(pageNumber: number): Promise<string> {
+  if (!pdfDocument.value) return ''
+  try {
+    let content = textContentCache.get(pageNumber)
+    if (!content) {
+      const page = await pdfDocument.value.getPage(pageNumber)
+      content = await page.getTextContent()
+      textContentCache.set(pageNumber, content)
+      page.cleanup()
+    }
+    const text = content.items
+      .filter((item: TextItem | TextMarkedContent): item is TextItem => 'str' in item)
+      .map(item => item.str)
+      .join(' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+    return text.slice(0, ANNOTATION_TEXT_MAX_LENGTH)
+  }
+  catch (error) {
+    console.warn('Failed to extract PDF bookmark excerpt:', error)
+    return ''
+  }
+}
+
+async function handleBookmarkToggle() {
+  if (currentBookmark.value) {
+    const success = await deleteAnnotation(currentBookmark.value.id)
+    if (success) {
+      useLogEvent('bookmark_deleted', { nft_class_id: props.nftClassId })
+    }
+    else {
+      toast.add({
+        title: $t('reader_bookmark_delete_failed'),
+        color: 'error',
+      })
+    }
+    return
+  }
+
+  const excerpt = await getBookmarkExcerptForPage(currentPage.value)
+  const createData: AnnotationCreateData = {
+    type: 'bookmark',
+    page: currentPage.value,
+    chapterTitle: getNearestOutlineTitle(currentPage.value),
+    ...(excerpt ? { text: excerpt } : {}),
+  }
+  const optimistic = createAnnotation(createData)
+  const saved = await saveAnnotation(optimistic.id, createData)
+  if (saved) {
+    useLogEvent('bookmark_created', { nft_class_id: props.nftClassId })
+  }
+  else {
+    toast.add({
+      title: $t('reader_bookmark_create_failed'),
+      color: 'error',
+    })
+  }
+}
+
+function handleBookmarkNavigate(bookmark: Annotation) {
+  isLeftSidebarOpen.value = false
+  if (bookmark.page !== undefined) {
+    goToPage(bookmark.page)
+  }
+}
+
+async function handleBookmarkDelete(bookmark: Annotation) {
+  const success = await deleteAnnotation(bookmark.id)
+  if (success) {
+    useLogEvent('bookmark_deleted', { nft_class_id: props.nftClassId })
+  }
+  else {
+    toast.add({
+      title: $t('reader_bookmark_delete_failed'),
+      color: 'error',
+    })
+  }
+}
 
 const emit = defineEmits<{
   error: [error: Error]

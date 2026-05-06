@@ -118,7 +118,7 @@ const selectedColorRgba = computed(() => {
 
 watch(() => props.annotation, (newAnnotation) => {
   if (newAnnotation) {
-    selectedColor.value = newAnnotation.color
+    if (newAnnotation.color) selectedColor.value = newAnnotation.color
     note.value = newAnnotation.note || ''
   }
   else {

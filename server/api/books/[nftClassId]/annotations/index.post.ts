@@ -17,13 +17,7 @@ export default defineEventHandler(async (event) => {
   const body = await readValidatedBody(event, createValidator(AnnotationCreateSchema))
 
   try {
-    const annotation = await createAnnotation(walletAddress, nftClassId, {
-      cfi: body.cfi,
-      text: body.text,
-      color: body.color,
-      note: body.note,
-      chapterTitle: body.chapterTitle,
-    })
+    const annotation = await createAnnotation(walletAddress, nftClassId, body)
 
     publishEvent(event, 'AnnotationCreate', {
       evmWallet: walletAddress,

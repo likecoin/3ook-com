@@ -86,9 +86,17 @@
                     </ul>
                   </template>
 
+                  <template #bookmarks>
+                    <BookmarksList
+                      :items="bookmarks"
+                      @navigate="handleBookmarkNavigate"
+                      @delete="handleBookmarkDelete"
+                    />
+                  </template>
+
                   <template #annotations>
                     <AnnotationsList
-                      :annotations="annotations"
+                      :items="annotations"
                       @navigate="handleAnnotationNavigate"
                     />
                   </template>
@@ -225,6 +233,14 @@
                 </div>
               </template>
             </BottomSlideover>
+            <UButton
+              :aria-label="$t('reader_bookmark_button')"
+              :icon="isCurrentPageBookmarked ? 'i-material-symbols-bookmark-rounded' : 'i-material-symbols-bookmark-outline-rounded'"
+              :disabled="isReaderLoading || !currentBookmarkCfi"
+              variant="ghost"
+              :color="isCurrentPageBookmarked ? 'primary' : 'neutral'"
+              @click="handleBookmarkToggle"
+            />
           </div>
         </template>
       </ReaderHeader>
@@ -399,13 +415,15 @@ const {
 })
 
 const {
-  annotations,
+  highlights: annotations,
+  bookmarks,
   fetchAnnotations,
   createAnnotation,
   saveAnnotation,
   updateAnnotation,
   deleteAnnotation,
   getAnnotationById,
+  getBookmarkByCfi,
 } = useAnnotations({ nftClassId })
 
 function getCacheKeyWithSuffix(suffix: ReaderCacheKeySuffix) {
@@ -414,7 +432,7 @@ function getCacheKeyWithSuffix(suffix: ReaderCacheKeySuffix) {
 
 const isReaderLoading = ref(true)
 
-type LeftSidebarTab = 'toc' | 'annotations'
+type LeftSidebarTab = 'toc' | 'bookmarks' | 'annotations'
 const isLeftSidebarOpen = ref(false)
 const leftSidebarTab = ref<LeftSidebarTab>('toc')
 const leftSidebarTabItems = computed(() => [
@@ -422,6 +440,11 @@ const leftSidebarTabItems = computed(() => [
     value: 'toc',
     slot: 'toc' as const,
     label: $t('reader_toc_title'),
+  },
+  {
+    value: 'bookmarks',
+    slot: 'bookmarks' as const,
+    label: $t('reader_bookmarks_title'),
   },
   {
     value: 'annotations',
@@ -1532,11 +1555,13 @@ function checkIsSelectingText() {
 
 function addAnnotationHighlight(annotation: Annotation) {
   if (!rendition.value) return
-  if (renderedHighlights.has(annotation.cfi)) return
+  const { cfi, color } = annotation
+  if (!cfi || !color) return
+  if (renderedHighlights.has(cfi)) return
 
   try {
     rendition.value.annotations.highlight(
-      annotation.cfi,
+      cfi,
       { id: annotation.id },
       (e: Event) => {
         e.stopPropagation()
@@ -1548,9 +1573,9 @@ function addAnnotationHighlight(annotation: Annotation) {
         }, 100)
       },
       'highlight',
-      { 'fill': ANNOTATION_COLORS_MAP[annotation.color], 'fill-opacity': '1' },
+      { 'fill': ANNOTATION_COLORS_MAP[color], 'fill-opacity': '1' },
     )
-    renderedHighlights.add(annotation.cfi)
+    renderedHighlights.add(cfi)
   }
   catch (error) {
     console.warn(`Failed to render annotation ${annotation.id}:`, error)
@@ -1620,7 +1645,7 @@ watch(annotations, renderAnnotations)
 
 function handleAnnotationClick(annotationId: string) {
   const annotation = getAnnotationById(annotationId)
-  if (annotation) {
+  if (annotation && annotation.type === 'highlight' && annotation.text && annotation.color) {
     editingAnnotation.value = annotation
     selectedText.value = annotation.text
     pendingAnnotationColor.value = annotation.color
@@ -1707,15 +1732,16 @@ async function handleAnnotationColorSelect(color: AnnotationColor) {
   isAnnotationMenuVisible.value = false
 
   const existingAnnotation = annotations.value.find(a => a.cfi === selectedCfi.value)
-  if (existingAnnotation) {
+  if (existingAnnotation && existingAnnotation.cfi) {
+    const existingCfi = existingAnnotation.cfi
     // Re-render with new color immediately
-    removeAnnotationHighlight(existingAnnotation.cfi)
+    removeAnnotationHighlight(existingCfi)
     addAnnotationHighlight({ ...existingAnnotation, color })
 
     const updated = await updateAnnotation(existingAnnotation.id, { color })
     if (!updated) {
       // Revert to original color
-      removeAnnotationHighlight(existingAnnotation.cfi)
+      removeAnnotationHighlight(existingCfi)
       addAnnotationHighlight(existingAnnotation)
       toast.add({
         title: $t('reader_annotations_update_failed'),
@@ -1725,23 +1751,26 @@ async function handleAnnotationColorSelect(color: AnnotationColor) {
   }
   else {
     const createData: AnnotationCreateData = {
+      type: 'highlight',
       cfi: selectedCfi.value,
       text: selectedText.value,
       color,
       chapterTitle: selectedChapterTitle.value,
     }
     const newAnnotation = createAnnotation(createData)
+    if (!newAnnotation.cfi) return
+    const newCfi = newAnnotation.cfi
     addAnnotationHighlight(newAnnotation)
 
     const saved = await saveAnnotation(newAnnotation.id, createData)
-    if (saved) {
+    if (saved && saved.type === 'highlight') {
       useLogEvent('annotation_created', { nft_class_id: nftClassId.value })
       // Re-render with server-assigned ID
-      removeAnnotationHighlight(newAnnotation.cfi)
+      removeAnnotationHighlight(newCfi)
       addAnnotationHighlight(saved)
     }
     else {
-      removeAnnotationHighlight(newAnnotation.cfi)
+      removeAnnotationHighlight(newCfi)
       toast.add({
         title: $t('reader_annotations_create_failed'),
         color: 'error',
@@ -1758,11 +1787,12 @@ async function handleAnnotationAddNote() {
   const existingAnnotation = annotations.value.find(a => a.cfi === selectedCfi.value)
   if (existingAnnotation) {
     editingAnnotation.value = existingAnnotation
-    pendingAnnotationColor.value = existingAnnotation.color
+    if (existingAnnotation.color) pendingAnnotationColor.value = existingAnnotation.color
     isNewAnnotation.value = false
   }
   else {
     const newAnnotation = createAnnotation({
+      type: 'highlight',
       cfi: selectedCfi.value,
       text: selectedText.value,
       color: pendingAnnotationColor.value,
@@ -1779,7 +1809,10 @@ async function handleAnnotationAddNote() {
   if (!isNewAnnotation.value || !editingAnnotation.value) return
 
   const newAnnotation = editingAnnotation.value
+  if (!newAnnotation.cfi || !newAnnotation.text || !newAnnotation.color) return
+
   pendingSavePromise.value = saveAnnotation(newAnnotation.id, {
+    type: 'highlight',
     cfi: newAnnotation.cfi,
     text: newAnnotation.text,
     color: newAnnotation.color,
@@ -1787,7 +1820,7 @@ async function handleAnnotationAddNote() {
   })
   const saved = await pendingSavePromise.value
   pendingSavePromise.value = null
-  if (saved) {
+  if (saved && saved.type === 'highlight') {
     removeAnnotationHighlight(newAnnotation.cfi)
     addAnnotationHighlight(saved)
     if (editingAnnotation.value?.id === newAnnotation.id) {
@@ -1832,9 +1865,9 @@ function handleAnnotationReportIssue() {
 }
 
 async function handleAnnotationModalSave(data: { color: AnnotationColor, note: string }) {
-  if (!editingAnnotation.value) return
+  if (!editingAnnotation.value?.cfi) return
 
-  const { cfi } = editingAnnotation.value
+  const cfi = editingAnnotation.value.cfi
 
   // Re-render highlight with new color immediately
   removeAnnotationHighlight(cfi)
@@ -1872,9 +1905,9 @@ async function handleAnnotationModalSave(data: { color: AnnotationColor, note: s
 }
 
 async function handleAnnotationModalDelete() {
-  if (!editingAnnotation.value) return
+  if (!editingAnnotation.value?.cfi) return
 
-  const { cfi } = editingAnnotation.value
+  const cfi = editingAnnotation.value.cfi
   removeAnnotationHighlight(cfi)
 
   isAnnotationModalOpen.value = false
@@ -1908,6 +1941,7 @@ async function handleAnnotationModalDelete() {
 
 async function handleAnnotationNavigate(annotation: Annotation) {
   isLeftSidebarOpen.value = false
+  if (!annotation.cfi) return
   isPageLoading.value = true
   try {
     const cfi = new EpubCFI(annotation.cfi)
@@ -1927,6 +1961,88 @@ async function handleAnnotationNavigate(annotation: Annotation) {
   }
   finally {
     isPageLoading.value = false
+  }
+}
+
+const currentBookmarkCfi = computed(() => currentPageStartCfi.value || currentCfi.value)
+const currentBookmark = computed(() => {
+  return currentBookmarkCfi.value ? getBookmarkByCfi(currentBookmarkCfi.value) : undefined
+})
+const isCurrentPageBookmarked = computed(() => !!currentBookmark.value)
+
+async function handleBookmarkToggle() {
+  if (currentBookmark.value) {
+    const id = currentBookmark.value.id
+    const success = await deleteAnnotation(id)
+    if (success) {
+      useLogEvent('bookmark_deleted', { nft_class_id: nftClassId.value })
+    }
+    else {
+      toast.add({
+        title: $t('reader_bookmark_delete_failed'),
+        color: 'error',
+      })
+    }
+    return
+  }
+
+  if (!currentBookmarkCfi.value) return
+  const doc = rendition.value?.manager?.getContents()?.[0]?.document
+  const excerpt = doc ? getExcerptForCFI(doc, currentBookmarkCfi.value, ANNOTATION_TEXT_MAX_LENGTH) : ''
+  const createData: AnnotationCreateData = {
+    type: 'bookmark',
+    cfi: currentBookmarkCfi.value,
+    chapterTitle: activeNavItemLabel.value,
+    ...(excerpt ? { text: excerpt } : {}),
+  }
+  const optimistic = createAnnotation(createData)
+  const saved = await saveAnnotation(optimistic.id, createData)
+  if (saved) {
+    useLogEvent('bookmark_created', { nft_class_id: nftClassId.value })
+  }
+  else {
+    toast.add({
+      title: $t('reader_bookmark_create_failed'),
+      color: 'error',
+    })
+  }
+}
+
+async function handleBookmarkNavigate(bookmark: Annotation) {
+  isLeftSidebarOpen.value = false
+  if (!bookmark.cfi) return
+  isPageLoading.value = true
+  try {
+    const cfi = new EpubCFI(bookmark.cfi)
+    if (cfi.range) {
+      cfi.collapse(true)
+    }
+    await rendition.value?.display(cfi.toString())
+  }
+  catch (error) {
+    console.error('Failed to navigate to bookmark:', error)
+    toast.add({
+      title: $t('reader_annotations_navigate_failed'),
+      color: 'error',
+      duration: 3000,
+      progress: false,
+    })
+  }
+  finally {
+    isPageLoading.value = false
+  }
+}
+
+async function handleBookmarkDelete(bookmark: Annotation) {
+  const success = await deleteAnnotation(bookmark.id)
+  if (success) {
+    useLogEvent('bookmark_deleted', { nft_class_id: nftClassId.value })
+  }
+  else {
+    toast.add({
+      title: $t('reader_bookmark_delete_failed'),
+      color: 'error',
+    })
   }
 }
 

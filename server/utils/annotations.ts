@@ -1,11 +1,16 @@
 import { createHash } from 'node:crypto'
-import { FieldValue, Timestamp } from 'firebase-admin/firestore'
+import { FieldValue, Timestamp, type UpdateData, type WithFieldValue } from 'firebase-admin/firestore'
 
 import { ANNOTATION_COLORS_MAP } from '~/constants/annotations'
 import type { AnnotationFirestoreData } from '~/server/types/annotation'
 
-function convertCFIToDocId(cfi: string): string {
-  return createHash('sha256').update(cfi).digest('hex')
+function getAnnotationDocId(data: AnnotationCreateData): string {
+  // Highlights use the legacy sha256(cfi) scheme to stay compatible with documents created before bookmarks existed.
+  if (data.type === 'highlight') {
+    return createHash('sha256').update(data.cfi!).digest('hex')
+  }
+  const anchor = data.cfi !== undefined ? `cfi:${data.cfi}` : `page:${data.page}`
+  return createHash('sha256').update(`${data.type}:${anchor}`).digest('hex')
 }
 
 function getAnnotationsCollection(userWallet: string, nftClassId: string) {
@@ -17,14 +22,20 @@ function getAnnotationsCollection(userWallet: string, nftClassId: string) {
 }
 
 function convertFirestoreToAnnotation(docId: string, data: AnnotationFirestoreData): Annotation {
-  const { note, chapterTitle, createdAt, updatedAt, ...baseData } = data
+  const type: AnnotationType = data.type === 'bookmark' ? 'bookmark' : 'highlight'
+  const createdAt = data.createdAt instanceof Timestamp ? data.createdAt.toMillis() : Date.now()
+  const updatedAt = data.updatedAt instanceof Timestamp ? data.updatedAt.toMillis() : Date.now()
   return {
-    ...baseData,
     id: docId,
-    note: note || '',
-    chapterTitle: chapterTitle || '',
-    createdAt: createdAt instanceof Timestamp ? createdAt.toMillis() : Date.now(),
-    updatedAt: updatedAt instanceof Timestamp ? updatedAt.toMillis() : Date.now(),
+    type,
+    ...(data.cfi !== undefined ? { cfi: data.cfi } : {}),
+    ...(data.page !== undefined ? { page: data.page } : {}),
+    ...(data.text !== undefined ? { text: data.text } : {}),
+    ...(data.color !== undefined ? { color: data.color } : {}),
+    ...(data.note !== undefined ? { note: data.note } : {}),
+    chapterTitle: data.chapterTitle || '',
+    createdAt,
+    updatedAt,
   }
 }
 
@@ -36,9 +47,7 @@ export async function getAnnotations(
     .orderBy('createdAt', 'asc')
     .get()
 
-  return snapshot.docs.map((doc) => {
-    return convertFirestoreToAnnotation(doc.id, doc.data())
-  })
+  return snapshot.docs.map(doc => convertFirestoreToAnnotation(doc.id, doc.data()))
 }
 
 export async function createAnnotation(
@@ -47,16 +56,19 @@ export async function createAnnotation(
   data: AnnotationCreateData,
 ): Promise<Annotation> {
   const collection = getAnnotationsCollection(userWallet, nftClassId)
-  const docRef = collection.doc(convertCFIToDocId(data.cfi))
+  const docRef = collection.doc(getAnnotationDocId(data))
   const now = FieldValue.serverTimestamp()
-  const annotationData = {
-    cfi: data.cfi,
-    text: data.text,
-    color: data.color,
-    note: data.note || '',
+
+  const annotationData: WithFieldValue<AnnotationFirestoreData> = {
+    type: data.type,
     chapterTitle: data.chapterTitle || '',
     createdAt: now,
     updatedAt: now,
+    ...(data.cfi !== undefined ? { cfi: data.cfi } : {}),
+    ...(data.page !== undefined ? { page: data.page } : {}),
+    ...(data.text !== undefined ? { text: data.text } : {}),
+    ...(data.color !== undefined ? { color: data.color } : {}),
+    ...(data.note !== undefined ? { note: data.note } : {}),
   }
 
   await docRef.create(annotationData)
@@ -76,15 +88,10 @@ export async function updateAnnotation(
 
   if (!doc.exists) return undefined
 
-  const updateData: Record<string, unknown> = {
+  const updateData: UpdateData<AnnotationFirestoreData> = {
     updatedAt: FieldValue.serverTimestamp(),
-  }
-
-  if (data.color !== undefined) {
-    updateData.color = data.color
-  }
-  if (data.note !== undefined) {
-    updateData.note = data.note || ''
+    ...(data.color !== undefined ? { color: data.color } : {}),
+    ...(data.note !== undefined ? { note: data.note || '' } : {}),
   }
 
   await docRef.update(updateData)
@@ -127,6 +134,26 @@ export function composeOpenAnnotationCollection({
     .join(' ')
 
   const oaAnnotations = annotations.map((annotation) => {
+    const selectors: Record<string, unknown>[] = []
+    if (annotation.cfi) {
+      selectors.push({
+        '@type': 'oa:FragmentSelector',
+        'value': annotation.cfi,
+      })
+    }
+    else if (annotation.page !== undefined) {
+      selectors.push({
+        '@type': 'oa:FragmentSelector',
+        'value': `page=${annotation.page}`,
+      })
+    }
+    if (annotation.text) {
+      selectors.push({
+        '@type': 'oa:TextQuoteSelector',
+        'exact': annotation.text,
+      })
+    }
+
     const target: Record<string, unknown> = {
       '@type': 'oa:SpecificResource',
       'hasSource': {
@@ -134,23 +161,27 @@ export function composeOpenAnnotationCollection({
         'uniqueIdentifier': nftClassId,
         'dc:title': title,
       },
-      'hasSelector': [
-        {
-          '@type': 'oa:FragmentSelector',
-          'value': annotation.cfi,
-        },
-        {
-          '@type': 'oa:TextQuoteSelector',
-          'exact': annotation.text,
-        },
-      ],
-      'styleClass': annotation.color,
+      'hasSelector': selectors,
+    }
+    if (annotation.color) {
+      target.styleClass = annotation.color
+    }
+
+    let motivatedBy: string
+    if (annotation.type === 'bookmark') {
+      motivatedBy = 'oa:bookmarking'
+    }
+    else if (annotation.note) {
+      motivatedBy = 'oa:commenting'
+    }
+    else {
+      motivatedBy = 'oa:highlighting'
     }
 
     const oa: Record<string, unknown> = {
       '@id': `urn:uuid:${annotation.id}`,
       '@type': 'oa:Annotation',
-      'motivatedBy': annotation.note ? 'oa:commenting' : 'oa:highlighting',
+      'motivatedBy': motivatedBy,
       'hasTarget': target,
       'annotatedAt': new Date(annotation.createdAt).toISOString(),
     }
