@@ -58,6 +58,7 @@ import type { AffiliateVoiceData } from '~/shared/types/custom-voice'
 const props = defineProps<{
   affiliateVoices?: AffiliateVoiceData[]
   affiliateLikerId?: string
+  affiliateExclusiveBadgeText?: string
 }>()
 
 const { handleError } = useErrorHandler()
@@ -78,6 +79,7 @@ const {
   },
   affiliateVoices: () => props.affiliateVoices,
   affiliateLikerId: () => props.affiliateLikerId,
+  affiliateExclusiveBadgeText: () => props.affiliateExclusiveBadgeText,
 })
 
 function getPlayButtonIcon(sampleId: string | null) {

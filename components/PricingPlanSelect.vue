@@ -136,6 +136,34 @@
             <span>{{ currency }} ${{ plan.price }}/{{ plan.perUnit }}</span>
           </span>
         </template>
+        <template v-else-if="plan.promoPrice !== undefined">
+          <span class="text-theme-black/60 line-through whitespace-nowrap">
+            <span>{{ currency }}&nbsp;</span>
+            <span v-text="`$${plan.price}`" />
+            <span>/{{ plan.perUnit }}</span>
+          </span>
+          <span class="font-bold whitespace-nowrap text-theme-black dark:text-theme-white">
+            <span
+              v-if="plan.promoPrice === 0"
+              class="text-lg laptop:text-xl"
+              v-text="$t(plan.promoFreeKey)"
+            />
+            <i18n-t
+              v-else
+              :keypath="plan.promoAmountKey"
+            >
+              <template #currency>
+                <span>{{ currency }}</span>
+              </template>
+              <template #price>
+                <span
+                  class="text-lg laptop:text-2xl"
+                  v-text="`$${plan.promoPrice}`"
+                />
+              </template>
+            </i18n-t>
+          </span>
+        </template>
         <template v-else>
           <div
             v-if="plan.hint"
@@ -174,6 +202,7 @@
 </template>
 
 <script lang="ts" setup>
+import type { PricingPagePromoPricing } from './PricingPageContent.props'
 import { DEFAULT_TRIAL_PERIOD_DAYS, PAID_TRIAL_PRICE, PAID_TRIAL_PERIOD_DAYS_THRESHOLD } from '~/constants/pricing'
 
 const props = withDefaults(defineProps<{
@@ -184,6 +213,9 @@ const props = withDefaults(defineProps<{
   trialPrice?: number
   yearlyDescription?: string
   monthlyDescription?: string
+  yearlyBadgeText?: string
+  monthlyBadgeText?: string
+  promoPricing?: PricingPagePromoPricing
 }>(), {
   isYearlyHidden: false,
   isMonthlyHidden: false,
@@ -192,6 +224,9 @@ const props = withDefaults(defineProps<{
   trialPrice: PAID_TRIAL_PRICE,
   yearlyDescription: undefined,
   monthlyDescription: undefined,
+  yearlyBadgeText: undefined,
+  monthlyBadgeText: undefined,
+  promoPricing: undefined,
 })
 
 const { t: $t } = useI18n()
@@ -235,12 +270,16 @@ const plans = computed(() => {
       })
     }
 
-    let badgeText: string | undefined
-    if (!isMonthly) {
-      badgeText = $t('pricing_page_yearly_discount', { discount: yearlyDiscountPercent.value })
-    }
+    const badgeText = isMonthly
+      ? props.monthlyBadgeText
+      : (props.yearlyBadgeText
+        ?? $t('pricing_page_yearly_discount', { discount: yearlyDiscountPercent.value }))
 
     const showTrialPrice = isMonthly || props.isAllowYearlyTrial
+
+    const promoPrice = isMonthly
+      ? props.promoPricing?.monthly?.price
+      : props.promoPricing?.yearly?.price
 
     return {
       isSelected: selectedPlan.value === value,
@@ -255,6 +294,13 @@ const plans = computed(() => {
       originalPrice: isMonthly ? originalMonthlyPrice.value : originalYearlyPrice.value,
       hasDiscount: isMonthly ? hasMonthlyDiscount.value : hasYearlyDiscount.value,
       showTrialPrice,
+      promoPrice,
+      promoFreeKey: isMonthly
+        ? 'pricing_page_promo_first_monthly_free'
+        : 'pricing_page_promo_first_yearly_free',
+      promoAmountKey: isMonthly
+        ? 'pricing_page_promo_first_monthly_amount'
+        : 'pricing_page_promo_first_yearly_amount',
     }
   })
 })

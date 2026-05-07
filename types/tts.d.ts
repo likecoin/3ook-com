@@ -16,4 +16,5 @@ declare interface TTSSample {
   languageVoice: string
   avatarSrc: string
   isAffiliateExclusive?: boolean
+  affiliateExclusiveBadgeText?: string
 }

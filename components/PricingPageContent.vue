@@ -47,6 +47,7 @@
               :is-dark-background="true"
               :title="campaignContent?.title"
               :description="campaignContent?.description"
+              :prepended-features="prependedFeatures"
             />
           </div>
         </div>
@@ -117,6 +118,7 @@
           :title="campaignContent?.title"
           :description="campaignContent?.description"
           :is-compact="isShowTTSSamples || !!$slots['affiliate-alert'] || !!$slots['affiliate-promo']"
+          :prepended-features="prependedFeatures"
         />
         <slot name="affiliate-alert" />
 
@@ -124,6 +126,7 @@
           v-if="isShowTTSSamples"
           :affiliate-voices="affiliateVoices"
           :affiliate-liker-id="affiliateLikerId"
+          :affiliate-exclusive-badge-text="ttsExclusiveBadgeText"
         />
 
         <slot name="affiliate-promo" />
@@ -159,6 +162,9 @@
                 <PricingPlanSelect
                   v-model="selectedPlan"
                   :trial-period-days="trialPeriodDays"
+                  :yearly-badge-text="yearlyBadgeText"
+                  :monthly-badge-text="monthlyBadgeText"
+                  :promo-pricing="promoPricing"
                 >
                   <template #header-left>
                     <div
@@ -199,7 +205,7 @@
               />
 
               <UAlert
-                v-if="!isApp && coupon"
+                v-if="!isApp && coupon && !promoPricing"
                 class="mt-4"
                 color="secondary"
                 variant="soft"
@@ -299,7 +305,10 @@ const campaignId = computed(() => {
 const {
   campaignContent,
   isBlocktrendCampaign,
-} = usePricingPageCampaign({ campaignId })
+} = usePricingPageCampaign({
+  campaignId,
+  affiliateLikerId: () => props.affiliateLikerId,
+})
 
 // NOTE: This could be simplified by computed, but props not updated after `open()` in `useOverlay()`
 const selectedPlan = useVModel(props, 'modelValue', emit, {

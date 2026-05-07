@@ -31,6 +31,13 @@
         { '[&>li>span:last-child]:text-white': isDarkBackground },
       ]"
     >
+      <li
+        v-for="(feature, index) in prependedFeatures"
+        :key="`prepended-${index}`"
+      >
+        <UIcon name="i-material-symbols-check" />
+        <span v-text="feature" />
+      </li>
       <li v-if="!isAudioHidden">
         <UIcon name="i-material-symbols-check" />
         <span v-text="$t('pricing_page_feature_1')" />
@@ -85,12 +92,14 @@ const props = withDefaults(defineProps<{
   isDarkBackground?: boolean
   isCompact?: boolean
   isAudioHidden?: boolean
+  prependedFeatures?: string[]
 }>(), {
   isTitleCenter: false,
   isTitleHidden: false,
   isDarkBackground: false,
   isCompact: false,
   isAudioHidden: false,
+  prependedFeatures: () => [],
 })
 
 const isYearlyPlan = computed(() => {

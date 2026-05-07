@@ -67,7 +67,7 @@
           variant="solid"
           :ui="{ base: 'gap-0 rounded-full font-bold' }"
         >
-          <span v-text="$t('tts_samples_section_affiliate_exclusive_badge')" />
+          <span v-text="sample.affiliateExclusiveBadgeText || $t('tts_samples_section_affiliate_exclusive_badge')" />
           <span aria-hidden="true">*</span>
         </UBadge>
 

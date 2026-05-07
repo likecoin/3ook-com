@@ -11,6 +11,11 @@
     :coupon="coupon"
     :affiliate-voices="affiliateSampleVoices"
     :affiliate-liker-id="affiliateLikerId"
+    :prepended-features="affiliateContent?.prependedFeatures"
+    :tts-exclusive-badge-text="affiliateContent?.ttsExclusiveBadgeText"
+    :yearly-badge-text="affiliateContent?.yearlyBadgeText"
+    :monthly-badge-text="affiliateContent?.monthlyBadgeText"
+    :promo-pricing="promoPricing"
     @open="handleOpen"
     @subscribe="handleSubscribe"
   >
@@ -93,7 +98,9 @@
 <script setup lang="ts">
 import type { ResolvableArray, ResolvableLink } from '@unhead/vue'
 
+import type { PricingPagePromoPricing } from '~/components/PricingPageContent.props'
 import type { AffiliatePublicConfig } from '~/shared/types/affiliate'
+import { getAffiliatePricingPageContent } from '~/composables/use-pricing-page-campaign'
 import { normalizeLikerId } from '~/shared/utils/liker-id'
 
 import { DEFAULT_TRIAL_PERIOD_DAYS } from '~/constants/pricing'
@@ -113,6 +120,7 @@ const baseURL = config.public.baseURL
 const { isApp } = useAppDetection()
 const { loggedIn: hasLoggedIn } = useUserSession()
 const accountStore = useAccountStore()
+const { displayCurrency } = usePaymentCurrency()
 
 const initialPlan: SubscriptionPlan = getRouteQuery('plan') === 'monthly' ? 'monthly' : 'yearly'
 const selectedPlan = ref<SubscriptionPlan>(initialPlan)
@@ -154,6 +162,9 @@ async function fetchAffiliateInfo() {
 watchImmediate(affiliateLikerId, () => {
   fetchAffiliateInfo()
 })
+
+const affiliateContent = computed(() => getAffiliatePricingPageContent(affiliateLikerId.value))
+
 const productGroup = 'plus'
 const monthlyProductId = 'plus-monthly'
 
@@ -295,6 +306,27 @@ const isAffiliateGiftRedeemable = computed(() => {
 })
 
 const coupon = computed(() => getRouteQuery('coupon') as string | undefined)
+
+const promoPricing = computed<PricingPagePromoPricing | undefined>(() => {
+  if (!coupon.value) return undefined
+  const effect = affiliateContent.value?.couponEffect
+  if (!effect) return undefined
+
+  if (effect.type === 'percent') {
+    const factor = 1 - effect.value / 100
+    return {
+      yearly: { price: Math.max(0, Math.round(yearlyPrice.value * factor)) },
+      monthly: { price: Math.max(0, Math.round(monthlyPrice.value * factor)) },
+    }
+  }
+
+  const off = effect.amount[displayCurrency.value]
+  if (typeof off !== 'number') return undefined
+  return {
+    yearly: { price: Math.max(0, yearlyPrice.value - off) },
+    monthly: { price: Math.max(0, monthlyPrice.value - off) },
+  }
+})
 
 const mustCollectPaymentMethod = computed(() => {
   const value = getRouteQuery('collect_payment_method')

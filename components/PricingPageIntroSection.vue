@@ -26,6 +26,7 @@
     <PricingPlanBenefits
       :is-dark-background="props.isDarkBackground"
       :is-compact="props.isCompact || (!!title && !!description)"
+      :prepended-features="props.prependedFeatures"
     />
   </div>
 </template>
@@ -47,6 +48,10 @@ const props = defineProps({
   description: {
     type: String,
     default: '',
+  },
+  prependedFeatures: {
+    type: Array as PropType<string[]>,
+    default: () => [],
   },
 })
 </script>

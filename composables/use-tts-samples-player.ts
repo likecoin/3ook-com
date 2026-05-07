@@ -7,10 +7,11 @@ interface TTSSamplesPlayerOptions {
   onEnd?: (sampleId: string | null) => void
   affiliateVoices?: MaybeRefOrGetter<AffiliateVoiceData[] | undefined>
   affiliateLikerId?: MaybeRefOrGetter<string | undefined>
+  affiliateExclusiveBadgeText?: MaybeRefOrGetter<string | undefined>
 }
 
 export function useTTSSamplesPlayer(options: TTSSamplesPlayerOptions = {}) {
-  const { onError, onEnd, affiliateVoices, affiliateLikerId } = options
+  const { onError, onEnd, affiliateVoices, affiliateLikerId, affiliateExclusiveBadgeText } = options
   const { t: $t } = useI18n()
   const affiliateVoicesComputed = computed(() => toValue(affiliateVoices) ?? [])
   const { getVoiceAvatar } = useTTSVoice({ affiliateVoices: affiliateVoicesComputed })
@@ -19,6 +20,7 @@ export function useTTSSamplesPlayer(options: TTSSamplesPlayerOptions = {}) {
     const voices = affiliateVoicesComputed.value
     const likerId = toValue(affiliateLikerId)
     if (!voices.length || !likerId) return []
+    const exclusiveBadgeText = toValue(affiliateExclusiveBadgeText)
     return voices.map((voice) => {
       const encodedVoiceId = encodeAffiliateVoiceId(voice.id)
       const language = voice.language?.toLowerCase().startsWith('zh-tw') ? 'zh-TW' : 'zh-HK'
@@ -47,6 +49,7 @@ export function useTTSSamplesPlayer(options: TTSSamplesPlayerOptions = {}) {
         languageVoice: encodedVoiceId,
         avatarSrc: getVoiceAvatar(encodedVoiceId),
         isAffiliateExclusive: true,
+        affiliateExclusiveBadgeText: exclusiveBadgeText,
       }
     })
   })
