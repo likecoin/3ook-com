@@ -229,6 +229,7 @@ import { estimateTTSMinutes } from '~/shared/utils/tts-trial'
 const { user, loggedIn: hasLoggedIn, fetch: refreshSession } = useUserSession()
 const accountStore = useAccountStore()
 const subscription = useSubscriptionModal()
+const { isProcessingSubscription } = subscription
 const { errorModal, handleError } = useErrorHandler()
 
 const { customVoice, hasCustomVoice, fetchCustomVoice } = useCustomVoice()
@@ -441,6 +442,13 @@ const { isTTSPlaying } = useTTSPlayingState()
 watch(isTextToSpeechPlaying, playing => isTTSPlaying.value = playing, { immediate: true })
 onBeforeUnmount(() => {
   isTTSPlaying.value = false
+})
+
+// The route-watch in use-tts-player-modal.ts can race the reader page's
+// unmount and leave this fullscreen modal covering /plus/checkout. Close
+// explicitly when the subscription handoff begins.
+watch(isProcessingSubscription, (isProcessing) => {
+  if (isProcessing) handleModalClose()
 })
 
 interface VisibleParagraph {
