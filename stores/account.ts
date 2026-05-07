@@ -11,6 +11,8 @@ const REGISTER_TIME_LIMIT_IN_TS = 15 * 60 * 1000 // 15 minutes
 
 const MAGIC_EMAIL_INPUT_ELEMENT_ID = 'MagicFormInput'
 
+export const SESSION_REFRESH_TIMESTAMP_KEY = 'lastSessionRefreshTs'
+
 const JWT_PERMISSIONS = [
   'profile',
   'email',
@@ -600,9 +602,24 @@ export const useAccountStore = defineStore('account', () => {
     }
   }
 
+  // Coalesce concurrent callers (mount + page-level callOnce + visibility
+  // resume can fire near-simultaneously) so we don't double-rotate the JWT.
+  let inFlightRefresh: Promise<void> | null = null
   async function refreshSessionInfo() {
-    await $fetch('/api/account/refresh', { method: 'POST' })
-    await refreshSession()
+    if (inFlightRefresh) return inFlightRefresh
+    inFlightRefresh = (async () => {
+      try {
+        await $fetch('/api/account/refresh', { method: 'POST' })
+        await refreshSession()
+        if (import.meta.client) {
+          localStorage.setItem(SESSION_REFRESH_TIMESTAMP_KEY, String(Date.now()))
+        }
+      }
+      finally {
+        inFlightRefresh = null
+      }
+    })()
+    return inFlightRefresh
   }
 
   async function exportPrivateKey() {

@@ -10,7 +10,9 @@
 </template>
 
 <script setup lang="ts">
-import { useStorage } from '@vueuse/core'
+import { useDocumentVisibility } from '@vueuse/core'
+
+import { SESSION_REFRESH_TIMESTAMP_KEY } from '~/stores/account'
 
 const { t: $t } = useI18n()
 const config = useRuntimeConfig()
@@ -44,23 +46,43 @@ const i18nHead = useLocaleHead()
 
 const { user } = useUserSession()
 const accountStore = useAccountStore()
-const lastSessionRefreshTs = useStorage('lastSessionRefreshTs', 0)
 
-onMounted(async () => {
-  if (user.value) {
-    const now = Date.now()
-    const oneDayInMs = 24 * 60 * 60 * 1000
-    const shouldRefresh = now - lastSessionRefreshTs.value > oneDayInMs
+// JWT lifetime is 1d; refreshing at the 12h mark keeps a 12h headroom so
+// timing slips around expiry don't leave a stale token in the cookie session
+// or in the native Intercom SDK's keychain.
+const SESSION_REFRESH_THRESHOLD_MS = 12 * 60 * 60 * 1000
 
-    if (shouldRefresh) {
-      try {
-        await accountStore.refreshSessionInfo()
-        lastSessionRefreshTs.value = now
-      }
-      catch (error) {
-        console.warn('Failed to refresh session info on app mount:', error)
-      }
-    }
+// Read directly from localStorage rather than via useStorage: VueUse's ref
+// only updates from cross-tab `storage` events, so in-tab writes from the
+// store's refreshSessionInfo wouldn't propagate to a cached ref.
+function getLastSessionRefreshTs(): number {
+  if (!import.meta.client) return 0
+  return Number(localStorage.getItem(SESSION_REFRESH_TIMESTAMP_KEY)) || 0
+}
+
+async function maybeRefreshSession() {
+  if (!user.value) return
+  if (Date.now() - getLastSessionRefreshTs() <= SESSION_REFRESH_THRESHOLD_MS) return
+  try {
+    await accountStore.refreshSessionInfo()
+  }
+  catch (error) {
+    console.warn('Failed to refresh session info:', error)
+  }
+}
+
+onMounted(() => {
+  maybeRefreshSession()
+})
+
+// Long-lived sessions never re-mount this component, and continuously-used
+// sessions can age past the JWT lifetime. Hook visibility transitions so a
+// foregrounded WebView (after iOS/Android resume) or a refocused browser tab
+// catches up without waiting for a full reload.
+const visibility = useDocumentVisibility()
+watch(visibility, (state, prev) => {
+  if (state === 'visible' && prev !== 'visible') {
+    maybeRefreshSession()
   }
 })
 useHead({
