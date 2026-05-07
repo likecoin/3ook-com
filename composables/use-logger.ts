@@ -82,6 +82,21 @@ const INTERCOM_EVENT_ALLOWLIST = new Set<string>([
   'deposit_claim_rewards_button_click',
 ])
 
+// Events whose authoritative source is the API server (likecoin-api-public): the server
+// fires them via posthog-node from the Stripe webhook handler. The matching client-side
+// fire to PostHog is suppressed here to avoid duplication, because posthog-js's capture()
+// doesn't accept a custom uuid and the two fires can't dedupe on PostHog's side. GA4 and
+// Meta Pixel still fire from both sides — they dedupe on transaction_id / eventID via
+// CAPI respectively, independent of the PostHog uuid issue. Re-enable the PostHog leg
+// once https://github.com/PostHog/posthog-js/issues/3546 lands and both sides can emit a
+// deterministic uuidv5(`${eventName}:${transaction_id}`, NS).
+const POSTHOG_SERVER_AUTHORITATIVE_EVENTS = new Set<string>([
+  'begin_checkout',
+  'purchase',
+  'start_trial',
+  'subscribe',
+])
+
 export function useLogEvent(eventName: string, eventParams: EventParams = {}) {
   try {
     const { proxy } = useScriptGoogleAnalytics()
@@ -152,6 +167,8 @@ export function useLogEvent(eventName: string, eventParams: EventParams = {}) {
     }
   }
 
+  if (POSTHOG_SERVER_AUTHORITATIVE_EVENTS.has(eventName)) return
+
   try {
     const { proxy } = useScriptPostHog()
     const posthogParams = { ...eventParams }
@@ -162,10 +179,6 @@ export function useLogEvent(eventName: string, eventParams: EventParams = {}) {
       if (classIds.length) {
         posthogParams.nft_class_ids = classIds.join(',')
       }
-    }
-    // Dedupe against the backend-fired counterpart (posthog-node) for the same transaction.
-    if (typeof eventParams.transaction_id === 'string' && eventParams.transaction_id) {
-      posthogParams.$insert_id = `${eventName}_${eventParams.transaction_id}`
     }
     proxy.posthog.capture(eventName, { app: '3ook', ...posthogParams })
   }
