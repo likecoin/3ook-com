@@ -55,8 +55,8 @@ export function useTTSSamplesPlayer(options: TTSSamplesPlayerOptions = {}) {
     return [
       {
         id: 'cantonese-pazu',
-        title: $t('tts_sample_cantonese'),
-        description: $t('tts_sample_cantonese_description'),
+        title: $t('tts_sample_cantonese_voice_name'),
+        description: $t('tts_sample_cantonese'),
         segments: [
           '當我慢慢依食譜調配藥水時，望著餓了一整個月的陳生，我忍不住問：「等咗咁耐，又要捱痛，仲要咁耐一啲嘢都冇得食。其實有冇好辛苦呀？」',
           '「冇嘢食都事小呀，我想快啲出院就真！我想出院煎魚就真！」「你知唔知呀，我啲熟客仔都 WhatsApp 我話好掛住我啲餸呀！」',
@@ -71,8 +71,8 @@ export function useTTSSamplesPlayer(options: TTSSamplesPlayerOptions = {}) {
       },
       {
         id: 'mandarin-aurora',
-        title: $t('tts_sample_mandarin'),
-        description: $t('tts_sample_mandarin_description'),
+        title: $t('tts_sample_mandarin_voice_name'),
+        description: $t('tts_sample_mandarin'),
         segments: [
           '她隨手從柴堆裡面抽出一根手指粗的棍子站起來，跨過熊熊的火堆衝到我面前，身子還沒停穩棍子就劈下來。',
           '張嬸他們上前扯，我媽兩手推開他們嚷道，今天你們誰也別攔著我，我就是要打死她，她這麼不聽話以後能有什麼用。',

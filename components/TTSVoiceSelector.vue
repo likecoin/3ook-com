@@ -75,7 +75,7 @@
           <img
             class="w-12 h-12 rounded-full ring-theme-black"
             :src="sample.avatarSrc"
-            :alt="sample.description"
+            :alt="sample.title"
           >
         </template>
       </UButton>
