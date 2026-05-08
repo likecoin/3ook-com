@@ -17,6 +17,8 @@ npm run dev              # Dev server on http://localhost:3000
 npm run lint             # ESLint
 npm run lint:fix         # Auto-fix lint issues
 npm run typecheck        # Type check via vue-tsc
+npm run test             # Vitest in watch mode
+npm run test:run         # Run unit tests once (used in CI)
 ```
 
 ## Production Build
@@ -42,4 +44,5 @@ Firebase App Hosting (Cloud Run):
 
 ## Documentation
 
-See [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) for framework details.
+- [`AGENTS.md`](./AGENTS.md) — architecture, conventions, and agent guidance
+- [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) — framework details
