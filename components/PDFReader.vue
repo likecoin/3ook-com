@@ -102,6 +102,8 @@
                 :ui="{
                   list: 'shrink-0 min-h-[56px] bg-transparent border-b border-gray-500 rounded-none',
                   content: 'flex-1 min-h-0 overflow-y-auto p-0',
+                  label: 'max-tablet:sr-only',
+                  leadingIcon: 'tablet:hidden',
                 }"
               >
                 <template #toc>
@@ -446,11 +448,13 @@ const leftSidebarTabItems = computed(() => [
     value: 'toc',
     slot: 'toc' as const,
     label: $t('reader_toc_title'),
+    icon: 'i-material-symbols-toc-rounded',
   },
   {
     value: 'bookmarks',
     slot: 'bookmarks' as const,
     label: $t('reader_bookmarks_title'),
+    icon: 'i-material-symbols-bookmarks-rounded',
   },
 ])
 
