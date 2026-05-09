@@ -15,6 +15,7 @@
             'rounded-full',
             'border-2',
             'border-muted',
+            { 'max-phone:hidden': i >= 2 },
           ]"
         />
         <USkeleton
