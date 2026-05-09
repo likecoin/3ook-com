@@ -512,10 +512,10 @@ const searchModeContext = computed(() => {
 
 const tagDescription = computed(() => {
   if (searchModeContext.value) return searchModeContext.value.description
-  const cmsDescription = isStakingTagId.value
-    ? ''
-    : activeCMSTag.value?.description[normalizedLocale.value] || ''
-  if (cmsDescription) return cmsDescription
+  if (!isStakingTagId.value) {
+    const cmsDescription = activeCMSTag.value?.description[normalizedLocale.value]
+    if (cmsDescription) return cmsDescription
+  }
   if (tagName.value) {
     return $t('store_page_tag_description', { tag: tagName.value })
   }
