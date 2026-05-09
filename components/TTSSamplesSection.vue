@@ -16,55 +16,25 @@
       />
     </div>
 
-    <div class="mt-4 space-y-3">
-      <TTSVoiceSelector
-        :icon="getPlayButtonIcon(activeTTSSampleId)"
-        :selected-voice-id="activeTTSSampleId"
-        :samples="ttsSamples"
-        @voice-click="handleSampleClick"
-      />
-
-      <UCard
-        v-if="isPlayingSample && currentSegmentText"
-        class="text-sm font-medium text-highlighted rounded-xl"
-      >
-        <div class="relative">
-          <!-- Spacer for text -->
-          <span
-            class="opacity-0 pointer-events-none"
-            v-text="longestSegmentText"
-          />
-          <Transition name="fade">
-            <span
-              :key="`segment-${currentSegmentIndex}`"
-              class="absolute inset-0"
-              v-text="currentSegmentText"
-            />
-          </Transition>
-        </div>
-      </UCard>
-
-      <div
-        v-if="activeAttribution"
-        class="text-xs text-muted text-center"
-      >
-        <NuxtLink
-          v-if="activeAttribution.nftClassId"
-          :to="localeRoute({ name: 'store-nftClassId', params: { nftClassId: activeAttribution.nftClassId } })"
-          class="underline hover:text-highlighted"
-        >
-          <span v-text="activeAttribution.text" />
-        </NuxtLink>
-        <span
-          v-else
-          v-text="activeAttribution.text"
-        />
-      </div>
-    </div>
+    <TTSSamplesGrid
+      class="mt-4"
+      :samples="ttsSamples"
+      :playing-sample-id="isPlayingSample ? activeTTSSampleId : null"
+      @sample-click="handleSampleClick"
+    />
 
     <footer
       class="mt-4 text-sm text-muted text-center"
       v-text="$t('tts_samples_section_footer')"
+    />
+
+    <TTSSamplePlayerModal
+      v-model:open="isPlayerModalOpen"
+      :sample="selectedSample"
+      :is-playing="isPlayingSample"
+      :current-segment-text="currentSegmentText"
+      :current-segment-index="currentSegmentIndex"
+      :longest-segment-text="longestSegmentText"
     />
   </UCard>
 </template>
@@ -78,12 +48,13 @@ const props = defineProps<{
   affiliateExclusiveBadgeText?: string
 }>()
 
-const localeRoute = useLocaleRoute()
 const { handleError } = useErrorHandler()
+
+const isPlayerModalOpen = ref(false)
+const selectedSample = ref<TTSSample | null>(null)
 
 const {
   samples: ttsSamples,
-  activeSample,
   activeSampleId: activeTTSSampleId,
   currentSegmentText,
   currentSegmentIndex,
@@ -95,29 +66,33 @@ const {
   onError: (error: unknown) => handleError(error),
   onEnd: () => {
     useLogEvent('tts_sample_play_complete', { sample: activeTTSSampleId.value })
+    isPlayerModalOpen.value = false
   },
   affiliateVoices: () => props.affiliateVoices,
   affiliateLikerId: () => props.affiliateLikerId,
   affiliateExclusiveBadgeText: () => props.affiliateExclusiveBadgeText,
 })
 
-const activeAttribution = computed(() => activeSample.value?.attribution ?? null)
-
-function getPlayButtonIcon(sampleId: string | null) {
-  return sampleId && activeTTSSampleId.value === sampleId && isPlayingSample.value
-    ? 'i-material-symbols-stop-rounded'
-    : 'i-material-symbols-play-arrow-rounded'
-}
+watch(isPlayerModalOpen, (open) => {
+  if (open) return
+  if (activeTTSSampleId.value) {
+    useLogEvent('tts_sample_stop', { sample: activeTTSSampleId.value })
+    stopSample()
+  }
+  selectedSample.value = null
+})
 
 function handleSampleClick(sample: { id: string, languageVoice: string }) {
   const sampleId = sample.id
   useLogEvent('tts_sample_click', { sample: sampleId })
 
-  if (activeTTSSampleId.value === sampleId && isPlayingSample.value) {
-    useLogEvent('tts_sample_stop', { sample: activeTTSSampleId.value })
-    stopSample()
+  if (isPlayingSample.value && activeTTSSampleId.value === sampleId) {
+    isPlayerModalOpen.value = false
     return
   }
+
+  selectedSample.value = ttsSamples.value.find(s => s.id === sampleId) ?? null
+  isPlayerModalOpen.value = true
 
   useLogEvent('tts_sample_play', { sample: sampleId })
   playSample(sampleId)
