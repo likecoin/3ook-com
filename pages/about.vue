@@ -1055,7 +1055,7 @@ function onSubmitNewsletter() {
 }
 
 const pageTitle = computed(() => $t('about_page_title'))
-const pageDescription = computed(() => $t('app_description'))
+const pageDescription = computed(() => $t('about_page_description'))
 const canonicalURL = computed(() => `${baseURL}/about`)
 
 useHead({

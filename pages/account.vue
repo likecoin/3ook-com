@@ -80,6 +80,10 @@
 // NOTE: Set `layout` to false for injecting props into `<NuxtLayout/>`.
 definePageMeta({ layout: false })
 
+useHead({
+  meta: [{ name: 'robots', content: 'noindex, nofollow' }],
+})
+
 const route = useRoute()
 const getRouteBaseName = useRouteBaseName()
 const { t: $t } = useI18n()

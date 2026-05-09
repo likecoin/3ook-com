@@ -60,6 +60,7 @@ const isPeriodMatch = computed(() => {
 
 useHead({
   title: $t('subscription_success_page_title'),
+  meta: [{ name: 'robots', content: 'noindex, nofollow' }],
 })
 
 async function fetchPlusGiftStatus() {

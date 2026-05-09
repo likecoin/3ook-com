@@ -111,6 +111,8 @@ import { UCheckbox } from '#components'
 
 const { t: $t, locale } = useI18n()
 const localeRoute = useLocaleRoute()
+const route = useRoute()
+const runtimeConfig = useRuntimeConfig()
 const { loggedIn: hasLoggedIn, user } = useUserSession()
 const accountStore = useAccountStore()
 const bookListStore = useBookListStore()
@@ -120,7 +122,23 @@ const { getAnalyticsParameters } = useAnalytics()
 const { getCheckoutCurrency } = usePaymentCurrency()
 const { isApp } = useAppDetection()
 
-useHead({ title: $t('book_list_title') })
+const pageTitle = computed(() => $t('book_list_title'))
+const pageDescription = computed(() => $t('book_list_description'))
+const canonicalURL = computed(() => `${runtimeConfig.public.baseURL}${route.path}`)
+
+useHead({
+  title: pageTitle,
+  meta: [
+    { name: 'description', content: pageDescription },
+    { property: 'og:title', content: pageTitle },
+    { property: 'og:description', content: pageDescription },
+    { property: 'og:url', content: canonicalURL },
+    { property: 'og:type', content: 'website' },
+  ],
+  link: [
+    { rel: 'canonical', href: canonicalURL },
+  ],
+})
 
 const selectedItemIds = ref<Set<string>>(new Set())
 const hasSelectedItems = computed(() => selectedItemIds.value.size > 0)

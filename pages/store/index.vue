@@ -470,8 +470,32 @@ const tagName = computed(() => {
 })
 
 const tagDescription = computed(() => {
-  if (isStakingTagId.value) return ''
-  return activeCMSTag.value?.description[normalizedLocale.value] || ''
+  if (isSearchMode.value) {
+    if (querySearchTerm.value) {
+      return $t('store_page_search_description', { term: querySearchTerm.value })
+    }
+    if (queryAuthorName.value) {
+      return $t('store_page_author_description', { author: queryAuthorName.value })
+    }
+    if (queryPublisherName.value) {
+      return $t('store_page_publisher_description', { publisher: queryPublisherName.value })
+    }
+    if (queryOwnerWallet.value) {
+      const displayName = ownerWalletDisplayName.value || queryOwnerWallet.value
+      return $t('store_page_owner_description', { owner: displayName })
+    }
+    if (queryGenre.value) {
+      return $t('store_page_genre_description', { genre: localizedGenreName.value })
+    }
+  }
+  const cmsDescription = isStakingTagId.value
+    ? ''
+    : activeCMSTag.value?.description[normalizedLocale.value] || ''
+  if (cmsDescription) return cmsDescription
+  if (tagName.value) {
+    return $t('store_page_tag_description', { tag: tagName.value })
+  }
+  return $t('store_page_description')
 })
 
 const canonicalURL = computed(() => {

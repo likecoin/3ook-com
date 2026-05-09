@@ -225,6 +225,7 @@ const getRouteQuery = useRouteQuery()
 
 useHead({
   title: $t('gift_plus_claim_title'),
+  meta: [{ name: 'robots', content: 'noindex, nofollow' }],
 })
 
 const isLoading = ref(true)

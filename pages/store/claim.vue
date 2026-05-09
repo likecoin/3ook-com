@@ -98,6 +98,10 @@
 <script setup lang="ts">
 definePageMeta({ name: 'claim-page', layout: false })
 
+useHead({
+  meta: [{ name: 'robots', content: 'noindex, nofollow' }],
+})
+
 const { t: $t } = useI18n()
 const likeCoinSessionAPI = useLikeCoinSessionAPI()
 const localeRoute = useLocaleRoute()

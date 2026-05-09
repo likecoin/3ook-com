@@ -16,6 +16,10 @@ definePageMeta({
   },
 })
 
+useHead({
+  meta: [{ name: 'robots', content: 'noindex, nofollow' }],
+})
+
 const route = useRoute()
 const getRouteQuery = useRouteQuery()
 const localeRoute = useLocaleRoute()

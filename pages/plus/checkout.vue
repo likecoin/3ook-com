@@ -109,6 +109,7 @@ let embeddedCheckout: StripeEmbeddedCheckout | null = null
 
 useHead({
   title: $t('plus_checkout_title'),
+  meta: [{ name: 'robots', content: 'noindex, nofollow' }],
 })
 
 async function mountCheckout() {
