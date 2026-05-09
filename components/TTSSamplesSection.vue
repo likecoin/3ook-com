@@ -32,7 +32,6 @@
       v-model:open="isPlayerModalOpen"
       :sample="selectedSample"
       :is-playing="isPlayingSample"
-      :current-segment-text="currentSegmentText"
       :current-segment-index="currentSegmentIndex"
       :longest-segment-text="longestSegmentText"
     />
@@ -56,7 +55,6 @@ const selectedSample = ref<TTSSample | null>(null)
 const {
   samples: ttsSamples,
   activeSampleId: activeTTSSampleId,
-  currentSegmentText,
   currentSegmentIndex,
   longestSegmentText,
   isPlaying: isPlayingSample,

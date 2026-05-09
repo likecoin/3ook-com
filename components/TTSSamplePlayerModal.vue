@@ -47,19 +47,40 @@
     </template>
 
     <template #body>
-      <p class="relative text-base leading-relaxed text-highlighted min-h-32">
-        <span
-          class="opacity-0 pointer-events-none whitespace-pre-wrap"
+      <div
+        v-if="sample"
+        class="relative py-12 tablet:py-24 text-base leading-relaxed"
+      >
+        <!-- Sizer -->
+        <p
+          class="invisible font-bold whitespace-pre-wrap"
+          aria-hidden="true"
           v-text="longestSegmentText"
         />
-        <Transition name="fade">
-          <span
-            :key="`segment-${currentSegmentIndex}`"
-            class="absolute inset-0 whitespace-pre-wrap"
-            v-text="currentSegmentText"
+
+        <div
+          ref="segmentsContainerRef"
+          class="absolute inset-0 overflow-hidden py-12 tablet:py-24 space-y-4"
+        >
+          <p
+            v-for="(segment, index) in sample.segments"
+            :key="segment.id"
+            ref="segmentRefs"
+            :class="getSegmentClass(index)"
+            v-text="segment.text"
           />
-        </Transition>
-      </p>
+        </div>
+
+        <!-- Top & Bottom Fades -->
+        <div
+          class="absolute inset-x-0 top-0 h-12 tablet:h-24 bg-gradient-to-b from-(--ui-bg) to-transparent pointer-events-none"
+          aria-hidden="true"
+        />
+        <div
+          class="absolute inset-x-0 bottom-0 h-12 tablet:h-24 bg-gradient-to-t from-(--ui-bg) to-transparent pointer-events-none"
+          aria-hidden="true"
+        />
+      </div>
 
       <footer
         v-if="sample?.attribution"
@@ -82,10 +103,9 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{
+const props = defineProps<{
   sample: TTSSample | null
   isPlaying: boolean
-  currentSegmentText: string
   currentSegmentIndex: number
   longestSegmentText: string
 }>()
@@ -93,6 +113,34 @@ defineProps<{
 const isOpen = defineModel<boolean>('open', { default: false })
 
 const localeRoute = useLocaleRoute()
+
+const segmentsContainerRef = ref<HTMLElement | null>(null)
+const segmentRefs = ref<HTMLElement[]>([])
+
+function getSegmentClass(index: number) {
+  const base = 'transition-opacity duration-300 whitespace-pre-wrap'
+  return index === props.currentSegmentIndex
+    ? `${base} font-bold text-default opacity-100`
+    : `${base} text-muted opacity-40`
+}
+
+function scrollSegmentIntoView(index: number) {
+  const container = segmentsContainerRef.value
+  const el = segmentRefs.value[index]
+  if (!container || !el) return
+  const targetTop = el.offsetTop - (container.clientHeight - el.clientHeight) / 2
+  const maxScrollTop = container.scrollHeight - container.clientHeight
+  const top = Math.min(maxScrollTop, Math.max(0, targetTop))
+  container.scrollTo({ top, behavior: 'smooth' })
+}
+
+watch(
+  () => [props.sample?.id, props.currentSegmentIndex] as const,
+  () => {
+    scrollSegmentIntoView(props.currentSegmentIndex)
+  },
+  { flush: 'post' },
+)
 </script>
 
 <style scoped>
