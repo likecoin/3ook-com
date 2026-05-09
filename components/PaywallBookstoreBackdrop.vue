@@ -8,6 +8,7 @@
       'h-[4000px]',
       'bg-repeat-y',
       'bg-top',
+      'bg-contain',
       'opacity-50',
       'blur-[1px]',
       'paywall-bookstore-backdrop-scroll-animation',
