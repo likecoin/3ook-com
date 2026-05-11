@@ -676,6 +676,17 @@ const structuredData = useStorePageStructuredData({
   description: tagDescription,
 })
 
+const entity = computed(() => {
+  if (queryAuthorName.value) return { type: 'Person' as const, name: queryAuthorName.value }
+  if (queryPublisherName.value) return { type: 'Organization' as const, name: queryPublisherName.value }
+  return null
+})
+const entityStructuredData = useEntityStructuredData({
+  entity,
+  url: canonicalURL,
+  description: () => searchModeContext.value?.description,
+})
+
 useHead(() => {
   const meta = []
   const script = []
@@ -712,6 +723,13 @@ useHead(() => {
       type: 'application/ld+json',
       innerHTML: JSON.stringify(structuredData.value),
     })
+
+    if (entityStructuredData.value) {
+      script.push({
+        type: 'application/ld+json',
+        innerHTML: JSON.stringify(entityStructuredData.value),
+      })
+    }
   }
 
   const collectiveEndpoint = runtimeConfig.public.likeCoinEVMChainCollectiveAPIEndpoint

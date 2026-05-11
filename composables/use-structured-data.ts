@@ -232,6 +232,29 @@ export function useStorePageStructuredData({
   })
 }
 
+export function useEntityStructuredData({
+  entity,
+  url,
+  description,
+}: {
+  entity: MaybeRefOrGetter<{ type: 'Person' | 'Organization', name: string } | null>
+  url: MaybeRefOrGetter<string>
+  description?: MaybeRefOrGetter<string | undefined>
+}) {
+  return computed(() => {
+    const entityValue = toValue(entity)
+    if (!entityValue) return null
+    const descriptionValue = toValue(description)
+    return {
+      '@context': 'https://schema.org',
+      '@type': entityValue.type,
+      'name': entityValue.name,
+      'url': toValue(url),
+      ...(descriptionValue && { description: descriptionValue }),
+    }
+  })
+}
+
 export function useStructuredData(
   { nftClassId }: { nftClassId: string | Ref<string> | ComputedRef<string> },
 ) {
