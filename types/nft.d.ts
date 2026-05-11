@@ -14,11 +14,11 @@ declare interface NFTClassMetadata {
   featured_image: string
   external_link: string
   ['@type']: string
-  author: string | { name: string, description: string }
+  author: string | { name: string, description?: string }
   nft_meta_collection_description: string
   nft_meta_collection_id: string
   publicationDate: string
-  publisher: string
+  publisher: string | { name: string, description?: string }
   recordTimestamp: string
   thumbnailUrl: string
   usageInfo: string

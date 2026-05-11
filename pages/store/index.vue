@@ -164,6 +164,22 @@
     <main
       class="flex flex-col items-center grow w-full max-w-[1440px] mx-auto pt-4 px-4 laptop:px-12 pb-16"
     >
+      <section
+        v-if="entity && entityDescription"
+        class="w-full mb-8 self-start text-left"
+      >
+        <h2
+          class="text-2xl font-bold text-highlighted mb-2"
+          v-text="entity.name"
+        />
+        <ExpandableContent>
+          <p
+            class="text-muted whitespace-pre-line"
+            v-text="entityDescription"
+          />
+        </ExpandableContent>
+      </section>
+
       <div
         v-if="isSearchResultEmpty"
         class="w-full mb-8"
@@ -272,6 +288,7 @@ const getRouteQuery = useRouteQuery()
 const runtimeConfig = useRuntimeConfig()
 const bookstoreStore = useBookstoreStore()
 const metadataStore = useMetadataStore()
+const nftStore = useNFTStore()
 const infiniteScrollDetectorElement = useTemplateRef<HTMLLIElement>('infiniteScrollDetector')
 const shouldLoadMore = useElementVisibility(infiniteScrollDetectorElement)
 const { handleError } = useErrorHandler()
@@ -511,6 +528,7 @@ const searchModeContext = computed(() => {
 })
 
 const tagDescription = computed(() => {
+  if (entityDescription.value) return entityDescription.value
   if (searchModeContext.value) return searchModeContext.value.description
   if (!isStakingTagId.value) {
     const cmsDescription = activeCMSTag.value?.description[normalizedLocale.value]
@@ -681,10 +699,29 @@ const entity = computed(() => {
   if (queryPublisherName.value) return { type: 'Organization' as const, name: queryPublisherName.value }
   return null
 })
+
+function extractEntityDescription(metadataKey: 'author' | 'publisher'): string {
+  for (const item of products.value.items) {
+    if (!item.classId) continue
+    const metadataValue = nftStore.getNFTClassById(item.classId)?.metadata?.[metadataKey]
+    if (metadataValue && typeof metadataValue === 'object') {
+      const description = metadataValue.description?.trim()
+      if (description) return description
+    }
+  }
+  return ''
+}
+
+const entityDescription = computed(() => {
+  if (queryAuthorName.value) return extractEntityDescription('author')
+  if (queryPublisherName.value) return extractEntityDescription('publisher')
+  return ''
+})
+
 const entityStructuredData = useEntityStructuredData({
   entity,
   url: canonicalURL,
-  description: () => searchModeContext.value?.description,
+  description: () => entityDescription.value || searchModeContext.value?.description,
 })
 
 useHead(() => {

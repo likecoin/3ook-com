@@ -56,7 +56,18 @@ export default function (
     return ''
   })
 
-  const publisherName = computed(() => bookInfo.publisher.value)
+  const publisherName = computed(() => {
+    const publisher = bookInfo.publisher.value
+    if (typeof publisher === 'string') return publisher
+    if (typeof publisher === 'object' && 'name' in publisher) return publisher.name
+    return ''
+  })
+
+  const publisherDescription = computed(() => {
+    const publisher = bookInfo.publisher.value
+    if (typeof publisher === 'object' && 'description' in publisher) return publisher.description || ''
+    return ''
+  })
 
   const formattedPublishedDate = computed(() => {
     return bookInfo.publishedDate.value?.toISOString().split('T')[0] || ''
@@ -317,6 +328,7 @@ export default function (
     authorName,
     authorDescription,
     publisherName,
+    publisherDescription,
     formattedPublishedDate,
     nftClassOwnerAvatar,
     description,
