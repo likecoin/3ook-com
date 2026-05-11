@@ -16,13 +16,13 @@
       <aside class="relative flex justify-end w-full bg-theme-black min-h-max overflow-hidden">
         <PaywallBookstoreBackdrop class="!opacity-20" />
         <div class="flex flex-col justify-center items-center relative w-full max-w-[512px] min-h-max">
-          <PlusBlocktrendBundleBanner
+          <LazyPlusBlocktrendBundleBanner
             v-if="isBlocktrendCampaign"
             class="w-full shrink-0"
             :is-force-landscape="true"
             :is-dark-background="true"
           />
-          <PricingPageCampaignMedia
+          <LazyPricingPageCampaignMedia
             v-else-if="campaignContent"
             class="w-full shrink-0"
             :campaign-id="campaignContent.id"
@@ -54,7 +54,7 @@
       </aside>
     </template>
     <template v-else>
-      <PlusBlocktrendBundleBanner
+      <LazyPlusBlocktrendBundleBanner
         v-if="isBlocktrendCampaign"
         class="max-laptop:shrink-0 w-full min-h-max"
       />
@@ -67,13 +67,13 @@
             v-if="isDesktopScreen"
             class="absolute inset-0 overflow-hidden"
           >
-            <PricingPageCampaignMedia
+            <LazyPricingPageCampaignMedia
               class="absolute inset-x-0 w-full top-1/2 -translate-y-1/2"
               :campaign-id="campaignContent.id"
               orientation="portrait"
             />
           </div>
-          <PricingPageCampaignMedia
+          <LazyPricingPageCampaignMedia
             v-else
             class="w-full"
             :campaign-id="campaignContent.id"
