@@ -50,7 +50,7 @@ const props = defineProps<{
 const { handleError } = useErrorHandler()
 
 const isPlayerModalOpen = ref(false)
-const selectedSample = ref<TTSSample | null>(null)
+const selectedSampleId = ref<string | null>(null)
 
 const {
   samples: ttsSamples,
@@ -71,13 +71,19 @@ const {
   affiliateExclusiveBadgeText: () => props.affiliateExclusiveBadgeText,
 })
 
+const selectedSample = computed(() =>
+  selectedSampleId.value
+    ? ttsSamples.value.find(s => s.id === selectedSampleId.value) ?? null
+    : null,
+)
+
 watch(isPlayerModalOpen, (open) => {
   if (open) return
   if (activeTTSSampleId.value) {
     useLogEvent('tts_sample_stop', { sample: activeTTSSampleId.value })
     stopSample()
   }
-  selectedSample.value = null
+  selectedSampleId.value = null
 })
 
 function handleSampleClick(sample: { id: string, languageVoice: string }) {
@@ -89,7 +95,7 @@ function handleSampleClick(sample: { id: string, languageVoice: string }) {
     return
   }
 
-  selectedSample.value = ttsSamples.value.find(s => s.id === sampleId) ?? null
+  selectedSampleId.value = sampleId
   isPlayerModalOpen.value = true
 
   useLogEvent('tts_sample_play', { sample: sampleId })
