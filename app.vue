@@ -71,6 +71,22 @@ async function maybeRefreshSession() {
   }
 }
 
+// Relies on registerType: 'autoUpdate' in nuxt.config.ts to actually reload
+// when a new sw.js is found; this just provokes the recheck. Shares
+// maybeRefreshSession's 12h timestamp so both fire on the same cadence.
+async function maybeUpdateServiceWorker() {
+  if (!import.meta.client) return
+  if (!('serviceWorker' in navigator)) return
+  if (Date.now() - getLastSessionRefreshTs() <= SESSION_REFRESH_THRESHOLD_MS) return
+  try {
+    const registration = await navigator.serviceWorker.getRegistration()
+    await registration?.update()
+  }
+  catch (error) {
+    console.warn('Failed to check for service worker update:', error)
+  }
+}
+
 onMounted(() => {
   maybeRefreshSession()
 })
@@ -82,7 +98,7 @@ onMounted(() => {
 const visibility = useDocumentVisibility()
 watch(visibility, (state, prev) => {
   if (state === 'visible' && prev !== 'visible') {
-    maybeRefreshSession()
+    Promise.allSettled([maybeRefreshSession(), maybeUpdateServiceWorker()])
   }
 })
 useHead({
