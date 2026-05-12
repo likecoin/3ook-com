@@ -72,19 +72,36 @@ async function maybeRefreshSession() {
 }
 
 // Relies on registerType: 'autoUpdate' in nuxt.config.ts to actually reload
-// when a new sw.js is found; this just provokes the recheck. Shares
-// maybeRefreshSession's 12h timestamp so both fire on the same cadence.
+// when a new sw.js is found; this just provokes the recheck. Tracks its own
+// timestamp because maybeRefreshSession's only advances for logged-in users,
+// which would let logged-out tabs probe update() on every refocus.
+const SW_UPDATE_CHECK_TIMESTAMP_KEY = 'lastSWUpdateCheckTs'
+
+function getLastSWUpdateCheckTs(): number {
+  if (!import.meta.client) return 0
+  return Number(localStorage.getItem(SW_UPDATE_CHECK_TIMESTAMP_KEY)) || 0
+}
+
+let inFlightSWUpdate: Promise<void> | null = null
 async function maybeUpdateServiceWorker() {
   if (!import.meta.client) return
   if (!('serviceWorker' in navigator)) return
-  if (Date.now() - getLastSessionRefreshTs() <= SESSION_REFRESH_THRESHOLD_MS) return
-  try {
-    const registration = await navigator.serviceWorker.getRegistration()
-    await registration?.update()
-  }
-  catch (error) {
-    console.warn('Failed to check for service worker update:', error)
-  }
+  if (Date.now() - getLastSWUpdateCheckTs() <= SESSION_REFRESH_THRESHOLD_MS) return
+  if (inFlightSWUpdate) return inFlightSWUpdate
+  inFlightSWUpdate = (async () => {
+    try {
+      const registration = await navigator.serviceWorker.getRegistration()
+      await registration?.update()
+      localStorage.setItem(SW_UPDATE_CHECK_TIMESTAMP_KEY, String(Date.now()))
+    }
+    catch (error) {
+      console.warn('Failed to check for service worker update:', error)
+    }
+    finally {
+      inFlightSWUpdate = null
+    }
+  })()
+  return inFlightSWUpdate
 }
 
 onMounted(() => {
