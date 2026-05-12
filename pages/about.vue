@@ -414,6 +414,7 @@
                   :cookies="true"
                   :width="9"
                   :height="16"
+                  ratio="9/16"
                   :aria-label="$t('about_page_author_kin_ko')"
                   :title="$t('about_page_author_kin_ko')"
                 >
@@ -461,6 +462,7 @@
                   :cookies="true"
                   :width="9"
                   :height="16"
+                  ratio="9/16"
                   :aria-label="$t('about_page_author_fu_yue_an')"
                   :title="$t('about_page_author_fu_yue_an')"
                 >
