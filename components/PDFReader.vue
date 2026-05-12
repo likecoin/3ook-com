@@ -6,7 +6,7 @@
     >
       <template #center>
         <div class="flex items-center gap-2">
-          <UButtonGroup>
+          <UButtonGroup class="-space-x-0.5">
             <UButton
               icon="i-material-symbols-chevron-left"
               :disabled="isAtFirstPage"
@@ -14,9 +14,19 @@
               variant="outline"
               @click="previousPage"
             />
-            <div class="flex items-center gap-1 px-2 border border-default rounded-[calc(var(--ui-radius)*1.5)]">
+            <div class="flex justify-center items-center gap-1 phone:pr-3 border-2 border-accented">
               <input
                 ref="pageInput"
+                :class="[
+                  'text-right max-phone:text-center',
+                  'text-sm',
+                  'bg-transparent',
+                  'outline-none',
+                  'appearance-none',
+                  '[&::-webkit-inner-spin-button]:appearance-none',
+                  '[&::-webkit-outer-spin-button]:appearance-none',
+                  '[-moz-appearance:textfield]',
+                ]"
                 :value="currentPage"
                 type="number"
                 :min="1"
@@ -24,11 +34,10 @@
                 :disabled="totalPages <= 0"
                 :aria-label="$t('reader_page_input_label')"
                 :style="{ width: `${Math.max(3, String(totalPages).length)}ch` }"
-                class="text-center text-sm bg-transparent outline-none appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]"
                 @change="onPageInputChange"
                 @keydown.enter="($event.target as HTMLInputElement)?.blur()"
               >
-              <span class="text-sm text-muted">/ {{ totalPages }}</span>
+              <span class="max-phone:hidden text-sm text-muted whitespace-nowrap">/ {{ totalPages }}</span>
             </div>
             <UButton
               icon="i-material-symbols-chevron-right"
@@ -39,7 +48,7 @@
             />
           </UButtonGroup>
 
-          <UButtonGroup>
+          <UButtonGroup class="max-phone:hidden -space-x-0.5">
             <UButton
               icon="i-material-symbols-zoom-out"
               :disabled="scale <= scaleMin"
@@ -48,7 +57,6 @@
               @click="zoomOut"
             />
             <UDropdownMenu
-              class="max-phone:hidden"
               :items="scaleMenuItems"
               :ui="{
                 item: 'justify-center',
@@ -57,7 +65,7 @@
               }"
             >
               <UButton
-                class="justify-center min-w-[64px]"
+                class="justify-center min-w-[64px] py-1"
                 :label="`${Math.round(scale * 100)}%`"
                 color="neutral"
                 variant="outline"
@@ -90,7 +98,7 @@
             }"
           >
             <UButton
-              icon="i-material-symbols-more-vert"
+              icon="i-material-symbols-page-info-outline-rounded"
               variant="ghost"
               color="neutral"
             />

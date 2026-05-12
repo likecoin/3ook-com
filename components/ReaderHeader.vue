@@ -36,7 +36,7 @@
         />
         <div
           v-if="props.chapterTitle"
-          class="text-muted text-sm font-semibold truncate "
+          class="text-muted text-sm font-semibold truncate"
           v-text="props.chapterTitle"
         />
       </div>
