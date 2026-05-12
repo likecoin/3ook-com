@@ -425,7 +425,6 @@ const {
   updateAnnotation,
   deleteAnnotation,
   getAnnotationById,
-  getBookmarkByCfi,
 } = useAnnotations({ nftClassId })
 
 function getCacheKeyWithSuffix(suffix: ReaderCacheKeySuffix) {
@@ -1971,7 +1970,7 @@ async function handleAnnotationNavigate(annotation: Annotation) {
 
 const currentBookmarkCfi = computed(() => currentPageStartCfi.value || currentCfi.value)
 const currentBookmark = computed(() => {
-  return currentBookmarkCfi.value ? getBookmarkByCfi(currentBookmarkCfi.value) : undefined
+  return bookmarks.value.find(b => b.cfi && isSegmentOnCurrentPage(b.cfi))
 })
 const isCurrentPageBookmarked = computed(() => !!currentBookmark.value)
 

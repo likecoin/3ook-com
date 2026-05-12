@@ -150,10 +150,6 @@ export default function useAnnotations(params: {
     return annotations.value.find(a => a.id === id)
   }
 
-  function getBookmarkByCfi(cfi: string): Annotation | undefined {
-    return bookmarks.value.find(a => a.cfi === cfi)
-  }
-
   function getBookmarkByPage(page: number): Annotation | undefined {
     return bookmarks.value.find(a => a.page === page)
   }
@@ -169,7 +165,6 @@ export default function useAnnotations(params: {
     updateAnnotation,
     deleteAnnotation,
     getAnnotationById,
-    getBookmarkByCfi,
     getBookmarkByPage,
   }
 }
