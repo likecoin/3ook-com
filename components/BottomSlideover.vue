@@ -20,14 +20,16 @@
         ref="bodyWrapperElement"
         :class="['overflow-y-auto pb-2', props.bodyClass]"
       >
-        <slot name="body" />
+        <div ref="bodyContentElement">
+          <slot name="body" />
+        </div>
       </div>
       <div
         :class="[
           ...scrollIndicatorClasses,
           'top-0',
           'bg-gradient-to-b',
-          { 'opacity-0': isBodyScrolledToTop },
+          { 'opacity-0': !isBodyContentOverflow || isBodyScrolledToTop },
         ]"
       />
       <div
@@ -35,7 +37,7 @@
           ...scrollIndicatorClasses,
           'bottom-0',
           'bg-gradient-to-t',
-          { 'opacity-0': isBodyScrolledToBottom },
+          { 'opacity-0': !isBodyContentOverflow || isBodyScrolledToBottom },
         ]"
       />
     </template>
@@ -60,11 +62,30 @@ const emit = defineEmits<{
 }>()
 
 const bodyWrapperElement = useTemplateRef<HTMLDivElement>('bodyWrapperElement')
+const bodyContentElement = useTemplateRef<HTMLDivElement>('bodyContentElement')
 const { arrivedState: bodyWrapperElementArrivedState } = useScroll(bodyWrapperElement)
 const {
   top: isBodyScrolledToTop,
   bottom: isBodyScrolledToBottom,
 } = toRefs(bodyWrapperElementArrivedState)
+
+const isBodyContentOverflow = ref(false)
+
+function updateIsBodyContentOverflow() {
+  const el = bodyWrapperElement.value
+  if (!el) {
+    isBodyContentOverflow.value = false
+    return
+  }
+  isBodyContentOverflow.value = el.scrollHeight > el.clientHeight
+}
+
+useResizeObserver([bodyWrapperElement, bodyContentElement], updateIsBodyContentOverflow)
+
+watch(bodyWrapperElement, async () => {
+  await nextTick()
+  updateIsBodyContentOverflow()
+})
 
 const scrollIndicatorClasses = [
   'absolute',
