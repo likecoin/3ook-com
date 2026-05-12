@@ -129,9 +129,9 @@ export default function useAnnotations(params: {
       return false
     }
 
-    const previous = annotations.value
-    if (!previous.some(a => a.id === annotationId)) return false
-    annotations.value = previous.filter(a => a.id !== annotationId)
+    const deleted = annotations.value.find(a => a.id === annotationId)
+    if (!deleted) return false
+    annotations.value = annotations.value.filter(a => a.id !== annotationId)
 
     try {
       await $fetch(`/api/books/${nftClassId.value}/annotations/${annotationId}`, {
@@ -140,7 +140,15 @@ export default function useAnnotations(params: {
       return true
     }
     catch (error) {
-      annotations.value = previous
+      // Re-insert only the removed item (preserving createdAt order) so
+      // concurrent changes to other annotations during the in-flight DELETE
+      // are not clobbered. Skip if a concurrent fetch already restored it.
+      if (!annotations.value.some(a => a.id === annotationId)) {
+        const insertAt = annotations.value.findIndex(a => a.createdAt > deleted.createdAt)
+        annotations.value = insertAt === -1
+          ? [...annotations.value, deleted]
+          : [...annotations.value.slice(0, insertAt), deleted, ...annotations.value.slice(insertAt)]
+      }
       console.warn(`Failed to delete annotation ${annotationId}:`, error)
       return false
     }
