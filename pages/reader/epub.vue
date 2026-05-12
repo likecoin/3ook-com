@@ -22,6 +22,92 @@
       >
         <template #trailing>
           <div class="relative flex justify-end items-center gap-2">
+            <BottomSlideover :title="$t('reader_display_options_button')">
+              <UButton
+                icon="i-material-symbols-text-fields-rounded"
+                variant="ghost"
+                color="neutral"
+              />
+
+              <template #body>
+                <div class="flex flex-col laptop:flex-row gap-4 p-6 pt-4 justify-between">
+                  <div class="flex-1">
+                    <p
+                      class="block text-sm font-medium mb-2"
+                      v-text="$t('reader_display_font_size_label')"
+                    />
+                    <div class="flex gap-2 items-center">
+                      <UButton
+                        icon="i-material-symbols-text-decrease-outline-rounded"
+                        variant="ghost"
+                        @click="decreaseFontSize"
+                      />
+                      <USelect
+                        v-model="fontSize"
+                        class="pl-9 w-full"
+                        :items="FONT_SIZE_OPTIONS"
+                        :ui="{ value: 'mx-auto' }"
+                      />
+                      <UButton
+                        icon="i-material-symbols-text-increase-rounded"
+                        variant="ghost"
+                        @click="increaseFontSize"
+                      />
+                    </div>
+                  </div>
+                  <div class="flex-1">
+                    <p
+                      class="block text-sm font-medium mb-2"
+                      v-text="$t('reader_display_line_height_label')"
+                    />
+                    <div class="flex gap-2 items-center">
+                      <UButton
+                        icon="i-material-symbols-remove"
+                        variant="ghost"
+                        @click="decreaseLineHeight"
+                      />
+                      <div
+                        class="flex justify-center items-center w-full px-2.5 py-1.5 text-sm rounded-md ring-2 ring-theme-black dark:ring-muted ring-inset"
+                        v-text="lineHeight.toFixed(1)"
+                      />
+                      <UButton
+                        icon="i-material-symbols-add"
+                        variant="ghost"
+                        @click="increaseLineHeight"
+                      />
+                    </div>
+                  </div>
+                  <div class="flex-1">
+                    <p
+                      class="block text-sm font-medium mb-2"
+                      v-text="$t('reader_display_orientation_label')"
+                    />
+                    <div class="grid grid-cols-2 gap-2">
+                      <UButton
+                        :variant="writingMode === EPUB_WRITING_MODES.horizontal ? 'solid' : 'outline'"
+                        icon="i-material-symbols-text-rotation-none-rounded"
+                        class="w-full justify-center"
+                        @click="setWritingMode(EPUB_WRITING_MODES.horizontal)"
+                      />
+                      <UButton
+                        :variant="writingMode === EPUB_WRITING_MODES.vertical ? 'solid' : 'outline'"
+                        icon="i-material-symbols-text-rotate-vertical-rounded"
+                        class="w-full justify-center"
+                        @click="setWritingMode(EPUB_WRITING_MODES.vertical)"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div class="px-6 pb-6">
+                  <UButton
+                    class="w-full justify-center"
+                    variant="outline"
+                    :label="$t('reader_display_restore_defaults_button')"
+                    @click="restoreDefaultDisplayOptions"
+                  />
+                </div>
+              </template>
+            </BottomSlideover>
             <USlideover
               v-model:open="isLeftSidebarOpen"
               side="left"
@@ -105,136 +191,12 @@
                 </UTabs>
               </template>
             </USlideover>
-            <UButton
-              :class="[
-                'laptop:hidden',
-                { 'opacity-50 cursor-not-allowed': isReaderLoading || bookInfo.isAudioHidden.value },
-              ]"
-              :avatar="{
-                src: activeTTSLanguageVoiceAvatar,
-                alt: activeTTSLanguageVoiceLabel,
-              }"
-              trailing-icon="i-material-symbols-play-arrow-rounded"
-              variant="ghost"
-              color="neutral"
-              :loading="isTTSExtracting"
-              @click="handleMobileTTSClick"
-            />
-            <UTooltip
-              :disabled="!bookInfo.isAudioHidden.value"
-              :text="$t('reader_text_to_speech_button_disabled_tooltip')"
-            >
-              <UButton
-                :ui="{
-                  base: '!rounded-l-md',
-                }"
-                class="max-laptop:hidden"
-                :avatar="{
-                  src: activeTTSLanguageVoiceAvatar,
-                  alt: activeTTSLanguageVoiceLabel,
-                }"
-                trailing-icon="i-material-symbols-play-arrow-rounded"
-                :label="$t('reader_text_to_speech_button')"
-                variant="ghost"
-                color="neutral"
-                :loading="isTTSExtracting"
-                :disabled="isReaderLoading || bookInfo.isAudioHidden.value"
-                @click="onClickTTSPlay"
-              />
-            </UTooltip>
-
             <ReaderSearch
               ref="readerSearch"
               v-model:open="isSearchOpen"
               :search-handler="handleSearchEPUB"
               @navigate="handleSearchNavigate"
             />
-
-            <BottomSlideover :title="$t('reader_display_options_button')">
-              <UButton
-                icon="i-material-symbols-text-fields"
-                variant="ghost"
-              />
-
-              <template #body>
-                <div class="flex flex-col laptop:flex-row gap-4 p-6 pt-4 justify-between">
-                  <div class="flex-1">
-                    <p
-                      class="block text-sm font-medium mb-2"
-                      v-text="$t('reader_display_font_size_label')"
-                    />
-                    <div class="flex gap-2 items-center">
-                      <UButton
-                        icon="i-material-symbols-text-decrease-outline-rounded"
-                        variant="ghost"
-                        @click="decreaseFontSize"
-                      />
-                      <USelect
-                        v-model="fontSize"
-                        class="pl-9 w-full"
-                        :items="FONT_SIZE_OPTIONS"
-                        :ui="{ value: 'mx-auto' }"
-                      />
-                      <UButton
-                        icon="i-material-symbols-text-increase-rounded"
-                        variant="ghost"
-                        @click="increaseFontSize"
-                      />
-                    </div>
-                  </div>
-                  <div class="flex-1">
-                    <p
-                      class="block text-sm font-medium mb-2"
-                      v-text="$t('reader_display_line_height_label')"
-                    />
-                    <div class="flex gap-2 items-center">
-                      <UButton
-                        icon="i-material-symbols-remove"
-                        variant="ghost"
-                        @click="decreaseLineHeight"
-                      />
-                      <div
-                        class="flex justify-center items-center w-full px-2.5 py-1.5 text-sm rounded-md ring-2 ring-theme-black dark:ring-muted ring-inset"
-                        v-text="lineHeight.toFixed(1)"
-                      />
-                      <UButton
-                        icon="i-material-symbols-add"
-                        variant="ghost"
-                        @click="increaseLineHeight"
-                      />
-                    </div>
-                  </div>
-                  <div class="flex-1">
-                    <p
-                      class="block text-sm font-medium mb-2"
-                      v-text="$t('reader_display_orientation_label')"
-                    />
-                    <div class="grid grid-cols-2 gap-2">
-                      <UButton
-                        :variant="writingMode === EPUB_WRITING_MODES.horizontal ? 'solid' : 'outline'"
-                        icon="i-material-symbols-text-rotation-none-rounded"
-                        class="w-full justify-center"
-                        @click="setWritingMode(EPUB_WRITING_MODES.horizontal)"
-                      />
-                      <UButton
-                        :variant="writingMode === EPUB_WRITING_MODES.vertical ? 'solid' : 'outline'"
-                        icon="i-material-symbols-text-rotate-vertical-rounded"
-                        class="w-full justify-center"
-                        @click="setWritingMode(EPUB_WRITING_MODES.vertical)"
-                      />
-                    </div>
-                  </div>
-                </div>
-                <div class="px-6 pb-6">
-                  <UButton
-                    class="w-full justify-center"
-                    variant="outline"
-                    :label="$t('reader_display_restore_defaults_button')"
-                    @click="restoreDefaultDisplayOptions"
-                  />
-                </div>
-              </template>
-            </BottomSlideover>
             <UButton
               :aria-label="$t('reader_bookmark_button')"
               :icon="isCurrentPageBookmarked ? 'i-material-symbols-bookmark-rounded' : 'i-material-symbols-bookmark-outline-rounded'"
@@ -243,6 +205,32 @@
               :color="isCurrentPageBookmarked ? 'primary' : 'neutral'"
               @click="handleBookmarkToggle"
             />
+            <UButton
+              :class="[
+                'laptop:hidden',
+                { 'opacity-50 cursor-not-allowed': isReaderLoading || bookInfo.isAudioHidden.value },
+              ]"
+              icon="i-material-symbols-volume-up-outline-rounded"
+              variant="solid"
+              color="primary"
+              :loading="isTTSExtracting"
+              @click="handleMobileTTSClick"
+            />
+            <UTooltip
+              :disabled="!bookInfo.isAudioHidden.value"
+              :text="$t('reader_text_to_speech_button_disabled_tooltip')"
+            >
+              <UButton
+                class="max-laptop:hidden"
+                icon="i-material-symbols-volume-up-outline-rounded"
+                :aria-label="$t('reader_text_to_speech_button')"
+                variant="solid"
+                color="primary"
+                :loading="isTTSExtracting"
+                :disabled="isReaderLoading || bookInfo.isAudioHidden.value"
+                @click="onClickTTSPlay"
+              />
+            </UTooltip>
           </div>
         </template>
       </ReaderHeader>
@@ -320,7 +308,7 @@
 
         <span
           v-if="!isReaderLoading"
-          class="absolute bottom-6 right-12 text-xs"
+          class="absolute bottom-6 right-12 text-xs text-muted"
           v-text="percentageLabel"
         />
       </div>
@@ -601,13 +589,6 @@ const { setTTSSegments, setChapterTitles, openPlayer } = useTTSPlayerModal({
       }
     }
   },
-})
-
-const {
-  activeTTSLanguageVoiceAvatar,
-  activeTTSLanguageVoiceLabel,
-} = useTTSVoice({
-  bookLanguage: bookInfo.inLanguage.value,
 })
 
 const currentSectionIndex = ref(0)

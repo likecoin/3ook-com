@@ -23,6 +23,7 @@
       class="laptop:hidden"
       icon="i-material-symbols-search-rounded"
       variant="ghost"
+      color="neutral"
       :aria-label="$t('reader_search_button')"
       @click="handleMobileTriggerClick"
     />
@@ -85,8 +86,9 @@
     <UButton
       class="max-laptop:hidden"
       icon="i-material-symbols-search-rounded"
-      :label="$t('reader_search_button')"
+      :aria-label="$t('reader_search_button')"
       variant="ghost"
+      color="neutral"
     />
     <template #body>
       <div class="flex flex-col gap-3 px-4 py-3">

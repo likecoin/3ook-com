@@ -77,6 +77,39 @@
       <template #trailing>
         <div class="flex items-center gap-2">
           <USlideover
+            :title="$t('reader_display_options_button')"
+            :close="{
+              color: 'neutral',
+              variant: 'outline',
+              class: 'rounded-full',
+            }"
+            side="bottom"
+            :overlay="false"
+            :ui="{
+              content: 'max-w-(--breakpoint-phone) mx-auto rounded-t-lg',
+            }"
+          >
+            <UButton
+              icon="i-material-symbols-more-vert"
+              variant="ghost"
+              color="neutral"
+            />
+
+            <template #body>
+              <UTabs
+                v-model="pageMode"
+                :items="pageModeOptions"
+                class="w-full"
+                :content="false"
+              />
+
+              <div class="flex items-center justify-between gap-4 mt-3 py-3">
+                <span class="text-sm">{{ $t('reader_right_to_left') }}</span>
+                <USwitch v-model="isRightToLeft" />
+              </div>
+            </template>
+          </USlideover>
+          <USlideover
             v-model:open="isLeftSidebarOpen"
             side="left"
             :close="false"
@@ -149,6 +182,11 @@
               </UTabs>
             </template>
           </USlideover>
+          <ReaderSearch
+            v-model:open="isSearchOpen"
+            :search-handler="handleSearchPDF"
+            @navigate="handleSearchNavigate"
+          />
           <UButton
             :aria-label="$t('reader_bookmark_button')"
             :icon="isCurrentPageBookmarked ? 'i-material-symbols-bookmark-rounded' : 'i-material-symbols-bookmark-outline-rounded'"
@@ -157,24 +195,14 @@
             :disabled="!pdfDocument || totalPages <= 0"
             @click="handleBookmarkToggle"
           />
-          <ReaderSearch
-            v-model:open="isSearchOpen"
-            :search-handler="handleSearchPDF"
-            @navigate="handleSearchNavigate"
-          />
-
           <UButton
             :class="[
               'laptop:hidden',
               { 'opacity-50 cursor-not-allowed': isAudioHidden },
             ]"
-            :avatar="{
-              src: activeTTSLanguageVoiceAvatar,
-              alt: activeTTSLanguageVoiceLabel,
-            }"
-            trailing-icon="i-material-symbols-play-arrow-rounded"
-            variant="ghost"
-            color="neutral"
+            icon="i-material-symbols-volume-up-outline-rounded"
+            variant="solid"
+            color="primary"
             :loading="isTTSExtracting"
             @click="handleMobileTTSClick"
           />
@@ -183,55 +211,16 @@
             :text="$t('reader_text_to_speech_button_disabled_tooltip')"
           >
             <UButton
-              :ui="{
-                base: '!rounded-l-md',
-              }"
               class="max-laptop:hidden"
-              :avatar="{
-                src: activeTTSLanguageVoiceAvatar,
-                alt: activeTTSLanguageVoiceLabel,
-              }"
-              trailing-icon="i-material-symbols-play-arrow-rounded"
-              :label="$t('reader_text_to_speech_button')"
-              variant="ghost"
-              color="neutral"
+              icon="i-material-symbols-volume-up-outline-rounded"
+              :aria-label="$t('reader_text_to_speech_button')"
+              variant="solid"
+              color="primary"
               :loading="isTTSExtracting"
               :disabled="isAudioHidden"
               @click="onClickTTSPlay"
             />
           </UTooltip>
-          <USlideover
-            :title="$t('reader_display_options_button')"
-            :close="{
-              color: 'neutral',
-              variant: 'outline',
-              class: 'rounded-full',
-            }"
-            side="bottom"
-            :overlay="false"
-            :ui="{
-              content: 'max-w-(--breakpoint-phone) mx-auto rounded-t-lg',
-            }"
-          >
-            <UButton
-              icon="i-material-symbols-more-vert"
-              variant="ghost"
-            />
-
-            <template #body>
-              <UTabs
-                v-model="pageMode"
-                :items="pageModeOptions"
-                class="w-full"
-                :content="false"
-              />
-
-              <div class="flex items-center justify-between gap-4 mt-3 py-3">
-                <span class="text-sm">{{ $t('reader_right_to_left') }}</span>
-                <USwitch v-model="isRightToLeft" />
-              </div>
-            </template>
-          </USlideover>
         </div>
       </template>
     </ReaderHeader>
@@ -573,11 +562,6 @@ const emit = defineEmits<{
   ttsPlay: []
   pageChanged: [pageNumber: number]
 }>()
-
-const {
-  activeTTSLanguageVoiceAvatar,
-  activeTTSLanguageVoiceLabel,
-} = useTTSVoice()
 
 const { pixelRatio } = useDevicePixelRatio()
 

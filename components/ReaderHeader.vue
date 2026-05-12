@@ -26,12 +26,17 @@
 
       <div class="flex flex-col overflow-hidden min-w-0">
         <div
-          :class="['font-semibold truncate', { 'text-xs': !!props.chapterTitle }]"
+          :class="[
+            'text-muted',
+            'font-semibold',
+            'truncate',
+            { 'text-xs': !!props.chapterTitle },
+          ]"
           v-text="props.bookName"
         />
         <div
           v-if="props.chapterTitle"
-          class="text-sm font-semibold truncate"
+          class="text-muted text-sm font-semibold truncate "
           v-text="props.chapterTitle"
         />
       </div>
