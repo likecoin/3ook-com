@@ -278,7 +278,7 @@ const { handleError } = useErrorHandler()
 const storePageState = useStorePageState()
 const isMobile = useMediaQuery('(max-width: 425px)')
 const isAdultContentEnabled = useAdultContentSetting()
-const { isApp } = useAppDetection()
+const { isApp, isIOS } = useAppDetection()
 const intercom = useIntercom()
 
 const querySearchTerm = computed(() => getRouteQuery('q', ''))
@@ -714,6 +714,7 @@ useHead(() => {
     })
   }
 
+  const collectiveEndpoint = runtimeConfig.public.likeCoinEVMChainCollectiveAPIEndpoint
   const link = [
     {
       rel: 'canonical',
@@ -726,21 +727,35 @@ useHead(() => {
       crossorigin: 'anonymous' as const,
       key: 'preload-store-tags',
     },
-    ...(isStakingTagId.value
+    // Skip cross-origin `<link rel="preload" as="fetch" crossorigin>` on iOS:
+    // WebKit fails to match it to the subsequent $fetch and the request errors
+    // out with "Load failed: <no response>". Preconnect warms TLS without the bug.
+    ...(isStakingTagId.value && isIOS.value && collectiveEndpoint
+      ? [{
+          rel: 'preconnect' as const,
+          href: new URL(collectiveEndpoint).origin,
+          crossorigin: '' as const,
+          key: 'preconnect-collective-indexer',
+        }]
+      : []),
+    ...(isStakingTagId.value && !isIOS.value
       ? [{
           rel: 'preload',
-          href: `${runtimeConfig.public.likeCoinEVMChainCollectiveAPIEndpoint}/book-nfts?pagination.limit=100&sort_by=${mapTagIdToAPIStakingSortValue(tagId.value)}&sort_order=desc`,
+          href: `${collectiveEndpoint}/book-nfts?pagination.limit=100&sort_by=${mapTagIdToAPIStakingSortValue(tagId.value)}&sort_order=desc`,
           as: 'fetch' as const,
           crossorigin: 'anonymous' as const,
           key: 'preload-staking-books',
         }]
-      : [{
+      : []),
+    ...(!isStakingTagId.value
+      ? [{
           rel: 'preload',
           href: `/api/store/products?tag=${tagId.value}&limit=100&ts=${getTimestampRoundedToMinute()}`,
           as: 'fetch' as const,
           crossorigin: 'anonymous' as const,
           key: 'preload-store-products',
-        }]),
+        }]
+      : []),
   ]
 
   return {
