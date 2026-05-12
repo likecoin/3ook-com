@@ -154,6 +154,7 @@
             :icon="isCurrentPageBookmarked ? 'i-material-symbols-bookmark-rounded' : 'i-material-symbols-bookmark-outline-rounded'"
             variant="ghost"
             :color="isCurrentPageBookmarked ? 'primary' : 'neutral'"
+            :disabled="!pdfDocument || totalPages <= 0"
             @click="handleBookmarkToggle"
           />
           <ReaderSearch
