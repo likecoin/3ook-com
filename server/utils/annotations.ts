@@ -7,8 +7,11 @@ import type { AnnotationFirestoreData } from '~/server/types/annotation'
 function getAnnotationDocId(data: AnnotationCreateData): string {
   // Highlights use the legacy sha256(cfi) scheme to stay compatible with documents created before bookmarks existed.
   if (data.type === 'highlight') {
-    if (!data.cfi) throw createError({ statusCode: 400, message: 'MISSING_CFI' })
+    if (!data.cfi) throw createError({ statusCode: 400, message: 'HIGHLIGHT_MISSING_CFI' })
     return createHash('sha256').update(data.cfi).digest('hex')
+  }
+  if ((data.cfi !== undefined) === (data.page !== undefined)) {
+    throw createError({ statusCode: 400, message: 'BOOKMARK_MISSING_ANCHOR' })
   }
   const anchor = data.cfi !== undefined ? `cfi:${data.cfi}` : `page:${data.page}`
   return createHash('sha256').update(`${data.type}:${anchor}`).digest('hex')
