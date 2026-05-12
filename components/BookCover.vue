@@ -12,19 +12,28 @@
         'group',
         {
           'cursor-pointer': isClickable,
-          'relative': isShowPlaceholder || (hasShadow && hasLoaded) || isShowRibbon,
-          'w-full h-full': isShowPlaceholder,
+          'relative': isShowPlaceholder || hasShadow || isShowRibbon,
+          'w-full': isShowPlaceholder || hasShadow,
+          'h-full': isShowPlaceholder,
         },
       ]"
       :to="props.to"
       @click="emit('click', $event)"
     >
-      <div
-        v-if="hasShadow"
+      <img
+        v-if="hasShadow && props.src && !hasError"
+        :src="props.src"
+        alt=""
+        aria-hidden="true"
+        decoding="async"
+        :loading="props.lazy ? 'lazy' : 'eager'"
+        :fetchpriority="props.priority ? 'high' : undefined"
         :class="[
           'absolute',
           'inset-0',
-          'bg-theme-black/5',
+          'w-full',
+          'h-full',
+          'object-cover',
           borderRadiusClass,
           'opacity-20',
           'brightness-50',
@@ -34,8 +43,7 @@
           '-translate-x-[10px]',
           'pointer-events-none',
         ]"
-        :style="{ backgroundImage: props.src && !hasError ? `url(${props.src})` : '' }"
-      />
+      >
       <img
         ref="imgElement"
         :class="[
@@ -48,6 +56,9 @@
         ]"
         :src="props.src"
         :alt="props.alt"
+        width="200"
+        height="300"
+        decoding="async"
         :loading="props.lazy ? 'lazy' : 'eager'"
         :fetchpriority="props.priority ? 'high' : undefined"
         @load="handleImageLoad"
@@ -180,6 +191,8 @@ const coverHoverScaleAnimationClass = [
 
 const coverClass = computed(() => {
   const classes = [
+    'w-full',
+    'h-auto',
     'border-l',
     'border-t',
     'border-muted',
