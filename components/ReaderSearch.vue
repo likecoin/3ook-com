@@ -78,7 +78,7 @@
       header: 'py-3 min-h-14',
       close: 'top-3',
       body: 'p-0 sm:p-0',
-      content: 'divide-muted ring-muted',
+      content: 'max-w-[calc(100vw-44px)] laptop:max-w-[425px] border-l border-gray-500 divide-gray-500',
     }"
     @update:open="handleOpenChange"
   >
