@@ -139,6 +139,7 @@
               :title="$t('reader_voice_options_button')"
               :is-disabled="!!props.specificLanguageVoice"
               :show-close-button="false"
+              body-class="max-h-[40vh] select-none"
             >
               <UButton
                 :class="[
