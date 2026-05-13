@@ -551,14 +551,17 @@ const shelfTabs = computed(() => {
   return tabs
 })
 
-const isTabsLoading = computed(() => (
-  !bookshelfStore.hasFetched
-  || (
-    isUploadedBookFeatureEnabled.value
-    && !uploadedBooksStore.hasFetched
+// nftClassIds is persisted, so on warm loads tabs can render before any fetch resolves.
+const isTabsLoading = computed(() => {
+  const hasAnyData = (
+    claimableFreeBooksCount.value > 0
+    || bookshelfStore.nftClassIds.length > 0
+    || stakingData.value.items.length > 0
+    || (isUploadedBookFeatureEnabled.value && hasUploadedBooks.value)
   )
-  || !stakingData.value.hasFetched
-))
+  if (hasAnyData) return false
+  return !bookshelfStore.hasFetched
+})
 
 const isCurrentTabFetching = computed(() => {
   switch (activeTab.value) {
