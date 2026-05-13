@@ -142,7 +142,7 @@
             >
               <UButton
                 :class="[
-                  'rounded-full',
+                  'rounded-full select-none',
                   { 'pointer-events-none': !!props.specificLanguageVoice },
                 ]"
                 :ui="{ leadingAvatar: 'size-8' }"
@@ -205,7 +205,7 @@
 
             <UTooltip :text="$t('reader_rate_options_button')">
               <UButton
-                class="rounded-full w-[5em] h-12"
+                class="rounded-full w-[5em] h-12 select-none"
                 :label="getTTSPlaybackRateLabel"
                 size="lg"
                 variant="soft"
