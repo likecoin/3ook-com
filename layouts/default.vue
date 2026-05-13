@@ -5,7 +5,7 @@
   >
     <!-- Pull to refresh indicator -->
     <div
-      v-if="isApp && (isPulling || isRefreshing)"
+      v-if="isPullToRefreshEnabled && (isPulling || isRefreshing)"
       class="fixed top-0 left-0 right-0 flex items-center justify-center transition-opacity z-50 pointer-events-none"
       :style="indicatorStyle"
     >
@@ -52,10 +52,13 @@ defineProps({
   },
 })
 
-const { isApp } = useAppDetection()
+const { isApp, isAndroid } = useAppDetection()
+
+// iOS app handles pull-to-refresh natively in RN WebView
+const isPullToRefreshEnabled = computed(() => isApp.value && isAndroid.value)
 
 const containerRef = ref<HTMLElement>()
-const pullTarget = computed(() => isApp.value ? containerRef.value : undefined)
+const pullTarget = computed(() => isPullToRefreshEnabled.value ? containerRef.value : undefined)
 
 const {
   isPulling,
@@ -82,7 +85,7 @@ onBeforeUnmount(() => {
 })
 
 const contentStyle = computed(() => {
-  if (!isApp.value) return {}
+  if (!isPullToRefreshEnabled.value) return {}
   if (pullDistance.value === 0 && !isSnappingBack.value) return {}
   return {
     transform: `translateY(${pullDistance.value}px)`,
