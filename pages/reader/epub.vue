@@ -22,7 +22,10 @@
       >
         <template #trailing>
           <div class="relative flex justify-end items-center gap-2">
-            <BottomSlideover :title="$t('reader_display_options_button')">
+            <BottomSlideover
+              :title="$t('reader_display_options_button')"
+              body-class="max-h-[40vh] select-none"
+            >
               <UButton
                 icon="i-material-symbols-text-fields-rounded"
                 variant="ghost"
@@ -113,7 +116,7 @@
               side="left"
               :close="false"
               :ui="{
-                body: 'p-0 sm:p-0 flex flex-col overflow-hidden',
+                body: 'p-0 sm:p-0 flex flex-col overflow-hidden select-none',
                 content: 'max-w-[calc(100vw-44px)] laptop:max-w-[425px] border-r border-gray-500',
               }"
             >

@@ -11,7 +11,7 @@
   />
   <ul
     v-else-if="segmentedResults.length > 0"
-    class="divide-y divide-muted"
+    class="divide-y divide-muted select-none"
   >
     <li
       v-for="result in segmentedResults"

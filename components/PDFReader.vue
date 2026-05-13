@@ -95,6 +95,7 @@
             :overlay="false"
             :ui="{
               content: 'max-w-(--breakpoint-phone) mx-auto rounded-t-lg',
+              body: 'select-none',
             }"
           >
             <UButton
@@ -122,7 +123,7 @@
             side="left"
             :close="false"
             :ui="{
-              body: 'p-0 sm:p-0 flex flex-col overflow-hidden',
+              body: 'p-0 sm:p-0 flex flex-col overflow-hidden select-none',
               content: 'max-w-[calc(100vw-44px)] laptop:max-w-[425px] border-r border-gray-500',
             }"
           >
