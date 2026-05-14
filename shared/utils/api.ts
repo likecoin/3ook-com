@@ -1,4 +1,4 @@
-import type { LikerInfoResponseData } from '../types/api'
+import type { LikerInfoResponseData } from '~~/shared/types/api'
 
 export function getLikeCoinAPIFetch() {
   const config = useRuntimeConfig()

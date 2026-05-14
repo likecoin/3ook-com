@@ -1,4 +1,4 @@
-import type { AnnotationColor } from '../types/annotation'
+import type { AnnotationColor } from '~~/shared/types/annotation'
 
 /**
  * Base annotation color RGB values from Tailwind 600-shade colors
