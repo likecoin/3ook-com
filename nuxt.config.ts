@@ -119,6 +119,7 @@ export default defineNuxtConfig({
       baseURL: process.env.BASE_URL,
     },
     session: {
+      password: '',
       maxAge: 60 * 60 * 24 * 30, // 30 days
       cookie: {
         secure: !isDevelopment,
