@@ -90,7 +90,7 @@ export class MinimaxTTSProvider implements BaseTTSProvider {
       voiceSetting: {
         voiceId: resolvedVoiceId,
         speed: 1,
-        emotion: 'neutral',
+        emotion: 'calm',
         textNormalization: true,
       },
       pronunciationDict: getTTSPronunciationDictionary(language),
@@ -114,18 +114,19 @@ export class MinimaxTTSProvider implements BaseTTSProvider {
     const resolvedVoiceId = (customMiniMaxVoiceId || VOICE_CONFIG[voiceId]!.minimaxVoiceId) as string
     const model = getMinimaxModel({ voiceId, customVoiceId: customMiniMaxVoiceId, language })
 
-    return await client.synthesizeStream({
+    const { audio } = await client.synthesizeStream({
       text,
       model,
       voiceSetting: {
         voiceId: resolvedVoiceId,
         speed: 1,
-        emotion: 'neutral',
+        emotion: 'calm',
         textNormalization: true,
       },
       pronunciationDict: getTTSPronunciationDictionary(language),
       languageBoost: LANG_MAPPING[language as keyof typeof LANG_MAPPING],
       streamOptions: { excludeAggregatedAudio: true },
     })
+    return audio
   }
 }
