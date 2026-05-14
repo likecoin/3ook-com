@@ -32,7 +32,7 @@
     "@likecoin/wagmi-connector": "2.4.1-like.0",
     "@nuxt/icon": "^1.11.0",
     "@nuxt/scripts": "^1.0.2",
-    "@nuxt/ui": "^3.2.0",
+    "@nuxt/ui": "^3.3.7",
     "@nuxtjs/i18n": "^10.3.0",
     "@nuxtjs/sitemap": "^7.3.1",
     "@pinia/nuxt": "^0.11.1",
@@ -60,8 +60,7 @@
     "uuid": "^8.3.2",
     "valibot": "^1.2.0",
     "viem": "^2.47.6",
-    "vue": "^3.5.13",
-    "vue-router": "^4.5.0"
+    "vue": "^3.5.13"
   },
   "devDependencies": {
     "@iconify-json/material-symbols": "^1.2.17",

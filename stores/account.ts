@@ -398,7 +398,8 @@ export const useAccountStore = defineStore('account', () => {
       let magicEmail: string | undefined = preferredEmail
       if (!connectorId || !connectors.some((c: { id: string }) => c.id === connectorId)) {
         useLogEvent('login_panel_open')
-        const result = await loginModal.open().result
+        // Cast because the Lazy* async-component wrapper hides LoginModal's close-payload from useOverlay's inference
+        const result = await loginModal.open().result as { id: string, email?: string } | undefined
         connectorId = result?.id
         magicEmail = result?.email
       }
