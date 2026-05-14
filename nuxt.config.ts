@@ -197,7 +197,6 @@ export default defineNuxtConfig({
         language: 'zh-HK',
       },
     ],
-    lazy: true,
     defaultLocale: 'zh-Hant',
     detectBrowserLanguage: false,
   },

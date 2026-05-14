@@ -66,8 +66,7 @@ const props = defineProps({
 const { t: $t } = useI18n()
 const { loggedIn: hasLoggedIn, user } = useUserSession()
 const localeRoute = useLocaleRoute()
-const route = useRoute()
-const getRouteBaseName = useRouteBaseName()
+const getRouteBaseNameString = useRouteBaseNameString()
 const { getLabelGraphic } = useGraphicLabel()
 
 const rawMenuItems = computed(() => [
@@ -75,15 +74,13 @@ const rawMenuItems = computed(() => [
   { key: 'shelf', label: $t('app_header_shelf') },
 ])
 
-const menuItems = computed(() =>
-  rawMenuItems.value.map((item) => {
-    const to = localeRoute({ name: item.key })
-    return {
-      ...item,
-      to,
-      isActive: getRouteBaseName(route)?.startsWith(item.key),
-      labelGraphic: getLabelGraphic(item.key),
-    }
-  }),
-)
+const menuItems = computed(() => {
+  const routeName = getRouteBaseNameString()
+  return rawMenuItems.value.map(item => ({
+    ...item,
+    to: localeRoute({ name: item.key }),
+    isActive: routeName.startsWith(item.key),
+    labelGraphic: getLabelGraphic(item.key),
+  }))
+})
 </script>

@@ -34,31 +34,30 @@
 <script setup lang="ts">
 import type { NuxtError } from '#app'
 
-const route = useRoute()
 const localeRoute = useLocaleRoute()
-const getRouteBaseName = useRouteBaseName()
+const getRouteBaseNameString = useRouteBaseNameString()
 const { t: $t } = useI18n()
 const props = defineProps({
   error: Object as () => NuxtError<{ rawMessage?: string }>,
 })
 
-const routeBaseName = computed(() => getRouteBaseName(route))
+const routeBaseName = computed(() => getRouteBaseNameString())
 
 const backButtonLabel = computed(() => {
-  if (routeBaseName.value?.startsWith('store')) {
+  if (routeBaseName.value.startsWith('store')) {
     return $t('error_back_to_bookstore_button_label')
   }
-  if (routeBaseName.value?.startsWith('shelf')) {
+  if (routeBaseName.value.startsWith('shelf')) {
     return $t('error_back_to_bookshelf_button_label')
   }
   return $t('error_back_to_home_button_label')
 })
 
 const backButtonRoute = computed(() => {
-  if (routeBaseName.value?.startsWith('store')) {
+  if (routeBaseName.value.startsWith('store')) {
     return localeRoute({ name: 'store' })
   }
-  if (routeBaseName.value?.startsWith('shelf')) {
+  if (routeBaseName.value.startsWith('shelf')) {
     return localeRoute({ name: 'shelf' })
   }
   return localeRoute({ name: 'index' })

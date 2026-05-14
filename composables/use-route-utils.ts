@@ -13,3 +13,12 @@ export function useRouteParam() {
     return (Array.isArray(value) ? value[0] : value) || defaultValue
   }
 }
+
+export function useRouteBaseNameString() {
+  const route = useRoute()
+  const getRouteBaseName = useRouteBaseName()
+  return function getRouteBaseNameString(targetRoute = route): string {
+    const name = getRouteBaseName(targetRoute)
+    return typeof name === 'string' ? name : ''
+  }
+}

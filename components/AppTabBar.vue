@@ -58,13 +58,13 @@
 <script setup lang="ts">
 const { t: $t } = useI18n()
 const localeRoute = useLocaleRoute()
-const route = useRoute()
-const getRouteBaseName = useRouteBaseName()
+const getRouteBaseNameString = useRouteBaseNameString()
 const { getLabelGraphic } = useGraphicLabel()
 const { loggedIn: hasLoggedIn, user } = useUserSession()
 
-const menuItems = computed(() =>
-  [
+const menuItems = computed(() => {
+  const routeName = getRouteBaseNameString()
+  return [
     {
       key: 'store',
       label: $t('tab_bar_store'),
@@ -84,7 +84,7 @@ const menuItems = computed(() =>
       iconActive: 'i-material-symbols-person-rounded',
     },
   ].map((tab) => {
-    const isActive = getRouteBaseName(route)?.startsWith(tab.key)
+    const isActive = routeName.startsWith(tab.key)
     const to = localeRoute({ name: tab.key })
     return {
       key: tab.key,
@@ -94,6 +94,6 @@ const menuItems = computed(() =>
       isActive,
       labelGraphic: getLabelGraphic(tab.key),
     }
-  }),
-)
+  })
+})
 </script>

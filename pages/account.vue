@@ -84,15 +84,14 @@ useHead({
   meta: [{ name: 'robots', content: 'noindex, nofollow' }],
 })
 
-const route = useRoute()
-const getRouteBaseName = useRouteBaseName()
+const getRouteBaseNameString = useRouteBaseNameString()
 const { t: $t } = useI18n()
 const localeRoute = useLocaleRoute()
 const { loggedIn: hasLoggedIn } = useUserSession()
 const accountStore = useAccountStore()
 const { isApp } = useAppDetection()
 
-const routeName = computed(() => getRouteBaseName(route) || '')
+const routeName = computed(() => getRouteBaseNameString())
 
 const breadcrumbItems = computed(() => {
   const items = []

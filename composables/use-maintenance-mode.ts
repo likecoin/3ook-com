@@ -4,17 +4,15 @@ const WHITELISTED_ROUTE_NAMES = [
 
 export function useMaintenanceMode() {
   const config = useRuntimeConfig()
-  const route = useRoute()
   const getRouteQuery = useRouteQuery()
-  const getRouteBaseName = useRouteBaseName()
+  const getRouteBaseNameString = useRouteBaseNameString()
 
   const shouldOverrideMaintenancePage = computed(() => {
     return getRouteQuery('maintenance') === '0'
   })
 
   const isWhitelistedRoute = computed(() => {
-    const routeName = getRouteBaseName(route)
-    return !!routeName && WHITELISTED_ROUTE_NAMES.includes(routeName)
+    return WHITELISTED_ROUTE_NAMES.includes(getRouteBaseNameString())
   })
 
   const isShowMaintenancePage = computed(() => (
