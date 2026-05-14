@@ -1,5 +1,5 @@
-import { BookIdParamsSchema } from '~/server/schemas/params'
-import { BookSettingsUpdateSchema } from '~/shared/schemas/book-settings'
+import { BookIdParamsSchema } from '~~/server/schemas/params'
+import { BookSettingsUpdateSchema } from '~~/shared/schemas/book-settings'
 
 export default defineEventHandler(async (event) => {
   const session = await requireUserSession(event)

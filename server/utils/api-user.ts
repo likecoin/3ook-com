@@ -1,10 +1,9 @@
 import type { H3Event } from 'h3'
 import { FieldPath, FieldValue, Timestamp } from 'firebase-admin/firestore'
-import type { BookSettingsData } from '~/types/book-settings'
-import type { BookSettingsFirestoreData } from '~/server/types/book-settings'
-import type { BookSettingsUpdatePayload } from '~/shared/types/book-settings'
-import type { UserSettingsData } from '~/types/user-settings'
-import { FIRESTORE_IN_OPERATOR_LIMIT } from '~/constants/api'
+import type { BookSettingsData, BookSettingsUpdatePayload } from '~~/shared/types/book-settings'
+import type { BookSettingsFirestoreData } from '~~/server/types/book-settings'
+import type { UserSettingsData } from '~~/shared/types/user-settings'
+import { FIRESTORE_IN_OPERATOR_LIMIT } from '~~/shared/constants/api'
 
 export async function requireUserWallet(event: H3Event): Promise<string> {
   const session = await requireUserSession(event)

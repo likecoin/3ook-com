@@ -1,4 +1,4 @@
-import type { AffiliateVoiceData } from '~/shared/types/custom-voice'
+import type { AffiliateVoiceData } from '~~/shared/types/custom-voice'
 
 export type AffiliatePublicConfig =
   | {

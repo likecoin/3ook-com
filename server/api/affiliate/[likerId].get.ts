@@ -1,6 +1,6 @@
-import type { AffiliatePublicConfig } from '~/shared/types/affiliate'
-import { getAffiliateConfig, getAffiliatePlusDiscountAllowed } from '~/server/utils/affiliate'
-import { fetchLikeCoinNFTClassAggregatedMetadataById } from '~/shared/utils/api'
+import type { AffiliatePublicConfig } from '~~/shared/types/affiliate'
+import { getAffiliateConfig, getAffiliatePlusDiscountAllowed } from '~~/server/utils/affiliate'
+import { fetchLikeCoinNFTClassAggregatedMetadataById } from '~~/shared/utils/api'
 
 export default defineEventHandler(async (event): Promise<AffiliatePublicConfig> => {
   const likerId = getRouterParam(event, 'likerId')

@@ -1,4 +1,4 @@
-import { HeartbeatSchema } from '~/server/schemas/analytics'
+import { HeartbeatSchema } from '~~/server/schemas/analytics'
 
 export default defineEventHandler(async (event) => {
   const wallet = await requireUserWallet(event)

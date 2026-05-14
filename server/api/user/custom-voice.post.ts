@@ -1,6 +1,6 @@
 import type { FileUploadResult } from 'minimax-speech-ts'
-import type { CustomVoiceData } from '~/shared/types/custom-voice'
-import { LANG_MAPPING } from '~/server/utils/tts-minimax'
+import type { CustomVoiceData } from '~~/shared/types/custom-voice'
+import { LANG_MAPPING } from '~~/server/utils/tts-minimax'
 import {
   CUSTOM_VOICE_ALLOWED_AUDIO_TYPES,
   CUSTOM_VOICE_ALLOWED_AVATAR_TYPES,
@@ -8,7 +8,7 @@ import {
   CUSTOM_VOICE_MAX_AVATAR_SIZE,
   CUSTOM_VOICE_MAX_PROMPT_AUDIO_SIZE,
   CustomVoiceFieldsSchema,
-} from '~/server/schemas/custom-voice'
+} from '~~/server/schemas/custom-voice'
 
 function getExtFromMime(mime: string): string {
   const map: Record<string, string> = {

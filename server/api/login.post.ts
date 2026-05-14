@@ -1,7 +1,7 @@
 import { jwtDecode } from 'jwt-decode'
 import { FieldValue } from 'firebase-admin/firestore'
 
-import { LoginBodySchema } from '~/server/schemas/auth'
+import { LoginBodySchema } from '~~/server/schemas/auth'
 
 export default defineEventHandler(async (event) => {
   const body = await readValidatedBody(event, createValidator(LoginBodySchema))

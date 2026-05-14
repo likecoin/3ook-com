@@ -1,6 +1,6 @@
 import * as v from 'valibot'
-import { MAX_HEARTBEAT_DELTA_MS, MAX_SESSION_DURATION_MS } from '~/constants/analytics'
-import { nftClassIdField } from '~/server/schemas/params'
+import { MAX_HEARTBEAT_DELTA_MS, MAX_SESSION_DURATION_MS } from '~~/shared/constants/analytics'
+import { nftClassIdField } from '~~/server/schemas/params'
 
 export const ReadingSessionSchema = v.object({
   nftClassId: nftClassIdField,

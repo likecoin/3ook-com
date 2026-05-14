@@ -10,3 +10,7 @@ export interface BaseUserSettingsData {
 }
 
 export type UserSettingKey = 'locale' | 'currency' | 'colorMode' | 'isAdultContentEnabled'
+
+export interface UserSettingsData extends BaseUserSettingsData {
+  updatedAt?: number
+}

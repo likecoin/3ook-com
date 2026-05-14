@@ -1,4 +1,4 @@
-import { ReadingSessionSchema } from '~/server/schemas/analytics'
+import { ReadingSessionSchema } from '~~/server/schemas/analytics'
 
 const COMPLETION_THRESHOLD = 95
 

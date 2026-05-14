@@ -1,4 +1,4 @@
-import { AccountDeleteBodySchema } from '~/server/schemas/auth'
+import { AccountDeleteBodySchema } from '~~/server/schemas/auth'
 
 export default defineEventHandler(async (event) => {
   const session = await requireUserSession(event)

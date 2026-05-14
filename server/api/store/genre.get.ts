@@ -1,6 +1,6 @@
 import { FetchError } from 'ofetch'
 
-import { StoreGenreQuerySchema } from '~/server/schemas/store'
+import { StoreGenreQuerySchema } from '~~/server/schemas/store'
 
 export default defineEventHandler(async (event) => {
   try {

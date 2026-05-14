@@ -1,6 +1,6 @@
 import * as v from 'valibot'
-import { bookIdField } from '~/server/schemas/params'
-import { TTS_PREVIEW_NFT_CLASS_ID } from '~/shared/utils/tts-sig'
+import { bookIdField } from '~~/server/schemas/params'
+import { TTS_PREVIEW_NFT_CLASS_ID } from '~~/shared/utils/tts-sig'
 
 export const TTS_MAX_TEXT_LENGTH = 2000
 

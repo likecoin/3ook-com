@@ -1,6 +1,6 @@
 import { jwtDecode } from 'jwt-decode'
 
-import { UserSettingsUpdateSchema } from '~/shared/schemas/user-settings'
+import { UserSettingsUpdateSchema } from '~~/shared/schemas/user-settings'
 
 export default defineEventHandler(async (event) => {
   const session = await requireUserSession(event)

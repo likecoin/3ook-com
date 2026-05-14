@@ -1,5 +1,5 @@
-import { fetchCollectiveBookNFTs } from '~/shared/utils/collective-indexer'
-import { normalizeNFTClassId } from '~/shared/utils/index'
+import { fetchCollectiveBookNFTs } from '~~/shared/utils/collective-indexer'
+import { normalizeNFTClassId } from '~~/shared/utils/index'
 
 const SITEMAP_CLASS_IDS_CACHE_KEY = 'sitemap:store:class-ids'
 const SITEMAP_CLASS_IDS_CACHE_TTL = 3600

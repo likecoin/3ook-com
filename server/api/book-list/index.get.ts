@@ -1,5 +1,5 @@
-import { BookListQuerySchema } from '~/server/schemas/book-list'
-import { fetchUserBookListItem } from '~/server/utils/book-list'
+import { BookListQuerySchema } from '~~/server/schemas/book-list'
+import { fetchUserBookListItem } from '~~/server/utils/book-list'
 
 export default defineEventHandler(async (event) => {
   const session = await requireUserSession(event)

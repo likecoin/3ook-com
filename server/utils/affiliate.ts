@@ -1,6 +1,6 @@
-import type { AffiliateConfig, AffiliateCustomVoice } from '~/server/types/affiliate'
-import { getLikeCoinAPIFetch } from '~/shared/utils/api'
-import { normalizeLikerId } from '~/shared/utils/liker-id'
+import type { AffiliateConfig, AffiliateCustomVoice } from '~~/server/types/affiliate'
+import { getLikeCoinAPIFetch } from '~~/shared/utils/api'
+import { normalizeLikerId } from '~~/shared/utils/liker-id'
 
 type UpstreamAffiliateResponse =
   & Omit<AffiliateConfig, 'affiliateClassIds' | 'customVoices'>

@@ -11,12 +11,12 @@ import {
 import {
   computeLegacyTTSTextSig,
   computeTTSTextSig,
-} from '~/shared/utils/tts-sig'
+} from '~~/shared/utils/tts-sig'
 import {
   buildTTSServerTiming,
   TTS_SERVER_SOURCE,
   TTS_SERVER_TIMING_METRIC,
-} from '~/shared/utils/tts-server-timing'
+} from '~~/shared/utils/tts-server-timing'
 
 describe('sanitizeTTSText', () => {
   it('returns empty string for falsy input', () => {

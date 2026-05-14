@@ -4,7 +4,7 @@ import {
   UPLOADED_BOOK_ID_PREFIX,
   UPLOADED_BOOK_MAX_COVER_SIZE,
   UPLOADED_BOOK_MAX_FILE_SIZE,
-} from '~/shared/utils/uploaded-book'
+} from '~~/shared/utils/uploaded-book'
 
 export const uploadedBookIdField = v.pipe(
   v.string('MISSING_BOOK_ID'),

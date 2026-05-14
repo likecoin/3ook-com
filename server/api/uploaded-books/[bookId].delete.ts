@@ -1,4 +1,4 @@
-import { UploadedBookIdParamsSchema } from '~/server/schemas/uploaded-book'
+import { UploadedBookIdParamsSchema } from '~~/server/schemas/uploaded-book'
 
 export default defineEventHandler(async (event) => {
   const wallet = await requireUserWallet(event)

@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import { UploadedBookIdParamsSchema } from '~/server/schemas/uploaded-book'
+import { UploadedBookIdParamsSchema } from '~~/server/schemas/uploaded-book'
 
 const CONTENT_TYPE_MAP: Record<string, string> = {
   epub: 'application/epub+zip',

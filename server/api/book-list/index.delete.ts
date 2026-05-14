@@ -1,4 +1,4 @@
-import { BookListBodySchema } from '~/server/schemas/book-list'
+import { BookListBodySchema } from '~~/server/schemas/book-list'
 
 export default defineEventHandler(async (event) => {
   const session = await requireUserSession(event)

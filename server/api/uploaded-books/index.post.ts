@@ -1,13 +1,13 @@
 import { randomUUID } from 'node:crypto'
-import type { InitUploadedBookResponse } from '~/shared/types/uploaded-book'
+import type { InitUploadedBookResponse } from '~~/shared/types/uploaded-book'
 import {
   UPLOADED_BOOK_CONTENT_TYPE_TO_MIME,
   UPLOADED_BOOK_COVER_EXT,
   UPLOADED_BOOK_COVER_MIME_TYPE,
   UPLOADED_BOOK_ID_PREFIX,
   UPLOADED_BOOK_MIME_TO_CONTENT_TYPE,
-} from '~/shared/utils/uploaded-book'
-import { InitUploadedBookBodySchema } from '~/server/schemas/uploaded-book'
+} from '~~/shared/utils/uploaded-book'
+import { InitUploadedBookBodySchema } from '~~/server/schemas/uploaded-book'
 
 export default defineEventHandler(async (event): Promise<InitUploadedBookResponse> => {
   const wallet = await requireUserWallet(event)

@@ -1,6 +1,6 @@
 import * as v from 'valibot'
 
-import { ANNOTATION_NOTE_MAX_LENGTH, ANNOTATION_TEXT_MAX_LENGTH } from '~/constants/annotations'
+import { ANNOTATION_NOTE_MAX_LENGTH, ANNOTATION_TEXT_MAX_LENGTH } from '~~/shared/constants/annotations'
 
 const AnnotationColorSchema = v.picklist(
   ['yellow', 'red', 'green', 'blue'] as const,

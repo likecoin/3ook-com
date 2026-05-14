@@ -1,5 +1,5 @@
-import { BookIdParamsSchema } from '~/server/schemas/params'
-import { isUploadedBookId } from '~/shared/utils/uploaded-book'
+import { BookIdParamsSchema } from '~~/server/schemas/params'
+import { isUploadedBookId } from '~~/shared/utils/uploaded-book'
 
 export default defineEventHandler(async (event) => {
   const session = await requireUserSession(event)

@@ -1,8 +1,8 @@
 import { createHash } from 'node:crypto'
 import { FieldValue, Timestamp, type UpdateData, type WithFieldValue } from 'firebase-admin/firestore'
 
-import { ANNOTATION_COLORS_MAP } from '~/constants/annotations'
-import type { AnnotationFirestoreData } from '~/server/types/annotation'
+import { ANNOTATION_COLORS_MAP } from '~~/shared/constants/annotations'
+import type { AnnotationFirestoreData } from '~~/server/types/annotation'
 
 function getAnnotationDocId(data: AnnotationCreateData): string {
   // Highlights use the legacy sha256(cfi) scheme to stay compatible with documents created before bookmarks existed.

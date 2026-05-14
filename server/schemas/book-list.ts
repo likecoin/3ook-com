@@ -1,5 +1,5 @@
 import * as v from 'valibot'
-import { nftClassIdField } from '~/server/schemas/params'
+import { nftClassIdField } from '~~/server/schemas/params'
 
 export const BookListBodySchema = v.object({
   nftClassId: nftClassIdField,

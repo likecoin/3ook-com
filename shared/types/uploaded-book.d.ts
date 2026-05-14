@@ -1,4 +1,4 @@
-import type { UploadedBookMimeType } from '~/shared/utils/uploaded-book'
+import type { UploadedBookMimeType } from '~~/shared/utils/uploaded-book'
 
 export interface UploadedBookMeta {
   id: string

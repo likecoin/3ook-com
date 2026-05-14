@@ -1,4 +1,4 @@
-import type { UploadedBookMeta, UploadedBooksQuota } from '~/shared/types/uploaded-book'
+import type { UploadedBookMeta, UploadedBooksQuota } from '~~/shared/types/uploaded-book'
 
 export default defineEventHandler(async (event): Promise<{
   items: UploadedBookMeta[]

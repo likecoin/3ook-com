@@ -1,7 +1,7 @@
 import { FetchError } from 'ofetch'
 import { FieldValue } from 'firebase-admin/firestore'
 
-import { RegisterBodySchema } from '~/server/schemas/auth'
+import { RegisterBodySchema } from '~~/server/schemas/auth'
 
 export default defineEventHandler(async (event) => {
   const body = await readValidatedBody(event, createValidator(RegisterBodySchema))

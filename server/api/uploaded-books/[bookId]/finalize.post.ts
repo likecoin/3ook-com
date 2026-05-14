@@ -1,16 +1,16 @@
-import type { UploadedBookMeta } from '~/shared/types/uploaded-book'
+import type { UploadedBookMeta } from '~~/shared/types/uploaded-book'
 import {
   UPLOADED_BOOK_CONTENT_TYPE_TO_MIME,
   UPLOADED_BOOK_COVER_EXT,
   UPLOADED_BOOK_COVER_MIME_TYPE,
   UPLOADED_BOOK_MAX_COVER_SIZE,
   UPLOADED_BOOK_MAX_FILE_SIZE,
-} from '~/shared/utils/uploaded-book'
+} from '~~/shared/utils/uploaded-book'
 import {
   FinalizeUploadedBookBodySchema,
   UPLOADED_BOOK_MAX_NAME_LENGTH,
   UploadedBookIdParamsSchema,
-} from '~/server/schemas/uploaded-book'
+} from '~~/server/schemas/uploaded-book'
 
 // PK\x03\x04 (standard zip) or PK\x05\x06 (empty zip) or PK\x07\x08 (spanned zip)
 const ZIP_MAGIC_PREFIX = Buffer.from([0x50, 0x4B])

@@ -1,7 +1,7 @@
 import { H3Error } from 'h3'
 import { FetchError } from 'ofetch'
 
-import { TagIdParamsSchema } from '~/server/schemas/params'
+import { TagIdParamsSchema } from '~~/server/schemas/params'
 
 export default defineEventHandler(async (event) => {
   try {

@@ -1,6 +1,6 @@
 import { FetchError } from 'ofetch'
 
-import { StoreTagsQuerySchema } from '~/server/schemas/store'
+import { StoreTagsQuerySchema } from '~~/server/schemas/store'
 
 export default defineEventHandler(async (event) => {
   try {

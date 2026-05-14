@@ -1,7 +1,7 @@
 import { H3Error } from 'h3'
 
-import { AnnotationParamsSchema } from '~/server/schemas/params'
-import { AnnotationUpdateSchema } from '~/shared/schemas/annotation'
+import { AnnotationParamsSchema } from '~~/server/schemas/params'
+import { AnnotationUpdateSchema } from '~~/shared/schemas/annotation'
 
 export default defineEventHandler(async (event) => {
   const session = await requireUserSession(event)

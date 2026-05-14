@@ -1,4 +1,4 @@
-import { BookIdParamsSchema } from '~/server/schemas/params'
+import { BookIdParamsSchema } from '~~/server/schemas/params'
 
 export default defineEventHandler(async (event) => {
   const session = await requireUserSession(event)

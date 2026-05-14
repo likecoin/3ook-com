@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto'
 import type { H3Event } from 'h3'
-import { TTS_TRIAL_CHARACTER_LIMIT } from '~/shared/utils/tts-trial'
+import { TTS_TRIAL_CHARACTER_LIMIT } from '~~/shared/utils/tts-trial'
 
 export function generateTTSKey(): string {
   return randomBytes(16).toString('hex')

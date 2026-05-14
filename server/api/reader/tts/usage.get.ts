@@ -1,4 +1,4 @@
-import { TTS_TRIAL_CHARACTER_LIMIT } from '~/shared/utils/tts-trial'
+import { TTS_TRIAL_CHARACTER_LIMIT } from '~~/shared/utils/tts-trial'
 
 export default defineEventHandler(async (event): Promise<{ charactersUsed: number, limit: number }> => {
   const session = await requireUserSession(event)

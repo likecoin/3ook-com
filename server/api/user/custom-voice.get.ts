@@ -1,4 +1,4 @@
-import type { CustomVoiceData } from '~/shared/types/custom-voice'
+import type { CustomVoiceData } from '~~/shared/types/custom-voice'
 
 export default defineEventHandler(async (event): Promise<CustomVoiceData | null> => {
   const session = await requireUserSession(event)

@@ -1,4 +1,4 @@
-import { CustomVoicePatchSchema } from '~/server/schemas/custom-voice'
+import { CustomVoicePatchSchema } from '~~/server/schemas/custom-voice'
 
 export default defineEventHandler(async (event) => {
   const session = await requireUserSession(event)

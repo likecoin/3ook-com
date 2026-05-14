@@ -1,7 +1,7 @@
 import { GrpcStatus } from 'firebase-admin/firestore'
 
-import { BookIdParamsSchema } from '~/server/schemas/params'
-import { AnnotationCreateSchema } from '~/shared/schemas/annotation'
+import { BookIdParamsSchema } from '~~/server/schemas/params'
+import { AnnotationCreateSchema } from '~~/shared/schemas/annotation'
 
 export default defineEventHandler(async (event) => {
   const session = await requireUserSession(event)

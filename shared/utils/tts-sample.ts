@@ -1,4 +1,4 @@
-import { normalizeLikerId } from '~/shared/utils/liker-id'
+import { normalizeLikerId } from '~~/shared/utils/liker-id'
 
 // Static example text for the public TTS sample endpoint. Hardcoding the text
 // per language closes the abuse vector: without auth + sig, an arbitrary

@@ -1,6 +1,6 @@
 import { FieldValue, Timestamp } from 'firebase-admin/firestore'
-import type { UploadedBookMeta, UploadedBooksQuota } from '~/shared/types/uploaded-book'
-import { UPLOADED_BOOK_MAX_COUNT } from '~/shared/utils/uploaded-book'
+import type { UploadedBookMeta, UploadedBooksQuota } from '~~/shared/types/uploaded-book'
+import { UPLOADED_BOOK_MAX_COUNT } from '~~/shared/utils/uploaded-book'
 
 export interface UploadedBookServerMeta extends UploadedBookMeta {
   storagePath: string
