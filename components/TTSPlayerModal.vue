@@ -15,7 +15,7 @@
     @update:open="handleModalUpdateOpen"
   >
     <template #content>
-      <div class="flex flex-col h-full w-full pb-4 sm:pb-6">
+      <div class="relative flex flex-col h-full w-full">
         <!-- Header -->
         <header class="flex items-center justify-center gap-1.5 px-16 min-h-16">
           <h1
@@ -28,6 +28,7 @@
             icon="i-material-symbols-close-rounded"
             size="md"
             variant="ghost"
+            color="neutral"
             @click="handleModalClose"
           />
         </header>
@@ -54,7 +55,7 @@
 
         <!-- Content -->
         <div class="relative flex-1 w-full max-w-[670px] min-h-0 mx-auto px-4 sm:px-6">
-          <div class="relative flex flex-col gap-4 items-start h-full py-6 overflow-y-auto hide-scrollbar text-lg laptop:text-2xl text-justify leading-normal">
+          <div class="relative flex flex-col gap-4 items-start h-full pt-6 pb-48 overflow-y-auto hide-scrollbar text-lg laptop:text-2xl text-justify leading-normal">
             <p
               v-for="paragraph in visibleParagraphs"
               :key="paragraph.key"
@@ -87,71 +88,41 @@
           />
         </div>
 
-        <!-- Controls -->
-        <div class="px-4 py-2 pb-safe">
-          <TTSTrialUsageChip
+        <!-- Floating controls -->
+        <div class="absolute inset-x-0 bottom-4 pb-safe px-4 flex flex-col items-center">
+          <div
             v-if="shouldShowTrialChip"
-            class="mb-3"
-            :minutes-remaining="trialMinutesRemaining"
-            :is-exhausted="isTrialExhausted"
-            @click="handleTrialChipClick"
-          />
-
-          <div class="flex items-center justify-center gap-6">
-            <UButton
-              :ui="{ leadingIcon: 'size-10' }"
-              icon="i-material-symbols-skip-previous-rounded"
-              variant="ghost"
-              color="neutral"
-              :disabled="!isTextToSpeechOn"
-              @click="skipBackward"
-            />
-            <UButton
-              v-if="isTextToSpeechPlaying || isTextToSpeechLoading"
-              :ui="{ leadingIcon: 'size-10' }"
-              icon="i-material-symbols-pause-rounded"
-              :loading="isTextToSpeechLoading"
-              variant="ghost"
-              color="neutral"
-              @click="pauseTextToSpeech"
-            />
-            <UButton
-              v-else
-              :ui="{ leadingIcon: 'size-10' }"
-              icon="i-material-symbols-play-arrow-rounded"
-              variant="ghost"
-              color="neutral"
-              @click="startTextToSpeech(currentTTSSegmentIndex)"
-            />
-            <UButton
-              :ui="{ leadingIcon: 'size-10' }"
-              icon="i-material-symbols-skip-next-rounded"
-              variant="ghost"
-              color="neutral"
-              :disabled="!isTextToSpeechOn"
-              @click="skipForward"
+            class="mb-3 bg-(--app-bg) rounded-full"
+          >
+            <TTSTrialUsageChip
+              :minutes-remaining="trialMinutesRemaining"
+              :is-exhausted="isTrialExhausted"
+              @click="handleTrialChipClick"
             />
           </div>
 
-          <!-- Player Options -->
-          <div class="mt-4 flex justify-center items-center gap-4">
+          <div class="flex items-center justify-center gap-3 p-3 rounded-full bg-(--ui-bg)/80 backdrop-blur-sm ring-1 ring-(--ui-border)">
             <BottomSlideover
+              v-model:open="isVoiceOptionsSlideoverOpen"
               :title="$t('reader_voice_options_button')"
               :is-disabled="!!props.specificLanguageVoice"
               :show-close-button="false"
               body-class="max-h-[40vh] select-none"
             >
-              <UButton
-                :class="[
-                  'rounded-full select-none',
-                  { 'pointer-events-none': !!props.specificLanguageVoice },
-                ]"
-                :ui="{ leadingAvatar: 'size-8' }"
-                :avatar="{ src: activeTTSLanguageVoiceAvatar }"
-                :label="activeTTSLanguageVoiceLabel"
-                size="lg"
-                variant="soft"
-              />
+              <UTooltip :text="activeTTSLanguageVoiceLabel">
+                <div class="shrink-0 flex justify-center w-16">
+                  <UButton
+                    :class="[
+                      'rounded-full select-none p-0',
+                      { 'pointer-events-none': !!props.specificLanguageVoice },
+                    ]"
+                    :ui="{ leadingAvatar: 'size-10 ring-2 ring-theme-cyan' }"
+                    :avatar="{ src: activeTTSLanguageVoiceAvatar }"
+                    variant="outline"
+                    color="neutral"
+                  />
+                </div>
+              </UTooltip>
 
               <template #body>
                 <div
@@ -204,13 +175,49 @@
               </template>
             </BottomSlideover>
 
+            <UButton
+              class="rounded-full"
+              :ui="{ leadingIcon: 'size-10' }"
+              icon="i-material-symbols-skip-previous-rounded"
+              variant="ghost"
+              color="neutral"
+              :disabled="!isTextToSpeechOn"
+              @click="skipBackward"
+            />
+            <UButton
+              v-if="isTextToSpeechPlaying || isTextToSpeechLoading"
+              class="rounded-full"
+              :ui="{ leadingIcon: 'size-10' }"
+              icon="i-material-symbols-pause-rounded"
+              :loading="isTextToSpeechLoading"
+              variant="solid"
+              @click="pauseTextToSpeech"
+            />
+            <UButton
+              v-else
+              class="rounded-full"
+              :ui="{ leadingIcon: 'size-10' }"
+              icon="i-material-symbols-play-arrow-rounded"
+              variant="solid"
+              @click="startTextToSpeech(currentTTSSegmentIndex)"
+            />
+            <UButton
+              class="rounded-full"
+              :ui="{ leadingIcon: 'size-10' }"
+              icon="i-material-symbols-skip-next-rounded"
+              variant="ghost"
+              color="neutral"
+              :disabled="!isTextToSpeechOn"
+              @click="skipForward"
+            />
+
             <UTooltip :text="$t('reader_rate_options_button')">
               <UButton
-                class="rounded-full w-[5em] h-12 select-none"
+                class="rounded-full w-16 h-10 select-none shrink-0 justify-center"
                 :label="getTTSPlaybackRateLabel"
-                size="lg"
+                size="md"
                 variant="soft"
-                :ui="{ label: 'w-full font-mono font-bold' }"
+                :ui="{ label: 'font-mono font-bold whitespace-nowrap' }"
                 @click="handleTTSPlaybackRateButton"
               />
             </UTooltip>
@@ -567,6 +574,8 @@ onMounted(() => {
   }
 })
 
+const isVoiceOptionsSlideoverOpen = ref(false)
+
 const selectedTTSLanguageVoice = computed({
   get: () => ttsLanguageVoice.value,
   set: (val: string) => {
@@ -578,9 +587,11 @@ const selectedTTSLanguageVoice = computed({
           query: { from: `@${likerId}` },
         }))
       }
+      isVoiceOptionsSlideoverOpen.value = false
       return
     }
     ttsLanguageVoice.value = val
+    isVoiceOptionsSlideoverOpen.value = false
   },
 })
 

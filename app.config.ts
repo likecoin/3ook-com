@@ -41,6 +41,7 @@ export default defineAppConfig({
     },
     icons: {
       close: 'i-material-symbols-close-rounded',
+      loading: 'i-material-symbols-progress-activity',
     },
     select: {
       slots: {
