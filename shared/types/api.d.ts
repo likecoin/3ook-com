@@ -1,3 +1,5 @@
+import type { LikerPlusStatus } from './subscription'
+
 export interface LikerInfoResponseData {
   user: string
   displayName: string

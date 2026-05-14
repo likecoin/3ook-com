@@ -1,6 +1,5 @@
 import { useStorage } from '@vueuse/core'
-
-export type LocaleCode = 'en' | 'zh-Hant'
+import type { LocaleCode } from '~~/shared/types/user-settings'
 
 function getDefaultLocaleFromCountry(country: string | null): LocaleCode {
   switch (country) {

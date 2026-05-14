@@ -1,5 +1,4 @@
-import type { LocaleCode } from '~/composables/use-auto-locale'
-
+export type LocaleCode = 'en' | 'zh-Hant'
 export type PaymentCurrency = 'auto' | 'hkd' | 'twd' | 'usd'
 export type ColorMode = 'light' | 'dark' | 'system'
 export interface BaseUserSettingsData {

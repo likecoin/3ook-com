@@ -1,3 +1,5 @@
+import type { AnnotationColor } from '../types/annotation'
+
 /**
  * Base annotation color RGB values from Tailwind 600-shade colors
  */
