@@ -1,6 +1,6 @@
 export function getLikeCoinAPIFetch() {
   const config = useRuntimeConfig()
-  return $fetch.create({ baseURL: config.public.likeCoinAPIEndpoint })
+  return createRetryingFetch({ baseURL: config.public.likeCoinAPIEndpoint })
 }
 
 export function fetchLikerProfileInfo(

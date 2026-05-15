@@ -1,3 +1,11 @@
+/**
+ * Shared client for first-party `/api/*` Nitro routes, with the
+ * method-aware retry policy from `createRetryingFetch` (idempotent
+ * GET/HEAD retry twice on a `<no response>`; payload methods opt in
+ * via an explicit `retry`).
+ */
+export const apiFetch = createRetryingFetch({ baseURL: '/api' })
+
 export function fetchBookstoreCMSProductsByTagId(tagId: string, {
   offset,
   limit = 100,
@@ -7,7 +15,7 @@ export function fetchBookstoreCMSProductsByTagId(tagId: string, {
   limit?: number
   ts?: number
 } = {}) {
-  return $fetch<FetchBookstoreCMSProductsResponseData>('/api/store/products', {
+  return apiFetch<FetchBookstoreCMSProductsResponseData>('/store/products', {
     query: {
       tag: tagId,
       offset,
@@ -26,7 +34,7 @@ export function fetchBookstoreCMSPublicationsBySearchTerm(searchTerm: string, {
   limit?: number
   ts?: number
 } = {}) {
-  return $fetch<FetchBookstoreCMSProductsResponseData>('/api/store/search', {
+  return apiFetch<FetchBookstoreCMSProductsResponseData>('/store/search', {
     query: {
       q: searchTerm,
       offset,
@@ -45,7 +53,7 @@ export function fetchBookstoreCMSPublicationsByGenre(genre: string, {
   limit?: number
   ts?: number
 } = {}) {
-  return $fetch<FetchBookstoreCMSProductsResponseData>('/api/store/genre', {
+  return apiFetch<FetchBookstoreCMSProductsResponseData>('/store/genre', {
     query: {
       q: genre,
       offset,
@@ -64,7 +72,7 @@ export function fetchBookstoreCMSTagsForAll({
   limit?: number
   ts?: number
 } = {}) {
-  return $fetch<FetchBookstoreCMSTagsResponseData>('/api/store/tags', {
+  return apiFetch<FetchBookstoreCMSTagsResponseData>('/store/tags', {
     query: {
       offset,
       limit,
@@ -74,7 +82,7 @@ export function fetchBookstoreCMSTagsForAll({
 }
 
 export function fetchBookstoreCMSTagById(tagId: string) {
-  return $fetch<BookstoreCMSTag>(`/api/store/tags/${tagId}`)
+  return apiFetch<BookstoreCMSTag>(`/store/tags/${tagId}`)
 }
 
 export function getEncryptedArweaveLinkAPIEndpoint() {

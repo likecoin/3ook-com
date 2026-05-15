@@ -8,7 +8,7 @@ export const useBookListStore = defineStore('book-list', () => {
   async function loadItems() {
     isLoading.value = true
     try {
-      const response = await $fetch<{ items: BookListItem[] }>('/api/book-list/all')
+      const response = await apiFetch<{ items: BookListItem[] }>('/book-list/all')
 
       itemsMap.value.clear()
       response.items.forEach((item: BookListItem) => {

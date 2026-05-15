@@ -23,7 +23,7 @@ export const useUserSettingsStore = defineStore('user-settings', () => {
       return fetchPromise.value
     }
 
-    const promise = $fetch<UserSettingsData>('/api/user/settings')
+    const promise = apiFetch<UserSettingsData>('/user/settings')
       .then((settings) => {
         settingsEntry.value = {
           data: settings,
@@ -75,8 +75,9 @@ export const useUserSettingsStore = defineStore('user-settings', () => {
     const updates = Object.fromEntries(batchQueue.value.entries())
 
     try {
-      await $fetch('/api/user/settings', {
+      await apiFetch('/user/settings', {
         method: 'POST',
+        retry: API_MAX_RETRIES,
         body: updates,
       })
       batchQueue.value.clear()

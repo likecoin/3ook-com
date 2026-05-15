@@ -18,7 +18,7 @@ export function useCustomVoice() {
     if (inflightFetch) return inflightFetch
     const task = (async () => {
       try {
-        const data = await $fetch<CustomVoiceData | null>('/api/user/custom-voice')
+        const data = await apiFetch<CustomVoiceData | null>('/user/custom-voice')
         if (!hasLoggedIn.value) return
         customVoice.value = data
         isLoaded.value = true

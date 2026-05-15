@@ -508,8 +508,9 @@ export const useAccountStore = defineStore('account', () => {
       const signature = await signMessageAsync({ message })
 
       blockingModal.patch({ title: $t('account_logging_in') })
-      await $fetch('/api/login', {
+      await apiFetch('/login', {
         method: 'POST',
+        retry: API_MAX_RETRIES,
         body: {
           walletAddress,
           signature,
@@ -590,7 +591,7 @@ export const useAccountStore = defineStore('account', () => {
     blockingModal.open({ title: $t('account_logging_out') })
     try {
       await disconnectAsync()
-      await $fetch('/api/logout', { method: 'POST' })
+      await apiFetch('/logout', { method: 'POST', retry: API_MAX_RETRIES })
       await refreshSession()
       clearCaches()
       savePlusRedirectRoute(null)
@@ -610,7 +611,7 @@ export const useAccountStore = defineStore('account', () => {
     if (inFlightRefresh) return inFlightRefresh
     inFlightRefresh = (async () => {
       try {
-        await $fetch('/api/account/refresh', { method: 'POST' })
+        await apiFetch('/account/refresh', { method: 'POST', retry: API_MAX_RETRIES })
         await refreshSession()
         if (import.meta.client) {
           localStorage.setItem(SESSION_REFRESH_TIMESTAMP_KEY, String(Date.now()))

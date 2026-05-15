@@ -46,7 +46,7 @@ export const useBookSettingsStore = defineStore('book-settings', () => {
       return fetchPromisesMap.value[key]
     }
 
-    const fetchPromise = $fetch<BookSettingsData>('/api/books/settings', {
+    const fetchPromise = apiFetch<BookSettingsData>('/books/settings', {
       params: { nftClassId },
     }).then((settings) => {
       settingsMap.value[key] = {
@@ -94,7 +94,7 @@ export const useBookSettingsStore = defineStore('book-settings', () => {
         for (let i = 0; i < nftClassIdsToFetch.length; i += FIRESTORE_IN_OPERATOR_LIMIT) {
           if (isStale()) return
           const chunk = nftClassIdsToFetch.slice(i, i + FIRESTORE_IN_OPERATOR_LIMIT)
-          const settings = await $fetch<Record<string, BookSettingsData>>('/api/books/settings', {
+          const settings = await apiFetch<Record<string, BookSettingsData>>('/books/settings', {
             params: {
               nftClassIds: chunk,
             },
@@ -176,8 +176,9 @@ export const useBookSettingsStore = defineStore('book-settings', () => {
     queue.clear()
 
     try {
-      await $fetch(`/api/books/${nftClassId}/settings`, {
+      await apiFetch(`/books/${nftClassId}/settings`, {
         method: 'POST',
+        retry: API_MAX_RETRIES,
         body: updates,
       })
     }

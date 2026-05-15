@@ -31,7 +31,7 @@ export function usePlusAffiliate() {
     if (loadedFrom.value === from || isLoading.value) return
     isLoading.value = true
     try {
-      const data = await $fetch<AffiliatePublicConfig>(`/api/affiliate/${encodeURIComponent(from)}`)
+      const data = await apiFetch<AffiliatePublicConfig>(`/affiliate/${encodeURIComponent(from)}`)
       loadedConfig.value = data?.active ? data : null
       loadedFrom.value = from
     }

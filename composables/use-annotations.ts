@@ -24,7 +24,7 @@ export default function useAnnotations(params: {
     }
 
     isLoading.value = true
-    fetchPromise.value = $fetch<{ annotations: Annotation[] }>(`/api/books/${nftClassId.value}/annotations`)
+    fetchPromise.value = apiFetch<{ annotations: Annotation[] }>(`/books/${nftClassId.value}/annotations`)
       .then((response) => {
         annotations.value = response.annotations
         hasFetched.value = true
@@ -104,8 +104,9 @@ export default function useAnnotations(params: {
     })
 
     try {
-      const response = await $fetch<{ annotation: Annotation }>(`/api/books/${nftClassId.value}/annotations/${annotationId}`, {
+      const response = await apiFetch<{ annotation: Annotation }>(`/books/${nftClassId.value}/annotations/${annotationId}`, {
         method: 'POST',
+        retry: API_MAX_RETRIES,
         body: {
           ...data,
           ...(data.note !== undefined ? { note: data.note || '' } : {}),

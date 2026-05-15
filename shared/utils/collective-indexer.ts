@@ -106,7 +106,7 @@ export interface CollectiveEventQueryResponse<T> {
 
 function getCollectiveIndexerAPIFetch() {
   const config = useRuntimeConfig()
-  return $fetch.create({ baseURL: config.public.likeCoinEVMChainCollectiveAPIEndpoint })
+  return createRetryingFetch({ baseURL: config.public.likeCoinEVMChainCollectiveAPIEndpoint })
 }
 
 export interface CollectiveQueryOptions {

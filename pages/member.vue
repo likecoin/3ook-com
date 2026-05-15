@@ -154,7 +154,7 @@ async function fetchAffiliateInfo() {
     return
   }
   try {
-    affiliateInfo.value = await $fetch<AffiliatePublicConfig>(`/api/affiliate/${encodeURIComponent(affiliateLikerId.value)}`)
+    affiliateInfo.value = await apiFetch<AffiliatePublicConfig>(`/affiliate/${encodeURIComponent(affiliateLikerId.value)}`)
   }
   catch { /* ignore */ }
 }

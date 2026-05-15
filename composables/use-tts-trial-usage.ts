@@ -20,7 +20,7 @@ async function fetchServerUsage(wallet: string): Promise<ServerUsage | null> {
   if (pending) return pending
   const task = (async (): Promise<ServerUsage | null> => {
     try {
-      return await $fetch<ServerUsage>('/api/reader/tts/usage')
+      return await apiFetch<ServerUsage>('/reader/tts/usage')
     }
     catch (error) {
       console.warn('[TTSTrialUsage] Failed to fetch server usage:', error)

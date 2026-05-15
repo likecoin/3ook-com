@@ -42,7 +42,7 @@ export interface FetchAccountByBookNFTResponseData {
 
 export function getIndexerAPIFetch() {
   const config = useRuntimeConfig()
-  return $fetch.create({ baseURL: config.public.likeCoinEVMChainAPIEndpoint })
+  return createRetryingFetch({ baseURL: config.public.likeCoinEVMChainAPIEndpoint })
 }
 
 export interface IndexerQueryOptions {
