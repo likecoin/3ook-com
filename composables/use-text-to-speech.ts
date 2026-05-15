@@ -223,6 +223,14 @@ export function useTextToSpeech(options: TTSOptions) {
     return classifyTTSCacheStatus(player.getCurrentURL())
   }
 
+  // Cost bucket for this segment load: browser_cache / cdn_or_storage are
+  // cheap, generated means a Minimax call. Native shell owns its own audio
+  // pipeline, so the source is opaque from the WebView.
+  function resolveAudioSource() {
+    if (isNativeBridge.value) return 'native' as const
+    return classifyTTSAudioSource(player.getCurrentURL())
+  }
+
   // Wire player events
   player.on('play', () => {
     isTextToSpeechPlaying.value = true
@@ -235,6 +243,7 @@ export function useTextToSpeech(options: TTSOptions) {
         had_buffering: timing.hadBuffering,
         is_first_segment: timing.index === 0,
         cache_status: resolveCacheStatus(),
+        audio_source: resolveAudioSource(),
       }))
     }
   })
@@ -312,6 +321,7 @@ export function useTextToSpeech(options: TTSOptions) {
         is_first_segment: timing.index === 0,
         error: formatTTSError(error),
         cache_status: resolveCacheStatus(),
+        audio_source: resolveAudioSource(),
       }))
     }
 

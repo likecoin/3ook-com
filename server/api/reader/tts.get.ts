@@ -3,10 +3,18 @@ import type { Writable } from 'node:stream'
 import type { H3Event } from 'h3'
 import { TTSQuerySchema } from '~/server/schemas/tts'
 import { computeLegacyTTSTextSig, computeTTSTextSig, decodeAffiliateVoiceId, isAffiliateVoiceId, TTS_PREVIEW_NFT_CLASS_ID } from '~/shared/utils/tts-sig'
+import { buildTTSServerTiming, TTS_SERVER_SOURCE, type TTSServerSource } from '~/shared/utils/tts-server-timing'
 
 // Coalesces concurrent identical TTS requests (e.g. browser range probes)
 const inFlightWrites = new Map<string, Promise<void>>()
 const IN_FLIGHT_TIMEOUT_MS = 120_000
+
+// Per-request source marker, read back client-side via
+// PerformanceResourceTiming.serverTiming on the tts_segment_loaded event to
+// size Cloud Storage cache hits vs expensive Minimax generations.
+function setTTSSourceHeader(event: H3Event, source: TTSServerSource) {
+  setHeader(event, 'server-timing', buildTTSServerTiming(source))
+}
 
 function getTTSProvider(voiceId: string): MinimaxTTSProvider {
   if (!KNOWN_VOICE_IDS.has(voiceId)) {
@@ -45,6 +53,7 @@ async function serveCachedTTS(
   setHeader(event, 'accept-ranges', 'bytes')
   setHeader(event, 'vary', 'Range')
   setHeader(event, 'etag', etag)
+  setTTSSourceHeader(event, TTS_SERVER_SOURCE.STORED)
 
   console.log(`[Speech] Cache hit for user ${wallet}: ${cacheKey}`)
 
@@ -310,6 +319,7 @@ export default defineEventHandler(async (event) => {
       setHeader(event, 'accept-ranges', 'bytes')
       setHeader(event, 'vary', 'Range')
       setHeader(event, 'etag', etag)
+      setTTSSourceHeader(event, TTS_SERVER_SOURCE.GENERATED)
 
       if (isCacheEnabled) {
         const cacheFile = bucket.file(cacheKey!)
@@ -351,6 +361,7 @@ export default defineEventHandler(async (event) => {
     }
     setHeader(event, 'content-type', provider.format)
     setHeader(event, 'cache-control', 'public, max-age=604800')
+    setTTSSourceHeader(event, TTS_SERVER_SOURCE.GENERATED)
 
     let cacheWriteStream: Writable | null = null
     if (isCacheEnabled) {
