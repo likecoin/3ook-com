@@ -209,7 +209,7 @@
               'laptop:hidden',
               { 'opacity-50 cursor-not-allowed': isAudioHidden },
             ]"
-            icon="i-material-symbols-volume-up-outline-rounded"
+            :icon="ttsButtonIcon"
             variant="solid"
             color="primary"
             :loading="isTTSExtracting"
@@ -221,7 +221,7 @@
           >
             <UButton
               class="max-laptop:hidden"
-              icon="i-material-symbols-volume-up-outline-rounded"
+              :icon="ttsButtonIcon"
               :aria-label="$t('reader_text_to_speech_button')"
               variant="solid"
               color="primary"
@@ -328,6 +328,15 @@ const props = defineProps<Props>()
 const toast = useToast()
 const { t: $t } = useI18n()
 const bookSettingsStore = useBookSettingsStore()
+
+const ttsButtonIconABTest = useABTest({
+  experimentKey: 'reader-tts-button-icon',
+})
+const ttsButtonIcon = computed(() =>
+  ttsButtonIconABTest.isVariant('play-arrow')
+    ? 'i-material-symbols-play-arrow-rounded'
+    : 'i-material-symbols-volume-up-outline-rounded',
+)
 
 const pdfjsLib = ref<typeof import('pdfjs-dist') | undefined>(undefined)
 const singleCanvas = useTemplateRef<HTMLCanvasElement>('singleCanvas')
