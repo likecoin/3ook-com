@@ -37,6 +37,7 @@ const localeRoute = useLocaleRoute()
 const accountStore = useAccountStore()
 const { handleError } = useErrorHandler()
 const { currency, yearlyPrice, monthlyPrice } = useSubscription()
+const { initializePaymentCurrency } = usePaymentCurrency()
 const { convertPrice } = useCurrency()
 const { user } = useUserSession()
 const likeCoinSessionAPI = useLikeCoinSessionAPI()
@@ -104,6 +105,10 @@ onMounted(async () => {
       giftClaimToken,
     } = await fetchPlusGiftStatus()
     if (isRedirected.value) {
+      // Restore the persisted currency before logging: post-Stripe-redirect the
+      // payment-currency state is fresh 'auto' and resolves to USD until
+      // geolocation lands, which would mislabel the analytics value/currency.
+      await initializePaymentCurrency()
       const isTrial = getRouteQuery('trial') !== '0'
 
       const PREDICTED_LTV_USD = 100
