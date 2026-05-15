@@ -74,19 +74,50 @@ export interface FetchLikeCoinNFTClassAggregatedMetadataResponseData {
   bookstoreInfo: BookstoreInfo | null
 }
 
+export function resolveLikeCoinNFTMetadataDataOptions(
+  options: FetchLikeCoinNFTClassAggregatedMetadataOptions = {},
+): LikeCoinNFTClassAggregatedMetadataOptionKey[] {
+  const included = new Set(options.include || likeCoinNFTClassAggregatedMetadataOptions)
+  const excluded = new Set(options.exclude || [])
+  return [...included].filter(option => !excluded.has(option))
+}
+
 export function fetchLikeCoinNFTClassAggregatedMetadataById(
   nftClassId: string,
   options: FetchLikeCoinNFTClassAggregatedMetadataOptions = { exclude: [], nocache: false },
 ) {
   const fetch = getLikeCoinAPIFetch()
-  const includedOptionSet = new Set(options.include || likeCoinNFTClassAggregatedMetadataOptions)
-  const excludedOptionSet = new Set(options.exclude || [])
   const query: Record<string, string | string[]> = {
     class_id: normalizeNFTClassId(nftClassId),
-    data: [...includedOptionSet].filter(option => !excludedOptionSet.has(option)),
+    data: resolveLikeCoinNFTMetadataDataOptions(options),
   }
   if (options.nocache) query.ts = `${Math.round(Date.now() / 1000)}`
   return fetch<FetchLikeCoinNFTClassAggregatedMetadataResponseData>('/likerland/nft/metadata', { query })
+}
+
+/**
+ * On the server, routes through our `/api/nft/:id/metadata` endpoint, which
+ * wraps the upstream call in a short shared cache to collapse the blocking SSR
+ * fetch (Cloud Run CPU). On the client it hits LikeCoin directly: the upstream
+ * is already Cloudflare-cached, so an extra hop through our server would only
+ * add latency. The payload is book-level (not session-scoped), so caching is
+ * safe and does not affect per-user rendering.
+ */
+export function fetchCachedLikeCoinNFTClassAggregatedMetadataById(
+  nftClassId: string,
+  options: FetchLikeCoinNFTClassAggregatedMetadataOptions = { exclude: [], nocache: false },
+) {
+  if (import.meta.client) {
+    return fetchLikeCoinNFTClassAggregatedMetadataById(nftClassId, options)
+  }
+  const query: Record<string, string | string[]> = {
+    data: resolveLikeCoinNFTMetadataDataOptions(options),
+  }
+  if (options.nocache) query.nocache = '1'
+  return $fetch<FetchLikeCoinNFTClassAggregatedMetadataResponseData>(
+    `/api/nft/${normalizeNFTClassId(nftClassId)}/metadata`,
+    { query },
+  )
 }
 
 export interface FetchBuyerMessageResponseData {

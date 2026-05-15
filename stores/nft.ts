@@ -40,7 +40,7 @@ export const useNFTStore = defineStore('nft', () => {
   }
 
   async function fetchNFTClassAggregatedMetadataById(nftClassId: string, options?: FetchLikeCoinNFTClassAggregatedMetadataOptions) {
-    const data = await fetchLikeCoinNFTClassAggregatedMetadataById(nftClassId, options)
+    const data = await fetchCachedLikeCoinNFTClassAggregatedMetadataById(nftClassId, options)
     if (data.classData) {
       addNFTClassMetadata(nftClassId, data.classData as NFTClassMetadata)
     }
