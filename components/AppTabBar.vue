@@ -1,43 +1,62 @@
 <template>
-  <nav class="bg-white dark:bg-theme-black border-t border-muted fixed bottom-0 left-0 right-0 pb-safe">
-    <ul class="flex justify-around items-center w-full max-w-md min-h-14 mx-auto">
-      <li
+  <nav class="fixed inset-x-0 bottom-0 z-40 pb-safe pointer-events-none">
+    <div
+      :class="[
+        'flex',
+        'items-center',
+        'justify-center',
+        'gap-1',
+
+        'w-fit',
+        'mx-auto',
+        'mb-2',
+        'p-1.5',
+
+        'bg-(--ui-bg)/80',
+        'backdrop-blur-sm',
+        'rounded-full',
+        'ring-1 ring-(--ui-border)',
+        'pointer-events-auto',
+      ]"
+    >
+      <template
         v-for="item in menuItems"
-        :key="item.label"
-        class="flex-1"
+        :key="item.key"
       >
         <NuxtLink
           v-if="item.key === 'account' && hasLoggedIn"
-          class="relative flex justify-center items-center"
+          class="flex justify-center items-center min-w-24 h-14 rounded-full"
           :to="item.to"
         >
-          <UAvatar
-            :class="[
-              'bg-white',
-              item.isActive
-                ? 'border-2 border-theme-black dark:border-theme-white'
-                : 'border border-muted',
-            ]"
-            :src="user?.avatar"
-            :alt="user?.displayName"
-            icon="i-material-symbols-person-2-rounded"
-            size="lg"
-          />
-          <UserAvatarPlusBadge
-            v-if="user?.isLikerPlus"
-            :is-inverted="item.isActive"
-          />
+          <div class="relative">
+            <UAvatar
+              :class="[
+                'bg-white ring-2',
+                'border-[1px] border-(--ui-border)',
+                item.isActive
+                  ? 'ring-theme-black dark:ring-theme-white'
+                  : 'ring-(--ui-border)',
+              ]"
+              :src="user?.avatar"
+              :alt="user?.displayName"
+              icon="i-material-symbols-person-2-rounded"
+              size="lg"
+            />
+            <UserAvatarPlusBadge
+              v-if="user?.isLikerPlus"
+              :is-inverted="item.isActive"
+            />
+          </div>
         </NuxtLink>
         <UButton
           v-else
-          class="flex-col gap-0"
+          class="flex-col gap-0 min-w-24 rounded-full"
           :label="item.label"
           :icon="item.icon"
-          :color="item.isActive ? 'primary' : 'neutral'"
-          variant="link"
+          :variant="item.isActive ? 'solid' : 'ghost'"
+          color="neutral"
           :to="item.to"
           size="xl"
-          block
           :ui="{ label: 'text-xs' }"
         >
           <template
@@ -50,8 +69,8 @@
             />
           </template>
         </UButton>
-      </li>
-    </ul>
+      </template>
+    </div>
   </nav>
 </template>
 
