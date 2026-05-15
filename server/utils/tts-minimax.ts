@@ -66,6 +66,23 @@ export function getMinimaxModel(options: {
   return customVoiceId && language !== 'zh-TW' ? 'speech-2.8-hd' : 'speech-2.6-hd'
 }
 
+// Minimax inline-pause syntax: <#seconds#>. 0.01s is imperceptible.
+const TTS_PAUSE_MARKER = '<#0.01#>'
+
+// Minimax speech-2.x degrades the rest of a synthesis call into garbled,
+// unintelligible noise when it hits an unpronounceable glyph; a pause marker
+// bounds that corruption to the clause between markers. Minimax also rejects
+// consecutive and trailing markers, so
+// we collapse punctuation runs and require a speakable char after. The
+// lookahead stays intentionally narrow: skipping a quote-opened clause only
+// weakens protection, but a looser test could emit a marker before a trailing
+// 」 with no speakable text after — the exact invalid input this avoids.
+// Segments arrive pre-split/speakable, so the run always has speakable text
+// before it.
+function injectTTSPauseMarkers(text: string): string {
+  return text.replace(/([，。]+)(?=\s*[\p{L}\p{N}])/gu, `$1${TTS_PAUSE_MARKER}`)
+}
+
 export class MinimaxTTSProvider implements BaseTTSProvider {
   provider = 'minimax'
   format = 'audio/mpeg'
@@ -85,7 +102,7 @@ export class MinimaxTTSProvider implements BaseTTSProvider {
     const model = getMinimaxModel({ voiceId, customVoiceId: customMiniMaxVoiceId, language })
 
     const result = await client.synthesize({
-      text,
+      text: injectTTSPauseMarkers(text),
       model,
       voiceSetting: {
         voiceId: resolvedVoiceId,
@@ -115,7 +132,7 @@ export class MinimaxTTSProvider implements BaseTTSProvider {
     const model = getMinimaxModel({ voiceId, customVoiceId: customMiniMaxVoiceId, language })
 
     const { audio } = await client.synthesizeStream({
-      text,
+      text: injectTTSPauseMarkers(text),
       model,
       voiceSetting: {
         voiceId: resolvedVoiceId,
