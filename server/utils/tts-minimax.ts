@@ -38,9 +38,14 @@ export function getTTSPronunciationDictionary(language: string) {
     case 'zh-HK':
       return {
         tone: [
-          '掬/(谷)',
-          '驥/(冀)',
-          '頰/(甲)',
+          '茅塞頓開/茅(sak1)頓開',
+          '區家麟/(au1)家麟',
+          '悄悄/(ciu1)(ciu1)',
+          '肖像/(ciu3)像',
+          '顫抖/(zin3)抖',
+          '掬/(guk1)',
+          '驥/(kei3)',
+          '頰/(gaap3)',
         ],
       }
     case 'en-US':
