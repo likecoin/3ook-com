@@ -27,32 +27,62 @@ export function getVoiceDisplayName(voiceId: string): string | undefined {
   return VOICE_CONFIG[voiceId]?.displayName
 }
 
-export function getTTSPronunciationDictionary(language: string) {
-  switch (language) {
-    case 'zh-TW':
-      return {
-        tone: [
-          '乾/(gan1)',
-        ],
-      }
-    case 'zh-HK':
-      return {
-        tone: [
-          '茅塞頓開/茅(sak1)頓開',
-          '區家麟/(au1)家麟',
-          '悄悄/(ciu1)(ciu1)',
-          '肖像/(ciu3)像',
-          '顫抖/(zin3)抖',
-          '掬/(guk1)',
-          '驥/(kei3)',
-          '頰/(gaap3)',
-        ],
-      }
-    case 'en-US':
-      return undefined
-    default:
-      return undefined
-  }
+interface PronunciationRule {
+  // Source text that must be fully present for the rule to apply.
+  target: string
+  // The override for `target`: Mandarin Pinyin (tone 1–5), IPA, or Cantonese
+  // Jyutping (tone 1–6), wrapped in half-width parentheses. For multi-char
+  // targets it spans the whole word with only the relevant syllables overridden
+  // (e.g. target `茅塞頓開` → tone `茅(sak1)頓開`). Used as-is for the inline
+  // form, and as `${target}/${tone}` for the Minimax `pronunciationDict`.
+  tone: string
+}
+
+// Pronunciation overrides keyed by Minimax synthesis language.
+const TTS_PRONUNCIATION_RULES: Record<string, PronunciationRule[]> = {
+  'zh-TW': [
+    { target: '乾', tone: '(gan1)' },
+  ],
+  'zh-HK': [
+    { target: '茅塞頓開', tone: '茅(sak1)頓開' },
+    { target: '區家麟', tone: '(au1)家麟' },
+    { target: '悄悄', tone: '(ciu1)(ciu1)' },
+    { target: '肖像', tone: '(ciu3)像' },
+    { target: '顫抖', tone: '(zin3)抖' },
+    { target: '掬', tone: '(guk1)' },
+    { target: '驥', tone: '(kei3)' },
+    { target: '頰', tone: '(gaap3)' },
+  ],
+}
+
+// Rules that actually apply to this request: language must match and the
+// target text must be fully present (Minimax mis-handles dict entries whose
+// match never occurs, and a leaner dict keeps the payload small).
+function getApplicablePronunciationRules(language: string, text: string): PronunciationRule[] {
+  const rules = TTS_PRONUNCIATION_RULES[language]
+  if (!rules) return []
+  return rules.filter(rule => text.includes(rule.target))
+}
+
+// `undefined` (not an empty dict) when nothing applies, so Minimax skips the
+// pronunciationDict entirely.
+export function getTTSPronunciationDictionary(
+  language: string,
+  text: string,
+): { tone: string[] } | undefined {
+  const tone = getApplicablePronunciationRules(language, text)
+    .map(rule => `${rule.target}/${rule.tone}`)
+  return tone.length ? { tone } : undefined
+}
+
+// Alternative to `pronunciationDict`: splice the override straight into the
+// text via Minimax's half-width-parenthesis inline syntax, e.g.
+// "去街市買啲(sung3)。" / "This is (he2)平, not (huo4)面."
+export function applyInlinePronunciation(language: string, text: string): string {
+  return getApplicablePronunciationRules(language, text).reduce(
+    (acc, rule) => acc.split(rule.target).join(rule.tone),
+    text,
+  )
 }
 
 export function getMinimaxModel(options: {
@@ -115,7 +145,7 @@ export class MinimaxTTSProvider implements BaseTTSProvider {
         emotion: 'calm',
         textNormalization: true,
       },
-      pronunciationDict: getTTSPronunciationDictionary(language),
+      pronunciationDict: getTTSPronunciationDictionary(language, text),
       languageBoost: LANG_MAPPING[language as keyof typeof LANG_MAPPING],
     })
 
@@ -145,7 +175,7 @@ export class MinimaxTTSProvider implements BaseTTSProvider {
         emotion: 'calm',
         textNormalization: true,
       },
-      pronunciationDict: getTTSPronunciationDictionary(language),
+      pronunciationDict: getTTSPronunciationDictionary(language, text),
       languageBoost: LANG_MAPPING[language as keyof typeof LANG_MAPPING],
       streamOptions: { excludeAggregatedAudio: true },
     })
