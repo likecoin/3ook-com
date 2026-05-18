@@ -112,7 +112,11 @@ export function useLikeCoinSessionAPI() {
     if (hasLoggedIn && user.value?.token) {
       fetchOptions.headers = { Authorization: `Bearer ${user.value?.token}` }
     }
-    return $fetch.create(fetchOptions)
+    // Method-aware retry: GET/HEAD recover from a transient `<no response>`,
+    // while payload methods stay no-retry by default so a dropped checkout
+    // POST (`purchase/cart/new`) is never replayed into a second payment.
+    // Idempotent POSTs opt in explicitly per call (see `claimCartById`).
+    return createRetryingFetch(fetchOptions)
   })
 
   function createNFTBookPurchase({
@@ -293,6 +297,10 @@ export function useLikeCoinSessionAPI() {
   function claimCartById({ cartId, token, paymentId, wallet }: { cartId: string, token: string, paymentId: string, wallet: string }) {
     return fetch.value<ClaimCartByIdResponseData>(`/likernft/book/purchase/cart/${cartId}/claim`, {
       method: 'POST',
+      // Idempotent: keyed on cartId/paymentId so a replay can't double-mint,
+      // and re-claiming returns CART_ALREADY_CLAIMED* which the claim page
+      // normalizes back into success.
+      retry: API_MAX_RETRIES,
       query: { token },
       body: { wallet, paymentId },
     })
