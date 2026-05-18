@@ -8,6 +8,8 @@
     variant="outline"
     :ui="{
       base: [
+        // Use absolute font size to prevent it from being affected by system font size changes
+        'text-[8px]',
         'rounded-full',
         colorClass,
         'font-bold',
