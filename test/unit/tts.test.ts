@@ -12,6 +12,11 @@ import {
   computeLegacyTTSTextSig,
   computeTTSTextSig,
 } from '~/shared/utils/tts-sig'
+import {
+  buildTTSServerTiming,
+  TTS_SERVER_SOURCE,
+  TTS_SERVER_TIMING_METRIC,
+} from '~/shared/utils/tts-server-timing'
 
 describe('sanitizeTTSText', () => {
   it('returns empty string for falsy input', () => {
@@ -353,6 +358,44 @@ describe('computeTTSTextSig', () => {
     expect(computeTTSTextSig({ ...baseParams, ...overrides })).not.toBe(
       computeTTSTextSig(baseParams),
     )
+  })
+})
+
+describe('TTS Server-Timing wire contract', () => {
+  // The server (server/api/reader/tts.get.ts) and the client classifier
+  // (utils/resource-timing.ts) never share an import of each other's expected
+  // strings — they only agree via these symbols. A typo degrades silently to
+  // an 'unknown' classification with no error, so lock the literals here.
+  it('builds the exact wire format the client parses', () => {
+    expect(buildTTSServerTiming(TTS_SERVER_SOURCE.GENERATED)).toBe('tts;desc="gen"')
+    expect(buildTTSServerTiming(TTS_SERVER_SOURCE.STORED)).toBe('tts;desc="store"')
+  })
+
+  it('pins the metric name and source descriptors', () => {
+    expect(TTS_SERVER_TIMING_METRIC).toBe('tts')
+    expect(TTS_SERVER_SOURCE.GENERATED).toBe('gen')
+    expect(TTS_SERVER_SOURCE.STORED).toBe('store')
+  })
+
+  // Round-trip: parse the built header the way the browser exposes it via
+  // PerformanceResourceTiming.serverTiming, then run the client classifier's
+  // own comparison (utils/resource-timing.ts:69-71). This fails if either
+  // side drifts, before it can silently fall through to 'unknown'.
+  it('survives a server-build → browser-parse → client-classify round trip', () => {
+    function parseServerTiming(header: string) {
+      const [name, descPart] = header.split(';')
+      const description = descPart?.replace(/^desc="?|"?$/g, '') ?? ''
+      return { name, description }
+    }
+    function classify(header: string) {
+      const entry = parseServerTiming(header)
+      const desc = entry.name === TTS_SERVER_TIMING_METRIC ? entry.description : undefined
+      if (desc === TTS_SERVER_SOURCE.GENERATED) return 'generated'
+      if (desc === TTS_SERVER_SOURCE.STORED) return 'cdn_or_storage'
+      return 'unknown'
+    }
+    expect(classify(buildTTSServerTiming(TTS_SERVER_SOURCE.GENERATED))).toBe('generated')
+    expect(classify(buildTTSServerTiming(TTS_SERVER_SOURCE.STORED))).toBe('cdn_or_storage')
   })
 })
 
