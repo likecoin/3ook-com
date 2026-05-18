@@ -12,8 +12,16 @@ export default defineEventHandler(async (event) => {
   const toArray = (value?: string | string[]) => (Array.isArray(value) ? value : value ? [value] : [])
 
   const validOptionSet = new Set<string>(likeCoinNFTClassAggregatedMetadataOptions)
-  const requestedData = toArray(query.data)
-    .filter(option => validOptionSet.has(option)) as LikeCoinNFTClassAggregatedMetadataOptionKey[]
+  const requestedDataRaw = toArray(query.data)
+  const invalidRequestedData = requestedDataRaw.filter(option => !validOptionSet.has(option))
+  if (invalidRequestedData.length) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'INVALID_DATA_QUERY',
+      message: `Unsupported data option(s): ${invalidRequestedData.join(', ')}`,
+    })
+  }
+  const requestedData = requestedDataRaw as LikeCoinNFTClassAggregatedMetadataOptionKey[]
   const dataOptions = resolveLikeCoinNFTMetadataDataOptions({
     include: requestedData.length ? requestedData : undefined,
   })
