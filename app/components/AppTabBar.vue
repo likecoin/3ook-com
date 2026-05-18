@@ -39,7 +39,7 @@
                 :src="user?.avatar"
                 :alt="user?.displayName"
                 icon="i-material-symbols-person-2-rounded"
-                size="md"
+                size="2xl"
               />
               <UserAvatarPlusBadge
                 v-if="user?.isLikerPlus"
