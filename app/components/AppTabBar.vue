@@ -9,8 +9,8 @@
 
         'w-fit',
         'mx-auto',
-        'mb-2',
-        'p-1.5',
+        'mb-1',
+        'p-1',
 
         'bg-(--ui-bg)/80',
         'backdrop-blur-sm',
@@ -25,11 +25,11 @@
       >
         <UButton
           v-if="item.key === 'account' && hasLoggedIn"
-          class="justify-center min-w-24 h-14 rounded-full"
+          class="justify-center min-w-24 h-12 rounded-full"
           :variant="item.isActive ? 'solid' : 'ghost'"
           color="neutral"
           :to="item.to"
-          size="xl"
+          size="md"
           :aria-label="item.label"
         >
           <template #leading>
@@ -39,7 +39,7 @@
                 :src="user?.avatar"
                 :alt="user?.displayName"
                 icon="i-material-symbols-person-2-rounded"
-                size="2xl"
+                size="lg"
               />
               <UserAvatarPlusBadge
                 v-if="user?.isLikerPlus"
@@ -56,7 +56,7 @@
           :variant="item.isActive ? 'solid' : 'ghost'"
           color="neutral"
           :to="item.to"
-          size="xl"
+          size="md"
           :ui="{ label: 'text-xs' }"
         >
           <template
@@ -65,7 +65,7 @@
           >
             <component
               :is="item.labelGraphic"
-              style="width: auto; height: 12px;"
+              style="width: auto"
             />
           </template>
         </UButton>
