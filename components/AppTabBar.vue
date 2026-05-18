@@ -23,31 +23,31 @@
         v-for="item in menuItems"
         :key="item.key"
       >
-        <NuxtLink
+        <UButton
           v-if="item.key === 'account' && hasLoggedIn"
-          class="flex justify-center items-center min-w-24 h-14 rounded-full"
+          class="justify-center min-w-24 h-14 rounded-full"
+          :variant="item.isActive ? 'solid' : 'ghost'"
+          color="neutral"
           :to="item.to"
+          size="xl"
+          :aria-label="item.label"
         >
-          <div class="relative">
-            <UAvatar
-              :class="[
-                'bg-white ring-2',
-                'border-[1px] border-(--ui-border)',
-                item.isActive
-                  ? 'ring-theme-black dark:ring-theme-white'
-                  : 'ring-(--ui-border)',
-              ]"
-              :src="user?.avatar"
-              :alt="user?.displayName"
-              icon="i-material-symbols-person-2-rounded"
-              size="lg"
-            />
-            <UserAvatarPlusBadge
-              v-if="user?.isLikerPlus"
-              :is-inverted="item.isActive"
-            />
-          </div>
-        </NuxtLink>
+          <template #leading>
+            <div class="relative">
+              <UAvatar
+                class="bg-white ring-1 ring-default border border-default"
+                :src="user?.avatar"
+                :alt="user?.displayName"
+                icon="i-material-symbols-person-2-rounded"
+                size="md"
+              />
+              <UserAvatarPlusBadge
+                v-if="user?.isLikerPlus"
+                :color="item.isActive ? 'secondary' : 'primary'"
+              />
+            </div>
+          </template>
+        </UButton>
         <UButton
           v-else
           class="flex-col gap-0 min-w-24 rounded-full"

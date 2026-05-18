@@ -5,13 +5,11 @@
       verticalAlign === 'top' ? 'top-0 -translate-y-1/2' : 'bottom-0 translate-y-1/2',
     ]"
     size="xs"
-    :variant="isInverted ? 'solid' : 'outline'"
+    variant="outline"
     :ui="{
       base: [
         'rounded-full',
-        isInverted
-          ? 'bg-theme-black dark:bg-theme-cyan text-theme-cyan dark:text-theme-black'
-          : 'bg-theme-white dark:bg-theme-black',
+        colorClass,
         'font-bold',
       ],
     }"
@@ -21,11 +19,22 @@
 </template>
 
 <script setup lang="ts">
-withDefaults(defineProps<{
-  isInverted?: boolean
+const props = withDefaults(defineProps<{
+  color?: 'primary' | 'secondary' | 'neutral'
   verticalAlign?: 'top' | 'bottom'
 }>(), {
-  isInverted: false,
+  color: 'primary',
   verticalAlign: 'bottom',
+})
+
+const colorClass = computed(() => {
+  switch (props.color) {
+    case 'secondary':
+      return 'bg-theme-cyan text-theme-black ring-theme-black'
+    case 'neutral':
+      return 'bg-theme-white dark:bg-theme-black'
+    default:
+      return 'bg-theme-black text-theme-cyan'
+  }
 })
 </script>
