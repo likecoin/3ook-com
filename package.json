@@ -47,7 +47,7 @@
     "firebase-admin": "^13.4.0",
     "jwt-decode": "^4.0.0",
     "markdown-it": "^14.1.1",
-    "minimax-speech-ts": "^0.3.0",
+    "minimax-speech-ts": "^0.4.1",
     "nuxt": "^4.4.5",
     "nuxt-auth-utils": "^0.5.29",
     "nuxt-security": "^2.6.0",
