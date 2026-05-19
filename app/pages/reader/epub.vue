@@ -1093,6 +1093,10 @@ async function loadEPub() {
     const href = location.start.href
     currentPageHref.value = href
     activeNavItemHref.value = resolveActiveNavItemHref(href)
+    // During listen mode `onSegmentChange` owns progress: it writes the
+    // segment-accurate position, while `relocated` only sees the page start
+    // (and stale data while the modal covers the reader on native).
+    if (isTTSQueryParam.value) return
     percentage.value = book.locations!.percentageFromCfi(location.start.cfi) ?? 0
     currentCfi.value = location.start.cfi
     readingProgress.value = percentage.value
