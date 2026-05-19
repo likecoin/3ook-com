@@ -782,17 +782,10 @@ useHead(() => {
       crossorigin: 'anonymous' as const,
       key: 'preload-store-tags',
     },
-    // Skip cross-origin `<link rel="preload" as="fetch" crossorigin>` on iOS:
-    // WebKit fails to match it to the subsequent $fetch and the request errors
-    // out with "Load failed: <no response>". Preconnect warms TLS without the bug.
-    ...(isStakingTagId.value && isIOS.value && collectiveEndpoint
-      ? [{
-          rel: 'preconnect' as const,
-          href: new URL(collectiveEndpoint).origin,
-          crossorigin: '' as const,
-          key: 'preconnect-collective-indexer',
-        }]
-      : []),
+    // No resource hint for the cross-origin indexer on iOS: priming WKWebView's
+    // app-level NSURLSession pool (preload OR preconnect) can wedge a poisoned
+    // connection that fails every later fetch with "Load failed: <no response>"
+    // until the app is killed — reload alone doesn't recover it.
     ...(isStakingTagId.value && !isIOS.value
       ? [{
           rel: 'preload',

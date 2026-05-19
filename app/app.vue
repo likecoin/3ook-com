@@ -32,7 +32,7 @@ const { memberProgramData } = useMemberProgramStructuredData()
 const { initializeServerGeolocation, initializeClientGeolocation } = useDetectedGeolocation()
 const { initializePaymentCurrency } = usePaymentCurrency()
 const { initializeLocale } = useAutoLocale()
-const { isApp } = useAppDetection()
+const { isApp, isIOS } = useAppDetection()
 
 callOnce(() => {
   initializeServerGeolocation()
@@ -193,7 +193,11 @@ useHead({
       rel: 'me',
       href: 'https://www.threads.com/@3ookcom',
     },
-    ...(likeCoinAPIEndpoint
+    // Skip on iOS: priming WKWebView's app-level NSURLSession pool with a
+    // cross-origin CORS preconnect can wedge a poisoned connection that fails
+    // every later $fetch with "Load failed: <no response>" until the app is
+    // killed — reload alone doesn't recover it.
+    ...(likeCoinAPIEndpoint && !isIOS.value
       ? [{ rel: 'preconnect', href: likeCoinAPIEndpoint, crossorigin: '', key: 'preconnect-like-api' }]
       : []),
     ...(likeCoinStaticEndpoint
