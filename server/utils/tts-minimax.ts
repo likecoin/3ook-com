@@ -42,6 +42,8 @@ interface PronunciationRule {
 const TTS_PRONUNCIATION_RULES: Record<string, PronunciationRule[]> = {
   'zh-TW': [
     { target: '乾', tone: '(gan1)' },
+    { target: '〇', tone: '(ling2)' },
+    { target: '鬍子', tone: '(hu2)子' },
   ],
   'zh-HK': [
     { target: '茅塞頓開', tone: '茅(sak1)頓開' },
@@ -52,6 +54,8 @@ const TTS_PRONUNCIATION_RULES: Record<string, PronunciationRule[]> = {
     { target: '掬', tone: '(guk1)' },
     { target: '驥', tone: '(kei3)' },
     { target: '頰', tone: '(gaap3)' },
+    { target: '〇', tone: '(ling4)' },
+    { target: '鬍子', tone: '(wu4)子' },
   ],
 }
 
