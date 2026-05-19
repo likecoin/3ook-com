@@ -538,10 +538,11 @@ let pendingTTSDisplayCfi: string | null = null
 const epubCFI = new EpubCFI()
 
 function isSegmentOnCurrentPage(segmentCfi: string): boolean {
-  if (!currentPageStartCfi.value || !currentPageEndCfi.value) return false
+  const start = currentPageStartCfi.value
+  const end = currentPageEndCfi.value
+  if (!start || !end) return false
   try {
-    return epubCFI.compare(segmentCfi, currentPageStartCfi.value) >= 0
-      && epubCFI.compare(segmentCfi, currentPageEndCfi.value) <= 0
+    return isCFIWithinPageRange(epubCFI, segmentCfi, start, end)
   }
   catch {
     return false

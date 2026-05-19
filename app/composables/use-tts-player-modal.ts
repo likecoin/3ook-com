@@ -78,8 +78,7 @@ export function useTTSPlayerModal(options: TTSPlayerOptions) {
     let isStoredIndexStale = false
     if (storedSegmentCFI && cfi && pageEndCFI) {
       try {
-        isStoredIndexStale = epubCFI.compare(storedSegmentCFI, cfi) < 0
-          || epubCFI.compare(storedSegmentCFI, pageEndCFI) > 0
+        isStoredIndexStale = !isCFIWithinPageRange(epubCFI, storedSegmentCFI, cfi, pageEndCFI)
       }
       catch {
         // Treat malformed/unsupported CFIs as stale so we fall back to the
@@ -88,12 +87,19 @@ export function useTTSPlayerModal(options: TTSPlayerOptions) {
       }
     }
 
-    // First TTS segment of the reader's current section (0 when there's no
-    // section or it has no segments). Used by the cfi fallbacks and the
-    // no-page-cfi path.
-    const firstSegmentOfSection = () => sectionIndex !== undefined
-      ? Math.max(ttsSegments.value.findIndex(segment => segment.sectionIndex >= sectionIndex), 0)
-      : 0
+    // First TTS segment at or after the reader's current section (so an
+    // image-only section with no segments resolves to the next section that
+    // has them). 0 when there's no section index; when the section is past
+    // every segment (e.g. trailing image-only pages) fall back to the last
+    // segment rather than restarting from the book's start. Used by the cfi
+    // fallbacks and the no-page-cfi path.
+    const firstSegmentOfSection = () => {
+      if (sectionIndex === undefined || ttsSegments.value.length === 0) return 0
+      const index = ttsSegments.value.findIndex(
+        segment => segment.sectionIndex >= sectionIndex,
+      )
+      return index === -1 ? ttsSegments.value.length - 1 : index
+    }
 
     if (ttsIndex !== undefined && !isStoredIndexStale) {
       startIndex.value = ttsIndex

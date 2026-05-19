@@ -1,6 +1,25 @@
 import { EpubCFI } from '@likecoin/epub-ts'
 
 /**
+ * Whether `cfi` lies within the page span bounded by `pageBoundA` and
+ * `pageBoundB` (inclusive), without assuming which bound is the lower one.
+ * epub.js can report a page's start cfi *after* its end cfi for a reflowable
+ * chapter wedged between fixed-layout image spreads, so the membership test
+ * must be order-agnostic. May throw on a malformed cfi (via `compare`);
+ * callers guard with try/catch.
+ */
+export function isCFIWithinPageRange(
+  epubCFI: EpubCFI,
+  cfi: string,
+  pageBoundA: string,
+  pageBoundB: string,
+): boolean {
+  const a = epubCFI.compare(cfi, pageBoundA)
+  const b = epubCFI.compare(cfi, pageBoundB)
+  return (a >= 0 && b <= 0) || (a <= 0 && b >= 0)
+}
+
+/**
  * Resolve the first text node at or after the DOM position (container, offset).
  * For element containers, `offset` indexes into childNodes per the DOM Range spec,
  * so we advance to the child at that index (or past the container entirely).
