@@ -938,8 +938,10 @@ async function loadEPub() {
   // Clear stale TTS index from previous session so it doesn't override current page position
   activeTTSElementIndex.value = undefined
 
-  rendition.value.on('rendered', (section: Section, view: EpubView) => {
-    currentSectionIndex.value = section.index ?? 0
+  rendition.value.on('rendered', (_section: Section, view: EpubView) => {
+    // `rendered` fires for sections epub.js pre-renders into its paging
+    // buffer, so this can be a neighbour, not the visible page — the section
+    // index comes from the authoritative `relocated` handler instead.
     renditionViewWindow.value = view.window
     isPageLoading.value = false
     isWrittenFromRightToLeft.value = view.settings.direction === 'rtl'
@@ -1090,6 +1092,8 @@ async function loadEPub() {
     isPageLoading.value = false
     currentPageStartCfi.value = location.start.cfi
     currentPageEndCfi.value = location.end.cfi
+    // Authoritative section of the visible page (see the `rendered` handler).
+    currentSectionIndex.value = location.start.index
     const href = location.start.href
     currentPageHref.value = href
     activeNavItemHref.value = resolveActiveNavItemHref(href)
@@ -1097,6 +1101,11 @@ async function loadEPub() {
     // segment-accurate position, while `relocated` only sees the page start
     // (and stale data while the modal covers the reader on native).
     if (isTTSQueryParam.value) return
+    // Any read-mode page change invalidates a persisted TTS index: the user
+    // has read past where playback last was, so the next listen resumes from
+    // this page via the cfi lookup. relocated is the single choke point that
+    // also covers swipe, reflow and native-shell turns.
+    activeTTSElementIndex.value = undefined
     percentage.value = book.locations!.percentageFromCfi(location.start.cfi) ?? 0
     currentCfi.value = location.start.cfi
     readingProgress.value = percentage.value
