@@ -127,7 +127,7 @@
               />
               <div class="flex items-center justify-between gap-1 flex-wrap">
                 <BalanceLabel
-                  class="text-2xl mt-1"
+                  class="text-2xl text-secondary mt-1"
                   :value="governanceData.formattedEstimatedRewardPerDay.value"
                 />
                 <UBadge
@@ -150,7 +150,7 @@
                 ? $t('governance_page_claim_rewards_and_restake')
                 : $t('governance_page_claim_rewards')
             )"
-            color="primary"
+            color="neutral"
             size="lg"
             block
             :loading="isLoading"
@@ -165,6 +165,7 @@
             />
             <USwitch
               v-model="isAutoRestakeEnabled"
+              color="neutral"
               @update:model-value="handleAutoRestakeSwitchChange"
             />
           </div>
@@ -173,26 +174,27 @@
         <!-- Legacy Rewards -->
         <div
           v-if="governanceData.hasLegacyReward.value"
-          class="px-4 py-4 flex items-start justify-between"
+          class="px-4 py-4 flex items-start gap-3"
         >
-          <div class="flex items-start gap-3 grow">
-            <UIcon
-              name="i-material-symbols-history-rounded"
-              class="size-5 text-warning mt-1 shrink-0"
-            />
-            <span
-              class="text-sm font-semibold mt-0.5"
-              v-text="$t('governance_page_legacy_rewards')"
-            />
-          </div>
-          <div class="flex flex-col items-end gap-1">
-            <BalanceLabel
-              class="text-2xl"
-              :value="governanceData.formattedLegacyPendingReward.value"
-            />
+          <UIcon
+            name="i-material-symbols-history-rounded"
+            class="size-5 shrink-0"
+          />
+          <div class="flex items-start justify-between gap-x-3 gap-y-1.5 grow flex-wrap">
+            <div class="flex flex-col">
+              <span
+                class="text-sm font-semibold"
+                v-text="$t('governance_page_legacy_rewards')"
+              />
+              <BalanceLabel
+                class="text-2xl text-secondary"
+                :value="governanceData.formattedLegacyPendingReward.value"
+              />
+            </div>
             <UButton
+              class="self-center"
               :label="$t('governance_page_claim_legacy_rewards')"
-              color="warning"
+              color="secondary"
               size="sm"
               :loading="isLoading"
               @click="handleClaimLegacyRewards"
