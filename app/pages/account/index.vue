@@ -21,7 +21,7 @@
             class="rounded-[inherit]"
             icon="i-material-symbols-edit-outline-rounded"
             variant="outline"
-            color="primary"
+            color="neutral"
             :loading="isUploadingAvatar"
             :aria-label="$t('account_page_avatar_change_avatar')"
             @click="handleAvatarEditButtonClick"
@@ -64,7 +64,7 @@
               icon="i-material-symbols-favorite-outline-rounded"
               :label="$t('account_page_book_list')"
               variant="outline"
-              color="primary"
+              color="neutral"
             />
           </template>
         </AccountSettingsItem>
@@ -96,7 +96,7 @@
               :label="$t('account_page_display_name_edit_button')"
               icon="i-material-symbols-edit-outline-rounded"
               variant="outline"
-              color="primary"
+              color="neutral"
               @click="handleDisplayNameEditButtonClick"
             />
           </template>
@@ -167,7 +167,7 @@
             <UButton
               :label="likerPlusButtonLabel"
               :variant="user?.isLikerPlus ? 'outline' : 'solid'"
-              color="primary"
+              :color="user?.isLikerPlus ? 'neutral' : 'primary'"
               :loading="isOpeningBillingPortal"
               @click="handleLikerPlusButtonClick"
             />
@@ -188,7 +188,6 @@
             <UButton
               :label="$t('account_page_gift_plus_button')"
               color="primary"
-              variant="outline"
               :to="localeRoute({ name: 'gift-plus' })"
             />
           </template>
@@ -210,7 +209,7 @@
               v-if="user?.isLikerPlus"
               :label="hasCustomVoice ? $t('tts_custom_voice_change_button') : $t('tts_custom_voice_upload_button')"
               :variant="hasCustomVoice ? 'outline' : 'solid'"
-              color="primary"
+              color="neutral"
               @click="handleOpenCustomVoiceModal"
             />
             <UButton
@@ -252,6 +251,8 @@
             <UButton
               :to="localeRoute({ name: 'account-deposit' })"
               :label="$t('account_page_governance_button')"
+              color="neutral"
+              variant="outline"
               size="lg"
             />
           </template>
@@ -270,6 +271,7 @@
           <template #right>
             <UButton
               :label="$t('account_page_staking_reward_claim_button')"
+              color="neutral"
               variant="outline"
               size="lg"
               :disabled="totalUnclaimedRewards <= 0n"
@@ -348,10 +350,10 @@
           v-if="!isApp"
           :label="$t('account_page_view_member')"
           :to="localeRoute({ name: 'member' })"
-          variant="link"
+          variant="solid"
           leading-icon="i-material-symbols-diamond-outline-rounded"
           trailing-icon="i-material-symbols-arrow-forward-rounded"
-          color="neutral"
+          color="primary"
           size="lg"
           block
         />
@@ -452,8 +454,8 @@
           <template #right>
             <UButton
               :label="stripeConnectButtonLabel"
-              :variant="stripeConnectState === 'ready' ? 'outline' : 'solid'"
-              color="primary"
+              variant="outline"
+              color="neutral"
               :loading="isStripeConnectLoading"
               @click="handleStripeConnectButtonClick"
             />
