@@ -149,11 +149,6 @@
       v-if="hasLoggedIn && isPlusFeatureVisible"
       class="space-y-3"
     >
-      <h2
-        class="px-4 pt-4 text-lg font-bold"
-        v-text="$t('account_page_plus_title')"
-      />
-
       <UCard :ui="{ body: '!p-0 divide-y-1 divide-(--ui-border)' }">
         <AccountSettingsItem
           v-if="hasLoggedIn"
@@ -235,11 +230,6 @@
       v-if="hasLoggedIn && (likeBalance > 0n || !!user?.likeWallet)"
       class="space-y-3"
     >
-      <h2
-        class="px-4 pt-4 text-lg font-bold"
-        v-text="$t('account_page_likecoin_title')"
-      />
-
       <UCard :ui="{ body: '!p-0 divide-y-1 divide-(--ui-border)' }">
         <AccountSettingsItem
           v-if="!isApp || likeBalance > 0n"
@@ -330,11 +320,6 @@
       v-if="!hasLoggedIn"
       class="space-y-3"
     >
-      <h2
-        class="px-4 pt-4 text-lg font-bold"
-        v-text="$t('account_page_learn_more_title')"
-      />
-
       <UCard
         :ui="{
           body: [
@@ -374,11 +359,6 @@
     </section>
 
     <section class="space-y-3">
-      <h2
-        class="px-4 pt-4 text-lg font-bold"
-        v-text="$t('account_page_app_settings_title')"
-      />
-
       <UCard :ui="{ body: '!p-0 divide-y-1 divide-(--ui-border)' }">
         <AccountSettingsItem
           icon="i-material-symbols-language"
@@ -454,11 +434,6 @@
     </section>
 
     <section class="space-y-3">
-      <h2
-        class="px-4 pt-4 text-lg font-bold"
-        v-text="$t('account_page_author_title')"
-      />
-
       <UCard
         v-if="hasLoggedIn && !isApp"
         :ui="{ body: '!p-0 divide-y-1 divide-(--ui-border)' }"
@@ -505,11 +480,6 @@
     </section>
 
     <section class="space-y-3">
-      <h2
-        class="px-4 pt-4 text-lg font-bold"
-        v-text="$t('account_page_settings_and_help_title')"
-      />
-
       <UCard :ui="{ body: '!p-0 divide-y-1 divide-(--ui-border)' }">
         <UButton
           :label="$t('account_page_contact_support')"
