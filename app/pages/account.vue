@@ -35,17 +35,6 @@
       <UBreadcrumb :items="breadcrumbItems" />
     </header>
 
-    <!-- Top-level header -->
-    <header
-      v-else-if="hasLoggedIn"
-      class="px-4 pt-10"
-    >
-      <h1
-        class="text-2xl font-bold"
-        v-text="breadcrumbItems[0]?.label"
-      />
-    </header>
-
     <!-- Login Prompt -->
     <aside
       v-if="!hasLoggedIn"
@@ -72,7 +61,7 @@
       </UCard>
     </aside>
 
-    <NuxtPage class="px-4 phone:grow not-first:mt-2" />
+    <NuxtPage class="px-4 phone:grow first:mt-10 not-first:mt-2" />
   </NuxtLayout>
 </template>
 
