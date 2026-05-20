@@ -274,6 +274,7 @@
   "bookshelf_item_menu_unarchive": "取消封存",
   "bookshelf_item_menu_view_book_info": "查閱書籍資訊",
   "bookshelf_item_open_content_failed": "無法開啟此書籍",
+  "bookshelf_item_reading_progress_label": "閱讀進度：{percentage}%",
   "bookshelf_no_items": "你的書架沒有書",
   "bookshelf_no_items_archived": "還沒有封存的書",
   "bookshelf_no_items_cta_button": "前往書店",

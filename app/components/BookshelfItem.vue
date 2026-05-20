@@ -28,6 +28,11 @@
       <div
         v-else-if="progressPercentage > 0 && progressPercentage <= 100"
         class="w-full h-1 rounded-full overflow-hidden text-toned/50"
+        role="progressbar"
+        :aria-label="$t('bookshelf_item_reading_progress_label', { percentage: progressPercentage })"
+        :aria-valuenow="progressPercentage"
+        aria-valuemin="0"
+        aria-valuemax="100"
       >
         <div
           class="h-full bg-current rounded-full transition-all duration-300"

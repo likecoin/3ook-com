@@ -274,6 +274,7 @@
   "bookshelf_item_menu_unarchive": "Unarchive",
   "bookshelf_item_menu_view_book_info": "View Book Info",
   "bookshelf_item_open_content_failed": "Unable to open this book",
+  "bookshelf_item_reading_progress_label": "Reading progress: {percentage}%",
   "bookshelf_no_items": "Your 3ookShelf is empty",
   "bookshelf_no_items_archived": "No archived books",
   "bookshelf_no_items_cta_button": "Visit 3ookStore",
