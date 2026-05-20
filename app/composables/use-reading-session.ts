@@ -16,7 +16,7 @@ export function useReadingSession(options: ReadingSessionOptions) {
   const { readerType, progress, isTextToSpeechPlaying, chapterIndex, pageIndex } = options
   const nftClassId = toRef(options.nftClassId)
 
-  const { loggedIn } = useUserSession()
+  const { loggedIn, user: sessionUser } = useUserSession()
   let sessionId = ''
   let startProgress = 0
   let pagesViewed = new Set<number | string>()
@@ -159,6 +159,7 @@ export function useReadingSession(options: ReadingSessionOptions) {
       active_reading_time_ms: payload.activeReadingTimeMs,
       tts_active_time_ms: payload.ttsActiveTimeMs,
       pages_viewed: payload.pagesViewed,
+      is_liker_plus_at_event_time: !!sessionUser.value?.isLikerPlus,
     })
   }
 

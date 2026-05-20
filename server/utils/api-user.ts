@@ -5,7 +5,10 @@ import type { BookSettingsFirestoreData } from '~~/server/types/book-settings'
 import type { UserSettingsData } from '~~/shared/types/user-settings'
 import { FIRESTORE_IN_OPERATOR_LIMIT } from '~~/shared/constants/api'
 
-export async function requireUserWallet(event: H3Event): Promise<string> {
+export async function requireUserWalletWithStatus(event: H3Event): Promise<{
+  wallet: string
+  isLikerPlus: boolean
+}> {
   const session = await requireUserSession(event)
   const wallet = session.user.evmWallet
   if (!wallet) {
@@ -14,6 +17,11 @@ export async function requireUserWallet(event: H3Event): Promise<string> {
       message: 'WALLET_NOT_FOUND',
     })
   }
+  return { wallet, isLikerPlus: !!session.user.isLikerPlus }
+}
+
+export async function requireUserWallet(event: H3Event): Promise<string> {
+  const { wallet } = await requireUserWalletWithStatus(event)
   return wallet
 }
 
@@ -246,24 +254,32 @@ export async function deleteCustomVoice(
 export async function incrementBookReadingTime(
   userWallet: string,
   nftClassId: string,
-  activeReadingTimeMs: number,
-  ttsActiveTimeMs: number,
-  options?: { countSession?: boolean },
+  payload: {
+    activeReadingTimeMs: number
+    ttsActiveTimeMs: number
+    isLikerPlus: boolean
+    countSession?: boolean
+  },
 ): Promise<void> {
+  const { activeReadingTimeMs, ttsActiveTimeMs, isLikerPlus, countSession } = payload
   const userDocRef = getUserCollection().doc(userWallet)
   const bookDocRef = userDocRef.collection('books').doc(nftClassId.toLowerCase())
+
+  const plusTTSListeningTimeMs = isLikerPlus ? ttsActiveTimeMs : 0
 
   const batch = getFirestoreDb().batch()
 
   batch.set(userDocRef, {
     totalReadingTimeMs: FieldValue.increment(activeReadingTimeMs),
     totalTTSListeningTimeMs: FieldValue.increment(ttsActiveTimeMs),
+    totalPlusTTSListeningTimeMs: FieldValue.increment(plusTTSListeningTimeMs),
   }, { merge: true })
 
   batch.set(bookDocRef, {
     totalReadingTimeMs: FieldValue.increment(activeReadingTimeMs),
     totalTTSListeningTimeMs: FieldValue.increment(ttsActiveTimeMs),
-    ...(options?.countSession && { sessionCount: FieldValue.increment(1) }),
+    totalPlusTTSListeningTimeMs: FieldValue.increment(plusTTSListeningTimeMs),
+    ...(countSession && { sessionCount: FieldValue.increment(1) }),
     updatedAt: FieldValue.serverTimestamp(),
   }, { merge: true })
 
@@ -281,12 +297,12 @@ export async function updateReadingStreak(
     const streak = data?.readingStreak || { currentDays: 0, longestDays: 0, lastActiveDate: '' }
 
     const now = new Date()
-    const today = now.toISOString().split('T')[0]
+    const today = toUTCDateString(now)
     if (streak.lastActiveDate === today) return
 
     const yesterday = new Date(now)
     yesterday.setUTCDate(yesterday.getUTCDate() - 1)
-    const yesterdayStr = yesterday.toISOString().split('T')[0]
+    const yesterdayStr = toUTCDateString(yesterday)
 
     let newCurrentDays: number
     if (streak.lastActiveDate === yesterdayStr) {
