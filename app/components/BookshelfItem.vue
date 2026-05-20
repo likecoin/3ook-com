@@ -13,10 +13,10 @@
       @click="handleCoverClick"
     />
 
-    <div class="mt-2 mb-1 w-full h-[24px]">
+    <div class="mt-2 mb-1 w-full">
       <div
         v-if="props.stakedLike > 0"
-        class="flex justify-between items-center gap-1 text-xs text-toned"
+        class="flex justify-between items-center gap-1 h-4 text-xs text-toned"
       >
         <span v-text="$t('staking_explore_total_staked')" />
         <BalanceLabel
@@ -27,18 +27,12 @@
       </div>
       <div
         v-else-if="progressPercentage > 0 && progressPercentage <= 100"
-        class="w-full"
+        class="w-full h-1 rounded-full overflow-hidden text-toned/50"
       >
         <div
-          class="text-xs text-toned mb-0.5"
-          v-text="`${progressPercentage}%`"
+          class="h-full bg-current rounded-full transition-all duration-300"
+          :style="{ width: `${progressPercentage}%` }"
         />
-        <div class="w-full h-1 rounded-full overflow-hidden ring-[0.5px] ring-inset ring-current text-highlighted">
-          <div
-            class="h-full bg-current transition-all duration-300"
-            :style="{ width: `${progressPercentage}%` }"
-          />
-        </div>
       </div>
     </div>
 
