@@ -434,11 +434,9 @@
     </section>
 
     <section class="space-y-3">
-      <UCard
-        v-if="hasLoggedIn && !isApp"
-        :ui="{ body: '!p-0 divide-y-1 divide-(--ui-border)' }"
-      >
+      <UCard :ui="{ body: '!p-0 divide-y-1 divide-(--ui-border)' }">
         <AccountSettingsItem
+          v-if="hasLoggedIn && !isApp"
           icon="i-material-symbols-account-balance-wallet-outline-rounded"
           :label="$t('account_page_stripe_connect')"
         >
@@ -461,9 +459,6 @@
             />
           </template>
         </AccountSettingsItem>
-      </UCard>
-
-      <UCard :ui="{ body: '!p-0 divide-y-1 divide-(--ui-border)' }">
         <UButton
           :label="$t('account_page_publish_book')"
           :to="publishBookURL"
@@ -474,13 +469,14 @@
           color="neutral"
           size="lg"
           block
+          :ui="{ base: 'px-4 py-3' }"
           @click="handlePublishBookButtonClick"
         />
       </UCard>
     </section>
 
     <section class="space-y-3">
-      <UCard :ui="{ body: '!p-0 divide-y-1 divide-(--ui-border)' }">
+      <UCard :ui="{ body: '!p-0 divide-y-1 divide-(--ui-border) *:first:rounded-b-none' }">
         <UButton
           :label="$t('account_page_contact_support')"
           variant="link"
@@ -490,6 +486,7 @@
           color="neutral"
           size="lg"
           block
+          :ui="{ base: 'px-4 py-3' }"
           @click="handleCustomerServiceLinkButtonClick"
         />
 
@@ -503,6 +500,7 @@
           color="neutral"
           size="lg"
           block
+          :ui="{ base: 'px-4 py-3' }"
         />
       </UCard>
     </section>
