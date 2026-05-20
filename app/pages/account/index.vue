@@ -14,7 +14,6 @@
         />
         <UserAvatarPlusBadge
           v-if="user?.isLikerPlus"
-          vertical-align="top"
           color="primary"
         />
         <div class="absolute -bottom-1 -right-1 rounded-full bg-(--app-bg)">
