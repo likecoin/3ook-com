@@ -299,6 +299,7 @@ export default defineEventHandler(async (event) => {
       language,
       voiceId,
       provider: provider.provider,
+      nftClassId,
       text: text.length > 1800 ? text.substring(0, 1800) + '...' : text,
       textLength: text.length.toString(),
       createdAt: new Date().toISOString(),
