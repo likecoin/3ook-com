@@ -300,6 +300,7 @@ async function checkItemsDeliveryThroughIndexer() {
   await bookshelfStore.fetchItems({
     isRefresh: true,
     walletAddress: claimingWallet.value as string,
+    shouldForceFetchSettings: false,
   })
 }
 

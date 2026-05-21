@@ -64,10 +64,15 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
     walletAddress,
     isRefresh: shouldRefresh = false,
     limit = 100,
+    shouldForceFetchSettings,
   }: {
     walletAddress: string
     isRefresh?: boolean
     limit?: number
+    // Force-refetch book settings even when already cached. Defaults to the
+    // resolved refresh flag; the claim poll opts out so repeated polls hydrate
+    // newly-delivered books once instead of re-fetching every iteration.
+    shouldForceFetchSettings?: boolean
   }) {
     const normalizedWalletAddress = walletAddress?.toLowerCase()
     if (
@@ -119,14 +124,14 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
           tokenIdsByNFTClassId.value[nftClassId] ??= []
         }
 
-        if (nftClass.metadata) {
+        if (nftClass.metadata && !nftStore.getNFTClassMetadataById(nftClassId)) {
           nftStore.addNFTClassMetadata(nftClassId, nftClass.metadata)
         }
 
         progressFetchNFTClassIds.add(nftClassId)
       })
 
-      await bookSettingsStore.fetchBatchSettings(Array.from(progressFetchNFTClassIds), { force: isRefresh })
+      await bookSettingsStore.fetchBatchSettings(Array.from(progressFetchNFTClassIds), { force: shouldForceFetchSettings ?? isRefresh })
       if (isStale()) return
 
       nextKey.value = res.data.length < limit ? undefined : res.pagination.next_key
