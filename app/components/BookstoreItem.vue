@@ -13,13 +13,13 @@
       @click="onBookCoverClick"
     />
 
-    <div class="mt-2 h-[5em]">
+    <div class="mt-2 min-h-[3.2lh]">
       <div
         class="laptop:text-base text-highlighted font-semibold line-clamp-2"
         v-text="bookName"
       />
 
-      <div class="h-[1.25em] mt-[0.5em] truncate leading-none text-xs">
+      <div class="h-lh mt-[0.5lh] truncate leading-none text-xs">
         <NuxtLink
           :to="bookInfo.getAuthorPageRoute({
             llMedium: 'author-link',
@@ -37,7 +37,7 @@
     <!-- Price info for store mode -->
     <div
       v-if="!isApp || price === 0"
-      class="mt-[0.5em] text-highlighted"
+      class="mt-[0.5lh] text-highlighted"
     >
       <span
         v-if="formattedDiscountPrice"
@@ -52,7 +52,7 @@
     <div v-if="likeRank > 0">
       <NuxtLink
         :to="stakingRoute"
-        class="font-mono"
+        class="text-xs font-mono"
       >
         #{{ likeRank }}
       </NuxtLink>

@@ -16,7 +16,7 @@
     <div class="mt-2 mb-1 w-full">
       <div
         v-if="props.stakedLike > 0"
-        class="flex justify-between items-center flex-wrap gap-1 min-h-[16px] text-[12px] text-toned"
+        class="flex justify-between items-center flex-wrap gap-1 min-h-lh text-xs text-toned"
       >
         <span
           class="shrink-0"
@@ -44,8 +44,7 @@
       </div>
     </div>
 
-    <!-- Use em unit for adapting to system font size changes -->
-    <div class="flex items-start gap-1 h-[3em] text-sm laptop:text-base">
+    <div class="flex items-start gap-1 min-h-[2lh] text-sm laptop:text-base">
       <div
         class="text-highlighted font-semibold line-clamp-2 grow"
         v-text="bookInfo.name"
