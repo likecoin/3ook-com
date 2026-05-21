@@ -16,9 +16,12 @@
     <div class="mt-2 mb-1 w-full">
       <div
         v-if="props.stakedLike > 0"
-        class="flex justify-between items-center gap-1 h-4 text-xs text-toned"
+        class="flex justify-between items-center flex-wrap gap-1 min-h-[16px] text-[12px] text-toned"
       >
-        <span v-text="$t('staking_explore_total_staked')" />
+        <span
+          class="shrink-0"
+          v-text="$t('staking_explore_total_staked')"
+        />
         <BalanceLabel
           :value="props.stakedLike"
           :is-compact="true"
