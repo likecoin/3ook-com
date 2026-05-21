@@ -1,6 +1,7 @@
 const COLUMN_CLASSES = [
   // [GRID_CLASS, GRID_ITEM_CLASS]
-  ['grid-cols-3', 'max-tablet:hidden'],
+  ['grid-cols-2', 'max-tiny-phone:hidden'],
+  ['tiny-phone:grid-cols-3', 'tiny-phone:max-tablet:hidden'],
   ['tablet:grid-cols-4', 'tablet:max-laptop:hidden'],
   ['laptop:grid-cols-5', 'laptop:max-desktop:hidden'],
   ['desktop:grid-cols-6', 'desktop:max-widescreen:hidden'],
@@ -8,7 +9,7 @@ const COLUMN_CLASSES = [
 ]
 
 const COLUMN_MAX = 7
-const COLUMN_MIN = 3
+const COLUMN_MIN = 2
 
 function getColumnClass(column: number) {
   const [grid, gridItem] = COLUMN_CLASSES[column - COLUMN_MIN] || []

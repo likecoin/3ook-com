@@ -52,6 +52,7 @@ body {
 }
 
 @theme {
+  --breakpoint-tiny-phone: 26rem;
   --breakpoint-phone: 40rem;
   --breakpoint-tablet: 48rem;
   --breakpoint-laptop: 64rem;
