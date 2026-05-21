@@ -2,7 +2,7 @@
   <div
     :class="[
       'flex',
-      { 'aspect-2/3': !isVerticalCenter || isShowPlaceholder },
+      { 'aspect-2/3': isShowPlaceholder },
       isVerticalCenter ? 'items-center' : 'items-end',
     ]"
   >
