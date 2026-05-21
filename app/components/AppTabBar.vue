@@ -1,5 +1,14 @@
 <template>
-  <nav class="fixed inset-x-0 bottom-0 z-40 pb-safe pointer-events-none">
+  <nav
+    :class="[
+      'fixed',
+      'inset-x-0',
+      'bottom-0',
+      'z-40',
+      isApp ? 'pb-[min(env(safe-area-inset-bottom),16px)]' : 'pb-safe',
+      'pointer-events-none',
+    ]"
+  >
     <div
       :class="[
         'flex',
@@ -80,6 +89,7 @@ const localeRoute = useLocaleRoute()
 const getRouteBaseNameString = useRouteBaseNameString()
 const { getLabelGraphic } = useGraphicLabel()
 const { loggedIn: hasLoggedIn, user } = useUserSession()
+const { isApp } = useAppDetection()
 
 const menuItems = computed(() => {
   const routeName = getRouteBaseNameString()
