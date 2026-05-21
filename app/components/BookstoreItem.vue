@@ -35,25 +35,25 @@
       </div>
     </div>
 
-    <div class="flex items-center justify-between mt-3 h-5">
-      <!-- Price info for store mode -->
-      <div
-        v-if="!isApp || price === 0"
-        class="text-sm text-theme-black dark:text-highlighted"
-      >
-        <span
-          v-if="formattedDiscountPrice"
-          v-text="formattedDiscountPrice"
-        />
-        <span
-          :class="{ 'text-xs text-toned ml-0.5 line-through': formattedDiscountPrice }"
-          v-text="formattedPrice"
-        />
-      </div>
+    <!-- Price info for store mode -->
+    <div
+      v-if="!isApp || price === 0"
+      class="text-sm text-theme-black dark:text-highlighted"
+    >
+      <span
+        v-if="formattedDiscountPrice"
+        v-text="formattedDiscountPrice"
+      />
+      <span
+        :class="{ 'text-xs text-toned ml-0.5 line-through': formattedDiscountPrice }"
+        v-text="formattedPrice"
+      />
+    </div>
+
+    <div v-if="likeRank > 0">
       <NuxtLink
-        v-if="likeRank > 0"
         :to="stakingRoute"
-        class="text-muted text-sm font-semibold"
+        class="text-muted text-sm font-mono"
       >
         #{{ likeRank }}
       </NuxtLink>
