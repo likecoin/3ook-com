@@ -1,7 +1,7 @@
 <template>
   <li
     ref="lazyLoadTrigger"
-    class="flex flex-col justify-end"
+    class="flex flex-col justify-end text-sm text-muted"
   >
     <BookCover
       :src="bookCoverSrc"
@@ -13,13 +13,13 @@
       @click="onBookCoverClick"
     />
 
-    <div class="mt-2 h-[70px]">
+    <div class="mt-2 h-[5em]">
       <div
-        class="text-sm laptop:text-base text-highlighted font-semibold line-clamp-2"
+        class="laptop:text-base text-highlighted font-semibold line-clamp-2"
         v-text="bookName"
       />
 
-      <div class="h-4 laptop:h-5 mt-0.5 truncate leading-none">
+      <div class="h-[1.25em] mt-[0.5em] truncate leading-none text-xs">
         <NuxtLink
           :to="bookInfo.getAuthorPageRoute({
             llMedium: 'author-link',
@@ -27,7 +27,6 @@
           })"
           :class="[
             'inline',
-            'text-xs laptop:text-sm',
             'text-toned hover:text-theme-black',
             'hover:underline',
           ]"
@@ -38,14 +37,14 @@
     <!-- Price info for store mode -->
     <div
       v-if="!isApp || price === 0"
-      class="text-sm text-theme-black dark:text-highlighted"
+      class="mt-[0.5em] text-highlighted"
     >
       <span
         v-if="formattedDiscountPrice"
         v-text="formattedDiscountPrice"
       />
       <span
-        :class="{ 'text-xs text-toned ml-0.5 line-through': formattedDiscountPrice }"
+        :class="{ 'text-xs ml-0.5 text-muted line-through': formattedDiscountPrice }"
         v-text="formattedPrice"
       />
     </div>
@@ -53,7 +52,7 @@
     <div v-if="likeRank > 0">
       <NuxtLink
         :to="stakingRoute"
-        class="text-muted text-sm font-mono"
+        class="font-mono"
       >
         #{{ likeRank }}
       </NuxtLink>
