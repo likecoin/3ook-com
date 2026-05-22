@@ -128,24 +128,14 @@ export function useTTSPlayerModal(options: TTSPlayerOptions) {
     else if (cfi) {
       let segmentIndex: number
       try {
-        const scanned = scanSegmentByCFI(cfi)
-        // epub.js can report an inconsistent page range — start cfi *after*
-        // end cfi. Seen after a search/page jump on the native paginated
-        // manager (the END lags at the previous position) and for a reflowable
-        // chapter wedged between fixed-layout image spreads. The START cfi is
-        // still the position the reader opened, so resolve from it; only when
-        // the range is inconsistent AND the scan escapes the opened section (a
-        // genuinely garbage start cfi) do we fall back to the section start.
         // Each segment carries its own text-range cfi (see extractTTSSegments
         // in pages/reader/epub.vue), so the scan resolves directly to the
-        // segment whose start the page boundary most recently passed.
-        const isInconsistentRange = !!pageEndCFI && epubCFI.compare(cfi, pageEndCFI) > 0
-        const escapesSection = sectionIndex !== undefined
-          && scanned >= 0
-          && ttsSegments.value[scanned]?.sectionIndex !== sectionIndex
-        segmentIndex = (scanned >= 0 && !(isInconsistentRange && escapesSection))
-          ? scanned
-          : firstSegmentOfSection()
+        // segment whose start the page boundary most recently passed. epub-ts
+        // ≥0.6.4 recomputes a fast-path-induced start/end range inversion at
+        // the source (Mapping.page), so the page-start cfi is trustworthy and
+        // no inconsistent-range workaround is needed here.
+        const scanned = scanSegmentByCFI(cfi)
+        segmentIndex = scanned >= 0 ? scanned : firstSegmentOfSection()
       }
       catch {
         // Malformed/unsupported cfi — fall back to the section start.
