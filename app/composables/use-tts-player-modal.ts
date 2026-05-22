@@ -104,6 +104,17 @@ export function useTTSPlayerModal(options: TTSPlayerOptions) {
     // Resolve a page/anchor cfi to the segment whose start it most recently
     // passed (lastAtOrBefore), else the first segment after it; -1 when no
     // segment is comparable.
+    //
+    // Segment cfis are NOT strictly ascending, so this must scan every segment
+    // and never break early: a paragraph that opens with an inline element
+    // (e.g. the decorative drop-cap `<span>O</span>` some books put before the
+    // first letter) gives its first segment a cfi that descends into that span
+    // (…/2/1:0). epub.js numbers a paragraph's body text as its first *text*
+    // node — step /1 — while the leading span is element step /2, and compare()
+    // sorts /2 after /1. So that drop-cap segment sorts *after* the paragraph's
+    // own body text. Breaking on the first cfi past the target would stop at
+    // the next paragraph's drop-cap segment and strand the result on the
+    // previous paragraph's last segment (TTS starting a page too early).
     const scanSegmentByCFI = (targetCFI: string): number => {
       const target = new EpubCFI(targetCFI)
       let lastAtOrBefore = -1
@@ -114,9 +125,8 @@ export function useTTSPlayerModal(options: TTSPlayerOptions) {
         if (epubCFI.compare(segmentCFI, target) <= 0) {
           lastAtOrBefore = i
         }
-        else {
+        else if (firstAfter < 0) {
           firstAfter = i
-          break
         }
       }
       return lastAtOrBefore >= 0 ? lastAtOrBefore : firstAfter
