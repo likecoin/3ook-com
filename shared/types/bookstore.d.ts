@@ -11,6 +11,7 @@ export interface BookstoreCMSProduct {
   isAdultOnly?: boolean
   isMultiple?: boolean
   minPrice?: number
+  minPriceInDecimalByCurrency?: BookPriceInDecimalByCurrency
   timestamp?: number
   totalStaked?: bigint
   stakerCount?: number
@@ -63,6 +64,7 @@ declare global {
     isAdultOnly?: boolean
     isMultiple?: boolean
     minPrice?: number
+    minPriceInDecimalByCurrency?: BookPriceInDecimalByCurrency
     timestamp?: number
   }
 

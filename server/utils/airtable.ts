@@ -101,6 +101,8 @@ export interface FetchAirtableCMSProductsByTagIdResponseData {
       'Image URL'?: string
       'Name'?: string
       'Min Price'?: number
+      'Min Price HKD'?: number
+      'Min Price TWD'?: number
       'Listing Date'?: string[]
       'Timestamp'?: number
       'DRM-free'?: boolean | number // boolean in Publications table, number (0 = false, 1 = true) in Products table
@@ -132,6 +134,20 @@ function getFormulaForSearchTerm(searchTerm: string) {
   return formula
 }
 
+// Airtable stores per-currency "Min Price <CODE>" columns in major units
+// (e.g. HKD/TWD dollars). Convert to the minor-unit override shape the client
+// price resolver expects.
+function normalizeMinPriceInDecimalByCurrency(
+  fields: FetchAirtableCMSProductsByTagIdResponseData['records'][number]['fields'],
+): BookPriceInDecimalByCurrency | undefined {
+  const result: BookPriceInDecimalByCurrency = {}
+  const hkd = fields['Min Price HKD']
+  const twd = fields['Min Price TWD']
+  if (typeof hkd === 'number' && hkd > 0) result.hkd = Math.round(hkd * 100)
+  if (typeof twd === 'number' && twd > 0) result.twd = Math.round(twd * 100)
+  return Object.keys(result).length ? result : undefined
+}
+
 function normalizeProductRecord({ id, fields }: FetchAirtableCMSProductsByTagIdResponseData['records'][number]): BookstoreCMSProduct {
   const classIds = fields.IDs
   const isMultiple = classIds && classIds.length > 1
@@ -148,6 +164,7 @@ function normalizeProductRecord({ id, fields }: FetchAirtableCMSProductsByTagIdR
     isAdultOnly: !!fields['Adult Only'] || undefined,
     isMultiple: isMultiple ? true : undefined,
     minPrice: fields['Min Price'],
+    minPriceInDecimalByCurrency: normalizeMinPriceInDecimalByCurrency(fields),
     timestamp: fields.Timestamp,
   }
 }

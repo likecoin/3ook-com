@@ -78,6 +78,10 @@ const props = defineProps({
     type: Number,
     default: 0,
   },
+  priceOverride: {
+    type: Object as PropType<BookPriceInDecimalByCurrency>,
+    default: undefined,
+  },
   lazy: {
     type: Boolean,
     default: false,
@@ -132,10 +136,10 @@ const bookName = computed(() => bookInfo.name.value || props.bookName)
 const authorName = computed(() => bookInfo.authorName.value)
 
 const price = computed(() => props.price || bookInfo.minPrice.value)
-// Only the catalog's own min-tier carries an override; a price passed in via
-// props has no currency override context, so fall back to ladder conversion.
+// A prop price carries its own per-currency override (the catalog's Airtable min);
+// without one we use the catalog's min-tier override. Unmigrated records pass none.
 const priceCurrencyOverride = computed(() => (
-  props.price ? undefined : bookInfo.minPricingItem.value?.priceInDecimalByCurrency
+  props.price ? props.priceOverride : bookInfo.minPricingItem.value?.priceInDecimalByCurrency
 ))
 const formattedPrice = computed(() => formatPrice(price.value, priceCurrencyOverride.value))
 

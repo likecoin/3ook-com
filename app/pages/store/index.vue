@@ -256,6 +256,7 @@
           :book-name="item.title"
           :book-cover-src="item.imageUrl"
           :price="item.minPrice"
+          :price-override="item.minPriceInDecimalByCurrency"
           :like-rank="item.likeRank ?? 0"
           :lazy="index >= columnMax"
           :priority="index < columnMax"

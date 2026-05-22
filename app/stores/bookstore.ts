@@ -15,6 +15,7 @@ interface BookstoreSearchResults {
     title: string
     imageUrl: string
     minPrice?: number
+    minPriceInDecimalByCurrency?: BookPriceInDecimalByCurrency
   }>
   isFetching: boolean
   hasFetched: boolean
@@ -242,6 +243,7 @@ export const useBookstoreStore = defineStore('bookstore', () => {
         title: item.title!,
         imageUrl: item.imageUrl!,
         minPrice: item.minPrice,
+        minPriceInDecimalByCurrency: item.minPriceInDecimalByCurrency,
       }))
 
     updateSearchResults(queryKey, mappedItems, result.offset, isRefresh)
@@ -261,6 +263,7 @@ export const useBookstoreStore = defineStore('bookstore', () => {
         title: item.title!,
         imageUrl: item.imageUrl!,
         minPrice: item.minPrice,
+        minPriceInDecimalByCurrency: item.minPriceInDecimalByCurrency,
       }))
 
     updateSearchResults(queryKey, mappedItems, result.offset, isRefresh)
