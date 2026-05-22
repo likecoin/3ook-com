@@ -51,58 +51,55 @@
         v-text="bookInfo.name"
       />
 
+      <DefineMenuButton>
+        <UButton
+          class="-mr-2 -mt-1"
+          icon="i-material-symbols-more-vert"
+          color="neutral"
+          variant="link"
+        />
+      </DefineMenuButton>
+
       <UDropdownMenu
         v-if="isDesktopScreen"
         :items="menuItems"
         :modal="true"
       >
-        <UButton
-          class="-mr-2 -mt-1"
-          icon="i-material-symbols-more-vert"
-          color="neutral"
-          variant="link"
-        />
+        <MenuButton />
       </UDropdownMenu>
-
       <UDrawer
         v-else
         v-model:open="isMobileMenuOpen"
+        :title="bookInfo.name.value"
         :handle="false"
+        :ui="{
+          content: 'pb-safe',
+          title: 'text-center font-bold',
+          body: '-mx-3',
+        }"
       >
-        <UButton
-          class="-mr-2 -mt-1"
-          icon="i-material-symbols-more-vert"
-          color="neutral"
-          variant="link"
-        />
-        <template #content>
-          <UCard
-            class="pb-safe"
-            :ui="{ header: 'text-center font-bold' }"
-          >
-            <template #header>
-              {{ bookInfo.name.value }}
-            </template>
-            <UButton
-              v-for="item in menuItems"
-              :key="item.label"
-              class="cursor-pointer"
-              :icon="item.icon"
-              :label="item.label"
-              :href="item.href"
-              :to="item.to"
-              :disabled="item.disabled"
-              variant="link"
-              color="neutral"
-              size="xl"
-              block
-              :ui="{ base: 'justify-start' }"
-              @click="(e) => {
-                isMobileMenuOpen = false
-                item.onSelect?.(e)
-              }"
-            />
-          </UCard>
+        <MenuButton />
+
+        <template #body>
+          <UButton
+            v-for="item in menuItems"
+            :key="item.label"
+            class="cursor-pointer"
+            :icon="item.icon"
+            :label="item.label"
+            :href="item.href"
+            :to="item.to"
+            :disabled="item.disabled"
+            variant="link"
+            color="neutral"
+            size="xl"
+            block
+            :ui="{ base: 'justify-start' }"
+            @click="(e) => {
+              isMobileMenuOpen = false
+              item.onSelect?.(e)
+            }"
+          />
         </template>
       </UDrawer>
     </div>
@@ -188,6 +185,8 @@ const { exportAnnotations } = useExportAnnotations({
   bookId: computed(() => props.nftClassId),
   bookName: bookInfo.name,
 })
+
+const [DefineMenuButton, MenuButton] = createReusableTemplate()
 
 const bookCoverSrc = computed(() => getResizedImageURL(bookInfo.coverSrc.value, { size: 300 }))
 
