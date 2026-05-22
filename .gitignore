@@ -32,3 +32,7 @@ logs
 
 # Claude Code local settings
 .claude/settings.local.json
+
+# TTS pronunciation dictionary generator + MOE source CSVs (kept local; only
+# the generated server/utils/tts-pronunciation/*.json is committed)
+/scripts/tts-pronunciation/

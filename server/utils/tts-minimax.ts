@@ -1,4 +1,6 @@
 import type { BaseTTSProvider, TTSProviderResult, TTSProviderStreamResult, TTSRequestParams } from './api-tts'
+import zhHKPronunciation from './tts-pronunciation/zh-HK.json'
+import zhTWPronunciation from './tts-pronunciation/zh-TW.json'
 
 export const LANG_MAPPING = {
   'en-US': 'English',
@@ -27,65 +29,52 @@ export function getVoiceDisplayName(voiceId: string): string | undefined {
   return VOICE_CONFIG[voiceId]?.displayName
 }
 
-interface PronunciationRule {
-  // Source text that must be fully present for the rule to apply.
-  target: string
-  // The override for `target`: Mandarin Pinyin (tone 1–5), IPA, or Cantonese
-  // Jyutping (tone 1–6), wrapped in half-width parentheses. For multi-char
-  // targets it spans the whole word with only the relevant syllables overridden
-  // (e.g. target `茅塞頓開` → tone `茅(sak1)頓開`). Used as-is for the inline
-  // form, and as `${target}/${tone}` for the Minimax `pronunciationDict`.
-  tone: string
+// Pronunciation overrides keyed by Minimax synthesis language. Each maps a
+// source word (`target`) to its `override`: Mandarin Pinyin (tone 1–5)
+// or Cantonese Jyutping (tone 1–6) wrapped in half-width parentheses, spanning
+// the whole word with only the relevant syllables overridden (e.g. `排行` →
+// `排(hang2)`, `茅塞頓開` → `茅(sak1)頓開`). The override is used as-is for the
+// inline form, and as `${target}/${override}` for the Minimax `pronunciationDict`.
+// zh-TW is generated from the MOE dictionary by scripts/tts-pronunciation/
+// generate.mjs; that generator and its source CSVs are kept local (gitignored),
+// so only this committed JSON ships — regenerate from your local copy.
+const TTS_PRONUNCIATION_RULES: Record<string, Record<string, string>> = {
+  'zh-TW': zhTWPronunciation,
+  'zh-HK': zhHKPronunciation,
 }
 
-// Pronunciation overrides keyed by Minimax synthesis language.
-const TTS_PRONUNCIATION_RULES: Record<string, PronunciationRule[]> = {
-  'zh-TW': [
-    { target: '乾', tone: '(gan1)' },
-    { target: '〇', tone: '(ling2)' },
-    { target: '鬍子', tone: '(hu2)子' },
-  ],
-  'zh-HK': [
-    { target: '茅塞頓開', tone: '茅(sak1)頓開' },
-    { target: '區家麟', tone: '(au1)家麟' },
-    { target: '悄悄', tone: '(ciu1)(ciu1)' },
-    { target: '肖像', tone: '(ciu3)像' },
-    { target: '顫抖', tone: '(zin3)抖' },
-    { target: '掬', tone: '(guk1)' },
-    { target: '驥', tone: '(kei3)' },
-    { target: '頰', tone: '(gaap3)' },
-    { target: '〇', tone: '(ling4)' },
-    { target: '鬍子', tone: '(wu4)子' },
-    { target: '語塞', tone: '語(sak1)' },
-    { target: '自傳', tone: '自(zyun6)' },
-    { target: '彈結他', tone: '(taan4)結他' },
-    { target: '兮', tone: '(hai4)' },
-    { target: '柙', tone: '(haap6)' },
-    { target: '玩伴', tone: '(wun6)伴' },
-    { target: '命裡', tone: '命(leoi5)' },
-    { target: '命裏', tone: '命(leoi5)' },
-    { target: '膜拜', tone: '(mou4)拜' },
-    { target: '弶', tone: '(goeng6)' },
-  ],
+// Precomputed once at module load: each language's [target, override] pairs,
+// sorted longest target first so the most specific override wins for
+// polyphones — `排行榜` before `排行`, and the inline form rewrites the longer
+// word before its prefix. The hot path only filters these, so the ~6k-entry
+// zh-TW array is never rebuilt or re-sorted per TTS segment request.
+const TTS_PRONUNCIATION_ENTRIES: Record<string, [target: string, override: string][]>
+  = Object.fromEntries(Object.entries(TTS_PRONUNCIATION_RULES)
+    .map(([language, rules]) => [
+      language,
+      Object.entries(rules).sort(([a], [b]) => b.length - a.length),
+    ]))
+
+// Rules that actually apply to this request: language must match and the target
+// word must be fully present (Minimax mis-handles dict entries whose match
+// never occurs, and a leaner dict keeps the payload small).
+function getApplicablePronunciationRules(language: string, text: string): [target: string, override: string][] {
+  const entries = TTS_PRONUNCIATION_ENTRIES[language]
+  if (!entries) return []
+  return entries.filter(([target]) => text.includes(target))
 }
 
-// Rules that actually apply to this request: language must match and the
-// target text must be fully present (Minimax mis-handles dict entries whose
-// match never occurs, and a leaner dict keeps the payload small).
-function getApplicablePronunciationRules(language: string, text: string): PronunciationRule[] {
-  const rules = TTS_PRONUNCIATION_RULES[language]
-  if (!rules) return []
-  return rules.filter(rule => text.includes(rule.target))
-}
-
-// `undefined` (not an empty dict) when nothing applies, so Minimax skips the
-// pronunciationDict entirely.
+// Pass the exact text sent to Minimax (i.e. after `injectTTSPauseMarkers`): a
+// pause marker spliced into a clause-spanning target — many zh-TW idiom entries
+// contain ，— stops that target from appearing verbatim, and Minimax mis-handles
+// dict entries whose match never occurs. Returns `undefined` (not an empty dict)
+// when nothing applies, so Minimax skips the pronunciationDict entirely.
 export function getTTSPronunciationDictionary(
   language: string,
-  text: string,
+  synthesizedText: string,
 ): { tone: string[] } | undefined {
-  const tone = getApplicablePronunciationRules(language, text)
-    .map(rule => `${rule.target}/${rule.tone}`)
+  const tone = getApplicablePronunciationRules(language, synthesizedText)
+    .map(([target, override]) => `${target}/${override}`)
   return tone.length ? { tone } : undefined
 }
 
@@ -94,7 +83,7 @@ export function getTTSPronunciationDictionary(
 // "去街市買啲(sung3)。" / "This is (he2)平, not (huo4)面."
 export function applyInlinePronunciation(language: string, text: string): string {
   return getApplicablePronunciationRules(language, text).reduce(
-    (acc, rule) => acc.split(rule.target).join(rule.tone),
+    (acc, [target, override]) => acc.split(target).join(override),
     text,
   )
 }
@@ -152,9 +141,10 @@ export class MinimaxTTSProvider implements BaseTTSProvider {
     const client = getMiniMaxSpeechClient()
     const resolvedVoiceId = (customMiniMaxVoiceId || VOICE_CONFIG[voiceId]!.minimaxVoiceId) as string
     const model = getMinimaxModel({ voiceId, customVoiceId: customMiniMaxVoiceId, language })
+    const synthesizedText = injectTTSPauseMarkers(text)
 
     const result = await client.synthesize({
-      text: injectTTSPauseMarkers(text),
+      text: synthesizedText,
       model,
       voiceSetting: {
         voiceId: resolvedVoiceId,
@@ -162,7 +152,7 @@ export class MinimaxTTSProvider implements BaseTTSProvider {
         emotion: 'calm',
         textNormalization: true,
       },
-      pronunciationDict: getTTSPronunciationDictionary(language, text),
+      pronunciationDict: getTTSPronunciationDictionary(language, synthesizedText),
       languageBoost: LANG_MAPPING[language as keyof typeof LANG_MAPPING],
     })
 
@@ -182,9 +172,10 @@ export class MinimaxTTSProvider implements BaseTTSProvider {
     const client = getMiniMaxSpeechClient()
     const resolvedVoiceId = (customMiniMaxVoiceId || VOICE_CONFIG[voiceId]!.minimaxVoiceId) as string
     const model = getMinimaxModel({ voiceId, customVoiceId: customMiniMaxVoiceId, language })
+    const synthesizedText = injectTTSPauseMarkers(text)
 
     const { audio, extraInfo, traceId } = await client.synthesizeStream({
-      text: injectTTSPauseMarkers(text),
+      text: synthesizedText,
       model,
       voiceSetting: {
         voiceId: resolvedVoiceId,
@@ -192,7 +183,7 @@ export class MinimaxTTSProvider implements BaseTTSProvider {
         emotion: 'calm',
         textNormalization: true,
       },
-      pronunciationDict: getTTSPronunciationDictionary(language, text),
+      pronunciationDict: getTTSPronunciationDictionary(language, synthesizedText),
       languageBoost: LANG_MAPPING[language as keyof typeof LANG_MAPPING],
       streamOptions: { excludeAggregatedAudio: true },
     })
