@@ -93,6 +93,10 @@ export const useBookstoreStore = defineStore('bookstore', () => {
       const result = await fetchBookstoreCMSProductsByTagId(tagId, {
         offset: fetchOffset,
         ts: bookstoreCMSProductsByTagIdMap.value[tagId].ts,
+        // The offset refresh must bypass the page-1 cache; the cached cursor
+        // has a shorter TTL than its records, so it may already be gone by
+        // the time we need to paginate.
+        live: shouldRefreshOffset,
       })
 
       if (isRefresh || shouldRefreshOffset) {

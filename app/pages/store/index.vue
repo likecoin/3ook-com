@@ -927,9 +927,12 @@ async function fetchTagItems({ isRefresh = false } = {}) {
   }
 }
 
-async function fetchItems({ lazy = false, isRefresh = false } = {}) {
+// Returns whether the fetch completed without surfacing an error, so callers
+// (e.g. the infinite-scroll watcher) can avoid chaining a follow-up fetch —
+// and a second error modal — after a genuine failure.
+async function fetchItems({ lazy = false, isRefresh = false } = {}): Promise<boolean> {
   if (lazy && products.value.items.length > 0) {
-    return
+    return true
   }
   if (isSearchMode.value) {
     try {
@@ -937,17 +940,19 @@ async function fetchItems({ lazy = false, isRefresh = false } = {}) {
       if (type && searchTerm) {
         await bookstoreStore.fetchSearchResults(type as 'q' | 'author' | 'publisher' | 'owner_wallet' | 'genre', searchTerm, { isRefresh })
       }
+      return true
     }
     catch (error) {
       await handleError(error, {
         title: isRefresh ? $t('store_fetch_items_error') : $t('store_fetch_more_items_error'),
       })
+      return false
     }
-    return
   }
 
   try {
     await fetchTagItems({ isRefresh })
+    return true
   }
   catch (error) {
     await handleError(error, {
@@ -966,6 +971,7 @@ async function fetchItems({ lazy = false, isRefresh = false } = {}) {
         },
       },
     })
+    return false
   }
 }
 
@@ -1010,11 +1016,36 @@ onBeforeRouteLeave((to) => {
   }
 })
 
+const isLoadingMore = ref(false)
 watch(
   shouldLoadMore,
-  async (shouldLoadMore) => {
-    if (shouldLoadMore) {
-      await fetchItems()
+  async (isSentinelVisible) => {
+    // Serialize: an async watch isn't re-entrancy-safe, so a sentinel
+    // visibility flip mid-fetch could otherwise stack overlapping runs (and
+    // duplicate error modals).
+    if (!isSentinelVisible || isLoadingMore.value) return
+    isLoadingMore.value = true
+    try {
+      const countBefore = products.value.items.length
+      const didFetch = await fetchItems()
+      // Recovering an expired offset (422) re-fetches page 1 in place to mint a
+      // fresh cursor without adding items. The IntersectionObserver won't
+      // re-fire because the sentinel hasn't moved, so the spinner would hang
+      // despite a usable cursor. If the fetch succeeded but the list didn't
+      // grow and a cursor remains, advance once more so pagination continues.
+      // Gating on success avoids re-firing (and re-erroring) after a failure.
+      if (
+        didFetch
+        && shouldLoadMore.value
+        && hasMoreItems.value
+        && !!products.value.nextItemsKey
+        && products.value.items.length <= countBefore
+      ) {
+        await fetchItems()
+      }
+    }
+    finally {
+      isLoadingMore.value = false
     }
   },
 )

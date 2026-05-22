@@ -10,10 +10,12 @@ export function fetchBookstoreCMSProductsByTagId(tagId: string, {
   offset,
   limit = 100,
   ts,
+  live,
 }: {
   offset?: string
   limit?: number
   ts?: number
+  live?: boolean
 } = {}) {
   return apiFetch<FetchBookstoreCMSProductsResponseData>('/store/products', {
     query: {
@@ -21,6 +23,7 @@ export function fetchBookstoreCMSProductsByTagId(tagId: string, {
       offset,
       limit,
       ts,
+      live: live ? 1 : undefined,
     },
   })
 }

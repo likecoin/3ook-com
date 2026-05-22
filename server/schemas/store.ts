@@ -7,6 +7,8 @@ const PaginationFields = {
 
 export const StoreProductsQuerySchema = v.object({
   tag: v.optional(v.union([v.string(), v.array(v.string())])),
+  // Bypass the page-1 cache to mint a fresh Airtable pagination cursor.
+  live: v.optional(v.union([v.string(), v.array(v.string())])),
   ...PaginationFields,
 })
 

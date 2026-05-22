@@ -232,6 +232,26 @@ export async function fetchAirtableCMSProductsByTagId(
   }
 }
 
+const inflightLiveTagFetches = new Map<string, Promise<FetchBookstoreCMSProductsResponseData>>()
+
+// Coalesce concurrent uncached "live" page-1 fetches for the same tag into a
+// single upstream call. The live path (used to mint a fresh pagination cursor)
+// bypasses the cache, so without this a burst of clients paginating the same
+// tag at once would each hit Airtable and trip its per-base rate limit.
+export function fetchLiveAirtableCMSProductsByTagId(
+  tagId: string,
+  { pageSize = 100 }: { pageSize?: number } = {},
+): Promise<FetchBookstoreCMSProductsResponseData> {
+  const key = `${tagId}:${pageSize}`
+  let inflight = inflightLiveTagFetches.get(key)
+  if (!inflight) {
+    inflight = fetchAirtableCMSProductsByTagId(tagId, { pageSize })
+      .finally(() => inflightLiveTagFetches.delete(key))
+    inflightLiveTagFetches.set(key, inflight)
+  }
+  return inflight
+}
+
 export interface FetchAirtableCMSTagRecord {
   id: string
   createdTime: string
