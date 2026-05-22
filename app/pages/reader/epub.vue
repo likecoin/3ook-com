@@ -643,7 +643,7 @@ const FONT_SIZE_OPTIONS = [
   6, 8, 10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 40, 48, 56, 64, 72,
 ]
 const DEFAULT_FONT_SIZE_INDEX = 8 // Default to 24px
-const COPY_CHAR_LIMIT = 100
+const COPY_CHAR_LIMIT = 500
 const SELECTION_CHANGE_DEBOUNCE_MS = 300
 const fontSize = useSyncedBookSettings({
   nftClassId: nftClassId.value,
