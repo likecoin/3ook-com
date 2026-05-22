@@ -101,46 +101,51 @@ export function useTTSPlayerModal(options: TTSPlayerOptions) {
       return index === -1 ? ttsSegments.value.length - 1 : index
     }
 
+    // Resolve a page/anchor cfi to the segment whose start it most recently
+    // passed (lastAtOrBefore), else the first segment after it; -1 when no
+    // segment is comparable.
+    const scanSegmentByCFI = (targetCFI: string): number => {
+      const target = new EpubCFI(targetCFI)
+      let lastAtOrBefore = -1
+      let firstAfter = -1
+      for (let i = 0; i < ttsSegments.value.length; i++) {
+        const segmentCFI = ttsSegments.value[i]?.cfi
+        if (!segmentCFI) continue // cfi is optional on TTSSegment
+        if (epubCFI.compare(segmentCFI, target) <= 0) {
+          lastAtOrBefore = i
+        }
+        else {
+          firstAfter = i
+          break
+        }
+      }
+      return lastAtOrBefore >= 0 ? lastAtOrBefore : firstAfter
+    }
+
     if (ttsIndex !== undefined && !isStoredIndexStale) {
       startIndex.value = ttsIndex
     }
     else if (cfi) {
-      const segments = ttsSegments.value
-      let segmentIndex = 0
+      let segmentIndex: number
       try {
+        const scanned = scanSegmentByCFI(cfi)
         // epub.js can report an inconsistent page range — start cfi *after*
-        // end cfi — for a reflowable chapter wedged between fixed-layout
-        // image spreads. The page cfi is then garbage, so anchor on the
-        // section the reader actually opened.
-        if (pageEndCFI && epubCFI.compare(cfi, pageEndCFI) > 0) {
-          segmentIndex = firstSegmentOfSection()
-        }
-        else {
-          // Anchor on the page-start cfi across ALL segments, not a
-          // `sectionIndex >= currentSection` seed: a cfi embeds its spine
-          // position so it still resolves when the current spine item has no
-          // segments (full-page image spreads between text pages), whereas
-          // the seed could only skip forward to the next text section
-          // ("read → listen jumps to next section" bug). Each segment carries
-          // its own text-range cfi (see extractTTSSegments in
-          // pages/reader/epub.vue), so `lastAtOrBefore` resolves directly to
-          // the segment whose start the page boundary most recently passed.
-          const pageCFI = new EpubCFI(cfi)
-          let lastAtOrBefore = -1
-          let firstAfter = -1
-          for (let i = 0; i < segments.length; i++) {
-            const segmentCFI = segments[i]?.cfi
-            if (!segmentCFI) continue // cfi is optional on TTSSegment
-            if (epubCFI.compare(segmentCFI, pageCFI) <= 0) {
-              lastAtOrBefore = i
-            }
-            else {
-              firstAfter = i
-              break
-            }
-          }
-          segmentIndex = lastAtOrBefore >= 0 ? lastAtOrBefore : Math.max(firstAfter, 0)
-        }
+        // end cfi. Seen after a search/page jump on the native paginated
+        // manager (the END lags at the previous position) and for a reflowable
+        // chapter wedged between fixed-layout image spreads. The START cfi is
+        // still the position the reader opened, so resolve from it; only when
+        // the range is inconsistent AND the scan escapes the opened section (a
+        // genuinely garbage start cfi) do we fall back to the section start.
+        // Each segment carries its own text-range cfi (see extractTTSSegments
+        // in pages/reader/epub.vue), so the scan resolves directly to the
+        // segment whose start the page boundary most recently passed.
+        const isInconsistentRange = !!pageEndCFI && epubCFI.compare(cfi, pageEndCFI) > 0
+        const escapesSection = sectionIndex !== undefined
+          && scanned >= 0
+          && ttsSegments.value[scanned]?.sectionIndex !== sectionIndex
+        segmentIndex = (scanned >= 0 && !(isInconsistentRange && escapesSection))
+          ? scanned
+          : firstSegmentOfSection()
       }
       catch {
         // Malformed/unsupported cfi — fall back to the section start.
