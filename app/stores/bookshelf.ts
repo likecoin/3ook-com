@@ -69,9 +69,10 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
     walletAddress: string
     isRefresh?: boolean
     limit?: number
-    // Force-refetch book settings even when already cached. Defaults to the
-    // resolved refresh flag; the claim poll opts out so repeated polls hydrate
-    // newly-delivered books once instead of re-fetching every iteration.
+    // Force-refetch book settings and overwrite cached metadata even when
+    // already cached. Defaults to the resolved refresh flag; the claim poll
+    // opts out so repeated polls hydrate newly-delivered books once instead of
+    // re-fetching every iteration.
     shouldForceFetchSettings?: boolean
   }) {
     const normalizedWalletAddress = walletAddress?.toLowerCase()
@@ -87,6 +88,11 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
     if (!walletAddress || isFetching.value || (!isRefresh && !nextKey.value)) {
       return
     }
+
+    // A forced refresh fetches `nocache`, so overwrite cached settings and
+    // metadata with the authoritative response; otherwise first-write-wins
+    // (the claim poll opts out — see shouldForceFetchSettings doc above).
+    const shouldForceRefreshCache = shouldForceFetchSettings ?? isRefresh
 
     const generation = resetGeneration
     const isStale = () => generation !== resetGeneration
@@ -124,14 +130,14 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
           tokenIdsByNFTClassId.value[nftClassId] ??= []
         }
 
-        if (nftClass.metadata && !nftStore.getNFTClassMetadataById(nftClassId)) {
+        if (nftClass.metadata && (shouldForceRefreshCache || !nftStore.getNFTClassMetadataById(nftClassId))) {
           nftStore.addNFTClassMetadata(nftClassId, nftClass.metadata)
         }
 
         progressFetchNFTClassIds.add(nftClassId)
       })
 
-      await bookSettingsStore.fetchBatchSettings(Array.from(progressFetchNFTClassIds), { force: shouldForceFetchSettings ?? isRefresh })
+      await bookSettingsStore.fetchBatchSettings(Array.from(progressFetchNFTClassIds), { force: shouldForceRefreshCache })
       if (isStale()) return
 
       nextKey.value = res.data.length < limit ? undefined : res.pagination.next_key
