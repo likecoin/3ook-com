@@ -744,17 +744,21 @@
       v-if="isUserBookOwner || pricingItems.length"
       :class="[
         'fixed',
-        'bottom-[56px]',
+        'bottom-17',
         'inset-x-0',
         'flex tablet:hidden',
         'flex-col',
         'gap-2',
+        isApp ? 'mx-2' : 'mr-20',
         'mb-safe',
         'px-4',
         'py-3',
-        'bg-white dark:bg-(--app-bg)',
-        'border-y',
-        'border-y-muted',
+        'bg-default/80',
+        'backdrop-blur-sm',
+        'border',
+        { 'border-l-0': !isApp },
+        'border-muted',
+        isApp ? 'rounded-2xl' : 'rounded-r-2xl',
         'z-10',
       ]"
     >
@@ -792,13 +796,13 @@
           </UDropdownMenu>
         </UFieldGroup>
 
-        <div class="flex items-center justify-between">
-          <span class="flex items-center gap-1 shrink-0">
+        <div class="flex items-center justify-between flex-wrap gap-2">
+          <span class="shrink-0 space-x-0.5">
             <span
               v-if="selectedPricingItem?.discountedPrice"
               :class="[
                 { 'text-theme-cyan': selectedPricingItem?.discountedPrice },
-                'text-2xl',
+                'text-xl',
                 'font-semibold',
                 'leading-none',
               ]"
@@ -813,13 +817,16 @@
               ]"
               v-text="selectedPricingItem?.originalPrice"
             />
-            <PlusBadge v-if="isLikerPlus && selectedPricingItem?.discountedPrice" />
+            <PlusBadge
+              v-if="isLikerPlus && selectedPricingItem?.discountedPrice"
+              class="inline-block"
+            />
           </span>
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-1">
             <UButton
               v-if="canBePurchased"
               icon="i-material-symbols-featured-seasonal-and-gifts-rounded"
-              color="primary"
+              color="neutral"
               variant="outline"
               size="sm"
               :ui="{ base: 'cursor-pointer rounded-full p-1.5' }"
@@ -829,7 +836,7 @@
             />
             <UButton
               :icon="isInBookList ? 'i-material-symbols-favorite-rounded' : 'i-material-symbols-add-2-rounded'"
-              color="primary"
+              color="neutral"
               variant="outline"
               size="sm"
               :ui="{ base: 'cursor-pointer rounded-full p-1.5' }"
