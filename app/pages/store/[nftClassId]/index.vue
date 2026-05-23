@@ -797,24 +797,14 @@
         </UFieldGroup>
 
         <div class="flex items-center justify-between flex-wrap gap-2">
-          <span class="shrink-0 space-x-0.5">
+          <span class="shrink-0 space-x-0.5 text-xl font-semibold leading-none">
             <span
               v-if="selectedPricingItem?.discountedPrice"
-              :class="[
-                { 'text-theme-cyan': selectedPricingItem?.discountedPrice },
-                'text-xl',
-                'font-semibold',
-                'leading-none',
-              ]"
+              :class="{ 'text-theme-cyan': selectedPricingItem?.discountedPrice }"
               v-text="selectedPricingItem?.discountedPrice"
             />
             <span
-              :class="[
-                selectedPricingItem?.discountedPrice
-                  ? 'text-xs text-dimmed line-through'
-                  : 'text-2xl font-semibold',
-                'leading-none',
-              ]"
+              :class="{ 'text-xs text-dimmed line-through': selectedPricingItem?.discountedPrice }"
               v-text="selectedPricingItem?.originalPrice"
             />
             <PlusBadge
