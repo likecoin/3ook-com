@@ -906,6 +906,13 @@ async function loadEPub() {
   book.spine!.hooks.content.register((document: Document) => {
     applyWritingModeToDocument(document)
   })
+
+  // Settings load lazily (kicked off un-awaited in onMounted). Apply the theme
+  // and resolve the saved CFI only once font-size/line-height/cfi have arrived:
+  // injecting font-size/line-height *after* anchoring reflows the chapter and
+  // strands the restore on an earlier page than the one that was saved.
+  await bookSettingsStore.ensureInitialized(nftClassId.value)
+  await nextTick()
   applyTheme()
   isPageLoading.value = true
 
