@@ -213,7 +213,7 @@
                 'laptop:hidden',
                 { 'opacity-50 cursor-not-allowed': isReaderLoading || bookInfo.isAudioHidden.value },
               ]"
-              :icon="ttsButtonIcon"
+              icon="i-material-symbols-play-arrow-rounded"
               variant="solid"
               color="primary"
               :loading="isTTSExtracting"
@@ -225,7 +225,7 @@
             >
               <UButton
                 class="max-laptop:hidden"
-                :icon="ttsButtonIcon"
+                icon="i-material-symbols-play-arrow-rounded"
                 :aria-label="$t('reader_text_to_speech_button')"
                 variant="solid"
                 color="primary"
@@ -389,15 +389,6 @@ const {
 } = useReader()
 const { fetchCustomVoice } = useCustomVoice()
 const { fetchConfig: fetchPlusAffiliateConfig } = usePlusAffiliate()
-
-const ttsButtonIconABTest = useABTest({
-  experimentKey: 'reader-tts-button-icon',
-})
-const ttsButtonIcon = computed(() =>
-  ttsButtonIconABTest.isVariant('play-arrow')
-    ? 'i-material-symbols-play-arrow-rounded'
-    : 'i-material-symbols-volume-up-outline-rounded',
-)
 
 onMounted(() => {
   if (hasLoggedIn.value) {
