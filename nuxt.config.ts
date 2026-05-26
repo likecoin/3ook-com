@@ -203,6 +203,10 @@ export default defineNuxtConfig({
 
   pwa: {
     registerType: 'autoUpdate',
+    // Serve sw.js and manifest.webmanifest with 'max-age=0, must-revalidate' so
+    // a stale CDN/edge copy can't pin the old worker and block autoUpdate; they
+    // revalidate cheaply via ETag (304). Without this the worker never updates.
+    registerWebManifestInRouteRules: true,
     manifest: {
       name: '3ook.com',
       short_name: '3ook.com',
