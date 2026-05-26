@@ -24,6 +24,15 @@ function getExtFromMime(mime: string): string {
   return map[mime] || 'bin'
 }
 
+// Canonical IANA MIME per audio extension. Browsers report non-standard types
+// for picked files (e.g. Chromium maps .m4a to audio/x-m4a), which Minimax
+// rejects. Forward a canonical type instead of the browser-provided one.
+const AUDIO_EXT_MIME: Record<string, string> = {
+  mp3: 'audio/mpeg',
+  wav: 'audio/wav',
+  m4a: 'audio/mp4',
+}
+
 export default defineEventHandler(async (event): Promise<CustomVoiceData> => {
   const session = await requireUserSession(event)
   const wallet = session.user.evmWallet
@@ -131,13 +140,13 @@ export default defineEventHandler(async (event): Promise<CustomVoiceData> => {
   })
 
   const audioExt = getExtFromMime(audioPart!.type!)
-  const audioBlob = new File([audioPart!.data], `voice.${audioExt}`, { type: audioPart!.type })
+  const audioBlob = new File([audioPart!.data], `voice.${audioExt}`, { type: AUDIO_EXT_MIME[audioExt] || audioPart!.type })
   const audioUploadPromise = client.uploadFile(audioBlob, 'voice_clone')
 
   let promptUploadPromise: Promise<FileUploadResult | undefined> = Promise.resolve(undefined)
   if (promptAudioPart?.data && promptAudioPart.type) {
     const promptExt = getExtFromMime(promptAudioPart.type)
-    const promptBlob = new File([promptAudioPart.data], `prompt.${promptExt}`, { type: promptAudioPart.type })
+    const promptBlob = new File([promptAudioPart.data], `prompt.${promptExt}`, { type: AUDIO_EXT_MIME[promptExt] || promptAudioPart.type })
     promptUploadPromise = client.uploadFile(promptBlob, 'prompt_audio')
   }
   // Prevent orphan rejection if audio upload rejects first in Promise.all
