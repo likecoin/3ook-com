@@ -1,7 +1,18 @@
 import { FieldValue, GrpcStatus, Timestamp } from 'firebase-admin/firestore'
 import { jwtDecode } from 'jwt-decode'
+import type { UserSession } from '#auth-utils'
 
 const SESSIONS_SUBCOLLECTION = 'sessions'
+
+/**
+ * Reads the session JWT, preferring the server-only `secure` copy and falling
+ * back to the legacy client-visible `user.token` for sessions issued before
+ * the token moved out of the cookie's public payload. `??` (not `||`) so an
+ * empty-string token surfaces loudly instead of silently falling through.
+ */
+export function getSessionToken(session: UserSession): string | undefined {
+  return session.secure?.token ?? session.user?.token
+}
 
 const FALLBACK_SESSION_LIFETIME_MS = 30 * 24 * 60 * 60 * 1000
 

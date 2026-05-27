@@ -4,7 +4,7 @@ export default function (params: {
   const config = useRuntimeConfig()
   const getRouteQuery = useRouteQuery()
   const { getResizedImageURL } = useImageResize()
-  const getBookFileURLWithCORS = useBookFileURLWithCORS()
+  const getBookFileURL = useBookFileURL()
 
   const nftClassId = computed(() =>
     getRouteQuery('nft_class_id') || toValue(params.nftClassId) || '',
@@ -48,11 +48,11 @@ export default function (params: {
     }),
   )
 
-  const bookFileURLWithCORS = computed(() => {
+  const bookFileURL = computed(() => {
     if (isUploadedBook.value) {
       return `/api/uploaded-books/${nftClassId.value}/file`
     }
-    return getBookFileURLWithCORS({
+    return getBookFileURL({
       nftClassId: nftClassId.value,
       nftId: nftId.value,
       fileIndex: fileIndex.value,
@@ -71,6 +71,6 @@ export default function (params: {
 
     bookFileCacheKey,
     bookProgressKeyPrefix,
-    bookFileURLWithCORS,
+    bookFileURL,
   }
 }

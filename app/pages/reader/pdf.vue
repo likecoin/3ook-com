@@ -57,7 +57,7 @@ const {
   isUploadedBook,
   bookInfo,
   bookCoverSrc,
-  bookFileURLWithCORS,
+  bookFileURL,
   bookFileCacheKey,
   bookProgressKeyPrefix,
 } = useReader()
@@ -157,7 +157,7 @@ onMounted(async () => {
 })
 
 async function loadPDF() {
-  const buffer = await loadFileAsBuffer(bookFileURLWithCORS.value, bookFileCacheKey.value)
+  const buffer = await loadFileAsBuffer(bookFileURL.value, bookFileCacheKey.value)
   if (!buffer) {
     return
   }

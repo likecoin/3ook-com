@@ -3,7 +3,7 @@ export function useBookDownload() {
   const { handleError } = useErrorHandler()
   const toast = useToast()
   const { t: $t } = useI18n()
-  const getBookFileURLWithCORS = useBookFileURLWithCORS()
+  const getBookFileURL = useBookFileURL()
 
   const mimeTypeMap: Record<string, string> = {
     pdf: 'application/pdf',
@@ -44,7 +44,7 @@ export function useBookDownload() {
     })
 
     try {
-      const bookFileURL = getBookFileURLWithCORS({
+      const bookFileURL = getBookFileURL({
         nftClassId,
         nftId,
         fileIndex,

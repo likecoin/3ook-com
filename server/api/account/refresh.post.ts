@@ -10,7 +10,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const token = session.secure?.token ?? session.user.token
+  const token = getSessionToken(session)
   if (!token) {
     throw createError({
       statusCode: 401,

@@ -33,7 +33,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Sync locale to like.co user preferences API
-  const token = session.secure?.token ?? session.user.token
+  const token = getSessionToken(session)
   if ('locale' in body && token) {
     try {
       const decoded = jwtDecode<{ permissions?: string[] }>(token)
