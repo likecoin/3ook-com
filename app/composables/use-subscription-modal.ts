@@ -20,6 +20,7 @@ export function useSubscriptionModal() {
 
   const checkoutData = useSubscriptionCheckout()
   const { startSubscription, isProcessingSubscription } = checkoutData
+  const { isIAPSupported } = useNativeIAP()
 
   const selectedPlan = ref<SubscriptionPlan>('yearly')
 
@@ -39,7 +40,9 @@ export function useSubscriptionModal() {
 
   function getPaywallModalProps(): PaywallModalProps {
     return {
-      'trialPeriodDays': DEFAULT_TRIAL_PERIOD_DAYS,
+      // When Plus goes through store IAP, the trial is governed by the store's
+      // intro offer — don't advertise a web trial we won't apply.
+      'trialPeriodDays': isIAPSupported.value ? 0 : DEFAULT_TRIAL_PERIOD_DAYS,
       'modelValue': selectedPlan.value,
       'isProcessingSubscription': isProcessingSubscription.value,
       'onUpdate:modelValue': (value: SubscriptionPlan) => {

@@ -24,12 +24,35 @@ export function useSubscriptionCheckout() {
   const blockingModal = useBlockingModal()
   const { getAnalyticsParameters } = useAnalytics()
   const { isApp } = useAppDetection()
+  const { isIAPSupported, purchase: purchaseViaIAP } = useNativeIAP()
   const runtimeConfig = useRuntimeConfig()
   const embeddedCheckoutABTest = useABTest({ experimentKey: 'plus-embedded-checkout' })
 
   const isProcessingSubscription = ref(false)
 
   const { handleError } = useErrorHandler()
+
+  // Backend-webhook model: after a native purchase, RevenueCat notifies our
+  // backend which flips `isLikerPlus`. Re-fetch the session a few times to
+  // absorb webhook latency rather than trusting the device for entitlement.
+  async function pollSessionUntilPlus(maxAttempts = 6, delayMs = 2000): Promise<boolean> {
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      // Best-effort: a transient refresh failure must not throw out of here. The
+      // store purchase already succeeded, so the user should still reach the
+      // success page (which re-polls) instead of being stranded on checkout.
+      try {
+        await accountStore.refreshSessionInfo()
+      }
+      catch {
+        // ignore and retry on the next attempt
+      }
+      if (isLikerPlus.value) return true
+      if (attempt < maxAttempts - 1) {
+        await sleep(delayMs)
+      }
+    }
+    return isLikerPlus.value
+  }
 
   async function redirectIfSubscribed(plan?: string) {
     if (isLikerPlus.value && (!plan || likerPlusPeriod.value !== 'month' || plan !== 'yearly')) {
@@ -78,6 +101,65 @@ export function useSubscriptionCheckout() {
       useLogEvent('subscription_login_required')
       await accountStore.login()
       if (!hasLoggedIn.value) return
+    }
+
+    // In the native app, route Plus purchases through StoreKit / Play Billing
+    // (RevenueCat) instead of Stripe. RevenueCat is keyed by likerId (the backend
+    // internal user id) already synced via `identifyUser`; entitlement truth still
+    // comes from the backend session, so poll it after a successful purchase.
+    if (isIAPSupported.value) {
+      if (isProcessingSubscription.value) return
+      // RevenueCat is keyed by likerId (the backend internal user id), so a
+      // missing likerId can't attribute the purchase — gate it like Stripe does.
+      if (!user.value?.likerId) {
+        useLogEvent('subscription_liker_id_required')
+        toast.add({
+          title: $t('pricing_page_liker_id_required'),
+          description: $t('pricing_page_liker_id_required_description'),
+          color: 'warning',
+        })
+        return
+      }
+      // Stripe-only options (a coupon, or the gift-NFT-with-yearly flow) can't be
+      // honored by store IAP. We still complete the purchase as a plain subscription,
+      // but log when one is present to measure real exposure before handling it.
+      // trialPeriodDays / mustCollectPaymentMethod are intentionally excluded:
+      // store IAP applies its own intro offers, so they aren't a mismatch here.
+      if (coupon || nftClassId) {
+        useLogEvent('subscription_iap_unsupported_options', {
+          has_coupon: Boolean(coupon),
+          has_nft_class_id: Boolean(nftClassId),
+        })
+      }
+      try {
+        isProcessingSubscription.value = true
+        useLogEvent('begin_checkout', eventPayloadWithCoupon)
+        const result = await purchaseViaIAP(plan, user.value.likerId)
+        if (result.status === 'cancelled') return
+        if (result.status !== 'success') {
+          throw createError({
+            statusCode: 502,
+            message: result.message || 'In-app purchase failed',
+            data: {
+              description: $t('plus_checkout_error_description'),
+            },
+          })
+        }
+        blockingModal.open({ title: $t('common_processing') })
+        await pollSessionUntilPlus()
+        await navigateTo(localeRoute({ name: 'plus-success', query: { period: plan } }))
+      }
+      catch (error) {
+        useLogEvent('subscription_checkout_error', {
+          error_message: getErrorMessage(error),
+        })
+        handleError(error)
+      }
+      finally {
+        isProcessingSubscription.value = false
+        blockingModal.close()
+      }
+      return
     }
 
     if (isProcessingSubscription.value) return

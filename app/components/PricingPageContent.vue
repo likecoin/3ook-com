@@ -142,7 +142,7 @@
           <div :class="$slots['pricing-mobile'] ? 'hidden laptop:contents' : undefined">
             <slot name="pricing">
               <div
-                v-if="!isApp"
+                v-if="!isApp || isIAPSupported"
                 :class="{ 'bg-theme-cyan p-3 rounded-xl': isPaidTrial }"
               >
                 <header
@@ -254,6 +254,7 @@ const isDesktopScreen = useDesktopScreen()
 const { t: $t } = useI18n()
 const getRouteQuery = useRouteQuery()
 const { isApp } = useAppDetection()
+const { isIAPSupported } = useNativeIAP()
 
 const emit = defineEmits<{
   'open': []
