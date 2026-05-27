@@ -12,6 +12,15 @@ export const StoreProductsQuerySchema = v.object({
   ...PaginationFields,
 })
 
+export const StoreStakingBooksQuerySchema = v.object({
+  sort_by: v.optional(v.union([v.string(), v.array(v.string())])),
+  sort_order: v.optional(v.union([v.string(), v.array(v.string())])),
+  // Collective indexer pagination cursor (`pagination.key`); request-specific.
+  key: v.optional(v.union([v.string(), v.array(v.string())])),
+  // Cursor-based pagination — `limit` only, no offset.
+  limit: PaginationFields.limit,
+})
+
 export const StoreSearchQuerySchema = v.object({
   q: v.pipe(
     v.union([v.string(), v.array(v.string())]),

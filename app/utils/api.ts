@@ -1,3 +1,5 @@
+import type { CollectiveBookNFT, CollectiveBookNFTsQueryOptions, CollectivePaginationResponse } from '~~/shared/utils/collective-indexer'
+
 /**
  * Shared client for first-party `/api/*` Nitro routes, with the
  * method-aware retry policy from `createRetryingFetch` (idempotent
@@ -5,6 +7,33 @@
  * via an explicit `retry`).
  */
 export const apiFetch = createRetryingFetch({ baseURL: '/api' })
+
+/**
+ * Fetches the staking book listing through our same-origin `/api/store/staking-books`
+ * proxy instead of hitting the collective indexer directly. iOS WKWebView can wedge
+ * a poisoned connection on cross-origin fetches ("Load failed: <no response>"); routing
+ * through our origin keeps the cross-origin hop server-side and lets page 1 be cached.
+ */
+export function fetchStakingBookNFTs({
+  sortBy = 'staked_amount',
+  sortOrder = 'desc',
+  limit = 100,
+  key,
+}: {
+  sortBy?: NonNullable<CollectiveBookNFTsQueryOptions['sort_by']>
+  sortOrder?: NonNullable<CollectiveBookNFTsQueryOptions['sort_order']>
+  limit?: number
+  key?: string | number
+} = {}) {
+  return apiFetch<CollectivePaginationResponse<CollectiveBookNFT>>('/store/staking-books', {
+    query: {
+      sort_by: sortBy,
+      sort_order: sortOrder,
+      limit,
+      key,
+    },
+  })
+}
 
 export function fetchBookstoreCMSProductsByTagId(tagId: string, {
   offset,

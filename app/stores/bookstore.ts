@@ -1,5 +1,3 @@
-import { fetchCollectiveBookNFTs } from '~~/shared/utils/collective-indexer'
-
 interface BookstoreCMSTagProducts {
   items: BookstoreCMSProduct[]
   isFetching: boolean
@@ -386,11 +384,11 @@ export const useBookstoreStore = defineStore('bookstore', () => {
     try {
       stakingBooksMap.value[sortBy].isFetching = true
 
-      const result = await fetchCollectiveBookNFTs({
-        'pagination.limit': limit,
-        'pagination.key': stakingBooksMap.value[sortBy].offset,
-        'sort_order': 'desc',
-        'sort_by': sortBy as 'staked_amount' | 'last_staked_at' | 'number_of_stakers',
+      const result = await fetchStakingBookNFTs({
+        sortBy: sortBy as 'staked_amount' | 'last_staked_at' | 'number_of_stakers',
+        sortOrder: 'desc',
+        limit,
+        key: stakingBooksMap.value[sortBy].offset,
       })
 
       const currentOffset = Number(stakingBooksMap.value[sortBy].offset ?? 0)

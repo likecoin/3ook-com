@@ -150,6 +150,16 @@ export default defineNuxtConfig({
         },
       },
     },
+    '/api/store/staking-books': {
+      security: {
+        corsHandler: {
+          origin: '^https?:\\/\\/([a-zA-Z0-9-]+\\.)?3ook\\.com$',
+          useRegExp: true,
+          methods: ['GET', 'OPTIONS'],
+          allowHeaders: ['Content-Type', 'Authorization'],
+        },
+      },
+    },
   },
 
   sourcemap: {

@@ -296,7 +296,7 @@ const { handleError } = useErrorHandler()
 const storePageState = useStorePageState()
 const isMobile = useMediaQuery('(max-width: 425px)')
 const isAdultContentEnabled = useAdultContentSetting()
-const { isApp, isIOS } = useAppDetection()
+const { isApp } = useAppDetection()
 const intercom = useIntercom()
 
 const querySearchTerm = computed(() => getRouteQuery('q', ''))
@@ -770,7 +770,6 @@ useHead(() => {
     }
   }
 
-  const collectiveEndpoint = runtimeConfig.public.likeCoinEVMChainCollectiveAPIEndpoint
   const link = [
     {
       rel: 'canonical',
@@ -783,14 +782,14 @@ useHead(() => {
       crossorigin: 'anonymous' as const,
       key: 'preload-store-tags',
     },
-    // No resource hint for the cross-origin indexer on iOS: priming WKWebView's
-    // app-level NSURLSession pool (preload OR preconnect) can wedge a poisoned
-    // connection that fails every later fetch with "Load failed: <no response>"
-    // until the app is killed — reload alone doesn't recover it.
-    ...(isStakingTagId.value && !isIOS.value
+    // Same-origin proxy preload: the staking listing now routes through our own
+    // origin (/api/store/staking-books), so priming it is safe on iOS — the
+    // cross-origin indexer hop happens server-side and can't poison WKWebView's
+    // NSURLSession pool the way a direct cross-origin fetch could.
+    ...(isStakingTagId.value
       ? [{
           rel: 'preload',
-          href: `${collectiveEndpoint}/book-nfts?pagination.limit=100&sort_by=${mapTagIdToAPIStakingSortValue(tagId.value)}&sort_order=desc`,
+          href: `/api/store/staking-books?sort_by=${mapTagIdToAPIStakingSortValue(tagId.value)}&sort_order=desc&limit=100`,
           as: 'fetch' as const,
           crossorigin: 'anonymous' as const,
           key: 'preload-staking-books',
