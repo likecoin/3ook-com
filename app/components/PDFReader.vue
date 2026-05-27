@@ -213,6 +213,7 @@
             variant="solid"
             color="primary"
             :loading="isTTSExtracting"
+            :ui="ttsButtonUI"
             @click="handleMobileTTSClick"
           />
           <UTooltip
@@ -227,6 +228,7 @@
               color="primary"
               :loading="isTTSExtracting"
               :disabled="isAudioHidden"
+              :ui="ttsButtonUI"
               @click="onClickTTSPlay"
             />
           </UTooltip>
@@ -328,6 +330,18 @@ const props = defineProps<Props>()
 const toast = useToast()
 const { t: $t } = useI18n()
 const bookSettingsStore = useBookSettingsStore()
+
+const ttsButtonSizeABTest = useABTest({
+  experimentKey: 'reader-tts-button-icon-size',
+})
+const ttsButtonUI = computed(() =>
+  ttsButtonSizeABTest.isVariant('large')
+    ? {
+        base: 'p-0 sm:p-0 rounded-full',
+        leadingIcon: 'size-8',
+      }
+    : undefined,
+)
 
 const pdfjsLib = ref<typeof import('pdfjs-dist') | undefined>(undefined)
 const singleCanvas = useTemplateRef<HTMLCanvasElement>('singleCanvas')

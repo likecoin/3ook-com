@@ -217,6 +217,7 @@
               variant="solid"
               color="primary"
               :loading="isTTSExtracting"
+              :ui="ttsButtonUI"
               @click="handleMobileTTSClick"
             />
             <UTooltip
@@ -231,6 +232,7 @@
                 color="primary"
                 :loading="isTTSExtracting"
                 :disabled="isReaderLoading || bookInfo.isAudioHidden.value"
+                :ui="ttsButtonUI"
                 @click="onClickTTSPlay"
               />
             </UTooltip>
@@ -389,6 +391,18 @@ const {
 } = useReader()
 const { fetchCustomVoice } = useCustomVoice()
 const { fetchConfig: fetchPlusAffiliateConfig } = usePlusAffiliate()
+
+const ttsButtonSizeABTest = useABTest({
+  experimentKey: 'reader-tts-button-icon-size',
+})
+const ttsButtonUI = computed(() =>
+  ttsButtonSizeABTest.isVariant('large')
+    ? {
+        base: 'p-0 sm:p-0 rounded-full',
+        leadingIcon: 'size-8',
+      }
+    : undefined,
+)
 
 onMounted(() => {
   if (hasLoggedIn.value) {
