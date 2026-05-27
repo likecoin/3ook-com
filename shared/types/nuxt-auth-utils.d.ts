@@ -13,6 +13,7 @@ declare module '#auth-utils' {
     isLikerPlus?: boolean
     isExpiredLikerPlus?: boolean
     likerPlusPeriod?: LikerPlusStatus
+    likerPlusProvider?: LikerPlusProvider
     plusAffiliateFrom?: string
     ttsKey?: string
     likerPlusSubscriptionStatus?: 'active' | 'past_due' | 'canceled'

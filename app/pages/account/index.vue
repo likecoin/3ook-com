@@ -161,14 +161,20 @@
           />
 
           <template
-            v-if="!isApp && (user?.isLikerPlus || user?.isExpiredLikerPlus)"
+            v-if="likerPlusManageMode !== 'none'"
             #right
           >
+            <div
+              v-if="likerPlusManageMode === 'store-info'"
+              class="text-sm text-muted text-right"
+              v-text="$t('account_page_manage_on_device')"
+            />
             <UButton
+              v-else
               :label="likerPlusButtonLabel"
               :variant="user?.isLikerPlus ? 'outline' : 'solid'"
               :color="user?.isLikerPlus ? 'neutral' : 'primary'"
-              :loading="isOpeningBillingPortal"
+              :loading="isOpeningBillingPortal || isManagingSubscription"
               @click="handleLikerPlusButtonClick"
             />
           </template>
@@ -219,6 +225,33 @@
               variant="solid"
               color="primary"
               :to="localeRoute({ name: 'member', query: { ll_medium: 'custom-voice' } })"
+            />
+          </template>
+        </AccountSettingsItem>
+      </UCard>
+    </section>
+
+    <section
+      v-if="hasLoggedIn && isIAPSupported"
+      class="space-y-3"
+    >
+      <UCard :ui="{ body: '!p-0 divide-y-1 divide-(--ui-border)' }">
+        <AccountSettingsItem
+          icon="i-material-symbols-restore-rounded"
+          :label="$t('account_restore_purchases_label')"
+        >
+          <div
+            class="text-sm/5"
+            v-text="$t('account_restore_purchases_description')"
+          />
+
+          <template #right>
+            <UButton
+              :label="$t('account_restore_purchases_button')"
+              variant="outline"
+              color="neutral"
+              :loading="isRestoringPurchases"
+              @click="handleRestorePurchases"
             />
           </template>
         </AccountSettingsItem>
@@ -671,7 +704,59 @@ const { handleError } = useErrorHandler()
 const toast = useToast()
 const { copy: copyToClipboard } = useClipboard()
 const { isApp } = useAppDetection()
+const { isIAPSupported, restore: restorePurchases, manageSubscription: manageViaIAP } = useNativeIAP()
 const intercom = useIntercom()
+
+const isRestoringPurchases = ref(false)
+
+// App Store / Play account-based restore: re-sync entitlements from the store,
+// then refresh the backend session so `isLikerPlus` reflects the result.
+async function handleRestorePurchases() {
+  if (isRestoringPurchases.value) return
+  // RevenueCat is keyed by likerId (the backend internal user id), so a missing
+  // likerId can't attribute the restore to the right user — gate it like checkout.
+  if (!user.value?.likerId) {
+    toast.add({
+      title: $t('pricing_page_liker_id_required'),
+      description: $t('pricing_page_liker_id_required_description'),
+      color: 'warning',
+    })
+    return
+  }
+  try {
+    isRestoringPurchases.value = true
+    const result = await restorePurchases(user.value.likerId)
+    if (result.status !== 'success') {
+      // Route through a recognized handler so the modal shows only the localized
+      // copy; otherwise handleError surfaces the raw native/English message
+      // (e.g. "Restore timed out") in its debug code block.
+      await handleError(new Error('RESTORE_PURCHASES_FAILED'), {
+        customHandlerMap: {
+          RESTORE_PURCHASES_FAILED: { description: $t('error_restore_purchases_failed') },
+        },
+      })
+      return
+    }
+    // result.isPlus is RevenueCat's device-side truth for whether this store
+    // account holds the entitlement — trust it for the toast so a lagging
+    // backend webhook doesn't show a false "nothing to restore". The session
+    // refresh syncs isLikerPlus (which gates features) once the webhook lands.
+    await accountStore.refreshSessionInfo()
+    const restored = result.isPlus ?? user.value?.isLikerPlus ?? false
+    toast.add({
+      title: restored
+        ? $t('account_restore_purchases_success')
+        : $t('account_restore_purchases_none'),
+      color: restored ? 'success' : 'info',
+    })
+  }
+  catch (error) {
+    handleError(error)
+  }
+  finally {
+    isRestoringPurchases.value = false
+  }
+}
 
 const isAdultContentEnabled = useAdultContentSetting()
 const isAdultContentConfirmOpen = ref(false)
@@ -922,6 +1007,22 @@ const likerPlusButtonLabel = computed(() => {
   return $t('account_page_renew_subscription')
 })
 
+// How the subscriber can manage their plan, by where they subscribed:
+// - native-store: store-owned (App Store/Play) and in-app → native manage sheet
+// - store-info:   store-owned but not in a build that can open the sheet (web,
+//                 or an app build without IAP) → "manage on your device" text
+// - stripe-portal: Stripe (incl. legacy/undefined provider, which predates IAP)
+//                 on web → Stripe customer portal; hidden in-app for now
+// - none:         not a subscriber, or Stripe in-app (no portal button in-app)
+type LikerPlusManageMode = 'native-store' | 'store-info' | 'stripe-portal' | 'none'
+const likerPlusManageMode = computed<LikerPlusManageMode>(() => {
+  if (!user.value?.isLikerPlus && !user.value?.isExpiredLikerPlus) return 'none'
+  if (user.value?.likerPlusProvider === 'revenuecat') {
+    return isIAPSupported.value ? 'native-store' : 'store-info'
+  }
+  return isApp.value ? 'none' : 'stripe-portal'
+})
+
 const likeWalletButtonTo = computed(() => {
   if (!user.value?.likeWallet) return undefined
   return `${config.public.likerLandSiteURL}/${locale.value}/${user.value.likeWallet}?tab=collected`
@@ -1046,9 +1147,44 @@ async function handleMagicButtonClick() {
 }
 
 const isOpeningBillingPortal = ref(false)
+const isManagingSubscription = ref(false)
 
 async function handleLikerPlusButtonClick() {
   useLogEvent('account_liker_plus_button_click')
+
+  // Store-owned subscription: open the native App Store / Play sheet. Only
+  // refresh the session on success (a plan change reflects via webhook), and
+  // surface failures the way the billing-portal path below does.
+  if (likerPlusManageMode.value === 'native-store') {
+    if (isManagingSubscription.value) return
+    isManagingSubscription.value = true
+    try {
+      const result = await manageViaIAP()
+      if (result.status === 'error') {
+        // See handleRestorePurchases: use a recognized handler so only the
+        // localized copy shows, not the raw native/English message.
+        await handleError(new Error('MANAGE_SUBSCRIPTION_FAILED'), {
+          customHandlerMap: {
+            MANAGE_SUBSCRIPTION_FAILED: { description: $t('error_manage_subscription_failed') },
+          },
+        })
+        return
+      }
+      try {
+        await accountStore.refreshSessionInfo()
+      }
+      catch (error) {
+        // Best-effort sync after the native sheet closes; the management action
+        // itself already succeeded, so a failed refresh is non-fatal (matches
+        // the avatar/display-name refresh paths above).
+        console.error('Failed to refresh session info after managing subscription:', error)
+      }
+    }
+    finally {
+      isManagingSubscription.value = false
+    }
+    return
+  }
 
   if (!user.value?.isLikerPlus && !isPaymentPastDue.value) {
     await navigateTo(localeRoute({ name: 'member' }))
