@@ -124,11 +124,18 @@
       <div class="flex flex-col justify-center min-h-[52px] text-xs laptop:text-sm text-right">
         <template v-if="isPaidTrial && plan.showTrialPrice">
           <span class="font-bold whitespace-nowrap text-theme-black dark:text-theme-white">
-            <span>{{ currency }}&nbsp;</span>
             <span
+              v-if="props.trialPriceString"
               class="text-lg laptop:text-2xl"
-              v-text="`$${convertedTrialPrice}`"
+              v-text="props.trialPriceString"
             />
+            <template v-else>
+              <span>{{ currency }}&nbsp;</span>
+              <span
+                class="text-lg laptop:text-2xl"
+                v-text="`$${convertedTrialPrice}`"
+              />
+            </template>
             <span> /{{ $t('plan_select_trial_days_unit', { days: trialPeriodDays }) }}</span>
           </span>
           <span class="text-theme-black/40 dark:text-theme-white/40 whitespace-nowrap">
@@ -203,7 +210,8 @@
 
 <script lang="ts" setup>
 import type { PricingPagePromoPricing } from './PricingPageContent.props'
-import { DEFAULT_TRIAL_PERIOD_DAYS, PAID_TRIAL_PRICE, PAID_TRIAL_PERIOD_DAYS_THRESHOLD } from '~~/shared/constants/pricing'
+import { DEFAULT_TRIAL_PERIOD_DAYS, PAID_TRIAL_PRICE } from '~~/shared/constants/pricing'
+import { resolveIsPaidTrial } from '~~/shared/utils/pricing'
 
 const props = withDefaults(defineProps<{
   isYearlyHidden?: boolean
@@ -211,6 +219,11 @@ const props = withDefaults(defineProps<{
   isAllowYearlyTrial?: boolean
   trialPeriodDays?: number
   trialPrice?: number
+  // Store-driven (IAP) trial overrides — see IAPTrialInfo in use-native-iap.ts.
+  // `isPaidTrialOverride` forces the paid/free distinction instead of deriving it
+  // from the day count; `trialPriceString` is shown verbatim for a store paid intro.
+  isPaidTrialOverride?: boolean
+  trialPriceString?: string
   yearlyDescription?: string
   monthlyDescription?: string
   yearlyBadgeText?: string
@@ -222,6 +235,8 @@ const props = withDefaults(defineProps<{
   isAllowYearlyTrial: true,
   trialPeriodDays: DEFAULT_TRIAL_PERIOD_DAYS,
   trialPrice: PAID_TRIAL_PRICE,
+  isPaidTrialOverride: undefined,
+  trialPriceString: undefined,
   yearlyDescription: undefined,
   monthlyDescription: undefined,
   yearlyBadgeText: undefined,
@@ -248,8 +263,11 @@ const selectedPlan = defineModel({
   default: 'yearly',
 })
 
-const isPaidTrial = computed(() => props.trialPeriodDays && props.trialPeriodDays >= PAID_TRIAL_PERIOD_DAYS_THRESHOLD)
+const isPaidTrial = computed(() => resolveIsPaidTrial(props.trialPeriodDays, props.isPaidTrialOverride))
 const convertedTrialPrice = computed(() => convertToDisplayCurrency(props.trialPrice))
+// An explicit store free trial (isPaidTrialOverride === false) must not show the
+// "$X for N days" price hint — it's genuinely free.
+const isFreeTrialOffer = computed(() => props.isPaidTrialOverride === false)
 
 const plans = computed(() => {
   const values: SubscriptionPlan[] = []
@@ -263,11 +281,13 @@ const plans = computed(() => {
     const isMonthly = value === 'monthly'
     let hint: string | undefined
     if (!isPaidTrial.value && props.trialPeriodDays && (isMonthly || props.isAllowYearlyTrial)) {
-      hint = $t('plan_select_trial_for_price_hint', {
-        days: props.trialPeriodDays,
-        currency: currency.value,
-        price: convertToDisplayCurrency(props.trialPrice),
-      })
+      hint = isFreeTrialOffer.value
+        ? $t('plan_select_free_trial_hint', { days: props.trialPeriodDays })
+        : $t('plan_select_trial_for_price_hint', {
+            days: props.trialPeriodDays,
+            currency: currency.value,
+            price: convertToDisplayCurrency(props.trialPrice),
+          })
     }
 
     const badgeText = isMonthly

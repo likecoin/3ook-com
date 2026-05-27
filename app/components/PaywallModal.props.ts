@@ -6,6 +6,9 @@ export interface PaywallModalProps {
   'isCloseButtonHidden'?: boolean
   'isProcessingSubscription'?: boolean
   'trialPeriodDays'?: number
+  // Store-driven (IAP) trial overrides — see IAPTrialInfo in use-native-iap.ts.
+  'isPaidTrialOverride'?: boolean
+  'trialPriceString'?: string
   'mustCollectPaymentMethod'?: boolean
   'utmCampaign'?: string
   'utmMedium'?: string

@@ -27,6 +27,23 @@ export interface IAPOfferingPackage {
   priceString: string
   price: number
   currency: string
+  // Store intro offer (App Store Connect / Play + RevenueCat), absent when the
+  // product has no intro offer. `trialPeriodDays` is the intro length in days;
+  // `isFreeTrial` distinguishes a free trial from a paid intro; `introPriceString`
+  // is the store-formatted price to display verbatim for a paid intro.
+  trialPeriodDays?: number
+  isFreeTrial?: boolean
+  introPrice?: number
+  introPriceString?: string
+}
+
+// Trial info resolved for a plan, shaped for the Plus UI props. `isPaidTrial`
+// is explicit (not re-derived from the day count) because store free trials can
+// be >= the web's paid-trial day threshold and would otherwise be misrendered.
+export interface IAPTrialInfo {
+  trialPeriodDays: number
+  isPaidTrial: boolean
+  trialPriceString?: string
 }
 
 // The StoreKit / Play purchase sheet stays open while the user authenticates,
@@ -57,6 +74,12 @@ export const useNativeIAP = createSharedComposable(() => {
   // Dedupe concurrent getOfferings() calls by sharing the in-flight promise — a
   // second caller getting [] would read as "no offerings" and hide the pricing UI.
   let offeringsRequest: Promise<IAPOfferingPackage[]> | null = null
+
+  // Reactive cache driving trial/price display; empty until ensureOfferings()
+  // resolves, which renders as "no trial". `offeringsLoaded` distinguishes
+  // "not fetched yet" from a fetched empty result (no intro offer configured).
+  const offerings = ref<IAPOfferingPackage[]>([])
+  let offeringsLoaded = false
 
   // Consumers (checkout, pricing page, account) render during SSR where
   // `window` is undefined; only attach the reply listener on the client.
@@ -164,6 +187,38 @@ export const useNativeIAP = createSharedComposable(() => {
     return offeringsRequest
   }
 
+  // Fetches the offerings at most once per session and caches them reactively.
+  // Safe to call from multiple consumers (paywall/upsell modals) on mount;
+  // concurrent calls share one round-trip via getOfferings()'s offeringsRequest.
+  // Offers are static store config, so a fetched empty result latches too — a
+  // transient failure just means no trial copy until the next launch (display only).
+  async function ensureOfferings(): Promise<IAPOfferingPackage[]> {
+    if (!isIAPSupported.value) return []
+    if (offeringsLoaded) return offerings.value
+    offerings.value = await getOfferings()
+    offeringsLoaded = true
+    return offerings.value
+  }
+
+  // Resolves the trial to display for a plan from the store's actual intro offer;
+  // defaults to no trial when there's no offer or offerings haven't loaded yet.
+  function getIAPTrial(period: SubscriptionPlan): IAPTrialInfo {
+    const pkg = offerings.value.find(p => p.period === period)
+    const trialPeriodDays = pkg?.trialPeriodDays ?? 0
+    const isPaidTrial = trialPeriodDays > 0 && pkg?.isFreeTrial === false
+    // A paid intro is only honest to display with the store's formatted price;
+    // without it the UI would fall back to the Stripe-configured price and risk a
+    // mismatch, so suppress the trial rather than show a wrong price.
+    if (isPaidTrial && !pkg?.introPriceString) {
+      return { trialPeriodDays: 0, isPaidTrial: false }
+    }
+    return {
+      trialPeriodDays,
+      isPaidTrial,
+      trialPriceString: isPaidTrial ? pkg?.introPriceString : undefined,
+    }
+  }
+
   // Opens the native App Store / Play subscription-management UI. Resolves when
   // the sheet is presented/dismissed — the store doesn't report what changed,
   // so callers refresh the session afterward to pick up any status change.
@@ -187,5 +242,5 @@ export const useNativeIAP = createSharedComposable(() => {
     })
   }
 
-  return { isIAPSupported, purchase, restore, getOfferings, manageSubscription }
+  return { isIAPSupported, purchase, restore, getOfferings, ensureOfferings, getIAPTrial, manageSubscription }
 })

@@ -162,6 +162,8 @@
                 <PricingPlanSelect
                   v-model="selectedPlan"
                   :trial-period-days="trialPeriodDays"
+                  :is-paid-trial-override="isPaidTrialOverride"
+                  :trial-price-string="trialPriceString"
                   :yearly-badge-text="yearlyBadgeText"
                   :monthly-badge-text="monthlyBadgeText"
                   :promo-pricing="promoPricing"
@@ -247,7 +249,7 @@
 
 <script setup lang="ts">
 import type { PricingPageContentProps } from './PricingPageContent.props'
-import { PAID_TRIAL_PERIOD_DAYS_THRESHOLD } from '~~/shared/constants/pricing'
+import { resolveIsPaidTrial } from '~~/shared/utils/pricing'
 
 const localeRoute = useLocaleRoute()
 const isDesktopScreen = useDesktopScreen()
@@ -317,7 +319,7 @@ const selectedPlan = useVModel(props, 'modelValue', emit, {
   defaultValue: 'yearly',
 })
 
-const isPaidTrial = computed(() => props.trialPeriodDays && props.trialPeriodDays >= PAID_TRIAL_PERIOD_DAYS_THRESHOLD)
+const isPaidTrial = computed(() => resolveIsPaidTrial(props.trialPeriodDays, props.isPaidTrialOverride))
 
 const route = useRoute()
 const getRouteBaseName = useRouteBaseName()

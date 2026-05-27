@@ -20,9 +20,16 @@ export function useSubscriptionModal() {
 
   const checkoutData = useSubscriptionCheckout()
   const { startSubscription, isProcessingSubscription } = checkoutData
-  const { isIAPSupported } = useNativeIAP()
+  const { isIAPSupported, ensureOfferings, getIAPTrial } = useNativeIAP()
 
   const selectedPlan = ref<SubscriptionPlan>('yearly')
+
+  // In the native app, drive the trial display from the store's actual intro
+  // offer rather than the Stripe default. Reactive to selectedPlan so a per-plan
+  // offer is reflected; resolves to no trial until offerings load / when none is
+  // configured. No-op on web (isIAPSupported is false).
+  const iapTrial = computed(() => getIAPTrial(selectedPlan.value))
+  if (import.meta.client) ensureOfferings()
 
   const paywallModalProps = ref<PaywallModalProps>({})
 
@@ -39,10 +46,15 @@ export function useSubscriptionModal() {
   }))
 
   function getPaywallModalProps(): PaywallModalProps {
+    const trial = isIAPSupported.value ? iapTrial.value : undefined
     return {
       // When Plus goes through store IAP, the trial is governed by the store's
-      // intro offer — don't advertise a web trial we won't apply.
-      'trialPeriodDays': isIAPSupported.value ? 0 : DEFAULT_TRIAL_PERIOD_DAYS,
+      // intro offer (read from offerings); on web it's the Stripe default.
+      // isPaidTrialOverride/trialPriceString are undefined off-IAP so the web
+      // keeps its existing day-count heuristic and configured price.
+      'trialPeriodDays': trial ? trial.trialPeriodDays : DEFAULT_TRIAL_PERIOD_DAYS,
+      'isPaidTrialOverride': trial?.isPaidTrial,
+      'trialPriceString': trial?.trialPriceString,
       'modelValue': selectedPlan.value,
       'isProcessingSubscription': isProcessingSubscription.value,
       'onUpdate:modelValue': (value: SubscriptionPlan) => {
@@ -57,10 +69,19 @@ export function useSubscriptionModal() {
   }
 
   function getUpsellPlusModalProps(): UpsellPlusModalProps {
-    return {
+    const base: UpsellPlusModalProps = {
       isLikerPlus: isLikerPlus.value,
       likerPlusPeriod: likerPlusPeriod.value,
       onSubscribe: startSubscription,
+    }
+    if (!isIAPSupported.value) return base
+    // The upsell defaults to the yearly plan; surface that product's store offer.
+    const trial = getIAPTrial('yearly')
+    return {
+      ...base,
+      trialPeriodDays: trial.trialPeriodDays,
+      isPaidTrialOverride: trial.isPaidTrial,
+      trialPriceString: trial.trialPriceString,
     }
   }
 
@@ -127,6 +148,10 @@ export function useSubscriptionModal() {
         from: props.from,
         selected_pricing_item_index: props.selectedPricingItemIndex,
       }
+      // The upsell reads the store offer synchronously and, unlike the paywall
+      // modal, isn't patched after offerings resolve — so load them before
+      // building props or it renders with no trial. Cached/deduped; no-op on web.
+      await ensureOfferings()
       const upsellModalProps: UpsellPlusModalProps = {
         ...props,
         ...getUpsellPlusModalProps(),
@@ -154,6 +179,20 @@ export function useSubscriptionModal() {
       ...paywallModalProps.value,
       isProcessingSubscription: newValue,
     })
+  })
+
+  // Keep the open paywall modal's trial accurate when the store offer resolves
+  // (offerings load after mount) or the selected plan changes. Harmless when the
+  // modal is closed (mirrors the isProcessingSubscription patch above).
+  watch(iapTrial, (trial) => {
+    if (!isIAPSupported.value) return
+    paywallModalProps.value = {
+      ...paywallModalProps.value,
+      trialPeriodDays: trial.trialPeriodDays,
+      isPaidTrialOverride: trial.isPaidTrial,
+      trialPriceString: trial.trialPriceString,
+    }
+    paywallModal.patch(paywallModalProps.value)
   })
 
   return {

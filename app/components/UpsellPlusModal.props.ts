@@ -18,6 +18,9 @@ export interface UpsellPlusModalProps {
   isProcessingSubscription?: boolean
   trialPeriodDays?: number
   trialPrice?: number
+  // Store-driven (IAP) trial overrides — see IAPTrialInfo in use-native-iap.ts.
+  isPaidTrialOverride?: boolean
+  trialPriceString?: string
   mustCollectPaymentMethod?: boolean
   nftClassId?: string
   bookPrice?: number

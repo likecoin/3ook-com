@@ -14,6 +14,8 @@
         :model-value="props.modelValue"
         :is-processing-subscription="props.isProcessingSubscription"
         :trial-period-days="props.trialPeriodDays"
+        :is-paid-trial-override="props.isPaidTrialOverride"
+        :trial-price-string="props.trialPriceString"
         :must-collect-payment-method="props.mustCollectPaymentMethod"
         :utm-campaign="props.utmCampaign"
         :utm-medium="props.utmMedium"

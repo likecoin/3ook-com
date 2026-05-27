@@ -37,6 +37,8 @@
         :is-yearly-hidden="!shouldShowYearlyPlan"
         :is-allow-yearly-trial="isAllowYearlyTrial"
         :trial-period-days="trialPeriodDays"
+        :is-paid-trial-override="isPaidTrialOverride"
+        :trial-price-string="trialPriceString"
         :yearly-description="yearlyDescription"
         :monthly-description="monthlyDescription"
       />
@@ -63,7 +65,8 @@
 
 <script setup lang="ts">
 import type { UpsellPlusModalProps, UpsellPlusModalSubscribeEventPayload } from './UpsellPlusModal.props'
-import { DEFAULT_TRIAL_PERIOD_DAYS, PAID_TRIAL_PRICE, PAID_TRIAL_PERIOD_DAYS_THRESHOLD } from '~~/shared/constants/pricing'
+import { DEFAULT_TRIAL_PERIOD_DAYS, PAID_TRIAL_PRICE } from '~~/shared/constants/pricing'
+import { resolveIsPaidTrial } from '~~/shared/utils/pricing'
 
 const props = withDefaults(defineProps<UpsellPlusModalProps>(), {
   isLikerPlus: false,
@@ -71,6 +74,8 @@ const props = withDefaults(defineProps<UpsellPlusModalProps>(), {
   isProcessingSubscription: false,
   trialPeriodDays: DEFAULT_TRIAL_PERIOD_DAYS,
   trialPrice: PAID_TRIAL_PRICE,
+  isPaidTrialOverride: undefined,
+  trialPriceString: undefined,
   mustCollectPaymentMethod: false,
   selectedPricingItemIndex: 0,
   from: undefined,
@@ -97,7 +102,7 @@ const shouldShowYearlyPlan = computed(() => (!props.isLikerPlus || (props.likerP
 
 const isAllowYearlyTrial = computed(() => !props.nftClassId)
 
-const isPaidTrial = computed(() => props.trialPeriodDays && props.trialPeriodDays >= PAID_TRIAL_PERIOD_DAYS_THRESHOLD)
+const isPaidTrial = computed(() => resolveIsPaidTrial(props.trialPeriodDays, props.isPaidTrialOverride))
 
 const canGiftBook = computed(() => !!props.bookPrice && !!props.nftClassId)
 const isFreeBook = computed(() => props.bookPrice === 0)
@@ -116,6 +121,23 @@ const monthlyDescription = computed(() => {
   return undefined
 })
 
+// A store paid intro arrives pre-formatted (currency + amount); show it verbatim
+// so the displayed price equals the charged price. Stripe falls back to the
+// configured trialPrice composed with the display currency.
+function getPaidTrialCTALabel() {
+  if (props.trialPriceString) {
+    return $t('plus_subscribe_cta_trial_for_price_store', {
+      days: props.trialPeriodDays,
+      price: props.trialPriceString,
+    })
+  }
+  return $t('plus_subscribe_cta_trial_for_price', {
+    days: props.trialPeriodDays,
+    price: convertToDisplayCurrency(props.trialPrice),
+    currency: currency.value,
+  })
+}
+
 const subscribeButtonLabel = computed(() => {
   if (selectedPlan.value === 'yearly') {
     if (props.nftClassId) {
@@ -123,11 +145,7 @@ const subscribeButtonLabel = computed(() => {
     }
     if (props.trialPeriodDays && isAllowYearlyTrial.value) {
       if (isPaidTrial.value) {
-        return $t('plus_subscribe_cta_trial_for_price', {
-          days: props.trialPeriodDays,
-          price: convertToDisplayCurrency(props.trialPrice),
-          currency: currency.value,
-        })
+        return getPaidTrialCTALabel()
       }
       return $t('plus_subscribe_cta_trial_for_free', { days: props.trialPeriodDays })
     }
@@ -135,11 +153,7 @@ const subscribeButtonLabel = computed(() => {
   }
   if (props.trialPeriodDays) {
     if (isPaidTrial.value) {
-      return $t('plus_subscribe_cta_trial_for_price', {
-        days: props.trialPeriodDays,
-        price: convertToDisplayCurrency(props.trialPrice),
-        currency: currency.value,
-      })
+      return getPaidTrialCTALabel()
     }
     return $t('plus_subscribe_cta_trial_for_free', { days: props.trialPeriodDays })
   }
