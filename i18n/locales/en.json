@@ -761,6 +761,8 @@
   "reader_text_to_speech_button_disabled_tooltip": "This work cannot be read due to license issue",
   "reader_text_to_speech_not_available": "Text-to-speech not available",
   "reader_text_to_speech_not_available_description": "Upgrade to Plus to unlock AI voice reading feature",
+  "reader_text_to_speech_pdf_unreadable": "Can't read this PDF aloud",
+  "reader_text_to_speech_pdf_unreadable_description": "This PDF's text is embedded as glyph shapes without a readable text layer, so it can't be narrated.",
   "reader_title": "Read \"{name}\" - {author}",
   "reader_toc_button": "Table of contents",
   "reader_toc_empty": "No table of contents available",

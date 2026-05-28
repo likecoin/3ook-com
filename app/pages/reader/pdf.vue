@@ -51,6 +51,7 @@ if (!hasLoggedIn.value) {
 }
 
 const { t: $t } = useI18n()
+const toast = useToast()
 const nftStore = useNFTStore()
 const {
   nftClassId,
@@ -185,8 +186,12 @@ function handlePDFLoaded(pdfDocument: PDFDocumentProxy) {
 async function extractTTSSegmentsFromPDF(pdfDocument: PDFDocumentProxy) {
   const segments: TTSSegment[] = []
   const chapterTitles: Record<number, string> = {}
+  const numPages = pdfDocument.numPages
+  let pagesWithText = 0
+  let garbledPages = 0
+  let isUnreadable = false
 
-  for (let pageNum = 1; pageNum <= pdfDocument.numPages; pageNum++) {
+  for (let pageNum = 1; pageNum <= numPages; pageNum++) {
     try {
       const page = await pdfDocument.getPage(pageNum)
       const textContent = await page.getTextContent()
@@ -211,6 +216,8 @@ async function extractTTSSegmentsFromPDF(pdfDocument: PDFDocumentProxy) {
         .trim()
 
       if (pageText) {
+        pagesWithText++
+        if (isLikelyGarbledPDFText(pageText)) garbledPages++
         const textSegments = splitTextIntoSegments(pageText)
         const pageSegments = textSegments.map((segment: string, index: number) => ({
           id: `page-${pageNum}-segment-${index}`,
@@ -224,13 +231,23 @@ async function extractTTSSegmentsFromPDF(pdfDocument: PDFDocumentProxy) {
       }
 
       page.cleanup()
+
+      // Once the verdict is locked unreadable even if every remaining page
+      // turns out to be clean prose, stop pulling text content for the tail.
+      if (isPDFCorpusUnreadable({ pagesWithText: numPages, garbledPages })) {
+        isUnreadable = true
+        break
+      }
     }
     catch (error) {
       console.warn(`Failed to extract text from PDF page ${pageNum}:`, error)
     }
   }
 
-  return { segments: mergeShortTTSSegments(segments), chapterTitles }
+  if (!isUnreadable) {
+    isUnreadable = isPDFCorpusUnreadable({ pagesWithText, garbledPages })
+  }
+  return { segments: mergeShortTTSSegments(segments), chapterTitles, isUnreadable }
 }
 
 function handlePageChanged(pageNumber: number) {
@@ -239,29 +256,46 @@ function handlePageChanged(pageNumber: number) {
   updatePDFProgress(pageNumber)
 }
 
-let ttsExtractionPromise: Promise<void> | undefined
-async function ensureTTSExtracted() {
-  if (!loadedPDFDocument.value) return
+let ttsExtractionPromise: Promise<{ isUnreadable: boolean }> | undefined
+async function ensureTTSExtracted(): Promise<{ isUnreadable: boolean }> {
+  if (!loadedPDFDocument.value) return { isUnreadable: false }
   if (!ttsExtractionPromise) {
     isTTSExtracting.value = true
     ttsExtractionPromise = extractTTSSegmentsFromPDF(loadedPDFDocument.value)
-      .then(({ segments, chapterTitles }) => {
-        setTTSSegments(segments)
-        setChapterTitles(chapterTitles)
+      .then(({ segments, chapterTitles, isUnreadable }) => {
+        if (!isUnreadable) {
+          setTTSSegments(segments)
+          setChapterTitles(chapterTitles)
+        }
+        return { isUnreadable }
       })
       .catch((error) => {
         console.warn('Failed to extract TTS segments from PDF:', error)
         ttsExtractionPromise = undefined
+        return { isUnreadable: false }
       })
       .finally(() => {
         isTTSExtracting.value = false
       })
   }
-  await ttsExtractionPromise
+  return ttsExtractionPromise
 }
 
 async function handleTTSPlay() {
-  await ensureTTSExtracted()
+  if (!loadedPDFDocument.value) return
+  const { isUnreadable } = await ensureTTSExtracted()
+  if (isUnreadable) {
+    setTTSQueryParam(false)
+    toast.add({
+      title: $t('reader_text_to_speech_pdf_unreadable'),
+      description: $t('reader_text_to_speech_pdf_unreadable_description'),
+      color: 'error',
+      duration: 5000,
+      progress: false,
+    })
+    useLogEvent('reader_tts_pdf_unreadable', { nft_class_id: nftClassId.value })
+    return
+  }
   setTTSQueryParam(true)
   openPlayer({
     ttsIndex: activeTTSElementIndex.value,

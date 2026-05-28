@@ -761,6 +761,8 @@
   "reader_text_to_speech_button_disabled_tooltip": "本作品無朗讀授權",
   "reader_text_to_speech_not_available": "朗讀功能不可用",
   "reader_text_to_speech_not_available_description": "升級至 Plus 即可解鎖 AI 朗讀功能",
+  "reader_text_to_speech_pdf_unreadable": "無法朗讀此 PDF",
+  "reader_text_to_speech_pdf_unreadable_description": "此 PDF 的文字內嵌為圖像字形，未提供可讀取的文字資料，無法朗讀。",
   "reader_title": "閱讀 《{name}》 - {author}",
   "reader_toc_button": "目錄",
   "reader_toc_empty": "本書沒有目錄",

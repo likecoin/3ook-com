@@ -237,3 +237,60 @@ export function getBookProgressData({
     progress: progressStr ? Number(progressStr) || 0 : 0,
   }
 }
+
+// Minimum char count before the garbled-text heuristic will commit to a
+// verdict — short runs (page numbers, captions) are too noisy to score.
+const GARBLED_PDF_TEXT_MIN_LENGTH = 50
+
+// Symbol density above which a page is treated as unreadable glyph-ID output.
+// French/Spanish with «» and accents stays comfortably under ~10%; garbled
+// glyph dumps from missing-ToUnicode fonts run 25–50%+.
+const GARBLED_PDF_TEXT_SYMBOL_RATIO = 0.15
+
+// Share of garbled pages above which the whole PDF is refused for TTS. A
+// single garbled cover or colophon shouldn't disable TTS, but once a third
+// of pages would speak nonsense the experience is broken.
+export const PDF_UNREADABLE_PAGE_RATIO = 0.3
+
+/**
+ * Detect PDF text that came out of a font with no `/ToUnicode` CMap, where
+ * pdf.js exposes raw glyph IDs reinterpreted as characters. These land
+ * predictably in the Latin-1 punctuation/symbol block (¬ ¯ ¶ « ¼ ½ …),
+ * standalone modifier letters, and PUA — ranges that real prose barely
+ * touches. Returns false for short strings to avoid false positives on
+ * page numbers and short captions.
+ */
+export function isLikelyGarbledPDFText(text: string): boolean {
+  let symbols = 0
+  let total = 0
+  for (const ch of text) {
+    const cp = ch.codePointAt(0)!
+    if (cp <= 0x20) continue
+    total++
+    if (
+      (cp >= 0x00A1 && cp <= 0x00BF)
+      || cp === 0x00D7 || cp === 0x00F7
+      || (cp >= 0x02B0 && cp <= 0x02FF)
+      || (cp >= 0xE000 && cp <= 0xF8FF)
+    ) symbols++
+  }
+  if (total < GARBLED_PDF_TEXT_MIN_LENGTH) return false
+  return symbols / total > GARBLED_PDF_TEXT_SYMBOL_RATIO
+}
+
+/**
+ * Final verdict over a PDF's per-page garbled counts. Pass the actual
+ * running totals after a full pass to decide whether to refuse TTS, or
+ * pass `pagesWithText: totalPagesInDocument` mid-iteration to test
+ * whether the verdict is already locked (best-case-remaining: every
+ * remaining page is clean prose).
+ */
+export function isPDFCorpusUnreadable({
+  pagesWithText,
+  garbledPages,
+}: {
+  pagesWithText: number
+  garbledPages: number
+}): boolean {
+  return pagesWithText > 0 && garbledPages / pagesWithText > PDF_UNREADABLE_PAGE_RATIO
+}
