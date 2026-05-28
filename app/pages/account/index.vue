@@ -910,6 +910,14 @@ const subscription = useSubscriptionModal()
 const route = useRoute()
 
 watchImmediate(hasLoggedIn, async (loggedIn) => {
+  // This handler calls Nuxt-context APIs (navigateTo, accountStore.refreshSessionInfo)
+  // after `await` boundaries. On the server the Nuxt instance is lost across
+  // awaits, so those throw "nuxt instance unavailable" — surfacing as a 500
+  // when the native WebView reloads a return URL fresh from an external portal
+  // (e.g. ?action=billing-return from Stripe). The client keeps a singleton
+  // nuxtApp, so restrict this resume/return logic to the client; the immediate
+  // re-fire on hydration runs it with a valid context.
+  if (import.meta.server) return
   if (loggedIn) {
     if (!user.value?.isLikerPlus) {
       try {
