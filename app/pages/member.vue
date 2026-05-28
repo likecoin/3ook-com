@@ -397,6 +397,10 @@ const trialPeriodDays = computed(() => {
 })
 
 const isAffiliateGiftRedeemable = computed(() => {
+  // Store IAP can't carry the gift book through to the backend, so the gift
+  // would silently drop after purchase. Hide the offer in-app until the IAP
+  // path can attach metadata (e.g. via appAccountToken / obfuscatedAccountId).
+  if (isIAPSupported.value) return false
   const info = activeAffiliate.value
   if (!info?.giftBooks?.length) return false
   if (selectedPlan.value !== 'yearly') return false
