@@ -237,7 +237,7 @@
     >
       <UCard :ui="{ body: '!p-0 divide-y-1 divide-(--ui-border)' }">
         <AccountSettingsItem
-          icon="i-material-symbols-restore-rounded"
+          icon="i-material-symbols-sync-rounded"
           :label="$t('account_restore_purchases_label')"
         >
           <div
