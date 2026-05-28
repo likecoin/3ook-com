@@ -164,6 +164,8 @@
                   :trial-period-days="trialPeriodDays"
                   :is-paid-trial-override="isPaidTrialOverride"
                   :trial-price-string="trialPriceString"
+                  :monthly-price-string="monthlyPriceString"
+                  :yearly-price-string="yearlyPriceString"
                   :yearly-badge-text="yearlyBadgeText"
                   :monthly-badge-text="monthlyBadgeText"
                   :promo-pricing="promoPricing"

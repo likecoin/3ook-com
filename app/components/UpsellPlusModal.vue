@@ -39,6 +39,9 @@
         :trial-period-days="trialPeriodDays"
         :is-paid-trial-override="isPaidTrialOverride"
         :trial-price-string="trialPriceString"
+        :monthly-price-string="monthlyPriceString"
+        :yearly-price-string="yearlyPriceString"
+        :yearly-badge-text="yearlyBadgeText"
         :yearly-description="yearlyDescription"
         :monthly-description="monthlyDescription"
       />
@@ -76,6 +79,9 @@ const props = withDefaults(defineProps<UpsellPlusModalProps>(), {
   trialPrice: PAID_TRIAL_PRICE,
   isPaidTrialOverride: undefined,
   trialPriceString: undefined,
+  monthlyPriceString: undefined,
+  yearlyPriceString: undefined,
+  yearlyBadgeText: undefined,
   mustCollectPaymentMethod: false,
   selectedPricingItemIndex: 0,
   from: undefined,

@@ -1,5 +1,14 @@
 import { convertUSDPriceToCurrency } from '~/utils/pricing'
 
+// Rounds down to 0 when the yearly costs more than 12× monthly, so callers can
+// gate "save X%" badges off the result without showing a misleading "save 0%".
+export function calcYearlyDiscountPercent(monthly: number, yearly: number): number {
+  const baselineYearly = monthly * 12
+  const discountedAmount = baselineYearly - yearly
+  if (discountedAmount <= 0) return 0
+  return Math.round(discountedAmount / baselineYearly * 100)
+}
+
 export default function useSubscriptionPricing() {
   const config = useRuntimeConfig()
   const { yearly, monthly } = config.public.subscription.pricing
@@ -25,14 +34,7 @@ export default function useSubscriptionPricing() {
   const hasMonthlyDiscount = computed(() => actualMonthlyPrice.value < originalMonthlyPrice.value)
   const hasYearlyDiscount = computed(() => actualYearlyPrice.value < originalYearlyPrice.value)
 
-  const yearlyDiscountPercent = computed(() => {
-    const originalYearlyCost = actualMonthlyPrice.value * 12
-    const discountedAmount = originalYearlyCost - actualYearlyPrice.value
-    if (discountedAmount <= 0) {
-      return 0
-    }
-    return Math.round(discountedAmount / originalYearlyCost * 100)
-  })
+  const yearlyDiscountPercent = computed(() => calcYearlyDiscountPercent(actualMonthlyPrice.value, actualYearlyPrice.value))
 
   return {
     yearlyPrice: readonly(actualYearlyPrice),

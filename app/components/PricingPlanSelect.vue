@@ -140,7 +140,9 @@
           </span>
           <span class="text-theme-black/40 dark:text-theme-white/40 whitespace-nowrap">
             <span>{{ $t('plan_select_then_price_hint') }}&nbsp;</span>
-            <span>{{ currency }} ${{ plan.price }}/{{ plan.perUnit }}</span>
+            <span v-if="plan.priceString">{{ plan.priceString }}</span>
+            <span v-else>{{ currency }} ${{ plan.price }}</span>
+            <span>/{{ plan.perUnit }}</span>
           </span>
         </template>
         <template v-else-if="plan.promoPrice !== undefined">
@@ -179,7 +181,7 @@
           />
 
           <span
-            v-if="plan.hasDiscount"
+            v-if="plan.hasDiscount && !plan.priceString"
             class="text-theme-black/60 after:content-['_']"
           >
             <span>{{ $t('pricing_page_original_price') }}&nbsp;</span>
@@ -187,11 +189,18 @@
           </span>
 
           <span class="font-bold whitespace-nowrap">
-            <span>{{ currency }}&nbsp;</span>
             <span
+              v-if="plan.priceString"
               class="text-lg laptop:text-2xl"
-              v-text="`$${plan.price}`"
+              v-text="plan.priceString"
             />
+            <template v-else>
+              <span>{{ currency }}&nbsp;</span>
+              <span
+                class="text-lg laptop:text-2xl"
+                v-text="`$${plan.price}`"
+              />
+            </template>
             <span>/{{ plan.perUnit }}</span>
           </span>
         </template>
@@ -224,6 +233,9 @@ const props = withDefaults(defineProps<{
   // from the day count; `trialPriceString` is shown verbatim for a store paid intro.
   isPaidTrialOverride?: boolean
   trialPriceString?: string
+  // Store-driven (IAP) recurring price strings — see IAPPlanPrice in use-native-iap.ts.
+  monthlyPriceString?: string
+  yearlyPriceString?: string
   yearlyDescription?: string
   monthlyDescription?: string
   yearlyBadgeText?: string
@@ -237,6 +249,8 @@ const props = withDefaults(defineProps<{
   trialPrice: PAID_TRIAL_PRICE,
   isPaidTrialOverride: undefined,
   trialPriceString: undefined,
+  monthlyPriceString: undefined,
+  yearlyPriceString: undefined,
   yearlyDescription: undefined,
   monthlyDescription: undefined,
   yearlyBadgeText: undefined,
@@ -311,6 +325,8 @@ const plans = computed(() => {
       badgeText,
       perUnit: isMonthly ? $t('pricing_page_price_per_month') : $t('pricing_page_price_per_year'),
       price: isMonthly ? monthlyPrice.value : yearlyPrice.value,
+      // When present, suppresses originalPrice/hasDiscount — Stripe-only concepts.
+      priceString: isMonthly ? props.monthlyPriceString : props.yearlyPriceString,
       originalPrice: isMonthly ? originalMonthlyPrice.value : originalYearlyPrice.value,
       hasDiscount: isMonthly ? hasMonthlyDiscount.value : hasYearlyDiscount.value,
       showTrialPrice,

@@ -12,6 +12,9 @@ export interface PricingPageContentProps {
   // Store-driven (IAP) trial overrides — see IAPTrialInfo in use-native-iap.ts.
   isPaidTrialOverride?: boolean
   trialPriceString?: string
+  // Store-driven (IAP) recurring price strings — see IAPPlanPrice in use-native-iap.ts.
+  monthlyPriceString?: string
+  yearlyPriceString?: string
   mustCollectPaymentMethod?: boolean
   utmCampaign?: string
   utmMedium?: string

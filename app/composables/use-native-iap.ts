@@ -46,6 +46,15 @@ export interface IAPTrialInfo {
   trialPriceString?: string
 }
 
+// `priceString` is the localized verbatim string ("HK$88") so the shown price
+// equals what the store will charge; numeric `price` is surfaced for math that
+// must match the store's real numbers (e.g. yearly-vs-monthly discount percent).
+export interface IAPPlanPrice {
+  priceString: string
+  price: number
+  currency: string
+}
+
 // The StoreKit / Play purchase sheet stays open while the user authenticates,
 // so allow plenty of time; the native side always replies (success / cancelled
 // / error), making this only a lost-reply safety net.
@@ -204,10 +213,21 @@ export const useNativeIAP = createSharedComposable(() => {
     return offerings.value
   }
 
-  // Resolves the trial to display for a plan from the store's actual intro offer;
-  // defaults to no trial when there's no offer or offerings haven't loaded yet.
+  function findOffering(period: SubscriptionPlan): IAPOfferingPackage | undefined {
+    return offerings.value.find(p => p.period === period)
+  }
+
+  // Returns undefined until offerings load (or when the store has no package for
+  // the period) so callers fall back to the Stripe-configured display.
+  function getIAPPlanPrice(period: SubscriptionPlan): IAPPlanPrice | undefined {
+    const pkg = findOffering(period)
+    if (!pkg?.priceString) return undefined
+    return { priceString: pkg.priceString, price: pkg.price, currency: pkg.currency }
+  }
+
+  // Defaults to no trial when there's no offer or offerings haven't loaded yet.
   function getIAPTrial(period: SubscriptionPlan): IAPTrialInfo {
-    const pkg = offerings.value.find(p => p.period === period)
+    const pkg = findOffering(period)
     const trialPeriodDays = pkg?.trialPeriodDays ?? 0
     const isPaidTrial = trialPeriodDays > 0 && pkg?.isFreeTrial === false
     // A paid intro is only honest to display with the store's formatted price;
@@ -246,5 +266,5 @@ export const useNativeIAP = createSharedComposable(() => {
     })
   }
 
-  return { isIAPSupported, canStartSubscribeFlow, purchase, restore, getOfferings, ensureOfferings, getIAPTrial, manageSubscription }
+  return { isIAPSupported, canStartSubscribeFlow, purchase, restore, getOfferings, ensureOfferings, getIAPTrial, getIAPPlanPrice, manageSubscription }
 })
