@@ -269,6 +269,15 @@
           </ExpandableContent>
         </template>
 
+        <template #publisher>
+          <ExpandableContent>
+            <div
+              class="markdown"
+              v-html="publisherDescriptionHTML"
+            />
+          </ExpandableContent>
+        </template>
+
         <template #table-of-contents>
           <ExpandableContent>
             <div
@@ -1179,6 +1188,10 @@ const authorDescriptionHTML = computed(() => {
   return renderDescription(bookInfo.authorDescription?.value || '')
 })
 
+const publisherDescriptionHTML = computed(() => {
+  return renderDescription(bookInfo.publisherDescription?.value || '')
+})
+
 const buyerMessages = computed(() => {
   const messages = nftStore.getMessagesByNFTClassId(nftClassId.value)
   if (!messages) return []
@@ -1220,6 +1233,14 @@ const infoTabItems = computed(() => {
       label: $t('product_page_info_tab_author_description'),
       slot: 'author',
       value: 'author',
+    })
+  }
+
+  if (bookInfo.publisherDescription.value) {
+    items.push({
+      label: $t('product_page_info_tab_publisher_description'),
+      slot: 'publisher',
+      value: 'publisher',
     })
   }
 

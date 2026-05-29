@@ -147,14 +147,51 @@ export async function fetchNFTClassesByMetadata(
     }
   }
   else if (filterType === 'publisher') {
-    if (!options.filter) {
-      options.filter = {}
+    // For publisher searches, query both 'publisher.name' and 'publisher' fields
+    const publisherNameOptions = {
+      ...options,
+      filter: { ...options.filter, 'publisher.name': escapedFilterValue },
     }
-    options.filter.publisher = filterValue
+    const publisherOptions = {
+      ...options,
+      filter: { ...options.filter, publisher: escapedFilterValue },
+    }
 
-    return fetch<FetchBookNFTsResponseData>(`/booknfts`, {
-      query: getIndexerQueryOptions(options),
+    const [publisherNameResult, publisherResult] = await Promise.all([
+      fetch<FetchBookNFTsResponseData>(`/booknfts`, {
+        query: getIndexerQueryOptions(publisherNameOptions),
+      }),
+      fetch<FetchBookNFTsResponseData>(`/booknfts`, {
+        query: getIndexerQueryOptions(publisherOptions),
+      }),
+    ])
+
+    // Merge results and remove duplicates
+    const combinedDataMap: Record<string, NFTClass> = {}
+    publisherNameResult.data.forEach((item) => {
+      combinedDataMap[item.address] = item
     })
+    publisherResult.data.forEach((item) => {
+      combinedDataMap[item.address] = item
+    })
+    const combinedData = Object.values(combinedDataMap)
+
+    const queryOptions = getIndexerQueryOptions(options)
+    const actualLimit = parseInt(queryOptions['pagination.limit'] || '30')
+
+    const publisherNameNextKey = publisherNameResult.data.length >= actualLimit ? publisherNameResult.pagination.next_key : undefined
+    const publisherNextKey = publisherResult.data.length >= actualLimit ? publisherResult.pagination.next_key : undefined
+    const combinedNextKey = publisherNameNextKey !== undefined && publisherNextKey !== undefined
+      ? Math.min(publisherNameNextKey, publisherNextKey)
+      : publisherNameNextKey ?? publisherNextKey
+
+    return {
+      data: combinedData,
+      pagination: {
+        count: combinedData.length,
+        next_key: combinedNextKey,
+      },
+    }
   }
 
   throw createError({ statusCode: 400, statusMessage: `Unsupported filter type: ${filterType}` })
