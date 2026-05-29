@@ -46,6 +46,10 @@ export default defineEventHandler(async (event) => {
   const upstreamHeaders: Record<string, string> = {
     Authorization: `Bearer ${token}`,
   }
+  // Server-to-server `fetch` sends no `Origin`, but `/ebook-cors/` rejects an
+  // absent Origin with `ORIGIN_NOT_FOUND`. Send our own (whitelisted) origin so
+  // its CORS gate passes; the real auth boundary upstream is the Bearer JWT.
+  if (config.public.baseURL) upstreamHeaders.Origin = config.public.baseURL
   const rangeHeader = getHeader(event, 'range')
   if (rangeHeader) upstreamHeaders.Range = rangeHeader
 
