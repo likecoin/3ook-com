@@ -55,8 +55,17 @@ const coupon = computed(() => getRouteQuery('coupon'))
 const isRefreshing = ref(true)
 const isRedirecting = ref(false)
 const isLikerPlus = computed(() => user.value?.isLikerPlus)
+// The route `period` query is in SubscriptionPlan form ('yearly'/'monthly')
+// while the session stores LikerPlusStatus ('year'/'month'). Map between them,
+// otherwise the comparison below never matches and the onMounted retry loop
+// burns its full timeout on the loading state for already-subscribed users.
+const PLAN_TO_STATUS: Record<SubscriptionPlan, LikerPlusStatus> = {
+  yearly: 'year',
+  monthly: 'month',
+}
 const isPeriodMatch = computed(() => {
-  return !targetPeriod.value || user.value?.likerPlusPeriod === targetPeriod.value
+  if (!targetPeriod.value) return true
+  return user.value?.likerPlusPeriod === PLAN_TO_STATUS[targetPeriod.value as SubscriptionPlan]
 })
 
 useHead({
@@ -98,12 +107,16 @@ onMounted(async () => {
       await accountStore.refreshSessionInfo()
       retry++
     }
+    // The gift-with-yearly flow is Stripe-only (see use-subscription-checkout
+    // skipping `nftClassId` for IAP), and `/plus/gift` keys off a Stripe
+    // subscription Id, so calling it for RevenueCat subscribers always errors.
+    const isRevenueCatSubscriber = user.value?.likerPlusProvider === 'revenuecat'
     const {
       giftNFTClassId,
       giftCartId,
       giftPaymentId,
       giftClaimToken,
-    } = await fetchPlusGiftStatus()
+    } = isRevenueCatSubscriber ? {} : await fetchPlusGiftStatus()
     if (isRedirected.value) {
       // Restore the persisted currency before logging: post-Stripe-redirect the
       // payment-currency state is fresh 'auto' and resolves to USD until
