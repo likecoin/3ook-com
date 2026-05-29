@@ -270,6 +270,7 @@ export function useStructuredData(
     const isbn = bookInfo.isbn.value
     const inLanguage = bookInfo.inLanguage.value
     const nftClassOwnerWalletAddress = bookInfo.nftClassOwnerWalletAddress.value
+    const brand = bookInfo.brandName.value
 
     const pricingItems = bookInfo.pricingItems.value
     const pricingItem = pricingItems[selectedPricingItemIndex]
@@ -298,7 +299,7 @@ export function useStructuredData(
     },
     {
       property: 'product:brand',
-      content: '3ook.com',
+      content: brand,
     },
     {
       property: 'product:catalog_id',
@@ -323,10 +324,6 @@ export function useStructuredData(
     {
       property: 'product:custom_label_0',
       content: nftClassOwnerWalletAddress,
-    },
-    {
-      property: 'product:brand',
-      content: '3ook.com',
     },
     {
       property: 'og:type',
@@ -395,6 +392,7 @@ export function useStructuredData(
     const image = [coverImage, ...promotionalImages].filter(Boolean)
     const authorName = bookInfo.authorName.value
     const publisherName = bookInfo.publisherName.value
+    const brand = bookInfo.brandName.value
     const datePublished = bookInfo.formattedPublishedDate.value
     const genre = bookInfo.genre.value
     const rawKeywords = bookInfo.keywords.value
@@ -419,7 +417,7 @@ export function useStructuredData(
         'brand': {
           '@context': 'https://schema.org',
           '@type': 'Brand',
-          'name': '3ook.com',
+          'name': brand,
         },
         'author': authorName,
         'sku': skuId,
@@ -492,7 +490,7 @@ export function useStructuredData(
       'brand': {
         '@context': 'https://schema.org',
         '@type': 'Brand',
-        'name': '3ook.com',
+        'name': brand,
       },
       'author': authorName,
       'sku': nftClassIdValue,

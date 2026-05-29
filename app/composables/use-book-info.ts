@@ -69,6 +69,11 @@ export default function (
     return ''
   })
 
+  // A product's brand is its real brand, not the storefront; for books that's
+  // the publisher/imprint, falling back to author (self-published) then
+  // 3ook.com. Mirrors the API catalog feed (likecoin-api-public metaCatalog.ts).
+  const brandName = computed(() => publisherName.value || authorName.value || '3ook.com')
+
   const formattedPublishedDate = computed(() => {
     return bookInfo.publishedDate.value?.toISOString().split('T')[0] || ''
   })
@@ -332,6 +337,7 @@ export default function (
     authorDescription,
     publisherName,
     publisherDescription,
+    brandName,
     formattedPublishedDate,
     nftClassOwnerAvatar,
     description,
