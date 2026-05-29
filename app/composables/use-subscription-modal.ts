@@ -2,10 +2,6 @@ import type { RouteLocationAsRelativeGeneric } from 'vue-router'
 import { PaywallModal, UpsellPlusModal } from '#components'
 import type { PaywallModalProps } from '~/components/PaywallModal.props'
 import type { UpsellPlusModalProps } from '~/components/UpsellPlusModal.props'
-import { calcYearlyDiscountPercent } from '~/composables/use-subscription-pricing'
-import { DEFAULT_TRIAL_PERIOD_DAYS } from '~~/shared/constants/pricing'
-
-const MIN_DISCOUNT_PERCENT_TO_SHOW = 1
 
 type OpenPaywallModalOptions = PaywallModalProps & {
   redirectRoute?: RouteLocationAsRelativeGeneric
@@ -23,29 +19,15 @@ export function useSubscriptionModal() {
 
   const checkoutData = useSubscriptionCheckout()
   const { startSubscription, isProcessingSubscription } = checkoutData
-  const { isIAPSupported, ensureOfferings, getIAPTrial, getIAPPlanPrice } = useNativeIAP()
+  const { isIAPSupported, ensureOfferings, getIAPTrial } = useNativeIAP()
+  const { iapMonthlyPrice, iapYearlyPrice, getIAPOverrides } = useIAPPricingOverrides()
 
   const selectedPlan = ref<SubscriptionPlan>('yearly')
 
-  // In the native app, drive trial + recurring price from the store's offerings
-  // rather than the Stripe defaults; undefined off-IAP so web keeps Stripe.
+  // iapTrial is reactive on selectedPlan + offerings so the post-mount paywall
+  // patch watch fires when either changes; getIAPOverrides re-reads via the
+  // helper inside the callback.
   const iapTrial = computed(() => getIAPTrial(selectedPlan.value))
-  const iapMonthlyPrice = computed(() => isIAPSupported.value ? getIAPPlanPrice('monthly') : undefined)
-  const iapYearlyPrice = computed(() => isIAPSupported.value ? getIAPPlanPrice('yearly') : undefined)
-  // Recompute the badge percent from real store prices — the default math in
-  // useSubscriptionPricing runs on the Stripe-USD conversion and can disagree
-  // with the store's numbers. Undefined when prices haven't loaded yet (the
-  // PricingPlanSelect fallback applies) or when rounding to <1%.
-  const { t } = useI18n()
-  const iapYearlyBadgeText = computed(() => {
-    const monthly = iapMonthlyPrice.value?.price
-    const yearly = iapYearlyPrice.value?.price
-    if (!monthly || !yearly) return undefined
-    const percent = calcYearlyDiscountPercent(monthly, yearly)
-    if (percent < MIN_DISCOUNT_PERCENT_TO_SHOW) return undefined
-    return t('pricing_page_yearly_discount', { discount: percent })
-  })
-  if (import.meta.client) ensureOfferings()
 
   const paywallModalProps = ref<PaywallModalProps>({})
 
@@ -62,17 +44,8 @@ export function useSubscriptionModal() {
   }))
 
   function getPaywallModalProps(): PaywallModalProps {
-    const trial = isIAPSupported.value ? iapTrial.value : undefined
     return {
-      // In IAP mode the trial and recurring price come from the store's
-      // offerings so the shown values equal what the store will charge; off-IAP
-      // these are undefined so the web's Stripe defaults are kept.
-      'trialPeriodDays': trial ? trial.trialPeriodDays : DEFAULT_TRIAL_PERIOD_DAYS,
-      'isPaidTrialOverride': trial?.isPaidTrial,
-      'trialPriceString': trial?.trialPriceString,
-      'monthlyPriceString': iapMonthlyPrice.value?.priceString,
-      'yearlyPriceString': iapYearlyPrice.value?.priceString,
-      'yearlyBadgeText': iapYearlyBadgeText.value,
+      ...getIAPOverrides(selectedPlan.value),
       'modelValue': selectedPlan.value,
       'isProcessingSubscription': isProcessingSubscription.value,
       'onUpdate:modelValue': (value: SubscriptionPlan) => {
@@ -87,22 +60,11 @@ export function useSubscriptionModal() {
   }
 
   function getUpsellPlusModalProps(): UpsellPlusModalProps {
-    const base: UpsellPlusModalProps = {
+    return {
       isLikerPlus: isLikerPlus.value,
       likerPlusPeriod: likerPlusPeriod.value,
       onSubscribe: startSubscription,
-    }
-    if (!isIAPSupported.value) return base
-    // The upsell defaults to the yearly plan; surface that product's store offer.
-    const trial = getIAPTrial('yearly')
-    return {
-      ...base,
-      trialPeriodDays: trial.trialPeriodDays,
-      isPaidTrialOverride: trial.isPaidTrial,
-      trialPriceString: trial.trialPriceString,
-      monthlyPriceString: iapMonthlyPrice.value?.priceString,
-      yearlyPriceString: iapYearlyPrice.value?.priceString,
-      yearlyBadgeText: iapYearlyBadgeText.value,
+      ...getIAPOverrides('yearly'),
     }
   }
 
@@ -206,16 +168,11 @@ export function useSubscriptionModal() {
   // store offer resolves (offerings load after mount) or the selected plan
   // changes. Harmless when the modal is closed (mirrors the
   // isProcessingSubscription patch above).
-  watch([iapTrial, iapMonthlyPrice, iapYearlyPrice], ([trial, monthlyPrice, yearlyPrice]) => {
+  watch([iapTrial, iapMonthlyPrice, iapYearlyPrice], () => {
     if (!isIAPSupported.value) return
     paywallModalProps.value = {
       ...paywallModalProps.value,
-      trialPeriodDays: trial.trialPeriodDays,
-      isPaidTrialOverride: trial.isPaidTrial,
-      trialPriceString: trial.trialPriceString,
-      monthlyPriceString: monthlyPrice?.priceString,
-      yearlyPriceString: yearlyPrice?.priceString,
-      yearlyBadgeText: iapYearlyBadgeText.value,
+      ...getIAPOverrides(selectedPlan.value),
     }
     paywallModal.patch(paywallModalProps.value)
   })

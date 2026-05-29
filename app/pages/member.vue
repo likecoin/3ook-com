@@ -1,6 +1,7 @@
 <template>
   <PricingPageContent
     v-model="selectedPlan"
+    v-bind="iapOverrides"
     class="min-h-screen"
     :is-processing-subscription="checkout.isProcessingSubscription.value"
     :trial-period-days="trialPeriodDays"
@@ -13,7 +14,7 @@
     :affiliate-liker-id="affiliateLikerId"
     :prepended-features="affiliateContent?.prependedFeatures"
     :tts-exclusive-badge-text="affiliateContent?.ttsExclusiveBadgeText"
-    :yearly-badge-text="affiliateContent?.yearlyBadgeText"
+    :yearly-badge-text="iapOverrides.yearlyBadgeText ?? affiliateContent?.yearlyBadgeText"
     :monthly-badge-text="affiliateContent?.monthlyBadgeText"
     :promo-pricing="promoPricing"
     @open="handleOpen"
@@ -181,6 +182,7 @@ const config = useRuntimeConfig()
 const baseURL = config.public.baseURL
 
 const { canStartSubscribeFlow } = useNativeIAP()
+const { isIAPSupported, getIAPOverrides } = useIAPPricingOverrides()
 const { loggedIn: hasLoggedIn } = useUserSession()
 const accountStore = useAccountStore()
 const { displayCurrency } = usePaymentCurrency()
@@ -372,7 +374,12 @@ useHead({
   ],
 })
 
+// On IAP the store is the source of truth for the trial — the web's route-
+// query overrides and Stripe defaults don't apply because no Stripe trial
+// will ensue regardless.
+const iapOverrides = computed(() => getIAPOverrides(selectedPlan.value))
 const trialPeriodDays = computed(() => {
+  if (isIAPSupported.value) return iapOverrides.value.trialPeriodDays
   switch (getRouteQuery('trial')) {
     case '0':
     case '0d': return 0
