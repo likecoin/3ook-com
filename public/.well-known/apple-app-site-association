@@ -5,6 +5,22 @@
         "appIDs": ["SQMQJBU5RU.land.liker.book3app"],
         "components": [
           {
+            "/": "/store",
+            "exclude": true
+          },
+          {
+            "/": "/store/*",
+            "exclude": true
+          },
+          {
+            "/": "/checkout",
+            "exclude": true
+          },
+          {
+            "/": "/plus/checkout",
+            "exclude": true
+          },
+          {
             "/": "*"
           }
         ]
