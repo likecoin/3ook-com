@@ -1160,6 +1160,15 @@ const isManagingSubscription = ref(false)
 async function handleLikerPlusButtonClick() {
   useLogEvent('account_liker_plus_button_click')
 
+  // A fully expired subscriber (neither active nor past_due) must re-subscribe,
+  // not manage — on Play, showManageSubscriptions() errors when nothing is
+  // active (surfaced as "開啟訂閱管理時發生錯誤"). past_due is excluded: it still
+  // opens the store sheet / billing portal below to fix payment.
+  if (!user.value?.isLikerPlus && !isPaymentPastDue.value) {
+    await navigateTo(localeRoute({ name: 'member' }))
+    return
+  }
+
   // Store-owned subscription: open the native App Store / Play sheet. Only
   // refresh the session on success (a plan change reflects via webhook), and
   // surface failures the way the billing-portal path below does.
@@ -1194,10 +1203,8 @@ async function handleLikerPlusButtonClick() {
     return
   }
 
-  if (!user.value?.isLikerPlus && !isPaymentPastDue.value) {
-    await navigateTo(localeRoute({ name: 'member' }))
-    return
-  }
+  // Reaching here implies an active or past_due subscriber (the renew guard
+  // above returns for everyone else), so this opens the Stripe billing portal.
   if (isOpeningBillingPortal.value) return
   try {
     isOpeningBillingPortal.value = true
