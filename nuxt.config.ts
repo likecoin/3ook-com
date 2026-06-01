@@ -140,7 +140,27 @@ export default defineNuxtConfig({
         },
       },
     },
+    '/api/store/products/**': {
+      security: {
+        corsHandler: {
+          origin: '^https?:\\/\\/([a-zA-Z0-9-]+\\.)?3ook\\.com$',
+          useRegExp: true,
+          methods: ['GET', 'OPTIONS'],
+          allowHeaders: ['Content-Type', 'Authorization'],
+        },
+      },
+    },
     '/api/store/tags': {
+      security: {
+        corsHandler: {
+          origin: '^https?:\\/\\/([a-zA-Z0-9-]+\\.)?3ook\\.com$',
+          useRegExp: true,
+          methods: ['GET', 'OPTIONS'],
+          allowHeaders: ['Content-Type', 'Authorization'],
+        },
+      },
+    },
+    '/api/store/tags/**': {
       security: {
         corsHandler: {
           origin: '^https?:\\/\\/([a-zA-Z0-9-]+\\.)?3ook\\.com$',

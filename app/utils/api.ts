@@ -1,3 +1,4 @@
+import { MAX_BOOKSTORE_PAGE_SIZE, isBookstoreBuiltInListType } from '~~/shared/utils/bookstore'
 import type { CollectiveBookNFT, CollectiveBookNFTsQueryOptions, CollectivePaginationResponse } from '~~/shared/utils/collective-indexer'
 
 /**
@@ -37,24 +38,25 @@ export function fetchStakingBookNFTs({
 
 export function fetchBookstoreCMSProductsByTagId(tagId: string, {
   offset,
-  limit = 100,
+  limit = MAX_BOOKSTORE_PAGE_SIZE,
   ts,
-  live,
 }: {
   offset?: string
   limit?: number
   ts?: number
-  live?: boolean
 } = {}) {
-  return apiFetch<FetchBookstoreCMSProductsResponseData>('/store/products', {
-    query: {
-      tag: tagId,
-      offset,
-      limit,
-      ts,
-      live: live ? 1 : undefined,
+  const isBuiltIn = isBookstoreBuiltInListType(tagId)
+  return apiFetch<FetchBookstoreCMSProductsResponseData>(
+    isBuiltIn ? `/store/products/${encodeURIComponent(tagId)}` : '/store/products',
+    {
+      query: {
+        tag: isBuiltIn ? undefined : tagId,
+        offset,
+        limit,
+        ts,
+      },
     },
-  })
+  )
 }
 
 export function fetchBookstoreCMSPublicationsBySearchTerm(searchTerm: string, {
@@ -95,22 +97,8 @@ export function fetchBookstoreCMSPublicationsByGenre(genre: string, {
   })
 }
 
-export function fetchBookstoreCMSTagsForAll({
-  offset,
-  limit,
-  ts,
-}: {
-  offset?: string
-  limit?: number
-  ts?: number
-} = {}) {
-  return apiFetch<FetchBookstoreCMSTagsResponseData>('/store/tags', {
-    query: {
-      offset,
-      limit,
-      ts,
-    },
-  })
+export function fetchBookstoreCMSTagsForAll() {
+  return apiFetch<FetchBookstoreCMSTagsResponseData>('/store/tags')
 }
 
 export function fetchBookstoreCMSTagById(tagId: string) {

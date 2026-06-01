@@ -24,14 +24,11 @@ async function fetchTopStakedClassIds(): Promise<string[]> {
 
 async function fetchLatestTagClassIds(): Promise<string[]> {
   try {
-    const response = await fetchAirtableCMSProductsByTagId('latest', { pageSize: SITEMAP_PAGE_SIZE })
-    return response.records.flatMap((record) => {
-      if (record.classIds?.length) return record.classIds
-      return record.classId ? [record.classId] : []
-    })
+    const response = await fetchBookstoreBookListing(BUILT_IN_LIST_PATHS.latest, { pageSize: SITEMAP_PAGE_SIZE })
+    return response.records.flatMap(record => (record.classId ? [record.classId] : []))
   }
   catch (error) {
-    console.error('[sitemap] Error fetching latest tag products:', error)
+    console.error('[sitemap] Error fetching latest books:', error)
     return []
   }
 }

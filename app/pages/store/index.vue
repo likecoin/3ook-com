@@ -282,6 +282,7 @@
 
 <script setup lang="ts">
 import { getGenreI18nKey } from '~~/shared/constants/book-categories'
+import { MAX_BOOKSTORE_PAGE_SIZE, isBookstoreBuiltInListType } from '~~/shared/utils/bookstore'
 
 const { t: $t, locale } = useI18n()
 const localeRoute = useLocaleRoute()
@@ -386,8 +387,19 @@ await callOnce(async () => {
     await navigateTo(localeRoute({ name: 'local-histories' }), { replace: true })
     return
   }
-  if (!tagId.value || isDefaultTagId.value || isStakingTagId.value) return
-  await bookstoreStore.fetchBookstoreCMSTag(tagId.value)
+
+  if (
+    !tagId.value
+    || isDefaultTagId.value
+    || isStakingTagId.value
+    || isBookstoreBuiltInListType(tagId.value)
+  ) return
+
+  const tag = await bookstoreStore.fetchBookstoreCMSTag(tagId.value)
+  if (!tag) {
+    const { tag: _tag, ...query } = route.query
+    await navigateTo(localeRoute({ name: 'store', query }), { replace: true })
+  }
 })
 
 const normalizedLocale = computed(() => locale.value === 'zh-Hant' ? 'zh' : 'en')
@@ -439,11 +451,10 @@ const allTagItems = computed(() => {
       value: tag.id,
     }))
 
-  // While the full CMS tag list is still loading, surface the active CMS tag
-  // so the bar always renders the current selection.
+  // Always surface the active CMS tag even if it's absent from the cached list
+  // (e.g. a newly created tag not yet reflected in the cached tag list).
   if (
-    !bookstoreStore.hasFetchedBookstoreCMSTags
-    && activeCMSTag.value
+    activeCMSTag.value
     && !cmsTags.some(t => t.value === activeCMSTag.value!.id)
   ) {
     cmsTags.push({
@@ -771,6 +782,8 @@ useHead(() => {
     }
   }
 
+  const encodedTagId = encodeURIComponent(tagId.value)
+  const isBuiltInTag = isBookstoreBuiltInListType(tagId.value)
   const link = [
     {
       rel: 'canonical',
@@ -795,16 +808,13 @@ useHead(() => {
           crossorigin: 'anonymous' as const,
           key: 'preload-staking-books',
         }]
-      : []),
-    ...(!isStakingTagId.value
-      ? [{
+      : [{
           rel: 'preload',
-          href: `/api/store/products?tag=${tagId.value}&limit=100&ts=${getTimestampRoundedToMinute()}`,
+          href: `/api/store/products${isBuiltInTag ? `/${encodedTagId}?` : `?tag=${encodedTagId}&`}limit=${MAX_BOOKSTORE_PAGE_SIZE}&ts=${getTimestampRoundedToMinute()}`,
           as: 'fetch' as const,
           crossorigin: 'anonymous' as const,
           key: 'preload-store-products',
-        }]
-      : []),
+        }]),
   ]
 
   return {

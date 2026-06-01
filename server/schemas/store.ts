@@ -5,13 +5,6 @@ const PaginationFields = {
   offset: v.optional(v.union([v.string(), v.array(v.string())])),
 }
 
-export const StoreProductsQuerySchema = v.object({
-  tag: v.optional(v.union([v.string(), v.array(v.string())])),
-  // Bypass the page-1 cache to mint a fresh Airtable pagination cursor.
-  live: v.optional(v.union([v.string(), v.array(v.string())])),
-  ...PaginationFields,
-})
-
 export const StoreStakingBooksQuerySchema = v.object({
   sort_by: v.optional(v.union([v.string(), v.array(v.string())])),
   sort_order: v.optional(v.union([v.string(), v.array(v.string())])),
@@ -40,9 +33,5 @@ export const StoreGenreQuerySchema = v.object({
       'GENRE_REQUIRED',
     ),
   ),
-  ...PaginationFields,
-})
-
-export const StoreTagsQuerySchema = v.object({
   ...PaginationFields,
 })

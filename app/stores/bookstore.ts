@@ -57,8 +57,6 @@ export const useBookstoreStore = defineStore('bookstore', () => {
     }
   })
 
-  const DEFAULT_PAGE_SIZE = 100
-
   async function fetchCMSProductsByTagId(tagId: string, {
     isRefresh = false,
   }: {
@@ -68,16 +66,7 @@ export const useBookstoreStore = defineStore('bookstore', () => {
       return
     }
 
-    // If offset expired but more pages likely exist, re-fetch page 1 to get fresh offset
-    const state = bookstoreCMSProductsByTagIdMap.value[tagId]
-    const shouldRefreshOffset = !isRefresh && state?.hasFetched && !state?.offset && state?.mayHaveMore
-
-    // Bump ts so the retry bypasses the browser HTTP cache (same URL otherwise)
-    if (shouldRefreshOffset && state) {
-      state.ts = Date.now()
-    }
-
-    if (!bookstoreCMSProductsByTagIdMap.value[tagId] || (isRefresh && !shouldRefreshOffset)) {
+    if (!bookstoreCMSProductsByTagIdMap.value[tagId] || isRefresh) {
       bookstoreCMSProductsByTagIdMap.value[tagId] = {
         items: [],
         isFetching: false,
@@ -86,45 +75,25 @@ export const useBookstoreStore = defineStore('bookstore', () => {
         ts: getTimestampRoundedToMinute(),
       }
     }
-    const fetchOffset = (isRefresh || shouldRefreshOffset) ? undefined : bookstoreCMSProductsByTagIdMap.value[tagId]?.offset
+    const fetchOffset = isRefresh ? undefined : bookstoreCMSProductsByTagIdMap.value[tagId]?.offset
     try {
       bookstoreCMSProductsByTagIdMap.value[tagId].isFetching = true
       const result = await fetchBookstoreCMSProductsByTagId(tagId, {
         offset: fetchOffset,
         ts: bookstoreCMSProductsByTagIdMap.value[tagId].ts,
-        // The offset refresh must bypass the page-1 cache; the cached cursor
-        // has a shorter TTL than its records, so it may already be gone by
-        // the time we need to paginate.
-        live: shouldRefreshOffset,
       })
 
-      if (isRefresh || shouldRefreshOffset) {
+      if (isRefresh) {
         bookstoreCMSProductsByTagIdMap.value[tagId].items = result.records
       }
       else {
         bookstoreCMSProductsByTagIdMap.value[tagId].items.push(...result.records)
       }
       bookstoreCMSProductsByTagIdMap.value[tagId].offset = result.offset
-      // After an offset-refresh attempt that still returns no offset, stop retrying
-      if (shouldRefreshOffset && !result.offset) {
-        bookstoreCMSProductsByTagIdMap.value[tagId].mayHaveMore = false
-      }
-      else {
-        // The full-page heuristic only applies to page-1 fetches (cache may have dropped the offset).
-        // For paginated requests, trust the server's offset — a missing offset means we've reached the end, even if the page was full.
-        bookstoreCMSProductsByTagIdMap.value[tagId].mayHaveMore = result.hasMore ?? (!fetchOffset && !result.offset && result.records.length >= DEFAULT_PAGE_SIZE)
-      }
+      bookstoreCMSProductsByTagIdMap.value[tagId].mayHaveMore = result.hasMore
       bookstoreCMSProductsByTagIdMap.value[tagId].hasFetched = true
     }
     catch (error) {
-      // If a paginated request failed with expired offset, clear it and retry from page 1
-      if (fetchOffset && getErrorStatusCode(error) === 422) {
-        bookstoreCMSProductsByTagIdMap.value[tagId].offset = undefined
-        bookstoreCMSProductsByTagIdMap.value[tagId].mayHaveMore = true
-        bookstoreCMSProductsByTagIdMap.value[tagId].isFetching = false
-        // Must await so the finally block doesn't clobber isFetching mid-retry
-        return await fetchCMSProductsByTagId(tagId)
-      }
       // HACK: When `hasFetched` is placed inside the finally block, it will execute before `items` are updated.
       bookstoreCMSProductsByTagIdMap.value[tagId].hasFetched = true
       throw error
@@ -168,6 +137,7 @@ export const useBookstoreStore = defineStore('bookstore', () => {
   async function fetchBookstoreCMSTag(tagId: string) {
     const tag = await fetchBookstoreCMSTagById(tagId)
     if (tag) insertBookstoreCMSTag(tag)
+    return tag
   }
 
   /* Bookstore Search Results */
