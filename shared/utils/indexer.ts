@@ -99,102 +99,53 @@ export async function fetchNFTClassesByMetadata(
   const fetch = getIndexerAPIFetch()
   const escapedFilterValue = escapeCommasForFilter(filterValue)
 
-  if (filterType === 'author') {
-    // For author searches, query both 'author.name' and 'author' fields
-    const authorNameOptions = {
-      ...options,
-      filter: { ...options.filter, 'author.name': escapedFilterValue },
-    }
-    const authorOptions = {
-      ...options,
-      filter: { ...options.filter, author: escapedFilterValue },
-    }
-
-    const [authorNameResult, authorResult] = await Promise.all([
-      fetch<FetchBookNFTsResponseData>(`/booknfts`, {
-        query: getIndexerQueryOptions(authorNameOptions),
-      }),
-      fetch<FetchBookNFTsResponseData>(`/booknfts`, {
-        query: getIndexerQueryOptions(authorOptions),
-      }),
-    ])
-
-    // Merge results and remove duplicates
-    const combinedDataMap: Record<string, NFTClass> = {}
-    authorNameResult.data.forEach((item) => {
-      combinedDataMap[item.address] = item
-    })
-    authorResult.data.forEach((item) => {
-      combinedDataMap[item.address] = item
-    })
-    const combinedData = Object.values(combinedDataMap)
-
-    const queryOptions = getIndexerQueryOptions(options)
-    const actualLimit = parseInt(queryOptions['pagination.limit'] || '30')
-
-    const authorNameNextKey = authorNameResult.data.length >= actualLimit ? authorNameResult.pagination.next_key : undefined
-    const authorNextKey = authorResult.data.length >= actualLimit ? authorResult.pagination.next_key : undefined
-    const combinedNextKey = authorNameNextKey !== undefined && authorNextKey !== undefined
-      ? Math.min(authorNameNextKey, authorNextKey)
-      : authorNameNextKey ?? authorNextKey
-
-    return {
-      data: combinedData,
-      pagination: {
-        count: combinedData.length,
-        next_key: combinedNextKey,
-      },
-    }
+  // Query both the structured `<type>.name` field and the plain `<type>` field
+  const nameOptions = {
+    ...options,
+    filter: { ...options.filter, [`${filterType}.name`]: escapedFilterValue },
   }
-  else if (filterType === 'publisher') {
-    // For publisher searches, query both 'publisher.name' and 'publisher' fields
-    const publisherNameOptions = {
-      ...options,
-      filter: { ...options.filter, 'publisher.name': escapedFilterValue },
-    }
-    const publisherOptions = {
-      ...options,
-      filter: { ...options.filter, publisher: escapedFilterValue },
-    }
-
-    const [publisherNameResult, publisherResult] = await Promise.all([
-      fetch<FetchBookNFTsResponseData>(`/booknfts`, {
-        query: getIndexerQueryOptions(publisherNameOptions),
-      }),
-      fetch<FetchBookNFTsResponseData>(`/booknfts`, {
-        query: getIndexerQueryOptions(publisherOptions),
-      }),
-    ])
-
-    // Merge results and remove duplicates
-    const combinedDataMap: Record<string, NFTClass> = {}
-    publisherNameResult.data.forEach((item) => {
-      combinedDataMap[item.address] = item
-    })
-    publisherResult.data.forEach((item) => {
-      combinedDataMap[item.address] = item
-    })
-    const combinedData = Object.values(combinedDataMap)
-
-    const queryOptions = getIndexerQueryOptions(options)
-    const actualLimit = parseInt(queryOptions['pagination.limit'] || '30')
-
-    const publisherNameNextKey = publisherNameResult.data.length >= actualLimit ? publisherNameResult.pagination.next_key : undefined
-    const publisherNextKey = publisherResult.data.length >= actualLimit ? publisherResult.pagination.next_key : undefined
-    const combinedNextKey = publisherNameNextKey !== undefined && publisherNextKey !== undefined
-      ? Math.min(publisherNameNextKey, publisherNextKey)
-      : publisherNameNextKey ?? publisherNextKey
-
-    return {
-      data: combinedData,
-      pagination: {
-        count: combinedData.length,
-        next_key: combinedNextKey,
-      },
-    }
+  const valueOptions = {
+    ...options,
+    filter: { ...options.filter, [filterType]: escapedFilterValue },
   }
 
-  throw createError({ statusCode: 400, statusMessage: `Unsupported filter type: ${filterType}` })
+  const [nameResult, valueResult] = await Promise.all([
+    fetch<FetchBookNFTsResponseData>(`/booknfts`, {
+      query: getIndexerQueryOptions(nameOptions),
+    }),
+    fetch<FetchBookNFTsResponseData>(`/booknfts`, {
+      query: getIndexerQueryOptions(valueOptions),
+    }),
+  ])
+
+  // Merge results and remove duplicates
+  const combinedDataMap: Record<string, NFTClass> = {}
+  nameResult.data.forEach((item) => {
+    combinedDataMap[item.address] = item
+  })
+  valueResult.data.forEach((item) => {
+    combinedDataMap[item.address] = item
+  })
+  const combinedData = Object.values(combinedDataMap)
+
+  const actualLimit = options.limit || 30
+  // Merging two queries can yield more than `actualLimit` items; cap to keep
+  // the caller's `data.length === limit` pagination check working.
+  const limitedData = combinedData.slice(0, actualLimit)
+
+  const nameNextKey = nameResult.data.length >= actualLimit ? nameResult.pagination.next_key : undefined
+  const valueNextKey = valueResult.data.length >= actualLimit ? valueResult.pagination.next_key : undefined
+  const combinedNextKey = nameNextKey !== undefined && valueNextKey !== undefined
+    ? Math.min(nameNextKey, valueNextKey)
+    : nameNextKey ?? valueNextKey
+
+  return {
+    data: limitedData,
+    pagination: {
+      count: limitedData.length,
+      next_key: combinedNextKey,
+    },
+  }
 }
 
 export function fetchNFTsByOwnerWalletAddress(walletAddress: string, options: IndexerQueryOptions = {}) {
