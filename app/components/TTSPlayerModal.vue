@@ -543,13 +543,32 @@ const offlineModalActions = computed(() => [
   },
 ])
 
-watch(currentTTSSegmentIndex, async (newIndex: number) => {
+const documentVisibility = useDocumentVisibility()
+
+async function scrollToCurrentSegment(index: number) {
   await nextTick()
-  const el = visibleSegmentElements.get(newIndex)
+  const el = visibleSegmentElements.get(index)
   el?.scrollIntoView({
     behavior: 'smooth',
     block: 'center',
   })
+}
+
+watch(currentTTSSegmentIndex, (newIndex: number) => {
+  // Skip the smooth-scroll animation while the app/tab is backgrounded: it
+  // produces no visible result but still costs layout/composite cycles that
+  // iOS WebKit may service in the background during long listening sessions.
+  // The visibility watch below re-centers on foreground to cover skipped advances.
+  if (documentVisibility.value !== 'visible') return
+  scrollToCurrentSegment(newIndex)
+})
+
+// Catch up on return to foreground: background segment advances skip the scroll
+// above, so re-center on the current segment (which may have moved on, or stayed
+// put if playback was paused while backgrounded) once we're visible again.
+watch(documentVisibility, (state) => {
+  if (state !== 'visible') return
+  scrollToCurrentSegment(currentTTSSegmentIndex.value)
 })
 
 const hasStartedPlaying = ref(false)

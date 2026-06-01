@@ -1,4 +1,4 @@
-import { useDocumentVisibility, useEventListener, useStorage } from '@vueuse/core'
+import { useDocumentVisibility, useEventListener, useStorage, useThrottleFn } from '@vueuse/core'
 import type { CustomVoiceData, AffiliateVoiceData } from '~~/shared/types/custom-voice'
 import { computeTTSTextSig, decodeAffiliateVoiceId, isAffiliateVoiceId } from '~~/shared/utils/tts-sig'
 
@@ -434,9 +434,14 @@ export function useTextToSpeech(options: TTSOptions) {
     }
   }
 
-  player.on('positionState', () => {
-    updatePositionState()
-  })
+  // The web audio engine fires 'positionState' from `ontimeupdate` up to
+  // ~60x/sec. setPositionState() hits the iOS WebKit Now-Playing service on
+  // every call, wasting CPU (and battery) to keep the lock-screen scrubber
+  // accurate to the millisecond — ~1s granularity is plenty. The native audio
+  // engine never emits 'positionState', so this throttle is a web/PWA-only path.
+  const throttledUpdatePositionState = useThrottleFn(updatePositionState, 1000, true)
+
+  player.on('positionState', throttledUpdatePositionState)
 
   player.on('rateForced', (rate) => {
     effectivePlaybackRate.value = rate
