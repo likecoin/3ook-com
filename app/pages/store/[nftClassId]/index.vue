@@ -236,6 +236,16 @@
                 @click="handleTTSTagClick"
               />
             </li>
+            <li v-if="bookInfo.isPlusReadingEnabled.value">
+              <UButton
+                :label="plusReadingTagLabel"
+                :to="plusReadingTagRoute"
+                variant="subtle"
+                :color="plusReadingTagColor"
+                :ui="{ base: 'rounded-full' }"
+                @click="handlePlusReadingTagClick"
+              />
+            </li>
           </ul>
         </template>
 
@@ -623,6 +633,14 @@
                           :color="ttsTagColor"
                           size="sm"
                         />
+
+                        <UBadge
+                          v-if="bookInfo.isPlusReadingEnabled.value"
+                          :label="$t('product_page_plus_reading_label')"
+                          variant="subtle"
+                          :color="plusReadingTagColor"
+                          size="sm"
+                        />
                       </div>
                     </div>
                   </button>
@@ -661,6 +679,20 @@
               variant="solid"
               block
               @click="handleReadButtonClick"
+            />
+
+            <!-- Borrow CTA sits below the purchase box with a softer Plus-themed
+            green so it reads as a secondary, membership-led path. -->
+            <UButton
+              v-if="isPlusReadingCTAVisible"
+              class="max-tablet:hidden"
+              :label="isLikerPlus ? $t('product_page_plus_reading_borrow') : $t('product_page_plus_reading_cta')"
+              icon="i-material-symbols-auto-stories-outline-rounded"
+              size="xl"
+              :color="plusReadingTagColor"
+              variant="soft"
+              block
+              @click="handlePlusReadButtonClick"
             />
 
             <div
@@ -750,7 +782,7 @@
 
     <!-- Mobile sticky bottom bar -->
     <aside
-      v-if="isUserBookOwner || pricingItems.length"
+      v-if="isUserBookOwner || isPlusReadingCTAVisible || pricingItems.length"
       :class="[
         'fixed',
         'bottom-17',
@@ -782,7 +814,18 @@
         @click="handleReadButtonClick"
       />
 
-      <template v-else-if="pricingItems.length">
+      <UButton
+        v-if="isPlusReadingCTAVisible"
+        :label="isLikerPlus ? $t('product_page_plus_reading_borrow') : $t('product_page_plus_reading_cta')"
+        icon="i-material-symbols-auto-stories-outline-rounded"
+        class="cursor-pointer"
+        color="primary"
+        size="xl"
+        block
+        @click="handlePlusReadButtonClick"
+      />
+
+      <template v-if="!isUserBookOwner && pricingItems.length">
         <UFieldGroup
           v-if="pricingItems.length > 1"
           size="xs"
@@ -871,7 +914,7 @@
 
     <!-- Reading Format Selection Drawer -->
     <UDrawer
-      v-if="isUserBookOwner"
+      v-if="isUserBookOwner || isPlusReadingCTAVisible"
       v-model:open="isReadBookDrawerOpen"
       :direction="isDesktopScreen ? 'top' : 'bottom'"
       :handle="false"
@@ -983,6 +1026,27 @@ const ttsExplainerRoute = computed(() => localeRoute({
   },
 }))
 
+const plusReadingTagColor = computed(() => colorMode.value === 'dark' ? 'primary' : 'secondary')
+const plusReadingTagLabel = computed(() => $t('product_page_plus_reading_label'))
+const plusReadingTagRoute = computed(() =>
+  isLikerPlus.value || isApp.value
+    ? localeRoute({
+        name: 'store',
+        query: {
+          q: plusReadingTagLabel.value,
+          ll_medium: `keyword-${plusReadingTagLabel.value}`,
+          ll_source: 'product-page',
+        },
+      })
+    : localeRoute({
+        name: 'member',
+        query: {
+          ll_medium: 'plus-reading-tag',
+          ll_source: 'product-page',
+        },
+      }),
+)
+
 const metadataStore = useMetadataStore()
 const bookListStore = useBookListStore()
 const { handleError } = useErrorHandler()
@@ -995,6 +1059,12 @@ const isAdultContentEnabled = useAdultContentSetting()
 const nftClassId = computed(() => getRouteParam('nftClassId'))
 const { isOwner: isUserBookOwner } = useUserBookOwnership(nftClassId)
 const bookInfo = useBookInfo({ nftClassId })
+
+// Non-owners of a Plus-reading book see a CTA: Plus members read it directly,
+// while guests/non-Plus users are routed to subscribe.
+const isPlusReadingCTAVisible = computed(() =>
+  !isUserBookOwner.value && bookInfo.isPlusReadingEnabled.value,
+)
 const {
   generateBookStructuredData,
   generateOGMetaTags,
@@ -1415,9 +1485,14 @@ const canBePurchased = computed(() => {
 const getContentTypeLabel = useContentTypeLabel()
 
 function handleContentURLClick(contentURL: ContentURL) {
-  const firstTokenId = bookshelfStore.getFirstTokenIdByNFTClassId(nftClassId.value)
-  if (firstTokenId) {
-    openContentURL(contentURL, firstTokenId)
+  if (isUserBookOwner.value) {
+    const firstTokenId = bookshelfStore.getFirstTokenIdByNFTClassId(nftClassId.value)
+    if (firstTokenId) {
+      openContentURL(contentURL, firstTokenId)
+    }
+  }
+  else if (isPlusReadingCTAVisible.value) {
+    openContentURL(contentURL)
   }
   isReadBookDrawerOpen.value = false
 }
@@ -1811,9 +1886,54 @@ async function handleReadButtonClick() {
   }
 }
 
-async function openContentURL(contentURL: ContentURL, nftId: string) {
+// Omitting nftId opens a Plus reading session: the reader fetches the generic
+// file, which ebook-cors serves to active Plus subscribers without ownership.
+async function openContentURL(contentURL: ContentURL, nftId?: string) {
   const readerRoute = bookInfo.getReaderRoute.value({ nftId, contentURL })
   await navigateTo(readerRoute)
+}
+
+async function handlePlusReadButtonClick() {
+  useLogEvent('product_page_plus_reading_button_click', { nft_class_id: nftClassId.value })
+
+  // Guests and non-Plus users are routed to the membership page to subscribe.
+  if (!isLikerPlus.value) {
+    await navigateTo(localeRoute({
+      name: 'member',
+      query: {
+        ll_medium: 'plus-reading-cta',
+        ll_source: 'product-page',
+      },
+    }))
+    return
+  }
+
+  try {
+    const contentURLs = bookInfo.contentURLs.value || []
+    if (contentURLs.length > 1) {
+      isReadBookDrawerOpen.value = true
+      return
+    }
+
+    const contentURL = contentURLs[0] || bookInfo.defaultContentURL.value
+    if (!contentURL) {
+      throw createError({ data: { description: $t('error_book_content_url_empty') } })
+    }
+
+    await openContentURL(contentURL)
+  }
+  catch (error) {
+    await handleError(error)
+  }
+}
+
+function handlePlusReadingTagClick() {
+  if (isLikerPlus.value || isApp.value) {
+    handleKeywordClick(plusReadingTagLabel.value)
+  }
+  else {
+    useLogEvent('plus_reading_tag_click', { nft_class_id: nftClassId.value })
+  }
 }
 
 function calculateCustomPrice(editionPrice: number, tippingAmount: number | undefined): number {

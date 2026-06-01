@@ -145,6 +145,7 @@ declare global {
     promotionalImages?: string[]
     promotionalVideos?: string[]
     plusPromoEnabled?: boolean
+    isPlusReadingEnabled?: boolean
     timestamp: number
   }
 

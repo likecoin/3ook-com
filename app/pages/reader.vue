@@ -50,7 +50,9 @@ if (isUploadedBook) {
 }
 else {
   const bookInfo = useBookInfo({ nftClassId })
-  const { isOwner: isUserBookOwner, checkOwnership } = useUserBookOwnership(nftClassId)
+  const { checkOwnership } = useUserBookOwnership(nftClassId)
+  const { isLikerPlus } = useSubscription()
+  const nftStore = useNFTStore()
 
   if (nftClassId.value !== nftClassId.value.toLowerCase()) {
     await navigateTo(localeRoute({
@@ -62,8 +64,15 @@ else {
     }), { replace: true })
   }
 
-  await checkOwnership()
-  if (!isUserBookOwner.value) {
+  // Resolve ownership and the Plus-reading flag together: a non-owner may still
+  // borrow when they're an active Plus member and the book allows Plus reading.
+  const [isOwner] = await Promise.all([
+    checkOwnership(),
+    nftStore.lazyFetchNFTClassAggregatedMetadataById(nftClassId.value)
+      .catch(error => console.warn('Failed to fetch NFT metadata:', error)),
+  ])
+  const canBorrowWithPlus = isLikerPlus.value && bookInfo.isPlusReadingEnabled.value
+  if (!isOwner && !canBorrowWithPlus) {
     await navigateTo(localeRoute({ name: 'shelf', query: route.query }))
   }
 
