@@ -16,6 +16,9 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
 
   const nftClassIds = ref<string[]>([])
   const tokenIdsByNFTClassId = ref<Record<string, string[]>>({})
+  // Borrowed (non-owned) Plus-reading books, most-recent first. LRU-capped at 20
+  // server-side; the only terminal action is "return" (drop). See api-user.ts.
+  const plusReadingBookIds = ref<string[]>([])
   const persistedWalletAddress = ref<string | null>(null)
   const isFetching = ref(false)
   const hasFetched = ref(false)
@@ -34,31 +37,90 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
     return getTokenIdsByNFTClassId.value(nftClassId)[0]
   })
 
-  const items = computed<BookshelfItem[]>(() => {
-    return nftClassIds.value
-      .filter((nftClassId) => {
-        const metadata = nftStore.getNFTClassMetadataById(nftClassId)
-        return metadata?.['@type'] === 'Book'
-      })
-      .map((nftClassId) => {
-        const nftIds = tokenIdsByNFTClassId.value[nftClassId] || []
-        const settings = bookSettingsStore.getSettings(nftClassId)
-        const progressData = {
-          lastOpenedTime: settings?.lastOpenedTime || 0,
-          progress: settings?.progress || 0,
-        }
+  function getIsBookNFTClass(nftClassId: string) {
+    return nftStore.getNFTClassMetadataById(nftClassId)?.['@type'] === 'Book'
+  }
 
-        return {
-          nftClassId,
-          nftIds,
-          lastOpenedTime: progressData.lastOpenedTime,
-          progress: progressData.progress,
-          completedAt: settings?.completedAt,
-          didNotFinishAt: settings?.didNotFinishAt,
-          archivedAt: settings?.archivedAt,
-        }
-      })
+  function buildBookshelfItem(nftClassId: string, nftIds: string[]): BookshelfItem {
+    const settings = bookSettingsStore.getSettings(nftClassId)
+    return {
+      nftClassId,
+      nftIds,
+      lastOpenedTime: settings?.lastOpenedTime || 0,
+      progress: settings?.progress || 0,
+      completedAt: settings?.completedAt,
+      didNotFinishAt: settings?.didNotFinishAt,
+      archivedAt: settings?.archivedAt,
+    }
+  }
+
+  const items = computed<BookshelfItem[]>(() =>
+    nftClassIds.value
+      .filter(getIsBookNFTClass)
+      .map(nftClassId => buildBookshelfItem(nftClassId, tokenIdsByNFTClassId.value[nftClassId] || [])),
+  )
+
+  // Borrowed Plus-reading books are listed via a dedicated endpoint (they live
+  // outside the NFT-ownership-driven `items`). Deduped against owned books, and
+  // gated on Book metadata so the cover/title can render.
+  const plusReadingItems = computed<BookshelfItem[]>(() => {
+    const ownedNFTClassIds = new Set(nftClassIds.value.map(id => id.toLowerCase()))
+    return plusReadingBookIds.value
+      .filter(nftClassId => !ownedNFTClassIds.has(nftClassId))
+      .filter(getIsBookNFTClass)
+      .map(nftClassId => buildBookshelfItem(nftClassId, []))
   })
+
+  async function fetchPlusReadingBooks() {
+    if (!hasLoggedIn.value) return
+    try {
+      const ids = await $fetch('/api/books/plus-reading')
+      plusReadingBookIds.value = ids.map(id => id.toLowerCase())
+      if (!plusReadingBookIds.value.length) return
+
+      // Hydrate aggregated metadata (so the Book filter passes) + book settings
+      // (progress) for display. One failure shouldn't drop the rest.
+      await Promise.allSettled([
+        ...plusReadingBookIds.value.map(id =>
+          nftStore.lazyFetchNFTClassAggregatedMetadataById(id),
+        ),
+        bookSettingsStore.fetchBatchSettings(plusReadingBookIds.value),
+      ])
+    }
+    catch (error) {
+      console.warn('Failed to fetch plus reading books:', error)
+    }
+  }
+
+  // "Return" a borrowed book: drop it from the shelf entirely (progress kept).
+  async function removePlusReadingBook(nftClassId: string) {
+    const normalizedNFTClassId = nftClassId.toLowerCase()
+    plusReadingBookIds.value = plusReadingBookIds.value.filter(id => id !== normalizedNFTClassId)
+    try {
+      await $fetch(`/api/books/plus-reading/${normalizedNFTClassId}`, { method: 'DELETE' })
+    }
+    catch (error) {
+      console.warn('Failed to remove plus reading book:', error)
+    }
+  }
+
+  // Registers/refreshes a borrow when opened in the reader, moving it to the
+  // front (most-recent). Skips the write when it's already the most-recent
+  // borrow, so refreshes / format switches that re-mount don't re-POST.
+  async function registerPlusReadingOpen(nftClassId: string) {
+    const normalizedNFTClassId = nftClassId.toLowerCase()
+    if (plusReadingBookIds.value[0] === normalizedNFTClassId) return
+    plusReadingBookIds.value = [
+      normalizedNFTClassId,
+      ...plusReadingBookIds.value.filter(id => id !== normalizedNFTClassId),
+    ]
+    try {
+      await $fetch(`/api/books/plus-reading/${normalizedNFTClassId}`, { method: 'POST' })
+    }
+    catch (error) {
+      console.warn('Failed to register plus reading book:', error)
+    }
+  }
 
   async function fetchItems({
     walletAddress,
@@ -261,6 +323,7 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
     hasFetched.value = false
     nftClassIds.value = []
     tokenIdsByNFTClassId.value = {}
+    plusReadingBookIds.value = []
     nextKey.value = undefined
     persistedWalletAddress.value = null
     lastError.value = null
@@ -277,6 +340,7 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
     // Must be returned so Pinia exposes them on $state for persist.pick.
     nftClassIds,
     tokenIdsByNFTClassId,
+    plusReadingBookIds,
     persistedWalletAddress,
 
     isFetching,
@@ -285,9 +349,11 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
     lastError,
 
     items,
+    plusReadingItems,
 
     fetchItems,
     fetchAllItems,
+    fetchPlusReadingBooks,
     getTokenIdsByNFTClassId,
     getFirstTokenIdByNFTClassId,
     fetchNFTByNFTClassIdAndOwnerWalletAddressThroughContract,
@@ -295,12 +361,14 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
     markBookAsFinished,
     markBookAsDidNotFinish,
     markBookAsReading,
+    removePlusReadingBook,
+    registerPlusReadingOpen,
     archiveBook,
     unarchiveBook,
     reset,
   }
 }, {
   persist: {
-    pick: ['nftClassIds', 'tokenIdsByNFTClassId', 'persistedWalletAddress'],
+    pick: ['nftClassIds', 'tokenIdsByNFTClassId', 'plusReadingBookIds', 'persistedWalletAddress'],
   },
 })

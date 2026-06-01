@@ -85,6 +85,7 @@ function normalizeBookSettings(data: BookSettingsFirestoreData): BookSettingsDat
     totalTTSListeningTimeMs: _totalTTSListeningTimeMs,
     ttsCharactersUsed: _ttsCharactersUsed,
     sessionCount: _sessionCount,
+    plusBorrowedAt: _plusBorrowedAt,
     ...clientFields
   } = data
   const rawLastOpened = lastOpenedTime as Timestamp | number | undefined
@@ -177,6 +178,85 @@ export async function getBatchBookSettings(
   }
 
   return result
+}
+
+// Max number of borrowed (non-owned) Plus-reading books kept on a shelf.
+const PLUS_READING_LIMIT = 20
+
+/**
+ * Borrows a non-owned Plus-reading book (or refreshes its recency on re-open),
+ * stamping its LRU marker. Borrows are capped at PLUS_READING_LIMIT; overflow
+ * has its marker cleared (hide-only — the doc and reading progress are retained).
+ */
+export async function markPlusReadingBook(
+  userWallet: string,
+  nftClassId: string,
+): Promise<void> {
+  const booksCollection = getUserCollection().doc(userWallet).collection('books')
+  const bookDocRef = booksCollection.doc(nftClassId.toLowerCase())
+
+  // Re-stamping an existing borrow can't grow the borrow set, so only a
+  // genuinely new borrow runs the eviction query below (offset bills for every
+  // skipped doc, so it's worth avoiding when nothing can have overflowed).
+  const existing = await bookDocRef.get()
+  const wasAlreadyBorrowed = !!existing.data()?.plusBorrowedAt
+
+  await bookDocRef.set({
+    plusBorrowedAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
+  }, { merge: true })
+
+  if (wasAlreadyBorrowed) return
+
+  // Evict least-recently-borrowed books beyond the cap. A single-field orderBy
+  // implicitly excludes docs without plusBorrowedAt, so no composite index is
+  // required; offset skips the newest LIMIT docs to find the overflow.
+  const overflow = await booksCollection
+    .orderBy('plusBorrowedAt', 'desc')
+    .offset(PLUS_READING_LIMIT)
+    .limit(500) // cap eviction at Firestore's per-batch op limit; self-heals on next borrow
+    .get()
+  if (overflow.empty) return
+
+  const batch = getFirestoreDb().batch()
+  overflow.forEach((doc) => {
+    batch.set(doc.ref, { plusBorrowedAt: FieldValue.delete() }, { merge: true })
+  })
+  await batch.commit()
+}
+
+/**
+ * Returns a borrowed Plus-reading book to drop it from the shelf entirely.
+ * Clears the marker; reading progress on the doc is retained.
+ */
+export async function dropPlusReadingBook(
+  userWallet: string,
+  nftClassId: string,
+): Promise<void> {
+  await getUserCollection()
+    .doc(userWallet)
+    .collection('books')
+    .doc(nftClassId.toLowerCase())
+    .set({
+      plusBorrowedAt: FieldValue.delete(),
+      updatedAt: FieldValue.serverTimestamp(),
+    }, { merge: true })
+}
+
+/**
+ * Returns the wallet's borrowed Plus-reading book class IDs, most-recent first.
+ */
+export async function getPlusReadingBooks(
+  userWallet: string,
+): Promise<string[]> {
+  const snapshot = await getUserCollection()
+    .doc(userWallet)
+    .collection('books')
+    .orderBy('plusBorrowedAt', 'desc')
+    .limit(PLUS_READING_LIMIT)
+    .get()
+
+  return snapshot.docs.map(doc => doc.id)
 }
 
 export async function getUserSettings(

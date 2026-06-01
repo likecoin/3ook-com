@@ -382,6 +382,7 @@ const nftStore = useNFTStore()
 const bookSettingsStore = useBookSettingsStore()
 const {
   nftClassId,
+  nftId,
   isUploadedBook,
   bookInfo,
   bookCoverSrc,
@@ -389,6 +390,14 @@ const {
   bookFileCacheKey,
   bookProgressKeyPrefix,
 } = useReader()
+
+usePlusReadingTracker({
+  nftClassId,
+  isUploadedBook,
+  isPlusReadingEnabled: bookInfo.isPlusReadingEnabled,
+  nftId,
+})
+
 const { fetchCustomVoice } = useCustomVoice()
 const { fetchConfig: fetchPlusAffiliateConfig } = usePlusAffiliate()
 

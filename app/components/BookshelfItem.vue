@@ -2,16 +2,43 @@
   <li
     ref="lazyLoadTrigger"
     class="flex flex-col justify-end"
-    :class="!props.isOwned ? 'opacity-50' : 'opacity-100'"
+    :class="canRead ? 'opacity-100' : 'opacity-50'"
   >
-    <BookCover
-      :src="bookCoverSrc"
-      :alt="bookInfo.name.value"
-      :lazy="props.lazy"
-      :ribbon-text="props.isClaimable ? $t('bookshelf_claimable_label') : ''"
-      :has-shadow="true"
-      @click="handleCoverClick"
-    />
+    <div class="relative">
+      <BookCover
+        :src="bookCoverSrc"
+        :alt="bookInfo.name.value"
+        :lazy="props.lazy"
+        :ribbon-text="props.isClaimable ? $t('bookshelf_claimable_label') : ''"
+        :has-shadow="true"
+        @click="handleCoverClick"
+      />
+
+      <!-- Marks a borrowed (non-owned) book so owned books read as premium. -->
+      <UBadge
+        v-if="props.isPlusReading"
+        class="absolute top-2 left-2 pointer-events-none"
+        :label="$t('bookshelf_plus_reading_badge_label')"
+        color="primary"
+        variant="solid"
+        size="sm"
+      />
+
+      <!-- Locked overlay when Plus has lapsed: tap routes to resubscribe. -->
+      <button
+        v-if="props.isPlusReading && !props.isPlusReadingAccessible"
+        type="button"
+        class="absolute inset-0 flex items-center justify-center bg-black/20 rounded-[inherit] cursor-pointer"
+        :aria-label="$t('bookshelf_plus_reading_locked_cta')"
+        @click="handleCoverClick"
+      >
+        <UIcon
+          name="i-material-symbols-lock-outline"
+          class="text-white"
+          size="32"
+        />
+      </button>
+    </div>
 
     <div class="mt-2 mb-1 w-full">
       <div
@@ -129,6 +156,16 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
+  // A borrowed (non-owned) Plus-reading book. Shows a badge; when Plus has
+  // lapsed (isPlusReadingAccessible=false) it renders locked with a resub CTA.
+  isPlusReading: {
+    type: Boolean,
+    default: false,
+  },
+  isPlusReadingAccessible: {
+    type: Boolean,
+    default: true,
+  },
   progress: {
     type: Number,
     default: 0,
@@ -167,6 +204,7 @@ const emit = defineEmits([
   'mark-as-reading',
   'mark-as-finished',
   'mark-as-did-not-finish',
+  'return-plus-reading',
   'archive',
   'unarchive',
 ])
@@ -191,6 +229,11 @@ const bookCoverSrc = computed(() => getResizedImageURL(bookInfo.coverSrc.value, 
 
 const progressPercentage = computed(() => Math.round(props.progress * 100))
 
+// A book is readable if owned, or borrowed via Plus reading with active Plus.
+const canRead = computed(() =>
+  props.isOwned || (props.isPlusReading && props.isPlusReadingAccessible),
+)
+
 const isDesktopScreen = useDesktopScreen()
 
 const isMobileMenuOpen = ref(false)
@@ -209,7 +252,7 @@ const menuItems = computed<DropdownMenuItem[]>(() => {
   }
 
   // Reader items: only show if more than one content file
-  if (props.isOwned && bookInfo.sortedContentURLs.value.length > 1) {
+  if (canRead.value && bookInfo.sortedContentURLs.value.length > 1) {
     bookInfo.sortedContentURLs.value.forEach((contentURL) => {
       items.push({
         label: getContentTypeLabel(contentURL.type),
@@ -220,7 +263,7 @@ const menuItems = computed<DropdownMenuItem[]>(() => {
   }
 
   // TTS
-  if (props.isOwned) {
+  if (canRead.value) {
     if (bookInfo.isAudioHidden.value) {
       items.push({
         label: $t('bookshelf_item_menu_tts_disabled'),
@@ -246,7 +289,7 @@ const menuItems = computed<DropdownMenuItem[]>(() => {
     }),
   })
 
-  // Reading state
+  // Reading state (owned books)
   if (props.isOwned && props.canEditReadingState) {
     if (props.isFinished || props.isDidNotFinish) {
       items.push({
@@ -271,7 +314,18 @@ const menuItems = computed<DropdownMenuItem[]>(() => {
     }
   }
 
-  // Archive / Unarchive
+  // Return (borrowed Plus-reading books): the single terminal action, replacing
+  // finished/DNF/archive. Drops the book from the shelf; session-only, so it
+  // stays available after Plus lapses for cleanup.
+  if (props.isPlusReading && props.canEditReadingState) {
+    items.push({
+      label: $t('bookshelf_item_menu_plus_reading_return'),
+      icon: 'i-material-symbols-assignment-return-outline-rounded',
+      onSelect: () => emit('return-plus-reading', props.nftClassId),
+    })
+  }
+
+  // Archive / Unarchive (owned books only)
   if (props.isOwned && props.canArchive) {
     if (props.isArchived) {
       items.push({
@@ -296,7 +350,7 @@ const menuItems = computed<DropdownMenuItem[]>(() => {
     to: bookInfo.productPageRoute.value,
   })
 
-  // Download
+  // Download (owned books)
   if (props.isOwned) {
     if (bookInfo.isDownloadable.value) {
       bookInfo.sortedContentURLs.value.forEach((contentURL) => {
@@ -320,9 +374,27 @@ const menuItems = computed<DropdownMenuItem[]>(() => {
       })
     }
   }
+  // Download (borrowed Plus-reading books): never serve the file. Route to the
+  // store to buy it if it's downloadable, otherwise keep it visibly disabled.
+  else if (props.isPlusReading) {
+    if (bookInfo.isDownloadable.value) {
+      items.push({
+        label: $t('bookshelf_item_menu_download_via_store'),
+        icon: 'i-material-symbols-download-rounded',
+        to: bookInfo.productPageRoute.value,
+      })
+    }
+    else {
+      items.push({
+        label: $t('bookshelf_item_menu_download_disabled'),
+        icon: 'i-material-symbols-download-rounded',
+        disabled: true,
+      })
+    }
+  }
 
-  // Export annotations
-  if (props.isOwned) {
+  // Export annotations (owned or borrowed — both can be annotated while reading)
+  if (props.isOwned || props.isPlusReading) {
     items.push({
       label: $t('bookshelf_item_menu_export_annotations'),
       icon: 'i-material-symbols-upload-rounded',
@@ -404,14 +476,29 @@ function claimBook() {
   emit('claim', props.nftClassId)
 }
 
+const localeRoute = useLocaleRoute()
+
 function handleCoverClick() {
   if (props.isClaimable) {
     claimBook()
     return
   }
 
+  // Lapsed Plus on a borrowed book: route to the membership page to resubscribe.
+  if (props.isPlusReading && !props.isPlusReadingAccessible) {
+    useLogEvent('shelf_plus_reading_resub_click', { nft_class_id: props.nftClassId })
+    navigateTo(localeRoute({
+      name: 'member',
+      query: {
+        ll_medium: 'plus-reading-locked',
+        ll_source: 'shelf',
+      },
+    }))
+    return
+  }
+
   const contentURL = bookInfo.defaultContentURL.value
-  if (props.isOwned && contentURL) {
+  if (canRead.value && contentURL) {
     openContentURL(contentURL)
     return
   }

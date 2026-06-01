@@ -163,7 +163,9 @@
               :class="getGridItemClassesByIndex(claimableNFTClassIds.length + index)"
               :nft-class-id="item.nftClassId"
               :nft-ids="item.nftIds"
-              :is-owned="isMyBookshelf"
+              :is-owned="isMyBookshelf && item.isOwned"
+              :is-plus-reading="item.isPlusReading"
+              :is-plus-reading-accessible="isPlusReadingAccessible"
               :can-archive="isMyBookshelf"
               :can-edit-reading-state="isMyBookshelf"
               :is-finished="item.completedAt != null"
@@ -175,6 +177,7 @@
               @mark-as-reading="handleMarkBookAsReading"
               @mark-as-finished="handleMarkBookAsFinished"
               @mark-as-did-not-finish="handleMarkBookAsDidNotFinish"
+              @return-plus-reading="handleReturnPlusReadingBook"
               @archive="handleArchiveBook"
             />
           </ul>
@@ -352,6 +355,7 @@ interface BookshelfItemWithStaking extends BookshelfItem {
   stakedAmount: number
   pendingRewards: number
   isOwned: boolean
+  isPlusReading?: boolean
 }
 
 const { likeCoinTokenDecimals } = useRuntimeConfig().public
@@ -366,6 +370,7 @@ const bookshelfStore = useBookshelfStore()
 const uploadedBooksStore = useUploadedBooksStore()
 const metadataStore = useMetadataStore()
 const stakingStore = useStakingStore()
+const toast = useToast()
 const { isLikerPlus, isExpiredLikerPlus } = useSubscription()
 const { isApp } = useAppDetection()
 const isUploadedBookFeatureEnabled = useFeatureFlagEnabled('plus-upload-files')
@@ -382,6 +387,9 @@ const overlay = useOverlay()
 const deleteModal = overlay.create(DeleteUploadedBookModal)
 
 const isUploadedBookAccessible = computed(() => isLikerPlus.value && !isExpiredLikerPlus.value)
+// Borrowed Plus-reading books are readable only with active Plus; once it lapses
+// they render locked (with a resubscribe CTA) rather than disappearing.
+const isPlusReadingAccessible = computed(() => isLikerPlus.value && !isExpiredLikerPlus.value)
 const canUploadBook = computed(() => isMyBookshelf.value && isUploadedBookFeatureEnabled.value && isUploadedBookAccessible.value && !isApp.value)
 const isUploadedBookVisible = computed(() => isMyBookshelf.value && isUploadedBookFeatureEnabled.value && hasUploadedBooks.value)
 
@@ -419,6 +427,20 @@ const bookshelfItemsAll = computed<BookshelfItemWithStaking[]>(() => {
       isOwned: true,
     }
   })
+})
+
+// Borrowed (non-owned) Plus-reading books. Only on my own shelf; deduped vs
+// owned books by the store. They have no terminal state — they live in the
+// Reading tab until returned (還書), so they never reach Finished/DNF/Archived.
+const plusReadingItemsAll = computed<BookshelfItemWithStaking[]>(() => {
+  if (!isMyBookshelf.value) return []
+  return bookshelfStore.plusReadingItems.map(item => ({
+    ...item,
+    stakedAmount: 0,
+    pendingRewards: 0,
+    isOwned: false,
+    isPlusReading: true,
+  }))
 })
 
 // Finished tab: books with completedAt set (not archived), sorted by completedAt desc
@@ -479,10 +501,12 @@ const activeTab = computed<ShelfTab>({
   },
 })
 
-// Reading tab: owned books (excluding archived, finished, DNF) sorted by last opened time (opened first), then the rest
+// Reading tab: owned books (excluding archived, finished, DNF) plus all borrowed
+// Plus-reading books, sorted by last opened time (opened first).
 const readingItems = computed(() => {
-  return bookshelfItemsAll.value
+  const ownedReading = bookshelfItemsAll.value
     .filter(item => !isMyBookshelf.value || (item.archivedAt == null && item.completedAt == null && item.didNotFinishAt == null))
+  return [...ownedReading, ...plusReadingItemsAll.value]
     .sort((a, b) => {
       const aOpened = a.progress > 0
       const bOpened = b.progress > 0
@@ -741,6 +765,8 @@ async function loadBookshelfData(addr: string, { isRefresh = false } = {}) {
     promises.push(
       fetchClaimableFreeBooks(),
       stakingStore.fetchUserStakingData(user.value!.evmWallet),
+      // Unconditional (not Plus-gated): lapsed users still see locked borrows.
+      bookshelfStore.fetchPlusReadingBooks(),
     )
     if (isUploadedBookFeatureEnabled.value) {
       promises.push(uploadedBooksStore.fetchItems({ force: isRefresh }))
@@ -857,6 +883,18 @@ function handleMarkBookAsFinished(nftClassId: string) {
   if (!isMyBookshelf.value) return
   useLogEvent('shelf_mark_book_finished', { nft_class_id: nftClassId })
   bookshelfStore.markBookAsFinished(nftClassId)
+}
+
+// "Return" a borrowed Plus-reading book: drop it from the shelf entirely.
+function handleReturnPlusReadingBook(nftClassId: string) {
+  if (!isMyBookshelf.value) return
+  useLogEvent('shelf_return_plus_reading_book', { nft_class_id: nftClassId })
+  bookshelfStore.removePlusReadingBook(nftClassId)
+  toast.add({
+    title: $t('bookshelf_plus_reading_returned_toast'),
+    icon: 'i-material-symbols-assignment-return-outline-rounded',
+    color: 'neutral',
+  })
 }
 
 function handleMarkBookAsDidNotFinish(nftClassId: string) {
