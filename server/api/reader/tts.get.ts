@@ -32,6 +32,8 @@ async function serveCachedTTS(
   cacheKey: string,
   contentFormat: string,
   wallet: string,
+  dictVersion: string,
+  getExpectedSig: () => string,
 ): Promise<unknown | null> {
   const file = bucket.file(cacheKey)
   let totalSize: number
@@ -40,6 +42,11 @@ async function serveCachedTTS(
     const metadata = await file.getMetadata()
     totalSize = Number(metadata[0].size)
     contentType = metadata[0].contentType || contentFormat
+    // Auto-burst stale audio when the pronunciation dictionary changes.
+    const meta = metadata[0].metadata ?? {}
+    if (isCachedTTSPronunciationStale({ file, meta, dictVersion, getExpectedSig, cacheKey, label: `user ${wallet}` })) {
+      return null
+    }
   }
   catch (error: unknown) {
     if ((error as { code?: number })?.code === 404) return null
@@ -212,6 +219,14 @@ export default defineEventHandler(async (event) => {
   }
 
   const ttsModel = getMinimaxModel({ voiceId, customVoiceId: customMiniMaxVoiceId, language })
+  // Dictionary version + per-text applicable-rules signature drive cache
+  // invalidation, stamped on write and compared on read so a pronunciation edit
+  // auto-bursts exactly the affected segments. The version is a cheap stamp; the
+  // signature (a ~6k-entry scan for zh-TW) is computed lazily — only on a cache
+  // miss or the version-mismatch check after an edit — so steady-state hits
+  // never pay for it. Built from the synthesized text the provider sends.
+  const dictVersion = TTS_PRONUNCIATION_VERSION[language] ?? 'none'
+  const getExpectedSig = createTTSPronunciationSigGetter(language, text)
   const bucket = getTTSCacheBucket()
   const isCacheEnabled = !!bucket
   const cacheKey = isCacheEnabled
@@ -224,7 +239,7 @@ export default defineEventHandler(async (event) => {
 
   if (isCacheEnabled) {
     try {
-      const result = await serveCachedTTS(event, bucket, cacheKey!, provider.format, session.user.evmWallet)
+      const result = await serveCachedTTS(event, bucket, cacheKey!, provider.format, session.user.evmWallet, dictVersion, getExpectedSig)
       if (result !== null) {
         publishEvent(event, 'TTSCacheHit', ttsEventBase)
         return result
@@ -243,7 +258,7 @@ export default defineEventHandler(async (event) => {
       console.log(`[Speech] In-flight dedup for user ${session.user.evmWallet}: ${cacheKey}`)
       try {
         await pending
-        const result = await serveCachedTTS(event, bucket!, cacheKey, provider.format, session.user.evmWallet)
+        const result = await serveCachedTTS(event, bucket!, cacheKey, provider.format, session.user.evmWallet, dictVersion, getExpectedSig)
         if (result !== null) return result
         console.warn(`[Speech] In-flight dedup cache miss after wait, generating own for user ${session.user.evmWallet}: ${cacheKey}`)
       }
@@ -302,6 +317,8 @@ export default defineEventHandler(async (event) => {
       nftClassId,
       text: text.length > 1800 ? text.substring(0, 1800) + '...' : text,
       textLength: text.length.toString(),
+      pronunciationVersion: dictVersion,
+      pronunciationSig: getExpectedSig(),
       createdAt: new Date().toISOString(),
     },
   }

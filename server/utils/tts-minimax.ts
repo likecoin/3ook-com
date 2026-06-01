@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import type { BaseTTSProvider, TTSProviderResult, TTSProviderStreamResult, TTSRequestParams } from './api-tts'
 import zhHKPronunciation from './tts-pronunciation/zh-HK.json'
 import zhTWPronunciation from './tts-pronunciation/zh-TW.json'
@@ -76,6 +77,82 @@ export function getTTSPronunciationDictionary(
   const tone = getApplicablePronunciationRules(language, synthesizedText)
     .map(([target, override]) => `${target}/${override}`)
   return tone.length ? { tone } : undefined
+}
+
+// Per-language content hash of the pronunciation rules, computed once at module
+// load. Editing either JSON changes its hash automatically — no manual bump — so
+// cached TTS audio can detect it was generated under a now-outdated dictionary.
+// Per-language so a zh-HK edit leaves every zh-TW cache entry untouched.
+export const TTS_PRONUNCIATION_VERSION: Record<string, string> = Object.fromEntries(
+  Object.entries(TTS_PRONUNCIATION_RULES).map(([language, rules]) =>
+    [language, createHash('sha256').update(JSON.stringify(rules)).digest('hex').slice(0, 12)]),
+)
+
+// Signature for text no pronunciation rule applies to. Shared so the cache's
+// legacy-entry default (server/api/reader/tts.get.ts) stays in lockstep with
+// what getTTSPronunciationSignature emits — if they drift, dict-free legacy
+// audio would wrongly regenerate.
+export const NO_PRONUNCIATION_SIG = 'none'
+
+// Hash of only the pronunciation rules that apply to this exact text — the
+// change detector behind cache invalidation. Derives from the same dictionary
+// the generator sends to Minimax, so pass the post-`injectTTSPauseMarkers` text
+// (a marker spliced into a clause-spanning idiom changes which rules match).
+export function getTTSPronunciationSignature(language: string, synthesizedText: string): string {
+  const dict = getTTSPronunciationDictionary(language, synthesizedText)
+  if (!dict) return NO_PRONUNCIATION_SIG
+  return createHash('sha256').update(dict.tone.join('\n')).digest('hex').slice(0, 16)
+}
+
+// Memoizing getter for a request's pronunciation signature: computes the
+// (~6k-entry for zh-TW) dictionary scan at most once, and only when actually
+// called — so a steady-state cache hit whose version stamp matches never pays
+// for it. Shared by the reader and sample TTS endpoints.
+export function createTTSPronunciationSigGetter(language: string, text: string): () => string {
+  let sig: string | undefined
+  return () => (sig ??= getTTSPronunciationSignature(language, injectTTSPauseMarkers(text)))
+}
+
+// Mirrors Google Cloud Storage's custom-metadata value type (`getMetadata()[0]
+// .metadata`), whose values are coerced to these primitives.
+type CloudStorageMetadata = Record<string, string | number | boolean | null>
+
+// Cache keys whose stamp refresh is already in flight this process, so the
+// concurrent range probes a single playback fans out (see `inFlightWrites` in
+// the TTS endpoints) collapse to one metadata PATCH instead of a write burst.
+const refreshingPronunciationStamps = new Set<string>()
+
+// Decides whether cached TTS audio is stale after a pronunciation-dict edit,
+// shared by the reader and sample endpoints. A version-stamp match is the fast
+// path — the audio is current, so the (~6k-entry) signature scan never runs.
+// On a version miss the segment is stale only if its applicable rules differ
+// from what it was generated with; legacy entries (no stamp) are treated as
+// having had no overrides ('none'), so dict-free text is left alone while text
+// that now needs a replacement is regenerated. When the rules are unchanged we
+// refresh the stamp (fire-and-forget, de-duped per process) so future hits take
+// the version fast-path instead of rescanning every time.
+export function isCachedTTSPronunciationStale(options: {
+  file: { setMetadata: (metadata: { metadata: CloudStorageMetadata }) => Promise<unknown> }
+  meta: CloudStorageMetadata
+  dictVersion: string
+  getExpectedSig: () => string
+  cacheKey: string
+  label: string
+}): boolean {
+  const { file, meta, dictVersion, getExpectedSig, cacheKey, label } = options
+  if (meta.pronunciationVersion === dictVersion) return false
+  const expectedSig = getExpectedSig()
+  if (expectedSig !== (meta.pronunciationSig ?? NO_PRONUNCIATION_SIG)) {
+    console.log(`[Speech] Stale pronunciation for ${label}, regenerating: ${cacheKey}`)
+    return true
+  }
+  if (!refreshingPronunciationStamps.has(cacheKey)) {
+    refreshingPronunciationStamps.add(cacheKey)
+    file.setMetadata({ metadata: { ...meta, pronunciationVersion: dictVersion, pronunciationSig: expectedSig } })
+      .catch((error: unknown) => console.warn(`[Speech] Failed to refresh pronunciation metadata for ${label}: ${cacheKey}`, error))
+      .finally(() => { refreshingPronunciationStamps.delete(cacheKey) })
+  }
+  return false
 }
 
 // Alternative to `pronunciationDict`: splice the override straight into the

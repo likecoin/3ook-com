@@ -1,3 +1,7 @@
+// @vitest-environment node
+// These are pure string helpers needing no DOM; the default `nuxt` (unenv)
+// environment stubs out node:crypto, which tts-minimax.ts touches at import
+// time (TTS_PRONUNCIATION_VERSION), so import fails there. Run under real Node.
 import { describe, expect, it } from 'vitest'
 import { applyInlinePronunciation, getTTSPronunciationDictionary, injectTTSPauseMarkers } from '~~/server/utils/tts-minimax'
 

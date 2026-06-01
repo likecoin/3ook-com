@@ -15,6 +15,8 @@ async function serveCachedSample(
   bucket: NonNullable<ReturnType<typeof getTTSCacheBucket>>,
   cacheKey: string,
   contentFormat: string,
+  dictVersion: string,
+  getExpectedSig: () => string,
 ): Promise<unknown | null> {
   const file = bucket.file(cacheKey)
   let totalSize: number
@@ -23,6 +25,11 @@ async function serveCachedSample(
     const metadata = await file.getMetadata()
     totalSize = Number(metadata[0].size)
     contentType = metadata[0].contentType || contentFormat
+    // Auto-burst stale sample audio when the pronunciation dictionary changes.
+    const meta = metadata[0].metadata ?? {}
+    if (isCachedTTSPronunciationStale({ file, meta, dictVersion, getExpectedSig, cacheKey, label: 'sample' })) {
+      return null
+    }
   }
   catch (error: unknown) {
     if ((error as { code?: number })?.code === 404) return null
@@ -114,6 +121,12 @@ export default defineEventHandler(async (event) => {
 
   const provider = new MinimaxTTSProvider()
   const ttsModel = getMinimaxModel({ voiceId, customVoiceId: customMiniMaxVoiceId, language })
+  // Stamp + check the pronunciation dictionary version so a dict edit
+  // auto-bursts affected sample audio, mirroring the reader endpoint. The
+  // signature is computed lazily (only on cache miss or version mismatch) from
+  // the synthesized text the provider sends.
+  const dictVersion = TTS_PRONUNCIATION_VERSION[language] ?? 'none'
+  const getExpectedSig = createTTSPronunciationSigGetter(language, text)
   const bucket = getTTSCacheBucket()
   const isCacheEnabled = !!bucket
   const cacheKey = isCacheEnabled
@@ -124,7 +137,7 @@ export default defineEventHandler(async (event) => {
 
   if (isCacheEnabled && cacheKey) {
     try {
-      const result = await serveCachedSample(event, bucket, cacheKey, provider.format)
+      const result = await serveCachedSample(event, bucket, cacheKey, provider.format, dictVersion, getExpectedSig)
       if (result !== null) return result
     }
     catch (error) {
@@ -139,7 +152,7 @@ export default defineEventHandler(async (event) => {
     if (pending) {
       try {
         await pending
-        const result = await serveCachedSample(event, bucket!, cacheKey, provider.format)
+        const result = await serveCachedSample(event, bucket!, cacheKey, provider.format, dictVersion, getExpectedSig)
         if (result !== null) return result
       }
       catch {
@@ -204,6 +217,8 @@ export default defineEventHandler(async (event) => {
           text,
           textLength: text.length.toString(),
           isSample: 'true',
+          pronunciationVersion: dictVersion,
+          pronunciationSig: getExpectedSig(),
           createdAt: new Date().toISOString(),
         },
       },
