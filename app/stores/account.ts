@@ -373,7 +373,11 @@ export const useAccountStore = defineStore('account', () => {
     const lastUsedConnectorId = user.value?.loginMethod
     let connector
     if (lastUsedConnectorId) {
-      connector = connectors.find((c: { id: string }) => c.id === lastUsedConnectorId)
+      // Resolve from the raw wagmi config rather than the reactive
+      // `useConnect()` connectors: a Vue proxy passed into wagmi core crashes
+      // its cycle-detection-free `deepEqual` with "Maximum call stack size
+      // exceeded" (circular connector→config→connectors graph).
+      connector = $wagmiConfig.connectors.find(c => c.id === lastUsedConnectorId)
     }
     if (connector) {
       await connectAsync({
@@ -408,9 +412,9 @@ export const useAccountStore = defineStore('account', () => {
         return
       }
 
-      const connector = connectors.find(
-        (c: { id: string }) => c.id === connectorId,
-      )
+      // Resolve from the raw wagmi config (see `restoreConnection`) to avoid
+      // leaking a reactive proxy into wagmi core.
+      const connector = $wagmiConfig.connectors.find(c => c.id === connectorId)
       if (!connector) return
 
       let magicEmailInput: HTMLInputElement | undefined
