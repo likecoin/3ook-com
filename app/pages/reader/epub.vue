@@ -305,7 +305,7 @@
             ]"
           >
             <UIcon
-              class="animate-spin size-12"
+              :class="['size-12', { 'animate-spin': isPageLoading }]"
               name="i-material-symbols-refresh-rounded"
             />
           </div>
