@@ -80,6 +80,19 @@ function buildHighlightRegex(trimmedQuery: string): RegExp | null {
   return new RegExp(tokens.join('\\s+'), 'gi')
 }
 
+// Both excerpt sources center the match with ~60-75 chars of leading context,
+// which pushes the keyword past the 2-line clamp on long CJK paragraphs so the
+// visible portion shows only the lead-in text. Drop excess leading context (but
+// keep a little) so the highlighted match stays within the first visible line.
+const EXCERPT_LEAD_CHARS = 12
+
+function clampExcerptToMatch(excerpt: string, regex: RegExp | null): string {
+  if (!regex) return excerpt
+  const matchIndex = excerpt.search(regex)
+  if (matchIndex <= EXCERPT_LEAD_CHARS) return excerpt
+  return `…${excerpt.slice(matchIndex - EXCERPT_LEAD_CHARS)}`
+}
+
 function splitExcerpt(excerpt: string, regex: RegExp | null): ExcerptSegment[] {
   if (!regex) return [{ text: excerpt, isMatch: false }]
 
@@ -106,7 +119,7 @@ const segmentedResults = computed(() => {
   const regex = trimmedQuery ? buildHighlightRegex(trimmedQuery) : null
   return props.results.map(result => ({
     ...result,
-    segments: splitExcerpt(result.excerpt, regex),
+    segments: splitExcerpt(clampExcerptToMatch(result.excerpt, regex), regex),
   }))
 })
 
