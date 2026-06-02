@@ -55,7 +55,10 @@
 
         <!-- Content -->
         <div class="relative flex-1 w-full max-w-[670px] min-h-0 mx-auto px-4 sm:px-6">
-          <div class="relative flex flex-col gap-4 items-start h-full pt-6 pb-48 overflow-y-auto hide-scrollbar text-lg laptop:text-2xl text-justify leading-normal">
+          <div
+            ref="segmentsContainerElement"
+            class="relative flex flex-col gap-4 items-start h-full pt-6 pb-48 overflow-y-auto hide-scrollbar text-lg laptop:text-2xl text-justify leading-normal"
+          >
             <p
               v-for="paragraph in visibleParagraphs"
               :key="paragraph.key"
@@ -545,10 +548,26 @@ const offlineModalActions = computed(() => [
 
 const documentVisibility = useDocumentVisibility()
 
+const segmentsContainerElement = useTemplateRef<HTMLElement>('segmentsContainerElement')
+
 async function scrollToCurrentSegment(index: number) {
   await nextTick()
   const el = visibleSegmentElements.get(index)
-  el?.scrollIntoView({
+  const container = segmentsContainerElement.value
+  if (!el || !container) return
+  // Skip re-animating a smooth scroll when the segment already sits within the
+  // centered 60% band of the container — avoids per-sentence scroll churn for
+  // consecutive segments in the same paragraph.
+  const elRect = el.getBoundingClientRect()
+  const containerRect = container.getBoundingClientRect()
+  const band = containerRect.height * 0.2
+  if (
+    elRect.top >= containerRect.top + band
+    && elRect.bottom <= containerRect.bottom - band
+  ) {
+    return
+  }
+  el.scrollIntoView({
     behavior: 'smooth',
     block: 'center',
   })
