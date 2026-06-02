@@ -97,6 +97,7 @@ Some features (Intercom, downloads, etc.) hand off to the native SDK when availa
 - **ESLint** — `@nuxt/eslint` with stylistic rules enabled
 - **Runtime config** — access env vars via `useRuntimeConfig()`, never hardcode
 - **Env vars** — keep variables sorted alphabetically in `.env.example` and `apphosting.*.yaml` files
+- **Comments** — keep concise, at most 3 lines. Avoid breaking lines mid-sentence; break at punctuation when needed.
 
 ### Nuxt
 - **Route middleware** — `/middleware/query.global.ts` persists UTM/tracking params across navigation
