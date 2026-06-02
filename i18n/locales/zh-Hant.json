@@ -419,6 +419,7 @@
   "error_unknown": "未知錯誤",
   "error_unstake_amount_exceeded": "超過可解除質押的數量",
   "error_unstake_amount_exceeded_description": "你只能解除 {amount} LIKE 的質押數量。",
+  "error_wallet_authorization_payload_expired": "登入簽署已過期，請確認裝置的日期及時間設定正確後再試。",
   "error_wallet_session_expired": "錢包連線已過期，請重新登入再繼續。",
   "expandable_content_show_less_button_label": "收起內容",
   "expandable_content_show_more_button_label": "查看更多",

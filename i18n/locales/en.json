@@ -419,6 +419,7 @@
   "error_unknown": "Unknown error.",
   "error_unstake_amount_exceeded": "Amount exceeds your stake",
   "error_unstake_amount_exceeded_description": "You can only unstake up to {amount} LIKE.",
+  "error_wallet_authorization_payload_expired": "Your login signature has expired. Please make sure your device's date and time are correct, then try again.",
   "error_wallet_session_expired": "Your wallet session has expired. Please log in again to continue.",
   "expandable_content_show_less_button_label": "Show Less",
   "expandable_content_show_more_button_label": "Show More",

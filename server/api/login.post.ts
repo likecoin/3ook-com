@@ -1,5 +1,6 @@
 import { jwtDecode } from 'jwt-decode'
 import { FieldValue } from 'firebase-admin/firestore'
+import { FetchError } from 'ofetch'
 
 import { LoginBodySchema } from '~~/server/schemas/auth'
 
@@ -31,10 +32,31 @@ export default defineEventHandler(async (event) => {
     intercomToken = authorizeRes.intercomToken
   }
   catch (error) {
-    console.error('Failed to authorize wallet:', error)
+    // Unwrap the upstream response body so the actual failure reason isn't swallowed.
+    // ofetch exposes a text body as a string in `error.data`, or a parsed JSON body's fields.
+    let upstreamError: string | undefined
+    if (error instanceof FetchError) {
+      const data = error.data as string | { error?: string, message?: string } | undefined
+      upstreamError = typeof data === 'string'
+        ? data
+        : data?.error || data?.message
+    }
+
+    console.error('Failed to authorize wallet:', error, upstreamError)
+
+    // A signed message that's no longer valid almost always means the device clock is off.
+    if (upstreamError === 'PAYLOAD_EXPIRED') {
+      throw createError({
+        status: 401,
+        message: 'WALLET_AUTHORIZATION_PAYLOAD_EXPIRED',
+      })
+    }
+
     throw createError({
       status: 401,
-      message: 'WALLET_AUTHORIZATION_FAILED',
+      message: upstreamError
+        ? `WALLET_AUTHORIZATION_FAILED: ${upstreamError}`
+        : 'WALLET_AUTHORIZATION_FAILED',
     })
   }
 

@@ -63,6 +63,12 @@ export default function () {
           }
           break
 
+        case 'WALLET_AUTHORIZATION_PAYLOAD_EXPIRED':
+          handler = {
+            description: $t('error_wallet_authorization_payload_expired'),
+          }
+          break
+
         default:
           break
       }
