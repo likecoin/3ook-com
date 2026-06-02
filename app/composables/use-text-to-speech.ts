@@ -231,6 +231,13 @@ export function useTextToSpeech(options: TTSOptions) {
     return classifyTTSAudioSource(player.getCurrentURL())
   }
 
+  // Stop playback UI state and route the user into the trial wall.
+  function handleTrialExhaustedStop() {
+    isTextToSpeechLoading.value = false
+    isTextToSpeechPlaying.value = false
+    options.onTrialExhausted?.()
+  }
+
   // Wire player events
   player.on('play', () => {
     isTextToSpeechPlaying.value = true
@@ -261,9 +268,7 @@ export function useTextToSpeech(options: TTSOptions) {
   player.on('ended', () => {
     consecutiveAudioErrors.value = 0
     if (hasMoreTracks() && ttsTrialUsage.isExhausted.value) {
-      isTextToSpeechLoading.value = false
-      isTextToSpeechPlaying.value = false
-      options.onTrialExhausted?.()
+      handleTrialExhaustedStop()
       return
     }
     // Set loading before clearing playing so the UI never briefly shows
@@ -283,10 +288,18 @@ export function useTextToSpeech(options: TTSOptions) {
   }
 
   player.on('trackChanged', (index, meta) => {
+    const isResync = !!meta?.isResync
+    // The native engine plays the whole queue itself, auto-advancing via
+    // `trackChanged` instead of the per-segment `ended` the trial gate hooks.
+    // Enforce the wall here so an exhausted non-Plus user can't play past it.
+    if (!isResync && index > currentTTSSegmentIndex.value && ttsTrialUsage.isExhausted.value) {
+      handleTrialExhaustedStop()
+      return
+    }
     if (index !== currentTTSSegmentIndex.value) {
       consecutiveAudioErrors.value = 0
     }
-    isLastTrackChangeResync = !!meta?.isResync
+    isLastTrackChangeResync = isResync
     currentTTSSegmentIndex.value = index
     startSegmentLoadTimer(index)
   })
