@@ -232,7 +232,7 @@
     </section>
 
     <section
-      v-if="hasLoggedIn && isIAPSupported"
+      v-if="hasLoggedIn && isIAPSupported && !user?.isLikerPlus"
       class="space-y-3"
     >
       <UCard :ui="{ body: '!p-0 divide-y-1 divide-(--ui-border)' }">
