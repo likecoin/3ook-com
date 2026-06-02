@@ -270,6 +270,7 @@
         class="flex justify-center py-48"
       >
         <UIcon
+          v-if="isLoadingMore"
           class="animate-spin"
           name="material-symbols-progress-activity"
           size="48"
