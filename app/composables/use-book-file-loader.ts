@@ -1,5 +1,6 @@
 export default function () {
   const { t: $t } = useI18n()
+  const { user } = useUserSession()
   const config = useRuntimeConfig()
 
   const loadingFilesize = ref(0)
@@ -46,9 +47,13 @@ export default function () {
       }
     }
     if (!res) {
-      // Same-origin request to `/api/book-file`; the session cookie is sent
-      // automatically and the proxy attaches the upstream Bearer token.
-      res = await fetch(url)
+      res = await fetch(url, {
+        headers: {
+          Authorization: user.value?.token
+            ? `Bearer ${user.value.token}`
+            : '',
+        },
+      })
       if (!res.ok) {
         const errorText = await res.text()
         throw createError({
