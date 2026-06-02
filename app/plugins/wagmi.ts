@@ -32,6 +32,10 @@ export default defineNuxtPlugin((nuxtApp) => {
         try {
           const recentId = await wagmiConfig.storage?.getItem('recentConnectorId')
           if (!recentId) return
+          // WalletConnect's relayer holds a live websocket whose ~2s heartbeat
+          // keeps the tab awake (battery drain during reading/TTS). Skip restore
+          // on mount; first on-chain action reconnects via restoreConnection().
+          if (recentId === 'walletConnect') return
           const connector = wagmiConfig.connectors.find(c => c.id === recentId)
           if (!connector) return
           await reconnect(wagmiConfig, { connectors: [connector] })
