@@ -4,10 +4,10 @@ import type { ReadableStream as NodeWebReadableStream } from 'node:stream/web'
 import { BookFileQuerySchema } from '~~/server/schemas/book-file'
 
 // Forwarded verbatim from the upstream ebook response. `x-original-content-
-// length` is the true (pre-transfer) size the client's progress bar reads;
-// `content-length` is intentionally omitted — undici auto-decompresses the
-// body, so a forwarded length could mismatch the streamed bytes and truncate
-// the file. The body goes out chunked instead.
+// length` is the true (pre-transfer) size the client's progress bar reads.
+// `content-length` is forwarded conditionally below — undici auto-decompresses,
+// so a length is only safe to pass through when the upstream body was sent
+// uncompressed.
 const FORWARDED_RESPONSE_HEADERS = [
   'content-type',
   'content-range',
@@ -80,6 +80,17 @@ export default defineEventHandler(async (event) => {
   for (const name of FORWARDED_RESPONSE_HEADERS) {
     const value = upstream.headers.get(name)
     if (value) setHeader(event, name, value)
+  }
+  // undici transparently decompresses the upstream body, so a forwarded length
+  // is only correct when the upstream sent it uncompressed. The book-file
+  // service serves these payloads as identity with an accurate Content-Length;
+  // pass it through so the response is fixed-length (intermediaries stream it
+  // instead of buffering a chunked body) and the browser can reject a truncated
+  // download rather than caching a partial 200.
+  const encoding = upstream.headers.get('content-encoding')
+  if (!encoding || encoding.toLowerCase() === 'identity') {
+    const upstreamContentLength = Number(upstream.headers.get('content-length'))
+    if (upstreamContentLength) setHeader(event, 'content-length', upstreamContentLength)
   }
 
   // Pipe as a Node stream (not the web body): h3's web-stream sink ignores
