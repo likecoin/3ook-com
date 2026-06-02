@@ -236,7 +236,7 @@
                 @click="handleTTSTagClick"
               />
             </li>
-            <li v-if="bookInfo.isPlusReadingEnabled.value">
+            <li v-if="isPlusReadingEnabled">
               <UButton
                 :label="plusReadingTagLabel"
                 :to="plusReadingTagRoute"
@@ -635,7 +635,7 @@
                         />
 
                         <UBadge
-                          v-if="bookInfo.isPlusReadingEnabled.value"
+                          v-if="isPlusReadingEnabled"
                           :label="$t('product_page_plus_reading_label')"
                           variant="subtle"
                           :color="plusReadingTagColor"
@@ -1060,10 +1060,17 @@ const nftClassId = computed(() => getRouteParam('nftClassId'))
 const { isOwner: isUserBookOwner } = useUserBookOwnership(nftClassId)
 const bookInfo = useBookInfo({ nftClassId })
 
+// Plus-reading is gated behind a PostHog flag for staged internal testing on
+// prod, combined with the per-book backend flag.
+const isPlusReadingFeatureEnabled = useFeatureFlagEnabled('plus-library')
+const isPlusReadingEnabled = computed(() =>
+  isPlusReadingFeatureEnabled.value && bookInfo.isPlusReadingEnabled.value,
+)
+
 // Non-owners of a Plus-reading book see a CTA: Plus members read it directly,
 // while guests/non-Plus users are routed to subscribe.
 const isPlusReadingCTAVisible = computed(() =>
-  !isUserBookOwner.value && bookInfo.isPlusReadingEnabled.value,
+  !isUserBookOwner.value && isPlusReadingEnabled.value,
 )
 const {
   generateBookStructuredData,
