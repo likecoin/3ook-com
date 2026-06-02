@@ -67,6 +67,18 @@ export async function saveSessionTokens(
   }
 }
 
+export async function deleteSessionTokens(wallet: string, jwtId: string): Promise<void> {
+  // Best-effort: a failed delete must never block logout. Deleting a missing
+  // doc is a Firestore no-op, so legacy sessions that pre-date the subcollection
+  // need no special handling.
+  try {
+    await getSessionDocRef(wallet, jwtId).delete()
+  }
+  catch (error) {
+    console.warn('[SessionTokens] Failed to delete session tokens:', error)
+  }
+}
+
 export async function refreshSessionTokens(
   wallet: string,
   jwtId: string,
