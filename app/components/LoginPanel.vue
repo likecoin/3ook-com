@@ -8,7 +8,7 @@
 
     <form
       class="mt-6 flex flex-col gap-2"
-      @submit.prevent="handleConnect({ id: 'magic', email: emailInput.trim() })"
+      @submit.prevent="handleConnect({ id: 'magic', email: normalizeEmail(emailInput) })"
     >
       <UInput
         v-model="emailInput"
@@ -117,7 +117,7 @@ watch(logoClickCount, (count) => {
 
 const emailInput = ref(getRouteQuery('email'))
 
-const isEmailValid = computed(() => validateEmail(emailInput.value.trim()))
+const isEmailValid = computed(() => validateEmail(normalizeEmail(emailInput.value)))
 
 const othersConnectors = computed(() => {
   return connectors.filter(c => !['magic', 'injected'].includes(c.id))

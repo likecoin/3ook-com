@@ -112,6 +112,8 @@ function handleRegisterButtonClick() {
     return
   }
 
+  email.value = normalizeEmail(email.value)
+
   if (!verifyEmail(email.value)) {
     emailError.value = $t('registration_modal_error_email_invalid')
     return

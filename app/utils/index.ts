@@ -85,6 +85,10 @@ export function validateEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
 }
 
+export function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase()
+}
+
 export function getStoreQueryRoute(title: string) {
   return { name: 'store', query: { q: title } }
 }
