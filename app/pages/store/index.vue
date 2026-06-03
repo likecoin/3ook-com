@@ -281,9 +281,12 @@
 </template>
 
 <script setup lang="ts">
+import { FetchError } from 'ofetch'
+
 import { getGenreI18nKey } from '~~/shared/constants/book-categories'
 import { MAX_BOOKSTORE_PAGE_SIZE, isBookstoreBuiltInListType } from '~~/shared/utils/bookstore'
 
+const nuxtApp = useNuxtApp()
 const { t: $t, locale } = useI18n()
 const localeRoute = useLocaleRoute()
 const route = useRoute()
@@ -395,10 +398,18 @@ await callOnce(async () => {
     || isBookstoreBuiltInListType(tagId.value)
   ) return
 
-  const tag = await bookstoreStore.fetchBookstoreCMSTag(tagId.value)
+  let tag: BookstoreCMSTag | undefined
+  try {
+    tag = await bookstoreStore.fetchBookstoreCMSTag(tagId.value)
+  }
+  catch (error) {
+    // Ignore 404 error
+    if (!(error instanceof FetchError && error.statusCode === 404)) throw error
+  }
   if (!tag) {
     const { tag: _tag, ...query } = route.query
-    await navigateTo(localeRoute({ name: 'store', query }), { replace: true })
+    // Restore Nuxt context lost across the await before calling navigateTo/localeRoute.
+    await nuxtApp.runWithContext(() => navigateTo(localeRoute({ name: 'store', query }), { replace: true }))
   }
 })
 
