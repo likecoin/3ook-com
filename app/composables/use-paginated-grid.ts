@@ -47,6 +47,7 @@ export default function usePaginatedGrid(props: {
   })
 
   function isInIncompleteRow(index: number, column: number) {
+    if (itemsCount.value < column) return false
     const remainder = itemsCount.value % column
     return remainder !== 0 && index >= itemsCount.value - remainder
   }
