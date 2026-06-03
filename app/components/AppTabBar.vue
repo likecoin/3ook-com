@@ -34,7 +34,7 @@
       >
         <UButton
           v-if="item.key === 'account' && hasLoggedIn"
-          class="justify-center min-w-24 h-13 rounded-full"
+          class="justify-center min-w-20 h-13 rounded-full"
           :variant="item.isActive ? 'solid' : 'ghost'"
           color="neutral"
           :to="item.to"
@@ -59,7 +59,7 @@
         </UButton>
         <UButton
           v-else
-          class="flex-col gap-0.75 min-w-24 h-13 py-1 rounded-full text-[11px]"
+          class="flex-col gap-0.75 min-w-20 h-13 py-1 rounded-full text-[11px]"
           :label="item.label"
           :icon="item.icon"
           :variant="item.isActive ? 'solid' : 'ghost'"
@@ -90,6 +90,7 @@ const getRouteBaseNameString = useRouteBaseNameString()
 const { getLabelGraphic } = useGraphicLabel()
 const { loggedIn: hasLoggedIn, user } = useUserSession()
 const { isApp } = useAppDetection()
+const isPlusLibraryEnabled = useFeatureFlagEnabled('plus-library')
 
 const menuItems = computed(() => {
   const routeName = getRouteBaseNameString()
@@ -100,6 +101,15 @@ const menuItems = computed(() => {
       icon: 'i-material-symbols-storefront-outline',
       iconActive: 'i-material-symbols-storefront',
     },
+    // Plus-reading library; only shown once the feature flag resolves true.
+    ...(isPlusLibraryEnabled.value === true
+      ? [{
+          key: 'library',
+          label: $t('tab_bar_library'),
+          icon: 'i-3ook-com-library-outline-rounded',
+          iconActive: 'i-3ook-com-library-rounded',
+        }]
+      : []),
     {
       key: 'shelf',
       label: $t('tab_bar_shelf'),

@@ -1,10 +1,15 @@
-export function useStorePageState() {
+export function useStorePageState(routeName: MaybeRefOrGetter<string> = 'store') {
   const localeRoute = useLocaleRoute()
   const getRouteQuery = useRouteQuery()
 
-  const lastScrollPosition = useState<number>('store-last-scroll-position', () => 0)
-  const lastVisitedTag = useState<string>('store-last-visited-tag', () => '')
-  const lastVisitedQuery = useState<Record<string, string>>('store-last-visited-query', () => ({}))
+  // /store and /library reuse this composable; namespace state per route so
+  // their scroll/tag memory doesn't clobber each other. The route name is fixed
+  // for a mounted page instance, so resolve the key prefix once.
+  const name = toValue(routeName) || 'store'
+
+  const lastScrollPosition = useState<number>(`${name}-last-scroll-position`, () => 0)
+  const lastVisitedTag = useState<string>(`${name}-last-visited-tag`, () => '')
+  const lastVisitedQuery = useState<Record<string, string>>(`${name}-last-visited-query`, () => ({}))
 
   function save(tag: string, query: Record<string, string>) {
     if (import.meta.client) {
@@ -38,7 +43,7 @@ export function useStorePageState() {
       return
     }
     await navigateTo(localeRoute({
-      name: 'store',
+      name,
       query: {
         ...lastVisitedQuery.value,
         tag: lastVisitedTag.value === 'default' ? undefined : lastVisitedTag.value,

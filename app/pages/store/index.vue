@@ -24,7 +24,7 @@
         class="flex items-center gap-1 phone:gap-2 w-full"
       >
         <PillButton
-          :to="localeRoute({ name: 'store' })"
+          :to="localeRoute({ name: routeName })"
           icon="i-material-symbols-close-rounded"
         />
 
@@ -66,10 +66,10 @@
         class="flex items-center gap-1 phone:gap-2 w-full col-span-full"
       >
         <UButton
-          v-if="!isApp"
+          v-if="!isApp && !isLibraryTab"
           :to="isDefaultTagId
             ? localeRoute({ name: 'about', query: { ll_medium: 'about-logo' } })
-            : localeRoute({ name: 'store' })"
+            : localeRoute({ name: routeName })"
           variant="link"
           :ui="{
             base: ['shrink-0', 'p-0 sm:p-0'],
@@ -150,7 +150,10 @@
           </template>
         </UModal>
 
-        <UTooltip :text="$t('book_list_title')">
+        <UTooltip
+          v-if="!isLibraryTab"
+          :text="$t('book_list_title')"
+        >
           <PillButton
             icon="i-material-symbols-favorite-outline-rounded"
             :aria-label="$t('book_list_title')"
@@ -290,6 +293,10 @@ const nuxtApp = useNuxtApp()
 const { t: $t, locale } = useI18n()
 const localeRoute = useLocaleRoute()
 const route = useRoute()
+const getRouteBaseNameString = useRouteBaseNameString()
+// /store and /library share this file; the route name selects the mode.
+const routeName = computed(() => getRouteBaseNameString() || 'store')
+const isLibraryTab = computed(() => routeName.value === 'library')
 const getRouteQuery = useRouteQuery()
 const runtimeConfig = useRuntimeConfig()
 const bookstoreStore = useBookstoreStore()
@@ -298,7 +305,7 @@ const nftStore = useNFTStore()
 const infiniteScrollDetectorElement = useTemplateRef<HTMLLIElement>('infiniteScrollDetector')
 const shouldLoadMore = useElementVisibility(infiniteScrollDetectorElement)
 const { handleError } = useErrorHandler()
-const storePageState = useStorePageState()
+const storePageState = useStorePageState(routeName)
 const isOnline = useOnline()
 const isMobile = useMediaQuery('(max-width: 425px)')
 const isAdultContentEnabled = useAdultContentSetting()
@@ -373,7 +380,7 @@ const tagId = computed({
       return
     }
     await navigateTo(localeRoute({
-      name: 'store',
+      name: routeName.value,
       query: {
         ...route.query,
         ll_medium: `tag-${id}`,
@@ -410,7 +417,7 @@ await callOnce(async () => {
   if (!tag) {
     const { tag: _tag, ...query } = route.query
     // Restore Nuxt context lost across the await before calling navigateTo/localeRoute.
-    await nuxtApp.runWithContext(() => navigateTo(localeRoute({ name: 'store', query }), { replace: true }))
+    await nuxtApp.runWithContext(() => navigateTo(localeRoute({ name: routeName.value, query }), { replace: true }))
   }
 })
 
@@ -438,7 +445,7 @@ function getTagTo(value: string) {
     return localeRoute({ name: 'local-histories' })
   }
   return localeRoute({
-    name: 'store',
+    name: routeName.value,
     query: {
       ...route.query,
       tag: getIsDefaultTagId(value) ? undefined : value,
@@ -477,8 +484,13 @@ const allTagItems = computed(() => {
     })
   }
 
+  // Local histories is a store-only entry; the library tab omits it.
+  const visibleCMSTags = isLibraryTab.value
+    ? cmsTags.filter(tag => !getIsLocalHistoriesTagId(tag.value))
+    : cmsTags
+
   // On mobile, pin the local-histories CMS tag last.
-  const ordered = [...stakingTags, ...cmsTags]
+  const ordered = [...stakingTags, ...visibleCMSTags]
   if (isMobile.value) {
     const localHistoriesIndex = ordered.findIndex(tag => getIsLocalHistoriesTagId(tag.value))
     if (localHistoriesIndex !== -1) {
@@ -553,6 +565,9 @@ const searchModeContext = computed(() => {
   return null
 })
 
+const pageTitle = computed(() => isLibraryTab.value ? $t('library_tab_title') : $t('store_page_title'))
+const pageDescription = computed(() => isLibraryTab.value ? $t('library_tab_description') : $t('store_page_description'))
+
 const tagDescription = computed(() => {
   if (entityDescription.value) return entityDescription.value
   if (searchModeContext.value) return searchModeContext.value.description
@@ -563,7 +578,7 @@ const tagDescription = computed(() => {
   if (tagName.value) {
     return $t('store_page_tag_description', { tag: tagName.value })
   }
-  return $t('store_page_description')
+  return pageDescription.value
 })
 
 const canonicalURL = computed(() => {
@@ -598,12 +613,12 @@ const canonicalURL = computed(() => {
 
 const ogTitle = computed(() => {
   if (searchModeContext.value) {
-    return `${searchModeContext.value.titlePrefix}${searchModeContext.value.label} - ${$t('store_page_title')}`
+    return `${searchModeContext.value.titlePrefix}${searchModeContext.value.label} - ${pageTitle.value}`
   }
   if (tagName.value) {
-    return [tagName.value, $t('store_page_title')].join(' - ')
+    return [tagName.value, pageTitle.value].join(' - ')
   }
-  return $t('store_page_title')
+  return pageTitle.value
 })
 
 const searchResults = computed<BookstoreItemList | null>(() => {
@@ -662,7 +677,15 @@ function shouldFilterAdultOnly(bookstoreInfo: BookstoreInfo | null | undefined):
   return !isAdultContentEnabled.value && !!bookstoreInfo?.isAdultOnly
 }
 
-const products = computed<BookstoreItemList>(() => {
+// Library mode keeps only Plus-reading books. CMS/built-in listings carry the
+// flag inline; staking/search items fall back to already-loaded BookstoreInfo.
+function getIsPlusReading(item: BookstoreItem): boolean {
+  if (typeof item.isPlusReadingEnabled === 'boolean') return item.isPlusReadingEnabled
+  const info = bookstoreStore.getBookstoreInfoByNFTClassId(item.classId || item.id || '')
+  return !!info?.isPlusReadingEnabled
+}
+
+const baseProducts = computed<BookstoreItemList>(() => {
   if (searchResults.value && !isSearchResultEmpty.value) {
     const filtered = searchResults.value.items.filter((item) => {
       const bookstoreInfo = bookstoreStore.getBookstoreInfoByNFTClassId(item.classId || '')
@@ -707,6 +730,14 @@ const products = computed<BookstoreItemList>(() => {
     return { ...cmsProducts.value, items: filtered }
   }
   return cmsProducts.value
+})
+
+const products = computed<BookstoreItemList>(() => {
+  if (!isLibraryTab.value) return baseProducts.value
+  return {
+    ...baseProducts.value,
+    items: baseProducts.value.items.filter(getIsPlusReading),
+  }
 })
 
 const itemsCount = computed(() => products.value.items.length)
@@ -874,7 +905,7 @@ watch(queryOwnerWallet, async (wallet) => {
 watch(ownerWalletInfo, (info) => {
   if (info?.evmWallet && queryOwnerWallet.value.toLowerCase() !== info.evmWallet.toLowerCase()) {
     navigateTo(localeRoute({
-      name: 'store',
+      name: routeName.value,
       query: {
         ...route.query,
         owner_wallet: info.evmWallet,
@@ -1004,6 +1035,13 @@ async function fetchItems({ lazy = false, isRefresh = false } = {}): Promise<boo
 }
 
 onMounted(async () => {
+  // Gate /library behind the `plus-library` flag. PostHog is client-only, so
+  // evaluate after mount and redirect to /store when disabled.
+  if (isLibraryTab.value && !(await fetchFeatureFlagEnabled('plus-library'))) {
+    await navigateTo(localeRoute({ name: 'store' }), { replace: true })
+    return
+  }
+
   if (!route.query.tag && !isSearchMode.value) {
     await storePageState.restoreIfNeeded()
   }
@@ -1036,7 +1074,10 @@ onMounted(async () => {
 })
 
 onBeforeRouteLeave((to) => {
-  if (to.name && String(to.name).startsWith('store')) {
+  // Keep scroll/tag state only when staying within the same tab (store ↔ store,
+  // library ↔ library); switching tabs or leaving clears it.
+  const toBaseName = getRouteBaseNameString(to)
+  if (toBaseName && toBaseName.startsWith(routeName.value)) {
     storePageState.save(tagId.value, route.query as Record<string, string>)
   }
   else {

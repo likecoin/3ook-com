@@ -1,5 +1,8 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+import { createResolver } from '@nuxt/kit'
 import type { ConfigDefaults } from 'posthog-js'
+
+const { resolve } = createResolver(import.meta.url)
 
 const {
   NODE_ENV,
@@ -34,6 +37,7 @@ export default defineNuxtConfig({
   ],
 
   devtools: { enabled: true },
+
   app: {
     layoutTransition: {
       name: 'fade',
@@ -218,6 +222,18 @@ export default defineNuxtConfig({
     },
   },
 
+  hooks: {
+    // /library reuses the store page (same file), distinguished by route name.
+    // It surfaces only Plus-reading books; see app/pages/store/index.vue.
+    'pages:extend'(pages) {
+      pages.push({
+        name: 'library',
+        path: '/library',
+        file: resolve('app/pages/store/index.vue'),
+      })
+    },
+  },
+
   i18n: {
     baseUrl: process.env.BASE_URL,
     locales: [
@@ -236,6 +252,14 @@ export default defineNuxtConfig({
     ],
     defaultLocale: 'zh-Hant',
     detectBrowserLanguage: false,
+  },
+
+  icon: {
+    // Local SVG collection for bespoke icons not in Material Symbols.
+    // Reference as `i-3ook-com-<filename>` (e.g. i-3ook-com-library-rounded).
+    customCollections: [
+      { prefix: '3ook-com', dir: resolve('app/assets/icons') },
+    ],
   },
 
   pwa: {

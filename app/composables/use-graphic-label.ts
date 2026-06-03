@@ -1,8 +1,12 @@
+import AccountZhGraphic from '~/assets/images/nav/account-zh.svg'
+import LibraryZhGraphic from '~/assets/images/nav/library-zh.svg'
 import StoreZhGraphic from '~/assets/images/nav/bookstore-zh.svg'
 import ShelfZhGraphic from '~/assets/images/nav/bookshelf-zh.svg'
 
 const graphicsMap = {
   'zh-Hant': {
+    account: AccountZhGraphic,
+    library: LibraryZhGraphic,
     store: StoreZhGraphic,
     shelf: ShelfZhGraphic,
   },

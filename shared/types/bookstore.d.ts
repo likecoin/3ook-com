@@ -9,6 +9,7 @@ export interface BookstoreCMSProduct {
   locales?: string[]
   isDRMFree: boolean
   isAdultOnly?: boolean
+  isPlusReadingEnabled?: boolean
   isMultiple?: boolean
   minPrice?: number
   minPriceInDecimalByCurrency?: BookPriceInDecimalByCurrency
@@ -62,6 +63,7 @@ declare global {
     locales?: string[]
     isDRMFree?: boolean
     isAdultOnly?: boolean
+    isPlusReadingEnabled?: boolean
     isMultiple?: boolean
     minPrice?: number
     minPriceInDecimalByCurrency?: BookPriceInDecimalByCurrency
