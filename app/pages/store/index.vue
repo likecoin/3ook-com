@@ -476,15 +476,14 @@ const allTagItems = computed(() => {
     })
   }
 
-  const localHistoriesTag = {
-    label: $t('local_histories_page_title'),
-    value: 'local-histories',
-    isCustom: true,
+  // On mobile, pin the local-histories CMS tag last.
+  const ordered = [...stakingTags, ...cmsTags]
+  if (isMobile.value) {
+    const localHistoriesIndex = ordered.findIndex(tag => getIsLocalHistoriesTagId(tag.value))
+    if (localHistoriesIndex !== -1) {
+      ordered.push(...ordered.splice(localHistoriesIndex, 1))
+    }
   }
-
-  const ordered = isMobile.value
-    ? [...stakingTags, ...cmsTags, localHistoriesTag]
-    : [...stakingTags, localHistoriesTag, ...cmsTags]
 
   return ordered.map(item => ({
     ...item,
