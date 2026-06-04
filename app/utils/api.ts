@@ -1,4 +1,4 @@
-import { MAX_BOOKSTORE_PAGE_SIZE, isBookstoreBuiltInListType } from '~~/shared/utils/bookstore'
+import { MAX_BOOKSTORE_PAGE_SIZE } from '~~/shared/utils/bookstore'
 import type { CollectiveBookNFT, CollectiveBookNFTsQueryOptions, CollectivePaginationResponse } from '~~/shared/utils/collective-indexer'
 
 /**
@@ -45,18 +45,14 @@ export function fetchBookstoreCMSProductsByTagId(tagId: string, {
   limit?: number
   ts?: number
 } = {}) {
-  const isBuiltIn = isBookstoreBuiltInListType(tagId)
-  return apiFetch<FetchBookstoreCMSProductsResponseData>(
-    isBuiltIn ? `/store/products/${encodeURIComponent(tagId)}` : '/store/products',
-    {
-      query: {
-        tag: isBuiltIn ? undefined : tagId,
-        offset,
-        limit,
-        ts,
-      },
+  return apiFetch<FetchBookstoreCMSProductsResponseData>('/store/products', {
+    query: {
+      tag: tagId,
+      offset,
+      limit,
+      ts,
     },
-  )
+  })
 }
 
 export function fetchBookstoreCMSPublicationsBySearchTerm(searchTerm: string, {

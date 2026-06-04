@@ -794,7 +794,6 @@ useHead(() => {
   }
 
   const encodedTagId = encodeURIComponent(tagId.value)
-  const isBuiltInTag = isBookstoreBuiltInListType(tagId.value)
   const link = [
     {
       rel: 'canonical',
@@ -821,7 +820,7 @@ useHead(() => {
         }]
       : [{
           rel: 'preload',
-          href: `/api/store/products${isBuiltInTag ? `/${encodedTagId}?` : `?tag=${encodedTagId}&`}limit=${MAX_BOOKSTORE_PAGE_SIZE}&ts=${getTimestampRoundedToMinute()}`,
+          href: `/api/store/products?tag=${encodedTagId}&limit=${MAX_BOOKSTORE_PAGE_SIZE}&ts=${getTimestampRoundedToMinute()}`,
           as: 'fetch' as const,
           crossorigin: 'anonymous' as const,
           key: 'preload-store-products',

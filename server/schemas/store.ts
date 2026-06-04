@@ -14,6 +14,14 @@ export const StoreStakingBooksQuerySchema = v.object({
   limit: PaginationFields.limit,
 })
 
+export const StoreProductsQuerySchema = v.object({
+  tag: v.pipe(
+    v.optional(v.union([v.string(), v.array(v.string())])),
+    v.transform(val => (Array.isArray(val) ? val[0] : val)),
+  ),
+  ...PaginationFields,
+})
+
 export const StoreSearchQuerySchema = v.object({
   q: v.pipe(
     v.union([v.string(), v.array(v.string())]),
