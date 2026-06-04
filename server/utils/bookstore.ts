@@ -165,7 +165,7 @@ export async function respondWithBookstoreAPI(
   }
   try {
     const result = await fetcher({ pageSize, nextKey })
-    setHeader(event, 'cache-control', nextKey ? 'no-store' : 'public, max-age=60')
+    setHeader(event, 'cache-control', 'public, max-age=60')
     return result
   }
   catch (error) {
