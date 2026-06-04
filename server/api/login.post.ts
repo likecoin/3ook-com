@@ -90,6 +90,7 @@ export default defineEventHandler(async (event) => {
     email: body.email || userInfoRes.email,
     loginMethod: body.loginMethod,
     isLikerPlus: userInfoRes.isLikerPlus || false,
+    isLikerPlusTrial: userInfoRes.isLikerPlusTrial || false,
     isExpiredLikerPlus: userInfoRes.isExpiredLikerPlus || false,
     likerPlusPeriod: userInfoRes.likerPlusPeriod,
     likerPlusProvider: userInfoRes.likerPlusProvider,

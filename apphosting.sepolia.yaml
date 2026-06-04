@@ -79,6 +79,8 @@ env:
     value: j0ryap5a
   - variable: NUXT_SESSION_PASSWORD
     secret: V3_NUXT_SESSION_PASSWORD
+  - variable: PLUS_READING_SERVICE_TOKEN
+    secret: PLUS_READING_SERVICE_TOKEN
   - variable: POSTHOG_DEFAULTS
     value: 2026-01-30
   - variable: POSTHOG_HOST

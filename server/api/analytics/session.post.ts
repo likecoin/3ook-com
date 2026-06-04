@@ -3,7 +3,7 @@ import { ReadingSessionSchema } from '~~/server/schemas/analytics'
 const COMPLETION_THRESHOLD = 95
 
 export default defineEventHandler(async (event) => {
-  const { wallet, isLikerPlus } = await requireUserWalletWithStatus(event)
+  const { wallet, isLikerPlus, isPaidPlus } = await requireUserWalletWithStatus(event)
   const body = await readValidatedBody(event, createValidator(ReadingSessionSchema))
 
   const {
@@ -33,12 +33,23 @@ export default defineEventHandler(async (event) => {
 
   const tasks: Promise<unknown>[] = []
   if (hasActivity) {
-    tasks.push(incrementBookReadingTime(wallet, nftClassId, {
-      activeReadingTimeMs: paced.activeReadingTimeMsDelta,
-      ttsActiveTimeMs: paced.ttsActiveTimeMsDelta,
-      isLikerPlus,
-      countSession: true,
-    }))
+    // Revenue share runs once the book's borrow status is known, in parallel with
+    // the other session tasks rather than serially after them.
+    tasks.push(
+      incrementBookReadingTime(wallet, nftClassId, {
+        activeReadingTimeMs: paced.activeReadingTimeMsDelta,
+        ttsActiveTimeMs: paced.ttsActiveTimeMsDelta,
+        isLikerPlus,
+        countSession: true,
+      }).then(({ isBorrowed }) => forwardPlusReadingUsage({
+        isPaidPlus,
+        isBorrowed,
+        readerWallet: wallet,
+        classId: nftClassId,
+        readingTimeMs: paced.activeReadingTimeMsDelta,
+        ttsTimeMs: paced.ttsActiveTimeMsDelta,
+      })),
+    )
     tasks.push(updateReadingStreak(wallet))
   }
 

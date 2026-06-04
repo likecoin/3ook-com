@@ -1,7 +1,7 @@
 import { HeartbeatSchema } from '~~/server/schemas/analytics'
 
 export default defineEventHandler(async (event) => {
-  const { wallet, isLikerPlus } = await requireUserWalletWithStatus(event)
+  const { wallet, isLikerPlus, isPaidPlus } = await requireUserWalletWithStatus(event)
   const body = await readValidatedBody(event, createValidator(HeartbeatSchema))
 
   const {
@@ -20,10 +20,19 @@ export default defineEventHandler(async (event) => {
   })
 
   if (paced.activeReadingTimeMsDelta > 0 || paced.ttsActiveTimeMsDelta > 0) {
-    await incrementBookReadingTime(wallet, nftClassId, {
+    const { isBorrowed } = await incrementBookReadingTime(wallet, nftClassId, {
       activeReadingTimeMs: paced.activeReadingTimeMsDelta,
       ttsActiveTimeMs: paced.ttsActiveTimeMsDelta,
       isLikerPlus,
+    })
+
+    await forwardPlusReadingUsage({
+      isPaidPlus,
+      isBorrowed,
+      readerWallet: wallet,
+      classId: nftClassId,
+      readingTimeMs: paced.activeReadingTimeMsDelta,
+      ttsTimeMs: paced.ttsActiveTimeMsDelta,
     })
   }
 

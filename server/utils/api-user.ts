@@ -8,6 +8,9 @@ import { FIRESTORE_IN_OPERATOR_LIMIT } from '~~/shared/constants/api'
 export async function requireUserWalletWithStatus(event: H3Event): Promise<{
   wallet: string
   isLikerPlus: boolean
+  // Paid (non-trial) Plus. Reading-library revenue share excludes trial usage, so
+  // forwards to the API gate on this, not on isLikerPlus (which includes trial).
+  isPaidPlus: boolean
 }> {
   const session = await requireUserSession(event)
   const wallet = session.user.evmWallet
@@ -17,7 +20,12 @@ export async function requireUserWalletWithStatus(event: H3Event): Promise<{
       message: 'WALLET_NOT_FOUND',
     })
   }
-  return { wallet, isLikerPlus: !!session.user.isLikerPlus }
+  const isLikerPlus = !!session.user.isLikerPlus
+  return {
+    wallet,
+    isLikerPlus,
+    isPaidPlus: isLikerPlus && !session.user.isLikerPlusTrial,
+  }
 }
 
 export async function requireUserWallet(event: H3Event): Promise<string> {
@@ -342,7 +350,7 @@ export async function incrementBookReadingTime(
     isLikerPlus: boolean
     countSession?: boolean
   },
-): Promise<void> {
+): Promise<{ isBorrowed: boolean }> {
   const { activeReadingTimeMs, ttsActiveTimeMs, isLikerPlus, countSession } = payload
   const userDocRef = getUserCollection().doc(userWallet)
   const bookDocRef = userDocRef.collection('books').doc(nftClassId.toLowerCase())
@@ -351,10 +359,12 @@ export async function incrementBookReadingTime(
   // borrowed books. `plusBorrowedAt` is stamped server-side at borrow time, so
   // we read it here rather than trust the client.
   const plusTTSListeningTimeMs = isLikerPlus ? ttsActiveTimeMs : 0
+  let isBorrowed = false
   let plusReadingTimeMs = 0
   if (isLikerPlus && activeReadingTimeMs > 0) {
     const bookDoc = await bookDocRef.get()
-    if (bookDoc.data()?.plusBorrowedAt) {
+    isBorrowed = !!bookDoc.data()?.plusBorrowedAt
+    if (isBorrowed) {
       plusReadingTimeMs = activeReadingTimeMs
     }
   }
@@ -378,6 +388,8 @@ export async function incrementBookReadingTime(
   }, { merge: true })
 
   await batch.commit()
+
+  return { isBorrowed }
 }
 
 export async function updateReadingStreak(

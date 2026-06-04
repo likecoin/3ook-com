@@ -7,6 +7,7 @@ export interface LikerInfoResponseData {
   evmWallet: string
   description: string
   isLikerPlus?: boolean
+  isLikerPlusTrial?: boolean
   isExpiredLikerPlus?: boolean
   likerPlusSubscriptionStatus?: 'active' | 'past_due' | 'canceled'
 }

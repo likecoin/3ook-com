@@ -68,6 +68,7 @@ export default defineEventHandler(async (event) => {
     email: body.email,
     loginMethod: body.loginMethod,
     isLikerPlus: userInfoRes.isLikerPlus || false,
+    isLikerPlusTrial: userInfoRes.isLikerPlusTrial || false,
     isExpiredLikerPlus: userInfoRes.isExpiredLikerPlus || false,
     likerPlusSubscriptionStatus: userInfoRes.likerPlusSubscriptionStatus,
     ttsKey: generateTTSKey(),
