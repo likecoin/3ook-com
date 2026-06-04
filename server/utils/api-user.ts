@@ -46,6 +46,8 @@ export interface UserDocData {
   customVoice?: CustomVoiceDocData
   totalReadingTimeMs?: number
   totalTTSListeningTimeMs?: number
+  totalPlusReadingTimeMs?: number
+  totalPlusTTSListeningTimeMs?: number
   totalBooksCompleted?: number
   readingStreak?: {
     currentDays: number
@@ -345,19 +347,31 @@ export async function incrementBookReadingTime(
   const userDocRef = getUserCollection().doc(userWallet)
   const bookDocRef = userDocRef.collection('books').doc(nftClassId.toLowerCase())
 
+  // TTS share accrues for Plus listening on any book; reading share only for
+  // borrowed books. `plusBorrowedAt` is stamped server-side at borrow time, so
+  // we read it here rather than trust the client.
   const plusTTSListeningTimeMs = isLikerPlus ? ttsActiveTimeMs : 0
+  let plusReadingTimeMs = 0
+  if (isLikerPlus && activeReadingTimeMs > 0) {
+    const bookDoc = await bookDocRef.get()
+    if (bookDoc.data()?.plusBorrowedAt) {
+      plusReadingTimeMs = activeReadingTimeMs
+    }
+  }
 
   const batch = getFirestoreDb().batch()
 
   batch.set(userDocRef, {
     totalReadingTimeMs: FieldValue.increment(activeReadingTimeMs),
     totalTTSListeningTimeMs: FieldValue.increment(ttsActiveTimeMs),
+    totalPlusReadingTimeMs: FieldValue.increment(plusReadingTimeMs),
     totalPlusTTSListeningTimeMs: FieldValue.increment(plusTTSListeningTimeMs),
   }, { merge: true })
 
   batch.set(bookDocRef, {
     totalReadingTimeMs: FieldValue.increment(activeReadingTimeMs),
     totalTTSListeningTimeMs: FieldValue.increment(ttsActiveTimeMs),
+    totalPlusReadingTimeMs: FieldValue.increment(plusReadingTimeMs),
     totalPlusTTSListeningTimeMs: FieldValue.increment(plusTTSListeningTimeMs),
     ...(countSession && { sessionCount: FieldValue.increment(1) }),
     updatedAt: FieldValue.serverTimestamp(),
