@@ -453,6 +453,8 @@ const allTagItems = computed(() => {
     }))
     .filter(option => tagId.value === option.value || option.isPublic)
 
+  // Built-in list types (latest/free/drm-free) are mirrored as CMS tags so editors
+  // control their ordering here, hence they surface through cmsTags like any other tag.
   const cmsTags = bookstoreStore.bookstoreCMSTags
     .filter((tag) => {
       return !!tag.isPublic || tag.id === tagId.value
