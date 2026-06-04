@@ -75,7 +75,7 @@ function normalizeBookListingToProduct(book: NFTBookListingInfo): BookstoreCMSPr
     title: book.name,
     imageUrl: book.thumbnailUrl,
     locales: book.inLanguage ? [book.inLanguage] : undefined,
-    isDRMFree: !book.hideDownload,
+    isDRMFree: book.hideDownload === false,
     isAdultOnly: book.isAdultOnly || undefined,
     minPrice: book.minPrice ?? cheapest?.price,
     minPriceInDecimalByCurrency: cheapest?.priceInDecimalByCurrency,
