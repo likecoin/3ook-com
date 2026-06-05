@@ -1068,6 +1068,15 @@ onMounted(async () => {
     return
   }
 
+  // Stale-while-revalidate: when persisted data already fills the landing,
+  // render it immediately and refresh in the background instead of blocking
+  // (or, offline, instead of failing) on the network.
+  if (products.value.items.length > 0 && isOnline.value) {
+    fetchTags()
+    fetchItems({ isRefresh: true })
+    return
+  }
+
   await Promise.all([
     fetchTags(),
     fetchItems({ lazy: true }),

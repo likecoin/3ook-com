@@ -344,7 +344,9 @@ export const useBookstoreStore = defineStore('bookstore', () => {
     }
     if (!stakingBooksMap.value[sortBy] || isRefresh) {
       stakingBooksMap.value[sortBy] = {
-        items: [],
+        // Keep any existing items visible during a refresh so a background
+        // revalidation doesn't flash the grid empty; replaced on success.
+        items: stakingBooksMap.value[sortBy]?.items ?? [],
         isFetching: false,
         hasFetched: false,
         offset: undefined,
@@ -431,4 +433,45 @@ export const useBookstoreStore = defineStore('bookstore', () => {
 
     fetchStakingBooks,
   }
+}, {
+  persist: {
+    // Best-effort offline support for the store landing: persist the tag chips,
+    // the staking ranked lists, and the book info (titles/covers) they render.
+    pick: [
+      'bookstoreCMSTagIds',
+      'bookstoreCMSTagsMapById',
+      'stakingBooksMap',
+      'bookstoreInfoByNFTClassIdMap',
+    ],
+    // totalStaked is a BigInt; the default JSON serializer throws on it and the
+    // write is silently dropped, so round-trip BigInt through a tagged string.
+    serializer: {
+      serialize: state => JSON.stringify(state, (_, value) =>
+        typeof value === 'bigint' ? `$bigint:${value}` : value),
+      deserialize: str => JSON.parse(str, (_, value) => {
+        if (typeof value === 'string' && value.startsWith('$bigint:')) {
+          // Corrupted/edited storage could hold an invalid bigint payload;
+          // BigInt() would throw inside the reviver and abort the whole parse.
+          try {
+            return BigInt(value.slice(8))
+          }
+          catch {
+            return value
+          }
+        }
+        return value
+      }),
+    },
+    // A persisted isFetching:true (app killed mid-fetch) would dead-lock the
+    // guard in fetchStakingBooks, so clear in-flight flags on restore.
+    afterHydrate: ({ store }) => {
+      // Corrupted/version-skewed storage could hydrate a non-object here; a throw
+      // would abort afterHydrate and break hydration of the whole store.
+      const map = store.stakingBooksMap as unknown
+      if (!map || typeof map !== 'object') return
+      for (const entry of Object.values(map as Record<string, StakingBooks>)) {
+        if (entry && typeof entry === 'object') entry.isFetching = false
+      }
+    },
+  },
 })
