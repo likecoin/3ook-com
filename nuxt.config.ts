@@ -10,6 +10,10 @@ const {
 
 const isDevelopment = NODE_ENV === 'development'
 
+// Workbox cacheName for document navigations; shared so the offline app-shell
+// fallback below opens the same cache the NetworkFirst route writes to.
+const HTML_PAGES_CACHE = 'html-pages'
+
 export default defineNuxtConfig({
   modules: [
     '@nuxt/eslint',
@@ -265,10 +269,31 @@ export default defineNuxtConfig({
             request.mode === 'navigate' && !url.pathname.startsWith('/api'),
           handler: 'NetworkFirst',
           options: {
-            cacheName: 'html-pages',
+            cacheName: HTML_PAGES_CACHE,
             networkTimeoutSeconds: 10,
             expiration: { maxEntries: 64, maxAgeSeconds: 60 * 60 * 24 * 7 },
             cacheableResponse: { statuses: [200] },
+            plugins: [
+              {
+                // A direct offline open of an SPA sub-route (e.g. /shelf) has no
+                // cached document — client-side navigations never hit the SW — so
+                // NetworkFirst throws `no-response`. Serve any cached document as
+                // the shell; Nuxt boots and routes to the real URL client-side.
+                handlerDidError: async () => {
+                  // Inline the cache name: this handler is serialized into the
+                  // generated sw.js via toString(), so the HTML_PAGES_CACHE
+                  // closure isn't in scope at runtime — referencing it throws.
+                  const cache = await caches.open('html-pages')
+                  // ignoreSearch: the homepage is often cached with UTM query
+                  // params (query.global middleware), so a bare '/' would miss.
+                  const shell = await cache.match('/', { ignoreSearch: true })
+                  if (shell) return shell
+                  const [firstKey] = await cache.keys()
+                  const fallback = firstKey ? await cache.match(firstKey) : undefined
+                  return fallback ?? Response.error()
+                },
+              },
+            ],
           },
         },
       ],
