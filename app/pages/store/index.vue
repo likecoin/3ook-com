@@ -299,6 +299,7 @@ const infiniteScrollDetectorElement = useTemplateRef<HTMLLIElement>('infiniteScr
 const shouldLoadMore = useElementVisibility(infiniteScrollDetectorElement)
 const { handleError } = useErrorHandler()
 const storePageState = useStorePageState()
+const isOnline = useOnline()
 const isMobile = useMediaQuery('(max-width: 425px)')
 const isAdultContentEnabled = useAdultContentSetting()
 const { isApp } = useAppDetection()
@@ -902,6 +903,9 @@ async function fetchTags() {
     await bookstoreStore.fetchBookstoreCMSTags()
   }
   catch (error) {
+    // Offline cold launch fails these network fetches expectedly; the cached
+    // shell still renders, so don't surface a blocking error modal.
+    if (!isOnline.value) return
     await handleError(error, {
       title: $t('store_fetch_tags_error'),
     })
@@ -965,6 +969,7 @@ async function fetchItems({ lazy = false, isRefresh = false } = {}): Promise<boo
       return true
     }
     catch (error) {
+      if (!isOnline.value) return false
       await handleError(error, {
         title: isRefresh ? $t('store_fetch_items_error') : $t('store_fetch_more_items_error'),
       })
@@ -977,6 +982,7 @@ async function fetchItems({ lazy = false, isRefresh = false } = {}): Promise<boo
     return true
   }
   catch (error) {
+    if (!isOnline.value) return false
     await handleError(error, {
       title: isRefresh ? $t('store_fetch_items_error') : $t('store_fetch_more_items_error'),
       customHandlerMap: {

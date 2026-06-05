@@ -262,6 +262,18 @@ export default defineNuxtConfig({
           },
         },
         {
+          // @nuxtjs/i18n strips unused keys from the SSR payload and fetches the
+          // full locale from this Nitro route at runtime; without caching it,
+          // offline navigations render raw keys. The :hash makes CacheFirst safe.
+          urlPattern: ({ url }) => url.pathname.startsWith('/_i18n/'),
+          handler: 'CacheFirst',
+          options: {
+            cacheName: 'i18n-messages',
+            expiration: { maxEntries: 16, maxAgeSeconds: 60 * 60 * 24 * 30 },
+            cacheableResponse: { statuses: [0, 200] },
+          },
+        },
+        {
           // Page navigations: prefer fresh network, fall back to the last cached
           // document when offline so the app shell can boot. Skip API routes —
           // they must never be served from a stale document cache.
