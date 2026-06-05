@@ -1548,7 +1548,10 @@ async function onClickTTSPlay() {
   openPlayer({
     ttsIndex: activeTTSElementIndex.value,
     sectionIndex: currentSectionIndex.value,
-    cfi: currentPageStartCfi.value,
+    // On auto-resume reopen, `relocated` may not have populated the live page
+    // anchor yet; fall back to the restored reading position so TTS resumes
+    // there instead of defaulting to segment 0 and resetting progress.
+    cfi: currentPageStartCfi.value || currentCfi.value,
     pageEndCFI: currentPageEndCfi.value,
   })
 }
