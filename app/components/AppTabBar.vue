@@ -5,7 +5,7 @@
       'inset-x-0',
       'bottom-0',
       'z-40',
-      isApp ? 'pb-[min(env(safe-area-inset-bottom),16px)]' : 'pb-safe',
+      isApp ? 'pb-[min(env(safe-area-inset-bottom),18px)]' : 'pb-safe',
       'pointer-events-none',
     ]"
   >
@@ -34,7 +34,7 @@
       >
         <UButton
           v-if="item.key === 'account' && hasLoggedIn"
-          class="justify-center min-w-24 h-12 rounded-full"
+          class="justify-center min-w-24 h-13 rounded-full"
           :variant="item.isActive ? 'solid' : 'ghost'"
           color="neutral"
           :to="item.to"
@@ -59,14 +59,14 @@
         </UButton>
         <UButton
           v-else
-          class="flex-col gap-0 min-w-24 rounded-full"
+          class="flex-col gap-0.75 min-w-24 h-13 py-1 rounded-full text-[11px]"
           :label="item.label"
           :icon="item.icon"
           :variant="item.isActive ? 'solid' : 'ghost'"
           color="neutral"
           :to="item.to"
           size="md"
-          :ui="{ label: 'text-xs' }"
+          :ui="{ leadingIcon: 'size-7', label: 'leading-none' }"
         >
           <template
             v-if="item.labelGraphic"
@@ -74,7 +74,7 @@
           >
             <component
               :is="item.labelGraphic"
-              style="width: auto"
+              style="width: auto; height: 1em; margin: 0;"
             />
           </template>
         </UButton>
