@@ -491,13 +491,22 @@ const isAnnotationClickInProgress = ref(false)
 const pendingSavePromise = ref<Promise<Annotation | null> | null>(null)
 const renderedHighlights = new Set<string>()
 
-const { loadingLabel, loadingPercentage, loadFileAsBuffer } = useBookFileLoader()
+const { loadingLabel, loadingPercentage, loadFileAsBuffer, abortLoad } = useBookFileLoader()
 
 const isOnline = useOnline()
 
-onMounted(async () => {
-  isReaderLoading.value = true
+const { startReaderLoad } = useReaderFileLoad({
+  isReaderLoading,
+  readerType: 'epub',
+  load: () => loadEPub(),
+  getErrorTitle: () => isOnline.value
+    ? $t('error_reader_load_epub_failed')
+    : $t('error_reader_book_not_available_offline'),
+  handleError,
+  abortLoad,
+})
 
+onMounted(() => {
   // Kick off background fetches without awaiting so offline / slow API calls
   // don't block the cache-first EPUB load.
   bookSettingsStore.ensureInitialized(nftClassId.value)
@@ -513,21 +522,7 @@ onMounted(async () => {
       .catch(error => console.warn('Failed to fetch NFT metadata:', error))
   }
 
-  try {
-    await loadEPub()
-  }
-  catch (error) {
-    await handleError(error, {
-      title: isOnline.value
-        ? $t('error_reader_load_epub_failed')
-        : $t('error_reader_book_not_available_offline'),
-      onClose: () => {
-        navigateTo(localeRoute({ name: 'shelf' }))
-      },
-    })
-    return
-  }
-  isReaderLoading.value = false
+  startReaderLoad()
 })
 
 const rendition = ref<Rendition>()
