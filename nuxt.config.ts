@@ -63,6 +63,9 @@ export default defineNuxtConfig({
     uploadedBooksBucketPrefix: process.env.UPLOADED_BOOKS_BUCKET_PREFIX,
     public: {
       scripts: {
+        bingUet: {
+          id: '',
+        },
         googleAnalytics: {
           id: process.env.GA_TRACKING_ID || '',
         },
@@ -291,13 +294,20 @@ export default defineNuxtConfig({
   scripts: {
     privacy: false,
     registry: {
+      bingUet: {
+        bundle: false,
+        proxy: false,
+        trigger: 'onNuxtReady',
+      },
       googleAnalytics: {
         bundle: false,
         proxy: false,
+        trigger: 'onNuxtReady',
       },
       metaPixel: {
         bundle: false,
         proxy: false,
+        trigger: 'onNuxtReady',
       },
       posthog: POSTHOG_PUBLIC_KEY
         ? {
@@ -356,6 +366,8 @@ export default defineNuxtConfig({
           'https://static.intercomassets.com',
           'https://explorer-api.walletconnect.com',
           'https://i.ytimg.com',
+          'https://bat.bing.com',
+          'https://bat.bing.net',
           ...[
             process.env.LIKECOIN_API_ENDPOINT,
             process.env.LIKECOIN_STATIC_ENDPOINT,
