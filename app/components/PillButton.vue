@@ -4,7 +4,8 @@
     :icon="icon"
     :to="to"
     :aria-label="ariaLabel"
-    variant="outline"
+    :variant="isActive ? 'solid' : 'outline'"
+    color="neutral"
     :ui="customizedUI"
   />
 </template>
@@ -30,9 +31,7 @@ const BUTTON_CLASS_BASE = [
   '!ring-theme-black dark:!ring-muted',
 ]
 const BUTTON_CLASS_ACTIVE = [
-  'bg-theme-black dark:bg-theme-cyan',
-  'hover:bg-theme-black/80 hover:dark:bg-theme-cyan/80',
-  'text-theme-cyan dark:text-theme-black',
+  'dark:bg-inverted',
 ]
 const BUTTON_CLASS_INACTIVE = [
   'bg-(--app-bg)',
