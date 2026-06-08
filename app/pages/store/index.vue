@@ -264,6 +264,7 @@
           :lazy="index >= columnMax"
           :priority="index < columnMax"
           :ll-medium="llMedium"
+          :should-show-plus-reading-icon="!isLibraryTab"
           ll-source="bookstore"
         />
       </ul>

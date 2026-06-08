@@ -37,15 +37,24 @@
     <!-- Price info for store mode -->
     <div
       v-if="!isApp || price === 0"
-      class="mt-[0.5lh] text-highlighted"
+      class="flex items-center justify-between mt-[0.5lh] text-highlighted"
     >
-      <span
-        v-if="formattedDiscountPrice"
-        v-text="formattedDiscountPrice"
-      />
-      <span
-        :class="{ 'text-xs ml-0.5 text-muted line-through': formattedDiscountPrice }"
-        v-text="formattedPrice"
+      <div>
+        <span
+          v-if="formattedDiscountPrice"
+          v-text="formattedDiscountPrice"
+        />
+        <span
+          :class="{ 'text-xs ml-0.5 text-muted line-through': formattedDiscountPrice }"
+          v-text="formattedPrice"
+        />
+      </div>
+
+      <UIcon
+        v-if="isPlusReadingIconVisible"
+        class="size-4 shrink-0"
+        name="i-3ook-com-library-outline-rounded"
+        :title="$t('product_page_plus_reading_label')"
       />
     </div>
 
@@ -102,6 +111,10 @@ const props = defineProps({
     type: Number,
     default: 0,
   },
+  shouldShowPlusReadingIcon: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 const emit = defineEmits(['visible', 'open'])
@@ -142,6 +155,10 @@ const priceCurrencyOverride = computed(() => (
   props.price ? props.priceOverride : bookInfo.minPricingItem.value?.priceInDecimalByCurrency
 ))
 const formattedPrice = computed(() => formatPrice(price.value, priceCurrencyOverride.value))
+
+const isPlusReadingIconVisible = computed(() =>
+  props.shouldShowPlusReadingIcon && price.value > 0 && bookInfo.isPlusReadingEnabled.value,
+)
 
 const formattedDiscountPrice = computed(() => {
   if (isLikerPlus.value && price.value > 0) {
