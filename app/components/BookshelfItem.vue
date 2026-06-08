@@ -32,8 +32,9 @@
         <!-- Marks a borrowed (non-owned) book so owned books read as premium. -->
         <UBadge
           class="absolute top-2 left-2"
-          :label="$t('bookshelf_plus_reading_badge_label')"
-          color="primary"
+          icon="i-3ook-com-library-rounded"
+          :title="$t('bookshelf_plus_reading_badge_label')"
+          color="neutral"
           variant="solid"
           size="sm"
         />
