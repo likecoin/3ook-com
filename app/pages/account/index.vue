@@ -213,8 +213,8 @@
           <template #right>
             <UButton
               v-if="user?.isLikerPlus"
-              :label="hasCustomVoice ? $t('tts_custom_voice_change_button') : $t('tts_custom_voice_upload_button')"
-              :variant="hasCustomVoice ? 'outline' : 'solid'"
+              :label="hasCustomVoice ? $t('tts_custom_voice_change_button') : $t('account_page_create_custom_voice_button')"
+              variant="outline"
               color="neutral"
               @click="handleOpenCustomVoiceModal"
             />
