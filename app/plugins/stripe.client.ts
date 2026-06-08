@@ -6,6 +6,7 @@ export default defineNuxtPlugin(() => {
   }
 
   useScriptStripe({
+    version: 'clover',
     scriptOptions: {
       trigger: useScriptTriggerIdleTimeout({ timeout: 1000 }),
     },
