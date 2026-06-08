@@ -31,6 +31,7 @@ export async function forwardPlusReadingUsage(input: PlusReadingUsageInput): Pro
       method: 'POST',
       headers: { Authorization: `Bearer ${token}` },
       body: { readerWallet, classId, readingTimeMs, ttsTimeMs },
+      timeout: 2000, // bound heartbeat/session latency on a hung upstream; failures are swallowed below
     })
   }
   catch (error) {

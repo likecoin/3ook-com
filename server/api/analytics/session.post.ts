@@ -33,21 +33,36 @@ export default defineEventHandler(async (event) => {
 
   const tasks: Promise<unknown>[] = []
   if (hasActivity) {
-    // Revenue share runs once the book's borrow status is known, in parallel with
-    // the other session tasks rather than serially after them.
+    // Record paced usage (rev-share forward + analytics publish) once the book's
+    // borrow status is known, in parallel with the other session tasks. Shared with
+    // the heartbeat handler so the ledger and ES never drift in cadence.
     tasks.push(
       incrementBookReadingTime(wallet, nftClassId, {
         activeReadingTimeMs: paced.activeReadingTimeMsDelta,
         ttsActiveTimeMs: paced.ttsActiveTimeMsDelta,
         isLikerPlus,
         countSession: true,
-      }).then(({ isBorrowed }) => forwardPlusReadingUsage({
+      }).then(({ isBorrowed }) => recordPacedReadingUsage({
+        event,
+        source: 'session',
+        wallet,
+        nftClassId,
+        sessionId,
+        isLikerPlus,
         isPaidPlus,
         isBorrowed,
-        readerWallet: wallet,
-        classId: nftClassId,
-        readingTimeMs: paced.activeReadingTimeMsDelta,
-        ttsTimeMs: paced.ttsActiveTimeMsDelta,
+        paced,
+        rawDelta: { activeReadingTimeMsDelta, ttsActiveTimeMsDelta },
+        session: {
+          activeReadingTimeMs,
+          ttsActiveTimeMs,
+          pagesViewed,
+          startProgress,
+          endProgress,
+          readerType,
+          chapterIndex,
+          pageIndex,
+        },
       })),
     )
     tasks.push(updateReadingStreak(wallet))
@@ -62,37 +77,13 @@ export default defineEventHandler(async (event) => {
 
   await Promise.all(tasks)
 
-  try {
-    publishEvent(event, 'ReadingSession', {
+  if (isNewCompletion) {
+    publishEvent(event, 'BookCompleted', {
       evmWallet: wallet,
       isLikerPlus,
       nftClassId,
-      sessionId,
-      activeReadingTimeMs,
-      ttsActiveTimeMs,
-      activeReadingTimeMsDelta,
-      ttsActiveTimeMsDelta,
-      activeReadingTimeMsPacedDelta: paced.activeReadingTimeMsDelta,
-      ttsActiveTimeMsPacedDelta: paced.ttsActiveTimeMsDelta,
-      pagesViewed,
-      startProgress,
-      endProgress,
-      readerType,
-      chapterIndex,
-      pageIndex,
+      completionProgress: endProgress,
     })
-
-    if (isNewCompletion) {
-      publishEvent(event, 'BookCompleted', {
-        evmWallet: wallet,
-        isLikerPlus,
-        nftClassId,
-        completionProgress: endProgress,
-      })
-    }
-  }
-  catch (err) {
-    console.warn('[Session] Failed to publish event:', err)
   }
 
   return { success: true, bookCompleted: isNewCompletion }

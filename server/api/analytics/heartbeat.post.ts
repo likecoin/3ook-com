@@ -6,6 +6,7 @@ export default defineEventHandler(async (event) => {
 
   const {
     nftClassId,
+    sessionId,
     activeReadingTimeMsDelta,
     ttsActiveTimeMsDelta,
   } = body
@@ -26,13 +27,17 @@ export default defineEventHandler(async (event) => {
       isLikerPlus,
     })
 
-    await forwardPlusReadingUsage({
+    await recordPacedReadingUsage({
+      event,
+      source: 'heartbeat',
+      wallet,
+      nftClassId,
+      sessionId,
+      isLikerPlus,
       isPaidPlus,
       isBorrowed,
-      readerWallet: wallet,
-      classId: nftClassId,
-      readingTimeMs: paced.activeReadingTimeMsDelta,
-      ttsTimeMs: paced.ttsActiveTimeMsDelta,
+      paced,
+      rawDelta: { activeReadingTimeMsDelta, ttsActiveTimeMsDelta },
     })
   }
 
