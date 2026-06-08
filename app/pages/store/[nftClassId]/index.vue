@@ -647,50 +647,53 @@
                 </li>
               </ul>
               <footer class="flex flex-col gap-3">
-                <UButton
-                  v-if="isUserBookOwner"
-                  :label="$t('product_page_read_button_label')"
-                  icon="i-material-symbols-auto-stories-outline-rounded"
-                  size="xl"
-                  color="primary"
-                  variant="solid"
-                  block
-                  @click="handleReadButtonClick"
-                />
-                <UButton
-                  v-bind="checkoutButtonProps"
-                  class="cursor-pointer"
-                  size="xl"
-                  :loading="isPurchasing"
-                  :disabled="!canBePurchased"
-                  block
-                  @click="handlePurchaseButtonClick"
-                />
+                <!-- [購買/再次購買][閱讀/借閱] -->
+                <div class="flex gap-3">
+                  <UButton
+                    v-bind="checkoutButtonProps"
+                    class="flex-1 cursor-pointer justify-center"
+                    size="xl"
+                    :loading="isPurchasing"
+                    :disabled="!canBePurchased"
+                    @click="handlePurchaseButtonClick"
+                  />
+                  <UButton
+                    v-if="isUserBookOwner"
+                    :variant="readButtonVariant"
+                    class="flex-1 cursor-pointer justify-center"
+                    :label="$t('product_page_read_button_label')"
+                    size="xl"
+                    @click="handleReadButtonClick"
+                  />
+                  <UButton
+                    v-else-if="isPlusReadingCTAVisible"
+                    :variant="plusReadingCTAVariant"
+                    class="flex-1 cursor-pointer justify-center"
+                    :label="plusReadingCTALabel"
+                    size="xl"
+                    @click="handlePlusReadButtonClick"
+                  />
+                </div>
               </footer>
             </div>
 
             <UButton
               v-else-if="isUserBookOwner"
+              :variant="readButtonVariant"
               class="max-tablet:hidden"
               :label="$t('product_page_read_button_label')"
-              icon="i-material-symbols-auto-stories-outline-rounded"
               size="xl"
-              color="primary"
-              variant="solid"
               block
               @click="handleReadButtonClick"
             />
 
-            <!-- Borrow CTA sits below the purchase box with a softer Plus-themed
-            green so it reads as a secondary, membership-led path. -->
+            <!-- Fallback read/borrow only when there is no purchase block to pair with. -->
             <UButton
-              v-if="isPlusReadingCTAVisible"
+              v-if="isPlusReadingCTAVisible && !pricingItems.length"
+              :variant="plusReadingCTAVariant"
               class="max-tablet:hidden"
-              :label="isLikerPlus ? $t('product_page_plus_reading_borrow') : $t('product_page_plus_reading_cta')"
-              icon="i-material-symbols-auto-stories-outline-rounded"
+              :label="plusReadingCTALabel"
               size="xl"
-              :color="plusReadingTagColor"
-              variant="soft"
               block
               @click="handlePlusReadButtonClick"
             />
@@ -805,21 +808,20 @@
     >
       <UButton
         v-if="isUserBookOwner"
+        :variant="readButtonVariant"
         :label="$t('product_page_read_button_label')"
-        icon="i-material-symbols-auto-stories-outline-rounded"
         class="cursor-pointer"
-        color="primary"
         size="xl"
         block
         @click="handleReadButtonClick"
       />
 
+      <!-- Fallback read/borrow only when there is no purchase block to pair with. -->
       <UButton
-        v-if="isPlusReadingCTAVisible"
-        :label="isLikerPlus ? $t('product_page_plus_reading_borrow') : $t('product_page_plus_reading_cta')"
-        icon="i-material-symbols-auto-stories-outline-rounded"
+        v-if="isPlusReadingCTAVisible && !pricingItems.length"
+        :variant="plusReadingCTAVariant"
+        :label="plusReadingCTALabel"
         class="cursor-pointer"
-        color="primary"
         size="xl"
         block
         @click="handlePlusReadButtonClick"
@@ -889,16 +891,25 @@
             />
           </div>
         </div>
-        <UButton
-          v-bind="checkoutButtonProps"
-          class="cursor-pointer"
-          color="primary"
-          size="xl"
-          :loading="isPurchasing"
-          :disabled="!canBePurchased"
-          block
-          @click="handleStickyPurchaseButtonClick"
-        />
+        <div class="flex gap-2">
+          <UButton
+            v-bind="checkoutButtonProps"
+            class="flex-1 cursor-pointer justify-center"
+            color="primary"
+            size="xl"
+            :loading="isPurchasing"
+            :disabled="!canBePurchased"
+            @click="handleStickyPurchaseButtonClick"
+          />
+          <UButton
+            v-if="isPlusReadingCTAVisible"
+            :variant="plusReadingCTAVariant"
+            class="flex-1 cursor-pointer justify-center"
+            :label="plusReadingCTALabel"
+            size="xl"
+            @click="handlePlusReadButtonClick"
+          />
+        </div>
       </template>
     </aside>
 
@@ -1069,9 +1080,23 @@ const isPlusReadingEnabled = computed(() =>
 
 // Non-owners of a Plus-reading book see a CTA: Plus members read it directly,
 // while guests/non-Plus users are routed to subscribe.
+// Free books (price <= 0) are not offered for Plus reading.
 const isPlusReadingCTAVisible = computed(() =>
-  !isUserBookOwner.value && isPlusReadingEnabled.value,
+  !isUserBookOwner.value && isPlusReadingEnabled.value && bookInfo.minPrice.value > 0,
 )
+// An active Plus member who already borrowed this book reads it now, so the CTA shows Read instead of Borrow.
+const isBookBorrowed = computed(() =>
+  isLikerPlus.value && bookshelfStore.plusReadingBookIds.includes(nftClassId.value.toLowerCase()),
+)
+const plusReadingCTALabel = computed(() =>
+  isBookBorrowed.value
+    ? $t('product_page_read_button_label')
+    : $t('product_page_plus_reading_borrow'),
+)
+// Read is a quiet secondary action for Plus members (outline); non-Plus owners get a prominent solid button instead.
+const readButtonVariant = computed(() => (isLikerPlus.value ? 'outline' : 'solid'))
+// The shared borrow/read CTA shows Read (outline) once borrowed, else Borrow (solid).
+const plusReadingCTAVariant = computed(() => (isBookBorrowed.value ? 'outline' : 'solid'))
 const {
   generateBookStructuredData,
   generateOGMetaTags,
@@ -1516,11 +1541,7 @@ const checkoutButtonProps = computed<{
       : isFree
         ? $t('product_page_claim_button_label')
         : $t('product_page_checkout_button_label')
-  const variant = isSelectedPricingItemSoldOut.value
-    ? 'subtle'
-    : isUserBookOwner.value
-      ? 'outline'
-      : 'solid'
+  const variant = isSelectedPricingItemSoldOut.value ? 'subtle' : 'solid'
   return {
     variant,
     label,
@@ -1579,6 +1600,13 @@ onMounted(async () => {
   const selectedPricingItemIndex = getRouteQuery('edition')
   if (selectedPricingItemIndex) {
     handlePurchaseButtonClick()
+  }
+
+  // Refresh borrowed books so the CTA can read for an already-borrowed book.
+  if (hasLoggedIn.value && isLikerPlus.value) {
+    bookshelfStore.lazyFetchPlusReadingBooks().catch((error) => {
+      console.error('Failed to fetch plus reading books:', error)
+    })
   }
 
   checkBookListStatus()

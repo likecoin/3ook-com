@@ -19,6 +19,8 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
   // Borrowed (non-owned) Plus-reading books, most-recent first. LRU-capped at 20
   // server-side; the only terminal action is "return" (drop). See api-user.ts.
   const plusReadingBookIds = ref<string[]>([])
+  const hasFetchedPlusReadingBooks = ref(false)
+  let plusReadingBooksPromise: Promise<void> | null = null
   const persistedWalletAddress = ref<string | null>(null)
   const isFetching = ref(false)
   const hasFetched = ref(false)
@@ -76,6 +78,7 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
     try {
       const ids = await $fetch('/api/books/plus-reading')
       plusReadingBookIds.value = ids.map(id => id.toLowerCase())
+      hasFetchedPlusReadingBooks.value = true
       if (!plusReadingBookIds.value.length) return
 
       // Hydrate aggregated metadata (so the Book filter passes) + book settings
@@ -90,6 +93,16 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
     catch (error) {
       console.warn('Failed to fetch plus reading books:', error)
     }
+  }
+
+  async function lazyFetchPlusReadingBooks() {
+    if (hasFetchedPlusReadingBooks.value) return
+    if (!plusReadingBooksPromise) {
+      plusReadingBooksPromise = fetchPlusReadingBooks().finally(() => {
+        plusReadingBooksPromise = null
+      })
+    }
+    return plusReadingBooksPromise
   }
 
   // "Return" a borrowed book: drop it from the shelf entirely (progress kept).
@@ -324,6 +337,8 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
     nftClassIds.value = []
     tokenIdsByNFTClassId.value = {}
     plusReadingBookIds.value = []
+    hasFetchedPlusReadingBooks.value = false
+    plusReadingBooksPromise = null
     nextKey.value = undefined
     persistedWalletAddress.value = null
     lastError.value = null
@@ -354,6 +369,7 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
     fetchItems,
     fetchAllItems,
     fetchPlusReadingBooks,
+    lazyFetchPlusReadingBooks,
     getTokenIdsByNFTClassId,
     getFirstTokenIdByNFTClassId,
     fetchNFTByNFTClassIdAndOwnerWalletAddressThroughContract,
