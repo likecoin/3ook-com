@@ -321,7 +321,7 @@ const menuItems = computed<DropdownMenuItem[]>(() => {
   if (props.isPlusReading && props.canEditReadingState) {
     items.push({
       label: $t('bookshelf_item_menu_plus_reading_return'),
-      icon: 'i-material-symbols-assignment-return-outline-rounded',
+      icon: 'i-3ook-com-library-outline-rounded',
       onSelect: () => emit('return-plus-reading', props.nftClassId),
     })
   }
