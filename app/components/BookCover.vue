@@ -12,8 +12,8 @@
         'group',
         {
           'cursor-pointer': isClickable,
-          'relative': isShowPlaceholder || hasShadow || isShowRibbon,
-          'w-full': isShowPlaceholder || hasShadow,
+          'relative': isShowPlaceholder || hasShadow || isShowRibbon || hasOverlay,
+          'w-full': isShowPlaceholder || hasShadow || hasOverlay,
           'h-full': isShowPlaceholder,
         },
       ]"
@@ -125,6 +125,19 @@
           v-text="ribbonText"
         />
       </div>
+
+      <div
+        v-if="hasOverlay"
+        :class="[
+          'absolute',
+          'inset-0',
+          'pointer-events-none',
+          borderRadiusClass,
+          ...(isClickable ? coverHoverScaleAnimationClass : []),
+        ]"
+      >
+        <slot name="overlay" />
+      </div>
     </component>
   </div>
 </template>
@@ -180,6 +193,9 @@ const borderRadiusClass = 'rounded-lg'
 const isClickable = computed(() => !!props.to || !!getCurrentInstance()?.vnode.props?.onClick)
 
 const isShowRibbon = computed(() => !!props.ribbonText)
+
+const slots = useSlots()
+const hasOverlay = computed(() => !!slots.overlay)
 
 const coverHoverScaleAnimationClass = [
   'group-hover:scale-105',

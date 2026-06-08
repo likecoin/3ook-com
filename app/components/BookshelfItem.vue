@@ -4,41 +4,41 @@
     class="flex flex-col justify-end"
     :class="canRead ? 'opacity-100' : 'opacity-50'"
   >
-    <div class="relative">
-      <BookCover
-        :src="bookCoverSrc"
-        :alt="bookInfo.name.value"
-        :lazy="props.lazy"
-        :ribbon-text="props.isClaimable ? $t('bookshelf_claimable_label') : ''"
-        :has-shadow="true"
-        @click="handleCoverClick"
-      />
-
-      <!-- Marks a borrowed (non-owned) book so owned books read as premium. -->
-      <UBadge
+    <BookCover
+      :src="bookCoverSrc"
+      :alt="bookInfo.name.value"
+      :lazy="props.lazy"
+      :ribbon-text="props.isClaimable ? $t('bookshelf_claimable_label') : ''"
+      :has-shadow="true"
+      @click="handleCoverClick"
+    >
+      <template
         v-if="props.isPlusReading"
-        class="absolute top-2 left-2 pointer-events-none"
-        :label="$t('bookshelf_plus_reading_badge_label')"
-        color="primary"
-        variant="solid"
-        size="sm"
-      />
-
-      <!-- Locked overlay when Plus has lapsed: tap routes to resubscribe. -->
-      <button
-        v-if="props.isPlusReading && !props.isPlusReadingAccessible"
-        type="button"
-        class="absolute inset-0 flex items-center justify-center bg-black/20 rounded-[inherit] cursor-pointer"
-        :aria-label="$t('bookshelf_plus_reading_locked_cta')"
-        @click="handleCoverClick"
+        #overlay
       >
-        <UIcon
-          name="i-material-symbols-lock-outline"
-          class="text-white"
-          size="32"
+        <!-- Locked overlay when Plus has lapsed; the cover's own click routes to resubscribe. -->
+        <div
+          v-if="!props.isPlusReadingAccessible"
+          class="absolute inset-0 flex items-center justify-center bg-theme-black/50 rounded-[inherit]"
+          :aria-label="$t('bookshelf_plus_reading_locked_cta')"
+        >
+          <UIcon
+            class="text-theme-white"
+            name="i-material-symbols-lock-outline"
+            size="32"
+          />
+        </div>
+
+        <!-- Marks a borrowed (non-owned) book so owned books read as premium. -->
+        <UBadge
+          class="absolute top-2 left-2"
+          :label="$t('bookshelf_plus_reading_badge_label')"
+          color="primary"
+          variant="solid"
+          size="sm"
         />
-      </button>
-    </div>
+      </template>
+    </BookCover>
 
     <div class="mt-2 mb-1 w-full">
       <div

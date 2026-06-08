@@ -3,25 +3,26 @@
     class="flex flex-col justify-end"
     :class="isAccessible ? 'opacity-100' : 'opacity-50'"
   >
-    <div class="relative">
-      <BookCover
-        :src="bookCoverSrc"
-        :alt="bookInfo.name.value"
-        :lazy="props.lazy"
-        :has-shadow="true"
-        @click="handleCoverClick"
-      />
-      <div
+    <BookCover
+      :src="bookCoverSrc"
+      :alt="bookInfo.name.value"
+      :lazy="props.lazy"
+      :has-shadow="true"
+      @click="handleCoverClick"
+    >
+      <template
         v-if="!isAccessible"
-        class="absolute inset-0 flex items-center justify-center bg-black/20 rounded"
+        #overlay
       >
-        <UIcon
-          name="i-material-symbols-lock-outline"
-          size="32"
-          class="text-white"
-        />
-      </div>
-    </div>
+        <div class="absolute inset-0 flex items-center justify-center bg-theme-black/50 rounded-[inherit]">
+          <UIcon
+            class="text-theme-white"
+            name="i-material-symbols-lock-outline"
+            size="32"
+          />
+        </div>
+      </template>
+    </BookCover>
 
     <div class="mt-2 mb-1 w-full h-[24px]">
       <div
