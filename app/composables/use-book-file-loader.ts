@@ -3,6 +3,19 @@
 // which would otherwise strand the reader on the loading bar forever.
 const BOOK_FILE_STALL_TIMEOUT_MS = 30_000
 
+// Strip query params before a book-file URL reaches analytics or error data: it
+// carries a short-lived access token we must not ship to those destinations.
+function getSanitizedBookFileURL(url: string) {
+  try {
+    const parsed = new URL(url, window.location.origin)
+    return parsed.origin + parsed.pathname
+  }
+  catch {
+    // Leave url as-is if it isn't a parseable URL.
+    return url
+  }
+}
+
 export default function () {
   const { t: $t } = useI18n()
   const { user } = useUserSession()
@@ -110,7 +123,7 @@ export default function () {
             statusCode: res.status,
             message: errorText,
             data: {
-              url,
+              url: getSanitizedBookFileURL(url),
               description: $t('error_book_file_loading_failed'),
             },
           })
@@ -118,7 +131,7 @@ export default function () {
 
         if (cacheKey && window.caches) {
           try {
-            const cache = await caches.open(cacheKey)
+            const cache = await raceAbort(caches.open(cacheKey))
             // Fire-and-forget: awaiting would drain the clone before our own
             // stream loop starts, forcing the tee to buffer the whole response.
             // On failure we delete the now-empty cache that caches.open() just
@@ -136,6 +149,10 @@ export default function () {
               })
           }
           catch (error) {
+            // An abort here (raceAbort losing) is a real load failure: surface
+            // it to the outer handler instead of swallowing it, matching the
+            // cache-read path.
+            if (controller.signal.aborted) throw error
             console.error(error)
           }
         }
@@ -239,16 +256,7 @@ export default function () {
       // shows its retry / back-to-shelf modal instead of spinning forever, and
       // record it for production triage.
       if (didStall) {
-        // Strip query params: the book-file URL carries a short-lived access
-        // token we must not ship to analytics destinations.
-        let sanitizedURL = url
-        try {
-          const parsed = new URL(url)
-          sanitizedURL = parsed.origin + parsed.pathname
-        }
-        catch {
-          // Leave url as-is if it isn't a parseable absolute URL.
-        }
+        const sanitizedURL = getSanitizedBookFileURL(url)
         useLogEvent('book_file_load_timeout', {
           url: sanitizedURL,
           from_cache: isFromCache,
@@ -261,7 +269,7 @@ export default function () {
           statusCode: 504,
           message: 'Book file load timed out',
           data: {
-            url,
+            url: sanitizedURL,
             description: $t('error_book_file_loading_failed'),
             isTimeout: true,
           },
