@@ -214,7 +214,7 @@ export default function (
   })
 
   const formattedReadingMethods = computed(() => {
-    const methods = [$t('reading_method_read_online')]
+    const methods: string[] = []
     if (isDownloadable.value) {
       methods.push($t('reading_method_download_file'))
     }
