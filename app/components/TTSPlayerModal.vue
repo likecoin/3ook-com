@@ -238,6 +238,7 @@ import { encodeAffiliateVoiceId } from '~~/shared/utils/tts-sig'
 import { estimateTTSMinutes } from '~~/shared/utils/tts-trial'
 
 const { user, loggedIn: hasLoggedIn, fetch: refreshSession } = useUserSession()
+const { hasDevicePlus } = useDevicePlusEntitlement()
 const accountStore = useAccountStore()
 const subscription = useSubscriptionModal()
 const { isProcessingSubscription } = subscription
@@ -388,6 +389,13 @@ const {
         return
       }
       if (!user.value?.isLikerPlus) {
+        // The device store already confirmed the purchase but the backend
+        // webhook hasn't flipped the session flag yet — don't re-nag with the
+        // paywall; show a transient notice while the session reconciles.
+        if (hasDevicePlus.value) {
+          handlePlusActivating()
+          return
+        }
         handleTrialExhausted('server_402')
         return
       }
@@ -429,6 +437,18 @@ function handleTrialExhausted(source: 'server_402' | 'client_gate') {
     utmCampaign: props.nftClassId,
     utmMedium: 'tts',
     redirectRoute: buildSubscribeRedirectRoute(),
+  })
+}
+
+// Store purchase succeeded but the session's Plus flag hasn't caught up yet.
+// Show a transient notice instead of the paywall while the background reconcile
+// refreshes the session; the user can retry playback once it flips.
+function handlePlusActivating() {
+  stopTextToSpeech()
+  errorModal.open({
+    level: 'warning',
+    title: $t('tts_plus_activating_title'),
+    description: $t('tts_plus_activating_description'),
   })
 }
 

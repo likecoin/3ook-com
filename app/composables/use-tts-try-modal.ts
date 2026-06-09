@@ -9,15 +9,13 @@ interface TTSTryModalState {
 }
 
 export function useTTSTryModal() {
-  const { user } = useUserSession()
+  const { isPlusOrDevicePlus: isPlus } = useDevicePlusEntitlement()
   const overlay = useOverlay()
 
   const state = useStorage<TTSTryModalState>(TTS_TRY_MODAL_KEY, {
     shouldOffer: true,
     cooldownUntil: Date.now(),
   })
-
-  const isPlus = computed(() => user.value?.isLikerPlus || false)
 
   const shouldShowTTSTryModal = computed(() => {
     if (isPlus.value) {

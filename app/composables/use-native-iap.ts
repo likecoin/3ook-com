@@ -64,8 +64,10 @@ const REQUEST_TIMEOUT_MS = 20 * 1000
 /**
  * Bridges Plus in-app purchases to the native RevenueCat layer when running
  * inside the native app. Web→native via `postToNative`; native→web replies
- * arrive as `nativeBridgeEvent` CustomEvents. Entitlement truth still comes
- * from the backend session — callers refresh the session after a success.
+ * arrive as `nativeBridgeEvent` CustomEvents. The backend session stays the
+ * canonical entitlement source (callers refresh it after a success); a
+ * device-confirmed purchase is recorded only to optimistically unblock
+ * client-side gates while the webhook flips the canonical flag.
  *
  * Shared across all callers (checkout, pricing page, account) so a single
  * `nativeBridgeEvent` listener and one set of pending-request resolvers are
@@ -73,6 +75,7 @@ const REQUEST_TIMEOUT_MS = 20 * 1000
  */
 export const useNativeIAP = createSharedComposable(() => {
   const { isApp } = useAppDetection()
+  const { markDevicePlusEntitled } = useDevicePlusEntitlement()
 
   const isIAPSupported = computed(() => isApp.value && isNativeFeatureSupported('iap'))
 
@@ -102,6 +105,9 @@ export const useNativeIAP = createSharedComposable(() => {
       if (!detail?.type) return
       switch (detail.type) {
         case 'iapPurchaseResult':
+          // The device store confirms entitlement instantly; record it so the
+          // paywall/TTS gates unblock without waiting out the backend webhook.
+          if (detail.status === 'success' && detail.isPlus) markDevicePlusEntitled()
           pendingPurchase?.({
             status: detail.status,
             period: detail.period,
@@ -112,6 +118,7 @@ export const useNativeIAP = createSharedComposable(() => {
           pendingPurchase = null
           break
         case 'iapRestoreResult':
+          if (detail.status === 'success' && detail.isPlus) markDevicePlusEntitled()
           pendingRestore?.({ status: detail.status, isPlus: detail.isPlus, message: detail.message })
           pendingRestore = null
           break

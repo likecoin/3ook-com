@@ -37,8 +37,11 @@ async function fetchServerUsage(wallet: string): Promise<ServerUsage | null> {
 export function useTTSTrialUsage() {
   const { loggedIn: hasLoggedIn, user } = useUserSession()
 
+  // Trust the device store's confirmed purchase too, so a paid user isn't
+  // gated client-side while the backend webhook flips the canonical flag.
+  const { isPlusOrDevicePlus: isLikerPlus } = useDevicePlusEntitlement()
+
   const wallet = computed(() => user.value?.evmWallet || '')
-  const isLikerPlus = computed(() => !!user.value?.isLikerPlus)
 
   // Reactive key: wallet switch rebinds the ref to the new wallet's storage
   // key automatically. `anon` is a sentinel for the logged-out state — the UI

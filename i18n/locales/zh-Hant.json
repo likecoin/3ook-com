@@ -965,6 +965,8 @@
   "tts_samples_section_affiliate_exclusive_badge": "推薦獨家",
   "tts_samples_section_footer": "訂閱即享雙語朗讀功能，解鎖更多聲音。",
   "tts_samples_section_title": "體驗聽書",
+  "tts_plus_activating_description": "正在啟用你的 Plus 訂閱，請稍候再試。",
+  "tts_plus_activating_title": "正在啟用訂閱",
   "tts_session_expired_description": "請重新登入以繼續收聽。",
   "tts_session_expired_title": "登入時段已過期",
   "tts_trial_chip_exhausted_label": "試用時數已用完，立即升級！",
