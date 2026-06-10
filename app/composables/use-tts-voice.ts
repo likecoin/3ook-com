@@ -40,6 +40,7 @@ export function useTTSVoice(options: TTSVoiceOptions = {}) {
 
   if (config.public.isTestnet) {
     ttsLanguageVoiceOptions.push(
+      { label: 'Karenly - 粵語', value: 'zh-HK_karenly' },
       { label: '粵語男聲', value: 'zh-HK_1' },
       { label: '粵語女聲', value: 'zh-HK_0' },
       { label: '國語男聲', value: 'zh-TW_1' },
