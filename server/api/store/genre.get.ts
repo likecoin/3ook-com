@@ -1,6 +1,7 @@
 import { FetchError } from 'ofetch'
 
 import { StoreGenreQuerySchema } from '~~/server/schemas/store'
+import { getLibraryScopedCacheKey } from '~~/shared/utils/bookstore'
 
 export default defineEventHandler(async (event) => {
   try {
@@ -8,15 +9,16 @@ export default defineEventHandler(async (event) => {
     const genre = (Array.isArray(query.q) ? query.q[0] : query.q)!
     const pageSize = Math.min(Math.max(1, Number((Array.isArray(query.limit) ? query.limit[0] : query.limit)) || 100), 100)
     const offset = (Array.isArray(query.offset) ? query.offset[0] : query.offset) || undefined
+    const isPlusReadingEnabled = (Array.isArray(query.library) ? query.library[0] : query.library) === '1'
 
     if (offset) {
       setHeader(event, 'cache-control', 'no-store')
-      return await fetchAirtableCMSPublicationsByGenre(genre, { pageSize, offset })
+      return await fetchAirtableCMSPublicationsByGenre(genre, { pageSize, offset, isPlusReadingEnabled })
     }
 
     const result = await fetchWithAirtableCache(
-      `genre:${genre}:${pageSize}`,
-      () => fetchAirtableCMSPublicationsByGenre(genre, { pageSize }),
+      getLibraryScopedCacheKey(`genre:${genre}:${pageSize}`, isPlusReadingEnabled),
+      () => fetchAirtableCMSPublicationsByGenre(genre, { pageSize, isPlusReadingEnabled }),
     )
     setHeader(event, 'cache-control', 'public, max-age=60')
     return result

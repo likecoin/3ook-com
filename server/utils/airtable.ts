@@ -106,6 +106,7 @@ export interface FetchAirtableCMSProductsByTagIdResponseData {
       'Chain'?: string[]
       'Calculation'?: boolean
       'Adult Only'?: boolean
+      'In Library'?: boolean
     }
   }>
   offset?: string
@@ -128,6 +129,10 @@ function getFormulaForSearchTerm(searchTerm: string) {
   )
   const formula = `OR(${formulas.join(', ')})`
   return formula
+}
+
+function applyLibraryFilter(formula: string, isInLibrary = false) {
+  return isInLibrary ? `AND({In Library}, ${formula})` : formula
 }
 
 // Airtable stores per-currency "Min Price <CODE>" columns in major units
@@ -158,6 +163,7 @@ function normalizeProductRecord({ id, fields }: FetchAirtableCMSProductsByTagIdR
     locales: fields.Locales,
     isDRMFree: !!fields['DRM-free'],
     isAdultOnly: !!fields['Adult Only'] || undefined,
+    isPlusReadingEnabled: !!fields['In Library'],
     isMultiple: isMultiple ? true : undefined,
     minPrice: fields['Min Price'],
     minPriceInDecimalByCurrency: normalizeMinPriceInDecimalByCurrency(fields),
@@ -165,13 +171,23 @@ function normalizeProductRecord({ id, fields }: FetchAirtableCMSProductsByTagIdR
   }
 }
 
+interface FetchAirtableCMSPublicationsOptions {
+  pageSize?: number
+  offset?: string
+  isPlusReadingEnabled?: boolean
+}
+
 export async function fetchAirtableCMSPublicationsBySearchTerm(
   searchTerm: string,
-  { pageSize = 100, offset }: { pageSize?: number, offset?: string } = {},
+  {
+    pageSize = 100,
+    offset,
+    isPlusReadingEnabled = false,
+  }: FetchAirtableCMSPublicationsOptions = {},
 ): Promise<FetchBookstoreCMSProductsResponseData> {
   const config = useRuntimeConfig()
   const fetch = getAirtableCMSFetch()
-  const filterByFormula = getFormulaForSearchTerm(searchTerm)
+  const filterByFormula = applyLibraryFilter(getFormulaForSearchTerm(searchTerm), isPlusReadingEnabled)
   const results = await fetch<FetchAirtableCMSProductsByTagIdResponseData>(
     `/${config.public.airtableCMSPublicationsTableId}`,
     {
@@ -194,12 +210,16 @@ export async function fetchAirtableCMSPublicationsBySearchTerm(
 
 export async function fetchAirtableCMSPublicationsByGenre(
   genre: string,
-  { pageSize = 100, offset }: { pageSize?: number, offset?: string } = {},
+  {
+    pageSize = 100,
+    offset,
+    isPlusReadingEnabled = false,
+  }: FetchAirtableCMSPublicationsOptions = {},
 ): Promise<FetchBookstoreCMSProductsResponseData> {
   const config = useRuntimeConfig()
   const fetch = getAirtableCMSFetch()
   const sanitizedGenre = genre.replaceAll('"', '')
-  const filterByFormula = `{Genre}="${sanitizedGenre}"`
+  const filterByFormula = applyLibraryFilter(`{Genre}="${sanitizedGenre}"`, isPlusReadingEnabled)
   const results = await fetch<FetchAirtableCMSProductsByTagIdResponseData>(
     `/${config.public.airtableCMSPublicationsTableId}`,
     {

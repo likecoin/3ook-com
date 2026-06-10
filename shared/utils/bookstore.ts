@@ -9,3 +9,7 @@ export const BOOKSTORE_DEFAULT_LIST_TYPE: BookstoreBuiltInListType = 'latest'
 export function isBookstoreBuiltInListType(value: string): value is BookstoreBuiltInListType {
   return (BOOKSTORE_BUILT_IN_LIST_TYPES as readonly string[]).includes(value)
 }
+
+export function getLibraryScopedCacheKey(key: string, isPlusReadingEnabled: boolean) {
+  return isPlusReadingEnabled ? `library:${key}` : key
+}

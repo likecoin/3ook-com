@@ -49,14 +49,12 @@
             />
           </div>
         </div>
-        <h1
-          v-else
-          class="px-3 py-1 text-theme-cyan font-medium bg-theme-black border-1 border-theme-black rounded-full"
-        >
-          <span v-if="querySearchTerm">{{ $t('store_search_prefix') }}{{ querySearchTerm }}</span>
-          <span v-else-if="queryAuthorName">{{ $t('store_author_prefix') }}{{ queryAuthorName }}</span>
-          <span v-else-if="queryPublisherName">{{ $t('store_publisher_prefix') }}{{ queryPublisherName }}</span>
-          <span v-else-if="queryGenre">{{ $t('store_genre_prefix') }}{{ localizedGenreName }}</span>
+        <h1 v-else-if="searchModeContext">
+          <PillButton
+            is-active
+            is-static
+            :label="`${searchModeContext.titlePrefix}${searchModeContext.label}`"
+          />
         </h1>
       </div>
 
@@ -129,7 +127,7 @@
                 :placeholder="$t('store_search_input_placeholder')"
                 type="search"
                 :ui="{
-                  base: 'py-5',
+                  base: 'py-5 [&::-webkit-search-cancel-button]:appearance-none',
                   trailing: 'pe-2',
                 }"
                 @blur="isSearchInputOpen = false"
@@ -184,7 +182,18 @@
       </section>
 
       <div
-        v-if="isSearchResultEmpty"
+        v-if="isLoadingInitialItems"
+        class="flex justify-center py-48"
+      >
+        <UIcon
+          class="animate-spin"
+          name="material-symbols-progress-activity"
+          size="48"
+        />
+      </div>
+
+      <div
+        v-else-if="isSearchResultEmpty"
         class="w-full mb-8"
       >
         <div class="flex flex-col items-center py-8">
@@ -624,7 +633,7 @@ const ogTitle = computed(() => {
 
 const searchResults = computed<BookstoreItemList | null>(() => {
   if (isSearchMode.value) {
-    const searchResults = bookstoreStore.getBookstoreSearchResultsByQuery(searchQuery.value)
+    const searchResults = bookstoreStore.getBookstoreSearchResultsByQuery(searchQuery.value, isLibraryTab.value)
     return {
       items: searchResults.items.map(item => ({
         ...item,
@@ -742,6 +751,7 @@ const products = computed<BookstoreItemList>(() => {
 })
 
 const itemsCount = computed(() => products.value.items.length)
+const isLoadingInitialItems = computed(() => itemsCount.value === 0 && products.value.isFetchingItems)
 const hasMoreItems = computed(() => !!products.value.nextItemsKey || !!products.value.mayHaveMore || !products.value.hasFetchedItems)
 
 const itemsForStructuredData = computed(() => products.value.items.slice(0, Math.min(20, itemsCount.value)))
@@ -996,7 +1006,14 @@ async function fetchItems({ lazy = false, isRefresh = false } = {}): Promise<boo
     try {
       const [type, searchTerm] = searchQuery.value.split(':', 2)
       if (type && searchTerm) {
-        await bookstoreStore.fetchSearchResults(type as 'q' | 'author' | 'publisher' | 'owner_wallet' | 'genre', searchTerm, { isRefresh })
+        await bookstoreStore.fetchSearchResults(
+          type as 'q' | 'author' | 'publisher' | 'owner_wallet' | 'genre',
+          searchTerm,
+          {
+            isRefresh,
+            isPlusReadingEnabled: isLibraryTab.value,
+          },
+        )
       }
       return true
     }
