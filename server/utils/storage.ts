@@ -7,14 +7,19 @@ function getDefaultBucket() {
   return storage.bucket()
 }
 
-export function generateTTSCacheKey(language: string, voiceId: string, text: string, model: string): string {
+// All TTS audio is cached under its resolved Minimax voice id so a voice
+// version bump (e.g. three_book_pazu_v3 -> _v4) or a re-cloned custom voice
+// (new cv_<wallet>_<timestamp> id) lands on a fresh path automatically, instead
+// of serving stale audio under a stable alias. Voice id leads the path so a
+// single voice's audio can be prefix-purged (see getTTSCachePrefixForVoice).
+export function generateTTSCacheKey(minimaxVoiceId: string, language: string, text: string, model: string): string {
   const config = useRuntimeConfig()
   if (!config.ttsCacheBucketPrefix) {
     throw new Error('TTS cache bucket is not configured')
   }
   // Create a hash of the text to avoid filesystem issues with special characters
   const textHash = createHash('sha256').update(text).digest('hex')
-  return `${config.ttsCacheBucketPrefix}/${model}/${language}/${voiceId}/${textHash}.mp3`
+  return `${config.ttsCacheBucketPrefix}/${minimaxVoiceId}/${model}/${language}/${textHash}.mp3`
 }
 
 export function getTTSCacheBucket() {
@@ -26,29 +31,15 @@ export function getTTSCacheBucket() {
   return getDefaultBucket()
 }
 
-function generateVoiceTTSCacheKey(subfolder: string, id: string, language: string, text: string, model: string): string {
+// Prefix matching every cached segment for one Minimax voice, used to purge a
+// custom voice's audio when it is deleted or re-cloned. The trailing slash
+// keeps cv_xxx_123 from matching cv_xxx_1234.
+export function getTTSCachePrefixForVoice(minimaxVoiceId: string): string {
   const config = useRuntimeConfig()
   if (!config.ttsCacheBucketPrefix) {
     throw new Error('TTS cache bucket is not configured')
   }
-  const textHash = createHash('sha256').update(text).digest('hex')
-  return `${config.ttsCacheBucketPrefix}/${subfolder}/${id}/${model}/${language}/${textHash}.mp3`
-}
-
-export function generateCustomVoiceTTSCacheKey(wallet: string, language: string, text: string, model: string): string {
-  return generateVoiceTTSCacheKey('custom-voices', wallet, language, text, model)
-}
-
-export function generateAffiliateVoiceTTSCacheKey(providerVoiceId: string, language: string, text: string, model: string): string {
-  return generateVoiceTTSCacheKey('affiliate-voices', providerVoiceId, language, text, model)
-}
-
-export function getCustomVoiceTTSCachePrefix(wallet: string): string {
-  const config = useRuntimeConfig()
-  if (!config.ttsCacheBucketPrefix) {
-    throw new Error('TTS cache bucket is not configured')
-  }
-  return `${config.ttsCacheBucketPrefix}/custom-voices/${wallet}/`
+  return `${config.ttsCacheBucketPrefix}/${minimaxVoiceId}/`
 }
 
 export function getCustomVoiceAudioPrefix(wallet: string): string {

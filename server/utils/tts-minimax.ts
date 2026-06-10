@@ -30,6 +30,10 @@ export function getVoiceDisplayName(voiceId: string): string | undefined {
   return VOICE_CONFIG[voiceId]?.displayName
 }
 
+export function getMinimaxVoiceId(voiceId: string): string | undefined {
+  return VOICE_CONFIG[voiceId]?.minimaxVoiceId
+}
+
 // Pronunciation overrides keyed by Minimax synthesis language. Each maps a
 // source word (`target`) to its `override`: Mandarin Pinyin (tone 1–5)
 // or Cantonese Jyutping (tone 1–6) wrapped in half-width parentheses, spanning

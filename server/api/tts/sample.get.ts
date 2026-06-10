@@ -129,10 +129,9 @@ export default defineEventHandler(async (event) => {
   const getExpectedSig = createTTSPronunciationSigGetter(language, text)
   const bucket = getTTSCacheBucket()
   const isCacheEnabled = !!bucket
-  const cacheKey = isCacheEnabled
-    ? (isAffiliate && customMiniMaxVoiceId
-        ? generateAffiliateVoiceTTSCacheKey(customMiniMaxVoiceId, language, text, ttsModel)
-        : generateTTSCacheKey(language, voiceId, text, ttsModel))
+  const minimaxVoiceId = customMiniMaxVoiceId ?? getMinimaxVoiceId(voiceId)
+  const cacheKey = isCacheEnabled && minimaxVoiceId
+    ? generateTTSCacheKey(minimaxVoiceId, language, text, ttsModel)
     : null
 
   if (isCacheEnabled && cacheKey) {

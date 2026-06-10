@@ -113,7 +113,7 @@ export default defineEventHandler(async (event): Promise<CustomVoiceData> => {
 
   const oldTTSCacheDeleted: Promise<void> = existingVoicePromise.then(async (existing) => {
     if (!existing?.voiceId || !ttsBucket) return
-    await ttsBucket.deleteFiles({ prefix: getCustomVoiceTTSCachePrefix(wallet) }).catch((error) => {
+    await ttsBucket.deleteFiles({ prefix: getTTSCachePrefixForVoice(existing.voiceId) }).catch((error) => {
       console.warn('[CustomVoice] Failed to delete TTS cache files:', error)
     })
   })

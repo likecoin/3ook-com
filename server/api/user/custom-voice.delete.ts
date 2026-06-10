@@ -42,7 +42,7 @@ export default defineEventHandler(async (event) => {
         })
       : Promise.resolve(),
     ttsBucket
-      ? ttsBucket.deleteFiles({ prefix: getCustomVoiceTTSCachePrefix(wallet) }).catch((error) => {
+      ? ttsBucket.deleteFiles({ prefix: getTTSCachePrefixForVoice(customVoice.voiceId) }).catch((error) => {
           console.warn('[CustomVoice] Failed to delete TTS cache files:', error)
         })
       : Promise.resolve(),

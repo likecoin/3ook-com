@@ -207,7 +207,6 @@ export default defineEventHandler(async (event) => {
     provider = getTTSProvider(voiceId)
   }
 
-  const customVoiceWallet = isCustomVoice ? session.user.evmWallet : undefined
   const logText = text.replace(/(\r\n|\n|\r)/gm, ' ')
   console.log(`[Speech] User ${session.user.evmWallet} requested conversion. Language: ${language}, Text: "${logText.substring(0, 50)}${logText.length > 50 ? '...' : ''}", Voice: ${voiceId}${customMiniMaxVoiceId ? ` (${customMiniMaxVoiceId})` : ''}`)
 
@@ -229,17 +228,16 @@ export default defineEventHandler(async (event) => {
   const getExpectedSig = createTTSPronunciationSigGetter(language, text)
   const bucket = getTTSCacheBucket()
   const isCacheEnabled = !!bucket
-  const cacheKey = isCacheEnabled
-    ? (isAffiliateVoice && customMiniMaxVoiceId
-        ? generateAffiliateVoiceTTSCacheKey(customMiniMaxVoiceId, language, text, ttsModel)
-        : customVoiceWallet
-          ? generateCustomVoiceTTSCacheKey(customVoiceWallet, language, text, ttsModel)
-          : generateTTSCacheKey(language, voiceId, text, ttsModel))
+  // Custom and affiliate voices carry their Minimax id directly; system voices
+  // resolve theirs from the internal alias.
+  const minimaxVoiceId = customMiniMaxVoiceId ?? getMinimaxVoiceId(voiceId)
+  const cacheKey = isCacheEnabled && minimaxVoiceId
+    ? generateTTSCacheKey(minimaxVoiceId, language, text, ttsModel)
     : null
 
-  if (isCacheEnabled) {
+  if (isCacheEnabled && cacheKey) {
     try {
-      const result = await serveCachedTTS(event, bucket, cacheKey!, provider.format, session.user.evmWallet, dictVersion, getExpectedSig)
+      const result = await serveCachedTTS(event, bucket, cacheKey, provider.format, session.user.evmWallet, dictVersion, getExpectedSig)
       if (result !== null) {
         publishEvent(event, 'TTSCacheHit', ttsEventBase)
         return result
