@@ -89,8 +89,9 @@
 
       <UDropdownMenu
         v-if="isDesktopScreen"
-        :items="menuItems"
+        :items="dropdownItems"
         :modal="true"
+        :ui="{ label: 'font-normal text-dimmed' }"
       >
         <MenuButton />
       </UDropdownMenu>
@@ -126,6 +127,11 @@
               isMobileMenuOpen = false
               item.onSelect?.(e)
             }"
+          />
+          <div
+            v-if="totalTimeLabel"
+            class="mt-1 pt-2 px-6 border-t border-default text-xs text-dimmed"
+            v-text="totalTimeLabel"
           />
         </template>
       </UDrawer>
@@ -195,6 +201,21 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  // Read/TTS time totals are only available for the logged-in user's own shelf,
+  // so the time header is gated on isOwnShelf. The TTS prop uses a lowercase
+  // "Tts" so its kebab-case binding round-trips (an uppercase "TTS" would not).
+  isOwnShelf: {
+    type: Boolean,
+    default: false,
+  },
+  totalReadingTimeMs: {
+    type: Number,
+    default: 0,
+  },
+  totalTtsListeningTimeMs: {
+    type: Number,
+    default: 0,
+  },
 })
 
 const emit = defineEmits([
@@ -210,7 +231,7 @@ const emit = defineEmits([
   'unarchive',
 ])
 
-const { t: $t } = useI18n()
+const { t: $t, locale } = useI18n()
 const nftStore = useNFTStore()
 const metadataStore = useMetadataStore()
 const bookInfo = useBookInfo({ nftClassId: props.nftClassId })
@@ -404,6 +425,24 @@ const menuItems = computed<DropdownMenuItem[]>(() => {
   }
 
   return items
+})
+
+// Total time spent with the book (reading + TTS), shown as a passive caption at
+// the foot of the menu. Empty when the total is 0 or off the user's own shelf.
+const totalTimeLabel = computed(() => {
+  if (!props.isOwnShelf) return ''
+  const duration = formatDuration(props.totalReadingTimeMs + props.totalTtsListeningTimeMs, locale.value)
+  return duration ? $t('bookshelf_item_menu_total_time', { duration }) : ''
+})
+
+// Desktop dropdown groups: the time caption (a non-interactive label) sits below
+// the actions, separated by the divider Nuxt UI renders between groups.
+const dropdownItems = computed<DropdownMenuItem[][]>(() => {
+  if (!totalTimeLabel.value) return [menuItems.value]
+  return [
+    menuItems.value,
+    [{ label: totalTimeLabel.value, type: 'label' as const }],
+  ]
 })
 
 if (!props.lazy) {

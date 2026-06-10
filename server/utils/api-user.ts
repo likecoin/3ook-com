@@ -89,10 +89,11 @@ function timestampToMillis(value: Timestamp | null | undefined): number | undefi
 function normalizeBookSettings(data: BookSettingsFirestoreData): BookSettingsData {
   // lastOpenedTime accepts a legacy number for records written before the
   // Timestamp migration; new writes are always Timestamp.
+  // totalReadingTimeMs / totalTTSListeningTimeMs are surfaced to the client (for
+  // the bookshelf time header); ttsCharactersUsed / sessionCount / plusBorrowedAt
+  // stay server-only.
   const {
     lastOpenedTime,
-    totalReadingTimeMs: _totalReadingTimeMs,
-    totalTTSListeningTimeMs: _totalTTSListeningTimeMs,
     ttsCharactersUsed: _ttsCharactersUsed,
     sessionCount: _sessionCount,
     plusBorrowedAt: _plusBorrowedAt,

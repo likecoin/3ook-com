@@ -272,6 +272,7 @@
   "bookshelf_item_menu_mark_reading": "Reading",
   "bookshelf_item_menu_plus_reading_return": "Return",
   "bookshelf_item_menu_staking": "Support",
+  "bookshelf_item_menu_total_time": "Read & listened {duration}",
   "bookshelf_item_menu_tts": "Voice Reading",
   "bookshelf_item_menu_tts_disabled": "Voice Reading (restricted by author)",
   "bookshelf_item_menu_unarchive": "Unarchive",

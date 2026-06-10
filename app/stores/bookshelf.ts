@@ -6,6 +6,8 @@ export interface BookshelfItem {
   completedAt?: number | null
   didNotFinishAt?: number | null
   archivedAt?: number | null
+  totalReadingTimeMs: number
+  totalTTSListeningTimeMs: number
 }
 
 export const useBookshelfStore = defineStore('bookshelf', () => {
@@ -53,6 +55,8 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
       completedAt: settings?.completedAt,
       didNotFinishAt: settings?.didNotFinishAt,
       archivedAt: settings?.archivedAt,
+      totalReadingTimeMs: settings?.totalReadingTimeMs || 0,
+      totalTTSListeningTimeMs: settings?.totalTTSListeningTimeMs || 0,
     }
   }
 

@@ -26,6 +26,9 @@ export interface BookSettingsUpdatePayload extends Omit<Partial<BaseBookSettings
 
 export interface BookSettingsData extends BaseBookSettingsData {
   updatedAt?: number
+  // Server-accumulated reading/TTS totals (read-only; not part of the update payload)
+  totalReadingTimeMs?: number
+  totalTTSListeningTimeMs?: number
 }
 
 export type BookSettingKey =

@@ -171,6 +171,9 @@
               :is-finished="item.completedAt != null"
               :is-did-not-finish="item.didNotFinishAt != null"
               :progress="item.progress"
+              :is-own-shelf="isMyBookshelf"
+              :total-reading-time-ms="item.totalReadingTimeMs"
+              :total-tts-listening-time-ms="item.totalTTSListeningTimeMs"
               :lazy="(claimableNFTClassIds.length + index) >= columnMax"
               @open="handleBookshelfItemOpen"
               @download="handleBookshelfItemDownload"
@@ -203,6 +206,9 @@
               :can-edit-reading-state="isMyBookshelf"
               :is-finished="true"
               :progress="item.progress"
+              :is-own-shelf="isMyBookshelf"
+              :total-reading-time-ms="item.totalReadingTimeMs"
+              :total-tts-listening-time-ms="item.totalTTSListeningTimeMs"
               :lazy="index >= columnMax"
               @open="handleBookshelfItemOpen"
               @download="handleBookshelfItemDownload"
@@ -233,6 +239,9 @@
               :can-edit-reading-state="isMyBookshelf"
               :is-did-not-finish="true"
               :progress="item.progress"
+              :is-own-shelf="isMyBookshelf"
+              :total-reading-time-ms="item.totalReadingTimeMs"
+              :total-tts-listening-time-ms="item.totalTTSListeningTimeMs"
               :lazy="index >= columnMax"
               @open="handleBookshelfItemOpen"
               @download="handleBookshelfItemDownload"
@@ -284,6 +293,9 @@
               :is-archived="item.archivedAt != null"
               :can-archive="isMyBookshelf"
               :progress="item.progress"
+              :is-own-shelf="isMyBookshelf"
+              :total-reading-time-ms="item.totalReadingTimeMs"
+              :total-tts-listening-time-ms="item.totalTTSListeningTimeMs"
               :staked-like="item.stakedAmount"
               :lazy="index >= columnMax"
               @open="handleBookshelfItemOpen"
@@ -316,6 +328,9 @@
               :is-finished="item.completedAt != null"
               :is-did-not-finish="item.didNotFinishAt != null"
               :progress="item.progress"
+              :is-own-shelf="isMyBookshelf"
+              :total-reading-time-ms="item.totalReadingTimeMs"
+              :total-tts-listening-time-ms="item.totalTTSListeningTimeMs"
               :lazy="index >= columnMax"
               @open="handleBookshelfItemOpen"
               @download="handleBookshelfItemDownload"
@@ -542,6 +557,8 @@ const stakingItems = computed<BookshelfItemWithStaking[]>(() => {
       lastOpenedTime: ownedItem?.lastOpenedTime || 0,
       progress: ownedItem?.progress || 0,
       archivedAt: ownedItem?.archivedAt ?? null,
+      totalReadingTimeMs: ownedItem?.totalReadingTimeMs || 0,
+      totalTTSListeningTimeMs: ownedItem?.totalTTSListeningTimeMs || 0,
     })
   })
 

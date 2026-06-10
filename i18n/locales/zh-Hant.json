@@ -272,6 +272,7 @@
   "bookshelf_item_menu_mark_reading": "閱讀中",
   "bookshelf_item_menu_plus_reading_return": "還書",
   "bookshelf_item_menu_staking": "後援會",
+  "bookshelf_item_menu_total_time": "已閱聽 {duration}",
   "bookshelf_item_menu_tts": "聲優朗讀",
   "bookshelf_item_menu_tts_disabled": "聲優朗讀（作者限制朗讀）",
   "bookshelf_item_menu_unarchive": "取消封存",
