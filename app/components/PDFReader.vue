@@ -212,7 +212,7 @@
             icon="i-material-symbols-play-arrow-rounded"
             variant="solid"
             color="primary"
-            :loading="isTTSExtracting"
+            :loading="isTtsExtracting"
             :ui="ttsButtonUI"
             @click="handleMobileTTSClick"
           />
@@ -226,7 +226,7 @@
               :aria-label="$t('reader_text_to_speech_button')"
               variant="solid"
               color="primary"
-              :loading="isTTSExtracting"
+              :loading="isTtsExtracting"
               :disabled="isAudioHidden"
               :ui="ttsButtonUI"
               @click="onClickTTSPlay"
@@ -319,7 +319,7 @@ interface Props {
   bookName?: string
   pdfBuffer?: ArrayBuffer | null
   isAudioHidden?: boolean
-  isTTSExtracting?: boolean
+  isTtsExtracting?: boolean
   bookFileCacheKey: string
   bookProgressKeyPrefix: string
   nftClassId: string
