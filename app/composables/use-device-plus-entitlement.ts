@@ -1,3 +1,5 @@
+import { createSharedComposable } from '@vueuse/core'
+
 // Optimistic Plus entitlement reported by the device store (StoreKit / Play via
 // RevenueCat) the instant a purchase/restore succeeds, bridging the gap until the
 // webhook flips the canonical `isLikerPlus`. In-memory only so it can't outlive
@@ -5,7 +7,10 @@
 const RECONCILE_MAX_ATTEMPTS = 15
 const RECONCILE_DELAY_MS = 3000
 
-export function useDevicePlusEntitlement() {
+// Shared across all consumers (TTS gates, native IAP) so the account-switch watcher
+// and `isPlusOrDevicePlus` computed are instantiated once; state is `useState`-backed
+// so it stays correct even if SSR falls back to a fresh instance per request.
+export const useDevicePlusEntitlement = createSharedComposable(() => {
   const { user, loggedIn } = useUserSession()
   const accountStore = useAccountStore()
 
@@ -53,11 +58,11 @@ export function useDevicePlusEntitlement() {
     // A purchase/restore reply can land after logout; recording it then would
     // leak the optimistic flag into the next login in the same tab.
     if (!loggedIn.value) return
-    hasDevicePlus.value = true
+    if (!hasDevicePlus.value) hasDevicePlus.value = true
     if (import.meta.client && !user.value?.isLikerPlus) {
       void reconcileSessionUntilPlus()
     }
   }
 
   return { hasDevicePlus, isPlusOrDevicePlus, markDevicePlusEntitled }
-}
+})

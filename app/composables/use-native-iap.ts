@@ -107,7 +107,7 @@ export const useNativeIAP = createSharedComposable(() => {
         case 'iapPurchaseResult':
           // The device store confirms entitlement instantly; record it so the
           // paywall/TTS gates unblock without waiting out the backend webhook.
-          if (detail.status === 'success' && detail.isPlus) markDevicePlusEntitled()
+          if (isIAPSupported.value && detail.status === 'success' && detail.isPlus) markDevicePlusEntitled()
           pendingPurchase?.({
             status: detail.status,
             period: detail.period,
@@ -118,7 +118,7 @@ export const useNativeIAP = createSharedComposable(() => {
           pendingPurchase = null
           break
         case 'iapRestoreResult':
-          if (detail.status === 'success' && detail.isPlus) markDevicePlusEntitled()
+          if (isIAPSupported.value && detail.status === 'success' && detail.isPlus) markDevicePlusEntitled()
           pendingRestore?.({ status: detail.status, isPlus: detail.isPlus, message: detail.message })
           pendingRestore = null
           break
