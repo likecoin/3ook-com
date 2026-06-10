@@ -1,5 +1,5 @@
-import { useDocumentVisibility, useIdle } from '@vueuse/core'
-import { HEARTBEAT_INTERVAL_MS, MAX_HEARTBEAT_DELTA_MS, MAX_SESSION_DURATION_MS } from '~~/shared/constants/analytics'
+import { useDocumentVisibility, useIdle, useThrottleFn } from '@vueuse/core'
+import { ANALYTICS_FLUSH_THROTTLE_MS, HEARTBEAT_INTERVAL_MS, MAX_HEARTBEAT_DELTA_MS, MAX_SESSION_DURATION_MS } from '~~/shared/constants/analytics'
 
 const IDLE_TIMEOUT_MS = 2 * 60 * 1000
 
@@ -53,6 +53,10 @@ export function useReadingSession(options: ReadingSessionOptions) {
     isTabVisible.value && !idle.value,
   )
 
+  // Commit accumulated time at natural boundaries (TTS pause/stop/close, end of a
+  // reading burst). Throttled so rapid toggles collapse to one paced Firestore write.
+  const flushDeltas = useThrottleFn(sendHeartbeat, ANALYTICS_FLUSH_THROTTLE_MS)
+
   watch(isActivelyReading, (active) => {
     if (active) {
       lastActiveTimestamp = Date.now()
@@ -60,6 +64,9 @@ export function useReadingSession(options: ReadingSessionOptions) {
     else if (lastActiveTimestamp) {
       activeReadingTimeMs += Date.now() - lastActiveTimestamp
       lastActiveTimestamp = null
+      // When the tab is hidden the terminal beacon flushes reliably; a $fetch here
+      // would race it and may be cancelled, so only flush on idle-while-visible.
+      if (isTabVisible.value) flushDeltas()
     }
   }, { immediate: true })
 
@@ -70,6 +77,8 @@ export function useReadingSession(options: ReadingSessionOptions) {
     else if (lastTTSTimestamp) {
       ttsActiveTimeMs += Date.now() - lastTTSTimestamp
       lastTTSTimestamp = null
+      // Only flush while visible, same as the idle path above.
+      if (isTabVisible.value) flushDeltas()
     }
   }, { immediate: true })
 

@@ -2,3 +2,4 @@ export const MAX_SESSION_DURATION_MS = 4 * 60 * 60 * 1000
 export const HEARTBEAT_INTERVAL_MS = 5 * 60 * 1000
 export const MAX_HEARTBEAT_DELTA_MS = 10 * 60 * 1000
 export const WALL_CLOCK_JITTER_MS = 30 * 1000
+export const ANALYTICS_FLUSH_THROTTLE_MS = 30 * 1000
