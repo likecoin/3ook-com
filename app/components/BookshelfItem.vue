@@ -202,9 +202,8 @@ const props = defineProps({
     default: false,
   },
   // Read/TTS time totals are only available for the logged-in user's own shelf,
-  // so the time header is gated on isOwnShelf. The TTS prop uses a lowercase
-  // "Tts" so its kebab-case binding round-trips (an uppercase "TTS" would not).
-  isOwnShelf: {
+  // so the time header is gated on isMyBookshelf.
+  isMyBookshelf: {
     type: Boolean,
     default: false,
   },
@@ -212,6 +211,8 @@ const props = defineProps({
     type: Number,
     default: 0,
   },
+  // The TTS prop uses a lowercase "Tts" so its kebab-case binding round-trips
+  // (an uppercase "TTS" would not).
   totalTtsListeningTimeMs: {
     type: Number,
     default: 0,
@@ -430,7 +431,7 @@ const menuItems = computed<DropdownMenuItem[]>(() => {
 // Total time spent with the book (reading + TTS), shown as a passive caption at
 // the foot of the menu. Empty when the total is 0 or off the user's own shelf.
 const totalTimeLabel = computed(() => {
-  if (!props.isOwnShelf) return ''
+  if (!props.isMyBookshelf) return ''
   const duration = formatDuration(props.totalReadingTimeMs + props.totalTtsListeningTimeMs, locale.value)
   return duration ? $t('bookshelf_item_menu_total_time', { duration }) : ''
 })
