@@ -99,6 +99,9 @@ export function useReadingSession(options: ReadingSessionOptions) {
     if (!chapterIndex && !pageIndex) {
       pagesViewed.add(Math.floor(progress.value))
     }
+    // Continuous play never toggles the idle/TTS watchers, so without this the
+    // in-progress span only commits on the 5-min heartbeat. Visible-only, throttled.
+    if (isTabVisible.value) flushDeltas()
   }, { immediate: true })
 
   function drainAccumulators(cap: number) {
