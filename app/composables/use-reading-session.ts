@@ -29,13 +29,13 @@ export function useReadingSession(options: ReadingSessionOptions) {
   let lastActiveTimestamp: number | null = null
   let lastTTSTimestamp: number | null = null
 
-  function resetSession() {
+  function resetSession({ seedTTSMs = 0 } = {}) {
     sessionId = crypto.randomUUID()
     startProgress = progress.value
     pagesViewed = new Set<number | string>()
     sessionFlushed = false
     activeReadingTimeMs = 0
-    ttsActiveTimeMs = 0
+    ttsActiveTimeMs = seedTTSMs
     sessionActiveReadingTimeMs = 0
     sessionTTSActiveTimeMs = 0
     lastActiveTimestamp = null
@@ -215,7 +215,14 @@ export function useReadingSession(options: ReadingSessionOptions) {
       flushSessionBeacon()
     }
     else {
-      resetSession()
+      // Audio keeps playing while hidden, so carry that listening span into the
+      // new session; resetSession() nulls the clocks and the source refs don't
+      // toggle on return, so re-arm both here or they never restart.
+      const now = Date.now()
+      const carriedTTSMs = ttsActiveTimeMs + (lastTTSTimestamp ? now - lastTTSTimestamp : 0)
+      resetSession({ seedTTSMs: carriedTTSMs })
+      if (isTextToSpeechPlaying?.value) lastTTSTimestamp = now
+      if (isActivelyReading.value) lastActiveTimestamp = now
       logSessionStart()
       resumeHeartbeat()
     }
