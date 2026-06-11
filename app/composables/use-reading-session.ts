@@ -64,8 +64,8 @@ export function useReadingSession(options: ReadingSessionOptions) {
     else if (lastActiveTimestamp) {
       activeReadingTimeMs += Date.now() - lastActiveTimestamp
       lastActiveTimestamp = null
-      // When the tab is hidden the terminal beacon flushes reliably; a $fetch here
-      // would race it and may be cancelled, so only flush on idle-while-visible.
+      // Fires on idle-while-visible or the hide transition; on hide the terminal
+      // beacon flushes and a $fetch would race it, so restrict to the visible case.
       if (isTabVisible.value) flushDeltas()
     }
   }, { immediate: true })
@@ -77,8 +77,9 @@ export function useReadingSession(options: ReadingSessionOptions) {
     else if (lastTTSTimestamp) {
       ttsActiveTimeMs += Date.now() - lastTTSTimestamp
       lastTTSTimestamp = null
-      // Only flush while visible, same as the idle path above.
-      if (isTabVisible.value) flushDeltas()
+      // TTS plays in the background, so commit on pause/stop even while hidden;
+      // a server flush works from a hidden-but-alive tab (beacon covers unload).
+      flushDeltas()
     }
   }, { immediate: true })
 
@@ -99,9 +100,9 @@ export function useReadingSession(options: ReadingSessionOptions) {
     if (!chapterIndex && !pageIndex) {
       pagesViewed.add(Math.floor(progress.value))
     }
-    // Continuous play never toggles the idle/TTS watchers, so without this the
-    // in-progress span only commits on the 5-min heartbeat. Visible-only, throttled.
-    if (isTabVisible.value) flushDeltas()
+    // TTS advances progress in the background too, so flush regardless of
+    // visibility — like the book-settings sync. Throttled; beacon covers unload.
+    flushDeltas()
   }, { immediate: true })
 
   function drainAccumulators(cap: number) {
