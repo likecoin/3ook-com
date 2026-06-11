@@ -232,6 +232,11 @@ export default defineNuxtConfig({
         path: '/library',
         file: resolve('app/pages/store/index.vue'),
       })
+      pages.push({
+        name: 'library-nftClassId',
+        path: '/library/:nftClassId',
+        file: resolve('app/pages/store/[nftClassId]/index.vue'),
+      })
     },
   },
 

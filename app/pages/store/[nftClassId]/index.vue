@@ -113,6 +113,7 @@
                 <EntityItem
                   :name="bookInfo.authorName.value"
                   entity-type="author"
+                  :is-library="isLibrary"
                 />
               </li>
               <li v-if="bookInfo.publisherName.value">
@@ -120,6 +121,7 @@
                 <EntityItem
                   :name="bookInfo.publisherName.value"
                   entity-type="publisher"
+                  :is-library="isLibrary"
                 />
               </li>
             </ul>
@@ -193,7 +195,7 @@
               <UButton
                 :label="bookInfo.localizedGenre.value"
                 :to="localeRoute({
-                  name: 'store',
+                  name: listingRouteName,
                   query: {
                     genre: bookInfo.genre.value,
                     ll_medium: 'genre',
@@ -213,7 +215,7 @@
               <UButton
                 :label="tag"
                 :to="localeRoute({
-                  name: 'store',
+                  name: listingRouteName,
                   query: {
                     q: tag,
                     ll_medium: `keyword-${tag}`,
@@ -501,10 +503,21 @@
             ]"
           >
             <div
-              v-if="pricingItems.length"
-              class="bg-white dark:bg-neutral-900 space-y-6 p-4 pt-6 pb-8 rounded-lg shadow-[0px_10px_20px_0px_rgba(0,0,0,0.04)]"
+              v-if="(!isLibrary && pricingItems.length) || isUserBookOwner || isPlusReadingCTAVisible"
+              :class="[
+                'bg-white',
+                'dark:bg-elevated',
+                'space-y-4',
+                'p-4',
+                'rounded-lg',
+                'shadow-[0px_10px_20px_0px_rgba(0,0,0,0.04)]',
+                { 'max-tablet:hidden': isLibrary },
+              ]"
             >
-              <ul class="space-y-2">
+              <ul
+                v-if="pricingItems.length && !isLibrary"
+                class="space-y-2"
+              >
                 <li
                   v-for="(item, index) in pricingItems"
                   :key="item.name"
@@ -639,89 +652,69 @@
                   </button>
                 </li>
               </ul>
-              <footer class="flex flex-col gap-3">
-                <!-- [購買/再次購買][閱讀/借閱] -->
-                <div class="flex gap-3">
-                  <UButton
-                    v-bind="checkoutButtonProps"
-                    class="flex-1 cursor-pointer justify-center"
-                    size="xl"
-                    :loading="isPurchasing"
-                    :disabled="!canBePurchased"
-                    @click="handlePurchaseButtonClick"
-                  />
-                  <UButton
-                    v-if="isUserBookOwner"
-                    :variant="readButtonVariant"
-                    class="flex-1 cursor-pointer justify-center"
-                    :label="$t('product_page_read_button_label')"
-                    size="xl"
-                    @click="handleReadButtonClick"
-                  />
-                  <UButton
-                    v-else-if="isPlusReadingCTAVisible"
-                    :variant="plusReadingCTAVariant"
-                    class="flex-1 cursor-pointer justify-center"
-                    :label="plusReadingCTALabel"
-                    size="xl"
-                    @click="handlePlusReadButtonClick"
-                  />
-                </div>
+
+              <!-- [購買/再次購買][閱讀/借閱] -->
+              <footer class="flex gap-3">
+                <UButton
+                  v-if="!isLibrary && pricingItems.length"
+                  v-bind="checkoutButtonProps"
+                  class="flex-1 cursor-pointer justify-center"
+                  size="xl"
+                  :loading="isPurchasing"
+                  :disabled="!canBePurchased"
+                  @click="handlePurchaseButtonClick"
+                />
+                <UButton
+                  v-if="isUserBookOwner"
+                  :variant="readButtonVariant"
+                  class="flex-1 cursor-pointer justify-center"
+                  :label="$t('product_page_read_button_label')"
+                  size="xl"
+                  @click="handleReadButtonClick"
+                />
+                <UButton
+                  v-else-if="isPlusReadingCTAVisible"
+                  :variant="plusReadingCTAVariant"
+                  class="flex-1 cursor-pointer justify-center"
+                  :label="plusReadingCTALabel"
+                  size="xl"
+                  @click="handlePlusReadButtonClick"
+                />
               </footer>
             </div>
 
-            <UButton
-              v-else-if="isUserBookOwner"
-              :variant="readButtonVariant"
-              class="max-tablet:hidden"
-              :label="$t('product_page_read_button_label')"
-              size="xl"
-              block
-              @click="handleReadButtonClick"
-            />
-
-            <!-- Fallback read/borrow only when there is no purchase block to pair with. -->
-            <UButton
-              v-if="isPlusReadingCTAVisible && !pricingItems.length"
-              :variant="plusReadingCTAVariant"
-              class="max-tablet:hidden"
-              :label="plusReadingCTALabel"
-              size="xl"
-              block
-              @click="handlePlusReadButtonClick"
-            />
-
             <div
-              v-if="pricingItems.length"
-              class="flex flex-col gap-4"
+              v-if="pricingItems.length && !isLibrary"
+              class="flex gap-3 px-4"
             >
-              <div class="flex gap-3">
-                <UButton
-                  v-if="canBePurchased"
-                  class="w-1/2 cursor-pointer justify-center"
-                  :label="$t('product_page_gift_button_label')"
-                  variant="outline"
-                  color="primary"
-                  size="lg"
-                  leading-icon="i-material-symbols-featured-seasonal-and-gifts-rounded"
-                  @click="handleGiftButtonClick"
-                />
-                <UButton
-                  class="cursor-pointer justify-center"
-                  :class="canBePurchased ? 'w-1/2' : 'w-full'"
-                  :label="isInBookList ? $t('product_page_remove_from_book_list_button_label') : $t('product_page_add_to_book_list_button_label')"
-                  variant="outline"
-                  color="primary"
-                  size="lg"
-                  :leading-icon="isInBookList ? 'i-material-symbols-favorite-rounded' : 'i-material-symbols-add-2-rounded'"
-                  :loading="isCheckingBookList || isUpdatingBookList"
-                  @click="handleBookListButtonClickDebounced"
-                />
-              </div>
+              <UButton
+                v-if="canBePurchased"
+                class="w-1/2 cursor-pointer justify-center"
+                :label="$t('product_page_gift_button_label')"
+                variant="outline"
+                color="primary"
+                size="lg"
+                leading-icon="i-material-symbols-featured-seasonal-and-gifts-rounded"
+                @click="handleGiftButtonClick"
+              />
+              <UButton
+                class="cursor-pointer justify-center"
+                :class="canBePurchased ? 'w-1/2' : 'w-full'"
+                :label="isInBookList ? $t('product_page_remove_from_book_list_button_label') : $t('product_page_add_to_book_list_button_label')"
+                variant="outline"
+                color="primary"
+                size="lg"
+                :leading-icon="isInBookList ? 'i-material-symbols-favorite-rounded' : 'i-material-symbols-add-2-rounded'"
+                :loading="isCheckingBookList || isUpdatingBookList"
+                @click="handleBookListButtonClickDebounced"
+              />
             </div>
           </div>
 
-          <ul class="flex justify-center items-center gap-2">
+          <ul
+            v-if="!isLibrary"
+            class="flex justify-center items-center gap-2"
+          >
             <li
               v-for="button in socialButtons"
               :key="button.icon"
@@ -771,6 +764,7 @@
           :lazy="true"
           :ll-medium="'recommendation'"
           :ll-source="nftClassId"
+          :is-library="isLibrary"
           @open="handleRecommendedBookCoverClick"
         />
       </ul>
@@ -778,7 +772,7 @@
 
     <!-- Mobile sticky bottom bar -->
     <aside
-      v-if="isUserBookOwner || isPlusReadingCTAVisible || pricingItems.length"
+      v-if="isUserBookOwner || isPlusReadingCTAVisible || (!isLibrary && pricingItems.length)"
       :class="[
         'fixed',
         'bottom-17',
@@ -809,20 +803,9 @@
         @click="handleReadButtonClick"
       />
 
-      <!-- Fallback read/borrow only when there is no purchase block to pair with. -->
-      <UButton
-        v-if="isPlusReadingCTAVisible && !pricingItems.length"
-        :variant="plusReadingCTAVariant"
-        :label="plusReadingCTALabel"
-        class="cursor-pointer"
-        size="xl"
-        block
-        @click="handlePlusReadButtonClick"
-      />
-
-      <template v-if="!isUserBookOwner && pricingItems.length">
+      <template v-else>
         <UFieldGroup
-          v-if="pricingItems.length > 1"
+          v-if="!isLibrary && pricingItems.length > 1"
           size="xs"
         >
           <UButton
@@ -843,7 +826,10 @@
           </UDropdownMenu>
         </UFieldGroup>
 
-        <div class="flex items-center justify-between flex-wrap gap-2">
+        <div
+          v-if="!isLibrary && pricingItems.length"
+          class="flex items-center justify-between flex-wrap gap-2"
+        >
           <span class="shrink-0 space-x-0.5 text-xl font-semibold leading-none">
             <span
               v-if="selectedPricingItem?.discountedPrice"
@@ -859,6 +845,7 @@
               class="inline-block"
             />
           </span>
+
           <div class="flex items-center gap-1">
             <UButton
               v-if="canBePurchased"
@@ -884,8 +871,10 @@
             />
           </div>
         </div>
+
         <div class="flex gap-2">
           <UButton
+            v-if="!isLibrary && pricingItems.length"
             v-bind="checkoutButtonProps"
             class="flex-1 cursor-pointer justify-center"
             color="primary"
@@ -1007,7 +996,7 @@ const ttsTagLabel = computed(() => $t('product_page_support_tts_label'))
 const ttsTagRoute = computed(() =>
   isLikerPlus.value || isApp.value
     ? localeRoute({
-        name: 'store',
+        name: listingRouteName.value,
         query: {
           q: ttsTagLabel.value,
           ll_medium: `keyword-${ttsTagLabel.value}`,
@@ -1035,7 +1024,7 @@ const plusReadingTagLabel = computed(() => $t('product_page_plus_reading_label')
 const plusReadingTagRoute = computed(() =>
   isLikerPlus.value || isApp.value
     ? localeRoute({
-        name: 'store',
+        name: listingRouteName.value,
         query: {
           q: plusReadingTagLabel.value,
           ll_medium: `keyword-${plusReadingTagLabel.value}`,
@@ -1063,6 +1052,9 @@ const isAdultContentEnabled = useAdultContentSetting()
 const nftClassId = computed(() => getRouteParam('nftClassId'))
 const { isOwner: isUserBookOwner } = useUserBookOwnership(nftClassId)
 const bookInfo = useBookInfo({ nftClassId })
+
+const isLibrary = computed(() => getRouteBaseName(route) === 'library-nftClassId')
+const listingRouteName = computed(() => (isLibrary.value ? 'library' : 'store'))
 
 // Plus-reading is gated behind a PostHog flag for staged internal testing on
 // prod, combined with the per-book backend flag.
@@ -1158,6 +1150,15 @@ if (newClassId && newClassId !== nftClassId.value) {
   }), { replace: true, redirectCode: 301 })
 }
 
+// The library only serves Plus-reading titles; send the rest to the store.
+if (isLibrary.value && !bookInfo.isPlusReadingEnabled.value) {
+  await navigateTo(localeRoute({
+    name: 'store-nftClassId',
+    params: { nftClassId: nftClassId.value },
+    query: route.query,
+  }), { replace: true })
+}
+
 const authorStore = useAuthorStore()
 const { getResizedImageURL } = useImageResize()
 const bookCoverSrc = computed(() => getResizedImageURL(bookInfo.coverSrc.value, { size: 600 }))
@@ -1219,7 +1220,12 @@ const ogTitle = computed(() => {
 })
 const ogDescription = computed(() => truncateText(bookInfo.description.value, 200))
 const canonicalURL = computed(() => {
-  return `${baseURL}${route.path}`
+  // Always canonicalize to the /store URL so the library variant does not create a duplicated content page for search engines.
+  const storePath = localeRoute({
+    name: 'store-nftClassId',
+    params: { nftClassId: nftClassId.value },
+  })?.path
+  return `${baseURL}${storePath || route.path}`
 })
 
 const structuredData = computed(() => {
@@ -1559,6 +1565,8 @@ const filteredRecommendedClassIds = computed(() => {
       const bookstoreInfo = bookstoreStore.getBookstoreInfoByNFTClassId(classId)
       if (bookstoreInfo === null || bookstoreInfo?.isHidden) return false
       if (!isAdultContentEnabled.value && bookstoreInfo?.isAdultOnly) return false
+      // Only shows Plus reading enabled titles in the library
+      if (isLibrary.value && !bookstoreInfo?.isPlusReadingEnabled) return false
       return true
     })
 })
@@ -1569,6 +1577,29 @@ const { gridClasses, getGridItemClassesByIndex } = usePaginatedGrid({
 })
 
 onMounted(async () => {
+  const mightRedirect = isLibrary.value || (isApp.value && bookInfo.isPlusReadingEnabled.value)
+  const isPlusLibraryEnabled = mightRedirect && await fetchFeatureFlagEnabled('plus-library')
+
+  // The library is gated behind a feature flag
+  if (isLibrary.value && !isPlusLibraryEnabled) {
+    await navigateTo(localeRoute({
+      name: 'store-nftClassId',
+      params: { nftClassId: nftClassId.value },
+      query: route.query,
+    }), { replace: true })
+    return
+  }
+
+  // The app hides the store, so send Plus-reading titles to the library.
+  if (!isLibrary.value && isPlusLibraryEnabled) {
+    await navigateTo(localeRoute({
+      name: 'library-nftClassId',
+      params: { nftClassId: nftClassId.value },
+      query: route.query,
+    }), { replace: true })
+    return
+  }
+
   useLogEvent('view_item', formattedLogPayload.value)
   nftStore.lazyFetchMessagesByClassId(nftClassId.value).catch((error) => {
     console.error(`Failed to fetch messages for NFT class ${nftClassId.value}:`, error)
@@ -1986,7 +2017,7 @@ function handleTTSExplainerClick() {
 async function handleBackButtonClick() {
   useLogEvent('product_page_back_button_click')
   await navigateTo(localeRoute({
-    name: 'store',
+    name: listingRouteName.value,
     query: route.query,
   }))
 }

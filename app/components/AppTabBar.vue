@@ -94,15 +94,21 @@ const isPlusLibraryEnabled = useFeatureFlagEnabled('plus-library')
 
 const menuItems = computed(() => {
   const routeName = getRouteBaseNameString()
+  const isLibraryEnabled = isPlusLibraryEnabled.value === true
+  // In app, the library replaces the store as the primary browse tab.
+  // The store stays as a fallback while the library flag is off/unresolved.
+  const isStoreHidden = isApp.value && isLibraryEnabled
   return [
-    {
-      key: 'store',
-      label: $t('tab_bar_store'),
-      icon: 'i-material-symbols-storefront-outline',
-      iconActive: 'i-material-symbols-storefront',
-    },
+    ...(isStoreHidden
+      ? []
+      : [{
+          key: 'store',
+          label: $t('tab_bar_store'),
+          icon: 'i-material-symbols-storefront-outline',
+          iconActive: 'i-material-symbols-storefront',
+        }]),
     // Plus-reading library; only shown once the feature flag resolves true.
-    ...(isPlusLibraryEnabled.value === true
+    ...(isLibraryEnabled
       ? [{
           key: 'library',
           label: $t('tab_bar_library'),
@@ -123,7 +129,10 @@ const menuItems = computed(() => {
       iconActive: 'i-material-symbols-person-rounded',
     },
   ].map((tab) => {
+    // With the store tab hidden, store routes have no tab of their own,
+    // so the library tab that replaced it stands in as active for them.
     const isActive = routeName.startsWith(tab.key)
+      || (isStoreHidden && tab.key === 'library' && routeName.startsWith('store'))
     const to = localeRoute({ name: tab.key })
     return {
       key: tab.key,

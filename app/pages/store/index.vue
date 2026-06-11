@@ -274,6 +274,7 @@
           :priority="index < columnMax"
           :ll-medium="llMedium"
           :should-show-plus-reading-icon="isPlusReadingFeatureEnabled && !isLibraryTab"
+          :is-library="isLibraryTab"
           ll-source="bookstore"
         />
       </ul>

@@ -54,6 +54,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  isLibrary: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 const localeRoute = useLocaleRoute()
@@ -98,7 +102,7 @@ const linkRoute = computed(() => {
       }
 
   return localeRoute({
-    name: 'store',
+    name: props.isLibrary ? 'library' : 'store',
     query,
   })
 })

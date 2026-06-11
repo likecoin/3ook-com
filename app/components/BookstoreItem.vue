@@ -24,6 +24,7 @@
           :to="bookInfo.getAuthorPageRoute({
             llMedium: 'author-link',
             llSource: 'bookstore-item',
+            isLibrary: props.isLibrary,
           })"
           :class="[
             'inline',
@@ -36,10 +37,9 @@
 
     <!-- Price info for store mode -->
     <div
-      v-if="!isApp || price === 0"
       class="flex items-center justify-between mt-[0.5lh] text-highlighted"
     >
-      <div>
+      <div v-if="!isLibrary && (!isApp || price === 0)">
         <span
           v-if="formattedDiscountPrice"
           v-text="formattedDiscountPrice"
@@ -115,6 +115,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  isLibrary: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 const emit = defineEmits(['visible', 'open'])
@@ -132,6 +136,7 @@ const productPageRoute = computed(() => {
   return bookInfo.getProductPageRoute({
     llMedium: props.llMedium || undefined,
     llSource: props.llSource || undefined,
+    isLibrary: props.isLibrary,
   })
 })
 const stakingRoute = computed(() => {

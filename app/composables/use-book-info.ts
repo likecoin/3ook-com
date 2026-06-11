@@ -288,7 +288,7 @@ export default function (
 
   const authorPageRoute = computed(() => getAuthorPageRoute())
 
-  function getAuthorPageRoute(options?: { llMedium?: string, llSource?: string }) {
+  function getAuthorPageRoute(options?: { llMedium?: string, llSource?: string, isLibrary?: boolean }) {
     const query: Record<string, string> = {
       author: authorName.value,
     }
@@ -302,14 +302,19 @@ export default function (
     }
 
     return localeRoute({
-      name: 'store',
+      name: options?.isLibrary ? 'library' : 'store',
       query,
     })
   }
 
   const productPageRoute = computed(() => getProductPageRoute())
 
-  function getProductPageRoute(options?: { llMedium?: string, llSource?: string, hash?: string }) {
+  function getProductPageRoute(options?: {
+    llMedium?: string
+    llSource?: string
+    hash?: string
+    isLibrary?: boolean
+  }) {
     const query: Record<string, string> = {}
 
     if (options?.llMedium) {
@@ -321,7 +326,7 @@ export default function (
     }
 
     return localeRoute({
-      name: 'store-nftClassId',
+      name: options?.isLibrary ? 'library-nftClassId' : 'store-nftClassId',
       params: { nftClassId: toValue(nftClassId) },
       query: Object.keys(query).length > 0 ? query : undefined,
       hash: options?.hash,
