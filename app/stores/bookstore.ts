@@ -1,4 +1,9 @@
-import { getLibraryScopedCacheKey } from '~~/shared/utils/bookstore'
+import { getBookstoreScopedKey } from '~~/shared/utils/bookstore'
+
+interface BookstoreSearchOptions {
+  isRefresh?: boolean
+  isLibrary?: boolean
+}
 
 interface BookstoreCMSTagProducts {
   items: BookstoreCMSProduct[]
@@ -147,8 +152,8 @@ export const useBookstoreStore = defineStore('bookstore', () => {
 
   const bookstoreSearchResultsByQueryMap = ref<Record<string, BookstoreSearchResults>>({})
 
-  const getBookstoreSearchResultsByQuery = computed(() => (query: string, isPlusReadingEnabled = false) => {
-    const queryKey = getLibraryScopedCacheKey(query, isPlusReadingEnabled)
+  const getBookstoreSearchResultsByQuery = computed(() => (query: string, isLibrary = false) => {
+    const queryKey = getBookstoreScopedKey(query, isLibrary)
     const items
       = (bookstoreSearchResultsByQueryMap.value[queryKey]?.items || [])
         .filter((item) => {
@@ -201,12 +206,11 @@ export const useBookstoreStore = defineStore('bookstore', () => {
     state.isFetching = false
   }
 
-  async function fetchTextSearch(searchTerm: string, queryKey: string, isRefresh: boolean, isPlusReadingEnabled: boolean) {
+  async function fetchTextSearch(searchTerm: string, queryKey: string, { isRefresh, isLibrary }: Required<BookstoreSearchOptions>) {
     const result = await fetchBookstoreCMSPublicationsBySearchTerm(searchTerm, {
       offset: isRefresh ? undefined : bookstoreSearchResultsByQueryMap.value[queryKey]?.nextKey,
-      limit: 100,
       ts: getTimestampRoundedToMinute(),
-      isPlusReadingEnabled,
+      isLibrary,
     })
 
     const mappedItems = result.records
@@ -223,12 +227,11 @@ export const useBookstoreStore = defineStore('bookstore', () => {
     updateSearchResults(queryKey, mappedItems, result.offset, isRefresh)
   }
 
-  async function fetchGenreSearch(genre: string, queryKey: string, isRefresh: boolean, isPlusReadingEnabled: boolean) {
+  async function fetchGenreSearch(genre: string, queryKey: string, { isRefresh, isLibrary }: Required<BookstoreSearchOptions>) {
     const result = await fetchBookstoreCMSPublicationsByGenre(genre, {
       offset: isRefresh ? undefined : bookstoreSearchResultsByQueryMap.value[queryKey]?.nextKey,
-      limit: 100,
       ts: getTimestampRoundedToMinute(),
-      isPlusReadingEnabled,
+      isLibrary,
     })
 
     const mappedItems = result.records
@@ -303,13 +306,10 @@ export const useBookstoreStore = defineStore('bookstore', () => {
     searchTerm: string,
     {
       isRefresh = false,
-      isPlusReadingEnabled = false,
-    }: {
-      isRefresh?: boolean
-      isPlusReadingEnabled?: boolean
-    } = {},
+      isLibrary = false,
+    }: BookstoreSearchOptions = {},
   ) {
-    const queryKey = getLibraryScopedCacheKey(`${type}:${searchTerm}`, isPlusReadingEnabled)
+    const queryKey = getBookstoreScopedKey(`${type}:${searchTerm}`, isLibrary)
 
     if (!checkAndInitializeSearchState(queryKey, isRefresh)) {
       return
@@ -317,10 +317,10 @@ export const useBookstoreStore = defineStore('bookstore', () => {
 
     try {
       if (type === 'q') {
-        await fetchTextSearch(searchTerm, queryKey, isRefresh, isPlusReadingEnabled)
+        await fetchTextSearch(searchTerm, queryKey, { isRefresh, isLibrary })
       }
       else if (type === 'genre') {
-        await fetchGenreSearch(searchTerm, queryKey, isRefresh, isPlusReadingEnabled)
+        await fetchGenreSearch(searchTerm, queryKey, { isRefresh, isLibrary })
       }
       else if (type === 'owner_wallet') {
         if (checkIsEVMAddress(searchTerm)) {

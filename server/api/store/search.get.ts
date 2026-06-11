@@ -6,14 +6,14 @@ export default defineEventHandler(async (event) => {
   try {
     const query = await getValidatedQuery(event, createValidator(StoreSearchQuerySchema))
     const searchTerm = (Array.isArray(query.q) ? query.q[0] : query.q)!
-    const pageSize = Math.min(Math.max(1, Number((Array.isArray(query.limit) ? query.limit[0] : query.limit)) || 100), 100)
+    const pageSize = parseBookstorePageSize(query.limit)
     const offset = (Array.isArray(query.offset) ? query.offset[0] : query.offset) || undefined
-    const isPlusReadingEnabled = (Array.isArray(query.library) ? query.library[0] : query.library) === '1'
+    const isLibrary = (Array.isArray(query.library) ? query.library[0] : query.library) === '1'
 
     const result = await fetchAirtableCMSPublicationsBySearchTerm(searchTerm, {
       pageSize,
       offset,
-      isPlusReadingEnabled,
+      isLibrary,
     })
     setHeader(event, 'cache-control', 'public, max-age=60, stale-while-revalidate=600')
     return result

@@ -59,12 +59,12 @@ export function fetchBookstoreCMSPublicationsBySearchTerm(searchTerm: string, {
   offset,
   limit = MAX_BOOKSTORE_PAGE_SIZE,
   ts,
-  isPlusReadingEnabled = false,
+  isLibrary = false,
 }: {
   offset?: string
   limit?: number
   ts?: number
-  isPlusReadingEnabled?: boolean
+  isLibrary?: boolean
 } = {}) {
   return apiFetch<FetchBookstoreCMSProductsResponseData>('/store/search', {
     query: {
@@ -72,7 +72,7 @@ export function fetchBookstoreCMSPublicationsBySearchTerm(searchTerm: string, {
       offset,
       limit,
       ts,
-      library: isPlusReadingEnabled ? '1' : undefined,
+      library: isLibrary ? '1' : undefined,
     },
   })
 }
@@ -81,12 +81,12 @@ export function fetchBookstoreCMSPublicationsByGenre(genre: string, {
   offset,
   limit = MAX_BOOKSTORE_PAGE_SIZE,
   ts,
-  isPlusReadingEnabled = false,
+  isLibrary = false,
 }: {
   offset?: string
   limit?: number
   ts?: number
-  isPlusReadingEnabled?: boolean
+  isLibrary?: boolean
 } = {}) {
   return apiFetch<FetchBookstoreCMSProductsResponseData>('/store/genre', {
     query: {
@@ -94,7 +94,7 @@ export function fetchBookstoreCMSPublicationsByGenre(genre: string, {
       offset,
       limit,
       ts,
-      library: isPlusReadingEnabled ? '1' : undefined,
+      library: isLibrary ? '1' : undefined,
     },
   })
 }

@@ -135,6 +135,18 @@ export async function fetchBookstoreBookListing(
   }
 }
 
+// Parse a raw `limit` query value into a valid page size. An invalid/missing/empty
+// limit falls back to the max, while `limit=0` clamps to 1 (not the max — `0 || max`
+// would have swallowed it). `limit=` alone is treated as missing so it doesn't slip
+// through as Number('')=0.
+export function parseBookstorePageSize(limit: string | string[] | undefined): number {
+  const raw = Array.isArray(limit) ? limit[0] : limit
+  const limitNum = raw === undefined || raw === '' ? NaN : Number(raw)
+  return Number.isFinite(limitNum)
+    ? Math.min(Math.max(1, Math.floor(limitNum)), MAX_BOOKSTORE_PAGE_SIZE)
+    : MAX_BOOKSTORE_PAGE_SIZE
+}
+
 export async function respondWithBookstoreAPI(
   event: H3Event,
   fetcher: (opts: { pageSize: number, nextKey?: string }) => Promise<FetchBookstoreCMSProductsResponseData>,
@@ -147,15 +159,8 @@ export async function respondWithBookstoreAPI(
   } = {},
 ) {
   const query = getQuery(event)
-  const limitRaw = Array.isArray(query.limit) ? query.limit[0] : query.limit
   const offsetRaw = Array.isArray(query.offset) ? query.offset[0] : query.offset
-  // Parse first, then clamp; an invalid/missing/empty limit falls back to the max,
-  // while `limit=0` clamps to 1 (not the max — `0 || max` would have swallowed it).
-  // `limit=` alone is treated as missing so it doesn't slip through as Number('')=0.
-  const limitNum = limitRaw === undefined || limitRaw === '' ? NaN : Number(limitRaw)
-  const pageSize = Number.isFinite(limitNum)
-    ? Math.min(Math.max(1, Math.floor(limitNum)), MAX_BOOKSTORE_PAGE_SIZE)
-    : MAX_BOOKSTORE_PAGE_SIZE
+  const pageSize = parseBookstorePageSize(query.limit as string | string[] | undefined)
   // Validate offset as a non-negative integer; treat 0 the same as omitted so page-1 stays cacheable.
   let nextKey: string | undefined
   if (offsetRaw !== undefined && offsetRaw !== '') {

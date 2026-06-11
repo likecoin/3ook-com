@@ -10,6 +10,6 @@ export function isBookstoreBuiltInListType(value: string): value is BookstoreBui
   return (BOOKSTORE_BUILT_IN_LIST_TYPES as readonly string[]).includes(value)
 }
 
-export function getLibraryScopedCacheKey(key: string, isPlusReadingEnabled: boolean) {
-  return isPlusReadingEnabled ? `library:${key}` : key
+export function getBookstoreScopedKey(key: string, isLibrary: boolean) {
+  return isLibrary ? `library:${key}` : key
 }

@@ -131,8 +131,8 @@ function getFormulaForSearchTerm(searchTerm: string) {
   return formula
 }
 
-function applyLibraryFilter(formula: string, isInLibrary = false) {
-  return isInLibrary ? `AND({In Library}, ${formula})` : formula
+function getScopedSearchFormula(formula: string, isLibrary = false) {
+  return isLibrary ? `AND({In Library}, ${formula})` : formula
 }
 
 // Airtable stores per-currency "Min Price <CODE>" columns in major units
@@ -174,7 +174,7 @@ function normalizeProductRecord({ id, fields }: FetchAirtableCMSProductsByTagIdR
 interface FetchAirtableCMSPublicationsOptions {
   pageSize?: number
   offset?: string
-  isPlusReadingEnabled?: boolean
+  isLibrary?: boolean
 }
 
 export async function fetchAirtableCMSPublicationsBySearchTerm(
@@ -182,12 +182,12 @@ export async function fetchAirtableCMSPublicationsBySearchTerm(
   {
     pageSize = 100,
     offset,
-    isPlusReadingEnabled = false,
+    isLibrary = false,
   }: FetchAirtableCMSPublicationsOptions = {},
 ): Promise<FetchBookstoreCMSProductsResponseData> {
   const config = useRuntimeConfig()
   const fetch = getAirtableCMSFetch()
-  const filterByFormula = applyLibraryFilter(getFormulaForSearchTerm(searchTerm), isPlusReadingEnabled)
+  const filterByFormula = getScopedSearchFormula(getFormulaForSearchTerm(searchTerm), isLibrary)
   const results = await fetch<FetchAirtableCMSProductsByTagIdResponseData>(
     `/${config.public.airtableCMSPublicationsTableId}`,
     {
@@ -208,18 +208,21 @@ export async function fetchAirtableCMSPublicationsBySearchTerm(
   }
 }
 
+export function sanitizeAirtableGenre(genre: string): string {
+  return genre.replaceAll('"', '')
+}
+
 export async function fetchAirtableCMSPublicationsByGenre(
   genre: string,
   {
     pageSize = 100,
     offset,
-    isPlusReadingEnabled = false,
+    isLibrary = false,
   }: FetchAirtableCMSPublicationsOptions = {},
 ): Promise<FetchBookstoreCMSProductsResponseData> {
   const config = useRuntimeConfig()
   const fetch = getAirtableCMSFetch()
-  const sanitizedGenre = genre.replaceAll('"', '')
-  const filterByFormula = applyLibraryFilter(`{Genre}="${sanitizedGenre}"`, isPlusReadingEnabled)
+  const filterByFormula = getScopedSearchFormula(`{Genre}="${sanitizeAirtableGenre(genre)}"`, isLibrary)
   const results = await fetch<FetchAirtableCMSProductsByTagIdResponseData>(
     `/${config.public.airtableCMSPublicationsTableId}`,
     {

@@ -1011,7 +1011,7 @@ async function fetchItems({ lazy = false, isRefresh = false } = {}): Promise<boo
           searchTerm,
           {
             isRefresh,
-            isPlusReadingEnabled: isLibraryTab.value,
+            isLibrary: isLibraryTab.value,
           },
         )
       }
