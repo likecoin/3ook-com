@@ -58,10 +58,10 @@
       />
     </div>
 
-    <div v-if="likeRank > 0">
+    <div class="text-xs font-mono h-lh">
       <NuxtLink
+        v-if="likeRank > 0"
         :to="stakingRoute"
-        class="text-xs font-mono"
       >
         #{{ likeRank }}
       </NuxtLink>
