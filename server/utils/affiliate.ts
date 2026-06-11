@@ -1,12 +1,14 @@
 import type { AffiliateConfig, AffiliateCustomVoice } from '~~/server/types/affiliate'
-import { normalizeNFTClassId } from '~~/shared/utils'
+import { fetchCachedNFTClassAggregatedMetadata } from '~~/server/utils/likecoin-nft'
+import { checkIsEVMAddress, checksumEVMAddress, normalizeNFTClassId } from '~~/shared/utils'
 import { getLikeCoinAPIFetch } from '~~/shared/utils/api'
 import { normalizeLikerId } from '~~/shared/utils/liker-id'
 
 type UpstreamAffiliateResponse =
-  & Omit<AffiliateConfig, 'affiliateClassIds' | 'customVoices'>
+  & Omit<AffiliateConfig, 'affiliateClassIds' | 'affiliatePublisherWallets' | 'customVoices'>
   & {
     affiliateClassIds?: string[]
+    affiliatePublisherWallets?: string[]
     customVoices?: Partial<AffiliateCustomVoice>[]
     isPlusDiscountAllowed?: boolean
   }
@@ -42,6 +44,9 @@ async function getAffiliateEntry(likerId: string): Promise<AffiliateEntry | null
           ? {
               active: true,
               affiliateClassIds: (upstream.affiliateClassIds ?? []).map(id => id.toLowerCase()),
+              affiliatePublisherWallets: (upstream.affiliatePublisherWallets ?? [])
+                .map(w => checksumEVMAddress(w))
+                .filter(Boolean),
               giftBooks: (upstream.giftBooks ?? [])
                 .filter(b => typeof b?.classId === 'string' && !!b.classId)
                 .map((b) => {
@@ -87,6 +92,17 @@ export async function getAffiliatePlusDiscountAllowed(likerId: string): Promise<
   return (await getAffiliateEntry(likerId))?.isPlusDiscountAllowed ?? false
 }
 
-export function isBookInAffiliateVoiceScope(config: AffiliateConfig, nftClassId: string): boolean {
-  return config.affiliateClassIds.includes(nftClassId.toLowerCase())
+// A book is in scope when it is explicitly listed in `affiliateClassIds`, or
+// when it is listed in the bookstore by one of the affiliate's publisher
+// wallets — letting a publisher whitelist their wallet instead of each book.
+export async function isBookInAffiliateVoiceScope(config: AffiliateConfig, nftClassId: string): Promise<boolean> {
+  if (config.affiliateClassIds.includes(nftClassId.toLowerCase())) return true
+  if (!config.affiliatePublisherWallets.length) return false
+  // Only on-chain NFT class IDs can have bookstore metadata; skip uploaded-book
+  // and preview IDs so we don't make guaranteed-failing upstream calls.
+  if (!checkIsEVMAddress(nftClassId)) return false
+  const metadata = await fetchCachedNFTClassAggregatedMetadata(nftClassId, ['bookstore'])
+    .catch(() => null)
+  const ownerWallet = checksumEVMAddress(metadata?.bookstoreInfo?.ownerWallet)
+  return !!ownerWallet && config.affiliatePublisherWallets.includes(ownerWallet)
 }

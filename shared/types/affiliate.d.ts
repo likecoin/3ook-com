@@ -18,5 +18,6 @@ export type AffiliatePublicConfig =
     giftOnTrial?: boolean
     isPlusDiscountAllowed?: boolean
     affiliateClassIds: string[]
+    affiliatePublisherWallets: string[]
     customVoices: AffiliateVoiceData[]
   }

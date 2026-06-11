@@ -1,12 +1,18 @@
 import type { AffiliatePublicConfig } from '~~/shared/types/affiliate'
 import type { AffiliateVoiceData } from '~~/shared/types/custom-voice'
+import { checksumEVMAddress } from '~~/shared/utils'
 
 export function getAffiliateVoicesForBook(
   config: AffiliatePublicConfig | null,
   nftClassId: string | undefined,
+  ownerWallet?: string,
 ): AffiliateVoiceData[] {
   if (!config?.active || !nftClassId) return []
-  if (!config.affiliateClassIds.includes(nftClassId.toLowerCase())) return []
+  const byClass = config.affiliateClassIds.includes(nftClassId.toLowerCase())
+  const checksummedOwnerWallet = checksumEVMAddress(ownerWallet)
+  const byWallet = !!checksummedOwnerWallet
+    && config.affiliatePublisherWallets.includes(checksummedOwnerWallet)
+  if (!byClass && !byWallet) return []
   return config.customVoices
 }
 
@@ -43,8 +49,11 @@ export function usePlusAffiliate() {
     }
   }
 
-  function voicesForBook(nftClassId: MaybeRefOrGetter<string | undefined>): AffiliateVoiceData[] {
-    return getAffiliateVoicesForBook(loadedConfig.value, toValue(nftClassId))
+  function voicesForBook(
+    nftClassId: MaybeRefOrGetter<string | undefined>,
+    ownerWallet?: MaybeRefOrGetter<string | undefined>,
+  ): AffiliateVoiceData[] {
+    return getAffiliateVoicesForBook(loadedConfig.value, toValue(nftClassId), toValue(ownerWallet))
   }
 
   return {

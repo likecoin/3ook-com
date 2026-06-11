@@ -44,6 +44,7 @@ export default defineEventHandler(async (event): Promise<AffiliatePublicConfig> 
     giftOnTrial: config.giftOnTrial,
     isPlusDiscountAllowed,
     affiliateClassIds: config.affiliateClassIds,
+    affiliatePublisherWallets: config.affiliatePublisherWallets,
     customVoices: config.customVoices.map(v => ({
       id: v.id,
       name: v.name,

@@ -15,6 +15,7 @@ export interface AffiliateGiftBook {
 export interface AffiliateConfig {
   active: boolean
   affiliateClassIds: string[]
+  affiliatePublisherWallets: string[]
   giftBooks?: AffiliateGiftBook[]
   giftOnTrial?: boolean
   customVoices: AffiliateCustomVoice[]

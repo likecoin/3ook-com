@@ -6,16 +6,20 @@ export function useBookOwnerAffiliate(
 ) {
   const { user } = useUserSession()
   const metadataStore = useMetadataStore()
+  const bookstoreStore = useBookstoreStore()
 
   const nftClassIdRef = computed(() => toValue(nftClassId) || '')
-  const { nftClassOwnerWalletAddress } = useEVMBookInfo({ nftClassId: nftClassIdRef })
+  // Use the bookstore-listing owner wallet (the lister) so the displayed voices
+  // match exactly what the server grants — it gates on the same `ownerWallet`.
+  const ownerWallet = computed(() =>
+    bookstoreStore.getBookstoreInfoByNFTClassId(nftClassIdRef.value)?.ownerWallet || '')
 
   const loadedConfig = useState<AffiliatePublicConfig | null>('book-owner-affiliate-config', () => null)
   const loadedLikerId = useState<string | null>('book-owner-affiliate-loaded-liker-id', () => null)
   const isLoading = useState<boolean>('book-owner-affiliate-loading', () => false)
 
   const ownerLikerId = computed(() => {
-    const wallet = nftClassOwnerWalletAddress.value
+    const wallet = ownerWallet.value
     if (!wallet) return undefined
     return metadataStore.getLikerInfoByWalletAddress(wallet)?.likerId
   })
@@ -26,7 +30,7 @@ export function useBookOwnerAffiliate(
       loadedLikerId.value = null
       return
     }
-    const wallet = nftClassOwnerWalletAddress.value
+    const wallet = ownerWallet.value
     if (!wallet || isLoading.value) return
     isLoading.value = true
     try {
@@ -45,14 +49,16 @@ export function useBookOwnerAffiliate(
     }
   }
 
-  watchImmediate(nftClassOwnerWalletAddress, () => {
+  watchImmediate(ownerWallet, () => {
     fetchConfig()
   })
 
-  const upsellVoices = computed(() => getAffiliateVoicesForBook(loadedConfig.value, nftClassIdRef.value))
+  const upsellVoices = computed(() =>
+    getAffiliateVoicesForBook(loadedConfig.value, nftClassIdRef.value, ownerWallet.value))
 
   return {
     config: loadedConfig,
+    ownerWallet,
     ownerLikerId,
     upsellVoices,
     fetchConfig,

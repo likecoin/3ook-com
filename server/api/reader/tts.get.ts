@@ -178,7 +178,7 @@ export default defineEventHandler(async (event) => {
     }
     // Ownership is gated at the reader-page level; this check is a sanity
     // boundary to stop an arbitrary book from riding an affiliate voice URL.
-    if (!isBookInAffiliateVoiceScope(affiliateConfig, nftClassId)) {
+    if (!(await isBookInAffiliateVoiceScope(affiliateConfig, nftClassId))) {
       throw createError({ status: 403, message: 'BOOK_NOT_IN_AFFILIATE' })
     }
     const affiliateVoice = affiliateConfig.customVoices.find(v => v.id === affiliateVoiceSlot)

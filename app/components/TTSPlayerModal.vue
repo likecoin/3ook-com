@@ -286,12 +286,14 @@ const props = withDefaults(
 )
 
 const { fetchConfig: fetchPlusAffiliateConfig, voicesForBook } = usePlusAffiliate()
-const plusAffiliateVoices = computed(() => voicesForBook(props.nftClassId))
 
 const {
+  ownerWallet: bookOwnerWallet,
   ownerLikerId: bookOwnerLikerId,
   upsellVoices: bookOwnerUpsellVoices,
 } = useBookOwnerAffiliate(() => props.nftClassId)
+
+const plusAffiliateVoices = computed(() => voicesForBook(props.nftClassId, bookOwnerWallet))
 
 const isLikerPlus = computed(() => !!user.value?.isLikerPlus)
 
