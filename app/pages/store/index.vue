@@ -477,6 +477,8 @@ const allTagItems = computed(() => {
   // control their ordering here, hence they surface through cmsTags like any other tag.
   const cmsTags = bookstoreStore.bookstoreCMSTags
     .filter((tag) => {
+      // The library tab only lists tags flagged with isForLibrary.
+      if (isLibraryTab.value && !tag.isForLibrary && tag.id !== tagId.value) return false
       return !!tag.isPublic || tag.id === tagId.value
     })
     .map(tag => ({

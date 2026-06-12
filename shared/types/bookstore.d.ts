@@ -35,6 +35,7 @@ export interface BookstoreCMSTag {
     en: string
   }
   isPublic: boolean
+  isForLibrary: boolean
 }
 
 export interface FetchBookstoreCMSTagsResponseData {
