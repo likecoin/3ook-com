@@ -120,21 +120,57 @@ export function useSubscriptionCheckout() {
         })
         return
       }
-      // Stripe-only options (a coupon, or the gift-NFT-with-yearly flow) can't be
-      // honored by store IAP. We still complete the purchase as a plain subscription,
-      // but log when one is present to measure real exposure before handling it.
-      // trialPeriodDays / mustCollectPaymentMethod are intentionally excluded:
-      // store IAP applies its own intro offers, so they aren't a mismatch here.
-      if (coupon || nftClassId) {
+      // Coupons can't be honored by store IAP (the store controls pricing). A gift
+      // NFT only attaches to yearly, so a gift on a monthly plan is dropped. Yearly
+      // gifts + affiliate attribution + ad-attribution DO carry through, as RevenueCat
+      // subscriber attributes set natively before purchase (see below). We still
+      // complete the purchase when an option is unsupported, but log to measure
+      // exposure. trialPeriodDays / mustCollectPaymentMethod are intentionally
+      // excluded: store IAP applies its own intro offers, so they aren't a mismatch.
+      const hasUnsupportedGift = Boolean(nftClassId) && !isYearly
+      if (coupon || hasUnsupportedGift) {
         useLogEvent('subscription_iap_unsupported_options', {
           has_coupon: Boolean(coupon),
-          has_nft_class_id: Boolean(nftClassId),
+          has_unsupported_gift: hasUnsupportedGift,
         })
       }
       try {
         isProcessingSubscription.value = true
         useLogEvent('begin_checkout', eventPayloadWithCoupon)
-        const result = await purchaseViaIAP(plan, user.value.likerId)
+        // The native purchase carries no metadata, so pass the gift book, affiliate
+        // channel, and ad-attribution as RevenueCat subscriber attributes. The native
+        // shell sets them before purchase and the grant webhook reads them back — the
+        // IAP equivalent of Stripe checkout metadata. Drop empty attribution values so
+        // we never overwrite an attribute with a blank.
+        const from = getRouteQuery('from')
+        const analyticsParams = getAnalyticsParameters()
+        const attributes: Record<string, string> = {}
+        const setAttribute = (key: string, value?: string | null) => {
+          if (value) attributes[key] = value
+        }
+        // Always send plusGiftClassId — unlike attribution, it must be cleared, not
+        // kept. RevenueCat attributes are sticky per-subscriber, so a non-gift
+        // purchase after a prior gift would otherwise inherit the stale class id and
+        // the webhook would re-grant the book. Empty string is the webhook's tombstone
+        // for "no gift". Gift only attaches to yearly.
+        attributes.plusGiftClassId = isYearly && nftClassId ? nftClassId : ''
+        setAttribute('plusFrom', from)
+        setAttribute('fbClickId', analyticsParams.fbClickId)
+        setAttribute('fbp', analyticsParams.fbp)
+        setAttribute('fbc', analyticsParams.fbc)
+        setAttribute('gaClientId', analyticsParams.gaClientId)
+        setAttribute('gaSessionId', analyticsParams.gaSessionId)
+        setAttribute('gadClickId', analyticsParams.gadClickId)
+        setAttribute('gadSource', analyticsParams.gadSource)
+        setAttribute('utmSource', analyticsParams.utmSource || utmSource)
+        setAttribute('utmMedium', analyticsParams.utmMedium || utmMedium)
+        setAttribute('utmCampaign', analyticsParams.utmCampaign || utmCampaign)
+        setAttribute('utmContent', analyticsParams.utmContent)
+        setAttribute('utmTerm', analyticsParams.utmTerm)
+        setAttribute('referrer', analyticsParams.referrer)
+        setAttribute('posthogDistinctId', analyticsParams.posthogDistinctId)
+
+        const result = await purchaseViaIAP(plan, user.value.likerId, attributes)
         if (result.status === 'cancelled') return
         if (result.status !== 'success') {
           throw createError({
@@ -147,7 +183,13 @@ export function useSubscriptionCheckout() {
         }
         blockingModal.open({ title: $t('common_processing') })
         await pollSessionUntilPlus()
-        await navigateTo(localeRoute({ name: 'plus-success', query: { period: plan } }))
+        // Flag a pending gift so the success page waits for the webhook to attach the
+        // book (the cart is created async on grant) before routing to the claim page.
+        const hasGift = isYearly && Boolean(nftClassId)
+        await navigateTo(localeRoute({
+          name: 'plus-success',
+          query: { period: plan, ...(hasGift ? { gift: '1' } : {}) },
+        }))
       }
       catch (error) {
         useLogEvent('subscription_checkout_error', {

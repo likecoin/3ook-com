@@ -73,7 +73,7 @@ useHead({
   meta: [{ name: 'robots', content: 'noindex, nofollow' }],
 })
 
-async function fetchPlusGiftStatus() {
+async function fetchPlusGiftStatus({ shouldHandleError = true } = {}) {
   try {
     const {
       giftClassId: giftNFTClassId,
@@ -89,10 +89,12 @@ async function fetchPlusGiftStatus() {
     }
   }
   catch (error) {
-    await handleError(error, {
-      title: $t('subscription_success_fetch_gift_error'),
-      description: $t('subscription_success_fetch_gift_error_description'),
-    })
+    if (shouldHandleError) {
+      await handleError(error, {
+        title: $t('subscription_success_fetch_gift_error'),
+        description: $t('subscription_success_fetch_gift_error_description'),
+      })
+    }
     return {}
   }
 }
@@ -107,16 +109,37 @@ onMounted(async () => {
       await accountStore.refreshSessionInfo()
       retry++
     }
-    // The gift-with-yearly flow is Stripe-only (see use-subscription-checkout
-    // skipping `nftClassId` for IAP), and `/plus/gift` keys off a Stripe
-    // subscription Id, so calling it for RevenueCat subscribers always errors.
-    const isRevenueCatSubscriber = user.value?.likerPlusProvider === 'revenuecat'
+    // The gift book attaches asynchronously — Stripe writes it to the subscription
+    // during invoice processing, RevenueCat creates the cart in its grant webhook —
+    // so `/plus/gift` (now provider-aware) can lag the entitlement. The IAP checkout
+    // sets `gift=1` when a gift is expected; poll briefly for the webhook to land.
+    // The Stripe redirect carries no flag and reads once.
+    const isGiftExpected = getRouteQuery('gift') === '1'
+    const MAX_GIFT_RETRIES = 4
+    // Suppress the error dialog while polling through expected webhook lag;
+    // only surface one on the final attempt. The Stripe path reads once.
+    let gift: {
+      giftNFTClassId?: string
+      giftCartId?: string
+      giftPaymentId?: string
+      giftClaimToken?: string
+    } = await fetchPlusGiftStatus({ shouldHandleError: !isGiftExpected })
+    let giftRetry = 0
+    while (
+      isGiftExpected
+      && !(gift.giftNFTClassId && gift.giftCartId && gift.giftPaymentId && gift.giftClaimToken)
+      && giftRetry < MAX_GIFT_RETRIES
+    ) {
+      await sleep(5000)
+      giftRetry++
+      gift = await fetchPlusGiftStatus({ shouldHandleError: giftRetry === MAX_GIFT_RETRIES })
+    }
     const {
       giftNFTClassId,
       giftCartId,
       giftPaymentId,
       giftClaimToken,
-    } = isRevenueCatSubscriber ? {} : await fetchPlusGiftStatus()
+    } = gift
     if (isRedirected.value) {
       // Restore the persisted currency before logging: post-Stripe-redirect the
       // payment-currency state is fresh 'auto' and resolves to USD until

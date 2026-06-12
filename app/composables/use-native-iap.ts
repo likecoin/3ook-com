@@ -137,7 +137,15 @@ export const useNativeIAP = createSharedComposable(() => {
   // `likerId` is the backend internal user id — used as the RevenueCat
   // app_user_id the native side logs in with and the webhook resolves against.
   // Same field name as the `identifyUser` payload to avoid sending the wrong id.
-  function purchase(period: SubscriptionPlan, likerId?: string): Promise<IAPPurchaseResult> {
+  // `attributes` are custom RevenueCat subscriber attributes (gift book, affiliate
+  // channel, ad-attribution ids) the native side sets before purchase so they reach
+  // the webhook's subscriber_attributes — the IAP equivalent of Stripe checkout
+  // metadata. The native handler ignores reserved ($-prefixed) keys.
+  function purchase(
+    period: SubscriptionPlan,
+    likerId?: string,
+    attributes?: Record<string, string>,
+  ): Promise<IAPPurchaseResult> {
     if (!isIAPSupported.value) {
       return Promise.resolve({ status: 'error', message: 'IAP not supported' })
     }
@@ -159,7 +167,7 @@ export const useNativeIAP = createSharedComposable(() => {
         clearTimeout(timer)
         resolve(r)
       }
-      postToNative({ type: 'iapPurchase', period, likerId })
+      postToNative({ type: 'iapPurchase', period, likerId, attributes })
     })
   }
 
