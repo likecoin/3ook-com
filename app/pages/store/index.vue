@@ -273,7 +273,7 @@
           :lazy="index >= columnMax"
           :priority="index < columnMax"
           :ll-medium="llMedium"
-          :should-show-plus-reading-icon="!isLibraryTab"
+          :should-show-plus-reading-icon="isPlusReadingFeatureEnabled && !isLibraryTab"
           ll-source="bookstore"
         />
       </ul>
@@ -307,6 +307,7 @@ const getRouteBaseNameString = useRouteBaseNameString()
 // /store and /library share this file; the route name selects the mode.
 const routeName = computed(() => getRouteBaseNameString() || 'store')
 const isLibraryTab = computed(() => routeName.value === 'library')
+const isPlusReadingFeatureEnabled = useFeatureFlagEnabled('plus-library')
 const getRouteQuery = useRouteQuery()
 const runtimeConfig = useRuntimeConfig()
 const bookstoreStore = useBookstoreStore()
