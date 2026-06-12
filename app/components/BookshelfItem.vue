@@ -303,14 +303,16 @@ const menuItems = computed<DropdownMenuItem[]>(() => {
     }
   }
 
-  // Staking
-  items.push({
-    label: $t('bookshelf_item_menu_staking'),
-    icon: 'i-material-symbols-handshake-outline-rounded',
-    to: bookInfo.getProductPageRoute({
-      hash: '#staking-info',
-    }),
-  })
+  // Staking (hidden for borrowed Plus-reading books)
+  if (!props.isPlusReading) {
+    items.push({
+      label: $t('bookshelf_item_menu_staking'),
+      icon: 'i-material-symbols-handshake-outline-rounded',
+      to: bookInfo.getProductPageRoute({
+        hash: '#staking-info',
+      }),
+    })
+  }
 
   // Reading state (owned books)
   if (props.isOwned && props.canEditReadingState) {
@@ -373,7 +375,7 @@ const menuItems = computed<DropdownMenuItem[]>(() => {
     to: bookInfo.productPageRoute.value,
   })
 
-  // Download (owned books)
+  // Download (owned books only; borrowed Plus-reading books get no entry)
   if (props.isOwned) {
     if (bookInfo.isDownloadable.value) {
       bookInfo.sortedContentURLs.value.forEach((contentURL) => {
@@ -387,24 +389,6 @@ const menuItems = computed<DropdownMenuItem[]>(() => {
               fileIndex: contentURL.index,
             }),
         })
-      })
-    }
-    else {
-      items.push({
-        label: $t('bookshelf_item_menu_download_disabled'),
-        icon: 'i-material-symbols-download-rounded',
-        disabled: true,
-      })
-    }
-  }
-  // Download (borrowed Plus-reading books): never serve the file. Route to the
-  // store to buy it if it's downloadable, otherwise keep it visibly disabled.
-  else if (props.isPlusReading) {
-    if (bookInfo.isDownloadable.value) {
-      items.push({
-        label: $t('bookshelf_item_menu_download_via_store'),
-        icon: 'i-material-symbols-download-rounded',
-        to: bookInfo.productPageRoute.value,
       })
     }
     else {

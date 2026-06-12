@@ -265,7 +265,6 @@
   "bookshelf_item_menu_claim_book": "Get Book",
   "bookshelf_item_menu_download_disabled": "Download (restricted by author)",
   "bookshelf_item_menu_download_file": "Download {type}",
-  "bookshelf_item_menu_download_via_store": "Buy to download",
   "bookshelf_item_menu_export_annotations": "Export Annotations",
   "bookshelf_item_menu_mark_dnf": "Did Not Finish",
   "bookshelf_item_menu_mark_finished": "Finished",

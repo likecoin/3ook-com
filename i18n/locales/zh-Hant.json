@@ -265,7 +265,6 @@
   "bookshelf_item_menu_claim_book": "領取書籍",
   "bookshelf_item_menu_download_disabled": "下載書籍檔案（作者限制下載）",
   "bookshelf_item_menu_download_file": "下載 {type}",
-  "bookshelf_item_menu_download_via_store": "購買以下載",
   "bookshelf_item_menu_export_annotations": "匯出書籍標註",
   "bookshelf_item_menu_mark_dnf": "棄坑",
   "bookshelf_item_menu_mark_finished": "完讀",
