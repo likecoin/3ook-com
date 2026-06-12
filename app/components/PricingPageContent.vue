@@ -239,11 +239,27 @@
 
         <p
           v-if="hasAffiliateVoices"
-          class="mt-8 text-xs text-dimmed text-center"
+          class="mt-8 text-center"
         >
-          <span aria-hidden="true">*&nbsp;</span>
-          <span v-text="$t('tts_samples_section_affiliate_books_note')" />
+          <button
+            type="button"
+            class="inline cursor-pointer text-xs text-dimmed underline-offset-2 hover:underline"
+            @click="isAffiliateBooksModalOpen = true"
+          >
+            <span aria-hidden="true">*&nbsp;</span>
+            <span v-text="$t('tts_samples_section_affiliate_books_note')" />
+            <UIcon
+              name="i-material-symbols-info-outline-rounded"
+              class="ml-0.5 align-text-bottom"
+            />
+          </button>
         </p>
+
+        <AffiliateBooksModal
+          v-if="affiliateLikerId"
+          v-model:open="isAffiliateBooksModalOpen"
+          :affiliate-liker-id="affiliateLikerId"
+        />
       </div>
     </div>
   </div>
@@ -285,6 +301,8 @@ const isCustomVoiceCampaign = computed(() => {
 })
 
 const hasAffiliateVoices = computed(() => (props.affiliateVoices?.length ?? 0) > 0)
+
+const isAffiliateBooksModalOpen = ref(false)
 
 const shouldShowTTSSamples = computed(() => {
   return getRouteQuery('samples') === '1' || isCustomVoiceCampaign.value || hasAffiliateVoices.value
