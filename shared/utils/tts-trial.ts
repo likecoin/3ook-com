@@ -1,4 +1,4 @@
-export const TTS_TRIAL_CHARACTER_LIMIT = 5000
+export const TTS_TRIAL_CHARACTER_LIMIT = 2500
 
 // Minimax pacing, measured from production audio.
 // Mandarin/Cantonese ~3.5-4 chars/sec ≈ 240 chars/min.
