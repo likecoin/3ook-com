@@ -23,11 +23,11 @@
         variant="link"
         color="neutral"
         :ui="{ base: '!px-0' }"
-        :label="$t('product_page_back_to_store_label')"
+        :label="isLibrary ? $t('product_page_back_to_library_label') : $t('product_page_back_to_store_label')"
         @click="handleBackButtonClick"
       >
         <template #leading>
-          <div class="rounded-full p-1 border-1 border-gray-300 flex items-center justify-center">
+          <div class="rounded-full p-1 border border-muted flex items-center justify-center">
             <UIcon
               name="i-material-symbols-arrow-back-rounded"
               class="w-4 h-4"
