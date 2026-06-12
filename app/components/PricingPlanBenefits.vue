@@ -38,6 +38,10 @@
         <UIcon name="i-material-symbols-check" />
         <span v-text="feature" />
       </li>
+      <li v-if="isPlusLibraryEnabled">
+        <UIcon name="i-material-symbols-check" />
+        <span v-text="$t('pricing_page_feature_library')" />
+      </li>
       <li v-if="!isAudioHidden">
         <UIcon name="i-material-symbols-check" />
         <span v-text="$t('pricing_page_feature_1')" />
@@ -105,6 +109,8 @@ const props = withDefaults(defineProps<{
 const isYearlyPlan = computed(() => {
   return props.selectedPlan === 'yearly'
 })
+
+const isPlusLibraryEnabled = useFeatureFlagEnabled('plus-library')
 
 const { t: $t } = useI18n()
 const intercom = useIntercom()
