@@ -5,8 +5,8 @@ const PaginationFields = {
   offset: v.optional(v.union([v.string(), v.array(v.string())])),
 }
 
-// Library tab passes `library=1` to restrict search/genre to Plus-reading titles.
-const PlusReadingField = {
+// Library tab passes `library=1` to restrict listings/search/genre to Plus-reading titles.
+const LibraryFilterField = {
   library: v.optional(v.union([v.string(), v.array(v.string())])),
 }
 
@@ -25,6 +25,7 @@ export const StoreProductsQuerySchema = v.object({
     v.transform(val => (Array.isArray(val) ? val[0] : val)),
   ),
   ...PaginationFields,
+  ...LibraryFilterField,
 })
 
 export const StoreSearchQuerySchema = v.object({
@@ -36,7 +37,7 @@ export const StoreSearchQuerySchema = v.object({
     ),
   ),
   ...PaginationFields,
-  ...PlusReadingField,
+  ...LibraryFilterField,
 })
 
 export const StoreGenreQuerySchema = v.object({
@@ -48,5 +49,5 @@ export const StoreGenreQuerySchema = v.object({
     ),
   ),
   ...PaginationFields,
-  ...PlusReadingField,
+  ...LibraryFilterField,
 })

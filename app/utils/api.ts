@@ -40,10 +40,12 @@ export function fetchBookstoreCMSProductsByTagId(tagId: string, {
   offset,
   limit = MAX_BOOKSTORE_PAGE_SIZE,
   ts,
+  isLibrary = false,
 }: {
   offset?: string
   limit?: number
   ts?: number
+  isLibrary?: boolean
 } = {}) {
   return apiFetch<FetchBookstoreCMSProductsResponseData>('/store/products', {
     query: {
@@ -51,6 +53,7 @@ export function fetchBookstoreCMSProductsByTagId(tagId: string, {
       offset,
       limit,
       ts,
+      library: isLibrary ? '1' : undefined,
     },
   })
 }

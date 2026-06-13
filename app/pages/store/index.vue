@@ -664,7 +664,7 @@ const cmsProducts = computed<BookstoreItemList>(() => {
     return map
   }, {} as Record<string, { totalStaked: bigint, stakerCount: number, likeRank?: number }>)
 
-  const listingProducts = bookstoreStore.getBookstoreCMSProductsByTagId(tagId.value)
+  const listingProducts = bookstoreStore.getBookstoreCMSProductsByTagId(tagId.value, isLibraryTab.value)
   const items = listingProducts.items.map((item) => {
     const stakingInfo = stakingData[item.classId?.toLowerCase() || '']
     return {
@@ -974,13 +974,14 @@ async function fetchTagItems({ isRefresh = false } = {}) {
 
   // Capture the items array reference before fetch so we can detect
   // if the store replaced it (e.g. on refresh or expired-offset retry)
-  const itemsBefore = bookstoreStore.bookstoreCMSProductsByTagIdMap[currentTagId]?.items
+  const currentTagKey = getBookstoreScopedKey(currentTagId, isLibraryTab.value)
+  const itemsBefore = bookstoreStore.bookstoreCMSProductsByTagKeyMap[currentTagKey]?.items
   const countBefore = isRefresh ? 0 : (itemsBefore?.length ?? 0)
-  await bookstoreStore.fetchCMSProductsByTagId(currentTagId, { isRefresh })
+  await bookstoreStore.fetchCMSProductsByTagId(currentTagId, { isRefresh, isLibrary: isLibraryTab.value })
 
   // Sort only the new batch by staking amount (skip 'latest' which preserves Airtable order)
   if (currentTagId !== 'latest') {
-    const items = bookstoreStore.bookstoreCMSProductsByTagIdMap[currentTagId]?.items
+    const items = bookstoreStore.bookstoreCMSProductsByTagKeyMap[currentTagKey]?.items
     if (items === itemsBefore && items?.length === countBefore) return
     // If the array was replaced (refresh or offset-refresh), sort from 0
     const sortingFromIndex = (items === itemsBefore) ? countBefore : 0

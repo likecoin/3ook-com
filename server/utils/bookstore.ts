@@ -44,6 +44,14 @@ interface NFTBookListResponse {
   nextKey?: number | null
 }
 
+interface BookstoreListingFetchOptions {
+  pageSize?: number
+  // Pagination cursor: numeric offset for /cms/list, timestamp key for /list*.
+  nextKey?: string
+  // When true, restricts results to Plus-reading titles via the upstream `library` flag.
+  isLibrary?: boolean
+}
+
 function normalizeCMSTag(tag: {
   id: string
   name?: { zh?: string, en?: string }
@@ -109,11 +117,20 @@ export async function fetchBookstoreCMSTagById(tagId: string): Promise<Bookstore
 
 export async function fetchBookstoreCMSProductsByTagId(
   tagId: string,
-  { pageSize = MAX_BOOKSTORE_PAGE_SIZE, nextKey: offset }: { pageSize?: number, nextKey?: string } = {},
+  {
+    pageSize = MAX_BOOKSTORE_PAGE_SIZE,
+    nextKey: offset,
+    isLibrary = false,
+  }: BookstoreListingFetchOptions = {},
 ): Promise<FetchBookstoreCMSProductsResponseData> {
   const fetch = getLikeCoinAPIFetch()
   const { list, nextOffset } = await fetch<NFTBookListResponse>(`${BOOKSTORE_API_BASE_PATH}/cms/list`, {
-    query: { tag: tagId, limit: pageSize, offset: offset ? Number(offset) : undefined },
+    query: {
+      tag: tagId,
+      limit: pageSize,
+      offset: offset ? Number(offset) : undefined,
+      library: isLibrary ? '1' : undefined,
+    },
   })
   return {
     records: (list || []).map(normalizeBookListingToProduct),
@@ -124,11 +141,19 @@ export async function fetchBookstoreCMSProductsByTagId(
 
 export async function fetchBookstoreBookListing(
   path: string,
-  { pageSize = MAX_BOOKSTORE_PAGE_SIZE, nextKey: key }: { pageSize?: number, nextKey?: string } = {},
+  {
+    pageSize = MAX_BOOKSTORE_PAGE_SIZE,
+    nextKey: key,
+    isLibrary = false,
+  }: BookstoreListingFetchOptions = {},
 ): Promise<FetchBookstoreCMSProductsResponseData> {
   const fetch = getLikeCoinAPIFetch()
   const { list, nextKey } = await fetch<NFTBookListResponse>(path, {
-    query: { limit: pageSize, key: key ? Number(key) : undefined },
+    query: {
+      limit: pageSize,
+      key: key ? Number(key) : undefined,
+      library: isLibrary ? '1' : undefined,
+    },
   })
   return {
     records: (list || []).map(normalizeBookListingToProduct),
@@ -151,7 +176,7 @@ export function parseBookstorePageSize(limit: string | string[] | undefined): nu
 
 export async function respondWithBookstoreAPI(
   event: H3Event,
-  fetcher: (opts: { pageSize: number, nextKey?: string }) => Promise<FetchBookstoreCMSProductsResponseData>,
+  fetcher: (opts: BookstoreListingFetchOptions) => Promise<FetchBookstoreCMSProductsResponseData>,
   {
     notFoundStatusCode = 404,
     notFoundStatusMessage = 'NOT_FOUND',
@@ -163,6 +188,7 @@ export async function respondWithBookstoreAPI(
   const query = getQuery(event)
   const offsetRaw = Array.isArray(query.offset) ? query.offset[0] : query.offset
   const pageSize = parseBookstorePageSize(query.limit as string | string[] | undefined)
+  const isLibrary = (Array.isArray(query.library) ? query.library[0] : query.library) === '1'
   // Validate offset as a non-negative integer; treat 0 the same as omitted so page-1 stays cacheable.
   let nextKey: string | undefined
   if (offsetRaw !== undefined && offsetRaw !== '') {
@@ -173,7 +199,7 @@ export async function respondWithBookstoreAPI(
     nextKey = offsetNum === 0 ? undefined : String(offsetNum)
   }
   try {
-    const result = await fetcher({ pageSize, nextKey })
+    const result = await fetcher({ pageSize, nextKey, isLibrary })
     setHeader(event, 'cache-control', 'public, max-age=60')
     return result
   }
