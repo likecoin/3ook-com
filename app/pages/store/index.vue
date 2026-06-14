@@ -1057,10 +1057,15 @@ async function fetchItems({ lazy = false, isRefresh = false } = {}): Promise<boo
 }
 
 onMounted(async () => {
-  // Gate /library behind the `plus-library` flag. PostHog is client-only, so
-  // evaluate after mount and redirect to /store when disabled.
-  if (isLibraryTab.value && !(await fetchFeatureFlagEnabled('plus-library'))) {
-    await navigateTo(localeRoute({ name: 'store' }), { replace: true })
+  // /store and /library share this page; PostHog is client-only, so evaluate
+  // the `plus-library` flag after mount before deciding which tab to show.
+  const mightRedirect = isLibraryTab.value || isApp.value
+  const isPlusLibraryEnabled = mightRedirect && await fetchFeatureFlagEnabled('plus-library')
+
+  // The app surfaces eligible users to /library and gates everyone else to /store.
+  const targetName = isPlusLibraryEnabled ? 'library' : 'store'
+  if (routeName.value !== targetName) {
+    await navigateTo(localeRoute({ name: targetName, query: route.query }), { replace: true })
     return
   }
 
