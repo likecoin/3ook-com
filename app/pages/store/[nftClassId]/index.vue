@@ -238,7 +238,7 @@
                 @click="handleTTSTagClick"
               />
             </li>
-            <li v-if="isPlusReadingEnabled">
+            <li v-if="!isLibrary && isPlusReadingEnabled">
               <UButton
                 :label="plusReadingTagLabel"
                 :to="plusReadingTagRoute"
@@ -1065,9 +1065,8 @@ const isPlusReadingEnabled = computed(() =>
 
 // Non-owners of a Plus-reading book see a CTA: Plus members read it directly,
 // while guests/non-Plus users are routed to subscribe.
-// Free books (price <= 0) are not offered for Plus reading.
 const isPlusReadingCTAVisible = computed(() =>
-  !isUserBookOwner.value && isPlusReadingEnabled.value && bookInfo.minPrice.value > 0,
+  !isUserBookOwner.value && isPlusReadingEnabled.value,
 )
 // An active Plus member who already borrowed this book reads it now, so the CTA shows Read instead of Borrow.
 const isBookBorrowed = computed(() =>
@@ -1203,7 +1202,7 @@ const descriptionTags = computed(() => {
     tags.push(...bookInfo.contentTypes.value.map(type => type.toUpperCase()))
   }
 
-  if (bookInfo.isDownloadable.value) {
+  if (!isLibrary.value && bookInfo.isDownloadable.value) {
     tags.push($t('reading_method_download_file'))
   }
 
