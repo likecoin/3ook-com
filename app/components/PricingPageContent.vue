@@ -204,8 +204,8 @@
                 :to="learnMoreRoute"
                 variant="link"
                 color="neutral"
-                block
                 size="sm"
+                :ui="{ label: 'border-b border-current leading-5' }"
               />
 
               <UAlert
@@ -251,7 +251,7 @@
           >
             <template #selectedBooksOnly>
               <UButton
-                class="inline p-0 rounded-none border-b border-current text-xs"
+                class="inline p-0 rounded-none border-b border-current text-xs leading-5"
                 variant="link"
                 color="neutral"
                 :label="$t('tts_samples_section_affiliate_books_note_selected_books_only')"
