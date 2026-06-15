@@ -91,7 +91,9 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
         ...plusReadingBookIds.value.map(id =>
           nftStore.lazyFetchNFTClassAggregatedMetadataById(id),
         ),
-        bookSettingsStore.fetchBatchSettings(plusReadingBookIds.value),
+        // Force-refresh: server-accumulated reading/TTS totals change outside
+        // the client, so skip-if-initialized would surface a stale cached 0.
+        bookSettingsStore.fetchBatchSettings(plusReadingBookIds.value, { force: true }),
       ])
     }
     catch (error) {
