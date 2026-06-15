@@ -38,6 +38,7 @@ export function useTTSVoice(options: TTSVoiceOptions = {}) {
     ttsLanguageVoiceOptions.push(
       { label: 'Phoebe 2.6 - 粵語口語', value: `zh-HK_${PHOEBE_V26_VOICE_ID}` },
       { label: 'Karenly - 粵語', value: 'zh-HK_karenly' },
+      { label: 'Kellie - 粵語', value: 'zh-HK_kellie' },
       { label: '好青年 Gman - 粵語', value: 'zh-HK_corrupt_gman' },
       { label: '好青年 Alex - 粵語', value: 'zh-HK_corrupt_alex' },
       { label: '好青年 MK Kong - 粵語', value: 'zh-HK_corrupt_mkk' },
