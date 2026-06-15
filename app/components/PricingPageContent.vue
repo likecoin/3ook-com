@@ -239,20 +239,26 @@
 
         <p
           v-if="hasAffiliateVoices"
-          class="mt-8 text-center"
+          class="mt-8 text-center text-xs text-dimmed"
         >
-          <button
-            type="button"
-            class="inline cursor-pointer text-xs text-dimmed underline-offset-2 hover:underline"
-            @click="isAffiliateBooksModalOpen = true"
+          <UIcon
+            name="i-material-symbols-info-outline-rounded"
+            class="mr-0.5 align-middle"
+          />
+          <i18n-t
+            keypath="tts_samples_section_affiliate_books_note"
+            tag="span"
           >
-            <span aria-hidden="true">*&nbsp;</span>
-            <span v-text="$t('tts_samples_section_affiliate_books_note')" />
-            <UIcon
-              name="i-material-symbols-info-outline-rounded"
-              class="ml-0.5 align-text-bottom"
-            />
-          </button>
+            <template #selectedBooksOnly>
+              <UButton
+                class="inline p-0 rounded-none border-b border-current text-xs"
+                variant="link"
+                color="neutral"
+                :label="$t('tts_samples_section_affiliate_books_note_selected_books_only')"
+                @click="isAffiliateBooksModalOpen = true"
+              />
+            </template>
+          </i18n-t>
         </p>
 
         <AffiliateBooksModal
