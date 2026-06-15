@@ -27,7 +27,7 @@
             class="text-sm font-bold text-highlighted"
             v-text="$t('tts_samples_section_affiliate_books_modal_books_title')"
           />
-          <ul class="flex flex-col gap-3">
+          <ul class="grid grid-cols-2 gap-x-4 gap-y-3">
             <li
               v-for="classId in bookClassIds"
               :key="classId"
