@@ -35,7 +35,8 @@ export function useTTSVoice(options: TTSVoiceOptions = {}) {
 
   if (config.public.isTestnet) {
     ttsLanguageVoiceOptions.push(
-      { label: 'Karenly - 粵語', value: 'zh-HK_karenly' },
+      { label: 'Karenly V0 - 粵語', value: 'zh-HK_karenly_v0' },
+      { label: 'Karenly V1 - 粵語', value: 'zh-HK_karenly_v1' },
       { label: 'Kellie - 粵語', value: 'zh-HK_kellie' },
       { label: '好青年 Gman - 粵語', value: 'zh-HK_corrupt_gman' },
       { label: '好青年 Alex - 粵語', value: 'zh-HK_corrupt_alex' },
