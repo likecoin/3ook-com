@@ -21,6 +21,7 @@ const VOICE_CONFIG: Record<string, VoiceConfig> = {
   astro: { minimaxVoiceId: 'three_book_astro_v1', displayName: 'Astro' },
   aurora: { minimaxVoiceId: 'three_book_aurora_v1', displayName: 'Aurora' },
   karenly: { minimaxVoiceId: 'three_book_karenly_v0', displayName: 'Karenly' },
+  kellie: { minimaxVoiceId: 'three_book_kellie_v1', displayName: 'Kellie' },
   corrupt_gman: { minimaxVoiceId: 'three_book_corrupt_gman_v0', displayName: '好青年 Gman' },
   corrupt_alex: { minimaxVoiceId: 'three_book_corrupt_alex_v0', displayName: '好青年 Alex' },
   corrupt_mkk: { minimaxVoiceId: 'three_book_corrupt_mkk_v0', displayName: '好青年 MK Kong' },
