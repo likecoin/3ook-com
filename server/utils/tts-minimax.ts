@@ -25,6 +25,12 @@ const VOICE_CONFIG: Record<string, VoiceConfig> = {
   astro: { providerVoiceId: 'three_book_astro_v1', displayName: 'Astro' },
   aurora: { providerVoiceId: 'three_book_aurora_v1', displayName: 'Aurora' },
   karenly: { providerVoiceId: 'three_book_karenly_v0', displayName: 'Karenly' },
+  corrupt_gman: { providerVoiceId: 'three_book_corrupt_gman_v0', displayName: '好青年 Gman' },
+  corrupt_alex: { providerVoiceId: 'three_book_corrupt_alex_v0', displayName: '好青年 Alex' },
+  corrupt_mkk: { providerVoiceId: 'three_book_corrupt_mkk_v0', displayName: '好青年 MK Kong' },
+  corrupt_hung: { providerVoiceId: 'three_book_corrupt_hung_v0', displayName: '好青年 Hung' },
+  corrupt_chuen: { providerVoiceId: 'three_book_corrupt_chuen_v0', displayName: '好青年 Chuen' },
+  corrupt_four: { providerVoiceId: 'three_book_corrupt_four_v0', displayName: '好青年 Four' },
   pazu: { providerVoiceId: 'three_book_pazu_v3', displayName: 'Pazu' },
   // Version encodes the Minimax model (v26 = speech-2.6-hd, v28 = speech-2.8-hd).
   // Bumped from unversioned `phoebe` so request URLs change and CDN/browser
