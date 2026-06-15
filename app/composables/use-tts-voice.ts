@@ -36,6 +36,12 @@ export function useTTSVoice(options: TTSVoiceOptions = {}) {
   if (config.public.isTestnet) {
     ttsLanguageVoiceOptions.push(
       { label: 'Karenly - 粵語', value: 'zh-HK_karenly' },
+      { label: '好青年 Gman - 粵語', value: 'zh-HK_corrupt_gman' },
+      { label: '好青年 Alex - 粵語', value: 'zh-HK_corrupt_alex' },
+      { label: '好青年 MK Kong - 粵語', value: 'zh-HK_corrupt_mkk' },
+      { label: '好青年 Hung - 粵語', value: 'zh-HK_corrupt_hung' },
+      { label: '好青年 Chuen - 粵語', value: 'zh-HK_corrupt_chuen' },
+      { label: '好青年 Four - 粵語', value: 'zh-HK_corrupt_four' },
       { label: '粵語男聲', value: 'zh-HK_1' },
       { label: '粵語女聲', value: 'zh-HK_0' },
       { label: '國語男聲', value: 'zh-TW_1' },
