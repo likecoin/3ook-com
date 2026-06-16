@@ -160,8 +160,9 @@ const results = ref<ReaderSearchResult[]>([])
 const isSearching = ref(false)
 const hasSearched = ref(false)
 
-const mobileInput = useTemplateRef<{ inputRef?: Ref<HTMLInputElement | null> } | null>('mobileInput')
-const desktopInput = useTemplateRef<{ inputRef?: Ref<HTMLInputElement | null> } | null>('desktopInput')
+type InputExpose = { inputRef?: HTMLInputElement | null } | null
+const mobileInput = useTemplateRef<InputExpose>('mobileInput')
+const desktopInput = useTemplateRef<InputExpose>('desktopInput')
 const mobileFocusKeeper = useTemplateRef<HTMLInputElement | null>('mobileFocusKeeper')
 
 function handleMobileTriggerClick() {
@@ -237,7 +238,7 @@ function handleSelect(result: ReaderSearchResult) {
 function focusInput() {
   nextTick(() => {
     const input = isDesktop.value ? desktopInput.value : mobileInput.value
-    input?.inputRef?.value?.focus()
+    input?.inputRef?.focus()
   })
 }
 
