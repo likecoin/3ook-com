@@ -199,14 +199,23 @@ function fetchBookInfo() {
 }
 
 function onBookCoverClick() {
-  useLogEvent('select_item', {
-    items: [{
-      item_id: props.nftClassId,
-      item_name: bookName.value,
-      price: price.value,
-      quantity: 1,
-    }],
-  })
+  // In the library the book is already owned, so opening it to read isn't an
+  // ecommerce action — keep the GA4 `select_item` for the store path only.
+  if (props.isLibrary) {
+    useLogEvent('library_book_click', {
+      nft_class_id: props.nftClassId,
+    })
+  }
+  else {
+    useLogEvent('select_item', {
+      items: [{
+        item_id: props.nftClassId,
+        item_name: bookName.value,
+        price: price.value,
+        quantity: 1,
+      }],
+    })
+  }
   emit('open', props.nftClassId)
 }
 </script>

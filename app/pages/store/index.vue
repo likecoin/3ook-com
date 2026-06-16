@@ -1104,10 +1104,15 @@ onMounted(async () => {
   // /store and /library share this page. The app surfaces users to /library;
   // web visitors stay on whichever tab they landed on.
   const targetName = (isLibraryTab.value || isApp.value) ? 'library' : 'store'
+  const viewEvent = targetName === 'library' ? 'library_view' : 'store_view'
   if (routeName.value !== targetName) {
+    // Log before redirecting: this shared page component won't re-run onMounted
+    // after navigateTo, so app users sent /store -> /library would never log.
+    useLogEvent(viewEvent)
     await navigateTo(localeRoute({ name: targetName, query: route.query }), { replace: true })
     return
   }
+  useLogEvent(viewEvent)
 
   if (!route.query.tag && !isSearchMode.value) {
     await storePageState.restoreIfNeeded()
@@ -1210,12 +1215,12 @@ async function handleTagClick(tagValue?: string) {
   if (isLibraryTab.value) dismissLibraryIntroBanner()
 
   if (tagValue === 'local-histories') {
-    useLogEvent('store_tag_click', { tag_id: tagValue })
+    useLogEvent(isLibraryTab.value ? 'library_tag_click' : 'store_tag_click', { tag_id: tagValue })
     await navigateTo(localeRoute({ name: 'local-histories' }))
     return
   }
 
-  useLogEvent('store_tag_click', { tag_id: tagValue })
+  useLogEvent(isLibraryTab.value ? 'library_tag_click' : 'store_tag_click', { tag_id: tagValue })
   tagId.value = tagValue
 }
 
@@ -1247,17 +1252,17 @@ const isSearchInputOpen = ref(false)
 const searchInputValue = ref('')
 
 function handleSearchTagClick() {
-  useLogEvent('store_tag_search_click')
+  useLogEvent(isLibraryTab.value ? 'library_tag_search_click' : 'store_tag_search_click')
   searchInputValue.value = ''
 }
 
 function handleClearSearchInputButton() {
-  useLogEvent('store_search_input_clear_button_click')
+  useLogEvent(isLibraryTab.value ? 'library_search_input_clear_button_click' : 'store_search_input_clear_button_click')
   searchInputValue.value = ''
 }
 
 function handleContactUsClick() {
-  useLogEvent('store_no_search_results_contact_click', { search_term: querySearchTerm.value })
+  useLogEvent(isLibraryTab.value ? 'library_no_search_results_contact_click' : 'store_no_search_results_contact_click', { search_term: querySearchTerm.value })
   const searchTerm = querySearchTerm.value || queryAuthorName.value || queryPublisherName.value || queryOwnerWallet.value
   intercom.showNewMessage($t('store_no_search_results_contact_prefill', { term: searchTerm }))
 }
@@ -1270,7 +1275,7 @@ async function handleSearchSubmit() {
   if (checkIsEVMAddress(searchInputValue.value)) {
     query = 'owner_wallet'
   }
-  useLogEvent('store_search_submit')
+  useLogEvent(isLibraryTab.value ? 'library_search_submit' : 'store_search_submit')
   await navigateTo({ query: { [query]: searchInputValue.value } })
 }
 </script>
