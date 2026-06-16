@@ -123,7 +123,10 @@ export function usePricingPageCampaign(options: {
     const currentCampaignId = campaignId.value
     if (!currentCampaignId) return
     onLoaded(({ posthog }) => {
-      posthog.featureFlags.overrideFeatureFlags({
+      // onLoaded can fire before window.posthog is assigned (failed init or
+      // init race), where @nuxt/scripts' proxy yields a stub queue fn instead
+      // of the real featureFlags object — guard so the chain can't throw.
+      posthog.featureFlags?.overrideFeatureFlags?.({
         'pricing-page-campaign': currentCampaignId,
       })
     })
