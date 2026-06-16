@@ -273,7 +273,7 @@
           :lazy="index >= columnMax"
           :priority="index < columnMax"
           :ll-medium="llMedium"
-          :should-show-plus-reading-icon="isPlusReadingFeatureEnabled && !isLibraryTab"
+          :should-show-plus-reading-icon="!isLibraryTab"
           :is-library="isLibraryTab"
           ll-source="bookstore"
         />
@@ -308,7 +308,6 @@ const getRouteBaseNameString = useRouteBaseNameString()
 // /store and /library share this file; the route name selects the mode.
 const routeName = computed(() => getRouteBaseNameString() || 'store')
 const isLibraryTab = computed(() => routeName.value === 'library')
-const isPlusReadingFeatureEnabled = useFeatureFlagEnabled('plus-library')
 const getRouteQuery = useRouteQuery()
 const runtimeConfig = useRuntimeConfig()
 const bookstoreStore = useBookstoreStore()
@@ -1058,13 +1057,9 @@ async function fetchItems({ lazy = false, isRefresh = false } = {}): Promise<boo
 }
 
 onMounted(async () => {
-  // /store and /library share this page; PostHog is client-only, so evaluate
-  // the `plus-library` flag after mount before deciding which tab to show.
-  const mightRedirect = isLibraryTab.value || isApp.value
-  const isPlusLibraryEnabled = mightRedirect && await fetchFeatureFlagEnabled('plus-library')
-
-  // The app surfaces eligible users to /library and gates everyone else to /store.
-  const targetName = isPlusLibraryEnabled ? 'library' : 'store'
+  // /store and /library share this page. The app surfaces users to /library;
+  // web visitors stay on whichever tab they landed on.
+  const targetName = (isLibraryTab.value || isApp.value) ? 'library' : 'store'
   if (routeName.value !== targetName) {
     await navigateTo(localeRoute({ name: targetName, query: route.query }), { replace: true })
     return

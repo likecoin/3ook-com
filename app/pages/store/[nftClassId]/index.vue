@@ -1056,12 +1056,7 @@ const bookInfo = useBookInfo({ nftClassId })
 const isLibrary = computed(() => getRouteBaseName(route) === 'library-nftClassId')
 const listingRouteName = computed(() => (isLibrary.value ? 'library' : 'store'))
 
-// Plus-reading is gated behind a PostHog flag for staged internal testing on
-// prod, combined with the per-book backend flag.
-const isPlusReadingFeatureEnabled = useFeatureFlagEnabled('plus-library')
-const isPlusReadingEnabled = computed(() =>
-  isPlusReadingFeatureEnabled.value && bookInfo.isPlusReadingEnabled.value,
-)
+const isPlusReadingEnabled = bookInfo.isPlusReadingEnabled
 
 // Non-owners of a Plus-reading book see a CTA: Plus members read it directly,
 // while guests/non-Plus users are routed to subscribe.
@@ -1576,21 +1571,8 @@ const { gridClasses, getGridItemClassesByIndex } = usePaginatedGrid({
 })
 
 onMounted(async () => {
-  const mightRedirect = isLibrary.value || (isApp.value && bookInfo.isPlusReadingEnabled.value)
-  const isPlusLibraryEnabled = mightRedirect && await fetchFeatureFlagEnabled('plus-library')
-
-  // The library is gated behind a feature flag
-  if (isLibrary.value && !isPlusLibraryEnabled) {
-    await navigateTo(localeRoute({
-      name: 'store-nftClassId',
-      params: { nftClassId: nftClassId.value },
-      query: route.query,
-    }), { replace: true })
-    return
-  }
-
   // The app hides the store, so send Plus-reading titles to the library.
-  if (!isLibrary.value && isPlusLibraryEnabled) {
+  if (!isLibrary.value && isApp.value && bookInfo.isPlusReadingEnabled.value) {
     await navigateTo(localeRoute({
       name: 'library-nftClassId',
       params: { nftClassId: nftClassId.value },

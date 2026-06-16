@@ -90,14 +90,11 @@ const getRouteBaseNameString = useRouteBaseNameString()
 const { getLabelGraphic } = useGraphicLabel()
 const { loggedIn: hasLoggedIn, user } = useUserSession()
 const { isApp } = useAppDetection()
-const isPlusLibraryEnabled = useFeatureFlagEnabled('plus-library')
 
 const menuItems = computed(() => {
   const routeName = getRouteBaseNameString()
-  const isLibraryEnabled = isPlusLibraryEnabled.value === true
   // In app, the library replaces the store as the primary browse tab.
-  // The store stays as a fallback while the library flag is off/unresolved.
-  const isStoreHidden = isApp.value && isLibraryEnabled
+  const isStoreHidden = isApp.value
   return [
     ...(isStoreHidden
       ? []
@@ -107,15 +104,12 @@ const menuItems = computed(() => {
           icon: 'i-material-symbols-storefront-outline',
           iconActive: 'i-material-symbols-storefront',
         }]),
-    // Plus-reading library; only shown once the feature flag resolves true.
-    ...(isLibraryEnabled
-      ? [{
-          key: 'library',
-          label: $t('tab_bar_library'),
-          icon: 'i-3ook-com-library-outline-rounded',
-          iconActive: 'i-3ook-com-library-rounded',
-        }]
-      : []),
+    {
+      key: 'library',
+      label: $t('tab_bar_library'),
+      icon: 'i-3ook-com-library-outline-rounded',
+      iconActive: 'i-3ook-com-library-rounded',
+    },
     {
       key: 'shelf',
       label: $t('tab_bar_shelf'),

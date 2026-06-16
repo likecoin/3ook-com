@@ -71,15 +71,8 @@ else {
     nftStore.lazyFetchNFTClassAggregatedMetadataById(nftClassId.value)
       .catch(error => console.warn('Failed to fetch NFT metadata:', error)),
   ])
-  // Only a non-owner Plus member on a Plus-reading book can borrow, so resolve
-  // the feature flag only then — owners and others never wait on it to open a
-  // book. Borrowing is gated behind a PostHog flag for staged internal testing;
-  // PostHog is client-only, so allow it through on the server and let the client
-  // re-evaluate and redirect if the flag is off.
-  let canBorrowWithPlus = false
-  if (!isOwner && isLikerPlus.value && bookInfo.isPlusReadingEnabled.value) {
-    canBorrowWithPlus = import.meta.server || await fetchFeatureFlagEnabled('plus-library')
-  }
+  // Only a non-owner Plus member on a Plus-reading book can borrow.
+  const canBorrowWithPlus = !isOwner && isLikerPlus.value && bookInfo.isPlusReadingEnabled.value
   if (!isOwner && !canBorrowWithPlus) {
     await navigateTo(localeRoute({ name: 'shelf', query: route.query }))
   }
