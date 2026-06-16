@@ -16,6 +16,10 @@ export const useNFTStore = defineStore('nft', () => {
   const queuedRevalidations: Array<() => void> = []
   let activeRevalidationCount = 0
   const MAX_CONCURRENT_REVALIDATIONS = 6
+  // Reactive count of class IDs with a queued or in-flight background revalidation.
+  // Drives a loading signal for views (the library tab) whose filter hides items
+  // until their authoritative metadata lands.
+  const revalidatingCount = ref(0)
 
   const getNFTClassById = computed(() => (id: string) => nftClassByIdMap.value[normalizeNFTClassId(id)])
   const getIsNFTClassMetadataFresh = computed(() => (id: string) =>
@@ -25,6 +29,7 @@ export const useNFTStore = defineStore('nft', () => {
     return nftClass?.metadata
   })
   const getMessagesByNFTClassId = computed(() => (id: string) => messagesByNFTClassIdMap.value[id])
+  const isRevalidatingMetadata = computed(() => revalidatingCount.value > 0)
 
   function addNFTClass(nftClass: Partial<NFTClass>) {
     if (nftClass.address) {
@@ -89,6 +94,7 @@ export const useNFTStore = defineStore('nft', () => {
     const key = normalizeNFTClassId(nftClassId)
     const existing = inflightRevalidations.get(key)
     if (existing) return existing
+    revalidatingCount.value += 1
     const promise = new Promise<void>((resolve) => {
       queuedRevalidations.push(() => {
         fetchNFTClassAggregatedMetadataById(nftClassId, { include: ['class_chain', 'bookstore'] })
@@ -96,6 +102,7 @@ export const useNFTStore = defineStore('nft', () => {
           .finally(() => {
             activeRevalidationCount -= 1
             inflightRevalidations.delete(key)
+            revalidatingCount.value -= 1
             resolve()
             runNextRevalidation()
           })
@@ -106,21 +113,14 @@ export const useNFTStore = defineStore('nft', () => {
     return promise
   }
 
-  // Awaits live class + bookstore metadata for class IDs not yet fresh this
-  // session. Callers that must filter on authoritative data (the library's
-  // Plus-reading gate) use this; render paths use lazyFetch's SWR instead.
-  async function ensureNFTClassAggregatedMetadataFresh(nftClassIds: string[]) {
+  // Proactively revalidates a batch of not-yet-fresh class IDs, fire-and-forget.
+  // The library's staking tab filters its candidates out before they render, so
+  // they never trigger their own SWR refresh — nudging them here lets the gate
+  // reactively re-filter as authoritative flags land.
+  function revalidateNFTClassAggregatedMetadata(nftClassIds: string[]) {
     const pendingIds = [...new Set(nftClassIds.map(id => normalizeNFTClassId(id)).filter(Boolean))]
       .filter(id => !getIsNFTClassMetadataFresh.value(id))
-    if (!pendingIds.length) return
-    await Promise.all(pendingIds.map(id => revalidateNFTClassAggregatedMetadataById(id)))
-    // Revalidation swallows per-item errors to keep serving the cache, so a
-    // total failure (e.g. metadata API down) would otherwise leave the gated
-    // listing silently empty. Surface it only when nothing could be confirmed
-    // so the caller shows a retryable error; partial failures just drop items.
-    if (pendingIds.every(id => !getIsNFTClassMetadataFresh.value(id))) {
-      throw new Error('NFT_CLASS_METADATA_REVALIDATION_FAILED')
-    }
+    pendingIds.forEach(id => revalidateNFTClassAggregatedMetadataById(id))
   }
 
   async function lazyFetchNFTClassAggregatedMetadataById(nftClassId: string, { exclude = [], nocache = false }: FetchLikeCoinNFTClassAggregatedMetadataOptions = {}) {
@@ -184,13 +184,14 @@ export const useNFTStore = defineStore('nft', () => {
     getNFTClassMetadataById,
     getIsNFTClassMetadataFresh,
     getMessagesByNFTClassId,
+    isRevalidatingMetadata,
 
     addNFTClass,
     addNFTClasses,
     addNFTClassMetadata,
     fetchNFTClassAggregatedMetadataById,
     lazyFetchNFTClassAggregatedMetadataById,
-    ensureNFTClassAggregatedMetadataFresh,
+    revalidateNFTClassAggregatedMetadata,
     fetchNFTClassChainMetadataById,
     lazyFetchNFTClassChainMetadataById,
     fetchMessagesByClassId,

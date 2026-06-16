@@ -692,7 +692,8 @@ function shouldFilterAdultOnly(bookstoreInfo: BookstoreInfo | null | undefined):
 }
 
 // Library mode keeps only Plus-reading books. CMS/built-in listings carry the
-// flag inline; staking/search items fall back to already-loaded BookstoreInfo.
+// flag inline; staking/search items trust already-loaded BookstoreInfo, which
+// the proactive revalidate in fetchTagItems self-heals if stale.
 function getIsPlusReading(item: BookstoreItem): boolean {
   if (typeof item.isPlusReadingEnabled === 'boolean') return item.isPlusReadingEnabled
   const info = bookstoreStore.getBookstoreInfoByNFTClassId(item.classId || item.id || '')
@@ -755,7 +756,11 @@ const products = computed<BookstoreItemList>(() => {
 })
 
 const itemsCount = computed(() => products.value.items.length)
-const isLoadingInitialItems = computed(() => itemsCount.value === 0 && products.value.isFetchingItems)
+// In library mode the staking gate hides candidates until their Plus flags are
+// revalidated, so keep the skeleton up while that's in flight to avoid an
+// empty-state flash on cold load.
+const isLoadingInitialItems = computed(() => itemsCount.value === 0
+  && (products.value.isFetchingItems || (isLibraryTab.value && nftStore.isRevalidatingMetadata)))
 const hasMoreItems = computed(() => !!products.value.nextItemsKey || !!products.value.mayHaveMore || !products.value.hasFetchedItems)
 
 const itemsForStructuredData = computed(() => products.value.items.slice(0, Math.min(20, itemsCount.value)))
@@ -964,6 +969,14 @@ async function fetchTagItems({ isRefresh = false } = {}) {
 
   if (isStakingTagId.value) {
     await bookstoreStore.fetchStakingBooks(apiSortValue, { isRefresh, limit: 100 })
+    if (isLibraryTab.value) {
+      // Staking candidates are gated by getIsPlusReading before they render, so
+      // they never trigger their own SWR refresh; nudge them so stale/missing
+      // Plus flags self-correct and the gate reactively re-filters.
+      nftStore.revalidateNFTClassAggregatedMetadata(
+        bookstoreStore.getStakingBooks(apiSortValue).items.map(item => item.nftClassId),
+      )
+    }
     return
   }
 
