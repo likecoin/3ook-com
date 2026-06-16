@@ -600,6 +600,39 @@
       </section>
     </div>
 
+    <!-- Library (all-you-can-read) Section -->
+    <section
+      id="library"
+      class="w-full px-4 py-12 bg-gradient-to-b from-primary/5 to-transparent"
+    >
+      <div
+        v-gsap.whenVisible.once.from="{ y: 30, opacity: 0, duration: 0.5 }"
+        class="max-w-3xl mx-auto text-center space-y-5"
+      >
+        <UIcon
+          name="i-3ook-com-library-rounded"
+          class="text-primary mx-auto"
+          size="48"
+        />
+        <h2
+          class="text-2xl md:text-3xl font-bold text-gray-900"
+          v-text="$t('about_page_library_title')"
+        />
+        <p
+          class="text-lg text-gray-700 leading-relaxed max-w-2xl mx-auto"
+          v-text="$t('about_page_library_description')"
+        />
+        <UButton
+          :to="localeRoute({ name: 'library', query: { ll_source: 'about-library' } })"
+          :label="$t('about_page_library_cta')"
+          color="primary"
+          size="lg"
+          icon="i-3ook-com-library-rounded"
+          @click="onClickLibraryCta"
+        />
+      </div>
+    </section>
+
     <!-- 3ook.com Plus Membership Section -->
     <section
       v-if="canStartSubscribeFlow"
@@ -665,6 +698,13 @@
               size="20"
             />
             <span v-text="$t('about_page_plus_feature_early_access')" />
+          </li>
+          <li>
+            <UIcon
+              name="i-3ook-com-library-rounded"
+              size="20"
+            />
+            <span v-text="$t('about_page_plus_feature_library')" />
           </li>
           <li>
             <UIcon
@@ -999,6 +1039,10 @@ function onClickFeatureWeb3() {
 
 function onClickFeatureCurateToEarn() {
   useLogEvent('about_feature_curate_to_earn_click')
+}
+
+function onClickLibraryCta() {
+  useLogEvent('about_library_cta_click')
 }
 
 function onClickFeatureAuthorBenefits() {
