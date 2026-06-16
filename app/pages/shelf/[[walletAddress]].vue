@@ -705,6 +705,31 @@ const isMyBookshelf = computed(() => {
   return walletAddress.value === user.value?.evmWallet?.toLowerCase()
 })
 
+const shelfOwner = computed(() => {
+  return metadataStore.getLikerInfoByWalletAddress(walletAddress.value)
+})
+const shelfOwnerDisplayName = computed(() => {
+  return shelfOwner.value?.displayName || shelfOwner.value?.evmWallet
+})
+const shelfOwnerWalletAddress = computed(() => {
+  return shelfOwner.value?.evmWallet || walletAddress.value
+})
+
+// Registered before any `await` in setup: a composable that adds an unmount
+// hook must run synchronously, otherwise a redirect that unmounts the page
+// mid-Suspense leaves the head entry uncreated and crashes on teardown.
+useHead(() => ({
+  title: isMyBookshelf.value
+    ? $t('shelf_page_title')
+    : $t('shelf_page_title_someone_else', { name: shelfOwnerDisplayName.value || shelfOwnerWalletAddress.value }),
+  meta: [
+    {
+      name: 'robots',
+      content: 'noindex',
+    },
+  ],
+}))
+
 await callOnce(async () => {
   if (!isMyBookshelf.value && walletAddress.value) {
     try {
@@ -715,16 +740,6 @@ await callOnce(async () => {
     }
   }
 }, { mode: 'navigation' })
-
-const shelfOwner = computed(() => {
-  return metadataStore.getLikerInfoByWalletAddress(walletAddress.value)
-})
-const shelfOwnerDisplayName = computed(() => {
-  return shelfOwner.value?.displayName || shelfOwner.value?.evmWallet
-})
-const shelfOwnerWalletAddress = computed(() => {
-  return shelfOwner.value?.evmWallet || walletAddress.value
-})
 
 const isOnline = useOnline()
 const retryActions = computed(() => [{
@@ -757,18 +772,6 @@ const shelfNotice = computed(() => {
   }
   return null
 })
-
-useHead(() => ({
-  title: isMyBookshelf.value
-    ? $t('shelf_page_title')
-    : $t('shelf_page_title_someone_else', { name: shelfOwnerDisplayName.value || shelfOwnerWalletAddress.value }),
-  meta: [
-    {
-      name: 'robots',
-      content: 'noindex',
-    },
-  ],
-}))
 
 const { gridClasses, getGridItemClassesByIndex, columnMax } = usePaginatedGrid({
   itemsCount,
