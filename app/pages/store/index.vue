@@ -82,6 +82,25 @@
           >
         </UButton>
 
+        <UButton
+          v-if="!isApp && isLibraryTab"
+          :to="isDefaultTagId
+            ? localeRoute({ name: 'about', hash: '#library', query: { ll_medium: 'about-logo' } })
+            : localeRoute({ name: routeName })"
+          variant="link"
+          :ui="{
+            base: ['shrink-0', 'p-0 sm:p-0'],
+          }"
+          :title="$t('library_tab_title')"
+          :aria-label="$t('library_tab_title')"
+          @click="handleLibraryLogoClick"
+        >
+          <UIcon
+            name="i-3ook-com-library-rounded"
+            class="size-8 block text-primary"
+          />
+        </UButton>
+
         <PillButtonGroup
           :model-value="tagId"
           :items="allTagItems"
@@ -1206,6 +1225,16 @@ async function handleLogoClick() {
   }
   else {
     useLogEvent('store_logo_click')
+    storePageState.clear()
+  }
+}
+
+async function handleLibraryLogoClick() {
+  if (isDefaultTagId.value) {
+    useLogEvent('library_about_logo_click')
+  }
+  else {
+    useLogEvent('library_logo_click')
     storePageState.clear()
   }
 }
