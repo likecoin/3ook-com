@@ -356,17 +356,18 @@ export async function incrementBookReadingTime(
   const userDocRef = getUserCollection().doc(userWallet)
   const bookDocRef = userDocRef.collection('books').doc(nftClassId.toLowerCase())
 
-  // TTS share accrues for Plus listening on any book; reading share only for
-  // borrowed books. `plusBorrowedAt` is stamped server-side at borrow time, so
-  // we read it here rather than trust the client.
-  const plusTTSListeningTimeMs = isLikerPlus ? ttsActiveTimeMs : 0
+  // Both reading and TTS share accrue only for borrowed (Plus-library) books;
+  // owned reads/listens don't fund the pool. `plusBorrowedAt` is stamped
+  // server-side at borrow time, so we read it here rather than trust the client.
   let isBorrowed = false
   let plusReadingTimeMs = 0
-  if (isLikerPlus && activeReadingTimeMs > 0) {
+  let plusTTSListeningTimeMs = 0
+  if (isLikerPlus && (activeReadingTimeMs > 0 || ttsActiveTimeMs > 0)) {
     const bookDoc = await bookDocRef.get()
     isBorrowed = !!bookDoc.data()?.plusBorrowedAt
     if (isBorrowed) {
       plusReadingTimeMs = activeReadingTimeMs
+      plusTTSListeningTimeMs = ttsActiveTimeMs
     }
   }
 

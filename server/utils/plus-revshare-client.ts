@@ -15,11 +15,12 @@ interface PlusReadingUsageInput {
  * bookkeeping; still awaited so it settles before the serverless handler returns.
  */
 export async function forwardPlusReadingUsage(input: PlusReadingUsageInput): Promise<void> {
-  // Reading counts only for borrowed books, TTS for any book — both only for paid
-  // (non-trial) Plus, since trial usage must never fund the pool.
+  // Reading and TTS both count only for borrowed (Plus-library) books, and only
+  // for paid (non-trial) Plus, since trial usage must never fund the pool.
   if (!input.isPaidPlus) return
-  const { ttsTimeMs, readerWallet, classId } = input
+  const { readerWallet, classId } = input
   const readingTimeMs = input.isBorrowed ? input.readingTimeMs : 0
+  const ttsTimeMs = input.isBorrowed ? input.ttsTimeMs : 0
   if (readingTimeMs <= 0 && ttsTimeMs <= 0) return
 
   const config = useRuntimeConfig()
