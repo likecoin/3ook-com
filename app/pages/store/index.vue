@@ -309,6 +309,13 @@
           size="48"
         />
       </div>
+
+      <!-- In-app browse hides the store, so point native users to the full catalogue as plain text. -->
+      <p
+        v-if="isApp && !isSearchMode && itemsCount > 0 && !hasMoreItems"
+        class="w-full text-center text-sm text-muted py-8"
+        v-text="$t('store_list_end_more_books_text')"
+      />
     </main>
   </div>
 </template>

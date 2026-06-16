@@ -867,6 +867,7 @@
   "store_fetch_more_items_error": "Unable to load more books",
   "store_fetch_tags_error": "Unable to load tags",
   "store_genre_prefix": "Genre: ",
+  "store_list_end_more_books_text": "Discover more books at 3ook.com",
   "store_no_items": "No books",
   "store_no_items_learn_more": "Learn more about 3ook.com",
   "store_no_search_results": "No results found",

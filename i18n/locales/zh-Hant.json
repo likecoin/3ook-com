@@ -867,6 +867,7 @@
   "store_fetch_more_items_error": "無法載入更多書本",
   "store_fetch_tags_error": "無法載入分類",
   "store_genre_prefix": "分類：",
+  "store_list_end_more_books_text": "前往 3ook.com 探索更多書籍",
   "store_no_items": "沒有書本",
   "store_no_items_learn_more": "了解更多關於 3ook.com",
   "store_no_search_results": "沒有找到結果",
