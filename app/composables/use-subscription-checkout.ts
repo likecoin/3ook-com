@@ -26,7 +26,13 @@ export function useSubscriptionCheckout() {
   const { isApp } = useAppDetection()
   const { isIAPSupported, purchase: purchaseViaIAP } = useNativeIAP()
   const runtimeConfig = useRuntimeConfig()
-  const embeddedCheckoutABTest = useABTest({ experimentKey: 'plus-embedded-checkout' })
+  // Defer exposure to the checkout decision point (post-login) instead of mount,
+  // so only treatment-eligible users are counted and we avoid re-bucketing across
+  // the login boundary (the cause of the earlier sample-ratio mismatch).
+  const embeddedCheckoutABTest = useABTest({
+    experimentKey: 'plus-embedded-checkout',
+    manualExposure: true,
+  })
 
   const isProcessingSubscription = ref(false)
 
@@ -229,12 +235,17 @@ export function useSubscriptionCheckout() {
         await navigateTo(localeRoute({ name: 'plus-success', query: { period: plan } }))
       }
       else {
-        const canUseEmbeddedCheckout = (
+        // Only web Stripe users can receive the treatment — app users always get
+        // the hosted flow, so capture exposure here (not on mount) to keep the
+        // experiment population clean.
+        const isEmbeddedCheckoutEligible = (
           !isApp.value
-          && embeddedCheckoutABTest.isVariant('test')
           && !!runtimeConfig.public.stripePublishableKey
         )
-        const uiMode: CheckoutUIMode = canUseEmbeddedCheckout ? 'embedded' : 'hosted'
+        const embeddedVariant = isEmbeddedCheckoutEligible
+          ? embeddedCheckoutABTest.captureExposure()
+          : null
+        const uiMode: CheckoutUIMode = embeddedVariant === 'test' ? 'embedded' : 'hosted'
         const { url, clientSecret, paymentId } = await likeCoinSessionAPI.fetchLikerPlusCheckoutLink({
           period: plan,
           from: getRouteQuery('from'),
