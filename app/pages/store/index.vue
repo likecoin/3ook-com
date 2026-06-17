@@ -661,6 +661,11 @@ const ogTitle = computed(() => {
   return pageTitle.value
 })
 
+const ogImage = computed(() => {
+  const tab = isLibraryTab.value ? 'library' : 'store'
+  return `${runtimeConfig.public.baseURL}/images/og/${tab}.jpg`
+})
+
 const searchResults = computed<BookstoreItemList | null>(() => {
   if (isSearchMode.value) {
     const searchResults = bookstoreStore.getBookstoreSearchResultsByQuery(searchQuery.value, isLibraryTab.value)
@@ -854,6 +859,17 @@ useHead(() => {
     property: 'og:title',
     content: ogTitle.value,
   })
+
+  meta.push(
+    {
+      property: 'og:image',
+      content: ogImage.value,
+    },
+    {
+      name: 'twitter:image',
+      content: ogImage.value,
+    },
+  )
 
   const description = tagDescription.value
   if (description) {
