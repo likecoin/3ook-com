@@ -88,18 +88,16 @@
             ? localeRoute({ name: 'about', hash: '#library', query: { ll_medium: 'about-logo' } })
             : localeRoute({ name: routeName })"
           variant="link"
+          icon="i-3ook-com-library-rounded"
+          color="neutral"
           :ui="{
             base: ['shrink-0', 'p-0 sm:p-0'],
+            leadingIcon: ['size-8', 'text-highlighted'],
           }"
           :title="$t('library_tab_title')"
           :aria-label="$t('library_tab_title')"
           @click="handleLibraryLogoClick"
-        >
-          <UIcon
-            name="i-3ook-com-library-rounded"
-            class="size-8 block text-primary"
-          />
-        </UButton>
+        />
 
         <PillButtonGroup
           :model-value="tagId"
