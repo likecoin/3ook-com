@@ -867,6 +867,7 @@ import shoppingDesignLogo from '~/assets/images/about/media/shopping-design.png'
 import trensseLogo from '~/assets/images/about/media/trensse.png'
 import glassesOnLogo from '~/assets/images/about/media/glasses-on.png'
 import scmpLogo from '~/assets/images/about/media/scmp.png'
+import techritualLogo from '~/assets/images/about/media/techritual.webp'
 import unwireLogo from '~/assets/images/about/media/unwire.png'
 
 // Preload gsap chunks at module-eval time so the hero's above-the-fold
@@ -925,6 +926,12 @@ const featuredAuthors = [
 ]
 
 const mediaCoverage = [
+  {
+    title: '從創作到擁有的全新體驗 — 3ook.com 的創辦人故事',
+    source: 'Techritual',
+    url: 'https://www.techritual.com/2026/05/14/528382/',
+    logo: techritualLogo,
+  },
   {
     title: '當人人都能為好書代言：3ook.com 打造正向閱讀迴圈',
     source: 'Shopping Design',
