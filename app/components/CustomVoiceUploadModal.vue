@@ -515,12 +515,12 @@ const voiceLanguageOptions = computed(() => [
 ])
 
 const PREVIEW_TEXT = '歡迎收聽，這是我的私人聲優。'
-const SUGGESTED_READING_TEXT = '其實我一直覺得，閱讀是一件很浪漫的事。不管是手捧著實體書，還是滑著電子螢幕，只要沉浸在故事裡，就能暫時忘掉現實的煩惱，去到一個完全不同的時空。'
+const SUGGESTED_READING_TEXT = '其實我一直覺得，閱讀是一件很浪漫的事。不管是手捧著實體書，還是滑著電子螢幕，只要沉浸在故事裡，就能暫時忘掉現實的煩惱，去到一個完全不同的時空。有時候是一段細膩的對白，有時候是一句平凡卻打動人心的描寫，都會讓我停下來反覆咀嚼。我喜歡在安靜的夜晚，泡一杯熱茶，翻開書頁，聽著紙張輕輕摩擦的聲音，任由想像力帶我穿越山川湖海，走進別人的人生。文字的奇妙之處，在於它能把作者的心情、回憶與夢想，一字一句地傳遞到讀者心裡，跨越時間與距離，讓陌生的兩個人在同一個故事裡相遇。'
 const PROMPT_READING_TEXT = '在未來的世界裡，科技與生活將會深度融合。'
 
 // Preserved for legacy users whose existing custom voice is in English
 const PREVIEW_TEXT_EN = 'Welcome, this is my private voice artist.'
-const SUGGESTED_READING_TEXT_EN = 'I\'ve always felt that reading is something truly romantic. Whether you\'re holding a physical book or scrolling on a screen, as long as you\'re immersed in a story, you can briefly forget your worries and travel to an entirely different world.'
+const SUGGESTED_READING_TEXT_EN = 'I\'ve always felt that reading is something truly romantic. Whether you\'re holding a physical book or scrolling on a screen, as long as you\'re immersed in a story, you can briefly forget your worries and travel to an entirely different world. Sometimes it\'s a tender line of dialogue, and sometimes it\'s a plain yet deeply moving description that makes me pause and turn the words over in my mind. I love quiet evenings when I can brew a cup of hot tea, open a book, listen to the soft rustle of the pages, and let my imagination carry me across mountains, rivers, and seas, into the lives of other people. The wonder of words is that they can pass an author\'s feelings, memories, and dreams, sentence by sentence, straight into a reader\'s heart, bridging time and distance so that two strangers can meet inside the very same story.'
 const PROMPT_READING_TEXT_EN = 'In the world of the future, technology and daily life will be deeply intertwined.'
 
 const isLegacyEnglishVoice = computed(() => voiceLanguage.value === 'en-US')
