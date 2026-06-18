@@ -976,6 +976,12 @@ const featuredPublishers = [
   { name: '集誌社', likerId: 'thecollectivehk' },
   { name: 'Kubrick', likerId: 'kubrick_hk' },
   { name: 'dirty press', likerId: 'kcyguj' },
+  { name: '重版文化', likerId: 'ndpeks' },
+  { name: '科學月刊', likerId: 'scimonth' },
+  { name: '啓明出版', likerId: 'bsymfp' },
+  { name: '大銀', likerId: 'jseees' },
+  { name: 'Penana Limited', likerId: 'dxrvrk' },
+  { name: '崧博出版', likerId: 'zsnzbv' },
 ]
 
 function getAvatarSrc(likerId: string) {
