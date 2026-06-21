@@ -751,6 +751,7 @@
   "reader_annotations_navigate_failed": "無法跳轉至標註位置",
   "reader_annotations_title": "標註與註記",
   "reader_annotations_update_failed": "更新標註失敗",
+  "reader_back_to_shelf_button": "書架",
   "reader_bookmark_button": "書籤",
   "reader_bookmark_create_failed": "新增書籤失敗",
   "reader_bookmark_delete_button": "刪除書籤",

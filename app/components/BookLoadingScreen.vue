@@ -1,5 +1,11 @@
 <template>
   <div class="flex flex-col justify-center items-center py-[56px]">
+    <PillButton
+      class="absolute top-[max(16px,env(safe-area-inset-top))] left-4 z-10"
+      icon="i-material-symbols-arrow-back-rounded"
+      :aria-label="$t('reader_back_to_shelf_button')"
+      :to="localeRoute({ name: 'shelf' })"
+    />
     <div
       class="relative max-w-[164px] w-full aspect-2/3 shrink-0 transition-opacity duration-1000"
       :class="[
@@ -118,6 +124,8 @@ const props = defineProps({
     default: undefined,
   },
 })
+
+const localeRoute = useLocaleRoute()
 
 const scanLineStyle = {
   background: 'linear-gradient(to bottom, transparent 40%, rgba(255, 255, 255, 0.5) 50%, transparent 60%)',
