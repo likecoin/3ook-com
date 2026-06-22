@@ -84,6 +84,7 @@ export function useSubscriptionCheckout() {
     const eventPayload = {
       currency: currency.value,
       value: price,
+      product_type: 'plus',
       items: [{
         id: `plus-${plan}`,
         name: `Plus (${plan})`,
