@@ -18,6 +18,10 @@ export function usePlusReadingTracker(params: {
   const nftClassIdRef = computed(() => toValue(params.nftClassId))
   const { checkOwnership } = useUserBookOwnership(nftClassIdRef)
 
+  // True once the open is confirmed a borrowed Plus-library read (vs an owned or
+  // free read). Resolved asynchronously, so read it at emit time, not on mount.
+  const isLibraryBook = ref(false)
+
   async function registerIfBorrowed() {
     if (!import.meta.client) return
     if (params.isUploadedBook.value) return
@@ -33,8 +37,11 @@ export function usePlusReadingTracker(params: {
     if (isOwner) return
     if (!params.isPlusReadingEnabled.value) return
 
+    isLibraryBook.value = true
     await bookshelfStore.registerPlusReadingOpen(nftClassIdRef.value)
   }
 
   onMounted(registerIfBorrowed)
+
+  return { isLibraryBook: readonly(isLibraryBook) }
 }

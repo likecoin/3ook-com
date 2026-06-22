@@ -392,7 +392,7 @@ const {
   bookProgressKeyPrefix,
 } = useReader()
 
-usePlusReadingTracker({
+const { isLibraryBook } = usePlusReadingTracker({
   nftClassId,
   isUploadedBook,
   isPlusReadingEnabled: bookInfo.isPlusReadingEnabled,
@@ -627,6 +627,7 @@ if (!isUploadedBook.value) {
     progress: computed(() => Math.min(readingProgress.value * 100, 100)),
     isTextToSpeechPlaying: isTTSPlaying,
     chapterIndex: currentSectionIndex,
+    isLibraryBook,
   })
 }
 

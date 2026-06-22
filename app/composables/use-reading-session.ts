@@ -10,10 +10,13 @@ interface ReadingSessionOptions {
   isTextToSpeechPlaying?: Ref<boolean>
   chapterIndex?: Ref<number | undefined>
   pageIndex?: Ref<number | undefined>
+  // True when this is a borrowed Plus-library read. Resolved asynchronously,
+  // so it may still be false when the session starts but is set by session end.
+  isLibraryBook?: Ref<boolean>
 }
 
 export function useReadingSession(options: ReadingSessionOptions) {
-  const { readerType, progress, isTextToSpeechPlaying, chapterIndex, pageIndex } = options
+  const { readerType, progress, isTextToSpeechPlaying, chapterIndex, pageIndex, isLibraryBook } = options
   const nftClassId = toRef(options.nftClassId)
 
   const { loggedIn, user: sessionUser } = useUserSession()
@@ -173,6 +176,7 @@ export function useReadingSession(options: ReadingSessionOptions) {
       tts_active_time_ms: payload.ttsActiveTimeMs,
       pages_viewed: payload.pagesViewed,
       is_liker_plus_at_event_time: !!sessionUser.value?.isLikerPlus,
+      is_library_book: !!isLibraryBook?.value,
     })
   }
 
@@ -205,6 +209,7 @@ export function useReadingSession(options: ReadingSessionOptions) {
     useLogEvent('reading_session_start', {
       nft_class_id: toValue(nftClassId),
       reader_type: readerType,
+      is_library_book: !!isLibraryBook?.value,
     })
   }
 
