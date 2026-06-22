@@ -101,8 +101,8 @@ const menuItems = computed(() => {
       : [{
           key: 'store',
           label: $t('tab_bar_store'),
-          icon: 'i-material-symbols-storefront-outline',
-          iconActive: 'i-material-symbols-storefront',
+          icon: 'i-material-symbols-storefront-outline-rounded',
+          iconActive: 'i-material-symbols-storefront-rounded',
         }]),
     {
       key: 'library',
@@ -113,8 +113,8 @@ const menuItems = computed(() => {
     {
       key: 'shelf',
       label: $t('tab_bar_shelf'),
-      icon: 'i-material-symbols-auto-stories-outline',
-      iconActive: 'i-material-symbols-auto-stories',
+      icon: 'i-3ook-com-bookshelf-outline-rounded',
+      iconActive: 'i-3ook-com-bookshelf-rounded',
     },
     {
       key: 'account',
