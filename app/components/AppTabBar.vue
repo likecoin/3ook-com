@@ -42,7 +42,7 @@
           :aria-label="item.label"
         >
           <template #leading>
-            <div class="relative">
+            <div class="flex flex-col justify-center items-center">
               <UAvatar
                 class="bg-white ring-1 ring-default border border-default"
                 :src="user?.avatar"
@@ -52,6 +52,7 @@
               />
               <UserAvatarPlusBadge
                 v-if="user?.isLikerPlus"
+                class="-mt-1.5"
                 :color="item.isActive ? 'secondary' : 'primary'"
               />
             </div>

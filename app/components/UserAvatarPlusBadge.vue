@@ -1,9 +1,5 @@
 <template>
   <UBadge
-    :class="[
-      'absolute left-1/2 -translate-x-1/2',
-      verticalAlign === 'top' ? 'top-0 -translate-y-1/2' : 'bottom-0 translate-y-1/2',
-    ]"
     size="xs"
     variant="outline"
     :ui="{
@@ -23,10 +19,8 @@
 <script setup lang="ts">
 const props = withDefaults(defineProps<{
   color?: 'primary' | 'secondary' | 'neutral'
-  verticalAlign?: 'top' | 'bottom'
 }>(), {
   color: 'primary',
-  verticalAlign: 'bottom',
 })
 
 const colorClass = computed(() => {
