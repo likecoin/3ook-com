@@ -1,6 +1,7 @@
 <template>
   <div class="flex flex-col justify-center items-center py-[56px]">
     <PillButton
+      v-if="props.isBackToShelfButtonVisible"
       class="absolute top-[max(16px,env(safe-area-inset-top))] left-4 z-10"
       icon="i-material-symbols-arrow-back-rounded"
       :aria-label="$t('reader_back_to_shelf_button')"
@@ -122,6 +123,10 @@ const props = defineProps({
   coverClass: {
     type: String,
     default: undefined,
+  },
+  isBackToShelfButtonVisible: {
+    type: Boolean,
+    default: false,
   },
 })
 
