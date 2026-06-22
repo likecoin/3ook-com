@@ -357,6 +357,7 @@ const {
   buildTTSEventPayload,
 } = useTextToSpeech({
   nftClassId: props.nftClassId,
+  isLibraryBook: () => !!props.isLibraryBook,
   bookName: props.bookTitle,
   bookAuthorName: props.bookAuthorName,
   bookCoverSrc: props.bookCoverSrc,

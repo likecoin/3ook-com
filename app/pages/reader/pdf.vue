@@ -113,6 +113,7 @@ const { isTTSQueryParam, setTTSQueryParam } = useTTSQueryParam()
 
 const { setTTSSegments, setChapterTitles, openPlayer } = useTTSPlayerModal({
   nftClassId: nftClassId.value,
+  isLibraryBook,
   onClose: () => setTTSQueryParam(false),
   onSegmentChange: (segment) => {
     if (segment) {

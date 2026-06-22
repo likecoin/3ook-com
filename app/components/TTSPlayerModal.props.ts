@@ -7,6 +7,7 @@ export interface TTSPlayerModalProps {
   bookAuthorName?: string | undefined
   bookLanguage?: string | undefined
   nftClassId?: string
+  isLibraryBook?: boolean
   startIndex?: number
   specificLanguageVoice?: string
   isAutoClose?: boolean

@@ -5,6 +5,7 @@ import { isUploadedBookId } from '~~/shared/utils/uploaded-book'
 
 interface TTSPlayerOptions {
   nftClassId: MaybeRef<string>
+  isLibraryBook?: MaybeRef<boolean>
   onSegmentChange?: (segment: TTSSegment & { index: number, isResync?: boolean }) => void
   onClose?: () => void
 }
@@ -30,6 +31,7 @@ export function useTTSPlayerModal(options: TTSPlayerOptions) {
     bookAuthorName: bookInfo.authorName.value,
     bookLanguage: bookInfo.inLanguage.value,
     nftClassId: toValue(options.nftClassId),
+    isLibraryBook: toValue(options.isLibraryBook),
     segments: ttsSegments.value,
     chapterTitlesBySection: chapterTitlesBySection.value,
     startIndex: startIndex.value,

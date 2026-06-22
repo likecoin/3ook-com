@@ -39,6 +39,7 @@ interface TTSOptions {
   bookLanguage?: string | Ref<string> | ComputedRef<string>
   customVoice?: Ref<CustomVoiceData | null>
   affiliateVoices?: Ref<AffiliateVoiceData[]> | ComputedRef<AffiliateVoiceData[]>
+  isLibraryBook?: MaybeRefOrGetter<boolean>
 }
 
 export function useTextToSpeech(options: TTSOptions) {
@@ -91,6 +92,7 @@ export function useTextToSpeech(options: TTSOptions) {
       nft_class_id: nftClassId,
       tts_session_id: ttsSessionId.value || undefined,
       is_liker_plus_at_event_time: !!sessionUser.value?.isLikerPlus,
+      is_library_book: !!toValue(options.isLibraryBook),
       ...(ttsTrialUsage.isLoaded.value
         ? {
             cumulative_chars_used: ttsTrialUsage.charactersUsed.value,
