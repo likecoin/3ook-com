@@ -279,7 +279,7 @@ useHead({
       {
         '@context': 'https://schema.org',
         '@type': 'MobileApplication',
-        'name': '3ook.com',
+        'name': '3ook Reader',
         'operatingSystem': 'iOS',
         'applicationCategory': 'BookReaderApplication',
         'offers': {
