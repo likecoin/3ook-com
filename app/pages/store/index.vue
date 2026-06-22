@@ -298,7 +298,7 @@
         />
       </ul>
       <div
-        v-if="hasMoreItems"
+        v-if="hasMoreItems && itemsCount > 0"
         ref="infiniteScrollDetector"
         class="flex justify-center py-48"
       >
