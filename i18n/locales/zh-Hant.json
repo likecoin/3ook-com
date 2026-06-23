@@ -873,7 +873,7 @@
   "store_affiliate_cta_button": "成為 Plus 會員",
   "store_affiliate_cta_description": "這些選書都支援 {name} 的專屬 AI 聲線朗讀，成為 Plus 會員即可解鎖。",
   "store_affiliate_cta_title": "用 {name} 的聲音聽這些書",
-  "store_affiliate_prefix": "選書推薦",
+  "store_affiliate_prefix": "選書推薦：",
   "store_affiliate_publishers_label": "適用出版社",
   "store_author_prefix": "作者：",
   "store_fetch_items_error": "無法載入書本",

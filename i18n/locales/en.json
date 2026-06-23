@@ -873,7 +873,7 @@
   "store_affiliate_cta_button": "Become a Plus member",
   "store_affiliate_cta_description": "These curated books can be read aloud with {name}'s exclusive AI voice. Become a Plus member to unlock it.",
   "store_affiliate_cta_title": "Listen in {name}'s voice",
-  "store_affiliate_prefix": "Curated by",
+  "store_affiliate_prefix": "Curated by: ",
   "store_affiliate_publishers_label": "Featured publishers",
   "store_author_prefix": "Author: ",
   "store_fetch_items_error": "Unable to load books",

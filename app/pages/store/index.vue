@@ -559,7 +559,7 @@ const affiliateSubscribeRoute = computed(() => localeRoute({
 
 // Only greet actual members, so a shared/bookmarked `welcome` link can't surface
 // the banner for non-subscribers.
-const isWelcomeBannerVisible = computed(() => !!queryWelcome.value && isPlusOrDevicePlus.value)
+const isWelcomeBannerVisible = computed(() => queryWelcome.value === '1' && isPlusOrDevicePlus.value)
 function handleWelcomeBannerDismiss() {
   const { welcome: _welcome, ...query } = route.query
   navigateTo(localeRoute({ name: routeName.value, query }), { replace: true })
@@ -1191,11 +1191,17 @@ watchImmediate(queryAffiliate, async (likerId) => {
     console.error('Failed to fetch affiliate info:', error)
   })
 })
-watch(affiliatePublishers, (publishers) => {
-  publishers.forEach(({ wallet }) => {
-    metadataStore.lazyFetchLikerInfoByWalletAddress(wallet).catch(() => { /* ignore */ })
-  })
-})
+// Watch the raw wallet list, not affiliatePublishers — that computed reads each
+// publisher's liker info, so it recomputes as profiles load, re-running this
+// fetch loop (lazyFetch has no in-flight dedupe → duplicate concurrent requests).
+watchImmediate(
+  () => (affiliateConfig.value?.active ? affiliateConfig.value.affiliatePublisherWallets : undefined),
+  (wallets) => {
+    wallets?.forEach((wallet) => {
+      metadataStore.lazyFetchLikerInfoByWalletAddress(wallet).catch(() => { /* ignore */ })
+    })
+  },
+)
 
 watch(queryOwnerWallet, async (wallet) => {
   if (wallet) {
