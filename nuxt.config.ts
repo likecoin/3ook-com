@@ -258,6 +258,11 @@ export default defineNuxtConfig({
     ],
     defaultLocale: 'zh-Hant',
     detectBrowserLanguage: false,
+    experimental: {
+      // Cache the messages route for 1 day (default is 10s) so browsers and the
+      // CDN reuse unchanged translations. Safe: the route URL is content-hashed.
+      httpCacheDuration: 60 * 60 * 24,
+    },
   },
 
   icon: {
