@@ -1928,7 +1928,13 @@ async function openContentURL(contentURL: ContentURL, nftId?: string) {
 async function handlePlusReadButtonClick() {
   useLogEvent('product_page_plus_reading_button_click', { nft_class_id: nftClassId.value })
 
-  // Guests and non-Plus users are routed to the membership page to subscribe.
+  // Guests are prompted to log in or register before reaching the membership page.
+  if (!hasLoggedIn.value) {
+    await accountStore.login()
+    if (!hasLoggedIn.value) return
+  }
+
+  // Non-Plus users are routed to the membership page to subscribe.
   if (!isLikerPlus.value) {
     await navigateTo(localeRoute({
       name: 'member',
