@@ -152,12 +152,7 @@ export function useTextToSpeech(options: TTSOptions) {
   }
 
   // Playback rate options and storage
-  const ttsConfigCacheKey = computed(() =>
-    [
-      config.public.cacheKeyPrefix,
-      TTS_CONFIG_KEY,
-    ].join('-'),
-  )
+  const ttsConfigCacheKey = computed(() => getTTSConfigCacheKey(config.public.cacheKeyPrefix))
 
   const DEFAULT_PLAYBACK_RATE = 1.0
 

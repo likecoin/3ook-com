@@ -589,8 +589,11 @@ export const useAccountStore = defineStore('account', () => {
 
       window.localStorage.removeItem(getBookFileCacheIndexKey(config.public.cacheKeyPrefix))
 
+      // Must use the same cacheKeyPrefix-scoped key the values are written under
+      // (getTTSConfigCacheKey); the unprefixed key would clear nothing.
+      const ttsConfigCacheKey = getTTSConfigCacheKey(config.public.cacheKeyPrefix)
       getTTSConfigKeySuffixes().forEach((suffix) => {
-        window.localStorage.removeItem(getTTSConfigKeyWithSuffix(TTS_CONFIG_KEY, suffix))
+        window.localStorage.removeItem(getTTSConfigKeyWithSuffix(ttsConfigCacheKey, suffix))
       })
     }
     finally {

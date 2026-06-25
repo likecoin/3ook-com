@@ -21,12 +21,7 @@ export function useTTSVoice(options: TTSVoiceOptions = {}) {
   const { detectedCountry } = useDetectedGeolocation()
   const { getResizedImageURL } = useImageResize()
 
-  const ttsConfigCacheKey = computed(() =>
-    [
-      config.public.cacheKeyPrefix,
-      TTS_CONFIG_KEY,
-    ].join('-'),
-  )
+  const ttsConfigCacheKey = computed(() => getTTSConfigCacheKey(config.public.cacheKeyPrefix))
 
   // hardcoded voice options for now
   const ttsLanguageVoiceOptions = [
@@ -105,6 +100,17 @@ export function useTTSVoice(options: TTSVoiceOptions = {}) {
       ttsLanguageVoice.value = languageVoice
     }
   }
+
+  // The persisted voice is global, not per-book: a book opened while mislabeled
+  // (e.g. English) pins an incompatible voice that then sticks across all books.
+  // Reset to the locale default when invalid here; skip async-gated affiliate/custom.
+  watch(availableTTSLanguageVoiceOptions, (voiceOptions) => {
+    const current = ttsLanguageVoice.value
+    if (!current || isAffiliateVoiceId(current) || current === 'custom') return
+    if (!voiceOptions.some(option => option.value === current)) {
+      ttsLanguageVoice.value = getDefaultTTSVoiceByLocale()
+    }
+  }, { immediate: true })
 
   const activeTTSLanguageVoiceAvatar = computed(() => {
     return getVoiceAvatar(ttsLanguageVoice.value)

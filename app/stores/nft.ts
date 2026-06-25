@@ -86,10 +86,9 @@ export const useNFTStore = defineStore('nft', () => {
     next()
   }
 
-  // Refetches the displayed aspects (class + bookstore) in the background,
-  // coalescing concurrent callers and bounding fan-out. Goes through the CDN
-  // cache (no nocache) — enough to heal a days-old persisted entry — and keeps
-  // serving the cached value if it fails.
+  // Background revalidation: coalesced, bounded fan-out. nocache is required —
+  // the LikeCoin CDN serves a 24h stale-while-revalidate body, so a plain refetch
+  // loops on the stale value and never heals a corrected field. Keeps cache on failure.
   function revalidateNFTClassAggregatedMetadataById(nftClassId: string) {
     const key = normalizeNFTClassId(nftClassId)
     const existing = inflightRevalidations.get(key)
@@ -97,7 +96,7 @@ export const useNFTStore = defineStore('nft', () => {
     revalidatingCount.value += 1
     const promise = new Promise<void>((resolve) => {
       queuedRevalidations.push(() => {
-        fetchNFTClassAggregatedMetadataById(nftClassId, { include: ['class_chain', 'bookstore'] })
+        fetchNFTClassAggregatedMetadataById(nftClassId, { include: ['class_chain', 'bookstore'], nocache: true })
           .catch(() => { /* keep the cached value; retry on a later session */ })
           .finally(() => {
             activeRevalidationCount -= 1

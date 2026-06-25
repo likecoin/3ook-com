@@ -204,6 +204,10 @@ export function getTTSConfigKeySuffixes() {
   return TTS_CONFIG_KEY_SUFFIX_LIST
 }
 
+export function getTTSConfigCacheKey(cacheKeyPrefix: string) {
+  return [cacheKeyPrefix, TTS_CONFIG_KEY].join('-')
+}
+
 export function getTTSConfigKeyWithSuffix(key: string, suffix: TTSConfigKeySuffix) {
   return `${key}-${suffix}`
 }
