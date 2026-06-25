@@ -1946,6 +1946,11 @@ async function handlePlusReadButtonClick() {
     return
   }
 
+  // Refresh borrowed books so the shelf reflects this borrow after a fresh login.
+  bookshelfStore.lazyFetchPlusReadingBooks().catch((error) => {
+    console.error('Failed to fetch plus reading books:', error)
+  })
+
   try {
     const contentURLs = bookInfo.contentURLs.value || []
     if (contentURLs.length > 1) {
