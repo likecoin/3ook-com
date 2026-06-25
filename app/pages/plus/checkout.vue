@@ -90,7 +90,7 @@ interface StripeEmbeddedCheckout {
 }
 
 interface StripeInstance {
-  initEmbeddedCheckout: (options: {
+  createEmbeddedCheckoutPage: (options: {
     fetchClientSecret: () => Promise<string>
     onComplete?: () => void
   }) => Promise<StripeEmbeddedCheckout>
@@ -125,7 +125,7 @@ async function mountCheckout() {
   try {
     const { Stripe } = await stripeScript.load() as { Stripe: (publishableKey: string) => StripeInstance }
     const stripe = Stripe(publishableKey)
-    embeddedCheckout = await stripe.initEmbeddedCheckout({
+    embeddedCheckout = await stripe.createEmbeddedCheckoutPage({
       fetchClientSecret: async () => clientSecret,
       onComplete: handleComplete,
     })
