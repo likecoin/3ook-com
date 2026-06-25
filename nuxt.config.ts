@@ -275,6 +275,11 @@ export default defineNuxtConfig({
 
   pwa: {
     registerType: 'autoUpdate',
+    // Send cookies when fetching manifest.webmanifest so it injects
+    // crossorigin="use-credentials". Without this, Cloudflare Access (on
+    // sepolia.3ook.com) redirects the cookieless manifest fetch to its login
+    // page, which fails CORS. Harmless on unprotected production.
+    useCredentials: true,
     // Serve sw.js and manifest.webmanifest with 'max-age=0, must-revalidate' so
     // a stale CDN/edge copy can't pin the old worker and block autoUpdate; they
     // revalidate cheaply via ETag (304). Without this the worker never updates.
