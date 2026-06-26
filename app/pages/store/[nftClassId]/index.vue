@@ -1398,6 +1398,7 @@ const selectedPricingItem = computed(() => {
   return pricingItems.value[selectedPricingItemIndex.value]
 })
 const priceIndex = computed(() => selectedPricingItem.value?.index || 0)
+const isSelectedPricingItemFree = computed(() => selectedPricingItem.value?.price === 0)
 
 const stickyEditionDropdownItems = computed(() => {
   return pricingItems.value.map((item, index) => ({
@@ -1518,7 +1519,7 @@ const checkoutButtonProps = computed<{
   variant: 'subtle' | 'solid' | 'outline'
   label: string
 }>(() => {
-  const isFree = selectedPricingItem.value?.price === 0
+  const isFree = isSelectedPricingItemFree.value
   const label = isSelectedPricingItemSoldOut.value
     ? $t('product_page_sold_out_button_label')
     : isUserBookOwner.value
@@ -1788,7 +1789,8 @@ async function handlePurchaseButtonClick() {
       await accountStore.login()
       if (!hasLoggedIn.value) return
     }
-    if (!isApp.value && !isRedirectedFromUpsell.value && !bookInfo.isUpsellDisabled.value && !bookInfo.isPlusPromoEnabled.value) {
+    // Free books skip the Plus upsell and fall through to the donation modal.
+    if (!isSelectedPricingItemFree.value && !isApp.value && !isRedirectedFromUpsell.value && !bookInfo.isUpsellDisabled.value && !bookInfo.isPlusPromoEnabled.value) {
       const isStartSubscription = await openUpsellPlusModalIfEligible({
         nftClassId: nftClassId.value,
         bookPrice: selectedPricingItem.value.price,
