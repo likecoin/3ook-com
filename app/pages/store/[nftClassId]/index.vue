@@ -1789,7 +1789,7 @@ async function handlePurchaseButtonClick() {
       await accountStore.login()
       if (!hasLoggedIn.value) return
     }
-    // Free books skip the Plus upsell and fall through to the donation modal.
+    // Free books skip the Plus upsell and proceed to the tipping/donation flow when eligible.
     if (!isSelectedPricingItemFree.value && !isApp.value && !isRedirectedFromUpsell.value && !bookInfo.isUpsellDisabled.value && !bookInfo.isPlusPromoEnabled.value) {
       const isStartSubscription = await openUpsellPlusModalIfEligible({
         nftClassId: nftClassId.value,
