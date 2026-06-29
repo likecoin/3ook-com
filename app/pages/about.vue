@@ -760,6 +760,7 @@
 
           <AppDownloadButtons
             class="*:text-theme-white *:ring-theme-white *:hover:bg-theme-white/20"
+            placement="about"
             @click-app-store="onClickAppStoreButton"
             @click-google-play="onClickGooglePlayButton"
           />

@@ -35,6 +35,7 @@
 
           <AppDownloadButtons
             class="*:text-theme-white *:ring-theme-white *:hover:bg-theme-white/20"
+            placement="app_page_hero"
             @click-app-store="onClickAppStore"
             @click-google-play="onClickGooglePlay"
           />
@@ -194,6 +195,7 @@
         />
         <AppDownloadButtons
           class="w-full max-w-md"
+          placement="app_page_cta"
           @click-app-store="onClickCtaAppStore"
           @click-google-play="onClickCtaGooglePlay"
         />
@@ -203,6 +205,8 @@
 </template>
 
 <script setup lang="ts">
+import { APP_STORE_URL, GOOGLE_PLAY_URL } from '~/utils/app-store'
+
 definePageMeta({
   layout: false,
   colorMode: 'light',
@@ -211,9 +215,6 @@ definePageMeta({
 const { t: $t } = useI18n()
 const config = useRuntimeConfig()
 const baseURL = config.public.baseURL
-
-const APP_STORE_URL = 'https://apps.apple.com/app/id6757783481'
-const GOOGLE_PLAY_URL = 'https://play.google.com/store/apps/details?id=land.liker.book3app'
 
 function onClickAppStore() {
   useLogEvent('app_page_hero_app_store_click')

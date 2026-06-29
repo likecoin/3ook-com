@@ -13,6 +13,7 @@
 import { useDocumentVisibility } from '@vueuse/core'
 
 import { SESSION_REFRESH_TIMESTAMP_KEY } from '~/stores/account'
+import { APP_STORE_URL, GOOGLE_PLAY_URL } from '~/utils/app-store'
 
 const { t: $t, locales } = useI18n()
 const config = useRuntimeConfig()
@@ -287,7 +288,7 @@ useHead({
           'price': 0,
           'priceCurrency': 'USD',
         },
-        'installUrl': 'https://apps.apple.com/app/id6757783481',
+        'installUrl': APP_STORE_URL,
       },
       {
         '@context': 'https://schema.org',
@@ -300,7 +301,7 @@ useHead({
           'price': 0,
           'priceCurrency': 'USD',
         },
-        'installUrl': 'https://play.google.com/store/apps/details?id=land.liker.book3app',
+        'installUrl': GOOGLE_PLAY_URL,
       },
       ]),
     },

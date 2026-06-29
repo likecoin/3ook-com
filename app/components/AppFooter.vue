@@ -138,6 +138,7 @@
     <AppDownloadButtons
       v-if="!isApp"
       class="mx-auto"
+      placement="footer"
       @click-app-store="onClickAppStoreButton"
       @click-google-play="onClickGooglePlayButton"
     />

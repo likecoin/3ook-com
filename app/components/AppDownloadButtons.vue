@@ -3,7 +3,7 @@
     <UButton
       :label="$t('app_download_buttons_app_store')"
       icon="i-simple-icons-apple"
-      to="https://apps.apple.com/app/id6757783481"
+      :to="appStoreUrl"
       target="_blank"
       rel="noopener noreferrer"
       color="neutral"
@@ -15,7 +15,7 @@
     <UButton
       :label="$t('app_download_buttons_google_play')"
       icon="i-simple-icons-googleplay"
-      to="https://play.google.com/store/apps/details?id=land.liker.book3app"
+      :to="googlePlayUrl"
       target="_blank"
       rel="noopener noreferrer"
       color="neutral"
@@ -28,10 +28,23 @@
 </template>
 
 <script setup lang="ts">
+import type { AppDownloadPlacement } from '~/composables/use-app-download-urls'
+
+const props = withDefaults(
+  defineProps<{
+    // Static fallback campaign tag identifying where this CTA lives, used when
+    // the session carries no UTM. See useAppDownloadUrls.
+    placement?: AppDownloadPlacement
+  }>(),
+  { placement: 'app_download' },
+)
+
 const emit = defineEmits<{
   clickAppStore: []
   clickGooglePlay: []
 }>()
+
+const { appStoreUrl, googlePlayUrl } = useAppDownloadUrls(props.placement)
 
 function onClickAppStore() {
   emit('clickAppStore')
