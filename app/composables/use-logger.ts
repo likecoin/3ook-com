@@ -90,13 +90,14 @@ const INTERCOM_EVENT_ALLOWLIST = new Set<string>([
 // (timestamp, distinct_id, event, uuid) then collapses the pair into one row. The
 // matching server helper lives in likecoin-api-public/src/util/posthog.ts — the URL
 // format below is the contract; keep both sides identical or dedup breaks silently.
-// The 4 entries below are the subset of likecoin-api-public's SERVER_EVENT_MAP that the
+// The 5 entries below are the subset of likecoin-api-public's SERVER_EVENT_MAP that the
 // browser also fires (from success pages after a user action).
 const POSTHOG_SERVER_MIRRORED_EVENTS = new Set<string>([
   'begin_checkout',
   'purchase',
   'start_trial',
   'subscribe',
+  'plus_acquisition',
 ])
 
 // The host must be a fixed literal: substituting useRuntimeConfig().public.siteUrl or
@@ -147,6 +148,31 @@ export function useLogEvent(eventName: string, eventParams: EventParams = {}) {
           : undefined,
         content_ids: Array.isArray(items) ? items.map(i => i.id) : undefined,
         predicted_ltv: predictedLTV,
+      }, { eventID: eventId })
+    }
+
+    // Custom (non-standard) Meta events. PlusAcquisition is the unified Plus
+    // conversion signal fired alongside start_trial/subscribe; optimize ad sets on it.
+    const customEventNameMapping: { [key: string]: string } = {
+      plus_acquisition: 'PlusAcquisition',
+    }
+    if (customEventNameMapping[eventName]) {
+      const {
+        transaction_id: paymentId,
+        value,
+        currency,
+        predicted_ltv: predictedLTV,
+        is_trial: isTrial,
+      } = eventParams
+      const metaEventName = customEventNameMapping[eventName]
+      const eventId = paymentId ? `${metaEventName}_${paymentId}` : undefined
+      const { proxy } = useScriptMetaPixel()
+      proxy.fbq('trackCustom', metaEventName, {
+        currency,
+        value,
+        order_id: paymentId,
+        predicted_ltv: predictedLTV,
+        is_trial: isTrial,
       }, { eventID: eventId })
     }
   }

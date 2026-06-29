@@ -151,29 +151,24 @@ onMounted(async () => {
       const PREDICTED_LTV_USD = 100
       const TRIAL_TO_PAID_CONVERSION = 0.5
 
-      if (isTrial) {
-        const trialExpectedValue = convertPrice(PREDICTED_LTV_USD * TRIAL_TO_PAID_CONVERSION)
-        useLogEvent('start_trial', {
-          transaction_id: paymentId.value,
-          currency: currency.value,
-          value: trialExpectedValue,
-          predicted_ltv: trialExpectedValue,
-          promotion_id: coupon.value,
-          promotion_name: coupon.value,
-        })
+      const conversionValue = isTrial
+        ? convertPrice(PREDICTED_LTV_USD * TRIAL_TO_PAID_CONVERSION)
+        : (isYearly.value ? yearlyPrice.value : monthlyPrice.value)
+      const conversionPredictedLTV = convertPrice(
+        isTrial ? PREDICTED_LTV_USD * TRIAL_TO_PAID_CONVERSION : PREDICTED_LTV_USD,
+      )
+      const conversionParams = {
+        transaction_id: paymentId.value,
+        currency: currency.value,
+        value: conversionValue,
+        predicted_ltv: conversionPredictedLTV,
+        promotion_id: coupon.value,
+        promotion_name: coupon.value,
       }
-      else {
-        const subscriptionPrice = isYearly.value ? yearlyPrice.value : monthlyPrice.value
-        const predictedLTV = convertPrice(PREDICTED_LTV_USD)
-        useLogEvent('subscribe', {
-          transaction_id: paymentId.value,
-          currency: currency.value,
-          value: subscriptionPrice,
-          predicted_ltv: predictedLTV,
-          promotion_id: coupon.value,
-          promotion_name: coupon.value,
-        })
-      }
+      useLogEvent(isTrial ? 'start_trial' : 'subscribe', conversionParams)
+      // Unified acquisition signal across web trial / web direct / app IAP
+      // (mirrored server-side from Stripe + RevenueCat). Optimize Meta on this.
+      useLogEvent('plus_acquisition', { ...conversionParams, is_trial: isTrial })
 
       await navigateTo(localeRoute({
         name: getRouteBaseName(route),
