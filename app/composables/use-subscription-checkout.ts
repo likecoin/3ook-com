@@ -176,6 +176,11 @@ export function useSubscriptionCheckout() {
         setAttribute('utmTerm', analyticsParams.utmTerm)
         setAttribute('referrer', analyticsParams.referrer)
         setAttribute('posthogDistinctId', analyticsParams.posthogDistinctId)
+        // Reflects THIS purchase's attribution origin. Unlike the sticky values
+        // above it must be cleared on live-attributed purchases, else a prior
+        // install flag persists (RC attributes are sticky). '' is the tombstone,
+        // as with plusGiftClassId. See useAnalytics.
+        attributes.attributionSource = analyticsParams.attributionSource || ''
 
         const result = await purchaseViaIAP(plan, user.value.likerId, attributes)
         if (result.status === 'cancelled') return

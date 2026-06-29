@@ -1,7 +1,10 @@
-// Mirrors the fallback logic in `useAnalytics.getAnalyticsParameters()` so
+// Mirrors the normalization in `useAnalytics.getAnalyticsParameters()` so
 // PostHog ends up with the same normalized values the backend (Airtable) gets:
 // `ll_source`/`ll_medium` collapse into `utm_source`/`utm_medium`, and
 // `srsltid` becomes `utm_source=google` + `utm_medium=organic`.
+// getAnalyticsParameters ALSO applies a native install-referrer fallback that
+// this helper intentionally omits — install attribution reaches PostHog via the
+// native SDK super properties and the backend conversion events instead.
 
 export const POSTHOG_ATTRIBUTION_KEYS = [
   'utm_source',

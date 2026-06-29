@@ -13,6 +13,31 @@ export function isNativeFeatureSupported(feature: string): boolean {
   return Array.isArray(features) && features.includes(feature)
 }
 
+// Android install-referrer attribution the native shell exposes; null on web/iOS.
+// Reads off `window`, so the value is untrusted: validate and sanitize into a
+// fresh object (finite installedAt, string-only values) inside try/catch, so a
+// malformed injection can't throw into — or leak non-strings through — checkout's
+// getAnalyticsParameters. Returns null unless there's at least one fillable value.
+export function getInstallAttribution(): InstallAttribution | null {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw: unknown = window.__nativeBridge?.installAttribution
+    if (!raw || typeof raw !== 'object') return null
+    const { installedAt, attribution } = raw as { installedAt?: unknown, attribution?: unknown }
+    if (typeof installedAt !== 'number' || !Number.isFinite(installedAt)) return null
+    if (!attribution || typeof attribution !== 'object') return null
+    const clean: Record<string, string> = {}
+    for (const [key, value] of Object.entries(attribution)) {
+      if (typeof value === 'string' && value.length > 0) clean[key] = value
+    }
+    return Object.keys(clean).length ? { attribution: clean, installedAt } : null
+  }
+  catch {
+    // Hostile/exotic shape (e.g. throwing getters) — treat as absent.
+    return null
+  }
+}
+
 export function isNativeIntercomAvailable(): boolean {
   return isNativeWebView() && isNativeFeatureSupported('intercom')
 }

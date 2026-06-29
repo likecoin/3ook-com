@@ -1,3 +1,9 @@
+import { getInstallAttribution } from '~/utils/native-bridge'
+
+// Meta's click-attribution window; install click ids older than this are dropped
+// so stale clicks aren't sent to CAPI. UTM has no window (tagged instead).
+const INSTALL_CLICK_FRESHNESS_MS = 7 * 24 * 60 * 60 * 1000
+
 export function useAnalytics() {
   const getRouteQuery = useRouteQuery()
   const { proxy } = useScriptGoogleAnalytics()
@@ -43,21 +49,54 @@ export function useAnalytics() {
       }
     }
 
+    // Fall back to the install referrer only when the live session has no value,
+    // so last-touch always wins. Click ids (`gated`) are additionally limited to
+    // the freshness window. Any fill is flagged via `attributionSource` so it is
+    // never confused with live last-touch attribution downstream.
+    const install = getInstallAttribution()
+    const now = Date.now()
+    // Reject future timestamps (clock skew / malformed payload) — a negative
+    // difference would otherwise satisfy the window check and look "fresh".
+    const installFresh = !!install
+      && install.installedAt <= now
+      && now - install.installedAt < INSTALL_CLICK_FRESHNESS_MS
+    let usedInstall = false
+    const withInstall = (live: string | undefined, key: string, gated = false): string | undefined => {
+      if (live) return live
+      if (!install || (gated && !installFresh)) return live
+      const value = install.attribution[key]
+      if (!value) return live
+      usedInstall = true
+      return value
+    }
+
+    // Resolve every field before the return so `usedInstall` is fully
+    // accumulated, keeping `attributionSource` independent of property order.
+    const utmCampaign = withInstall(getRouteQuery('utm_campaign'), 'utm_campaign')
+    const utmMediumResolved = withInstall(resolvedUtmMedium || getRouteQuery('ll_medium') || utmMedium, 'utm_medium')
+    const utmSourceResolved = withInstall(resolvedUtmSource || getRouteQuery('ll_source') || utmSource, 'utm_source')
+    const utmContent = withInstall(getRouteQuery('utm_content'), 'utm_content')
+    const utmTerm = withInstall(getRouteQuery('utm_term'), 'utm_term')
+    const gadClickId = withInstall(getRouteQuery('gclid'), 'gclid', true)
+    const gadSource = withInstall(getRouteQuery('gad_source'), 'gad_source', true)
+    const fbClickId = withInstall(getRouteQuery('fbclid'), 'fbclid', true)
+
     return {
       gaClientId: gaClientId.value,
       gaSessionId: gaSessionId.value,
       referrer: referrer.value,
-      utmCampaign: getRouteQuery('utm_campaign'),
-      utmMedium: resolvedUtmMedium || getRouteQuery('ll_medium') || utmMedium,
-      utmSource: resolvedUtmSource || getRouteQuery('ll_source') || utmSource,
-      utmContent: getRouteQuery('utm_content'),
-      utmTerm: getRouteQuery('utm_term'),
-      gadClickId: getRouteQuery('gclid'),
-      gadSource: getRouteQuery('gad_source'),
-      fbClickId: getRouteQuery('fbclid'),
+      utmCampaign,
+      utmMedium: utmMediumResolved,
+      utmSource: utmSourceResolved,
+      utmContent,
+      utmTerm,
+      gadClickId,
+      gadSource,
+      fbClickId,
       fbp: fbp.value || undefined,
       fbc: fbc.value || undefined,
       posthogDistinctId: posthogDistinctId.value,
+      attributionSource: usedInstall ? 'install_referrer' : undefined,
     }
   }
 
