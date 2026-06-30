@@ -495,7 +495,7 @@
 import { FetchError } from 'ofetch'
 
 import { getGenreI18nKey } from '~~/shared/constants/book-categories'
-import { MAX_BOOKSTORE_PAGE_SIZE, isBookstoreBuiltInListType } from '~~/shared/utils/bookstore'
+import { BOOKSTORE_DEFAULT_LIST_TYPE, MAX_BOOKSTORE_PAGE_SIZE, isBookstoreBuiltInListType } from '~~/shared/utils/bookstore'
 import { normalizeLikerId } from '~~/shared/utils/liker-id'
 
 import affiliateCTABackdropImageSrc from '~/assets/images/affiliate-cta-banner-backdrop.webp'
@@ -528,6 +528,7 @@ const intercom = useIntercom()
 // Effective Plus (canonical flag OR optimistic device-store entitlement) so a
 // just-subscribed member isn't briefly treated as non-Plus before the webhook lands.
 const { isPlusOrDevicePlus } = useDevicePlusEntitlement()
+const { loggedIn: hasLoggedIn } = useUserSession()
 
 const querySearchTerm = computed(() => getRouteQuery('q', ''))
 const queryAuthorName = computed(() => getRouteQuery('author', ''))
@@ -666,10 +667,12 @@ const STAKING_SORT_OPTIONS = [
   value: `${STAKING_SORT_TAG_PREFIX}${option.value}`,
 }))
 const STAKING_TAG_DEFAULT = STAKING_SORT_OPTIONS[0]!.value
-const TAG_DEFAULT = STAKING_TAG_DEFAULT
+// Signed-in readers land on the freshest titles; signed-out visitors get the
+// staking-ranked landing as the default tab.
+const defaultTagId = computed(() => hasLoggedIn.value ? BOOKSTORE_DEFAULT_LIST_TYPE : STAKING_TAG_DEFAULT)
 
 function getIsDefaultTagId(id: string) {
-  return id === TAG_DEFAULT
+  return id === defaultTagId.value
 }
 
 function getIsLocalHistoriesTagId(id: string) {
@@ -681,7 +684,7 @@ function getIsStakingTagId(id: string) {
 }
 
 const tagId = computed({
-  get: () => getRouteQuery('tag', TAG_DEFAULT),
+  get: () => getRouteQuery('tag', defaultTagId.value),
   set: async (id) => {
     if (getIsLocalHistoriesTagId(id)) {
       await navigateTo(localeRoute({ name: 'local-histories' }))
