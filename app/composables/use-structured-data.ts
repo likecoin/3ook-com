@@ -315,7 +315,7 @@ export function useStructuredData(
     },
     {
       property: 'product:category',
-      content: 'Media > Books > E-Books',
+      content: 'Media > Books > E-books',
     },
     {
       property: 'product:condition',
