@@ -1624,7 +1624,9 @@ async function handleSearchSubmit() {
   if (checkIsEVMAddress(searchInputValue.value)) {
     query = 'owner_wallet'
   }
-  useLogEvent(isLibraryTab.value ? 'library_search_submit' : 'store_search_submit')
+  // Omit search_term for wallet-address searches so we don't forward a persistent
+  // on-chain identifier to GA4/Meta; still fire the event to keep the search count.
+  useLogEvent(isLibraryTab.value ? 'library_search_submit' : 'store_search_submit', query === 'owner_wallet' ? {} : { search_term: searchInputValue.value })
   await navigateTo({ query: { [query]: searchInputValue.value } })
 }
 </script>

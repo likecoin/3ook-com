@@ -496,6 +496,9 @@ export const useAccountStore = defineStore('account', () => {
         }
         useLogEvent('sign_up', {
           method: connector.id,
+          // Dedup key shared with the server CompleteRegistration CAPI event so
+          // Meta collapses the browser + server pair into one conversion.
+          transaction_id: walletAddress?.toLowerCase(),
         })
       }
 

@@ -116,12 +116,18 @@ export function useLogEvent(eventName: string, eventParams: EventParams = {}) {
   }
 
   try {
+    // Maps our GA4-style event names to Meta Pixel standard events. Prefer GA4
+    // recommended names as keys; app-specific names (e.g. store/library search
+    // submit) map to the closest Meta standard event.
     const eventNameMapping: { [key: string]: string } = {
       view_item: 'ViewContent',
       begin_checkout: 'InitiateCheckout',
       add_to_cart: 'AddToCart',
+      add_to_wishlist: 'AddToWishlist',
       purchase: 'Purchase',
-      search: 'Search',
+      store_search_submit: 'Search',
+      library_search_submit: 'Search',
+      sign_up: 'CompleteRegistration',
       start_trial: 'StartTrial',
       subscribe: 'Subscribe',
     }
@@ -132,10 +138,12 @@ export function useLogEvent(eventName: string, eventParams: EventParams = {}) {
         currency,
         items,
         predicted_ltv: predictedLTV,
+        search_term: searchString,
       } = eventParams
-      const eventId = paymentId ? `${eventNameMapping[eventName]}_${paymentId}` : undefined
+      const metaEventName = eventNameMapping[eventName]
+      const eventId = paymentId ? `${metaEventName}_${paymentId}` : undefined
       const { proxy } = useScriptMetaPixel()
-      proxy.fbq('track', eventNameMapping[eventName], {
+      proxy.fbq('track', metaEventName, {
         currency,
         value,
         order_id: paymentId,
@@ -148,6 +156,7 @@ export function useLogEvent(eventName: string, eventParams: EventParams = {}) {
           : undefined,
         content_ids: Array.isArray(items) ? items.map(i => i.id) : undefined,
         predicted_ltv: predictedLTV,
+        search_string: searchString,
       }, { eventID: eventId })
     }
 

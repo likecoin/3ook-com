@@ -1740,8 +1740,8 @@ async function handleBookListButtonClick() {
     }
   }
   else {
-    // Add to book list
-    useLogEvent('add_to_cart', formattedLogPayload.value)
+    // Add to book list (a save-for-later wishlist, not the checkout cart)
+    useLogEvent('add_to_wishlist', formattedLogPayload.value)
     try {
       await bookListStore.addItem(
         nftClassId.value,
