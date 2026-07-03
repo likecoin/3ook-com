@@ -47,6 +47,11 @@ export default defineNuxtPlugin((nuxtApp) => {
       // Telemetry only — fall back to false on browsers that reject the call.
     }
 
+    // A present SW re-serves the cached stale "/" (NetworkFirst nav route), so a gentle
+    // reload can't recover — skip that rung and purge immediately. Only on the first
+    // error, else a SW that appears after the soft reload would skip the purge too.
+    const effectiveAttempt = hadSW && attempt === 0 ? 1 : attempt
+
     const logChunkError = (reloaded: boolean, escalated: boolean) =>
       useLogEvent('chunk_error', {
         error_message: message,
@@ -56,20 +61,23 @@ export default defineNuxtPlugin((nuxtApp) => {
         had_sw: hadSW,
       })
 
-    // Third error in the incident: both the soft reload and the cache purge
-    // failed (e.g. the network is genuinely unreachable). Stop reloading and
-    // surface the error instead of looping.
-    if (attempt >= 2) {
+    // Both the soft reload (if any) and the cache purge failed (e.g. the network
+    // is genuinely unreachable). Stop reloading and surface the error instead of
+    // looping. Reached at the second error when a SW is present, the third otherwise.
+    if (effectiveAttempt >= 2) {
       logChunkError(false, true)
       console.error('[chunk-error] already escalated, surfacing error', error)
       return
     }
 
     // Advance the ladder for the two reload branches below (give-up returned above).
-    reloadCount.value = attempt + 1
+    // Persist effectiveAttempt, not attempt, so a purge that unregisters the SW still
+    // surfaces on the next error even if that reload no longer sees a SW.
+    reloadCount.value = effectiveAttempt + 1
 
-    if (attempt >= 1) {
-      // Soft reload didn't fix it — purge SW + caches and force a clean fetch.
+    if (effectiveAttempt >= 1) {
+      // Soft reload didn't fix it — or a SW is present and would just re-serve the
+      // stale shell — so purge SW + caches and force a clean fetch.
       // Targets iOS WebKit where the cached "/" shell (NetworkFirst document
       // cache) keeps re-serving references to deleted chunk hashes after deploy.
       logChunkError(true, true)
