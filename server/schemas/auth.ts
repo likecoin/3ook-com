@@ -38,6 +38,17 @@ export const RegisterBodySchema = v.object({
   magicUserId: v.optional(v.string()),
   magicDIDToken: v.optional(v.string()),
   locale: v.optional(v.string()),
+  utmSource: v.optional(v.string()),
+  utmMedium: v.optional(v.string()),
+  utmCampaign: v.optional(v.string()),
+  utmContent: v.optional(v.string()),
+  utmTerm: v.optional(v.string()),
+  gadClickId: v.optional(v.string()),
+  gadSource: v.optional(v.string()),
+  fbClickId: v.optional(v.string()),
+  gaClientId: v.optional(v.string()),
+  gaSessionId: v.optional(v.union([v.string(), v.number()])),
+  referrer: v.optional(v.string()),
 })
 
 export const AccountDeleteBodySchema = v.object({

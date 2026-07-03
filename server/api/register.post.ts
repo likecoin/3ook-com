@@ -19,6 +19,10 @@ export default defineEventHandler(async (event) => {
         magicUserId: body.magicUserId,
         magicDIDToken: body.magicDIDToken,
         locale: body.locale?.startsWith('zh') ? 'zh' : 'en',
+        utmSource: body.utmSource || undefined,
+        utmMedium: body.utmMedium || undefined,
+        utmCampaign: body.utmCampaign || undefined,
+        sourceURL: body.referrer || undefined,
       },
     })
   }
@@ -88,6 +92,17 @@ export default defineEventHandler(async (event) => {
     likerId: userInfoRes.user,
     loginMethod: body.loginMethod,
     locale: body.locale,
+    utmSource: body.utmSource,
+    utmMedium: body.utmMedium,
+    utmCampaign: body.utmCampaign,
+    utmContent: body.utmContent,
+    utmTerm: body.utmTerm,
+    gadClickId: body.gadClickId,
+    gadSource: body.gadSource,
+    fbClickId: body.fbClickId,
+    gaClientId: body.gaClientId,
+    gaSessionId: body.gaSessionId,
+    referrer: body.referrer,
   })
 
   return userInfo
