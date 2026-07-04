@@ -62,6 +62,7 @@
           v-else
           class="flex-col gap-0.75 min-w-20 h-13 py-1 rounded-full text-[11px]"
           :label="item.label"
+          :aria-label="item.labelGraphic ? item.label : undefined"
           :icon="item.icon"
           :variant="item.isActive ? 'solid' : 'ghost'"
           color="neutral"

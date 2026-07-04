@@ -120,6 +120,7 @@
         <PillButtonGroup
           :model-value="tagId"
           :items="allTagItems"
+          :aria-label="$t('store_tag_more_categories_label')"
           :is-loading="!bookstoreStore.hasFetchedBookstoreCMSTags && isDefaultTagId"
           class="grow min-w-0"
           @click="(item) => handleTagClick(item.value)"
@@ -144,6 +145,7 @@
         >
           <PillButton
             icon="i-material-symbols-search-rounded"
+            :aria-label="$t('store_search_label')"
             @click="handleSearchTagClick"
           />
 
@@ -175,6 +177,7 @@
                     color="neutral"
                     variant="link"
                     icon="i-material-symbols-close-rounded"
+                    :aria-label="$t('store_search_clear_label')"
                     @click="handleClearSearchInputButton"
                   />
                 </template>

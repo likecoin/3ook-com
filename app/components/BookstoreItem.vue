@@ -6,7 +6,7 @@
     <BookCover
       :src="bookCoverSrc"
       :to="productPageRoute"
-      :alt="bookName"
+      :alt="bookName || $t('book_cover_link_label')"
       :lazy="props.lazy"
       :priority="props.priority"
       :has-shadow="true"
@@ -21,6 +21,7 @@
 
       <div class="h-lh mt-[0.5lh] truncate leading-none text-xs">
         <NuxtLink
+          v-if="authorName"
           :to="bookInfo.getAuthorPageRoute({
             llMedium: 'author-link',
             llSource: 'bookstore-item',
