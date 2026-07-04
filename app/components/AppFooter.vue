@@ -96,6 +96,7 @@
             size="xs"
             target="_blank"
             icon="i-simple-icons-instagram"
+            :aria-label="$t('footer_social_instagram')"
             href="https://www.instagram.com/3ookcom"
           />
         </li>
@@ -106,6 +107,7 @@
             size="xs"
             target="_blank"
             icon="i-simple-icons-facebook"
+            :aria-label="$t('footer_social_facebook')"
             href="https://www.facebook.com/3ookcom"
           />
         </li>
@@ -116,6 +118,7 @@
             size="xs"
             target="_blank"
             icon="i-simple-icons-threads"
+            :aria-label="$t('footer_social_threads')"
             href="https://www.threads.com/@3ookcom"
           />
         </li>
@@ -126,6 +129,7 @@
             size="xs"
             target="_blank"
             icon="i-simple-icons-substack"
+            :aria-label="$t('footer_social_review')"
             href="https://review.3ook.com"
           />
         </li>

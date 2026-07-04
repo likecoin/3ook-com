@@ -728,6 +728,7 @@
                   variant="outline"
                   size="xs"
                   :icon="button.icon"
+                  :aria-label="button.label"
                   :ui="{ base: 'p-2 rounded-full' }"
                   @click="handleSocialButtonClick(button.key)"
                 />
