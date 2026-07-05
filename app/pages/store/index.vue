@@ -675,9 +675,13 @@ const STAKING_SORT_OPTIONS = [
   value: `${STAKING_SORT_TAG_PREFIX}${option.value}`,
 }))
 const STAKING_TAG_DEFAULT = STAKING_SORT_OPTIONS[0]!.value
-// Signed-in readers land on the freshest titles; signed-out visitors get the
-// staking-ranked landing as the default tab.
-const defaultTagId = computed(() => hasLoggedIn.value ? BOOKSTORE_DEFAULT_LIST_TYPE : STAKING_TAG_DEFAULT)
+// The library always lands on the staking-ranked (熱門) tab regardless of login
+// status. On the store, signed-in readers land on the freshest titles while
+// signed-out visitors get the staking-ranked landing as the default tab.
+const defaultTagId = computed(() => {
+  if (isLibraryTab.value) return STAKING_TAG_DEFAULT
+  return hasLoggedIn.value ? BOOKSTORE_DEFAULT_LIST_TYPE : STAKING_TAG_DEFAULT
+})
 
 function getIsDefaultTagId(id: string) {
   return id === defaultTagId.value
