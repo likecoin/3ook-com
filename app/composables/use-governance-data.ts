@@ -1,6 +1,5 @@
 import { formatUnits } from 'viem'
 import { readContract, waitForTransactionReceipt } from '@wagmi/core'
-import { veLikeAddress } from '~/composables/use-ve-like-contract'
 import veLikeRewardABI from '~/contracts/ve-like-reward.json'
 
 const SECONDS_PER_DAY = 86400n
@@ -10,6 +9,7 @@ export function useGovernanceData(walletAddress: string | Ref<string>) {
   const { $wagmiConfig } = useNuxtApp()
   const { likeCoinTokenDecimals, likeCoinVeLikeLegacyRewardAddresses } = config.public
   const {
+    veLikeAddress,
     balanceOf: getVeLikeBalance,
     totalSupply: getVeLikeTotalSupply,
     getCurrentRewardContract,

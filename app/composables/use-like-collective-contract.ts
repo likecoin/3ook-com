@@ -3,12 +3,11 @@ import type { Hash } from 'viem'
 
 import likeCollectiveABI from '~/contracts/like-collective.json'
 
-export const likeCollectiveAddress = '0x4506ac2dd1e9a470d92a3d1656e1a99c676e1c8e'
-
 export function useLikeCollectiveContract() {
+  const config = useRuntimeConfig()
   const { writeContractAsync } = useContractWrite()
   const { $wagmiConfig } = useNuxtApp()
-  // TODO: Update address when deployed
+  const likeCollectiveAddress = config.public.likeCoinCollectiveAddress as `0x${string}`
 
   async function getWalletPendingRewardsOfNFTClass(wallet: string, nftClassId: string) {
     const rewards = await readContract($wagmiConfig, {
@@ -104,6 +103,7 @@ export function useLikeCollectiveContract() {
   }
 
   return {
+    likeCollectiveAddress,
     getWalletPendingRewardsOfNFTClass,
     getWalletStakeOfNFTClass,
     getTotalStakeOfNFTClass,

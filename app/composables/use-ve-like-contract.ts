@@ -3,12 +3,11 @@ import type { Hash } from 'viem'
 
 import veLikeABI from '~/contracts/ve-like.json'
 
-// TODO: Update address when deployed
-export const veLikeAddress = '0xE55C2b91E688BE70e5BbcEdE3792d723b4766e2B'
-
 export function useVeLikeContract() {
+  const config = useRuntimeConfig()
   const { writeContractAsync } = useContractWrite()
   const { $wagmiConfig } = useNuxtApp()
+  const veLikeAddress = config.public.likeCoinVeTokenAddress as `0x${string}`
 
   // Read functions
   async function getAsset() {
@@ -321,6 +320,7 @@ export function useVeLikeContract() {
   }
 
   return {
+    veLikeAddress,
     // Read functions
     getAsset,
     balanceOf,

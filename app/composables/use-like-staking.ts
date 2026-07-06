@@ -9,6 +9,7 @@ export function useLikeStaking() {
     getWalletLikeStakePositionIds,
   } = useLikeStakePositionContract()
   const {
+    likeCollectiveAddress,
     getWalletPendingRewardsOfNFTClass,
     getWalletStakeOfNFTClass,
     getTotalStakeOfNFTClass,

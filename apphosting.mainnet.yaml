@@ -41,10 +41,14 @@ env:
     value: https://w3s.link/ipfs
   - variable: LIKECOIN_API_ENDPOINT
     value: https://api.like.co
+  - variable: LIKECOIN_COLLECTIVE_ADDRESS
+    value: 0x4506ac2dd1e9a470d92a3d1656e1a99c676e1c8e
   - variable: LIKECOIN_EVM_CHAIN_API_ENDPOINT
     value: https://indexer.v3.like.co/protocol/api
   - variable: LIKECOIN_EVM_CHAIN_COLLECTIVE_API_ENDPOINT
     value: https://indexer.v3.like.co/collective/api
+  - variable: LIKECOIN_STAKE_POSITION_ADDRESS
+    value: 0x508610D3009cda82Ac1a40D2b322Ed31932D16b1
   - variable: LIKECOIN_STATIC_ENDPOINT
     value: https://static.like.co
   - variable: LIKECOIN_TOKEN_ADDRESS

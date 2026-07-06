@@ -95,6 +95,8 @@ export default defineNuxtConfig({
       likeCoinEVMChainAPIEndpoint: process.env.LIKECOIN_EVM_CHAIN_API_ENDPOINT,
       likeCoinEVMChainCollectiveAPIEndpoint: process.env.LIKECOIN_EVM_CHAIN_COLLECTIVE_API_ENDPOINT,
       likeCoinTokenAddress: process.env.LIKECOIN_TOKEN_ADDRESS,
+      likeCoinCollectiveAddress: process.env.LIKECOIN_COLLECTIVE_ADDRESS,
+      likeCoinStakePositionAddress: process.env.LIKECOIN_STAKE_POSITION_ADDRESS,
       likeCoinTokenDecimals: Number(process.env.LIKECOIN_TOKEN_DECIMALS),
       likeCoinTokenSymbol: process.env.LIKECOIN_TOKEN_SYMBOL,
       likeCoinVeTokenAddress: process.env.LIKECOIN_VE_TOKEN_ADDRESS,
