@@ -3,863 +3,866 @@
     name="default"
     :is-footer-visible="true"
   >
-    <!-- Hero Section with Banner -->
-    <section
-      id="hero"
-      v-gsap.entrance.slide-bottom.stagger
-      class="flex flex-col justify-center items-center text-center space-y-16 min-h-[70vh] px-8 py-20 bg-theme-black bg-center"
-    >
-      <NuxtLink
-        :to="localeRoute({ name: 'store' })"
-        class="w-full max-w-sm"
-        @click="onClickHeroLogo"
+    <main>
+      <!-- Hero Section with Banner -->
+      <section
+        id="hero"
+        v-gsap.entrance.slide-bottom.stagger
+        class="flex flex-col justify-center items-center text-center space-y-16 min-h-[70vh] px-8 py-20 bg-theme-black bg-center"
       >
-        <div class="relative flex justify-center items-center">
-          <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
-            <div class="logo-glow rounded-full blur-3xl" />
-          </div>
-          <AppLogo
-            height="auto"
-            :is-icon="false"
-            :is-padded="false"
-            class="relative"
-          />
-        </div>
-      </NuxtLink>
-
-      <div class="space-y-4 text-gray-100">
-        <h1
-          class="text-3xl md:text-5xl font-bold"
-          v-text="$t('about_page_hero_title')"
-        />
-        <p
-          class="text-lg max-w-3xl mx-auto leading-relaxed"
-          v-text="$t('about_page_hero_subtitle')"
-        />
-      </div>
-
-      <img
-        class="w-full max-w-xl -mt-10 mb-10"
-        src="~/assets/images/mockup.png"
-        alt="3ook.com"
-      >
-
-      <div
-        :class="[
-          'grid',
-          { 'sm:grid-cols-2': canStartSubscribeFlow },
-          'gap-4',
-          'justify-center',
-          'items-center',
-        ]"
-      >
-        <UButton
-          class="text-theme-cyan ring-theme-cyan hover:bg-theme-cyan/20"
+        <NuxtLink
           :to="localeRoute({ name: 'store' })"
-          :label="$t('about_page_hero_cta_store')"
-          color="neutral"
-          variant="outline"
-          size="xl"
-          icon="i-material-symbols-storefront"
-          block
-          @click="onClickHeroCtaStore"
-        />
-        <UButton
-          v-if="canStartSubscribeFlow"
-          class="text-theme-white hover:bg-theme-white/20"
-          :to="localeRoute({ name: 'member', query: { ll_source: 'about-page' } })"
-          :label="$t('about_page_hero_cta_plus')"
-          color="neutral"
-          variant="outline"
-          size="xl"
-          icon="i-material-symbols-star-rounded"
-          block
-          @click="onClickHeroCtaPlus"
-        />
-      </div>
-    </section>
-
-    <!-- Stats Bar -->
-    <section class="w-full bg-gray-50 border-y border-gray-200 py-8">
-      <div
-        v-gsap.whenVisible.once.stagger.from="{ y: 20, opacity: 0, duration: 0.4, stagger: 0.1 }"
-        class="max-w-4xl mx-auto flex flex-wrap justify-center gap-8 md:gap-16 px-4"
-      >
-        <div class="text-center">
-          <p class="text-3xl font-bold text-primary">
-            1,000+
-          </p>
-          <p
-            class="text-sm text-muted"
-            v-text="$t('about_page_stat_books')"
-          />
-        </div>
-        <div class="text-center">
-          <p class="text-3xl font-bold text-primary">
-            10,000+
-          </p>
-          <p
-            class="text-sm text-muted"
-            v-text="$t('about_page_stat_readers')"
-          />
-        </div>
-        <div class="text-center">
-          <p class="text-3xl font-bold text-primary">
-            90%*
-          </p>
-          <p
-            class="text-sm text-muted"
-            v-text="$t('about_page_stat_author_revenue')"
-          />
-        </div>
-      </div>
-    </section>
-
-    <div class="w-full max-w-4xl mx-auto px-4 pt-12 py-16 space-y-20">
-      <p
-        class="text-lg text-gray-700 leading-relaxed max-w-3xl mx-auto text-center"
-        v-text="$t('about_page_what_is_content')"
-      />
-
-      <!-- Key Features Section -->
-      <section
-        id="features"
-        class="space-y-6"
-      >
-        <h2
-          class="text-2xl md:text-3xl font-bold text-gray-900 text-center"
-          v-text="$t('about_page_features_title')"
-        />
-
-        <div
-          v-gsap.whenVisible.once.stagger.from="{ y: 50, opacity: 0, duration: 0.6, stagger: 0.1 }"
-          class="grid md:grid-cols-2 gap-6"
+          class="w-full max-w-sm"
+          :aria-label="$t('about_page_hero_cta_store')"
+          @click="onClickHeroLogo"
         >
-          <UCard
-            id="dual-format"
-            class="p-6 space-y-3"
-          >
-            <div class="flex items-center gap-3">
-              <UIcon
-                name="i-material-symbols-auto-stories-rounded"
-                size="24"
-                class="text-primary"
-              />
-              <h3
-                v-if="isApp"
-                class="text-xl font-semibold text-gray-900"
-                v-text="$t('about_page_feature_dual_format')"
-              />
-              <h3
-                v-else
-                class="text-xl font-semibold text-gray-900"
-              >
-                <NuxtLink
-                  to="https://docs.3ook.com/zh-TW/articles/11905421-成為-3ook-plus-會員後-如何使用朗讀功能"
-                  target="_blank"
-                  rel="noopener"
-                  class="hover:text-primary hover:underline"
-                  @click="onClickFeatureDualFormat"
-                >
-                  {{ $t('about_page_feature_dual_format') }}
-                </NuxtLink>
-              </h3>
+          <div class="relative flex justify-center items-center">
+            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+              <div class="logo-glow rounded-full blur-3xl" />
             </div>
-            <p
-              class="mt-4 text-gray-700"
-              v-text="$t('about_page_feature_dual_format_desc')"
+            <AppLogo
+              height="auto"
+              :is-icon="false"
+              :is-padded="false"
+              class="relative"
             />
-          </UCard>
-
-          <UCard
-            id="ai-narration"
-            class="p-6 space-y-3"
-          >
-            <div class="flex items-center gap-3">
-              <UIcon
-                name="i-material-symbols-volume-up-rounded"
-                size="24"
-                class="text-primary"
-              />
-              <h3
-                v-if="canStartSubscribeFlow"
-                class="text-xl font-semibold text-gray-900"
-              >
-                <NuxtLink
-                  :to="localeRoute({ name: 'member' })"
-                  class="hover:text-primary hover:underline"
-                  @click="onClickFeatureAiNarration"
-                >
-                  {{ $t('about_page_feature_ai_narration') }}
-                </NuxtLink>
-              </h3>
-              <h3
-                v-else
-                class="text-xl font-semibold text-gray-900"
-                v-text="$t('about_page_feature_ai_narration')"
-              />
-            </div>
-            <p
-              class="mt-4 text-gray-700"
-              v-text="$t('about_page_feature_ai_narration_desc')"
-            />
-          </UCard>
-
-          <UCard
-            id="web3"
-            class="p-6 space-y-3"
-          >
-            <div class="flex items-center gap-3">
-              <UIcon
-                name="i-material-symbols-storefront"
-                size="24"
-                class="text-primary"
-              />
-              <h3 class="text-xl font-semibold text-gray-900">
-                <NuxtLink
-                  :to="localeRoute({ name: 'store' })"
-                  class="hover:text-primary hover:underline"
-                  @click="onClickFeatureWeb3"
-                >
-                  {{ $t('about_page_feature_web3') }}
-                </NuxtLink>
-              </h3>
-            </div>
-            <p
-              class="mt-4 text-gray-700"
-              v-text="$t('about_page_feature_web3_desc')"
-            />
-          </UCard>
-
-          <UCard
-            id="curate-to-earn"
-            class="p-6 space-y-3"
-          >
-            <div class="flex items-center gap-3">
-              <UIcon
-                name="i-material-symbols-pie-chart"
-                size="24"
-                class="text-primary"
-              />
-              <h3 class="text-xl font-semibold text-gray-900">
-                <NuxtLink
-                  to="https://docs.3ook.com/zh-TW/articles/12750024-如何將-likecoin-質押-應援作品並獲取收益"
-                  target="_blank"
-                  rel="noopener"
-                  class="hover:text-primary hover:underline"
-                  @click="onClickFeatureCurateToEarn"
-                >
-                  {{ $t('about_page_feature_curate_to_earn') }}
-                </NuxtLink>
-              </h3>
-            </div>
-            <p
-              class="mt-4 text-gray-700"
-              v-text="$t('about_page_feature_curate_to_earn_desc')"
-            />
-          </UCard>
-
-          <UCard
-            id="affiliate"
-            class="p-6 space-y-3"
-          >
-            <div class="flex items-center gap-3">
-              <UIcon
-                name="i-material-symbols-trending-up-rounded"
-                size="24"
-                class="text-primary"
-              />
-              <h3 class="text-xl font-semibold text-gray-900">
-                <NuxtLink
-                  to="https://docs.3ook.com/zh-TW/articles/13515071-%E5%A6%82%E4%BD%95%E5%8A%A0%E5%85%A5-3ook-com-%E6%9B%B8%E5%BA%97%E6%8E%A8%E5%BB%A3%E8%A8%88%E5%8A%83"
-                  target="_blank"
-                  rel="noopener"
-                  class="hover:text-primary hover:underline"
-                  @click="onClickFeatureAffiliate"
-                >
-                  {{ $t('about_page_feature_affiliate') }}
-                </NuxtLink>
-              </h3>
-            </div>
-            <p
-              class="mt-4 text-gray-700"
-              v-text="$t('about_page_feature_affiliate_desc')"
-            />
-          </UCard>
-
-          <UCard
-            id="author-benefits"
-            class="p-6 space-y-3"
-          >
-            <div class="flex items-center gap-3">
-              <UIcon
-                name="i-material-symbols-handshake-rounded"
-                size="24"
-                class="text-primary"
-              />
-              <h3 class="text-xl font-semibold text-gray-900">
-                <NuxtLink
-                  to="https://publish.3ook.com/about/"
-                  target="_blank"
-                  rel="noopener"
-                  class="hover:text-primary hover:underline"
-                  @click="onClickFeatureAuthorBenefits"
-                >
-                  {{ $t('about_page_feature_author_benefits') }}
-                </NuxtLink>
-              </h3>
-            </div>
-            <p
-              class="mt-4 text-gray-700"
-              v-text="$t('about_page_feature_author_benefits_desc')"
-            />
-          </UCard>
-        </div>
-      </section>
-
-      <section
-        id="author-stories"
-        class="space-y-12"
-      >
-        <div class="text-center space-y-4">
-          <h2 class="text-2xl md:text-3xl font-bold text-gray-900">
-            {{ $t('about_page_author_stories_title') }}
-          </h2>
-          <p class="text-lg text-muted leading-relaxed max-w-2xl mx-auto">
-            {{ $t('about_page_author_stories_content') }}
-          </p>
-        </div>
-
-        <UCard
-          class="overflow-hidden"
-          :ui="{ body: 'space-y-4' }"
-        >
-          <div class="flex items-center gap-3">
-            <UAvatar
-              :src="getAvatarSrc('nghengsun')"
-              :alt="$t('about_page_author_dung_kai_cheung')"
-              icon="i-material-symbols-person-rounded"
-              size="md"
-            />
-            <h3 class="text-xl font-bold text-gray-900">
-              <UButton
-                :to="getEntityStoreRoute('董啟章', 'author', 'nghengsun')"
-                variant="link"
-                :label="$t('about_page_author_dung_kai_cheung')"
-                @click="onClickAuthorDungKaiCheung"
-              />
-            </h3>
           </div>
-          <p class="text-muted leading-relaxed">
-            {{ $t('about_page_author_dung_kai_cheung_desc') }}
-          </p>
+        </NuxtLink>
 
-          <div
-            class="aspect-video w-full rounded-xl overflow-hidden bg-gray-900 shadow-inner"
-            @click.once="onPlayAuthorDungKaiCheungVideo"
-          >
-            <ClientOnly>
-              <ScriptYouTubePlayer
-                video-id="BibwtPyXxCg"
-                :cookies="true"
-                :width="16"
-                :height="9"
-                :aria-label="$t('about_page_author_dung_kai_cheung')"
-                :title="$t('about_page_author_dung_kai_cheung')"
-              >
-                <template #placeholder>
-                  <img
-                    src="~/assets/images/about/dung_preview.png"
-                    :alt="$t('about_page_author_dung_kai_cheung')"
-                    class="w-full h-full object-cover"
-                  >
-                </template>
-              </ScriptYouTubePlayer>
-            </ClientOnly>
-          </div>
-        </UCard>
-
-        <div class="grid md:grid-cols-2 gap-6 items-stretch">
-          <UCard
-            class="overflow-hidden h-full"
-            :ui="{ body: 'flex flex-col gap-4 h-full' }"
-          >
-            <div class="flex items-center gap-3">
-              <UAvatar
-                :src="getAvatarSrc('ckxpress')"
-                :alt="$t('about_page_author_kin_ko')"
-                icon="i-material-symbols-person-rounded"
-                size="md"
-              />
-              <h3 class="text-xl font-bold text-gray-900">
-                <UButton
-                  :to="getEntityStoreRoute('高重建', 'author', 'ckxpress')"
-                  variant="link"
-                  :label="$t('about_page_author_kin_ko')"
-                  @click="onClickAuthorKinKo"
-                />
-              </h3>
-            </div>
-            <p class="text-muted leading-relaxed">
-              {{ $t('about_page_author_kin_ko_desc') }}
-            </p>
-
-            <div
-              class="w-[180px] aspect-[9/16] rounded-xl overflow-hidden bg-gray-900 shadow-inner mx-auto mt-auto"
-              @click.once="onPlayAuthorKinKoVideo"
-            >
-              <ClientOnly>
-                <ScriptYouTubePlayer
-                  video-id="llHnvvDyzns"
-                  :cookies="true"
-                  :width="9"
-                  :height="16"
-                  ratio="9/16"
-                  :aria-label="$t('about_page_author_kin_ko')"
-                  :title="$t('about_page_author_kin_ko')"
-                >
-                  <template #placeholder>
-                    <img
-                      src="~/assets/images/about/kin_preview.png"
-                      :alt="$t('about_page_author_kin_ko')"
-                      class="w-full h-full object-cover"
-                    >
-                  </template>
-                </ScriptYouTubePlayer>
-              </ClientOnly>
-            </div>
-          </UCard>
-
-          <UCard
-            class="overflow-hidden h-full"
-            :ui="{ body: 'flex flex-col gap-4 h-full' }"
-          >
-            <div class="flex items-center gap-3">
-              <UAvatar
-                icon="i-material-symbols-person-rounded"
-                size="md"
-              />
-              <h3 class="text-xl font-bold text-gray-900">
-                <UButton
-                  :to="localeRoute({ name: 'store', query: { author: '傅月庵' } })"
-                  variant="link"
-                  :label="$t('about_page_author_fu_yue_an')"
-                  @click="onClickAuthorFuYueAn"
-                />
-              </h3>
-            </div>
-            <p class="text-muted leading-relaxed">
-              {{ $t('about_page_author_fu_yue_an_desc') }}
-            </p>
-
-            <div
-              class="w-[180px] aspect-[9/16] rounded-xl overflow-hidden bg-gray-900 shadow-inner mx-auto mt-auto"
-              @click.once="onPlayAuthorFuYueAnVideo"
-            >
-              <ClientOnly>
-                <ScriptYouTubePlayer
-                  video-id="3nsPGnqdoIk"
-                  :cookies="true"
-                  :width="9"
-                  :height="16"
-                  ratio="9/16"
-                  :aria-label="$t('about_page_author_fu_yue_an')"
-                  :title="$t('about_page_author_fu_yue_an')"
-                >
-                  <template #placeholder>
-                    <img
-                      src="~/assets/images/about/fu_preview.png"
-                      :alt="$t('about_page_author_fu_yue_an')"
-                      class="w-full h-full object-cover"
-                    >
-                  </template>
-                </ScriptYouTubePlayer>
-              </ClientOnly>
-            </div>
-          </UCard>
+        <div class="space-y-4 text-gray-100">
+          <h1
+            class="text-3xl md:text-5xl font-bold"
+            v-text="$t('about_page_hero_title')"
+          />
+          <p
+            class="text-lg max-w-3xl mx-auto leading-relaxed"
+            v-text="$t('about_page_hero_subtitle')"
+          />
         </div>
-      </section>
 
-      <!-- Featured Authors Section -->
-      <section
-        id="featured-authors"
-        class="space-y-6"
-      >
-        <div class="text-center space-y-2">
-          <h2 class="text-2xl md:text-3xl font-bold text-gray-900">
-            {{ $t('about_page_featured_authors_title') }}
-          </h2>
-          <p class="text-lg text-muted leading-relaxed max-w-2xl mx-auto">
-            {{ $t('about_page_featured_authors_content') }}
-          </p>
-        </div>
+        <img
+          class="w-full max-w-xl -mt-10 mb-10"
+          src="~/assets/images/mockup.png"
+          alt="3ook.com"
+        >
 
         <div
-          v-gsap.whenVisible.once.stagger.from="{ y: 20, opacity: 0, duration: 0.4, stagger: 0.05 }"
-          class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-6"
-        >
-          <NuxtLink
-            v-for="author in featuredAuthors"
-            :key="author.name"
-            :to="getEntityStoreRoute(author.name, 'author', author.likerId)"
-            class="flex flex-col items-center gap-2 group"
-            @click="onClickFeaturedAuthor"
-          >
-            <UAvatar
-              :src="author.avatar || (author.likerId ? getAvatarSrc(author.likerId) : undefined)"
-              :alt="author.name"
-              icon="i-material-symbols-person-2-rounded"
-              size="xl"
-              class="transition-transform group-hover:scale-110"
-            />
-            <span class="text-sm text-center text-gray-700 group-hover:text-primary transition-colors">
-              {{ author.name }}
-            </span>
-          </NuxtLink>
-        </div>
-      </section>
-
-      <!-- Featured Publishers & Media Section -->
-      <section
-        id="featured-publishers"
-        class="space-y-6"
-      >
-        <div class="text-center space-y-2">
-          <h2 class="text-2xl md:text-3xl font-bold text-gray-900">
-            {{ $t('about_page_featured_publishers_title') }}
-          </h2>
-          <p class="text-lg text-muted leading-relaxed max-w-2xl mx-auto">
-            {{ $t('about_page_featured_publishers_content') }}
-          </p>
-        </div>
-
-        <div
-          v-gsap.whenVisible.once.stagger.from="{ y: 20, opacity: 0, duration: 0.4, stagger: 0.05 }"
-          class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-6"
-        >
-          <NuxtLink
-            v-for="publisher in featuredPublishers"
-            :key="publisher.likerId"
-            :to="getEntityStoreRoute(publisher.name, 'publisher', publisher.likerId)"
-            class="flex flex-col items-center gap-2 group"
-            @click="onClickFeaturedPublisher"
-          >
-            <UAvatar
-              :src="getAvatarSrc(publisher.likerId)"
-              :alt="publisher.name"
-              icon="i-material-symbols-person-2-rounded"
-              size="xl"
-              class="transition-transform group-hover:scale-110"
-            />
-            <span class="text-sm text-center text-gray-700 group-hover:text-primary transition-colors">
-              {{ publisher.name }}
-            </span>
-          </NuxtLink>
-        </div>
-      </section>
-
-      <!-- Media Coverage Section -->
-      <section
-        id="media-coverage"
-        class="space-y-6"
-      >
-        <div class="text-center space-y-2">
-          <h2 class="text-2xl md:text-3xl font-bold text-gray-900">
-            {{ $t('about_page_media_coverage_title') }}
-          </h2>
-          <p class="text-lg text-muted leading-relaxed max-w-2xl mx-auto">
-            {{ $t('about_page_media_coverage_content') }}
-          </p>
-        </div>
-
-        <div class="flex flex-wrap justify-center items-center gap-8 md:gap-12">
-          <NuxtLink
-            v-for="item in mediaCoverage"
-            :key="item.url"
-            :to="item.url"
-            :title="item.title"
-            target="_blank"
-            rel="noopener"
-            class="opacity-70 hover:opacity-100 transition-opacity"
-            @click="onClickMediaCoverage"
-          >
-            <img
-              v-if="item.logo"
-              :src="item.logo"
-              :alt="item.source"
-              class="h-8 md:h-10 w-auto object-contain"
-            >
-            <span
-              v-else
-              class="text-lg md:text-xl font-bold text-gray-800 whitespace-nowrap"
-            >
-              {{ item.source }}
-            </span>
-          </NuxtLink>
-        </div>
-      </section>
-    </div>
-
-    <!-- Library (all-you-can-read) Section -->
-    <section
-      id="library"
-      class="w-full px-4 py-12 bg-gradient-to-b from-primary/5 to-transparent"
-    >
-      <div
-        v-gsap.whenVisible.once.from="{ y: 30, opacity: 0, duration: 0.5 }"
-        class="max-w-3xl mx-auto text-center space-y-5"
-      >
-        <UIcon
-          name="i-3ook-com-library-rounded"
-          class="text-primary mx-auto"
-          size="48"
-        />
-        <h2
-          class="text-2xl md:text-3xl font-bold text-gray-900"
-          v-text="$t('about_page_library_title')"
-        />
-        <p
-          class="text-lg text-gray-700 leading-relaxed max-w-2xl mx-auto"
-          v-text="$t('about_page_library_description')"
-        />
-        <UButton
-          :to="localeRoute({ name: 'library', query: { ll_source: 'about-library' } })"
-          :label="$t('about_page_library_cta')"
-          color="primary"
-          size="lg"
-          icon="i-3ook-com-library-rounded"
-          @click="onClickLibraryCta"
-        />
-      </div>
-    </section>
-
-    <!-- 3ook.com Plus Membership Section -->
-    <section
-      v-if="canStartSubscribeFlow"
-      id="plus"
-      class="w-full bg-gradient-to-r from-primary/10 to-secondary/20 py-12 px-4"
-    >
-      <div class="max-w-4xl mx-auto text-center space-y-6">
-        <h2
-          class="text-2xl md:text-3xl font-bold text-gray-900"
-          v-text="$t('about_page_plus_title')"
-        />
-        <p
-          class="text-lg text-gray-700 leading-relaxed max-w-2xl mx-auto"
-          v-text="$t('about_page_plus_description')"
-        />
-        <ul
-          v-gsap.whenVisible.once.stagger.from="{ y: 30, opacity: 0, duration: 0.4, stagger: 0.1 }"
           :class="[
             'grid',
-            'sm:grid-cols-2',
-            'gap-x-10',
-            'gap-y-4',
-            'text-left',
-            'w-fit',
-            'max-w-3xl',
-            'mx-auto',
-
-            '*:flex',
-            '*:items-center',
-            '*:gap-2',
-
-            '[&_span:first-child]:text-primary',
-            '[&_span:first-child]:shrink-0',
-
-            '[&_span:last-child]:text-sm',
-            '[&_span:last-child]:text-gray-700',
+            { 'sm:grid-cols-2': canStartSubscribeFlow },
+            'gap-4',
+            'justify-center',
+            'items-center',
           ]"
         >
-          <li>
-            <UIcon
-              name="i-material-symbols-volume-up-rounded"
-              size="20"
-            />
-            <span v-text="$t('about_page_plus_feature_tts')" />
-          </li>
-          <li>
-            <UIcon
-              name="i-material-symbols-record-voice-over-rounded"
-              size="20"
-            />
-            <span v-text="$t('about_page_plus_feature_custom_voice')" />
-          </li>
-          <li>
-            <UIcon
-              name="i-material-symbols-percent-discount-outline-rounded"
-              size="20"
-            />
-            <span v-text="$t('about_page_plus_feature_discount')" />
-          </li>
-          <li>
-            <UIcon
-              name="i-material-symbols-dark-mode-outline-rounded"
-              size="20"
-            />
-            <span v-text="$t('about_page_plus_feature_early_access')" />
-          </li>
-          <li>
-            <UIcon
-              name="i-3ook-com-library-rounded"
-              size="20"
-            />
-            <span v-text="$t('about_page_plus_feature_library')" />
-          </li>
-          <li>
-            <UIcon
-              name="i-material-symbols-support-agent-rounded"
-              size="20"
-            />
-            <span v-text="$t('about_page_plus_feature_support')" />
-          </li>
-        </ul>
-        <UButton
-          :to="localeRoute({ name: 'member', query: { ll_source: 'about-page' } })"
-          :label="$t('about_page_plus_cta')"
-          color="primary"
-          size="lg"
-          icon="i-material-symbols-star-rounded"
-          @click="onClickPlusCta"
-        />
-      </div>
-    </section>
-
-    <!-- App Section -->
-    <section
-      v-if="!isApp"
-      id="app"
-      class="relative w-full px-6 md:px-12 bg-theme-black overflow-hidden"
-    >
-      <div class="grid md:grid-cols-2 items-center w-full max-w-4xl mx-auto">
-        <div
-          v-gsap.entrance.slide-left.stagger
-          class="relative max-md:order-2 flex flex-col items-center md:items-start space-y-6 py-16 text-center md:text-left"
-        >
-          <div class="flex items-center justify-center md:justify-start gap-4">
-            <img
-              src="~assets/images/about/app-icon.webp"
-              alt="3ook Reader App"
-              class="size-16 md:size-20 rounded-2xl"
-            >
-            <h2 class="text-2xl md:text-3xl font-bold text-white">
-              <NuxtLink
-                :to="localeRoute({ name: 'app' })"
-                class="hover:underline"
-                @click="onClickAppSectionTitle"
-              >
-                {{ $t('about_page_app_title') }}
-              </NuxtLink>
-            </h2>
-          </div>
-
-          <p
-            class="text-lg text-gray-300 leading-relaxed max-w-lg"
-            v-text="$t('about_page_app_description')"
+          <UButton
+            class="text-theme-cyan ring-theme-cyan hover:bg-theme-cyan/20"
+            :to="localeRoute({ name: 'store' })"
+            :label="$t('about_page_hero_cta_store')"
+            color="neutral"
+            variant="outline"
+            size="xl"
+            icon="i-material-symbols-storefront"
+            block
+            @click="onClickHeroCtaStore"
           />
-
-          <AppDownloadButtons
-            class="*:text-theme-white *:ring-theme-white *:hover:bg-theme-white/20"
-            placement="about"
-            @click-app-store="onClickAppStoreButton"
-            @click-google-play="onClickGooglePlayButton"
+          <UButton
+            v-if="canStartSubscribeFlow"
+            class="text-theme-white hover:bg-theme-white/20"
+            :to="localeRoute({ name: 'member', query: { ll_source: 'about-page' } })"
+            :label="$t('about_page_hero_cta_plus')"
+            color="neutral"
+            variant="outline"
+            size="xl"
+            icon="i-material-symbols-star-rounded"
+            block
+            @click="onClickHeroCtaPlus"
           />
         </div>
+      </section>
 
-        <aside
-          v-gsap.entrance.slide-right="{ delay: 0.5, duration: 1, ease: 'power1.out' }"
-          class="max-md:absolute inset-0 flex justify-center self-stretch opacity-10! md:opacity-100! max-md:pointer-events-none"
+      <!-- Stats Bar -->
+      <section class="w-full bg-gray-50 border-y border-gray-200 py-8">
+        <div
+          v-gsap.whenVisible.once.stagger.from="{ y: 20, opacity: 0, duration: 0.4, stagger: 0.1 }"
+          class="max-w-4xl mx-auto flex flex-wrap justify-center gap-8 md:gap-16 px-4"
         >
-          <img
-            v-gsap.entrance.fade="{ delay: 0.5, duration: 1, ease: 'power1.out' }"
-            class="-my-40 max-md:scale-200 origin-center object-contain"
-            src="~assets/images/about/app-mockup.png"
-            alt="3ook Reader App"
-          >
-        </aside>
-      </div>
-    </section>
+          <div class="text-center">
+            <p class="text-3xl font-bold text-primary">
+              1,000+
+            </p>
+            <p
+              class="text-sm text-muted"
+              v-text="$t('about_page_stat_books')"
+            />
+          </div>
+          <div class="text-center">
+            <p class="text-3xl font-bold text-primary">
+              10,000+
+            </p>
+            <p
+              class="text-sm text-muted"
+              v-text="$t('about_page_stat_readers')"
+            />
+          </div>
+          <div class="text-center">
+            <p class="text-3xl font-bold text-primary">
+              90%*
+            </p>
+            <p
+              class="text-sm text-muted"
+              v-text="$t('about_page_stat_author_revenue')"
+            />
+          </div>
+        </div>
+      </section>
 
-    <!-- Contact Section -->
-    <section
-      id="contact"
-      class="px-6 md:px-12 py-12"
-    >
-      <UCard
-        :ui="{
-          root: 'w-full max-w-4xl mx-auto',
-          body: 'flex flex-col items-center p-12 sm:py-12 space-y-4 text-center',
-        }"
+      <div class="w-full max-w-4xl mx-auto px-4 pt-12 py-16 space-y-20">
+        <p
+          class="text-lg text-gray-700 leading-relaxed max-w-3xl mx-auto text-center"
+          v-text="$t('about_page_what_is_content')"
+        />
+
+        <!-- Key Features Section -->
+        <section
+          id="features"
+          class="space-y-6"
+        >
+          <h2
+            class="text-2xl md:text-3xl font-bold text-gray-900 text-center"
+            v-text="$t('about_page_features_title')"
+          />
+
+          <div
+            v-gsap.whenVisible.once.stagger.from="{ y: 50, opacity: 0, duration: 0.6, stagger: 0.1 }"
+            class="grid md:grid-cols-2 gap-6"
+          >
+            <UCard
+              id="dual-format"
+              class="p-6 space-y-3"
+            >
+              <div class="flex items-center gap-3">
+                <UIcon
+                  name="i-material-symbols-auto-stories-rounded"
+                  size="24"
+                  class="text-primary"
+                />
+                <h3
+                  v-if="isApp"
+                  class="text-xl font-semibold text-gray-900"
+                  v-text="$t('about_page_feature_dual_format')"
+                />
+                <h3
+                  v-else
+                  class="text-xl font-semibold text-gray-900"
+                >
+                  <NuxtLink
+                    to="https://docs.3ook.com/zh-TW/articles/11905421-成為-3ook-plus-會員後-如何使用朗讀功能"
+                    target="_blank"
+                    rel="noopener"
+                    class="hover:text-primary hover:underline"
+                    @click="onClickFeatureDualFormat"
+                  >
+                    {{ $t('about_page_feature_dual_format') }}
+                  </NuxtLink>
+                </h3>
+              </div>
+              <p
+                class="mt-4 text-gray-700"
+                v-text="$t('about_page_feature_dual_format_desc')"
+              />
+            </UCard>
+
+            <UCard
+              id="ai-narration"
+              class="p-6 space-y-3"
+            >
+              <div class="flex items-center gap-3">
+                <UIcon
+                  name="i-material-symbols-volume-up-rounded"
+                  size="24"
+                  class="text-primary"
+                />
+                <h3
+                  v-if="canStartSubscribeFlow"
+                  class="text-xl font-semibold text-gray-900"
+                >
+                  <NuxtLink
+                    :to="localeRoute({ name: 'member' })"
+                    class="hover:text-primary hover:underline"
+                    @click="onClickFeatureAiNarration"
+                  >
+                    {{ $t('about_page_feature_ai_narration') }}
+                  </NuxtLink>
+                </h3>
+                <h3
+                  v-else
+                  class="text-xl font-semibold text-gray-900"
+                  v-text="$t('about_page_feature_ai_narration')"
+                />
+              </div>
+              <p
+                class="mt-4 text-gray-700"
+                v-text="$t('about_page_feature_ai_narration_desc')"
+              />
+            </UCard>
+
+            <UCard
+              id="web3"
+              class="p-6 space-y-3"
+            >
+              <div class="flex items-center gap-3">
+                <UIcon
+                  name="i-material-symbols-storefront"
+                  size="24"
+                  class="text-primary"
+                />
+                <h3 class="text-xl font-semibold text-gray-900">
+                  <NuxtLink
+                    :to="localeRoute({ name: 'store' })"
+                    class="hover:text-primary hover:underline"
+                    @click="onClickFeatureWeb3"
+                  >
+                    {{ $t('about_page_feature_web3') }}
+                  </NuxtLink>
+                </h3>
+              </div>
+              <p
+                class="mt-4 text-gray-700"
+                v-text="$t('about_page_feature_web3_desc')"
+              />
+            </UCard>
+
+            <UCard
+              id="curate-to-earn"
+              class="p-6 space-y-3"
+            >
+              <div class="flex items-center gap-3">
+                <UIcon
+                  name="i-material-symbols-pie-chart"
+                  size="24"
+                  class="text-primary"
+                />
+                <h3 class="text-xl font-semibold text-gray-900">
+                  <NuxtLink
+                    to="https://docs.3ook.com/zh-TW/articles/12750024-如何將-likecoin-質押-應援作品並獲取收益"
+                    target="_blank"
+                    rel="noopener"
+                    class="hover:text-primary hover:underline"
+                    @click="onClickFeatureCurateToEarn"
+                  >
+                    {{ $t('about_page_feature_curate_to_earn') }}
+                  </NuxtLink>
+                </h3>
+              </div>
+              <p
+                class="mt-4 text-gray-700"
+                v-text="$t('about_page_feature_curate_to_earn_desc')"
+              />
+            </UCard>
+
+            <UCard
+              id="affiliate"
+              class="p-6 space-y-3"
+            >
+              <div class="flex items-center gap-3">
+                <UIcon
+                  name="i-material-symbols-trending-up-rounded"
+                  size="24"
+                  class="text-primary"
+                />
+                <h3 class="text-xl font-semibold text-gray-900">
+                  <NuxtLink
+                    to="https://docs.3ook.com/zh-TW/articles/13515071-%E5%A6%82%E4%BD%95%E5%8A%A0%E5%85%A5-3ook-com-%E6%9B%B8%E5%BA%97%E6%8E%A8%E5%BB%A3%E8%A8%88%E5%8A%83"
+                    target="_blank"
+                    rel="noopener"
+                    class="hover:text-primary hover:underline"
+                    @click="onClickFeatureAffiliate"
+                  >
+                    {{ $t('about_page_feature_affiliate') }}
+                  </NuxtLink>
+                </h3>
+              </div>
+              <p
+                class="mt-4 text-gray-700"
+                v-text="$t('about_page_feature_affiliate_desc')"
+              />
+            </UCard>
+
+            <UCard
+              id="author-benefits"
+              class="p-6 space-y-3"
+            >
+              <div class="flex items-center gap-3">
+                <UIcon
+                  name="i-material-symbols-handshake-rounded"
+                  size="24"
+                  class="text-primary"
+                />
+                <h3 class="text-xl font-semibold text-gray-900">
+                  <NuxtLink
+                    to="https://publish.3ook.com/about/"
+                    target="_blank"
+                    rel="noopener"
+                    class="hover:text-primary hover:underline"
+                    @click="onClickFeatureAuthorBenefits"
+                  >
+                    {{ $t('about_page_feature_author_benefits') }}
+                  </NuxtLink>
+                </h3>
+              </div>
+              <p
+                class="mt-4 text-gray-700"
+                v-text="$t('about_page_feature_author_benefits_desc')"
+              />
+            </UCard>
+          </div>
+        </section>
+
+        <section
+          id="author-stories"
+          class="space-y-12"
+        >
+          <div class="text-center space-y-4">
+            <h2 class="text-2xl md:text-3xl font-bold text-gray-900">
+              {{ $t('about_page_author_stories_title') }}
+            </h2>
+            <p class="text-lg text-muted leading-relaxed max-w-2xl mx-auto">
+              {{ $t('about_page_author_stories_content') }}
+            </p>
+          </div>
+
+          <UCard
+            class="overflow-hidden"
+            :ui="{ body: 'space-y-4' }"
+          >
+            <div class="flex items-center gap-3">
+              <UAvatar
+                :src="getAvatarSrc('nghengsun')"
+                :alt="$t('about_page_author_dung_kai_cheung')"
+                icon="i-material-symbols-person-rounded"
+                size="md"
+              />
+              <h3 class="text-xl font-bold text-gray-900">
+                <UButton
+                  :to="getEntityStoreRoute('董啟章', 'author', 'nghengsun')"
+                  variant="link"
+                  :label="$t('about_page_author_dung_kai_cheung')"
+                  @click="onClickAuthorDungKaiCheung"
+                />
+              </h3>
+            </div>
+            <p class="text-muted leading-relaxed">
+              {{ $t('about_page_author_dung_kai_cheung_desc') }}
+            </p>
+
+            <div
+              class="aspect-video w-full rounded-xl overflow-hidden bg-gray-900 shadow-inner"
+              @click.once="onPlayAuthorDungKaiCheungVideo"
+            >
+              <ClientOnly>
+                <ScriptYouTubePlayer
+                  video-id="BibwtPyXxCg"
+                  :cookies="true"
+                  :width="16"
+                  :height="9"
+                  :aria-label="$t('about_page_author_dung_kai_cheung')"
+                  :title="$t('about_page_author_dung_kai_cheung')"
+                >
+                  <template #placeholder>
+                    <img
+                      src="~/assets/images/about/dung_preview.png"
+                      :alt="$t('about_page_author_dung_kai_cheung')"
+                      class="w-full h-full object-cover"
+                    >
+                  </template>
+                </ScriptYouTubePlayer>
+              </ClientOnly>
+            </div>
+          </UCard>
+
+          <div class="grid md:grid-cols-2 gap-6 items-stretch">
+            <UCard
+              class="overflow-hidden h-full"
+              :ui="{ body: 'flex flex-col gap-4 h-full' }"
+            >
+              <div class="flex items-center gap-3">
+                <UAvatar
+                  :src="getAvatarSrc('ckxpress')"
+                  :alt="$t('about_page_author_kin_ko')"
+                  icon="i-material-symbols-person-rounded"
+                  size="md"
+                />
+                <h3 class="text-xl font-bold text-gray-900">
+                  <UButton
+                    :to="getEntityStoreRoute('高重建', 'author', 'ckxpress')"
+                    variant="link"
+                    :label="$t('about_page_author_kin_ko')"
+                    @click="onClickAuthorKinKo"
+                  />
+                </h3>
+              </div>
+              <p class="text-muted leading-relaxed">
+                {{ $t('about_page_author_kin_ko_desc') }}
+              </p>
+
+              <div
+                class="w-[180px] aspect-[9/16] rounded-xl overflow-hidden bg-gray-900 shadow-inner mx-auto mt-auto"
+                @click.once="onPlayAuthorKinKoVideo"
+              >
+                <ClientOnly>
+                  <ScriptYouTubePlayer
+                    video-id="llHnvvDyzns"
+                    :cookies="true"
+                    :width="9"
+                    :height="16"
+                    ratio="9/16"
+                    :aria-label="$t('about_page_author_kin_ko')"
+                    :title="$t('about_page_author_kin_ko')"
+                  >
+                    <template #placeholder>
+                      <img
+                        src="~/assets/images/about/kin_preview.png"
+                        :alt="$t('about_page_author_kin_ko')"
+                        class="w-full h-full object-cover"
+                      >
+                    </template>
+                  </ScriptYouTubePlayer>
+                </ClientOnly>
+              </div>
+            </UCard>
+
+            <UCard
+              class="overflow-hidden h-full"
+              :ui="{ body: 'flex flex-col gap-4 h-full' }"
+            >
+              <div class="flex items-center gap-3">
+                <UAvatar
+                  icon="i-material-symbols-person-rounded"
+                  size="md"
+                />
+                <h3 class="text-xl font-bold text-gray-900">
+                  <UButton
+                    :to="localeRoute({ name: 'store', query: { author: '傅月庵' } })"
+                    variant="link"
+                    :label="$t('about_page_author_fu_yue_an')"
+                    @click="onClickAuthorFuYueAn"
+                  />
+                </h3>
+              </div>
+              <p class="text-muted leading-relaxed">
+                {{ $t('about_page_author_fu_yue_an_desc') }}
+              </p>
+
+              <div
+                class="w-[180px] aspect-[9/16] rounded-xl overflow-hidden bg-gray-900 shadow-inner mx-auto mt-auto"
+                @click.once="onPlayAuthorFuYueAnVideo"
+              >
+                <ClientOnly>
+                  <ScriptYouTubePlayer
+                    video-id="3nsPGnqdoIk"
+                    :cookies="true"
+                    :width="9"
+                    :height="16"
+                    ratio="9/16"
+                    :aria-label="$t('about_page_author_fu_yue_an')"
+                    :title="$t('about_page_author_fu_yue_an')"
+                  >
+                    <template #placeholder>
+                      <img
+                        src="~/assets/images/about/fu_preview.png"
+                        :alt="$t('about_page_author_fu_yue_an')"
+                        class="w-full h-full object-cover"
+                      >
+                    </template>
+                  </ScriptYouTubePlayer>
+                </ClientOnly>
+              </div>
+            </UCard>
+          </div>
+        </section>
+
+        <!-- Featured Authors Section -->
+        <section
+          id="featured-authors"
+          class="space-y-6"
+        >
+          <div class="text-center space-y-2">
+            <h2 class="text-2xl md:text-3xl font-bold text-gray-900">
+              {{ $t('about_page_featured_authors_title') }}
+            </h2>
+            <p class="text-lg text-muted leading-relaxed max-w-2xl mx-auto">
+              {{ $t('about_page_featured_authors_content') }}
+            </p>
+          </div>
+
+          <div
+            v-gsap.whenVisible.once.stagger.from="{ y: 20, opacity: 0, duration: 0.4, stagger: 0.05 }"
+            class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-6"
+          >
+            <NuxtLink
+              v-for="author in featuredAuthors"
+              :key="author.name"
+              :to="getEntityStoreRoute(author.name, 'author', author.likerId)"
+              class="flex flex-col items-center gap-2 group"
+              @click="onClickFeaturedAuthor"
+            >
+              <UAvatar
+                :src="author.avatar || (author.likerId ? getAvatarSrc(author.likerId) : undefined)"
+                :alt="author.name"
+                icon="i-material-symbols-person-2-rounded"
+                size="xl"
+                class="transition-transform group-hover:scale-110"
+              />
+              <span class="text-sm text-center text-gray-700 group-hover:text-primary transition-colors">
+                {{ author.name }}
+              </span>
+            </NuxtLink>
+          </div>
+        </section>
+
+        <!-- Featured Publishers & Media Section -->
+        <section
+          id="featured-publishers"
+          class="space-y-6"
+        >
+          <div class="text-center space-y-2">
+            <h2 class="text-2xl md:text-3xl font-bold text-gray-900">
+              {{ $t('about_page_featured_publishers_title') }}
+            </h2>
+            <p class="text-lg text-muted leading-relaxed max-w-2xl mx-auto">
+              {{ $t('about_page_featured_publishers_content') }}
+            </p>
+          </div>
+
+          <div
+            v-gsap.whenVisible.once.stagger.from="{ y: 20, opacity: 0, duration: 0.4, stagger: 0.05 }"
+            class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-6"
+          >
+            <NuxtLink
+              v-for="publisher in featuredPublishers"
+              :key="publisher.likerId"
+              :to="getEntityStoreRoute(publisher.name, 'publisher', publisher.likerId)"
+              class="flex flex-col items-center gap-2 group"
+              @click="onClickFeaturedPublisher"
+            >
+              <UAvatar
+                :src="getAvatarSrc(publisher.likerId)"
+                :alt="publisher.name"
+                icon="i-material-symbols-person-2-rounded"
+                size="xl"
+                class="transition-transform group-hover:scale-110"
+              />
+              <span class="text-sm text-center text-gray-700 group-hover:text-primary transition-colors">
+                {{ publisher.name }}
+              </span>
+            </NuxtLink>
+          </div>
+        </section>
+
+        <!-- Media Coverage Section -->
+        <section
+          id="media-coverage"
+          class="space-y-6"
+        >
+          <div class="text-center space-y-2">
+            <h2 class="text-2xl md:text-3xl font-bold text-gray-900">
+              {{ $t('about_page_media_coverage_title') }}
+            </h2>
+            <p class="text-lg text-muted leading-relaxed max-w-2xl mx-auto">
+              {{ $t('about_page_media_coverage_content') }}
+            </p>
+          </div>
+
+          <div class="flex flex-wrap justify-center items-center gap-8 md:gap-12">
+            <NuxtLink
+              v-for="item in mediaCoverage"
+              :key="item.url"
+              :to="item.url"
+              :title="item.title"
+              target="_blank"
+              rel="noopener"
+              class="opacity-70 hover:opacity-100 transition-opacity"
+              @click="onClickMediaCoverage"
+            >
+              <img
+                v-if="item.logo"
+                :src="item.logo"
+                :alt="item.source"
+                class="h-8 md:h-10 w-auto object-contain"
+              >
+              <span
+                v-else
+                class="text-lg md:text-xl font-bold text-gray-800 whitespace-nowrap"
+              >
+                {{ item.source }}
+              </span>
+            </NuxtLink>
+          </div>
+        </section>
+      </div>
+
+      <!-- Library (all-you-can-read) Section -->
+      <section
+        id="library"
+        class="w-full px-4 py-12 bg-gradient-to-b from-primary/5 to-transparent"
+      >
+        <div
+          v-gsap.whenVisible.once.from="{ y: 30, opacity: 0, duration: 0.5 }"
+          class="max-w-3xl mx-auto text-center space-y-5"
+        >
+          <UIcon
+            name="i-3ook-com-library-rounded"
+            class="text-primary mx-auto"
+            size="48"
+          />
+          <h2
+            class="text-2xl md:text-3xl font-bold text-gray-900"
+            v-text="$t('about_page_library_title')"
+          />
+          <p
+            class="text-lg text-gray-700 leading-relaxed max-w-2xl mx-auto"
+            v-text="$t('about_page_library_description')"
+          />
+          <UButton
+            :to="localeRoute({ name: 'library', query: { ll_source: 'about-library' } })"
+            :label="$t('about_page_library_cta')"
+            color="primary"
+            size="lg"
+            icon="i-3ook-com-library-rounded"
+            @click="onClickLibraryCta"
+          />
+        </div>
+      </section>
+
+      <!-- 3ook.com Plus Membership Section -->
+      <section
+        v-if="canStartSubscribeFlow"
+        id="plus"
+        class="w-full bg-gradient-to-r from-primary/10 to-secondary/20 py-12 px-4"
+      >
+        <div class="max-w-4xl mx-auto text-center space-y-6">
+          <h2
+            class="text-2xl md:text-3xl font-bold text-gray-900"
+            v-text="$t('about_page_plus_title')"
+          />
+          <p
+            class="text-lg text-gray-700 leading-relaxed max-w-2xl mx-auto"
+            v-text="$t('about_page_plus_description')"
+          />
+          <ul
+            v-gsap.whenVisible.once.stagger.from="{ y: 30, opacity: 0, duration: 0.4, stagger: 0.1 }"
+            :class="[
+              'grid',
+              'sm:grid-cols-2',
+              'gap-x-10',
+              'gap-y-4',
+              'text-left',
+              'w-fit',
+              'max-w-3xl',
+              'mx-auto',
+
+              '*:flex',
+              '*:items-center',
+              '*:gap-2',
+
+              '[&_span:first-child]:text-primary',
+              '[&_span:first-child]:shrink-0',
+
+              '[&_span:last-child]:text-sm',
+              '[&_span:last-child]:text-gray-700',
+            ]"
+          >
+            <li>
+              <UIcon
+                name="i-material-symbols-volume-up-rounded"
+                size="20"
+              />
+              <span v-text="$t('about_page_plus_feature_tts')" />
+            </li>
+            <li>
+              <UIcon
+                name="i-material-symbols-record-voice-over-rounded"
+                size="20"
+              />
+              <span v-text="$t('about_page_plus_feature_custom_voice')" />
+            </li>
+            <li>
+              <UIcon
+                name="i-material-symbols-percent-discount-outline-rounded"
+                size="20"
+              />
+              <span v-text="$t('about_page_plus_feature_discount')" />
+            </li>
+            <li>
+              <UIcon
+                name="i-material-symbols-dark-mode-outline-rounded"
+                size="20"
+              />
+              <span v-text="$t('about_page_plus_feature_early_access')" />
+            </li>
+            <li>
+              <UIcon
+                name="i-3ook-com-library-rounded"
+                size="20"
+              />
+              <span v-text="$t('about_page_plus_feature_library')" />
+            </li>
+            <li>
+              <UIcon
+                name="i-material-symbols-support-agent-rounded"
+                size="20"
+              />
+              <span v-text="$t('about_page_plus_feature_support')" />
+            </li>
+          </ul>
+          <UButton
+            :to="localeRoute({ name: 'member', query: { ll_source: 'about-page' } })"
+            :label="$t('about_page_plus_cta')"
+            color="primary"
+            size="lg"
+            icon="i-material-symbols-star-rounded"
+            @click="onClickPlusCta"
+          />
+        </div>
+      </section>
+
+      <!-- App Section -->
+      <section
+        v-if="!isApp"
+        id="app"
+        class="relative w-full px-6 md:px-12 bg-theme-black overflow-hidden"
+      >
+        <div class="grid md:grid-cols-2 items-center w-full max-w-4xl mx-auto">
+          <div
+            v-gsap.entrance.slide-left.stagger
+            class="relative max-md:order-2 flex flex-col items-center md:items-start space-y-6 py-16 text-center md:text-left"
+          >
+            <div class="flex items-center justify-center md:justify-start gap-4">
+              <img
+                src="~assets/images/about/app-icon.webp"
+                alt="3ook Reader App"
+                class="size-16 md:size-20 rounded-2xl"
+              >
+              <h2 class="text-2xl md:text-3xl font-bold text-white">
+                <NuxtLink
+                  :to="localeRoute({ name: 'app' })"
+                  class="hover:underline"
+                  @click="onClickAppSectionTitle"
+                >
+                  {{ $t('about_page_app_title') }}
+                </NuxtLink>
+              </h2>
+            </div>
+
+            <p
+              class="text-lg text-gray-300 leading-relaxed max-w-lg"
+              v-text="$t('about_page_app_description')"
+            />
+
+            <AppDownloadButtons
+              class="*:text-theme-white *:ring-theme-white *:hover:bg-theme-white/20"
+              placement="about"
+              @click-app-store="onClickAppStoreButton"
+              @click-google-play="onClickGooglePlayButton"
+            />
+          </div>
+
+          <aside
+            v-gsap.entrance.slide-right="{ delay: 0.5, duration: 1, ease: 'power1.out' }"
+            class="max-md:absolute inset-0 flex justify-center self-stretch opacity-10! md:opacity-100! max-md:pointer-events-none"
+          >
+            <img
+              v-gsap.entrance.fade="{ delay: 0.5, duration: 1, ease: 'power1.out' }"
+              class="-my-40 max-md:scale-200 origin-center object-contain"
+              src="~assets/images/about/app-mockup.png"
+              alt="3ook Reader App"
+            >
+          </aside>
+        </div>
+      </section>
+
+      <!-- Contact Section -->
+      <section
+        id="contact"
+        class="px-6 md:px-12 py-12"
+      >
+        <UCard
+          :ui="{
+            root: 'w-full max-w-4xl mx-auto',
+            body: 'flex flex-col items-center p-12 sm:py-12 space-y-4 text-center',
+          }"
+        >
+          <h2
+            class="text-2xl md:text-3xl font-bold text-gray-900"
+            v-text="$t('about_page_contact_title')"
+          />
+          <p
+            class="text-lg text-muted max-w-2xl mx-auto"
+            v-text="$t('about_page_contact_content')"
+          />
+          <div class="grid sm:grid-cols-2 gap-4 justify-center items-center max-w-xl mx-auto">
+            <LoginButton
+              block
+              @click="onClickCtaSignUp"
+            />
+            <UButton
+              :to="localeRoute({ name: 'store' })"
+              :label="$t('app_header_store')"
+              color="primary"
+              size="lg"
+              icon="i-material-symbols-storefront"
+              block
+              @click="onClickCtaStore"
+            />
+          </div>
+        </UCard>
+      </section>
+
+      <!-- Newsletter Subscribe Section -->
+      <section
+        id="newsletter"
+        class="space-y-4 text-center px-6"
       >
         <h2
           class="text-2xl md:text-3xl font-bold text-gray-900"
-          v-text="$t('about_page_contact_title')"
+          v-text="$t('about_page_newsletter_title')"
         />
         <p
-          class="text-lg text-muted max-w-2xl mx-auto"
-          v-text="$t('about_page_contact_content')"
+          class="text-lg text-muted leading-relaxed max-w-2xl mx-auto"
+          v-text="$t('about_page_newsletter_content')"
         />
-        <div class="grid sm:grid-cols-2 gap-4 justify-center items-center max-w-xl mx-auto">
-          <LoginButton
-            block
-            @click="onClickCtaSignUp"
+        <form
+          class="flex flex-col sm:flex-row gap-3 max-w-md mx-auto"
+          @submit.prevent="onSubmitNewsletter"
+        >
+          <UInput
+            v-model="newsletterEmail"
+            class="flex-1"
+            type="email"
+            :placeholder="$t('about_page_newsletter_placeholder')"
+            size="lg"
+            required
+            icon="i-material-symbols-mail-outline-rounded"
           />
           <UButton
-            :to="localeRoute({ name: 'store' })"
-            :label="$t('app_header_store')"
+            class="self-center"
+            type="submit"
+            :label="$t('about_page_newsletter_button')"
             color="primary"
             size="lg"
-            icon="i-material-symbols-storefront"
-            block
-            @click="onClickCtaStore"
+            icon="i-material-symbols-send-rounded"
           />
-        </div>
-      </UCard>
-    </section>
+        </form>
+      </section>
 
-    <!-- Newsletter Subscribe Section -->
-    <section
-      id="newsletter"
-      class="space-y-4 text-center px-6"
-    >
-      <h2
-        class="text-2xl md:text-3xl font-bold text-gray-900"
-        v-text="$t('about_page_newsletter_title')"
-      />
+      <USeparator class="my-12" />
+
       <p
-        class="text-lg text-muted leading-relaxed max-w-2xl mx-auto"
-        v-text="$t('about_page_newsletter_content')"
+        class="max-w-2xl mx-auto mb-12 px-6 text-sm text-muted text-center leading-relaxed"
+        v-text="$t('app_description')"
       />
-      <form
-        class="flex flex-col sm:flex-row gap-3 max-w-md mx-auto"
-        @submit.prevent="onSubmitNewsletter"
-      >
-        <UInput
-          v-model="newsletterEmail"
-          class="flex-1"
-          type="email"
-          :placeholder="$t('about_page_newsletter_placeholder')"
-          size="lg"
-          required
-          icon="i-material-symbols-mail-outline-rounded"
-        />
-        <UButton
-          class="self-center"
-          type="submit"
-          :label="$t('about_page_newsletter_button')"
-          color="primary"
-          size="lg"
-          icon="i-material-symbols-send-rounded"
-        />
-      </form>
-    </section>
-
-    <USeparator class="my-12" />
-
-    <p
-      class="max-w-2xl mx-auto mb-12 px-6 text-sm text-muted text-center leading-relaxed"
-      v-text="$t('app_description')"
-    />
+    </main>
   </NuxtLayout>
 </template>
 
