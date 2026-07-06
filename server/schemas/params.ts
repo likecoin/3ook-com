@@ -17,6 +17,13 @@ export const BookIdParamsSchema = v.object({
   nftClassId: bookIdField,
 })
 
+export const LikerIdParamsSchema = v.object({
+  likerId: v.pipe(
+    v.string('MISSING_LIKER_ID'),
+    v.nonEmpty('MISSING_LIKER_ID'),
+  ),
+})
+
 export const TagIdParamsSchema = v.object({
   id: v.pipe(
     v.string('MISSING_TAG_ID'),

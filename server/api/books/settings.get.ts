@@ -1,20 +1,13 @@
-export default defineEventHandler(async (event) => {
-  const session = await requireUserSession(event)
-  const walletAddress = session.user.evmWallet || session.user.likeWallet
-  if (!walletAddress) {
-    throw createError({
-      statusCode: 401,
-      message: 'WALLET_NOT_FOUND',
-    })
-  }
+import { BookSettingsQuerySchema } from '~~/server/schemas/book-settings'
 
-  const query = getQuery(event)
-  const nftClassId = query.nftClassId
-  const nftClassIds = query.nftClassIds
+export default defineEventHandler(async (event) => {
+  const walletAddress = await requireUserWallet(event)
+
+  const { nftClassId, nftClassIds } = await getValidatedQuery(event, createValidator(BookSettingsQuerySchema))
 
   setHeader(event, 'Cache-Control', 'private, no-cache, no-store, must-revalidate')
 
-  if (nftClassId && typeof nftClassId === 'string') {
+  if (nftClassId) {
     try {
       const settings = await getBookSettings(walletAddress, nftClassId)
       return settings || {}
@@ -43,6 +36,7 @@ export default defineEventHandler(async (event) => {
     }
   }
 
+  // Defensive fallback: the schema's check already guarantees one is present.
   throw createError({
     statusCode: 400,
     message: 'MISSING_NFT_CLASS_ID_OR_IDS',

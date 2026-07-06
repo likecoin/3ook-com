@@ -1,12 +1,10 @@
 import type { AffiliatePublicConfig } from '~~/shared/types/affiliate'
+import { LikerIdParamsSchema } from '~~/server/schemas/params'
 import { getAffiliateConfig, getAffiliatePlusDiscountAllowed, toPublicAffiliateVoices } from '~~/server/utils/affiliate'
 import { fetchCachedNFTClassAggregatedMetadata } from '~~/server/utils/likecoin-nft'
 
 export default defineEventHandler(async (event): Promise<AffiliatePublicConfig> => {
-  const likerId = getRouterParam(event, 'likerId')
-  if (!likerId) {
-    throw createError({ statusCode: 400, message: 'MISSING_LIKER_ID' })
-  }
+  const { likerId } = await getValidatedRouterParams(event, createValidator(LikerIdParamsSchema))
 
   // Sequential, not Promise.all: both getters share one cache entry, and
   // running in parallel on a cold cache would fire two upstream fetches.
