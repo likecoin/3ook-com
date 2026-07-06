@@ -42,7 +42,9 @@ export interface FetchAccountByBookNFTResponseData {
 
 export function getIndexerAPIFetch() {
   const config = useRuntimeConfig()
-  return createRetryingFetch({ baseURL: config.public.likeCoinEVMChainAPIEndpoint })
+  // Bound wedged requests (see createRetryingFetch) so the bookshelf pagination
+  // await can't hang, stranding the shelf on its loading spinner.
+  return createRetryingFetch({ baseURL: config.public.likeCoinEVMChainAPIEndpoint, timeout: API_FETCH_TIMEOUT_MS })
 }
 
 export interface IndexerQueryOptions {

@@ -254,12 +254,15 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
     isRefresh?: boolean
   }) {
     await fetchItems({ walletAddress, isRefresh })
+    // Track visited cursors so a misbehaving indexer cursor that cycles
+    // (A→B→A) can't loop forever — the exact-repeat check alone misses cycles.
+    const visitedKeys = new Set<number>()
     while (nextKey.value) {
-      const previousNextKey = nextKey.value
-      await fetchItems({ walletAddress })
-      if (nextKey.value === previousNextKey) {
+      if (visitedKeys.has(nextKey.value)) {
         break
       }
+      visitedKeys.add(nextKey.value)
+      await fetchItems({ walletAddress })
     }
   }
 

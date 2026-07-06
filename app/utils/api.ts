@@ -7,7 +7,9 @@ import type { CollectiveBookNFT, CollectiveBookNFTsQueryOptions, CollectivePagin
  * GET/HEAD retry twice on a `<no response>`; payload methods opt in
  * via an explicit `retry`).
  */
-export const apiFetch = createRetryingFetch({ baseURL: '/api' })
+// Bound wedged requests (see createRetryingFetch) so awaits that gate loading
+// state — e.g. the bookshelf spinner — can't hang forever.
+export const apiFetch = createRetryingFetch({ baseURL: '/api', timeout: API_FETCH_TIMEOUT_MS })
 
 /**
  * Fetches the staking book listing through our same-origin `/api/store/staking-books`
