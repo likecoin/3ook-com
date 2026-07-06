@@ -67,7 +67,7 @@ const emit = defineEmits<{ close: [result?: unknown] }>()
 const { t: $t } = useI18n()
 
 const mergedUI = computed<UModalProps['ui']>(() => ({
-  footer: 'flex justify-end gap-2',
+  footer: 'flex flex-col-reverse items-center gap-2 sm:flex-row sm:justify-end',
   ...(props.ui ?? {}),
 }))
 
