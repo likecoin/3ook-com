@@ -40,7 +40,20 @@
       </li>
       <li>
         <UIcon name="i-material-symbols-check" />
-        <span v-text="$t('pricing_page_feature_library')" />
+        <i18n-t
+          keypath="pricing_page_feature_library"
+          tag="span"
+        >
+          <template #library>
+            <NuxtLink
+              :to="localeRoute({ name: 'library' })"
+              class="underline"
+              @click="handleClickLibrary"
+            >
+              {{ $t('pricing_page_feature_library_link') }}
+            </NuxtLink>
+          </template>
+        </i18n-t>
       </li>
       <li v-if="!isAudioHidden">
         <UIcon name="i-material-symbols-check" />
@@ -95,7 +108,12 @@ withDefaults(defineProps<{
 })
 
 const { t: $t } = useI18n()
+const localeRoute = useLocaleRoute()
 const intercom = useIntercom()
+
+function handleClickLibrary() {
+  useLogEvent('pricing_benefit_click_library')
+}
 
 function handleOpenIntercom() {
   useLogEvent('pricing_benefit_click_intercom')
