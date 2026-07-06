@@ -1,14 +1,7 @@
 import { FieldValue } from 'firebase-admin/firestore'
 
 export default defineEventHandler(async (event) => {
-  const session = await requireUserSession(event)
-  const walletAddress = session.user.evmWallet || session.user.likeWallet
-  if (!walletAddress) {
-    throw createError({
-      statusCode: 401,
-      message: 'WALLET_NOT_FOUND',
-    })
-  }
+  const { session, wallet: walletAddress } = await requireUserSessionWithWallet(event)
 
   const token = getSessionToken(session)
   if (!token) {

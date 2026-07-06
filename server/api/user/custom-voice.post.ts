@@ -34,13 +34,7 @@ const AUDIO_EXT_MIME: Record<string, string> = {
 }
 
 export default defineEventHandler(async (event): Promise<CustomVoiceData> => {
-  const session = await requireUserSession(event)
-  const wallet = session.user.evmWallet
-  if (!wallet) {
-    throw createError({ statusCode: 401, message: 'WALLET_NOT_FOUND' })
-  }
-
-  const isLikerPlus = session.user.isLikerPlus || false
+  const { wallet, isLikerPlus } = await requireUserWalletWithStatus(event)
   if (!isLikerPlus) {
     throw createError({ statusCode: 403, message: 'REQUIRE_LIKER_PLUS' })
   }

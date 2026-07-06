@@ -1,11 +1,7 @@
 import type { CustomVoiceData } from '~~/shared/types/custom-voice'
 
 export default defineEventHandler(async (event): Promise<CustomVoiceData | null> => {
-  const session = await requireUserSession(event)
-  const wallet = session.user.evmWallet
-  if (!wallet) {
-    throw createError({ statusCode: 401, message: 'WALLET_NOT_FOUND' })
-  }
+  const wallet = await requireUserWallet(event)
 
   const customVoice = await getCustomVoice(wallet)
   if (!customVoice) return null

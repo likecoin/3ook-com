@@ -5,12 +5,12 @@ import type { BookSettingsFirestoreData } from '~~/server/types/book-settings'
 import type { UserSettingsData } from '~~/shared/types/user-settings'
 import { FIRESTORE_IN_OPERATOR_LIMIT } from '~~/shared/constants/api'
 
-export async function requireUserWalletWithStatus(event: H3Event): Promise<{
+// Single gate for authenticated routes: resolves the session and its EVM wallet,
+// throwing 401 if either is missing. Routes gate on evmWallet only — the Cosmos
+// (likeWallet) fallback is intentionally not accepted.
+export async function requireUserSessionWithWallet(event: H3Event): Promise<{
+  session: Awaited<ReturnType<typeof requireUserSession>>
   wallet: string
-  isLikerPlus: boolean
-  // Paid (non-trial) Plus. Reading-library revenue share excludes trial usage, so
-  // forwards to the API gate on this, not on isLikerPlus (which includes trial).
-  isPaidPlus: boolean
 }> {
   const session = await requireUserSession(event)
   const wallet = session.user.evmWallet
@@ -20,6 +20,17 @@ export async function requireUserWalletWithStatus(event: H3Event): Promise<{
       message: 'WALLET_NOT_FOUND',
     })
   }
+  return { session, wallet }
+}
+
+export async function requireUserWalletWithStatus(event: H3Event): Promise<{
+  wallet: string
+  isLikerPlus: boolean
+  // Paid (non-trial) Plus. Reading-library revenue share excludes trial usage, so
+  // forwards to the API gate on this, not on isLikerPlus (which includes trial).
+  isPaidPlus: boolean
+}> {
+  const { session, wallet } = await requireUserSessionWithWallet(event)
   const isLikerPlus = !!session.user.isLikerPlus
   return {
     wallet,
@@ -29,7 +40,7 @@ export async function requireUserWalletWithStatus(event: H3Event): Promise<{
 }
 
 export async function requireUserWallet(event: H3Event): Promise<string> {
-  const { wallet } = await requireUserWalletWithStatus(event)
+  const { wallet } = await requireUserSessionWithWallet(event)
   return wallet
 }
 

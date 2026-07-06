@@ -3,14 +3,7 @@ import { jwtDecode } from 'jwt-decode'
 import { UserSettingsUpdateSchema } from '~~/shared/schemas/user-settings'
 
 export default defineEventHandler(async (event) => {
-  const session = await requireUserSession(event)
-  const wallet = session.user.evmWallet
-  if (!wallet) {
-    throw createError({
-      statusCode: 401,
-      message: 'WALLET_NOT_FOUND',
-    })
-  }
+  const { session, wallet } = await requireUserSessionWithWallet(event)
 
   const body = await readValidatedBody(event, createValidator(UserSettingsUpdateSchema))
 

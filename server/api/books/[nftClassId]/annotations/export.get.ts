@@ -2,14 +2,7 @@ import { BookIdParamsSchema } from '~~/server/schemas/params'
 import { isUploadedBookId } from '~~/shared/utils/uploaded-book'
 
 export default defineEventHandler(async (event) => {
-  const session = await requireUserSession(event)
-  const walletAddress = session.user.evmWallet || session.user.likeWallet
-  if (!walletAddress) {
-    throw createError({
-      statusCode: 401,
-      message: 'WALLET_NOT_FOUND',
-    })
-  }
+  const walletAddress = await requireUserWallet(event)
 
   const { nftClassId } = await getValidatedRouterParams(event, createValidator(BookIdParamsSchema))
 
