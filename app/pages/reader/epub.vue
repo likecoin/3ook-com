@@ -487,7 +487,7 @@ const leftSidebarTabItems = computed(() => [
   },
 ])
 
-const { isIOS, isAndroid, isApp } = useAppDetection()
+const { isIOS, isAndroid } = useAppDetection()
 
 const isPageLoading = ref(false)
 
@@ -510,6 +510,14 @@ const { loadingLabel, loadingPercentage, loadFileAsBuffer, abortLoad } = useBook
 
 const isOnline = useOnline()
 
+const { getBookLoadErrorActions } = useReaderErrorActions({
+  readerType: 'epub',
+  nftClassId,
+  nftId,
+  bookName: bookInfo.name,
+  isUploadedBook,
+})
+
 const { startReaderLoad } = useReaderFileLoad({
   isReaderLoading,
   readerType: 'epub',
@@ -517,6 +525,7 @@ const { startReaderLoad } = useReaderFileLoad({
   getErrorTitle: () => isOnline.value
     ? $t('error_reader_load_epub_failed')
     : $t('error_reader_book_not_available_offline'),
+  getErrorActions: getBookLoadErrorActions,
   handleError,
   abortLoad,
 })
@@ -834,8 +843,7 @@ let removeCopyListener: (() => void) | undefined
 let removeMouseUpListener: (() => void) | undefined
 let removeSelectionChangeListener: (() => void) | undefined
 let removeContextMenuListener: (() => void) | undefined
-const { isIntercomVisible, markIntercomVisible } = useIntercomVisibility()
-const intercom = useIntercom()
+const { isIntercomVisible, showNewMessageWithVisibility } = useIntercomVisibility()
 useHead({
   htmlAttrs: {
     class: computed(() => (isIntercomVisible.value ? 'intercom-visible' : '')),
@@ -2053,10 +2061,7 @@ function handleAnnotationReportIssue() {
   })
 
   const subject = $t('reader_annotation_report_issue_email_subject', { bookName: bookInfo.name.value })
-  const result = intercom.showNewMessage(prefillMessage, subject)
-  if (result.method === 'chat' && !isApp.value) {
-    markIntercomVisible()
-  }
+  showNewMessageWithVisibility(prefillMessage, subject)
 
   useLogEvent('reader_annotation_report_issue', {
     nft_class_id: nftClassId.value,

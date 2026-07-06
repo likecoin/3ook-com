@@ -23,6 +23,7 @@ export default function () {
     isFatal?: boolean
     title?: string
     description?: string
+    actions?: Array<ErrorHandlerAction>
     customHandlerMap?: Record<string | number, ErrorHandler>
     logPrefix?: string
     onClose?: () => void
@@ -105,7 +106,7 @@ export default function () {
       description,
       rawMessage: !handler ? `${url ? `${url}\n\n` : ''}${rawErrorMessage}` : '',
       tags: handlerProps?.tags || parseErrorData<Array<ErrorHandlerTag>>(error, 'tags') || [],
-      actions: handlerProps?.actions || parseErrorData<Array<ErrorHandlerAction>>(error, 'actions') || [],
+      actions: props.actions || handlerProps?.actions || parseErrorData<Array<ErrorHandlerAction>>(error, 'actions') || [],
     }
 
     if (props.isFatal) {

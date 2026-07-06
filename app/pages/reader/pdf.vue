@@ -137,6 +137,14 @@ const { loadingLabel, loadingPercentage, loadFileAsBuffer, abortLoad } = useBook
 
 const isOnline = useOnline()
 
+const { getBookLoadErrorActions } = useReaderErrorActions({
+  readerType: 'pdf',
+  nftClassId,
+  nftId,
+  bookName: bookInfo.name,
+  isUploadedBook,
+})
+
 const { startReaderLoad } = useReaderFileLoad({
   isReaderLoading,
   readerType: 'pdf',
@@ -144,6 +152,7 @@ const { startReaderLoad } = useReaderFileLoad({
   getErrorTitle: () => isOnline.value
     ? $t('error_reader_load_pdf_failed')
     : $t('error_reader_book_not_available_offline'),
+  getErrorActions: getBookLoadErrorActions,
   handleError,
   abortLoad,
 })
@@ -315,6 +324,7 @@ async function handleTTSPlay() {
 function handlePDFError(error: Error) {
   handleError(error, {
     title: $t('error_reader_load_pdf_failed'),
+    actions: getBookLoadErrorActions(error),
     onClose: () => {
       navigateTo(localeRoute({ name: 'shelf' }))
     },

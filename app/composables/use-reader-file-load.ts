@@ -8,6 +8,9 @@ interface UseReaderFileLoadOptions {
   load: () => Promise<void>
   // Resolved by the page so the literal $t() keys stay greppable.
   getErrorTitle: () => string
+  // Builds the error modal's action buttons (contact CS / back to shelf) from
+  // the caught error. Optional so non-reader callers can omit it.
+  getErrorActions?: (error: unknown) => ErrorHandlerAction[]
   // The page's own useErrorHandler instance, whose modal the page renders.
   handleError: ReturnType<typeof useErrorHandler>['handleError']
   // Aborts the wedged in-flight book fetch so the retry doesn't wait out the
@@ -20,6 +23,7 @@ export default function useReaderFileLoad({
   readerType,
   load,
   getErrorTitle,
+  getErrorActions,
   handleError,
   abortLoad,
 }: UseReaderFileLoadOptions) {
@@ -43,6 +47,7 @@ export default function useReaderFileLoad({
       if (attempt !== loadAttempt) return
       await handleError(error, {
         title: getErrorTitle(),
+        actions: getErrorActions?.(error),
         onClose: () => {
           navigateTo(localeRoute({ name: 'shelf' }))
         },
