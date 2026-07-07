@@ -22,7 +22,11 @@ export function getErrorStatusCode(error: unknown) {
   if (error instanceof FetchError) {
     return error.statusCode
   }
-  return 400
+  // e.g. errors created by createError() carry their own statusCode
+  if (error instanceof Error && 'statusCode' in error && typeof error.statusCode === 'number') {
+    return error.statusCode
+  }
+  return undefined
 }
 
 export function parseErrorData<T>(error: unknown, key: string): T | undefined {
