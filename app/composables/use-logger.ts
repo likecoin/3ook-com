@@ -106,13 +106,37 @@ function derivePostHogEventUUID(eventName: string, transactionId: string): strin
   return uuidv5(`https://3ook.com/posthog-dedup/${eventName}/${transactionId}`, uuidv5.URL)
 }
 
+// Conversion events the API server also mirrors to GA4 via the Measurement Protocol
+// (logServerEvents -> logGA4Events), keyed to the same session by the gaClientId it persists
+// into Stripe metadata at checkout. GA4 has no client<->server dedup key (unlike PostHog's uuid
+// or Meta Pixel's eventID), so the browser must not emit an event the server also sends. The
+// server fires GA4 only when value+currency are present (logServerEvents returns early otherwise),
+// so the client mirrors that exact gate below; value-less calls (e.g. cart/gift begin_checkout,
+// which have no server mirror) must keep firing from the browser. Kept separate from
+// POSTHOG_SERVER_MIRRORED_EVENTS because PostHog is mirrored regardless of value+currency.
+const GA4_SERVER_MIRRORED_EVENTS = new Set<string>([
+  'begin_checkout',
+  'purchase',
+  'start_trial',
+  'subscribe',
+  'plus_acquisition',
+])
+
 export function useLogEvent(eventName: string, eventParams: EventParams = {}) {
-  try {
-    const { proxy } = useScriptGoogleAnalytics()
-    proxy.gtag('event', eventName, eventParams)
-  }
-  catch {
-    console.error(`Failed to track event: ${eventName}`, eventParams)
+  // Skip the client emit only when the server will mirror this conversion to GA4 — i.e. when
+  // value+currency are present, matching the server's own gate (see GA4_SERVER_MIRRORED_EVENTS)
+  // — to avoid double-counting; the server's Measurement Protocol event is then authoritative.
+  const isGA4ServerMirrored = GA4_SERVER_MIRRORED_EVENTS.has(eventName)
+    && typeof eventParams.value === 'number' && Number.isFinite(eventParams.value)
+    && typeof eventParams.currency === 'string' && !!eventParams.currency
+  if (!isGA4ServerMirrored) {
+    try {
+      const { proxy } = useScriptGoogleAnalytics()
+      proxy.gtag('event', eventName, eventParams)
+    }
+    catch (error) {
+      console.error(`Failed to track event: ${eventName}`, error, eventParams)
+    }
   }
 
   try {
