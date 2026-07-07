@@ -568,6 +568,9 @@ const activeTTSElementIndex = useSyncedBookSettings<number | undefined>({
 
 let isTTSDisplaying = false
 let pendingTTSDisplayCfi: string | null = null
+// Guards the one-time forced re-render when a vertical manuscript initially
+// rendered horizontally (writing-mode declared only on <body>).
+let hasEnforcedDefaultVerticalMode = false
 const epubCFI = new EpubCFI()
 
 function isSegmentOnCurrentPage(segmentCfi: string): boolean {
@@ -709,6 +712,12 @@ const EPUB_WRITING_MODES = {
 } as const
 type EpubWritingMode = typeof EPUB_WRITING_MODES[keyof typeof EPUB_WRITING_MODES]
 
+const EPUB_TEXT_DIRECTIONS = {
+  ltr: 'ltr',
+  rtl: 'rtl',
+} as const
+type EpubTextDirection = typeof EPUB_TEXT_DIRECTIONS[keyof typeof EPUB_TEXT_DIRECTIONS]
+
 const FALLBACK_WRITING_MODE = EPUB_WRITING_MODES.horizontal
 const WRITING_MODE_SETTING_KEY = 'writingMode'
 const EPUB_SETTING_NAMESPACE = 'epub'
@@ -716,7 +725,11 @@ const WRITING_MODE_DB_KEY = getBookSettingDbKey({
   key: WRITING_MODE_SETTING_KEY,
   namespace: EPUB_SETTING_NAMESPACE,
 })
-const originalWritingMode = ref<EpubWritingMode>(FALLBACK_WRITING_MODE)
+// The book's own writing mode, detected from the first un-overridden render;
+// stays `undefined` until then so a forced mode is never mistaken for the
+// book's natural layout when deriving page-progression direction.
+const detectedNaturalWritingMode = ref<EpubWritingMode>()
+const originalWritingMode = computed(() => detectedNaturalWritingMode.value ?? FALLBACK_WRITING_MODE)
 const writingModeSetting = useSyncedBookSettings<EpubWritingMode>({
   nftClassId: nftClassId.value,
   key: WRITING_MODE_SETTING_KEY,
@@ -729,15 +742,38 @@ const hasSavedWritingMode = computed(() => {
 const writingMode = computed(() => {
   return hasSavedWritingMode.value ? writingModeSetting.value : originalWritingMode.value
 })
-// Tracks EPUB `page-progression-direction` so horizontal RTL books (Arabic,
-// Hebrew) still get RTL page turns without being forced into vertical layout.
-const isWrittenFromRightToLeft = ref(false)
-const shouldFlipFromRightToLeft = computed(() =>
-  writingMode.value === EPUB_WRITING_MODES.vertical || isWrittenFromRightToLeft.value,
+// Force our writing-mode onto the document when the user picked a mode, or when
+// the manuscript is vertical: some vertical EPUBs declare writing-mode only on
+// <body>, which epub.js ignores (it sizes columns from <html>), so they render
+// horizontally unless we enforce it.
+const shouldEnforceWritingMode = computed(() =>
+  hasSavedWritingMode.value || originalWritingMode.value === EPUB_WRITING_MODES.vertical,
+)
+// The book's own `page-progression-direction`, from metadata. A vertical book's
+// implicit RTL must be told apart from a genuine horizontal-RTL script (Arabic,
+// Hebrew) so forcing horizontal layout doesn't wrongly keep RTL turns.
+const bookProgressionIsRTL = computed(() =>
+  loadedBook.value?.packaging?.metadata?.direction === EPUB_TEXT_DIRECTIONS.rtl,
+)
+// Requires a positive horizontal detection (not the default fallback): a book
+// whose natural mode we couldn't observe — e.g. reopened with a saved horizontal
+// override that forces the DOM — must not be treated as horizontal-RTL.
+const isBookHorizontalRTL = computed(() =>
+  bookProgressionIsRTL.value && detectedNaturalWritingMode.value === EPUB_WRITING_MODES.horizontal,
 )
 
-function detectWritingModeFromDocument(doc: Document): EpubWritingMode {
-  const computedMode = doc.defaultView?.getComputedStyle(doc.documentElement).writingMode
+function getDirectionForWritingMode(mode: EpubWritingMode): EpubTextDirection {
+  if (mode === EPUB_WRITING_MODES.vertical) return EPUB_TEXT_DIRECTIONS.rtl
+  return isBookHorizontalRTL.value ? EPUB_TEXT_DIRECTIONS.rtl : EPUB_TEXT_DIRECTIONS.ltr
+}
+// Left/right page turns and arrow visibility follow the page-progression
+// direction: RTL for vertical layouts and genuine horizontal-RTL scripts.
+const shouldFlipFromRightToLeft = computed(() =>
+  getDirectionForWritingMode(writingMode.value) === EPUB_TEXT_DIRECTIONS.rtl,
+)
+
+function detectElementWritingMode(doc: Document, element: Element | null): EpubWritingMode {
+  const computedMode = element ? doc.defaultView?.getComputedStyle(element).writingMode : undefined
   return computedMode?.startsWith('vertical-')
     ? EPUB_WRITING_MODES.vertical
     : EPUB_WRITING_MODES.horizontal
@@ -756,9 +792,10 @@ function getWritingModeStyles() {
 }
 
 function applyWritingModeToDocument(document: Document) {
-  // Only override when the user has explicitly picked a mode; otherwise let
-  // the book's own CSS declare writing-mode so epub.js sizes columns from it.
-  if (!hasSavedWritingMode.value) return
+  // Override only when enforcing (user picked a mode, or vertical manuscript);
+  // otherwise let the book's own CSS declare writing-mode so epub.js sizes
+  // columns from it.
+  if (!shouldEnforceWritingMode.value) return
   const documentElement = document.documentElement
   const body = document.body
   if (!documentElement || !body) return
@@ -811,10 +848,10 @@ function applyTheme() {
     'p, div, span, h1, h2, h3, h4, h5, h6, li': textCSS,
     'a': anchorCSS,
   }
-  // Only layer a writing-mode rule on top of the book's own CSS when the user
-  // has explicitly picked a mode; otherwise it changes the initial column
-  // layout calc and can skew textWidth/textHeight on the first rendered page.
-  if (hasSavedWritingMode.value) {
+  // Only layer a writing-mode rule on top of the book's own CSS when enforcing;
+  // otherwise it changes the initial column layout calc and can skew
+  // textWidth/textHeight on the first rendered page.
+  if (shouldEnforceWritingMode.value) {
     const writingModeStyles = getWritingModeStyles()
     themeRules.html = writingModeStyles
     Object.assign(bodyCSS, writingModeStyles)
@@ -852,12 +889,25 @@ useHead({
 const renditionElement = useTemplateRef<HTMLDivElement>('reader')
 const renditionViewWindow = ref<Window | undefined>(undefined)
 
+// Sync epub.js's page-progression direction with the writing mode, else
+// next()/prev() and the turn arrows stay in the book's original direction after
+// a switch (blank pages, snap-back). Set the fields directly rather than via
+// Rendition.direction(), which also re-displays — our callers already do that.
+function applyRenditionDirection() {
+  const currentRendition = rendition.value
+  if (!currentRendition) return
+  const direction = getDirectionForWritingMode(writingMode.value)
+  currentRendition.settings.direction = direction
+  currentRendition.manager?.direction(direction)
+}
+
 async function rerenderRenditionAtCurrentLocation() {
   if (!rendition.value) return
 
   const target = currentCfi.value || currentPageStartCfi.value || activeNavItemHref.value
   renderedHighlights.clear()
   isPageLoading.value = true
+  applyRenditionDirection()
   rendition.value.clear()
   await nextTick()
 
@@ -885,6 +935,10 @@ async function displayRendition(href?: string, { isSilentError = false } = {}) {
 
 async function loadEPub() {
   renderedHighlights.clear()
+  // Reset per-book writing-mode detection so a prior book's result can't leak in
+  // if this page instance is reused across books.
+  detectedNaturalWritingMode.value = undefined
+  hasEnforcedDefaultVerticalMode = false
   const buffer = await loadFileAsBuffer(bookFileURLWithCORS.value, bookFileCacheKey.value)
   if (!buffer) {
     return
@@ -965,6 +1019,12 @@ async function loadEPub() {
   await bookSettingsStore.ensureInitialized(nftClassId.value)
   await nextTick()
   applyTheme()
+  // A saved (or forced) writing mode overrides the DOM but not epub.js's
+  // page-progression direction, so sync it before the first paint — otherwise
+  // next()/prev() and the turn arrows stay reversed until the first re-render.
+  if (shouldEnforceWritingMode.value) {
+    applyRenditionDirection()
+  }
   isPageLoading.value = true
 
   let hasDisplayed = false
@@ -994,9 +1054,31 @@ async function loadEPub() {
     // index comes from the authoritative `relocated` handler instead.
     renditionViewWindow.value = view.window
     isPageLoading.value = false
-    isWrittenFromRightToLeft.value = view.settings.direction === 'rtl'
-    if (!hasSavedWritingMode.value && view.window?.document) {
-      originalWritingMode.value = detectWritingModeFromDocument(view.window.document)
+    if (!hasSavedWritingMode.value && detectedNaturalWritingMode.value === undefined && !hasEnforcedDefaultVerticalMode && view.window?.document) {
+      const renderedDoc = view.window.document
+      // epub.js sizes columns from <html>, and `writing-mode` doesn't inherit
+      // from <body> up to <html>, so read <html> first and only fall back to
+      // <body>. Reused below, so compute it once.
+      const htmlMode = detectElementWritingMode(renderedDoc, renderedDoc.documentElement)
+      detectedNaturalWritingMode.value = htmlMode === EPUB_WRITING_MODES.vertical
+        ? EPUB_WRITING_MODES.vertical
+        : detectElementWritingMode(renderedDoc, renderedDoc.body)
+      // A vertical manuscript epub.js laid out horizontally (writing-mode on
+      // <body> only, which epub.js ignores) needs the mode forced and one
+      // re-render to flip to vertical.
+      if (detectedNaturalWritingMode.value === EPUB_WRITING_MODES.vertical
+        && htmlMode === EPUB_WRITING_MODES.horizontal) {
+        hasEnforcedDefaultVerticalMode = true
+        applyWritingModeToLoadedSections()
+        applyTheme()
+        void rerenderRenditionAtCurrentLocation()
+      }
+      // A book that renders vertically on its own (writing-mode on <html>) never
+      // re-renders here, so epub.js keeps its metadata/default page-progression
+      // direction — sync next()/prev() and the turn arrows to the vertical RTL.
+      else if (detectedNaturalWritingMode.value === EPUB_WRITING_MODES.vertical) {
+        applyRenditionDirection()
+      }
     }
 
     if (cleanUpClickListener) {
