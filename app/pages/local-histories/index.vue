@@ -43,11 +43,22 @@
               <LazyLocalHistoriesMap
                 v-if="region.routeName === 'local-histories-taiwan'"
                 class="h-full w-full"
-              />
-              <LazyHKLocalHistoriesMap
+              >
+                <template #paths>
+                  <TaiwanMapPaths />
+                </template>
+              </LazyLocalHistoriesMap>
+              <LazyLocalHistoriesMap
                 v-else-if="region.routeName === 'local-histories-hongkong'"
                 class="h-full w-full"
-              />
+              >
+                <template #paths>
+                  <HKMapPaths />
+                </template>
+                <template #pins>
+                  <HKMapPins />
+                </template>
+              </LazyLocalHistoriesMap>
             </div>
           </ClientOnly>
           <div

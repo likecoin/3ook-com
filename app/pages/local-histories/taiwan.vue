@@ -81,11 +81,17 @@
       <div class="grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
         <section class="hidden bg-transparent lg:block">
           <LocalHistoriesMap
-            :active-region="activeRegion"
-            :selected-region="selectedRegion"
-            @region-hover="handleMapHover"
-            @region-click="handleMapClick"
-          />
+            class="aspect-[4/5]"
+            aria-label="台灣地圖分區"
+            :active-key="activeRegion"
+            :selected-key="selectedRegion"
+            @key-hover="handleMapHover"
+            @key-click="handleMapClick"
+          >
+            <template #paths>
+              <TaiwanMapPaths />
+            </template>
+          </LocalHistoriesMap>
         </section>
 
         <section class="flex flex-col gap-4">

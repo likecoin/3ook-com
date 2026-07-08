@@ -80,13 +80,26 @@
 
       <div class="grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
         <section class="hidden bg-transparent lg:block">
-          <HKLocalHistoriesMap
-            :active-area="activeArea"
-            :selected-area="selectedArea"
+          <LocalHistoriesMap
+            :style="{
+              '--map-fill': 'rgba(210, 140, 90, 0.45)',
+              '--map-stroke': 'rgba(180, 110, 70, 0.45)',
+              '--map-selected-fill': 'rgba(180, 100, 60, 0.5)',
+              '--map-pin-fill': 'rgba(180, 80, 50, 0.7)',
+            }"
+            :active-key="activeArea"
+            :selected-key="selectedArea"
             :aria-label="t('hk_local_histories_map_aria_label')"
-            @area-hover="handleMapHover"
-            @area-click="handleMapClick"
-          />
+            @key-hover="handleMapHover"
+            @key-click="handleMapClick"
+          >
+            <template #paths>
+              <HKMapPaths />
+            </template>
+            <template #pins>
+              <HKMapPins />
+            </template>
+          </LocalHistoriesMap>
         </section>
 
         <section class="flex flex-col gap-4">
