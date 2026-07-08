@@ -1,5 +1,3 @@
-import type { Magic } from 'magic-sdk'
-
 let pendingSessionCheck: Promise<void> | null = null
 
 export function useMagicSession() {
@@ -10,11 +8,12 @@ export function useMagicSession() {
     const connector = currentKey
       ? $wagmiConfig.state.connections.get(currentKey)?.connector
       : undefined
-    if (!connector || connector.id !== 'magic' || !('getMagic' in connector)) return
+    if (!connector || connector.id !== 'magic') return
 
     let needsReauth = false
     try {
-      const magic = await (connector as unknown as { getMagic: () => Promise<Magic> }).getMagic()
+      const magic = await resolveMagicFromConnector(connector)
+      if (!magic) return
       needsReauth = !(await magic.user.isLoggedIn())
     }
     catch {

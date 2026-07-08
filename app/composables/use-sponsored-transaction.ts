@@ -53,10 +53,11 @@ export function useSponsoredTransaction() {
       throw new Error('No active wallet connection')
     }
     const connector = $wagmiConfig.state.connections.get(currentKey)?.connector
-    if (!connector || !('getMagic' in connector)) {
+    const magic = await resolveMagicFromConnector(connector)
+    if (!magic) {
       throw new Error('Magic connector not available')
     }
-    return (connector as unknown as { getMagic: () => Promise<Magic> }).getMagic()
+    return magic
   }
 
   /* eslint-disable @typescript-eslint/no-explicit-any */

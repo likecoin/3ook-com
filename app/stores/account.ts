@@ -469,8 +469,8 @@ export const useAccountStore = defineStore('account', () => {
       let magicUserId: string | undefined
       let magicDIDToken: string | undefined
       const loginMethod = connector.id
-      if (loginMethod === 'magic' && 'getMagic' in connector) {
-        const magic = await (connector as unknown as { getMagic: () => Promise<Magic> }).getMagic()
+      const magic = loginMethod === 'magic' ? await resolveMagicFromConnector(connector) : null
+      if (magic) {
         try {
           const userInfo = await magic.user.getInfo()
           if (userInfo.email) {
@@ -648,14 +648,15 @@ export const useAccountStore = defineStore('account', () => {
   async function getMagicInstance(): Promise<Magic> {
     await ensureMagicSession()
     const connector = connectors.find((c: { id: string }) => c.id === 'magic')
-    if (!connector || !('getMagic' in connector)) {
+    const magic = await resolveMagicFromConnector(connector)
+    if (!magic) {
       throw createError({
         statusCode: 400,
         message: $t('error_connect_wallet_failed'),
         fatal: true,
       })
     }
-    return (connector as unknown as { getMagic: () => Promise<Magic> }).getMagic()
+    return magic
   }
 
   async function exportPrivateKey() {
