@@ -10,11 +10,13 @@ export function useStripeConnectManagement() {
   const { handleError } = useErrorHandler()
   const stripeConnectSessionAPI = useStripeConnectSessionAPI()
 
-  const stripeConnectStatus = ref<FetchStripeConnectStatusResponseData>({
+  // useState so every caller (account page watcher, creator card) shares
+  // one status; the page loads it on login/return and the card renders it.
+  const stripeConnectStatus = useState<FetchStripeConnectStatusResponseData>('stripe-connect-status', () => ({
     hasAccount: false,
     isReady: false,
-  })
-  const isStripeConnectLoading = ref(false)
+  }))
+  const isStripeConnectLoading = useState('stripe-connect-loading', () => false)
 
   const stripeConnectState = computed<StripeConnectState>(() => {
     if (stripeConnectStatus.value.isReady) return 'ready'
@@ -54,9 +56,19 @@ export function useStripeConnectManagement() {
     isStripeConnectLoading.value = false
   }
 
-  watch(() => user.value?.evmWallet, () => {
-    resetStripeConnectState()
-  })
+  // The status is shared state, so only one live instance should own the
+  // wallet-change reset; the flag hands ownership to the next instance when
+  // the current owner's scope is disposed.
+  const hasWalletWatcher = useState('stripe-connect-wallet-watcher', () => false)
+  if (!hasWalletWatcher.value) {
+    hasWalletWatcher.value = true
+    watch(() => user.value?.evmWallet, () => {
+      resetStripeConnectState()
+    })
+    onScopeDispose(() => {
+      hasWalletWatcher.value = false
+    })
+  }
 
   async function loadStripeConnectStatus() {
     if (isApp.value) return
@@ -106,7 +118,6 @@ export function useStripeConnectManagement() {
   return {
     stripeConnectStatus,
     isStripeConnectLoading,
-    stripeConnectState,
     stripeConnectStatusLabel,
     stripeConnectButtonLabel,
     loadStripeConnectStatus,

@@ -6,7 +6,7 @@
       title: 'text-lg font-bold',
       footer: 'flex justify-end gap-3',
     }"
-    @update:open="handleOpenUpdate"
+    @update:open="open => !open && emit('close')"
   >
     <template #footer>
       <UButton
@@ -27,17 +27,16 @@
 <script setup lang="ts">
 const emit = defineEmits<{
   close: []
+  // The opener applies the setting: useAdultContentSetting() keeps
+  // logged-out state per instance, so setting it here would not reach
+  // the instance rendering the switch.
+  confirm: []
 }>()
 
 const { t: $t } = useI18n()
-const isAdultContentEnabled = useAdultContentSetting()
-
-function handleOpenUpdate(open: boolean) {
-  if (!open) emit('close')
-}
 
 function confirmAdultContent() {
-  isAdultContentEnabled.value = true
+  emit('confirm')
   emit('close')
 }
 </script>
