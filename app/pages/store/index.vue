@@ -130,7 +130,9 @@
           v-model:open="isSearchInputOpen"
           :close="false"
           :ui="{
-            content: 'max-phone:top-30 top-1/4',
+            // translate-y-0 cancels the modal theme's default -translate-y-1/2 so the
+            // box anchors by its top edge and grows downward as suggestions appear.
+            content: 'max-phone:top-30 top-1/4 translate-y-0',
             body: 'p-0 sm:p-0',
             footer: [
               'flex',
@@ -159,6 +161,7 @@
                 v-model="searchInputValue"
                 class="w-full"
                 icon="i-material-symbols-search-rounded"
+                :loading="isSearchSuggestionsLoading"
                 size="xl"
                 variant="none"
                 :placeholder="$t('store_search_input_placeholder')"
@@ -167,7 +170,9 @@
                   base: 'py-5 [&::-webkit-search-cancel-button]:appearance-none',
                   trailing: 'pe-2',
                 }"
-                @blur="isSearchInputOpen = false"
+                @compositionstart="isSearchInputComposing = true"
+                @compositionend="isSearchInputComposing = false"
+                @blur="handleSearchInputBlur"
               >
                 <template
                   v-if="searchInputValue.length"
@@ -183,6 +188,39 @@
                 </template>
               </UInput>
             </form>
+
+            <ul
+              v-if="shouldShowSearchSuggestions"
+              data-search-suggestions
+              class="border-t border-default max-h-80 overflow-y-auto py-2"
+              :aria-label="$t('store_search_suggestions_label')"
+            >
+              <li
+                v-for="suggestion in searchSuggestions"
+                :key="suggestion.classId"
+              >
+                <!-- mousedown.prevent keeps focus on the input so its blur
+                     handler doesn't close the modal before the click lands. -->
+                <button
+                  type="button"
+                  class="flex w-full items-center gap-3 px-4 py-2 text-left hover:bg-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
+                  @mousedown.prevent
+                  @click="handleSearchSuggestionSelect(suggestion)"
+                >
+                  <img
+                    v-if="suggestion.thumbnailUrl"
+                    :src="suggestion.thumbnailUrl"
+                    alt=""
+                    class="h-12 w-9 shrink-0 rounded object-cover"
+                    loading="lazy"
+                  >
+                  <span
+                    class="line-clamp-2 text-sm"
+                    v-text="suggestion.title"
+                  />
+                </button>
+              </li>
+            </ul>
           </template>
         </UModal>
 
@@ -1607,10 +1645,47 @@ async function handleLibraryLogoClick() {
 
 const isSearchInputOpen = ref(false)
 const searchInputValue = ref('')
+// Track IME composition so live suggestions don't fire on half-typed CJK input.
+const isSearchInputComposing = ref(false)
+
+const { suggestions: searchSuggestions, isLoading: isSearchSuggestionsLoading } = useStoreSearchSuggestions(
+  searchInputValue,
+  {
+    isLibrary: isLibraryTab,
+    isComposing: isSearchInputComposing,
+  },
+)
+
+const shouldShowSearchSuggestions = computed(() =>
+  isSearchInputOpen.value
+  && searchInputValue.value.trim().length >= SUGGESTION_MIN_TERM_LENGTH
+  && searchSuggestions.value.length > 0,
+)
+
+// Keep the modal open when focus moves into the suggestions list so keyboard users
+// can Tab from the input to a suggestion; close on any other blur.
+function handleSearchInputBlur(event: FocusEvent) {
+  const nextFocused = event.relatedTarget as HTMLElement | null
+  if (nextFocused?.closest('[data-search-suggestions]')) return
+  isSearchInputOpen.value = false
+}
 
 function handleSearchTagClick() {
   useLogEvent(isLibraryTab.value ? 'library_tag_search_click' : 'store_tag_search_click')
   searchInputValue.value = ''
+}
+
+async function handleSearchSuggestionSelect(suggestion: StoreSearchSuggestion) {
+  useLogEvent(isLibraryTab.value ? 'library_search_suggestion_click' : 'store_search_suggestion_click', {
+    search_term: searchInputValue.value,
+    nft_class_id: suggestion.classId,
+    item_name: suggestion.title,
+  })
+  isSearchInputOpen.value = false
+  await navigateTo(localeRoute({
+    name: isLibraryTab.value ? 'library-nftClassId' : 'store-nftClassId',
+    params: { nftClassId: suggestion.classId },
+  }))
 }
 
 function handleClearSearchInputButton() {

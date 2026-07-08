@@ -935,6 +935,7 @@
   "store_search_input_placeholder": "Search...",
   "store_search_label": "Search",
   "store_search_prefix": "Search: ",
+  "store_search_suggestions_label": "Search suggestions",
   "store_showing_recommendations": "Here are some recommended books for you",
   "store_tag_more_categories": "More",
   "store_tag_more_categories_label": "More categories",
