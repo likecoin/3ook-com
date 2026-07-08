@@ -112,89 +112,62 @@
                 </div>
               </template>
             </BottomSlideover>
-            <USlideover
+            <ReaderLeftSidebar
               v-model:open="isLeftSidebarOpen"
-              side="left"
-              :close="false"
-              :ui="{
-                body: 'p-0 sm:p-0 flex flex-col overflow-hidden select-none',
-                content: 'max-w-[calc(100vw-44px)] laptop:max-w-[425px] border-r border-gray-500',
-              }"
+              v-model:tab="leftSidebarTab"
+              has-annotations
+              :disabled="isReaderLoading"
+              @trigger-click="handleLeftSidebarTriggerClick"
             >
-              <UButton
-                :aria-label="$t('reader_menu_button')"
-                icon="i-material-symbols-format-list-bulleted"
-                :disabled="isReaderLoading"
-                variant="ghost"
-                color="neutral"
-                @click="handleLeftSidebarTriggerClick"
-              />
-
-              <template #body>
-                <UTabs
-                  v-model="leftSidebarTab"
-                  :items="leftSidebarTabItems"
-                  class="h-full"
-                  color="neutral"
-                  :ui="{
-                    root: 'gap-0',
-                    list: 'shrink-0 min-h-[56px] bg-transparent border-b border-gray-500 rounded-none',
-                    content: 'flex-1 min-h-0 overflow-y-auto p-0',
-                    label: 'max-tablet:sr-only',
-                    leadingIcon: 'tablet:hidden',
-                  }"
+              <template #toc>
+                <p
+                  v-if="!navItems.length"
+                  class="text-muted py-8 text-center"
+                  v-text="$t('reader_toc_empty')"
+                />
+                <ul
+                  v-else
+                  class="divide-muted divide-y"
                 >
-                  <template #toc>
-                    <p
-                      v-if="!navItems.length"
-                      class="text-muted py-8 text-center"
-                      v-text="$t('reader_toc_empty')"
+                  <li
+                    v-for="item in navItems"
+                    :ref="item.href === activeNavItemHref ? 'activeNavItemElements' : undefined"
+                    :key="item.href"
+                  >
+                    <UButton
+                      :label="item.label"
+                      variant="link"
+                      :color="item.href === activeNavItemHref ? 'primary' : 'neutral'"
+                      :ui="{
+                        label: 'text-left leading-[44px]',
+                        base: 'justify-start pl-6 pr-5.5 py-0',
+                      }"
+                      :trailing-icon="item.href === activeNavItemHref ? 'i-material-symbols-visibility-rounded' : undefined"
+                      block
+                      @click="() => {
+                        isLeftSidebarOpen = false
+                        setActiveNavItem(item)
+                      }"
                     />
-                    <ul
-                      v-else
-                      class="divide-muted divide-y"
-                    >
-                      <li
-                        v-for="item in navItems"
-                        :ref="item.href === activeNavItemHref ? 'activeNavItemElements' : undefined"
-                        :key="item.href"
-                      >
-                        <UButton
-                          :label="item.label"
-                          variant="link"
-                          :color="item.href === activeNavItemHref ? 'primary' : 'neutral'"
-                          :ui="{
-                            label: 'text-left leading-[44px]',
-                            base: 'justify-start pl-6 pr-5.5 py-0',
-                          }"
-                          :trailing-icon="item.href === activeNavItemHref ? 'i-material-symbols-visibility-rounded' : undefined"
-                          block
-                          @click="() => {
-                            isLeftSidebarOpen = false
-                            setActiveNavItem(item)
-                          }"
-                        />
-                      </li>
-                    </ul>
-                  </template>
-
-                  <template #bookmarks>
-                    <BookmarksList
-                      :items="bookmarks"
-                      @navigate="handleBookmarkNavigate"
-                      @delete="handleBookmarkDelete"
-                    />
-                  </template>
-
-                  <template #annotations>
-                    <AnnotationsList
-                      :items="annotations"
-                      @navigate="handleAnnotationNavigate"
-                    />
-                  </template>
-                </UTabs>
+                  </li>
+                </ul>
               </template>
-            </USlideover>
+
+              <template #bookmarks>
+                <BookmarksList
+                  :items="bookmarks"
+                  @navigate="handleBookmarkNavigate"
+                  @delete="handleBookmarkDelete"
+                />
+              </template>
+
+              <template #annotations>
+                <AnnotationsList
+                  :items="annotations"
+                  @navigate="handleAnnotationNavigate"
+                />
+              </template>
+            </ReaderLeftSidebar>
             <ReaderSearch
               ref="readerSearch"
               v-model:open="isSearchOpen"
@@ -364,6 +337,7 @@ import ePub, {
   type Location,
   type Section,
 } from '@likecoin/epub-ts'
+import type { ReaderLeftSidebarTab } from '~/components/ReaderLeftSidebar.props'
 import { ANNOTATION_COLORS_MAP, ANNOTATION_TEXT_MAX_LENGTH } from '~~/shared/constants/annotations'
 import { SEARCH_MAX_RESULTS } from '~~/shared/constants/reader-search'
 
@@ -463,29 +437,8 @@ function getCacheKeyWithSuffix(suffix: ReaderCacheKeySuffix) {
 
 const isReaderLoading = ref(true)
 
-type LeftSidebarTab = 'toc' | 'bookmarks' | 'annotations'
 const isLeftSidebarOpen = ref(false)
-const leftSidebarTab = ref<LeftSidebarTab>('toc')
-const leftSidebarTabItems = computed(() => [
-  {
-    value: 'toc',
-    slot: 'toc' as const,
-    label: $t('reader_toc_title'),
-    icon: 'i-material-symbols-toc-rounded',
-  },
-  {
-    value: 'bookmarks',
-    slot: 'bookmarks' as const,
-    label: $t('reader_bookmarks_title'),
-    icon: 'i-material-symbols-bookmarks-rounded',
-  },
-  {
-    value: 'annotations',
-    slot: 'annotations' as const,
-    label: $t('reader_annotations_title'),
-    icon: 'i-material-symbols-edit-note-rounded',
-  },
-])
+const leftSidebarTab = ref<ReaderLeftSidebarTab>('toc')
 
 const { isIOS, isAndroid } = useAppDetection()
 
