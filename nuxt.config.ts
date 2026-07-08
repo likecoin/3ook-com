@@ -1,5 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 import { createResolver } from '@nuxt/kit'
+import type { NitroRouteConfig } from 'nitropack'
 import type { ConfigDefaults } from 'posthog-js'
 
 const { resolve } = createResolver(import.meta.url)
@@ -16,6 +17,18 @@ const isDevelopment = NODE_ENV === 'development'
 // Workbox cacheName for document navigations; shared so the offline app-shell
 // fallback below opens the same cache the NetworkFirst route writes to.
 const HTML_PAGES_CACHE = 'html-pages'
+
+// Shared CORS rule for public store API routes consumed by *.3ook.com origins.
+const STORE_API_CORS_RULE: NitroRouteConfig = {
+  security: {
+    corsHandler: {
+      origin: '^https?:\\/\\/([a-zA-Z0-9-]+\\.)?3ook\\.com$',
+      useRegExp: true,
+      methods: ['GET', 'OPTIONS'],
+      allowHeaders: ['Content-Type', 'Authorization'],
+    },
+  },
+}
 
 export default defineNuxtConfig({
   modules: [
@@ -141,56 +154,11 @@ export default defineNuxtConfig({
     '/.well-known/apple-app-site-association': {
       headers: { 'Content-Type': 'application/json' },
     },
-    '/api/store/products': {
-      security: {
-        corsHandler: {
-          origin: '^https?:\\/\\/([a-zA-Z0-9-]+\\.)?3ook\\.com$',
-          useRegExp: true,
-          methods: ['GET', 'OPTIONS'],
-          allowHeaders: ['Content-Type', 'Authorization'],
-        },
-      },
-    },
-    '/api/store/products/**': {
-      security: {
-        corsHandler: {
-          origin: '^https?:\\/\\/([a-zA-Z0-9-]+\\.)?3ook\\.com$',
-          useRegExp: true,
-          methods: ['GET', 'OPTIONS'],
-          allowHeaders: ['Content-Type', 'Authorization'],
-        },
-      },
-    },
-    '/api/store/tags': {
-      security: {
-        corsHandler: {
-          origin: '^https?:\\/\\/([a-zA-Z0-9-]+\\.)?3ook\\.com$',
-          useRegExp: true,
-          methods: ['GET', 'OPTIONS'],
-          allowHeaders: ['Content-Type', 'Authorization'],
-        },
-      },
-    },
-    '/api/store/tags/**': {
-      security: {
-        corsHandler: {
-          origin: '^https?:\\/\\/([a-zA-Z0-9-]+\\.)?3ook\\.com$',
-          useRegExp: true,
-          methods: ['GET', 'OPTIONS'],
-          allowHeaders: ['Content-Type', 'Authorization'],
-        },
-      },
-    },
-    '/api/store/staking-books': {
-      security: {
-        corsHandler: {
-          origin: '^https?:\\/\\/([a-zA-Z0-9-]+\\.)?3ook\\.com$',
-          useRegExp: true,
-          methods: ['GET', 'OPTIONS'],
-          allowHeaders: ['Content-Type', 'Authorization'],
-        },
-      },
-    },
+    '/api/store/products': STORE_API_CORS_RULE,
+    '/api/store/products/**': STORE_API_CORS_RULE,
+    '/api/store/tags': STORE_API_CORS_RULE,
+    '/api/store/tags/**': STORE_API_CORS_RULE,
+    '/api/store/staking-books': STORE_API_CORS_RULE,
   },
 
   sourcemap: {
