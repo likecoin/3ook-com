@@ -1,6 +1,5 @@
-import { useDocumentVisibility, useEventListener, useStorage, useThrottleFn } from '@vueuse/core'
+import { useDocumentVisibility, useEventListener, useStorage } from '@vueuse/core'
 import type { CustomVoiceData, AffiliateVoiceData } from '~~/shared/types/custom-voice'
-import { computeTTSTextSig, decodeAffiliateVoiceId, isAffiliateVoiceId } from '~~/shared/utils/tts-sig'
 
 export const TTS_ERROR_NOT_ALLOWED = 'NotAllowedError'
 
@@ -20,11 +19,6 @@ export function formatTTSError(error: string | Event | MediaError): string {
   }
   if (error instanceof Event) return error.type || 'event'
   return 'unknown'
-}
-
-export function parseLanguageVoice(languageVoice: string): { language: string, voiceId: string } {
-  const [language = '', ...voiceIdParts] = languageVoice.split('_')
-  return { language, voiceId: voiceIdParts.join('_') }
 }
 
 interface TTSOptions {
@@ -75,42 +69,9 @@ export function useTextToSpeech(options: TTSOptions) {
     affiliateVoices: options.affiliateVoices,
   })
 
-  function resolveVoiceTier(languageVoice: string): 'system' | 'affiliate' | 'custom' {
-    if (languageVoice === 'custom') return 'custom'
-    if (isAffiliateVoiceId(languageVoice)) return 'affiliate'
-    return 'system'
-  }
-
-  const { isApp, isNativeBridge, appPlatform } = useAppDetection()
+  const { isNativeBridge } = useAppDetection()
 
   const ttsSessionId = ref('')
-
-  function buildTTSEventPayload(extras: Record<string, unknown> = {}) {
-    const languageVoice = ttsLanguageVoice.value || ''
-    const { voiceId } = parseLanguageVoice(languageVoice)
-    return {
-      nft_class_id: nftClassId,
-      tts_session_id: ttsSessionId.value || undefined,
-      is_liker_plus_at_event_time: !!sessionUser.value?.isLikerPlus,
-      is_library_book: !!toValue(options.isLibraryBook),
-      ...(ttsTrialUsage.isLoaded.value
-        ? {
-            cumulative_chars_used: ttsTrialUsage.charactersUsed.value,
-            chars_remaining: ttsTrialUsage.charactersRemaining.value,
-          }
-        : {}),
-      book_language: toValue(bookLanguage) || undefined,
-      voice_id: voiceId || languageVoice || undefined,
-      language_voice: languageVoice || undefined,
-      voice_tier: resolveVoiceTier(languageVoice),
-      playback_rate: effectivePlaybackRate.value,
-      current_segment_index: currentTTSSegmentIndex.value,
-      total_segments: ttsSegments.value.length,
-      app_platform: appPlatform.value,
-      is_app: isApp.value,
-      ...extras,
-    }
-  }
 
   // Both players are created upfront (inert until load()); the proxy below
   // delegates to the correct one based on the reactive isNativeBridge flag.
@@ -140,17 +101,6 @@ export function useTextToSpeech(options: TTSOptions) {
     return pos ? Math.round(pos.position * 1000) : undefined
   }
 
-  function logSkip(
-    event: 'tts_skip_forward' | 'tts_skip_backward' | 'tts_skip_to_index',
-    fromIndex: number,
-    toIndex: number,
-  ) {
-    useLogEvent(event, buildTTSEventPayload({
-      from_index: fromIndex,
-      to_index: toIndex,
-    }))
-  }
-
   // Playback rate options and storage
   const ttsConfigCacheKey = computed(() => getTTSConfigCacheKey(config.public.cacheKeyPrefix))
 
@@ -177,6 +127,17 @@ export function useTextToSpeech(options: TTSOptions) {
   const MAX_CONSECUTIVE_ERRORS = 3
   const currentTTSSegmentIndex = ref(0)
   const ttsSegments = ref<TTSSegment[]>([])
+
+  const { buildTTSEventPayload, logSkip } = useTTSAnalytics({
+    nftClassId,
+    ttsSessionId,
+    ttsLanguageVoice,
+    effectivePlaybackRate,
+    currentTTSSegmentIndex,
+    ttsSegments,
+    bookLanguage,
+    isLibraryBook: options.isLibraryBook,
+  })
 
   // hadBuffering survives past play, so it can't be derived from
   // isTextToSpeechLoading (which play resets before we read the timer).
@@ -426,110 +387,32 @@ export function useTextToSpeech(options: TTSOptions) {
 
   onScopeDispose(() => cancelPendingSkip())
 
-  // Media Session (web only)
-  function updatePositionState() {
-    if (!('mediaSession' in navigator)) return
-    const pos = player.getPosition()
-    if (pos) {
-      try {
-        navigator.mediaSession.setPositionState({
-          duration: pos.duration,
-          playbackRate: effectivePlaybackRate.value,
-          position: pos.position,
-        })
-      }
-      catch {
-        // Some browsers throw if duration is not finite
-      }
-    }
-  }
-
-  // The web audio engine fires 'positionState' from `ontimeupdate` up to
-  // ~60x/sec. setPositionState() hits the iOS WebKit Now-Playing service on
-  // every call, wasting CPU (and battery) to keep the lock-screen scrubber
-  // accurate to the millisecond — ~1s granularity is plenty. The native audio
-  // engine never emits 'positionState', so this throttle is a web/PWA-only path.
-  const throttledUpdatePositionState = useThrottleFn(updatePositionState, 1000, true)
+  const {
+    updatePositionState,
+    throttledUpdatePositionState,
+    setupMediaSession,
+    clearMediaSessionPlaybackState,
+  } = useTTSMediaSession({
+    isNativeBridge,
+    effectivePlaybackRate,
+    isTextToSpeechPlaying,
+    bookName,
+    bookChapterName,
+    bookAuthorName,
+    bookCoverSrc,
+    player,
+    onPlay: () => startTextToSpeech(),
+    onPause: () => pauseTextToSpeech(),
+    onStop: () => stopTextToSpeech(),
+    onPreviousTrack: () => skipBackward(),
+    onNextTrack: () => skipForward(),
+  })
 
   player.on('positionState', throttledUpdatePositionState)
 
   player.on('rateForced', (rate) => {
     effectivePlaybackRate.value = rate
     updatePositionState()
-  })
-
-  function setupMediaSession() {
-    if (isNativeBridge.value) return
-    try {
-      if ('mediaSession' in navigator) {
-        navigator.mediaSession.metadata = new MediaMetadata({
-          title: toValue(bookName),
-          album: toValue(bookChapterName) || toValue(bookName),
-          artist: toValue(bookAuthorName),
-          artwork: toValue(bookCoverSrc)
-            ? [
-                {
-                  src: toValue(bookCoverSrc) as string,
-                },
-              ]
-            : undefined,
-        })
-
-        navigator.mediaSession.setActionHandler('play', () => {
-          startTextToSpeech()
-        })
-
-        navigator.mediaSession.setActionHandler('pause', () => {
-          pauseTextToSpeech()
-        })
-
-        navigator.mediaSession.setActionHandler('previoustrack', () => {
-          skipBackward()
-        })
-
-        navigator.mediaSession.setActionHandler('nexttrack', () => {
-          skipForward()
-        })
-
-        navigator.mediaSession.setActionHandler('stop', () => {
-          stopTextToSpeech()
-        })
-
-        navigator.mediaSession.setActionHandler('seekbackward', (details) => {
-          const pos = player.getPosition()
-          if (pos) {
-            const offset = details.seekOffset || 10
-            player.seek(pos.position - offset)
-            updatePositionState()
-          }
-        })
-
-        navigator.mediaSession.setActionHandler('seekforward', (details) => {
-          const pos = player.getPosition()
-          if (pos) {
-            const offset = details.seekOffset || 10
-            player.seek(pos.position + offset)
-            updatePositionState()
-          }
-        })
-
-        navigator.mediaSession.setActionHandler('seekto', (details) => {
-          if (details.seekTime != null) {
-            player.seek(details.seekTime)
-            updatePositionState()
-          }
-        })
-      }
-    }
-    catch (error) {
-      console.error('Error setting up Media Session:', error)
-    }
-  }
-
-  watch(isTextToSpeechPlaying, () => {
-    if (!isNativeBridge.value && 'mediaSession' in navigator) {
-      navigator.mediaSession.playbackState = isTextToSpeechPlaying.value ? 'playing' : 'paused'
-    }
   })
 
   watch(ttsLanguageVoice, (newLanguage, oldLanguage) => {
@@ -543,11 +426,6 @@ export function useTextToSpeech(options: TTSOptions) {
     }
   })
 
-  function resolvePrivateVoiceLanguage(voiceLanguage?: string): string {
-    const lang = toValue(bookLanguage) || 'zh-HK'
-    return lang.toLowerCase().startsWith('en') ? 'en-US' : (voiceLanguage || 'zh-HK')
-  }
-
   watch(ttsPlaybackRate, (newRate, oldRate) => {
     effectivePlaybackRate.value = newRate
     player.setRate(newRate)
@@ -555,27 +433,6 @@ export function useTextToSpeech(options: TTSOptions) {
       previous_rate: oldRate,
     }))
   })
-
-  function appendCommonParams(
-    params: URLSearchParams,
-    { text, voiceId, language, isPrivateVoice }: {
-      text: string
-      voiceId: string
-      language: string
-      isPrivateVoice: boolean
-    },
-  ) {
-    params.set('nft_class_id', nftClassId)
-    // System voices use an empty-token sig so URLs converge across users,
-    // enabling shared Cloudflare edge caching. Private voices (custom +
-    // affiliate) use a per-user ttsKey so URLs stay unique per wallet — the
-    // edge cannot serve one user's cloned/exclusive voice audio to another.
-    const sigToken = isPrivateVoice ? (sessionUser.value?.ttsKey || '') : ''
-    params.set('sig', computeTTSTextSig({ token: sigToken, voiceId, language, nftClassId, text }))
-    if (isNativeBridge.value) {
-      params.set('blocking', '1')
-    }
-  }
 
   function recordOptimisticSegmentUsage(sanitizedText: string) {
     // Custom voice is gated to Plus; the server rejects non-Plus requests,
@@ -591,45 +448,15 @@ export function useTextToSpeech(options: TTSOptions) {
     const sanitizedText = sanitizeTTSText(element.text)
     recordOptimisticSegmentUsage(sanitizedText)
 
-    if (isAffiliateVoiceId(ttsLanguageVoice.value)) {
-      const slot = decodeAffiliateVoiceId(ttsLanguageVoice.value)
-      const voice = slot
-        ? options.affiliateVoices?.value?.find(v => v.id === slot)
-        : undefined
-      const language = resolvePrivateVoiceLanguage(voice?.language)
-      const params = new URLSearchParams({
-        text: sanitizedText,
-        language,
-        voice_id: ttsLanguageVoice.value,
-      })
-      appendCommonParams(params, { text: sanitizedText, voiceId: ttsLanguageVoice.value, language, isPrivateVoice: true })
-      return `/api/reader/tts?${params.toString()}`
-    }
-
-    if (ttsLanguageVoice.value === 'custom') {
-      const language = resolvePrivateVoiceLanguage(options.customVoice?.value?.voiceLanguage)
-      const params = new URLSearchParams({
-        text: sanitizedText,
-        language,
-        voice_id: 'custom',
-      })
-      appendCommonParams(params, { text: sanitizedText, voiceId: 'custom', language, isPrivateVoice: true })
-      if (options.customVoice?.value?.updatedAt) {
-        params.set('_t', options.customVoice.value.updatedAt.toString())
-      }
-      return `/api/reader/tts?${params.toString()}`
-    }
-
-    const parsed = parseLanguageVoice(ttsLanguageVoice.value)
-    const language = parsed.language || 'zh-HK'
-    const voiceId = parsed.voiceId
-    const params = new URLSearchParams({
-      text: sanitizedText,
-      language,
-      voice_id: voiceId,
+    return buildTTSAudioURL(sanitizedText, {
+      nftClassId,
+      languageVoice: ttsLanguageVoice.value,
+      bookLanguage: toValue(bookLanguage),
+      ttsKey: sessionUser.value?.ttsKey,
+      isBlocking: isNativeBridge.value,
+      affiliateVoices: options.affiliateVoices?.value,
+      customVoice: options.customVoice?.value,
     })
-    appendCommonParams(params, { text: sanitizedText, voiceId, language, isPrivateVoice: false })
-    return `/api/reader/tts?${params.toString()}`
   }
 
   function playNextElement() {
@@ -801,9 +628,7 @@ export function useTextToSpeech(options: TTSOptions) {
     effectivePlaybackRate.value = ttsPlaybackRate.value
     ttsSessionId.value = ''
 
-    if (!isNativeBridge.value && 'mediaSession' in navigator) {
-      navigator.mediaSession.playbackState = 'none'
-    }
+    clearMediaSessionPlaybackState()
   }
 
   function cyclePlaybackRate() {
