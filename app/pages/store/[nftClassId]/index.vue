@@ -300,112 +300,7 @@
         </template>
 
         <template #staking-info>
-          <StakingControl
-            class="tablet:hidden"
-            :nft-class-id="nftClassId"
-            :is-control-hidden="isApp"
-          />
-          <div class="max-tablet:hidden space-y-4 text-highlighted">
-            <div class="grid grid-cols-1 tablet:grid-cols-2 gap-4">
-              <UCard :ui="{ body: 'p-4' }">
-                <div class="text-center">
-                  <BalanceLabel
-                    class="text-2xl"
-                    :value="formattedTotalStake"
-                    :is-compact="true"
-                  />
-                  <div
-                    class="mt-1 text-sm text-muted"
-                    v-text="$t('staking_total_staked')"
-                  />
-                </div>
-              </UCard>
-              <UCard :ui="{ body: 'p-4' }">
-                <div class="text-center">
-                  <div
-                    class="text-2xl font-semibold"
-                    v-text="numberOfStakers.toLocaleString()"
-                  />
-                  <div
-                    class="mt-1 text-sm text-muted"
-                    v-text="$t('staking_total_stakers')"
-                  />
-                </div>
-              </UCard>
-              <UCard
-                v-if="stakingRank > 0"
-                :ui="{ body: 'p-4' }"
-              >
-                <div class="text-center">
-                  <div class="text-2xl font-semibold">
-                    #{{ stakingRank }}
-                  </div>
-                  <div
-                    class="mt-1 text-sm text-muted"
-                    v-text="$t('staking_like_rank')"
-                  />
-                </div>
-              </UCard>
-              <UCard
-                v-if="hasLoggedIn"
-                :ui="{ body: 'p-4' }"
-              >
-                <div class="text-center">
-                  <BalanceLabel
-                    class="text-2xl"
-                    :value="formattedUserStake"
-                    :is-compact="true"
-                  />
-
-                  <div
-                    class="mt-1 text-sm text-muted"
-                    v-text="$t('staking_your_stake')"
-                  />
-                </div>
-              </UCard>
-            </div>
-
-            <div
-              v-if="hasLoggedIn && pendingRewards > 0n"
-              class="mt-4"
-            >
-              <UCard :ui="{ body: 'p-4' }">
-                <div class="flex justify-between items-center">
-                  <div>
-                    <BalanceLabel
-                      class="text-2xl"
-                      :value="formattedPendingRewards"
-                    />
-                    <div
-                      class="mt-1 text-sm text-muted"
-                      v-text="$t('staking_pending_rewards')"
-                    />
-                  </div>
-                  <UButton
-                    v-if="!isApp"
-                    :label="$t('staking_claim_rewards')"
-                    color="primary"
-                    variant="outline"
-                    :loading="isClaimingRewards"
-                    @click="handleClaimRewards"
-                  />
-                </div>
-              </UCard>
-            </div>
-
-            <div class="mt-6">
-              <NuxtLink
-                :to="localeRoute({ name: 'about', hash: '#curate-to-earn' })"
-                class="inline-flex items-center gap-1 text-sm hover:underline"
-              >
-                <UIcon
-                  name="i-material-symbols-help-outline-rounded"
-                  size="16"
-                />
-                <span>{{ $t('staking_learn_more') }}</span>
-              </NuxtLink>
-            </div>
-          </div>
+          <ProductStakingInfo :nft-class-id="nftClassId" />
         </template>
 
         <template #buyer-messages>
@@ -514,144 +409,18 @@
                 { 'max-tablet:hidden': isLibrary },
               ]"
             >
-              <ul
+              <ProductPricingSelector
                 v-if="pricingItems.length && !isLibrary"
-                class="space-y-2"
-              >
-                <li
-                  v-for="(item, index) in pricingItems"
-                  :key="item.name"
-                >
-                  <button
-                    :class="[
-                      'flex',
-                      'items-center',
-                      'gap-3',
-                      'dark:bg-neutral-800',
-                      'hover:bg-muted',
-                      'hover:dark:bg-neutral-700/50',
-                      'rounded-lg',
-                      'w-full',
-                      'p-4',
-                      'border-2',
-                      item.isSelected
-                        ? 'border-neutral-900 dark:border-neutral-300'
-                        : 'border-neutral-300 dark:border-neutral-700',
-                      'transition-[background-color, border-color]',
-                      'duration-200',
-                      'ease-in-out',
-                      { 'cursor-pointer': !item.isSoldOut },
-                    ]"
-                    :aria-pressed="item.isSelected"
-                    :disabled="item.isSoldOut"
-                    @click="handlePricingItemClick(index)"
-                  >
-                    <div class="relative shrink-0 w-[24px] h-[24px] flex items-center justify-center">
-                      <span
-                        :class="[
-                          'absolute',
-                          'w-[20px]',
-                          'h-[20px]',
-                          item.isSelected ? 'bg-theme-cyan' : 'bg-white dark:bg-black',
-                          'rounded-full',
-                          'outline',
-                          'outline-neutral-300',
-                        ]"
-                      />
-                      <UIcon
-                        v-if="item.isSelected"
-                        class="absolute text-neutral-900 z-10"
-                        name="i-material-symbols-check-circle"
-                        size="24"
-                      />
-                    </div>
-                    <div class="grow">
-                      <div
-                        :class="[
-                          'flex',
-                          'justify-between',
-                          'items-center',
-                          'gap-3',
-                          item.isSoldOut ? 'text-dimmed' : 'text-highlighted',
-                        ]"
-                      >
-                        <span
-                          class="font-semibold text-left"
-                          v-text="item.label"
-                        />
-                        <span
-                          v-if="item.isSoldOut"
-                          class="text-sm font-semibold"
-                          v-text="$t('product_page_sold_out_button_label')"
-                        />
-                        <span
-                          v-else
-                          class="flex flex-col items-end text-right"
-                        >
-                          <template v-if="item?.discountedPrice">
-                            <span class="flex flex-nowrap items-center text-highlighted font-semibold">
-                              <span v-text="item.discountedPrice" />
-                              <PlusBadge
-                                v-if="isLikerPlus"
-                                class="ml-1"
-                              />
-                            </span>
-                            <span class="text-xs text-dimmed line-through">
-                              <span v-text="item.originalPrice" />
-                            </span>
-                          </template>
-                          <template v-else>
-                            <span
-                              class="font-semibold"
-                              v-text="item.originalPrice"
-                            />
-                          </template>
-                        </span>
-                      </div>
-                      <div
-                        v-if="item.renderedDescription"
-                        class="markdown whitespace-normal text-left mt-2"
-                        v-html="item.renderedDescription"
-                      />
-
-                      <div class="flex flex-wrap gap-1 mt-3">
-                        <UBadge
-                          v-for="contentType in bookInfo.contentTypes.value"
-                          :key="contentType"
-                          :label="contentType.toUpperCase()"
-                          variant="outline"
-                          color="neutral"
-                          size="sm"
-                        />
-
-                        <UBadge
-                          v-if="bookInfo.isDownloadable.value"
-                          :label="$t('reading_method_download_file')"
-                          variant="outline"
-                          color="neutral"
-                          size="sm"
-                        />
-
-                        <UBadge
-                          v-if="!bookInfo.isAudioHidden.value"
-                          :label="$t('product_page_support_tts_label')"
-                          variant="subtle"
-                          :color="ttsTagColor"
-                          size="sm"
-                        />
-
-                        <UBadge
-                          v-if="isPlusReadingEnabled"
-                          :label="$t('product_page_plus_reading_label')"
-                          variant="subtle"
-                          :color="plusReadingTagColor"
-                          size="sm"
-                        />
-                      </div>
-                    </div>
-                  </button>
-                </li>
-              </ul>
+                :items="pricingItems"
+                :is-liker-plus="isLikerPlus"
+                :content-types="bookInfo.contentTypes.value"
+                :is-downloadable="bookInfo.isDownloadable.value"
+                :is-tts-supported="!bookInfo.isAudioHidden.value"
+                :tts-tag-color="ttsTagColor"
+                :is-plus-reading-enabled="isPlusReadingEnabled"
+                :plus-reading-tag-color="plusReadingTagColor"
+                @select="handlePricingItemClick"
+              />
 
               <!-- [購買/再次購買][閱讀/借閱] -->
               <footer class="flex gap-3">
@@ -790,129 +559,30 @@
     />
 
     <!-- Mobile sticky bottom bar -->
-    <aside
-      v-if="isUserBookOwner || isPlusReadingCTAVisible || (!isLibrary && pricingItems.length)"
-      :class="[
-        'fixed',
-        'bottom-17',
-        'inset-x-0',
-        'flex tablet:hidden',
-        'flex-col',
-        'gap-2',
-        isApp ? 'mx-2' : 'mr-20',
-        'mb-safe',
-        'px-4',
-        'py-3',
-        'bg-default/80',
-        'backdrop-blur-sm',
-        'border',
-        { 'border-l-0': !isApp },
-        'border-muted',
-        isApp ? 'rounded-2xl' : 'rounded-r-2xl',
-        'z-10',
-      ]"
-    >
-      <UButton
-        v-if="isUserBookOwner"
-        :variant="readButtonVariant"
-        :label="$t('product_page_read_button_label')"
-        class="cursor-pointer"
-        size="xl"
-        block
-        @click="handleReadButtonClick"
-      />
-
-      <template v-else>
-        <UFieldGroup
-          v-if="!isLibrary && pricingItems.length > 1"
-          size="xs"
-        >
-          <UButton
-            :label="selectedPricingItem?.label"
-            color="neutral"
-            variant="outline"
-            :ui="{ base: 'cursor-default' }"
-          />
-          <UDropdownMenu
-            :items="stickyEditionDropdownItems"
-          >
-            <UButton
-              icon="i-material-symbols-arrow-drop-down"
-              color="neutral"
-              variant="outline"
-              class="cursor-pointer"
-            />
-          </UDropdownMenu>
-        </UFieldGroup>
-
-        <div
-          v-if="!isLibrary && pricingItems.length"
-          class="flex items-center justify-between flex-wrap gap-2"
-        >
-          <span class="shrink-0 space-x-0.5 text-xl font-semibold leading-none">
-            <span
-              v-if="selectedPricingItem?.discountedPrice"
-              :class="{ 'text-theme-cyan': selectedPricingItem?.discountedPrice }"
-              v-text="selectedPricingItem?.discountedPrice"
-            />
-            <span
-              :class="{ 'text-xs text-dimmed line-through': selectedPricingItem?.discountedPrice }"
-              v-text="selectedPricingItem?.originalPrice"
-            />
-            <PlusBadge
-              v-if="isLikerPlus && selectedPricingItem?.discountedPrice"
-              class="inline-block"
-            />
-          </span>
-
-          <div class="flex items-center gap-1">
-            <UButton
-              v-if="canBePurchased"
-              icon="i-material-symbols-featured-seasonal-and-gifts-rounded"
-              color="neutral"
-              variant="outline"
-              size="sm"
-              :ui="{ base: 'cursor-pointer rounded-full p-1.5' }"
-              :aria-label="$t('product_page_gift_button_label')"
-              :title="$t('product_page_gift_button_label')"
-              @click="handleGiftButtonClick"
-            />
-            <UButton
-              :icon="isInBookList ? 'i-material-symbols-favorite-rounded' : 'i-material-symbols-add-2-rounded'"
-              color="neutral"
-              variant="outline"
-              size="sm"
-              :ui="{ base: 'cursor-pointer rounded-full p-1.5' }"
-              :loading="isCheckingBookList || isUpdatingBookList"
-              :aria-label="$t(isInBookList ? 'product_page_remove_from_book_list_button_label' : 'product_page_add_to_book_list_button_label')"
-              :title="$t(isInBookList ? 'product_page_remove_from_book_list_button_label' : 'product_page_add_to_book_list_button_label')"
-              @click="handleBookListButtonClickDebounced"
-            />
-          </div>
-        </div>
-
-        <div class="flex gap-2">
-          <UButton
-            v-if="!isLibrary && pricingItems.length"
-            v-bind="checkoutButtonProps"
-            class="flex-1 cursor-pointer justify-center"
-            color="primary"
-            size="xl"
-            :loading="isPurchasing"
-            :disabled="!canBePurchased"
-            @click="handleStickyPurchaseButtonClick"
-          />
-          <UButton
-            v-if="isPlusReadingCTAVisible"
-            :variant="plusReadingCTAVariant"
-            class="flex-1 cursor-pointer justify-center"
-            :label="plusReadingCTALabel"
-            size="xl"
-            @click="handlePlusReadButtonClick"
-          />
-        </div>
-      </template>
-    </aside>
+    <ProductStickyBar
+      :is-app="isApp"
+      :is-library="isLibrary"
+      :is-user-book-owner="isUserBookOwner"
+      :is-plus-reading-cta-visible="isPlusReadingCTAVisible"
+      :plus-reading-cta-label="plusReadingCTALabel"
+      :plus-reading-cta-variant="plusReadingCTAVariant"
+      :read-button-variant="readButtonVariant"
+      :is-liker-plus="isLikerPlus"
+      :pricing-items="pricingItems"
+      :selected-pricing-item="selectedPricingItem"
+      :sticky-edition-dropdown-items="stickyEditionDropdownItems"
+      :checkout-button-props="checkoutButtonProps"
+      :can-be-purchased="canBePurchased"
+      :is-purchasing="isPurchasing"
+      :is-in-book-list="isInBookList"
+      :is-checking-book-list="isCheckingBookList"
+      :is-updating-book-list="isUpdatingBookList"
+      @read="handleReadButtonClick"
+      @plus-read="handlePlusReadButtonClick"
+      @gift="handleGiftButtonClick"
+      @book-list="handleBookListButtonClickDebounced"
+      @purchase="handleStickyPurchaseButtonClick"
+    />
 
     <!-- Gift Book Modal -->
     <GiftBookModal
@@ -993,7 +663,6 @@ const getRouteBaseName = useRouteBaseName()
 const getRouteParam = useRouteParam()
 const getRouteQuery = useRouteQuery()
 const { t: $t, locale } = useI18n()
-const toast = useToast()
 const { formatPrice, formatDiscountedPrice } = useCurrency()
 const { getCheckoutCurrency } = usePaymentCurrency()
 const { loggedIn: hasLoggedIn, user } = useUserSession()
@@ -1067,7 +736,6 @@ const plusReadingTagRoute = computed(() =>
 )
 
 const metadataStore = useMetadataStore()
-const bookListStore = useBookListStore()
 const { handleError } = useErrorHandler()
 const { getAnalyticsParameters } = useAnalytics()
 
@@ -1108,15 +776,7 @@ const {
 } = useStructuredData({ nftClassId })
 
 const {
-  pendingRewards,
-  isClaimingRewards,
   userStake,
-  formattedTotalStake,
-  formattedUserStake,
-  formattedPendingRewards,
-  numberOfStakers,
-  stakingRank,
-  handleClaimRewards,
   loadStakingData,
 } = useNFTClassStakingData(nftClassId)
 
@@ -1184,9 +844,6 @@ const { getResizedImageURL } = useImageResize()
 const bookCoverSrc = computed(() => getResizedImageURL(bookInfo.coverSrc.value, { size: 600 }))
 
 const selectedPricingItemIndex = ref(Number(getRouteQuery('price_index') || 0))
-const isInBookList = ref(false)
-const isCheckingBookList = ref(false)
-const isUpdatingBookList = ref(false)
 
 const from = computed(() => getRouteQuery('from') || undefined)
 
@@ -1458,46 +1115,9 @@ const bookReviewURLWithUTM = computed(() => {
   }
 })
 
-async function checkBookListStatus() {
-  if (!hasLoggedIn.value) {
-    isInBookList.value = false
-    return
-  }
-
-  if (isCheckingBookList.value) return
-
-  isCheckingBookList.value = true
-  try {
-    isInBookList.value = await bookListStore.checkItemExists(
-      nftClassId.value,
-      priceIndex.value,
-    )
-  }
-  catch (error) {
-    // Silent error
-    console.error(error)
-  }
-  finally {
-    isCheckingBookList.value = false
-  }
-}
-
-const checkBookListStatusDebounced = useDebounceFn(checkBookListStatus, 100)
-
 function handlePricingItemClick(index: number) {
   selectedPricingItemIndex.value = index
 }
-
-// Watch for login status and selected pricing item index changes
-watch([hasLoggedIn, selectedPricingItemIndex], checkBookListStatusDebounced)
-
-const socialButtons = computed(() => [
-  { key: 'copy-links', label: $t('share_button_hint_copy_link'), icon: 'i-material-symbols-link-rounded' },
-  { key: 'threads', label: $t('share_button_hint_threads'), icon: 'i-simple-icons-threads' },
-  { key: 'facebook', label: $t('share_button_hint_facebook'), icon: 'i-simple-icons-facebook' },
-  { key: 'whatsapp', label: $t('share_button_hint_whatsapp'), icon: 'i-simple-icons-whatsapp' },
-  { key: 'x', label: $t('share_button_hint_x'), icon: 'i-simple-icons-x' },
-])
 
 const formattedLogPayload = computed(() => {
   const currency = selectedPricingItem.value?.currency || 'USD'
@@ -1516,6 +1136,28 @@ const formattedLogPayload = computed(() => {
     promotion_id: coupon.value || (user.value?.isLikerPlus ? 'plus' : undefined),
     promotion_name: coupon.value || (user.value?.isLikerPlus ? 'plus' : undefined),
   }
+})
+
+const {
+  isInBookList,
+  isCheckingBookList,
+  isUpdatingBookList,
+  checkBookListStatus,
+  handleBookListButtonClickDebounced,
+} = useBookListStatus({
+  nftClassId,
+  priceIndex,
+  bookName,
+  getLogPayload: () => formattedLogPayload.value,
+})
+
+const { socialButtons, handleSocialButtonClick } = useBookSocialShare({
+  nftClassId,
+  bookName,
+  authorName: bookInfo.authorName,
+  canonicalURL,
+  from,
+  selectedPricingItemIndex,
 })
 
 const isSelectedPricingItemSoldOut = computed(() => {
@@ -1639,169 +1281,6 @@ onMounted(async () => {
   await nextTick()
   isTabInitialized.value = true
 })
-
-const { copy: copyToClipboard } = useClipboard()
-
-function getShareURL(medium: string) {
-  const baseURL = canonicalURL.value
-  const url = new URL(baseURL)
-  url.searchParams.set('utm_source', medium)
-  url.searchParams.set('utm_medium', 'social')
-  url.searchParams.set('utm_campaign', 'share')
-  if (from.value) {
-    url.searchParams.set('from', from.value)
-  }
-  return url.toString()
-}
-
-async function handleSocialButtonClick(key: string) {
-  const shareText = bookInfo.authorName.value
-    ? $t('product_page_share_text_with_author', { title: bookName.value, author: bookInfo.authorName.value })
-    : $t('product_page_share_text', { title: bookName.value })
-
-  useLogEvent('share', {
-    method: key,
-    item_id: `${nftClassId.value}-${selectedPricingItemIndex.value}`,
-  })
-
-  switch (key) {
-    case 'copy-links':
-      try {
-        const shareUrl = getShareURL('copy-link')
-        await copyToClipboard(shareUrl)
-        toast.add({
-          title: $t('copy_link_success'),
-          duration: 3000,
-          icon: 'i-material-symbols-link-rounded',
-          color: 'success',
-        })
-      }
-      catch (error) {
-        console.error('Failed to copy link:', error)
-        toast.add({
-          title: $t('copy_link_failed'),
-          icon: 'i-material-symbols-error-circle-rounded',
-          duration: 3000,
-          color: 'error',
-        })
-      }
-      break
-    case 'threads':
-      {
-        const shareUrl = getShareURL('threads')
-        window.open(
-          `https://threads.net/intent/post?text=${encodeURIComponent(`${shareText} ${shareUrl}`)}`,
-          '_blank',
-          'noopener,noreferrer',
-        )
-      }
-      break
-    case 'facebook':
-      {
-        const shareUrl = getShareURL('facebook')
-        window.open(
-          `https://m.facebook.com/sharer/sharer.php?display=page&u=${encodeURIComponent(shareUrl)}`,
-          '_blank',
-          'noopener,noreferrer',
-        )
-      }
-      break
-    case 'whatsapp':
-      {
-        const shareUrl = getShareURL('whatsapp')
-        window.open(
-          `https://wa.me/?text=${encodeURIComponent(`${shareText} ${shareUrl}`)}`,
-          '_blank',
-          'noopener,noreferrer',
-        )
-      }
-      break
-    case 'x':
-      {
-        const shareUrl = getShareURL('x')
-        window.open(
-          `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`,
-          '_blank',
-          'noopener,noreferrer',
-        )
-      }
-      break
-    default:
-  }
-}
-
-async function handleBookListButtonClick() {
-  if (!hasLoggedIn.value) {
-    await accountStore.login()
-    if (!hasLoggedIn.value) return
-  }
-
-  if (isUpdatingBookList.value) {
-    return // Prevent multiple simultaneous calls
-  }
-
-  isUpdatingBookList.value = true
-
-  if (isInBookList.value) {
-    // Remove from book list
-    useLogEvent('remove_from_cart', formattedLogPayload.value)
-    try {
-      await bookListStore.removeItem(
-        nftClassId.value,
-        selectedPricingItem.value?.index || 0,
-      )
-      isInBookList.value = false
-      toast.add({
-        title: $t('book_list_item_removed_toast_description'),
-        description: bookInfo.name.value,
-        icon: 'i-material-symbols-heart-broken',
-        color: 'secondary',
-      })
-    }
-    catch (error) {
-      await handleError(error, {
-        title: $t('error_book_list_remove'),
-        logPrefix: 'product_page_book_list_remove',
-      })
-    }
-  }
-  else {
-    // Add to book list (a save-for-later wishlist, not the checkout cart)
-    useLogEvent('add_to_wishlist', formattedLogPayload.value)
-    try {
-      await bookListStore.addItem(
-        nftClassId.value,
-        selectedPricingItem.value?.index || 0,
-      )
-      isInBookList.value = true
-      toast.add({
-        title: $t('book_list_item_added_toast_description'),
-        description: bookInfo.name.value,
-        icon: 'i-material-symbols-shopping-bag',
-        color: 'success',
-        actions: [
-          {
-            label: $t('book_list_added_toast_view_button_label'),
-            variant: 'outline',
-            onClick: () => {
-              navigateTo(localeRoute({ name: 'list' }))
-            },
-          },
-        ],
-      })
-    }
-    catch (error) {
-      await handleError(error, {
-        title: $t('error_book_list_add'),
-        logPrefix: 'product_page_book_list_add',
-      })
-    }
-  }
-
-  isUpdatingBookList.value = false
-}
-
-const handleBookListButtonClickDebounced = useDebounceFn(handleBookListButtonClick, 300)
 
 const isPurchasing = ref(false)
 const isReadBookDrawerOpen = ref(false)
