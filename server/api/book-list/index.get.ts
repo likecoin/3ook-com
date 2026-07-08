@@ -2,9 +2,8 @@ import { BookListQuerySchema } from '~~/server/schemas/book-list'
 import { fetchUserBookListItem } from '~~/server/utils/book-list'
 
 export default defineEventHandler(async (event) => {
-  const session = await requireUserSession(event)
+  const userWallet = await requireUserWallet(event)
   setHeader(event, 'cache-control', 'private')
-  const userWallet = session.user.evmWallet
   const query = await getValidatedQuery(event, createValidator(BookListQuerySchema))
 
   let priceIndex = 0

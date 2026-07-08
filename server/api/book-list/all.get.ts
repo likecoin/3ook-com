@@ -1,7 +1,6 @@
 export default defineEventHandler(async (event) => {
-  const session = await requireUserSession(event)
+  const userWallet = await requireUserWallet(event)
   setHeader(event, 'cache-control', 'private')
-  const userWallet = session.user.evmWallet
 
   try {
     const bookList = await fetchUserBookList(userWallet)

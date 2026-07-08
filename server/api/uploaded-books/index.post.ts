@@ -10,9 +10,8 @@ import {
 import { InitUploadedBookBodySchema } from '~~/server/schemas/uploaded-book'
 
 export default defineEventHandler(async (event): Promise<InitUploadedBookResponse> => {
-  const wallet = await requireUserWallet(event)
-  const session = await requireUserSession(event)
-  if (!session.user.isLikerPlus) {
+  const { wallet, isLikerPlus } = await requireUserWalletWithStatus(event)
+  if (!isLikerPlus) {
     throw createError({ statusCode: 402, message: 'REQUIRE_LIKER_PLUS' })
   }
 

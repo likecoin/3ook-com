@@ -1,8 +1,7 @@
 import { BookListBodySchema } from '~~/server/schemas/book-list'
 
 export default defineEventHandler(async (event) => {
-  const session = await requireUserSession(event)
-  const userWallet = session.user.evmWallet
+  const userWallet = await requireUserWallet(event)
   const { nftClassId, priceIndex } = await readValidatedBody(event, createValidator(BookListBodySchema))
 
   const bookListItem = await addUserBookListItem(userWallet, nftClassId, priceIndex)
