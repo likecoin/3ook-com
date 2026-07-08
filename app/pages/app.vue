@@ -55,6 +55,7 @@
               class="-my-40 max-md:scale-200 origin-center object-contain"
               src="~/assets/images/about/app-mockup.png"
               alt="3ook Reader App"
+              fetchpriority="high"
             >
           </aside>
         </div>

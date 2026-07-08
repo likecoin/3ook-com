@@ -44,6 +44,7 @@
           class="w-full max-w-xl -mt-10 mb-10"
           src="~/assets/images/mockup.png"
           alt="3ook.com"
+          fetchpriority="high"
         >
 
         <div
