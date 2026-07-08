@@ -519,19 +519,24 @@ const activeTab = computed<ShelfTab>({
 })
 
 // Reading tab: owned books (excluding archived, finished, DNF) plus all borrowed
-// Plus-reading books, sorted by last opened time (opened first).
+// Plus-reading books, most-recently-opened first. Sort on lastOpenedTime (not
+// progress): the reader stamps it on open, so a just-opened book at 0% still
+// rises to the top instead of sinking into the never-opened tail.
 const readingItems = computed(() => {
   const ownedReading = bookshelfItemsAll.value
     .filter(item => !isMyBookshelf.value || (item.archivedAt == null && item.completedAt == null && item.didNotFinishAt == null))
   return [...ownedReading, ...plusReadingItemsAll.value]
     .sort((a, b) => {
-      const aOpened = a.progress > 0
-      const bOpened = b.progress > 0
-      if (aOpened !== bOpened) return aOpened ? -1 : 1
-      if (aOpened && bOpened && a.lastOpenedTime !== b.lastOpenedTime) {
-        return b.lastOpenedTime - a.lastOpenedTime
-      }
-      return 0
+      if (b.lastOpenedTime !== a.lastOpenedTime) return b.lastOpenedTime - a.lastOpenedTime
+      // Within an equal-timestamp group (mostly legacy books lacking a
+      // lastOpenedTime stamp), surface started books over untouched ones, then
+      // fall back to nftClassId so the tail stays deterministic across loads.
+      const aStarted = a.progress > 0
+      const bStarted = b.progress > 0
+      if (aStarted !== bStarted) return aStarted ? -1 : 1
+      // nftClassId is a lowercase 0x-hex string, so plain ordering matches
+      // collation without the locale-aware cost of localeCompare.
+      return a.nftClassId < b.nftClassId ? -1 : a.nftClassId > b.nftClassId ? 1 : 0
     })
 })
 
