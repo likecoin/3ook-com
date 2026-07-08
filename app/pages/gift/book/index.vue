@@ -217,7 +217,7 @@
 </template>
 
 <script setup lang="ts">
-import type { BookGiftInfo } from '~/composables/use-likecoin-session-api'
+import type { BookGiftInfo } from '~/composables/use-book-purchase-session-api'
 
 const { t: $t } = useI18n()
 const localeRoute = useLocaleRoute()

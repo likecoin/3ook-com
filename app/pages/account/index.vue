@@ -751,7 +751,7 @@
 import { formatUnits } from 'viem'
 import { useSignMessage } from '@wagmi/vue'
 import { CustomVoiceUploadModal } from '#components'
-import type { FetchStripeConnectStatusResponseData } from '~/composables/use-likecoin-session-api'
+import type { FetchStripeConnectStatusResponseData } from '~/composables/use-stripe-connect-session-api'
 import likeCoinTokenImage from '~/assets/images/likecoin-token.png'
 
 const config = useRuntimeConfig()

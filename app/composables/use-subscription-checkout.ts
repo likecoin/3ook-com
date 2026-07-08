@@ -1,5 +1,5 @@
 import type { UpsellPlusModalSubscribeEventPayload } from '~/components/UpsellPlusModal.props'
-import type { CheckoutUIMode } from '~/composables/use-likecoin-session-api'
+import type { CheckoutUIMode } from '~/composables/use-plus-session-api'
 import { usePlusCheckoutStore } from '~/stores/plus-checkout'
 
 export function useSubscriptionCheckout() {
