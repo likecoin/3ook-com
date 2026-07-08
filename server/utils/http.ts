@@ -1,3 +1,13 @@
+import { createHash } from 'node:crypto'
+
+/**
+ * Computes a short, quoted ETag (first 16 hex chars of the SHA-256 digest)
+ * from a cache key or response buffer.
+ */
+export function computeShortETag(input: string | Buffer): string {
+  return `"${createHash('sha256').update(input).digest('hex').substring(0, 16)}"`
+}
+
 /**
  * Parses an HTTP Range header (e.g. `bytes=0-1023`) into start/end byte offsets.
  * Returns `null` when the header is malformed or the range is unsatisfiable.

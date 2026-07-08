@@ -1,4 +1,3 @@
-import { createHash } from 'node:crypto'
 import type { H3Event } from 'h3'
 import { TTSSampleQuerySchema } from '~~/server/schemas/tts'
 import { decodeAffiliateVoiceId, isAffiliateVoiceId } from '~~/shared/utils/tts-sig'
@@ -36,7 +35,7 @@ async function serveCachedSample(
     throw error
   }
 
-  const etag = `"${createHash('sha256').update(cacheKey).digest('hex').substring(0, 16)}"`
+  const etag = computeShortETag(cacheKey)
   setHeader(event, 'content-type', contentType)
   setHeader(event, 'cache-control', 'public, max-age=604800')
   setHeader(event, 'accept-ranges', 'bytes')
@@ -195,9 +194,7 @@ export default defineEventHandler(async (event) => {
     throw error
   }
 
-  const etag = cacheKey
-    ? `"${createHash('sha256').update(cacheKey).digest('hex').substring(0, 16)}"`
-    : `"${createHash('sha256').update(buffer).digest('hex').substring(0, 16)}"`
+  const etag = cacheKey ? computeShortETag(cacheKey) : computeShortETag(buffer)
   setHeader(event, 'content-type', provider.format)
   setHeader(event, 'cache-control', 'public, max-age=604800')
   setHeader(event, 'accept-ranges', 'bytes')

@@ -1,4 +1,3 @@
-import { createHash } from 'node:crypto'
 import type { Writable } from 'node:stream'
 import type { H3Event } from 'h3'
 import type { AffiliateCustomVoice } from '~~/server/types/affiliate'
@@ -55,7 +54,7 @@ async function serveCachedTTS(
   }
   const rangeHeader = getHeader(event, 'range')
 
-  const etag = `"${createHash('sha256').update(cacheKey).digest('hex').substring(0, 16)}"`
+  const etag = computeShortETag(cacheKey)
   setHeader(event, 'content-type', contentType)
   setHeader(event, 'cache-control', 'public, max-age=604800')
   setHeader(event, 'accept-ranges', 'bytes')
@@ -84,12 +83,6 @@ async function serveCachedTTS(
 
 export default defineEventHandler(async (event) => {
   const session = await requireUserSession(event)
-  if (!session) {
-    throw createError({
-      status: 401,
-      message: 'UNAUTHORIZED',
-    })
-  }
   const config = useRuntimeConfig()
   const {
     text,
@@ -343,9 +336,7 @@ export default defineEventHandler(async (event) => {
       const { audio: rawBuffer, extraInfo, traceId } = await provider.processRequest(requestParams)
       const buffer = Buffer.concat([id3Tag, rawBuffer])
 
-      const etag = cacheKey
-        ? `"${createHash('sha256').update(cacheKey).digest('hex').substring(0, 16)}"`
-        : `"${createHash('sha256').update(buffer).digest('hex').substring(0, 16)}"`
+      const etag = computeShortETag(cacheKey ?? buffer)
       setHeader(event, 'content-type', provider.format)
       setHeader(event, 'cache-control', 'public, max-age=604800')
       setHeader(event, 'accept-ranges', 'bytes')
@@ -388,8 +379,7 @@ export default defineEventHandler(async (event) => {
     const { audio: stream, extraInfo: extraInfoPromise, traceId: traceIdPromise } = await provider.processRequestStream(requestParams)
 
     if (cacheKey) {
-      const etag = `"${createHash('sha256').update(cacheKey).digest('hex').substring(0, 16)}"`
-      setHeader(event, 'etag', etag)
+      setHeader(event, 'etag', computeShortETag(cacheKey))
     }
     setHeader(event, 'content-type', provider.format)
     setHeader(event, 'cache-control', 'public, max-age=604800')

@@ -1,4 +1,3 @@
-import { createHash } from 'node:crypto'
 import { UploadedBookIdParamsSchema } from '~~/server/schemas/uploaded-book'
 
 const CONTENT_TYPE_MAP: Record<string, string> = {
@@ -29,7 +28,7 @@ export default defineEventHandler(async (event) => {
   const totalSize = book.fileSize
   const contentType = CONTENT_TYPE_MAP[book.contentType]
 
-  const etag = `"${createHash('sha256').update(book.storagePath).digest('hex').substring(0, 16)}"`
+  const etag = computeShortETag(book.storagePath)
   setHeader(event, 'content-type', contentType)
   // `no-cache` (not `no-store`): the browser may cache, but must revalidate
   // with the server on every use so an expired Plus member can't keep
