@@ -10,17 +10,7 @@ export function useMagicSession() {
       : undefined
     if (!connector || connector.id !== 'magic') return
 
-    let needsReauth = false
-    try {
-      const magic = await resolveMagicFromConnector(connector)
-      if (!magic) return
-      needsReauth = !(await magic.user.isLoggedIn())
-    }
-    catch {
-      needsReauth = true
-    }
-
-    if (!needsReauth) return
+    if (await isMagicSessionAlive(connector)) return
 
     const accountStore = useAccountStore()
     const { user } = useUserSession()

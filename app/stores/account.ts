@@ -382,6 +382,13 @@ export const useAccountStore = defineStore('account', () => {
       connector = $wagmiConfig.connectors.find(c => c.id === lastUsedConnectorId)
     }
     if (connector) {
+      // Magic can only reconnect silently while its client session is alive; if
+      // it has expired, connectAsync falls into the connector's OTP form with no
+      // email and hangs, so fall back to the explicit login flow instead.
+      if (connector.id === 'magic' && !(await isMagicSessionAlive(connector))) {
+        await login()
+        return
+      }
       await connectAsync({
         connector,
         chainId: chainId.value,
@@ -402,14 +409,18 @@ export const useAccountStore = defineStore('account', () => {
         await disconnectAsync().catch(() => {})
       }
       let magicEmail: string | undefined = preferredEmail
-      if (!connectorId || !connectors.some((c: { id: string }) => c.id === connectorId)) {
+      // Magic needs an email to seed its OTP input; entering connectAsync without
+      // one hangs the connector, so treat a magic login lacking an email as
+      // unresolved and fall back to the panel to collect it.
+      const isMagicWithoutEmail = () => connectorId === 'magic' && !magicEmail
+      if (!connectorId || !connectors.some((c: { id: string }) => c.id === connectorId) || isMagicWithoutEmail()) {
         useLogEvent('login_panel_open')
         // Cast because the Lazy* async-component wrapper hides LoginModal's close-payload from useOverlay's inference
         const result = await loginModal.open().result as { id: string, email?: string } | undefined
         connectorId = result?.id
         magicEmail = result?.email
       }
-      if (!connectorId) {
+      if (!connectorId || isMagicWithoutEmail()) {
         useLogEvent('login_panel_dismiss')
         return
       }
