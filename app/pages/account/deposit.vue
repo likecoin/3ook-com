@@ -359,7 +359,7 @@
 import { useStorage } from '@vueuse/core'
 import { formatUnits, parseUnits } from 'viem'
 
-import { waitForTransactionReceipt, watchAsset } from '@wagmi/core'
+import { watchAsset } from '@wagmi/core'
 
 const {
   cacheKeyPrefix,
@@ -380,6 +380,7 @@ const walletAddress = computed(() => user.value?.evmWallet || '')
 
 const governanceData = useGovernanceData(walletAddress)
 const { claimReward, restakeReward, claimLegacyReward, withdraw } = useVeLikeContract()
+const waitForTransaction = useWaitForTransaction()
 const { balanceOf } = useLikeCoinContract()
 const {
   likeBalance,
@@ -433,10 +434,7 @@ async function handleClaimRewards() {
     await accountStore.restoreConnection()
     if (isAutoRestakeEnabled.value) {
       const hash = await restakeReward(walletAddress.value)
-      await waitForTransactionReceipt($wagmiConfig, {
-        hash,
-        confirmations: 2,
-      })
+      await waitForTransaction(hash)
       toast.add({
         title: $t('governance_page_success'),
         description: $t('governance_page_rewards_restaked'),
@@ -445,10 +443,7 @@ async function handleClaimRewards() {
     }
     else {
       const hash = await claimReward(walletAddress.value)
-      await waitForTransactionReceipt($wagmiConfig, {
-        hash,
-        confirmations: 2,
-      })
+      await waitForTransaction(hash)
       toast.add({
         title: $t('governance_page_success'),
         description: $t('governance_page_rewards_claimed'),
@@ -485,10 +480,7 @@ async function handleClaimLegacyRewards() {
     await accountStore.restoreConnection()
     for (const reward of claimable) {
       const hash = await claimLegacyReward(reward.address, walletAddress.value)
-      await waitForTransactionReceipt($wagmiConfig, {
-        hash,
-        confirmations: 2,
-      })
+      await waitForTransaction(hash)
     }
     toast.add({
       title: $t('governance_page_success'),
@@ -576,10 +568,7 @@ async function handleWithdraw() {
     const amount = parseUnits(withdrawAmount.value.toString(), likeCoinTokenDecimals)
 
     const hash = await withdraw(amount, walletAddress.value, walletAddress.value)
-    await waitForTransactionReceipt($wagmiConfig, {
-      hash,
-      confirmations: 2,
-    })
+    await waitForTransaction(hash)
 
     toast.add({
       title: $t('governance_page_success'),

@@ -7,6 +7,7 @@ export function useContractWrite() {
   const { writeContractAsync: wagmiWriteContract } = useWriteContract()
   const { isSponsoredMode, sponsoredWriteContract } = useSponsoredTransaction()
   const { ensureMagicSession } = useMagicSession()
+  const waitForTransaction = useWaitForTransaction()
 
   async function writeContractAsync(params: SponsoredWriteContractParams): Promise<Hash> {
     await ensureMagicSession()
@@ -16,5 +17,5 @@ export function useContractWrite() {
     return wagmiWriteContract(params as Parameters<typeof wagmiWriteContract>[0])
   }
 
-  return { writeContractAsync }
+  return { writeContractAsync, waitForTransaction }
 }

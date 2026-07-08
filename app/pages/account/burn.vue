@@ -148,14 +148,12 @@
 </template>
 
 <script setup lang="ts">
-import { waitForTransactionReceipt } from '@wagmi/core'
-
 const { t: $t } = useI18n()
 const { loggedIn: hasLoggedIn, user } = useUserSession()
 const bookshelfStore = useBookshelfStore()
 const nftStore = useNFTStore()
 const { burnNFT } = useLikeNFTClassContract()
-const { $wagmiConfig } = useNuxtApp()
+const waitForTransaction = useWaitForTransaction()
 const { handleError } = useErrorHandler()
 const toast = useToast()
 const accountStore = useAccountStore()
@@ -250,10 +248,7 @@ async function confirmBurn() {
     await accountStore.restoreConnection()
 
     const hash = await burnNFT(nftClassId, nftId)
-    await waitForTransactionReceipt($wagmiConfig, {
-      hash,
-      confirmations: 2,
-    })
+    await waitForTransaction(hash)
 
     toast.add({
       title: $t('burn_page_success_title'),

@@ -749,14 +749,12 @@
 
 <script setup lang="ts">
 import { formatUnits } from 'viem'
-import { waitForTransactionReceipt } from '@wagmi/core'
 import { useSignMessage } from '@wagmi/vue'
 import { CustomVoiceUploadModal } from '#components'
 import type { FetchStripeConnectStatusResponseData } from '~/composables/use-likecoin-session-api'
 import likeCoinTokenImage from '~/assets/images/likecoin-token.png'
 
 const config = useRuntimeConfig()
-const { $wagmiConfig } = useNuxtApp()
 const likeCoinSessionAPI = useLikeCoinSessionAPI()
 const { t: $t, locale } = useI18n()
 const { loggedIn: hasLoggedIn, user } = useUserSession()
@@ -1051,6 +1049,7 @@ const {
   refetch: refetchLikeBalance,
 } = useLikeCoinBalance(walletAddress)
 const { claimWalletRewards } = useLikeCollectiveContract()
+const waitForTransaction = useWaitForTransaction()
 
 useHead({
   title: $t('account_page_title'),
@@ -1450,10 +1449,7 @@ async function handleClaimStakingRewardButtonClick() {
     await accountStore.restoreConnection()
 
     const hash = await claimWalletRewards(user.value.evmWallet)
-    await waitForTransactionReceipt($wagmiConfig, {
-      hash,
-      confirmations: 2,
-    })
+    await waitForTransaction(hash)
 
     toast.add({
       title: $t('staking_claim_all_rewards_success'),

@@ -1,7 +1,5 @@
-import { waitForTransactionReceipt } from '@wagmi/core'
-
 export function useLikeStaking() {
-  const { $wagmiConfig } = useNuxtApp()
+  const waitForTransaction = useWaitForTransaction()
   const { approveIfNeeded: approveIfNeededLikeCoin } = useLikeCoinContract()
   const {
     getLikeStakePositionInfo,
@@ -46,25 +44,16 @@ export function useLikeStaking() {
   async function stakeToNFTClass(wallet: string, nftClassId: string, amount: bigint) {
     const approvalHash = await approveIfNeededLikeCoin(wallet, likeCollectiveAddress, amount)
     if (approvalHash) {
-      await waitForTransactionReceipt($wagmiConfig, {
-        hash: approvalHash,
-        confirmations: 2,
-      })
+      await waitForTransaction(approvalHash)
     }
     const tokenIds = await getWalletLikeStakePositionIdsOfNFTClassId(wallet, nftClassId)
     if (tokenIds[0]) {
       const stakeHash = await increaseStakePosition(tokenIds[0], amount)
-      await waitForTransactionReceipt($wagmiConfig, {
-        hash: stakeHash,
-        confirmations: 2,
-      })
+      await waitForTransaction(stakeHash)
     }
     else {
       const stakeHash = await rawStakeToNFTClass(nftClassId, amount)
-      await waitForTransactionReceipt($wagmiConfig, {
-        hash: stakeHash,
-        confirmations: 2,
-      })
+      await waitForTransaction(stakeHash)
     }
   }
 
@@ -76,16 +65,10 @@ export function useLikeStaking() {
   async function depositReward(wallet: string, nftClassId: string, amount: bigint) {
     const approvalHash = await approveIfNeededLikeCoin(wallet, likeCollectiveAddress, amount)
     if (approvalHash) {
-      await waitForTransactionReceipt($wagmiConfig, {
-        hash: approvalHash,
-        confirmations: 2,
-      })
+      await waitForTransaction(approvalHash)
     }
     const depositHash = await rawDepositReward(nftClassId, amount)
-    await waitForTransactionReceipt($wagmiConfig, {
-      hash: depositHash,
-      confirmations: 2,
-    })
+    await waitForTransaction(depositHash)
   }
 
   async function mergeWalletStakePositionsOfNFTClass(wallet: string, nftClassId: string) {
