@@ -117,7 +117,7 @@ const { loggedIn: hasLoggedIn, user } = useUserSession()
 const accountStore = useAccountStore()
 const bookListStore = useBookListStore()
 const { handleError } = useErrorHandler()
-const likeCoinSessionAPI = useLikeCoinSessionAPI()
+const bookPurchaseSessionAPI = useBookPurchaseSessionAPI()
 const { getAnalyticsParameters } = useAnalytics()
 const { getCheckoutCurrency } = usePaymentCurrency()
 const { isApp } = useAppDetection()
@@ -185,7 +185,7 @@ async function handleCheckoutButtonClick() {
         priceIndex: item.priceIndex,
       }))
 
-    const { url, paymentId } = await likeCoinSessionAPI.createNFTBookCartPurchase(
+    const { url, paymentId } = await bookPurchaseSessionAPI.createNFTBookCartPurchase(
       selectedItems,
       {
         email: user.value?.email,

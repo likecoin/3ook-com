@@ -40,7 +40,7 @@ const { currency, yearlyPrice, monthlyPrice } = useSubscription()
 const { initializePaymentCurrency } = usePaymentCurrency()
 const { convertPrice } = useCurrency()
 const { user } = useUserSession()
-const likeCoinSessionAPI = useLikeCoinSessionAPI()
+const plusGiftSessionAPI = usePlusGiftSessionAPI()
 
 const route = useRoute()
 const getRouteQuery = useRouteQuery()
@@ -81,7 +81,7 @@ async function fetchPlusGiftStatus({ shouldHandleError = true } = {}) {
       giftCartId,
       giftPaymentId,
       giftClaimToken,
-    } = await likeCoinSessionAPI.fetchLikerPlusGiftStatus()
+    } = await plusGiftSessionAPI.fetchLikerPlusGiftStatus()
     return {
       giftNFTClassId,
       giftCartId,

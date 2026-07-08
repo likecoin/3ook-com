@@ -57,7 +57,7 @@ export const useAccountStore = defineStore('account', () => {
   const blockingModal = useBlockingModal()
   const { t: $t, locale } = useI18n()
   const { getLikeCoinV3BookMigrationSiteURL } = useLikeCoinV3MigrationSite()
-  const likeCoinSessionAPI = useLikeCoinSessionAPI()
+  const userAccountSessionAPI = useUserAccountSessionAPI()
   const { getAnalyticsParameters } = useAnalytics()
 
   const { ensureMagicSession } = useMagicSession()
@@ -211,7 +211,7 @@ export const useAccountStore = defineStore('account', () => {
                   ts: Date.now(),
                 }, null, 2)
                 const signature = await signMessageAsync({ message })
-                const res = await likeCoinSessionAPI.migrateMagicEmailUser({
+                const res = await userAccountSessionAPI.migrateMagicEmailUser({
                   wallet: walletAddress,
                   signature,
                   message,

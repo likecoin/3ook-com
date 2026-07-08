@@ -755,7 +755,9 @@ import type { FetchStripeConnectStatusResponseData } from '~/composables/use-str
 import likeCoinTokenImage from '~/assets/images/likecoin-token.png'
 
 const config = useRuntimeConfig()
-const likeCoinSessionAPI = useLikeCoinSessionAPI()
+const userAccountSessionAPI = useUserAccountSessionAPI()
+const stripeConnectSessionAPI = useStripeConnectSessionAPI()
+const plusSessionAPI = usePlusSessionAPI()
 const { t: $t, locale } = useI18n()
 const { loggedIn: hasLoggedIn, user } = useUserSession()
 const accountStore = useAccountStore()
@@ -916,7 +918,7 @@ async function loadStripeConnectStatus() {
   if (isApp.value) return
   if (!user.value?.evmWallet) return
   try {
-    stripeConnectStatus.value = await likeCoinSessionAPI.fetchStripeConnectStatus({
+    stripeConnectStatus.value = await stripeConnectSessionAPI.fetchStripeConnectStatus({
       wallet: user.value.evmWallet,
     })
   }
@@ -928,7 +930,7 @@ async function loadStripeConnectStatus() {
 async function refreshStripeConnectStatus() {
   if (isApp.value) return
   try {
-    await likeCoinSessionAPI.refreshStripeConnectStatus()
+    await stripeConnectSessionAPI.refreshStripeConnectStatus()
   }
   catch (error) {
     console.error('Failed to refresh Stripe Connect status:', error)
@@ -943,8 +945,8 @@ async function handleStripeConnectButtonClick() {
   try {
     useLogEvent(isManage ? 'stripe_connect_login' : 'stripe_connect_setup_started')
     const { url } = isManage
-      ? await likeCoinSessionAPI.fetchStripeConnectLoginLink()
-      : await likeCoinSessionAPI.createStripeConnectAccount()
+      ? await stripeConnectSessionAPI.fetchStripeConnectLoginLink()
+      : await stripeConnectSessionAPI.createStripeConnectAccount()
     await navigateTo(url, { external: true })
   }
   catch (error) {
@@ -1008,7 +1010,7 @@ watchImmediate(hasLoggedIn, async (loggedIn) => {
     if (route.query.action === 'billing-return') {
       if (isPaymentPastDue.value) {
         try {
-          await likeCoinSessionAPI.retryLikerPlusPayment()
+          await plusSessionAPI.retryLikerPlusPayment()
           await accountStore.refreshSessionInfo()
         }
         catch (error) {
@@ -1140,7 +1142,7 @@ async function confirmDisplayNameEdit() {
   isUpdatingDisplayName.value = true
   try {
     try {
-      await likeCoinSessionAPI.updateUserProfile({ displayName: nextDisplayName })
+      await userAccountSessionAPI.updateUserProfile({ displayName: nextDisplayName })
     }
     catch (error) {
       await handleError(error, {
@@ -1180,7 +1182,7 @@ async function confirmEmailEdit() {
   try {
     try {
       // Pre-check the email is free in our DB before any Magic OTP round-trip.
-      await likeCoinSessionAPI.checkEmailAvailability(nextEmail)
+      await userAccountSessionAPI.checkEmailAvailability(nextEmail)
       if (isMagic) {
         // Close our modal before Magic opens its own OTP UI; our modal's focus
         // trap and backdrop would otherwise block interaction with Magic's popup.
@@ -1189,10 +1191,10 @@ async function confirmEmailEdit() {
         // DID token, or undefined if the user cancels — abort quietly on cancel.
         const magicDIDToken = await accountStore.updateMagicEmail(nextEmail)
         if (!magicDIDToken) return
-        await likeCoinSessionAPI.updateUserEmail({ email: nextEmail, magicDIDToken })
+        await userAccountSessionAPI.updateUserEmail({ email: nextEmail, magicDIDToken })
       }
       else {
-        await likeCoinSessionAPI.updateUserEmail({ email: nextEmail })
+        await userAccountSessionAPI.updateUserEmail({ email: nextEmail })
       }
     }
     catch (error) {
@@ -1203,7 +1205,7 @@ async function confirmEmailEdit() {
     // Wallet users verify via our own email; non-fatal if the send fails.
     if (!isMagic) {
       try {
-        await likeCoinSessionAPI.sendEmailVerification()
+        await userAccountSessionAPI.sendEmailVerification()
       }
       catch (error) {
         console.error('Failed to send verification email after email update:', error)
@@ -1259,7 +1261,7 @@ async function handleAvatarFileChange(event: Event) {
   try {
     try {
       const resizedFile = await resizeImageFile(file, 256)
-      await likeCoinSessionAPI.uploadUserAvatar(resizedFile)
+      await userAccountSessionAPI.uploadUserAvatar(resizedFile)
     }
     catch (error) {
       await handleError(error, {
@@ -1343,7 +1345,7 @@ async function handleLikerPlusButtonClick() {
   if (isOpeningBillingPortal.value) return
   try {
     isOpeningBillingPortal.value = true
-    const { url } = await likeCoinSessionAPI.fetchLikerPlusBillingPortalLink()
+    const { url } = await plusSessionAPI.fetchLikerPlusBillingPortalLink()
     // NOTE: Not using _blank here as some browsers block popups
     await navigateTo(url, { external: true })
   }

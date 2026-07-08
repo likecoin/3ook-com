@@ -211,7 +211,7 @@
 const { t: $t } = useI18n()
 const localeRoute = useLocaleRoute()
 const { handleError } = useErrorHandler()
-const likeCoinSessionAPI = useLikeCoinSessionAPI()
+const plusGiftSessionAPI = usePlusGiftSessionAPI()
 const { yearlyPrice, monthlyPrice } = useSubscription()
 
 const getRouteQuery = useRouteQuery()
@@ -249,7 +249,7 @@ async function fetchGiftInfo() {
   try {
     while (retries < maxRetries) {
       // Fetch gift cart details to get recipient/sender information
-      const cartData = await likeCoinSessionAPI.fetchPlusGiftCartStatusById({
+      const cartData = await plusGiftSessionAPI.fetchPlusGiftCartStatusById({
         cartId: cartId.value,
         token: claimingToken.value,
       })

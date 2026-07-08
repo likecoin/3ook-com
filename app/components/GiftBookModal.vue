@@ -114,7 +114,7 @@ const model = defineModel<boolean>({ default: false })
 const { t: $t, locale } = useI18n()
 const { loggedIn: hasLoggedIn, user } = useUserSession()
 const accountStore = useAccountStore()
-const likeCoinSessionAPI = useLikeCoinSessionAPI()
+const bookPurchaseSessionAPI = useBookPurchaseSessionAPI()
 const { handleError } = useErrorHandler()
 const { getCheckoutCurrency } = usePaymentCurrency()
 const { getAnalyticsParameters } = useAnalytics()
@@ -189,7 +189,7 @@ async function handleCheckout() {
     const qty = props.quantity || 1
     const { url, paymentId } = await (
       qty > 1
-        ? likeCoinSessionAPI.createNFTBookCartPurchase([{
+        ? bookPurchaseSessionAPI.createNFTBookCartPurchase([{
             nftClassId: props.nftClassId,
             priceIndex: props.priceIndex,
             quantity: qty,
@@ -202,7 +202,7 @@ async function handleCheckout() {
             currency: getCheckoutCurrency(),
             ...getAnalyticsParameters(),
           })
-        : likeCoinSessionAPI.createNFTBookPurchase({
+        : bookPurchaseSessionAPI.createNFTBookPurchase({
             nftClassId: props.nftClassId,
             priceIndex: props.priceIndex,
             email,

@@ -170,7 +170,7 @@ interface CheckoutItem {
   pricingItem?: BookstorePrice
 }
 
-const likeCoinSessionAPI = useLikeCoinSessionAPI()
+const bookPurchaseSessionAPI = useBookPurchaseSessionAPI()
 const getRouteQuery = useRouteQuery()
 const { user } = useUserSession()
 const nftStore = useNFTStore()
@@ -364,7 +364,7 @@ async function handleCheckout() {
   try {
     isPurchasing.value = true
 
-    const { url, paymentId } = await likeCoinSessionAPI.createNFTBookCartPurchase(
+    const { url, paymentId } = await bookPurchaseSessionAPI.createNFTBookCartPurchase(
       cartItems.value.map(item => ({
         nftClassId: item.classId,
         priceIndex: item.priceIndex,

@@ -1,6 +1,6 @@
 export function useClaimableBooks() {
   const { t: $t } = useI18n()
-  const likeCoinSessionAPI = useLikeCoinSessionAPI()
+  const freeBookSessionAPI = useFreeBookSessionAPI()
   const blockingModal = useBlockingModal()
   const localeRoute = useLocaleRoute()
   const { handleError } = useErrorHandler()
@@ -15,7 +15,7 @@ export function useClaimableBooks() {
     if (isLoading.value) return
     try {
       isLoading.value = true
-      const response = await likeCoinSessionAPI.fetchClaimableFreeBooks()
+      const response = await freeBookSessionAPI.fetchClaimableFreeBooks()
       nftClassIds.value = response
     }
     catch (error) {
@@ -32,7 +32,7 @@ export function useClaimableBooks() {
     try {
       isLoading.value = true
       blockingModal.open({ title: $t('claiming') })
-      const response = await likeCoinSessionAPI.claimFreeBook(nftClassId)
+      const response = await freeBookSessionAPI.claimFreeBook(nftClassId)
 
       await navigateTo(localeRoute({
         name: 'claim-page',

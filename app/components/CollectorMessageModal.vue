@@ -88,7 +88,7 @@ const emit = defineEmits(['submit', 'update:open'])
 const open = defineModel<boolean>('open')
 const { t: $t } = useI18n()
 const { user } = useUserSession()
-const likeCoinSessionAPI = useLikeCoinSessionAPI()
+const bookPurchaseSessionAPI = useBookPurchaseSessionAPI()
 const { handleError } = useErrorHandler()
 
 const props = defineProps({
@@ -138,7 +138,7 @@ async function handleSubmitMessage() {
   isLoading.value = true
 
   try {
-    const result = await likeCoinSessionAPI.sendCollectorMessage({
+    const result = await bookPurchaseSessionAPI.sendCollectorMessage({
       message,
       nftClassId: props.nftClassId,
       wallet: user.value.evmWallet,

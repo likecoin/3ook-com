@@ -215,7 +215,7 @@
 const { t: $t } = useI18n()
 const localeRoute = useLocaleRoute()
 const { handleError } = useErrorHandler()
-const likeCoinSessionAPI = useLikeCoinSessionAPI()
+const plusGiftSessionAPI = usePlusGiftSessionAPI()
 const accountStore = useAccountStore()
 const { loggedIn: hasLoggedIn, user } = useUserSession()
 const { yearlyPrice, monthlyPrice } = useSubscription()
@@ -252,7 +252,7 @@ async function fetchGiftInfo() {
     error.value = null
 
     // Fetch gift cart details to get gift information
-    const cartData = await likeCoinSessionAPI.fetchPlusGiftCartStatusById({
+    const cartData = await plusGiftSessionAPI.fetchPlusGiftCartStatusById({
       cartId: cartId.value,
       token: claimingToken.value,
     })
@@ -298,7 +298,7 @@ async function handleClaim() {
     isClaiming.value = true
 
     // Call the claim API
-    await likeCoinSessionAPI.claimPlusGiftCart({
+    await plusGiftSessionAPI.claimPlusGiftCart({
       cartId: cartId.value,
       token: claimingToken.value,
     })

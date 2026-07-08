@@ -29,7 +29,7 @@
 const localeRoute = useLocaleRoute()
 const { t: $t } = useI18n()
 const { loggedIn: hasLoggedIn } = useUserSession()
-const likeCoinSessionAPI = useLikeCoinSessionAPI()
+const stripeConnectSessionAPI = useStripeConnectSessionAPI()
 
 const error = ref(false)
 
@@ -46,7 +46,7 @@ onMounted(async () => {
     return
   }
   try {
-    const { url } = await likeCoinSessionAPI.createStripeConnectAccount()
+    const { url } = await stripeConnectSessionAPI.createStripeConnectAccount()
     await navigateTo(url, { external: true })
   }
   catch (e) {

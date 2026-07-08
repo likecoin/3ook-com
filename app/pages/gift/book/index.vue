@@ -222,7 +222,7 @@ import type { BookGiftInfo } from '~/composables/use-book-purchase-session-api'
 const { t: $t } = useI18n()
 const localeRoute = useLocaleRoute()
 const { handleError } = useErrorHandler()
-const likeCoinSessionAPI = useLikeCoinSessionAPI()
+const bookPurchaseSessionAPI = useBookPurchaseSessionAPI()
 
 const getRouteQuery = useRouteQuery()
 const route = useRoute()
@@ -268,7 +268,7 @@ async function fetchGiftInfo() {
     while (retries < maxRetries) {
       if (isCancelled) return
 
-      const cartData = await likeCoinSessionAPI.fetchCartStatusById({
+      const cartData = await bookPurchaseSessionAPI.fetchCartStatusById({
         cartId: cartId.value,
         token: claimingToken.value,
       })

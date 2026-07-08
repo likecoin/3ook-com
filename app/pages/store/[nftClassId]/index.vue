@@ -966,7 +966,7 @@
 import type { AccordionItem } from '@nuxt/ui'
 import MarkdownIt from 'markdown-it'
 
-const likeCoinSessionAPI = useLikeCoinSessionAPI()
+const bookPurchaseSessionAPI = useBookPurchaseSessionAPI()
 const route = useRoute()
 const config = useRuntimeConfig()
 const isTestnet = !!config.public.isTestnet
@@ -1855,7 +1855,7 @@ async function handlePurchaseButtonClick() {
 
     const { url, paymentId } = await (
       quantity.value > 1
-        ? likeCoinSessionAPI.createNFTBookCartPurchase([{
+        ? bookPurchaseSessionAPI.createNFTBookCartPurchase([{
             nftClassId: nftClassId.value,
             priceIndex: priceIndex.value,
             quantity: quantity.value,
@@ -1867,7 +1867,7 @@ async function handlePurchaseButtonClick() {
             currency: getCheckoutCurrency(),
             ...getAnalyticsParameters(),
           })
-        : likeCoinSessionAPI.createNFTBookPurchase({
+        : bookPurchaseSessionAPI.createNFTBookPurchase({
             nftClassId: nftClassId.value,
             priceIndex: priceIndex.value,
             customPrice,

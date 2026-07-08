@@ -13,7 +13,7 @@ export function useSubscriptionCheckout() {
     getCheckoutCurrency,
   } = useSubscription()
 
-  const likeCoinSessionAPI = useLikeCoinSessionAPI()
+  const plusSessionAPI = usePlusSessionAPI()
   const { t: $t } = useI18n()
   const accountStore = useAccountStore()
   const plusCheckoutStore = usePlusCheckoutStore()
@@ -234,7 +234,7 @@ export function useSubscriptionCheckout() {
       const analyticsParams = getAnalyticsParameters()
       if (isLikerPlus.value) {
         useLogEvent('begin_checkout', eventPayloadWithCoupon)
-        await likeCoinSessionAPI.updateLikerPlusSubscription({
+        await plusSessionAPI.updateLikerPlusSubscription({
           period: plan,
           giftNFTClassId: isYearly ? nftClassId : undefined,
         })
@@ -252,7 +252,7 @@ export function useSubscriptionCheckout() {
           ? embeddedCheckoutABTest.captureExposure()
           : null
         const uiMode: CheckoutUIMode = embeddedVariant === 'test' ? 'embedded' : 'hosted'
-        const { url, clientSecret, paymentId } = await likeCoinSessionAPI.fetchLikerPlusCheckoutLink({
+        const { url, clientSecret, paymentId } = await plusSessionAPI.fetchLikerPlusCheckoutLink({
           period: plan,
           from: getRouteQuery('from'),
           currency: getCheckoutCurrency(),

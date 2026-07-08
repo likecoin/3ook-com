@@ -103,7 +103,7 @@ useHead({
 })
 
 const { t: $t } = useI18n()
-const likeCoinSessionAPI = useLikeCoinSessionAPI()
+const bookPurchaseSessionAPI = useBookPurchaseSessionAPI()
 const localeRoute = useLocaleRoute()
 const getRouteQuery = useRouteQuery()
 const { loggedIn: hasLoggedIn, user } = useUserSession()
@@ -246,7 +246,7 @@ onMounted(async () => {
   const maxRetries = 3
   while (retries < maxRetries) {
     try {
-      const data = await likeCoinSessionAPI.fetchCartStatusById({
+      const data = await bookPurchaseSessionAPI.fetchCartStatusById({
         cartId: cartId.value,
         token: claimingToken.value,
       })
@@ -390,7 +390,7 @@ async function startClaimingItems() {
       })
     }
 
-    const data = await likeCoinSessionAPI.claimCartById({
+    const data = await bookPurchaseSessionAPI.claimCartById({
       cartId: cartId.value,
       token: claimingToken.value,
       paymentId: paymentId.value,

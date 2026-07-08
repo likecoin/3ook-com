@@ -175,7 +175,7 @@ const { t: $t } = useI18n()
 const localeRoute = useLocaleRoute()
 const { isApp } = useAppDetection()
 const { handleError } = useErrorHandler()
-const likeCoinSessionAPI = useLikeCoinSessionAPI()
+const plusGiftSessionAPI = usePlusGiftSessionAPI()
 const { loggedIn: hasLoggedIn, user } = useUserSession()
 const accountStore = useAccountStore()
 const { getCheckoutCurrency } = usePaymentCurrency()
@@ -238,7 +238,7 @@ async function handleCheckout() {
     isProcessing.value = true
 
     const analyticsParams = getAnalyticsParameters()
-    const { url } = await likeCoinSessionAPI.fetchLikerPlusGiftCheckoutLink({
+    const { url } = await plusGiftSessionAPI.fetchLikerPlusGiftCheckoutLink({
       period: selectedPlan.value,
       giftInfo: {
         toEmail: formData.toEmail.trim(),
