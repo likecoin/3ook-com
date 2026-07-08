@@ -126,103 +126,7 @@
           @click="(item) => handleTagClick(item.value)"
         />
 
-        <UModal
-          v-model:open="isSearchInputOpen"
-          :close="false"
-          :ui="{
-            // translate-y-0 cancels the modal theme's default -translate-y-1/2 so the
-            // box anchors by its top edge and grows downward as suggestions appear.
-            content: 'max-phone:top-30 top-1/4 translate-y-0',
-            body: 'p-0 sm:p-0',
-            footer: [
-              'flex',
-              'items-center',
-              'justify-between',
-
-              'sm:px-4',
-              'pl-3 sm:pl-3',
-              'py-2',
-            ],
-          }"
-        >
-          <PillButton
-            icon="i-material-symbols-search-rounded"
-            :aria-label="$t('store_search_label')"
-            @click="handleSearchTagClick"
-          />
-
-          <template #body>
-            <form
-              class="w-full"
-              action="."
-              @submit.prevent="handleSearchSubmit"
-            >
-              <UInput
-                v-model="searchInputValue"
-                class="w-full"
-                icon="i-material-symbols-search-rounded"
-                :loading="isSearchSuggestionsLoading"
-                size="xl"
-                variant="none"
-                :placeholder="$t('store_search_input_placeholder')"
-                type="search"
-                :ui="{
-                  base: 'py-5 [&::-webkit-search-cancel-button]:appearance-none',
-                  trailing: 'pe-2',
-                }"
-                @compositionstart="isSearchInputComposing = true"
-                @compositionend="isSearchInputComposing = false"
-                @blur="handleSearchInputBlur"
-              >
-                <template
-                  v-if="searchInputValue.length"
-                  #trailing
-                >
-                  <UButton
-                    color="neutral"
-                    variant="link"
-                    icon="i-material-symbols-close-rounded"
-                    :aria-label="$t('store_search_clear_label')"
-                    @click="handleClearSearchInputButton"
-                  />
-                </template>
-              </UInput>
-            </form>
-
-            <ul
-              v-if="shouldShowSearchSuggestions"
-              data-search-suggestions
-              class="border-t border-default max-h-[min(20rem,50svh)] overflow-y-auto py-2"
-              :aria-label="$t('store_search_suggestions_label')"
-            >
-              <li
-                v-for="suggestion in searchSuggestions"
-                :key="suggestion.classId"
-              >
-                <!-- mousedown.prevent keeps focus on the input so its blur
-                     handler doesn't close the modal before the click lands. -->
-                <button
-                  type="button"
-                  class="flex w-full items-center gap-3 px-4 py-2 text-left hover:bg-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
-                  @mousedown.prevent
-                  @click="handleSearchSuggestionSelect(suggestion)"
-                >
-                  <img
-                    v-if="suggestion.thumbnailUrl"
-                    :src="suggestion.thumbnailUrl"
-                    alt=""
-                    class="h-12 w-9 shrink-0 rounded object-cover"
-                    loading="lazy"
-                  >
-                  <span
-                    class="line-clamp-2 text-sm"
-                    v-text="suggestion.title"
-                  />
-                </button>
-              </li>
-            </ul>
-          </template>
-        </UModal>
+        <StoreSearchModal :is-library-tab="isLibraryTab" />
 
         <UTooltip
           v-if="!isLibraryTab"
@@ -247,94 +151,18 @@
 
       <LibraryIntroBanner v-if="isLibraryIntroBannerVisible" />
 
-      <!--
-      Prompt non-Plus visitors to subscribe through this affiliate
-      to unlock the exclusive voice these curated books can be read with.
-      -->
-      <UAlert
+      <StoreAffiliateCTABanner
         v-if="isAffiliateCTAVisible"
-        color="neutral"
-        variant="subtle"
-        :title="$t('store_affiliate_cta_title', { name: affiliateDisplayName })"
-        :description="$t('store_affiliate_cta_description', { name: affiliateDisplayName })"
-        :actions="[
-          {
-            label: $t('store_affiliate_cta_button'),
-            color: 'primary',
-            to: affiliateSubscribeRoute,
-          },
-        ]"
-        :style="{ '--backdrop-image': `url(${affiliateCTABackdropImageSrc})` }"
-        :ui="{
-          root: 'max-phone:flex-row-reverse affiliate-cta-banner bg-cover laptop:bg-size-[50%] bg-no-repeat bg-right rounded-xl',
-          title: 'text-highlighted text-lg font-bold',
-        }"
-      >
-        <template #leading>
-          <div class="relative">
-            <UAvatar
-              :src="affiliateAvatarSrc"
-              :alt="affiliateDisplayName"
-              icon="i-material-symbols-person-2-rounded"
-              :ui="{
-                root: 'size-14 phone:size-18',
-                image: 'border border-2 border-theme-cyan',
-              }"
-            />
-            <!-- For deco -->
-            <UAvatar
-              class="absolute -bottom-0.5 -right-0.5 bg-theme-black"
-              icon="i-material-symbols-graphic-eq-rounded"
-              size="xs"
-              :ui="{ icon: 'text-theme-cyan' }"
-            />
-          </div>
-        </template>
-      </UAlert>
+        :display-name="affiliateDisplayName"
+        :avatar-src="affiliateAvatarSrc"
+        :subscribe-route="affiliateSubscribeRoute"
+      />
 
-      <UAlert
+      <PlusWelcomeBanner
         v-if="isWelcomeBannerVisible"
-        color="neutral"
-        variant="soft"
-        icon="i-material-symbols-celebration-rounded"
-        :title="$t('plus_welcome_banner_title')"
-        :description="queryAffiliate && affiliateHasVoices
-          ? $t('plus_welcome_banner_affiliate_description', { name: affiliateDisplayName })
-          : $t('plus_welcome_banner_description')"
-        :close="{
-          variant: 'soft',
-          color: 'neutral',
-          ui: { base: 'rounded-full' },
-        }"
-        :style="{ '--backdrop-image': `url(${plusWelcomeBannerBackdropImageSrc})` }"
-        :ui="{
-          root: 'plus-welcome-banner items-center text-theme-black bg-cover laptop:bg-size-[50%] bg-no-repeat bg-right rounded-xl',
-          title: 'text-lg font-bold',
-        }"
-        @update:open="handleWelcomeBannerDismiss"
-      >
-        <template #leading>
-          <UIcon
-            name="i-material-symbols-celebration-rounded"
-            class="size-8"
-          />
-
-          <!-- Plus deco -->
-          <img
-            :class="[
-              'absolute',
-              'right-1/2', 'phone:right-0',
-              'w-12',
-              'phone:mr-10',
-              'opacity-35', 'phone:opacity-50',
-              'scale-700', 'phone:scale-500',
-              'origin-center', 'phone:origin-right',
-              'mix-blend-multiply',
-            ]"
-            :src="plusLogoSrc"
-          >
-        </template>
-      </UAlert>
+        :description="welcomeBannerDescription"
+        @dismiss="handleWelcomeBannerDismiss"
+      />
     </section>
 
     <!--
@@ -381,100 +209,12 @@
         </ExpandableContent>
       </section>
 
-      <div
-        v-if="isAffiliateNotFound"
-        class="flex flex-col items-center m-auto py-16 text-center"
-      >
-        <UIcon
-          class="opacity-20 mb-4"
-          name="i-material-symbols-person-off-rounded"
-          size="128"
-        />
-        <h2
-          class="text-xl font-bold text-highlighted mb-2"
-          v-text="$t('store_affiliate_not_found_title')"
-        />
-        <p
-          class="text-muted mb-4"
-          v-text="$t('store_affiliate_not_found_description')"
-        />
-        <UButton
-          :label="$t('store_affiliate_not_found_back_button')"
-          :to="localeRoute({ name: routeName })"
-          color="primary"
-          trailing-icon="i-material-symbols-arrow-forward-rounded"
-        />
-      </div>
-
-      <div
-        v-else-if="isLoadingInitialItems"
-        class="flex justify-center py-48"
-      >
-        <UIcon
-          class="animate-spin"
-          name="material-symbols-progress-activity"
-          size="48"
-        />
-      </div>
-
-      <div
-        v-else-if="isSearchResultEmpty"
-        class="w-full mb-8"
-      >
-        <div class="flex flex-col items-center py-8">
-          <UIcon
-            class="opacity-20 mb-4"
-            name="i-material-symbols-search-off-rounded"
-            size="64"
-          />
-          <h2
-            class="text-xl font-bold text-highlighted mb-2"
-            v-text="$t('store_no_search_results')"
-          />
-          <p
-            class="text-muted"
-            v-text="$t('store_showing_recommendations')"
-          />
-          <p
-            class="text-muted mt-4"
-            v-text="$t('store_no_search_results_contact_message')"
-          />
-          <UButton
-            class="mt-2"
-            :label="$t('store_no_search_results_contact')"
-            leading-icon="i-material-symbols-chat-bubble-outline-rounded"
-            variant="outline"
-            color="neutral"
-            @click="handleContactUsClick"
-          />
-        </div>
-      </div>
-
-      <div
-        v-else-if="itemsCount === 0 && !products.isFetchingItems && products.hasFetchedItems"
-        class="flex flex-col items-center m-auto"
-      >
-        <UIcon
-          class="opacity-20 mb-4"
-          name="i-material-symbols-menu-book-outline-rounded"
-          size="128"
-        />
-
-        <p
-          class="text-muted"
-          v-text="$t('store_no_items')"
-        />
-
-        <UButton
-          class="mt-3"
-          :label="$t('store_no_items_learn_more')"
-          :to="localeRoute({ name: 'about', query: { ll_medium: 'about-link', ll_source: 'store-empty' } })"
-          variant="link"
-          color="neutral"
-          size="sm"
-          trailing-icon="i-material-symbols-arrow-forward-rounded"
-        />
-      </div>
+      <StoreListStatus
+        v-if="storeListStatus"
+        :status="storeListStatus"
+        :route-name="routeName"
+        @contact-click="handleContactUsClick"
+      />
 
       <h2
         v-if="queryAffiliate && itemsCount > 0"
@@ -536,15 +276,11 @@
 import { FetchError } from 'ofetch'
 
 import { getGenreI18nKey } from '~~/shared/constants/book-categories'
-import { BOOKSTORE_DEFAULT_LIST_TYPE, MAX_BOOKSTORE_PAGE_SIZE, isBookstoreBuiltInListType } from '~~/shared/utils/bookstore'
+import { MAX_BOOKSTORE_PAGE_SIZE, isBookstoreBuiltInListType } from '~~/shared/utils/bookstore'
 import { normalizeLikerId } from '~~/shared/utils/liker-id'
 
-import affiliateCTABackdropImageSrc from '~/assets/images/affiliate-cta-banner-backdrop.webp'
-import plusLogoSrc from '~/assets/images/plus-logo.svg?url'
-import plusWelcomeBannerBackdropImageSrc from '~/assets/images/plus-welcome-banner-backdrop.webp'
-
 const nuxtApp = useNuxtApp()
-const { t: $t, locale } = useI18n()
+const { t: $t } = useI18n()
 const localeRoute = useLocaleRoute()
 const route = useRoute()
 const getRouteBaseNameString = useRouteBaseNameString()
@@ -562,14 +298,12 @@ const { handleError } = useErrorHandler()
 const { dismissLibraryIntroBanner } = useLibraryIntroBanner()
 const storePageState = useStorePageState(routeName)
 const isOnline = useOnline()
-const isMobile = useMediaQuery('(max-width: 425px)')
 const isAdultContentEnabled = useAdultContentSetting()
 const { isApp } = useAppDetection()
 const intercom = useIntercom()
 // Effective Plus (canonical flag OR optimistic device-store entitlement) so a
 // just-subscribed member isn't briefly treated as non-Plus before the webhook lands.
 const { isPlusOrDevicePlus } = useDevicePlusEntitlement()
-const { loggedIn: hasLoggedIn } = useUserSession()
 
 const querySearchTerm = computed(() => getRouteQuery('q', ''))
 const queryAuthorName = computed(() => getRouteQuery('author', ''))
@@ -652,6 +386,11 @@ const isAffiliateNotFound = computed(() => !!queryAffiliate.value && !!isAffilia
 // Only greet actual members, so a shared/bookmarked `welcome` link can't surface
 // the banner for non-subscribers.
 const isWelcomeBannerVisible = computed(() => queryWelcome.value === '1' && isPlusOrDevicePlus.value)
+const welcomeBannerDescription = computed(() =>
+  queryAffiliate.value && affiliateHasVoices.value
+    ? $t('plus_welcome_banner_affiliate_description', { name: affiliateDisplayName.value })
+    : $t('plus_welcome_banner_description'),
+)
 function handleWelcomeBannerDismiss() {
   const { welcome: _welcome, ...query } = route.query
   navigateTo(localeRoute({ name: routeName.value, query }), { replace: true })
@@ -702,57 +441,18 @@ const localizedGenreName = computed(() => {
 const isSearchMode = computed(() => !!searchQuery.value)
 const isLibraryIntroBannerVisible = computed(() => isLibraryTab.value && !isSearchMode.value && !entity.value)
 
-const STAKING_SORT_TAG_PREFIX = 'staking-'
-const STAKING_SORT_OPTIONS = [
-  { value: 'total-staked', isPublic: true },
-  { value: 'staker-count' },
-  { value: 'recent' },
-].map(option => ({
-  ...option,
-  isPublic: !!option.isPublic,
-  value: `${STAKING_SORT_TAG_PREFIX}${option.value}`,
-}))
-const STAKING_TAG_DEFAULT = STAKING_SORT_OPTIONS[0]!.value
-// The library always lands on the staking-ranked (熱門) tab regardless of login
-// status. On the store, signed-in readers land on the freshest titles while
-// signed-out visitors get the staking-ranked landing as the default tab.
-const defaultTagId = computed(() => {
-  if (isLibraryTab.value) return STAKING_TAG_DEFAULT
-  return hasLoggedIn.value ? BOOKSTORE_DEFAULT_LIST_TYPE : STAKING_TAG_DEFAULT
-})
-
-function getIsDefaultTagId(id: string) {
-  return id === defaultTagId.value
-}
-
-function getIsLocalHistoriesTagId(id: string) {
-  return id === 'local-histories'
-}
-
-function getIsStakingTagId(id: string) {
-  return id.startsWith(STAKING_SORT_TAG_PREFIX)
-}
-
-const tagId = computed({
-  get: () => getRouteQuery('tag', defaultTagId.value),
-  set: async (id) => {
-    if (getIsLocalHistoriesTagId(id)) {
-      await navigateTo(localeRoute({ name: 'local-histories' }))
-      return
-    }
-    await navigateTo(localeRoute({
-      name: routeName.value,
-      query: {
-        ...route.query,
-        ll_medium: `tag-${id}`,
-        // NOTE: Remove the tag query if it is the listing tag
-        tag: getIsDefaultTagId(id) ? undefined : id,
-      },
-    }))
-  },
-})
-const isDefaultTagId = computed(() => getIsDefaultTagId(tagId.value))
-const isStakingTagId = computed(() => getIsStakingTagId(tagId.value))
+const {
+  STAKING_TAG_DEFAULT,
+  tagId,
+  isDefaultTagId,
+  isStakingTagId,
+  getIsLocalHistoriesTagId,
+  normalizedLocale,
+  activeCMSTag,
+  allTagItems,
+  mapTagIdToAPIStakingSortValue,
+  tagName,
+} = useStoreTags({ routeName, isLibraryTab })
 
 await callOnce(async () => {
   if (getIsLocalHistoriesTagId(tagId.value)) {
@@ -780,111 +480,6 @@ await callOnce(async () => {
     // Restore Nuxt context lost across the await before calling navigateTo/localeRoute.
     await nuxtApp.runWithContext(() => navigateTo(localeRoute({ name: routeName.value, query }), { replace: true }))
   }
-})
-
-const normalizedLocale = computed(() => locale.value === 'zh-Hant' ? 'zh' : 'en')
-
-function getStakingTagLabel(tagId: string) {
-  const suffix = tagId.slice(STAKING_SORT_TAG_PREFIX.length) || 'total-staked'
-  switch (suffix) {
-    case 'staker-count':
-      return $t('staking_explore_sort_staker_count')
-    case 'recent':
-      return $t('staking_explore_sort_recent')
-    case 'total-staked':
-    default:
-      return $t('staking_explore_sort_total_staked')
-  }
-}
-
-const activeCMSTag = computed(() => {
-  return bookstoreStore.getBookstoreCMSTagById(tagId.value)
-})
-
-function getTagTo(value: string) {
-  if (value === 'local-histories') {
-    return localeRoute({ name: 'local-histories' })
-  }
-  return localeRoute({
-    name: routeName.value,
-    query: {
-      ...route.query,
-      tag: getIsDefaultTagId(value) ? undefined : value,
-    },
-  })
-}
-
-const allTagItems = computed(() => {
-  const stakingTags = STAKING_SORT_OPTIONS
-    .map(option => ({
-      ...option,
-      label: getStakingTagLabel(option.value),
-    }))
-    .filter(option => tagId.value === option.value || option.isPublic)
-
-  // Built-in list types (latest/free/drm-free) are mirrored as CMS tags so editors
-  // control their ordering here, hence they surface through cmsTags like any other tag.
-  const cmsTags = bookstoreStore.bookstoreCMSTags
-    .filter((tag) => {
-      // The library tab only lists tags flagged with isForLibrary.
-      if (isLibraryTab.value && !tag.isForLibrary && tag.id !== tagId.value) return false
-      return !!tag.isPublic || tag.id === tagId.value
-    })
-    .map(tag => ({
-      label: tag.name[normalizedLocale.value],
-      value: tag.id,
-    }))
-
-  // Always surface the active CMS tag even if it's absent from the cached list
-  // (e.g. a newly created tag not yet reflected in the cached tag list).
-  if (
-    activeCMSTag.value
-    && !cmsTags.some(t => t.value === activeCMSTag.value!.id)
-  ) {
-    cmsTags.push({
-      label: activeCMSTag.value.name[normalizedLocale.value],
-      value: activeCMSTag.value.id,
-    })
-  }
-
-  // Local histories is a store-only entry; the library tab omits it.
-  const visibleCMSTags = isLibraryTab.value
-    ? cmsTags.filter(tag => !getIsLocalHistoriesTagId(tag.value))
-    : cmsTags
-
-  // On mobile, pin the local-histories CMS tag last.
-  const ordered = [...stakingTags, ...visibleCMSTags]
-  if (isMobile.value) {
-    const localHistoriesIndex = ordered.findIndex(tag => getIsLocalHistoriesTagId(tag.value))
-    if (localHistoriesIndex !== -1) {
-      ordered.push(...ordered.splice(localHistoriesIndex, 1))
-    }
-  }
-
-  return ordered.map(item => ({
-    ...item,
-    to: getTagTo(item.value),
-  }))
-})
-
-function mapTagIdToAPIStakingSortValue(tagId: string): 'staked_amount' | 'last_staked_at' | 'number_of_stakers' {
-  const suffix = tagId.slice(STAKING_SORT_TAG_PREFIX.length) || 'total-staked'
-  switch (suffix) {
-    case 'staker-count':
-      return 'number_of_stakers'
-    case 'recent':
-      return 'last_staked_at'
-    case 'total-staked':
-    default:
-      return 'staked_amount'
-  }
-}
-
-const tagName = computed(() => {
-  if (isStakingTagId.value) {
-    return getStakingTagLabel(tagId.value)
-  }
-  return activeCMSTag.value?.name[normalizedLocale.value] || ''
 })
 
 const searchModeContext = computed(() => {
@@ -1154,6 +749,15 @@ const isLoadingInitialItems = computed(() => (
   )
 ))
 const hasMoreItems = computed(() => !!products.value.nextItemsKey || !!products.value.mayHaveMore || !products.value.hasFetchedItems)
+
+// Order matters: the first matching status wins.
+const storeListStatus = computed(() => {
+  if (isAffiliateNotFound.value) return 'affiliate-not-found' as const
+  if (isLoadingInitialItems.value) return 'loading' as const
+  if (isSearchResultEmpty.value) return 'search-empty' as const
+  if (itemsCount.value === 0 && !products.value.isFetchingItems && products.value.hasFetchedItems) return 'no-items' as const
+  return null
+})
 
 const itemsForStructuredData = computed(() => products.value.items.slice(0, Math.min(20, itemsCount.value)))
 const structuredData = useStorePageStructuredData({
@@ -1643,103 +1247,9 @@ async function handleLibraryLogoClick() {
   }
 }
 
-const isSearchInputOpen = ref(false)
-const searchInputValue = ref('')
-// Track IME composition so live suggestions don't fire on half-typed CJK input.
-const isSearchInputComposing = ref(false)
-
-const { suggestions: searchSuggestions, isLoading: isSearchSuggestionsLoading } = useStoreSearchSuggestions(
-  searchInputValue,
-  {
-    isLibrary: isLibraryTab,
-    isComposing: isSearchInputComposing,
-  },
-)
-
-const shouldShowSearchSuggestions = computed(() =>
-  isSearchInputOpen.value
-  && searchInputValue.value.trim().length >= SUGGESTION_MIN_TERM_LENGTH
-  && searchSuggestions.value.length > 0,
-)
-
-// Keep the modal open when focus moves into the suggestions list so keyboard users
-// can Tab from the input to a suggestion; close on any other blur.
-function handleSearchInputBlur(event: FocusEvent) {
-  const nextFocused = event.relatedTarget as HTMLElement | null
-  if (nextFocused?.closest('[data-search-suggestions]')) return
-  isSearchInputOpen.value = false
-}
-
-function handleSearchTagClick() {
-  useLogEvent(isLibraryTab.value ? 'library_tag_search_click' : 'store_tag_search_click')
-  searchInputValue.value = ''
-}
-
-async function handleSearchSuggestionSelect(suggestion: StoreSearchSuggestion) {
-  useLogEvent(isLibraryTab.value ? 'library_search_suggestion_click' : 'store_search_suggestion_click', {
-    search_term: searchInputValue.value,
-    nft_class_id: suggestion.classId,
-    item_name: suggestion.title,
-  })
-  isSearchInputOpen.value = false
-  await navigateTo(localeRoute({
-    name: isLibraryTab.value ? 'library-nftClassId' : 'store-nftClassId',
-    params: { nftClassId: suggestion.classId },
-  }))
-}
-
-function handleClearSearchInputButton() {
-  useLogEvent(isLibraryTab.value ? 'library_search_input_clear_button_click' : 'store_search_input_clear_button_click')
-  searchInputValue.value = ''
-}
-
 function handleContactUsClick() {
   useLogEvent(isLibraryTab.value ? 'library_no_search_results_contact_click' : 'store_no_search_results_contact_click', { search_term: querySearchTerm.value })
   const searchTerm = querySearchTerm.value || queryAuthorName.value || queryPublisherName.value || queryOwnerWallet.value
   intercom.showNewMessage($t('store_no_search_results_contact_prefill', { term: searchTerm }))
 }
-
-async function handleSearchSubmit() {
-  if (!searchInputValue.value) return
-
-  isSearchInputOpen.value = false
-  let query = 'q'
-  if (checkIsEVMAddress(searchInputValue.value)) {
-    query = 'owner_wallet'
-  }
-  // Omit search_term for wallet-address searches so we don't forward a persistent
-  // on-chain identifier to GA4/Meta; still fire the event to keep the search count.
-  useLogEvent(isLibraryTab.value ? 'library_search_submit' : 'store_search_submit', query === 'owner_wallet' ? {} : { search_term: searchInputValue.value })
-  await navigateTo({ query: { [query]: searchInputValue.value } })
-}
 </script>
-
-<style scoped>
-.affiliate-cta-banner {
-  --banner-tint: #f0fdf9;
-  background-color: var(--banner-tint);
-  background-image:
-    linear-gradient(
-      to right,
-      var(--banner-tint),
-      color-mix(in oklab, var(--banner-tint) 85%, transparent)
-    ),
-    var(--backdrop-image);
-}
-
-.dark .affiliate-cta-banner {
-  --banner-tint: #052e2a;
-}
-
-.plus-welcome-banner {
-  --banner-tint: var(--color-theme-cyan);
-  background-color: var(--banner-tint);
-  background-image:
-    linear-gradient(
-      to right,
-      var(--banner-tint),
-      color-mix(in oklab, var(--banner-tint) 85%, transparent)
-    ),
-    var(--backdrop-image);
-}
-</style>
