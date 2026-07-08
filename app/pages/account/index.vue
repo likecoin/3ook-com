@@ -584,179 +584,26 @@
         variant="link"
         color="error"
         size="xs"
-        @click="isDeleteAccountDialogOpen = true"
+        @click="handleDeleteAccountButtonClick"
       />
     </template>
-
-    <UModal
-      v-model:open="isDisplayNameEditModalOpen"
-      :title="$t('account_page_display_name_edit_title')"
-      :dismissible="!isUpdatingDisplayName"
-      :close="!isUpdatingDisplayName"
-      :ui="{
-        title: 'text-lg font-bold',
-        footer: 'flex justify-end gap-3',
-      }"
-    >
-      <template #body>
-        <UInput
-          v-model="displayNameInput"
-          class="w-full"
-          autofocus
-          :placeholder="$t('account_page_display_name_edit_placeholder')"
-          :disabled="isUpdatingDisplayName"
-          @keydown.enter="confirmDisplayNameEdit"
-        />
-      </template>
-
-      <template #footer>
-        <UButton
-          :label="$t('common_cancel')"
-          variant="outline"
-          color="neutral"
-          :disabled="isUpdatingDisplayName"
-          @click="isDisplayNameEditModalOpen = false"
-        />
-        <UButton
-          :label="$t('account_page_display_name_edit_save')"
-          color="primary"
-          :loading="isUpdatingDisplayName"
-          :disabled="!isDisplayNameInputValid"
-          @click="confirmDisplayNameEdit"
-        />
-      </template>
-    </UModal>
-
-    <UModal
-      v-model:open="isEmailEditModalOpen"
-      :title="$t('account_page_email_edit_title')"
-      :dismissible="!isUpdatingEmail"
-      :close="!isUpdatingEmail"
-      :ui="{
-        title: 'text-lg font-bold',
-        footer: 'flex justify-end gap-3',
-      }"
-    >
-      <template #body>
-        <div class="space-y-3">
-          <UInput
-            v-model="emailInput"
-            class="w-full"
-            type="email"
-            autofocus
-            :placeholder="$t('account_page_email_edit_placeholder')"
-            :disabled="isUpdatingEmail"
-            @keydown.enter="confirmEmailEdit"
-          />
-          <p
-            class="text-xs text-muted"
-            v-text="accountStore.isLoginWithMagic
-              ? $t('account_page_email_edit_hint_magic')
-              : $t('account_page_email_edit_hint_wallet')"
-          />
-        </div>
-      </template>
-
-      <template #footer>
-        <UButton
-          :label="$t('common_cancel')"
-          variant="outline"
-          color="neutral"
-          :disabled="isUpdatingEmail"
-          @click="isEmailEditModalOpen = false"
-        />
-        <UButton
-          :label="$t('account_page_email_edit_save')"
-          color="primary"
-          :loading="isUpdatingEmail"
-          :disabled="!isEmailInputValid"
-          @click="confirmEmailEdit"
-        />
-      </template>
-    </UModal>
-
-    <UModal
-      v-model:open="isAdultContentConfirmOpen"
-      :title="$t('account_page_adult_content_confirm_title')"
-      :description="$t('account_page_adult_content_confirm_description')"
-      :ui="{
-        title: 'text-lg font-bold',
-        footer: 'flex justify-end gap-3',
-      }"
-    >
-      <template #footer>
-        <UButton
-          :label="$t('common_cancel')"
-          variant="outline"
-          color="neutral"
-          @click="isAdultContentConfirmOpen = false"
-        />
-        <UButton
-          :label="$t('account_page_adult_content_confirm_button')"
-          color="error"
-          @click="confirmAdultContent"
-        />
-      </template>
-    </UModal>
-
-    <UModal
-      v-model:open="isDeleteAccountDialogOpen"
-      :dismissible="!isDeletingAccount"
-      :close="!isDeletingAccount"
-      :ui="{
-        title: 'text-lg font-bold',
-        footer: 'flex justify-end gap-3',
-      }"
-    >
-      <template #title>
-        <span v-text="$t('account_page_delete_account_confirm_title')" />
-      </template>
-
-      <template #body>
-        <div class="space-y-4">
-          <p
-            class="text-sm"
-            v-text="$t('account_page_delete_account_confirm_description')"
-          />
-
-          <UAlert
-            icon="i-material-symbols-warning-outline-rounded"
-            color="error"
-            variant="subtle"
-            :title="$t('account_page_delete_account_confirm_warning')"
-          />
-        </div>
-      </template>
-
-      <template #footer>
-        <UButton
-          :label="$t('common_cancel')"
-          variant="outline"
-          color="neutral"
-          :disabled="isDeletingAccount"
-          @click="isDeleteAccountDialogOpen = false"
-        />
-        <UButton
-          :label="$t('account_page_delete_account_confirm_button')"
-          color="error"
-          :loading="isDeletingAccount"
-          @click="confirmDeleteAccount"
-        />
-      </template>
-    </UModal>
   </main>
 </template>
 
 <script setup lang="ts">
 import { formatUnits } from 'viem'
 import { useSignMessage } from '@wagmi/vue'
-import { CustomVoiceUploadModal } from '#components'
-import type { FetchStripeConnectStatusResponseData } from '~/composables/use-stripe-connect-session-api'
+import {
+  AccountAdultContentConfirmModal,
+  AccountDeleteConfirmModal,
+  AccountDisplayNameModal,
+  AccountEmailModal,
+  CustomVoiceUploadModal,
+} from '#components'
 import likeCoinTokenImage from '~/assets/images/likecoin-token.png'
 
 const config = useRuntimeConfig()
 const userAccountSessionAPI = useUserAccountSessionAPI()
-const stripeConnectSessionAPI = useStripeConnectSessionAPI()
 const plusSessionAPI = usePlusSessionAPI()
 const { t: $t, locale } = useI18n()
 const { loggedIn: hasLoggedIn, user } = useUserSession()
@@ -768,7 +615,7 @@ const { handleError } = useErrorHandler()
 const toast = useToast()
 const { copy: copyToClipboard } = useClipboard()
 const { isApp } = useAppDetection()
-const { isIAPSupported, canStartSubscribeFlow, restore: restorePurchases, manageSubscription: manageViaIAP } = useNativeIAP()
+const { isIAPSupported, canStartSubscribeFlow, restore: restorePurchases } = useNativeIAP()
 const intercom = useIntercom()
 
 const isRestoringPurchases = ref(false)
@@ -823,28 +670,11 @@ async function handleRestorePurchases() {
 }
 
 const isAdultContentEnabled = useAdultContentSetting()
-const isAdultContentConfirmOpen = ref(false)
 
 const AVATAR_MAX_BYTES = 2 * 1024 * 1024
 
 const avatarFileInput = useTemplateRef<HTMLInputElement>('avatarFileInput')
 const isUploadingAvatar = ref(false)
-
-const isDisplayNameEditModalOpen = ref(false)
-const isUpdatingDisplayName = ref(false)
-const displayNameInput = ref('')
-const isDisplayNameInputValid = computed(() => {
-  const trimmed = displayNameInput.value.trim()
-  return trimmed.length > 0 && trimmed !== user.value?.displayName
-})
-
-const isEmailEditModalOpen = ref(false)
-const isUpdatingEmail = ref(false)
-const emailInput = ref('')
-const isEmailInputValid = computed(() => {
-  const normalized = normalizeEmail(emailInput.value)
-  return validateEmail(normalized) && normalized !== normalizeEmail(user.value?.email ?? '')
-})
 
 const { locales } = useAutoLocale()
 const { currency, options: currencyOptions } = usePaymentCurrency()
@@ -864,118 +694,42 @@ const colorModeLabel = computed(
 
 const isPlusFeatureVisible = computed(() => canStartSubscribeFlow.value || !!user.value?.isLikerPlus)
 
-const stripeConnectStatus = ref<FetchStripeConnectStatusResponseData>({
-  hasAccount: false,
-  isReady: false,
-})
-const isStripeConnectLoading = ref(false)
+const {
+  stripeConnectStatus,
+  isStripeConnectLoading,
+  stripeConnectStatusLabel,
+  stripeConnectButtonLabel,
+  loadStripeConnectStatus,
+  refreshStripeConnectStatus,
+  handleStripeConnectButtonClick,
+} = useStripeConnectManagement()
 
-type StripeConnectState = 'ready' | 'pending' | 'none'
-
-const stripeConnectState = computed<StripeConnectState>(() => {
-  if (stripeConnectStatus.value.isReady) return 'ready'
-  if (stripeConnectStatus.value.hasAccount) return 'pending'
-  return 'none'
-})
-
-const stripeConnectStatusLabel = computed(() => {
-  switch (stripeConnectState.value) {
-    case 'ready':
-      return $t('account_page_stripe_connect_status_ready')
-    case 'pending':
-      return $t('account_page_stripe_connect_status_pending')
-    case 'none':
-      return $t('account_page_stripe_connect_status_none')
-  }
-  return ''
-})
-
-const stripeConnectButtonLabel = computed(() => {
-  switch (stripeConnectState.value) {
-    case 'ready':
-      return $t('account_page_stripe_connect_manage_button')
-    case 'pending':
-      return $t('account_page_stripe_connect_resume_button')
-    case 'none':
-      return $t('account_page_stripe_connect_setup_button')
-  }
-  return ''
-})
-
-function resetStripeConnectState() {
-  stripeConnectStatus.value = {
-    hasAccount: false,
-    isReady: false,
-  }
-  isStripeConnectLoading.value = false
-}
-
-watch(() => user.value?.evmWallet, () => {
-  resetStripeConnectState()
-})
-
-async function loadStripeConnectStatus() {
-  if (isApp.value) return
-  if (!user.value?.evmWallet) return
-  try {
-    stripeConnectStatus.value = await stripeConnectSessionAPI.fetchStripeConnectStatus({
-      wallet: user.value.evmWallet,
-    })
-  }
-  catch (error) {
-    console.error('Failed to fetch Stripe Connect status:', error)
-  }
-}
-
-async function refreshStripeConnectStatus() {
-  if (isApp.value) return
-  try {
-    await stripeConnectSessionAPI.refreshStripeConnectStatus()
-  }
-  catch (error) {
-    console.error('Failed to refresh Stripe Connect status:', error)
-  }
-  await loadStripeConnectStatus()
-}
-
-async function handleStripeConnectButtonClick() {
-  if (isStripeConnectLoading.value) return
-  const isManage = stripeConnectState.value === 'ready'
-  isStripeConnectLoading.value = true
-  try {
-    useLogEvent(isManage ? 'stripe_connect_login' : 'stripe_connect_setup_started')
-    const { url } = isManage
-      ? await stripeConnectSessionAPI.fetchStripeConnectLoginLink()
-      : await stripeConnectSessionAPI.createStripeConnectAccount()
-    await navigateTo(url, { external: true })
-  }
-  catch (error) {
-    isStripeConnectLoading.value = false
-    await handleError(error, {
-      title: isManage
-        ? $t('account_page_stripe_connect_manage_failed')
-        : $t('account_page_stripe_connect_setup_failed'),
-    })
-  }
-}
+const {
+  isPaymentPastDue,
+  subscriptionStateLabel,
+  likerPlusButtonLabel,
+  likerPlusManageMode,
+  isOpeningBillingPortal,
+  isManagingSubscription,
+  handleLikerPlusButtonClick,
+} = usePlusManagement()
 
 function handleAdultContentToggle(value: boolean) {
   if (value) {
-    isAdultContentConfirmOpen.value = true
+    adultContentConfirmModal.open()
   }
   else {
     isAdultContentEnabled.value = false
   }
 }
 
-function confirmAdultContent() {
-  isAdultContentEnabled.value = true
-  isAdultContentConfirmOpen.value = false
-}
-
 const { customVoice, hasCustomVoice, fetchCustomVoice } = useCustomVoice()
 const overlay = useOverlay()
 const customVoiceModal = overlay.create(CustomVoiceUploadModal)
+const displayNameModal = overlay.create(AccountDisplayNameModal)
+const emailModal = overlay.create(AccountEmailModal)
+const adultContentConfirmModal = overlay.create(AccountAdultContentConfirmModal)
+const deleteAccountModal = overlay.create(AccountDeleteConfirmModal)
 const blockingModal = useBlockingModal()
 const subscription = useSubscriptionModal()
 
@@ -1063,47 +817,6 @@ const publishBookURL = computed(() => {
   return `${config.public.publishBookEndpoint}?utm_source=3ookcom&utm_medium=referral&utm_campaign=3ookcom_account`
 })
 
-const isPaymentPastDue = computed(() =>
-  !!user.value?.isExpiredLikerPlus && user.value?.likerPlusSubscriptionStatus === 'past_due',
-)
-
-const subscriptionStateLabel = computed(() => {
-  if (!user.value) return undefined
-  if (user.value.isLikerPlus) {
-    // TODO: Support Trial
-    return $t('account_page_subscription_plus')
-  }
-  if (user.value.isExpiredLikerPlus) {
-    if (isPaymentPastDue.value) {
-      return $t('account_page_subscription_past_due')
-    }
-    return $t('account_page_subscription_expired')
-  }
-  return $t('account_page_subscription_free')
-})
-
-const likerPlusButtonLabel = computed(() => {
-  if (user.value?.isLikerPlus) return $t('account_page_manage_subscription')
-  if (isPaymentPastDue.value) return $t('account_page_update_payment')
-  return $t('account_page_renew_subscription')
-})
-
-// How the subscriber can manage their plan, by where they subscribed:
-// - native-store: store-owned (App Store/Play) and in-app → native manage sheet
-// - store-info:   store-owned but not in a build that can open the sheet (web,
-//                 or an app build without IAP) → "manage on your device" text
-// - stripe-portal: Stripe (incl. legacy/undefined provider, which predates IAP)
-//                 on web → Stripe customer portal; hidden in-app for now
-// - none:         not a subscriber, or Stripe in-app (no portal button in-app)
-type LikerPlusManageMode = 'native-store' | 'store-info' | 'stripe-portal' | 'none'
-const likerPlusManageMode = computed<LikerPlusManageMode>(() => {
-  if (!user.value?.isLikerPlus && !user.value?.isExpiredLikerPlus) return 'none'
-  if (user.value?.likerPlusProvider === 'revenuecat') {
-    return isIAPSupported.value ? 'native-store' : 'store-info'
-  }
-  return isApp.value ? 'none' : 'stripe-portal'
-})
-
 const likeWalletButtonTo = computed(() => {
   if (!user.value?.likeWallet) return undefined
   return `${config.public.likerLandSiteURL}/${locale.value}/${user.value.likeWallet}?tab=collected`
@@ -1132,104 +845,12 @@ async function handleLogout() {
 
 function handleDisplayNameEditButtonClick() {
   useLogEvent('account_display_name_edit_click')
-  displayNameInput.value = user.value?.displayName ?? ''
-  isDisplayNameEditModalOpen.value = true
-}
-
-async function confirmDisplayNameEdit() {
-  if (!isDisplayNameInputValid.value || isUpdatingDisplayName.value) return
-  const nextDisplayName = displayNameInput.value.trim()
-  isUpdatingDisplayName.value = true
-  try {
-    try {
-      await userAccountSessionAPI.updateUserProfile({ displayName: nextDisplayName })
-    }
-    catch (error) {
-      await handleError(error, {
-        title: $t('account_page_display_name_update_failed'),
-      })
-      return
-    }
-    useLogEvent('account_display_name_update_success')
-    toast.add({
-      title: $t('account_page_display_name_update_success'),
-      color: 'success',
-    })
-    isDisplayNameEditModalOpen.value = false
-    try {
-      await accountStore.refreshSessionInfo()
-    }
-    catch (error) {
-      console.error('Failed to refresh session info after display name update:', error)
-    }
-  }
-  finally {
-    isUpdatingDisplayName.value = false
-  }
+  displayNameModal.open()
 }
 
 function handleEmailEditButtonClick() {
   useLogEvent('account_email_edit_click')
-  emailInput.value = user.value?.email ?? ''
-  isEmailEditModalOpen.value = true
-}
-
-async function confirmEmailEdit() {
-  if (!isEmailInputValid.value || isUpdatingEmail.value) return
-  const nextEmail = normalizeEmail(emailInput.value)
-  const isMagic = accountStore.isLoginWithMagic
-  isUpdatingEmail.value = true
-  try {
-    try {
-      // Pre-check the email is free in our DB before any Magic OTP round-trip.
-      await userAccountSessionAPI.checkEmailAvailability(nextEmail)
-      if (isMagic) {
-        // Close our modal before Magic opens its own OTP UI; our modal's focus
-        // trap and backdrop would otherwise block interaction with Magic's popup.
-        isEmailEditModalOpen.value = false
-        // Magic's OTP-verified change preserves the wallet and returns a fresh
-        // DID token, or undefined if the user cancels — abort quietly on cancel.
-        const magicDIDToken = await accountStore.updateMagicEmail(nextEmail)
-        if (!magicDIDToken) return
-        await userAccountSessionAPI.updateUserEmail({ email: nextEmail, magicDIDToken })
-      }
-      else {
-        await userAccountSessionAPI.updateUserEmail({ email: nextEmail })
-      }
-    }
-    catch (error) {
-      await handleError(error, { title: $t('account_page_email_update_failed') })
-      return
-    }
-
-    // Wallet users verify via our own email; non-fatal if the send fails.
-    if (!isMagic) {
-      try {
-        await userAccountSessionAPI.sendEmailVerification()
-      }
-      catch (error) {
-        console.error('Failed to send verification email after email update:', error)
-      }
-    }
-
-    useLogEvent('account_email_update_success')
-    toast.add({
-      title: isMagic
-        ? $t('account_page_email_update_success')
-        : $t('account_page_email_verification_sent'),
-      color: 'success',
-    })
-    isEmailEditModalOpen.value = false
-    try {
-      await accountStore.refreshSessionInfo()
-    }
-    catch (error) {
-      console.error('Failed to refresh session info after email update:', error)
-    }
-  }
-  finally {
-    isUpdatingEmail.value = false
-  }
+  emailModal.open()
 }
 
 function handleAvatarEditButtonClick() {
@@ -1289,72 +910,6 @@ async function handleAvatarFileChange(event: Event) {
 async function handleMagicButtonClick() {
   useLogEvent('export_private_key')
   await accountStore.exportPrivateKey()
-}
-
-const isOpeningBillingPortal = ref(false)
-const isManagingSubscription = ref(false)
-
-async function handleLikerPlusButtonClick() {
-  useLogEvent('account_liker_plus_button_click')
-
-  // A fully expired subscriber (neither active nor past_due) must re-subscribe,
-  // not manage — on Play, showManageSubscriptions() errors when nothing is
-  // active (surfaced as "開啟訂閱管理時發生錯誤"). past_due is excluded: it still
-  // opens the store sheet / billing portal below to fix payment.
-  if (!user.value?.isLikerPlus && !isPaymentPastDue.value) {
-    await navigateTo(localeRoute({ name: 'member' }))
-    return
-  }
-
-  // Store-owned subscription: open the native App Store / Play sheet. Only
-  // refresh the session on success (a plan change reflects via webhook), and
-  // surface failures the way the billing-portal path below does.
-  if (likerPlusManageMode.value === 'native-store') {
-    if (isManagingSubscription.value) return
-    isManagingSubscription.value = true
-    try {
-      const result = await manageViaIAP()
-      if (result.status === 'error') {
-        // See handleRestorePurchases: use a recognized handler so only the
-        // localized copy shows, not the raw native/English message.
-        await handleError(new Error('MANAGE_SUBSCRIPTION_FAILED'), {
-          customHandlerMap: {
-            MANAGE_SUBSCRIPTION_FAILED: { description: $t('error_manage_subscription_failed') },
-          },
-        })
-        return
-      }
-      try {
-        await accountStore.refreshSessionInfo()
-      }
-      catch (error) {
-        // Best-effort sync after the native sheet closes; the management action
-        // itself already succeeded, so a failed refresh is non-fatal (matches
-        // the avatar/display-name refresh paths above).
-        console.error('Failed to refresh session info after managing subscription:', error)
-      }
-    }
-    finally {
-      isManagingSubscription.value = false
-    }
-    return
-  }
-
-  // Reaching here implies an active or past_due subscriber (the renew guard
-  // above returns for everyone else), so this opens the Stripe billing portal.
-  if (isOpeningBillingPortal.value) return
-  try {
-    isOpeningBillingPortal.value = true
-    const { url } = await plusSessionAPI.fetchLikerPlusBillingPortalLink()
-    // NOTE: Not using _blank here as some browsers block popups
-    await navigateTo(url, { external: true })
-  }
-  catch (error) {
-    isOpeningBillingPortal.value = false
-    await handleError(error, {
-      title: $t('error_billing_portal_failed'),
-    })
-  }
 }
 
 function openIntercomWithEmailFallback(prefillMessage?: string) {
@@ -1525,64 +1080,7 @@ async function handlePublishBookButtonClick(event: MouseEvent) {
   }
 }
 
-const isDeleteAccountDialogOpen = ref(false)
-const isDeletingAccount = ref(false)
-
-async function confirmDeleteAccount() {
-  if (!user.value?.likerId || !user.value?.evmWallet) return
-
-  const { evmWallet } = user.value
-  isDeletingAccount.value = true
-
-  try {
-    await accountStore.restoreConnection()
-
-    // Sign authorize message
-    const authorizePayload = JSON.stringify({
-      action: 'authorize',
-      permissions: ['write'],
-      ts: Date.now(),
-      evmWallet,
-    })
-    const authorizeSignature = await signMessageAsync({ message: authorizePayload })
-
-    // Sign delete message
-    const deletePayload = JSON.stringify({
-      action: 'user_delete',
-      ts: Date.now(),
-      evmWallet,
-    })
-    const deleteSignature = await signMessageAsync({ message: deletePayload })
-
-    await $fetch('/api/account/delete', {
-      method: 'POST',
-      body: {
-        wallet: evmWallet,
-        signMethod: 'personal_sign',
-        authorizeSignature,
-        authorizeMessage: authorizePayload,
-        deleteSignature,
-        deleteMessage: deletePayload,
-      },
-    })
-
-    useLogEvent('account_delete_account_success')
-
-    await accountStore.logout()
-    isDeleteAccountDialogOpen.value = false
-
-    toast.add({
-      title: $t('account_page_delete_account_success'),
-      color: 'success',
-    })
-  }
-  catch (error) {
-    await handleError(error, {
-      title: $t('account_page_delete_account_error'),
-    })
-  }
-  finally {
-    isDeletingAccount.value = false
-  }
+function handleDeleteAccountButtonClick() {
+  deleteAccountModal.open()
 }
 </script>
