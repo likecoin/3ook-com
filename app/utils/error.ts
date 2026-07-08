@@ -39,6 +39,25 @@ export function parseErrorData<T>(error: unknown, key: string): T | undefined {
   return undefined
 }
 
+// A navigation/timeout-cancelled fetch surfaces as an `AbortError`/`TimeoutError`
+// DOMException, which ofetch rewraps in a `<no response>` FetchError under
+// `cause`. Benign (superseded, not failed), so callers can skip the error modal.
+export function getIsAbortError(error: unknown): boolean {
+  const isAbortName = (name?: string) => name === 'AbortError' || name === 'TimeoutError'
+  // DOMException is not an Error subclass, and may be absent in some SSR/test
+  // runtimes, so guard the global before the instanceof check.
+  const isAbortLike = (e: unknown): boolean => {
+    if (typeof DOMException !== 'undefined' && e instanceof DOMException) return isAbortName(e.name)
+    return e instanceof Error && isAbortName(e.name)
+  }
+  if (isAbortLike(error)) return true
+  if (error instanceof Error) {
+    if (isAbortLike((error as { cause?: unknown }).cause)) return true
+    if (/\baborted\b/i.test(error.message)) return true
+  }
+  return false
+}
+
 export function getErrorURL(error: unknown) {
   if (error instanceof FetchError) {
     return error.response?.url

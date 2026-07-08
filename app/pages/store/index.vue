@@ -1421,7 +1421,8 @@ async function fetchItems({ lazy = false, isRefresh = false } = {}): Promise<boo
       return true
     }
     catch (error) {
-      if (!isOnline.value) return false
+      // A navigation-aborted fetch isn't a failure worth a modal.
+      if (!isOnline.value || getIsAbortError(error)) return false
       await handleError(error, {
         title: isRefresh ? $t('store_fetch_items_error') : $t('store_fetch_more_items_error'),
       })
@@ -1434,7 +1435,7 @@ async function fetchItems({ lazy = false, isRefresh = false } = {}): Promise<boo
     return true
   }
   catch (error) {
-    if (!isOnline.value) return false
+    if (!isOnline.value || getIsAbortError(error)) return false
     await handleError(error, {
       title: isRefresh ? $t('store_fetch_items_error') : $t('store_fetch_more_items_error'),
       customHandlerMap: {
