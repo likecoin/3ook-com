@@ -32,7 +32,7 @@
     </template>
 
     <template
-      v-if="activeAffiliate"
+      v-if="affiliateLikerId"
       #affiliate-alert
     >
       <AffiliateAlert class="mb-6" />
