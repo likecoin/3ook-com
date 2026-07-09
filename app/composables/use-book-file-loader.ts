@@ -1,3 +1,5 @@
+import { ORIGINAL_CONTENT_LENGTH_HEADER } from '~~/shared/utils/book-file'
+
 // Abort a book-file load when no progress is made within this window. iOS
 // WebKit wedges in-flight cross-origin fetches after the app is backgrounded,
 // which would otherwise strand the reader on the loading bar forever.
@@ -182,7 +184,7 @@ export default function () {
       if (!streamReader) return
 
       const contentLength = Number(
-        res?.headers?.get('X-Original-Content-Length')
+        res?.headers?.get(ORIGINAL_CONTENT_LENGTH_HEADER)
         || res?.headers?.get('Content-Length'),
       )
       if (contentLength) {

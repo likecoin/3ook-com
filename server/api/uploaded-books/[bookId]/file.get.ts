@@ -1,9 +1,15 @@
+import { ORIGINAL_CONTENT_LENGTH_HEADER } from '~~/shared/utils/book-file'
 import { UploadedBookIdParamsSchema } from '~~/server/schemas/uploaded-book'
 
 const CONTENT_TYPE_MAP: Record<string, string> = {
   epub: 'application/epub+zip',
   pdf: 'application/pdf',
 }
+
+// Cloud Run caps a fixed-length HTTP/1 response body at 32 MiB. Ranges carry a
+// content-length, so cap each 206 well below it; a client asking for more gets
+// a short 206 and requests the rest.
+const MAX_RANGE_CHUNK_SIZE = 24 * 1024 * 1024
 
 export default defineEventHandler(async (event) => {
   const { wallet, isLikerPlus } = await requireUserWalletWithStatus(event)
@@ -48,7 +54,8 @@ export default defineEventHandler(async (event) => {
   if (rangeHeader && totalSize) {
     const range = parseRangeHeader(rangeHeader, totalSize)
     if (range) {
-      const { start, end } = range
+      const { start, end: requestedEnd } = range
+      const end = Math.min(requestedEnd, start + MAX_RANGE_CHUNK_SIZE - 1)
       setResponseStatus(event, 206)
       setHeader(event, 'content-range', `bytes ${start}-${end}/${totalSize}`)
       setHeader(event, 'content-length', end - start + 1)
@@ -56,8 +63,11 @@ export default defineEventHandler(async (event) => {
     }
   }
 
+  // Deliberately no `content-length`: that would frame the body as fixed-length,
+  // which Cloud Run caps at 32 MiB. Omitting it lets Node fall back to
+  // `Transfer-Encoding: chunked`, which is uncapped.
   if (totalSize) {
-    setHeader(event, 'content-length', totalSize)
+    setHeader(event, ORIGINAL_CONTENT_LENGTH_HEADER, totalSize)
   }
   return sendStream(event, file.createReadStream())
 })
