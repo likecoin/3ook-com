@@ -192,7 +192,7 @@
             <ul
               v-if="shouldShowSearchSuggestions"
               data-search-suggestions
-              class="border-t border-default max-h-80 overflow-y-auto py-2"
+              class="border-t border-default max-h-[min(20rem,50svh)] overflow-y-auto py-2"
               :aria-label="$t('store_search_suggestions_label')"
             >
               <li
