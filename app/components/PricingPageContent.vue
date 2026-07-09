@@ -274,6 +274,7 @@
 <script setup lang="ts">
 import type { PricingPageContentProps } from './PricingPageContent.props'
 import { resolveIsPaidTrial } from '~~/shared/utils/pricing'
+import { getSystemVoiceByOwnerLikerId } from '~~/shared/utils/tts-sample'
 
 const localeRoute = useLocaleRoute()
 const isDesktopScreen = useDesktopScreen()
@@ -310,8 +311,13 @@ const hasAffiliateVoices = computed(() => (props.affiliateVoices?.length ?? 0) >
 
 const isAffiliateBooksModalOpen = ref(false)
 
+// A referrer owning a built-in voice has no affiliate voices, but their sample
+// is still the reason they shared the link — show the samples card for them.
+const hasReferrerSystemVoice = computed(() => !!getSystemVoiceByOwnerLikerId(props.affiliateLikerId))
+
 const shouldShowTTSSamples = computed(() => {
-  return getRouteQuery('samples') === '1' || isCustomVoiceCampaign.value || hasAffiliateVoices.value
+  return getRouteQuery('samples') === '1' || isCustomVoiceCampaign.value
+    || hasAffiliateVoices.value || hasReferrerSystemVoice.value
 })
 
 const abTest = shouldShowTTSSamples.value

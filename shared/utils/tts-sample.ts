@@ -60,3 +60,25 @@ export function getAffiliateSampleScript(
   if (!likerId || !voiceSlot) return undefined
   return AFFILIATE_SAMPLE_SCRIPTS[normalizeLikerId(likerId)]?.[voiceSlot]
 }
+
+// Built-in TTS voices lent by their owner. A referral from the owner surfaces
+// their voice sample even when they have no affiliate config or custom voice.
+export interface SystemVoice {
+  voiceId: string
+  name: string
+  language: TTSSampleLanguage
+}
+
+// Keyed by owner Liker ID. Unlike AFFILIATE_SAMPLE_SCRIPTS these have no
+// testnet counterpart to duplicate — the owners hold no sepolia account.
+const SYSTEM_VOICES_BY_OWNER: Record<string, SystemVoice> = {
+  withthepoons: { voiceId: 'phoebe', name: 'Phoebe', language: 'zh-HK' },
+  astrohsu99: { voiceId: 'astro', name: '許明恩', language: 'zh-TW' },
+}
+
+export function getSystemVoiceByOwnerLikerId(
+  likerId: string | undefined,
+): SystemVoice | undefined {
+  if (!likerId) return undefined
+  return SYSTEM_VOICES_BY_OWNER[normalizeLikerId(likerId)]
+}

@@ -1,6 +1,7 @@
 import type { AffiliateVoiceData } from '~~/shared/types/custom-voice'
+import type { TTSSampleLanguage } from '~~/shared/utils/tts-sample'
 import { encodeAffiliateVoiceId } from '~~/shared/utils/tts-sig'
-import { getAffiliateSampleScript, getTTSSampleText } from '~~/shared/utils/tts-sample'
+import { getAffiliateSampleScript, getSystemVoiceByOwnerLikerId, getTTSSampleText } from '~~/shared/utils/tts-sample'
 
 interface TTSSamplesPlayerOptions {
   onError?: (error: unknown) => void
@@ -16,6 +17,12 @@ export function useTTSSamplesPlayer(options: TTSSamplesPlayerOptions = {}) {
   const affiliateVoicesComputed = computed(() => toValue(affiliateVoices) ?? [])
   const { getVoiceAvatar } = useTTSVoice({ affiliateVoices: affiliateVoicesComputed })
 
+  function getSampleDescription(language: TTSSampleLanguage) {
+    return language === 'zh-TW'
+      ? $t('tts_sample_mandarin')
+      : $t('tts_sample_cantonese')
+  }
+
   const affiliateSamples = computed<TTSSample[]>(() => {
     const voices = affiliateVoicesComputed.value
     const likerId = toValue(affiliateLikerId)
@@ -27,9 +34,7 @@ export function useTTSSamplesPlayer(options: TTSSamplesPlayerOptions = {}) {
       const language = script?.language
         ?? (voice.language?.toLowerCase().startsWith('zh-tw') ? 'zh-TW' : 'zh-HK')
       const sampleId = `affiliate-${voice.id}`
-      const description = language === 'zh-TW'
-        ? $t('tts_sample_mandarin')
-        : $t('tts_sample_cantonese')
+      const description = getSampleDescription(language)
       const segmentTexts = script?.segments ?? [getTTSSampleText(language)]
       const baseQuery = new URLSearchParams({
         voice_id: encodedVoiceId,
@@ -114,8 +119,37 @@ export function useTTSSamplesPlayer(options: TTSSamplesPlayerOptions = {}) {
     })
   })
 
+  // A referrer who owns a built-in voice gets it surfaced alongside the
+  // defaults, even without an affiliate config.
+  const referrerSystemVoiceSamples = computed<TTSSample[]>(() => {
+    const voice = getSystemVoiceByOwnerLikerId(toValue(affiliateLikerId))
+    if (!voice) return []
+    const languageVoice = `${voice.language}_${voice.voiceId}`
+    const sampleId = `system-${voice.voiceId}`
+    const query = new URLSearchParams({
+      voice_id: voice.voiceId,
+      language: voice.language,
+    }).toString()
+    return [{
+      id: sampleId,
+      title: voice.name,
+      description: getSampleDescription(voice.language),
+      segments: [{
+        id: `${sampleId}-segment-0`,
+        text: getTTSSampleText(voice.language),
+        sectionIndex: 0,
+        cfi: undefined,
+        audioSrc: `/api/tts/sample?${query}`,
+      }],
+      language: voice.language,
+      languageVoice,
+      avatarSrc: getVoiceAvatar(languageVoice),
+    }]
+  })
+
   const samples = computed<TTSSample[]>(() => [
     ...defaultSamples.value,
+    ...referrerSystemVoiceSamples.value,
     ...affiliateSamples.value,
   ])
 
