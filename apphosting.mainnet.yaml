@@ -11,8 +11,6 @@ runConfig:
 env:
   # Configure environment variables.
   # See https://firebase.google.com/docs/app-hosting/configure#user-defined-environment
-  - variable: AIRTABLE_API_SECRET
-    secret: V3_AIRTABLE_API_SECRET
   - variable: AIRTABLE_CMS_BASE_ID
     value: appdrA6ruqhPRRFQj
   - variable: AIRTABLE_CMS_PRODUCTS_TABLE_ID
@@ -71,22 +69,34 @@ env:
     value: pk_live_583D0D54D78940DA
   - variable: MAGIC_LINK_CUSTOM_LOGO_URL
     value: https://3ook.com/pwa-512x512.png
-  - variable: MINIMAX_API_KEY
-    secret: MINIMAX_API_KEY
-  - variable: MINIMAX_GROUP_ID
-    secret: MINIMAX_GROUP_ID
   - variable: NODE_OPTIONS
     value: --max-old-space-size=8192
     availability:
       - BUILD
+  - variable: NUXT_AIRTABLE_API_SECRET
+    secret: V3_AIRTABLE_API_SECRET
+    availability:
+      - RUNTIME
+  - variable: NUXT_MINIMAX_API_KEY
+    secret: MINIMAX_API_KEY
+    availability:
+      - RUNTIME
+  - variable: NUXT_MINIMAX_GROUP_ID
+    secret: MINIMAX_GROUP_ID
+    availability:
+      - RUNTIME
+  - variable: NUXT_PLUS_READING_SERVICE_TOKEN
+    secret: PLUS_READING_SERVICE_TOKEN
+    availability:
+      - RUNTIME
   - variable: NUXT_PUBLIC_SCRIPTS_INTERCOM_APP_ID
     value: eupcse57
   - variable: NUXT_PUBLIC_SCRIPTS_META_PIXEL_ID
     value: 1261473308725104
   - variable: NUXT_SESSION_PASSWORD
     secret: V3_NUXT_SESSION_PASSWORD
-  - variable: PLUS_READING_SERVICE_TOKEN
-    secret: PLUS_READING_SERVICE_TOKEN
+    availability:
+      - RUNTIME
   - variable: POSTHOG_DEFAULTS
     value: 2026-01-30
   - variable: POSTHOG_HOST
@@ -97,6 +107,8 @@ env:
     value: https://publish.3ook.com
   - variable: SENTRY_AUTH_TOKEN
     secret: SENTRY_AUTH_TOKEN
+    availability:
+      - BUILD
   - variable: SENTRY_DSN
     value: https://07b4bd03c1d828f7e241ccc9e47a2f80@o149940.ingest.us.sentry.io/4509350693240832
   - variable: STRIPE_PUBLISHABLE_KEY

@@ -76,10 +76,13 @@ export default defineNuxtConfig({
   runtimeConfig: {
     pubsubEnable: process.env.GCLOUD_PUBSUB_ENABLE || '',
     appServer: process.env.APP_SERVER || '3ook-web',
-    airtableAPISecret: process.env.AIRTABLE_API_SECRET,
-    plusReadingServiceToken: process.env.PLUS_READING_SERVICE_TOKEN,
-    minimaxGroupId: process.env.MINIMAX_GROUP_ID,
-    minimaxAPIKey: process.env.MINIMAX_API_KEY,
+    // Secrets: left empty so none are baked into the build output. Nitro fills them
+    // at runtime from the matching NUXT_-prefixed env var (NUXT_AIRTABLE_API_SECRET,
+    // etc.), which is what lets apphosting.*.yaml scope them to RUNTIME only.
+    airtableAPISecret: '',
+    plusReadingServiceToken: '',
+    minimaxGroupId: '',
+    minimaxAPIKey: '',
     ttsCacheBucketPrefix: process.env.TTS_CACHE_BUCKET_PREFIX,
     customVoiceBucketPrefix: process.env.CUSTOM_VOICE_BUCKET_PREFIX,
     uploadedBooksBucketPrefix: process.env.UPLOADED_BOOKS_BUCKET_PREFIX,

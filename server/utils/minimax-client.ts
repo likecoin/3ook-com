@@ -10,7 +10,8 @@ export function getMiniMaxSpeechClient(): MiniMaxSpeech {
   }
   cachedClient = new MiniMaxSpeech({
     apiKey: config.minimaxAPIKey,
-    groupId: config.minimaxGroupId,
+    // Runtime env values go through destr, which turns an all-digit group id into a number.
+    groupId: String(config.minimaxGroupId),
   })
   return cachedClient
 }
