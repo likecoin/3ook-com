@@ -62,7 +62,9 @@ describe('getErrorEventMessage', () => {
 
   it('keeps the wallet and signed payload out of a viem error message', () => {
     expect(rpcError.message).toContain('0xX_WALLET')
-    expect(getErrorEventMessage(rpcError)).toBe('RPC Request failed.')
+    const eventMessage = getErrorEventMessage(rpcError)
+    expect(eventMessage).toBe(rpcError.shortMessage)
+    expect(eventMessage).not.toContain('0xX_WALLET')
   })
 
   it('leaves the RPC code recoverable via getErrorCode', () => {
