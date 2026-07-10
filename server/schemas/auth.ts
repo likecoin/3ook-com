@@ -46,6 +46,8 @@ export const RegisterBodySchema = v.object({
   gadClickId: v.optional(v.string()),
   gadSource: v.optional(v.string()),
   fbClickId: v.optional(v.string()),
+  fbp: v.optional(v.string()),
+  fbc: v.optional(v.string()),
   gaClientId: v.optional(v.string()),
   gaSessionId: v.optional(v.union([v.string(), v.number()])),
   referrer: v.optional(v.string()),

@@ -23,6 +23,10 @@ export default defineEventHandler(async (event) => {
         utmMedium: body.utmMedium || undefined,
         utmCampaign: body.utmCampaign || undefined,
         sourceURL: body.referrer || undefined,
+        // Meta match keys for the server-side CompleteRegistration CAPI event
+        fbClickId: body.fbClickId || undefined,
+        fbp: body.fbp || undefined,
+        fbc: body.fbc || undefined,
       },
     })
   }
