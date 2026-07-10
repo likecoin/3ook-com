@@ -29,6 +29,39 @@ export function getErrorStatusCode(error: unknown) {
   return undefined
 }
 
+// A low-cardinality grouping key for analytics, unlike the free-form message.
+// viem/wagmi and Magic SDK errors carry `code`; HTTP failures carry a statusCode.
+// Falls back to the error class name so every error still groups into something.
+export function getErrorCode(error: unknown) {
+  if (
+    error instanceof Error && 'code' in error
+    && (typeof error.code === 'number' || typeof error.code === 'string')
+  ) {
+    return error.code
+  }
+  const statusCode = getErrorStatusCode(error)
+  if (statusCode !== undefined) {
+    return statusCode
+  }
+  if (error instanceof Error) {
+    return error.name
+  }
+  return undefined
+}
+
+// GA4 silently truncates event parameter values beyond 100 characters.
+const MAX_ERROR_EVENT_MESSAGE_LENGTH = 100
+
+// Never log a raw `message` to analytics: viem appends its metaMessages to it, and
+// those embed the full RPC request body — on the login path that carries the user's
+// wallet and signed email. `shortMessage` is the first line, before any of that.
+export function getErrorEventMessage(error: unknown) {
+  const message = error instanceof Error && 'shortMessage' in error && typeof error.shortMessage === 'string'
+    ? error.shortMessage
+    : getErrorMessage(error)
+  return message.slice(0, MAX_ERROR_EVENT_MESSAGE_LENGTH)
+}
+
 export function parseErrorData<T>(error: unknown, key: string): T | undefined {
   if (error instanceof Error && 'data' in error && error.data && typeof error.data === 'object') {
     const data = error.data as Record<string, unknown>

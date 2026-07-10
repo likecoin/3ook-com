@@ -575,7 +575,11 @@ export const useAccountStore = defineStore('account', () => {
         useLogEvent('login_email_already_used', { method: connectorId })
         return
       }
-      useLogEvent('login_error', { method: connectorId })
+      useLogEvent('login_error', {
+        method: connectorId,
+        error_code: getErrorCode(error),
+        error_message: getErrorEventMessage(error),
+      })
       await handleError(error)
       return login()
     }
