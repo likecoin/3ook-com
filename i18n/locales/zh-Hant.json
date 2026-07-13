@@ -128,7 +128,7 @@
   "account_page_reader_cache_clear_failed": "清理書本快取資料失敗",
   "account_page_reader_cache_cleared": "已清理書本快取資料",
   "account_page_renew_subscription": "續訂",
-  "account_page_staking_reward": "質押收益",
+  "account_page_staking_reward": "後援會收益",
   "account_page_staking_reward_claim_button": "提領",
   "account_page_stripe_connect": "收款帳戶",
   "account_page_stripe_connect_manage_button": "開啟 Stripe 後台",
