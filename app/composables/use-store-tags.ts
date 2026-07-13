@@ -143,8 +143,16 @@ export function useStoreTags({ routeName, isLibraryTab }: StoreTagsOptions) {
       ? cmsTags.filter(tag => !getIsLocalHistoriesTagId(tag.value))
       : cmsTags
 
+    // 熱門 is the only built-in list type with no CMS tag mirroring it, so the library's
+    // default tab would render no pill; yield if editors ever add one, so their label wins.
+    const popularTags = isLibraryTab.value
+      && !visibleCMSTags.some(tag => tag.value === BOOKSTORE_POPULAR_LIST_TYPE)
+      ? [{ label: $t('store_tag_popular'), value: BOOKSTORE_POPULAR_LIST_TYPE }]
+      : []
+
+    const ordered = [...popularTags, ...stakingTags, ...visibleCMSTags]
+
     // On mobile, pin the local-histories CMS tag last.
-    const ordered = [...stakingTags, ...visibleCMSTags]
     if (isMobile.value) {
       const localHistoriesIndex = ordered.findIndex(tag => getIsLocalHistoriesTagId(tag.value))
       if (localHistoriesIndex !== -1) {
