@@ -21,7 +21,7 @@
         :help="$t('pricing_page_referrer_input_help')"
         :label="$t('pricing_page_referrer_input_label')"
       >
-        <div class="flex items-start gap-2">
+        <UFieldGroup class="w-full">
           <UInput
             v-model="referrerId"
             class="flex-1"
@@ -35,11 +35,12 @@
           <UButton
             :label="$t('pricing_page_referrer_input_confirm')"
             :loading="isVerifying"
+            color="neutral"
             :disabled="!referrerId.trim()"
             :ui="{ base: 'cursor-pointer' }"
             type="submit"
           />
-        </div>
+        </UFieldGroup>
       </UFormField>
     </form>
   </div>
