@@ -134,12 +134,18 @@
         <div class="flex flex-col w-full mt-6 laptop:mt-8">
           <div
             v-if="$slots['pricing-mobile']"
-            class="contents laptop:hidden"
+            class="laptop:hidden"
           >
             <slot name="pricing-mobile" />
           </div>
 
-          <div :class="$slots['pricing-mobile'] ? 'hidden laptop:contents' : undefined">
+          <div
+            :class="[
+              'flex',
+              'flex-col',
+              { 'max-laptop:hidden': $slots['pricing-mobile'] },
+            ]"
+          >
             <slot name="pricing">
               <div
                 v-if="canStartSubscribeFlow"
