@@ -34,7 +34,7 @@
           class="absolute top-2 left-2"
           icon="i-3ook-com-library-rounded"
           :title="$t('bookshelf_plus_reading_badge_label')"
-          color="neutral"
+          color="primary"
           variant="solid"
           size="sm"
         />

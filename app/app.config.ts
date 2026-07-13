@@ -6,6 +6,15 @@ export default defineAppConfig({
 
       neutral: 'neutral',
     },
+    badge: {
+      compoundVariants: [
+        {
+          color: 'primary',
+          variant: 'solid',
+          class: 'text-theme-cyan dark:text-theme-black',
+        },
+      ],
+    },
     button: {
       base: 'disabled:opacity-30',
       compoundVariants: [
