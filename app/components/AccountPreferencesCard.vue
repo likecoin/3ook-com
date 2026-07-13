@@ -2,6 +2,20 @@
   <section class="space-y-3">
     <UCard :ui="{ body: '!p-0 divide-y-1 divide-(--ui-border)' }">
       <AccountSettingsItem
+        icon="i-material-symbols-public-rounded"
+        :label="$t('account_page_region')"
+      >
+        <div
+          class="text-sm text-muted"
+          v-text="regionLabel"
+        />
+
+        <template #right>
+          <RegionSwitcher />
+        </template>
+      </AccountSettingsItem>
+
+      <AccountSettingsItem
         icon="i-material-symbols-language"
         :label="$t('account_page_locale')"
       >
@@ -84,6 +98,7 @@ const localeRoute = useLocaleRoute()
 const { isApp } = useAppDetection()
 
 const { locales } = useAutoLocale()
+const { regionLabel } = useRegionOptions()
 const { currency, options: currencyOptions } = usePaymentCurrency()
 const { preference: colorModePreference, options: colorModeOptions } = useColorModeSync()
 

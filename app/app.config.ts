@@ -64,5 +64,15 @@ export default defineAppConfig({
         },
       ],
     },
+    selectMenu: {
+      slots: {
+        trailingIcon: 'text-default',
+      },
+      variants: {
+        variant: {
+          outline: 'text-default font-medium ring-2',
+        },
+      },
+    },
   },
 })

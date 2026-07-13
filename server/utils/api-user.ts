@@ -319,6 +319,7 @@ export async function getUserSettings(
     currency: data.currency,
     colorMode: data.colorMode,
     isAdultContentEnabled: data.isAdultContentEnabled,
+    region: data.region,
     updatedAt: timestampToMillis(data.updatedAt),
   }
 }

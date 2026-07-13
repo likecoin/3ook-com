@@ -1,0 +1,1745 @@
+[
+  {
+    "name": {
+      "en": "Afghanistan",
+      "zh-Hant": "阿富汗"
+    },
+    "code": "AF"
+  },
+  {
+    "name": {
+      "en": "Åland Islands",
+      "zh-Hant": "奧蘭群島"
+    },
+    "code": "AX"
+  },
+  {
+    "name": {
+      "en": "Albania",
+      "zh-Hant": "阿爾巴尼亞"
+    },
+    "code": "AL"
+  },
+  {
+    "name": {
+      "en": "Algeria",
+      "zh-Hant": "阿爾及利亞"
+    },
+    "code": "DZ"
+  },
+  {
+    "name": {
+      "en": "American Samoa",
+      "zh-Hant": "美屬薩摩亞"
+    },
+    "code": "AS"
+  },
+  {
+    "name": {
+      "en": "Andorra",
+      "zh-Hant": "安道爾"
+    },
+    "code": "AD"
+  },
+  {
+    "name": {
+      "en": "Angola",
+      "zh-Hant": "安哥拉"
+    },
+    "code": "AO"
+  },
+  {
+    "name": {
+      "en": "Anguilla",
+      "zh-Hant": "安圭拉"
+    },
+    "code": "AI"
+  },
+  {
+    "name": {
+      "en": "Antarctica",
+      "zh-Hant": "南極洲"
+    },
+    "code": "AQ"
+  },
+  {
+    "name": {
+      "en": "Antigua and Barbuda",
+      "zh-Hant": "安提瓜和巴布達"
+    },
+    "code": "AG"
+  },
+  {
+    "name": {
+      "en": "Argentina",
+      "zh-Hant": "阿根廷"
+    },
+    "code": "AR"
+  },
+  {
+    "name": {
+      "en": "Armenia",
+      "zh-Hant": "亞美尼亞"
+    },
+    "code": "AM"
+  },
+  {
+    "name": {
+      "en": "Aruba",
+      "zh-Hant": "阿魯巴"
+    },
+    "code": "AW"
+  },
+  {
+    "name": {
+      "en": "Australia",
+      "zh-Hant": "澳洲"
+    },
+    "code": "AU"
+  },
+  {
+    "name": {
+      "en": "Austria",
+      "zh-Hant": "奧地利"
+    },
+    "code": "AT"
+  },
+  {
+    "name": {
+      "en": "Azerbaijan",
+      "zh-Hant": "阿塞拜疆"
+    },
+    "code": "AZ"
+  },
+  {
+    "name": {
+      "en": "Bahamas",
+      "zh-Hant": "巴哈馬"
+    },
+    "code": "BS"
+  },
+  {
+    "name": {
+      "en": "Bahrain",
+      "zh-Hant": "巴林"
+    },
+    "code": "BH"
+  },
+  {
+    "name": {
+      "en": "Bangladesh",
+      "zh-Hant": "孟加拉"
+    },
+    "code": "BD"
+  },
+  {
+    "name": {
+      "en": "Barbados",
+      "zh-Hant": "巴巴多斯"
+    },
+    "code": "BB"
+  },
+  {
+    "name": {
+      "en": "Belarus",
+      "zh-Hant": "白俄羅斯"
+    },
+    "code": "BY"
+  },
+  {
+    "name": {
+      "en": "Belgium",
+      "zh-Hant": "比利時"
+    },
+    "code": "BE"
+  },
+  {
+    "name": {
+      "en": "Belize",
+      "zh-Hant": "伯利茲"
+    },
+    "code": "BZ"
+  },
+  {
+    "name": {
+      "en": "Benin",
+      "zh-Hant": "貝寧"
+    },
+    "code": "BJ"
+  },
+  {
+    "name": {
+      "en": "Bermuda",
+      "zh-Hant": "百慕達"
+    },
+    "code": "BM"
+  },
+  {
+    "name": {
+      "en": "Bhutan",
+      "zh-Hant": "不丹"
+    },
+    "code": "BT"
+  },
+  {
+    "name": {
+      "en": "Bolivia",
+      "zh-Hant": "玻利維亞"
+    },
+    "code": "BO"
+  },
+  {
+    "name": {
+      "en": "Bonaire, Sint Eustatius and Saba",
+      "zh-Hant": "博奈爾、聖尤斯特歇斯和薩巴"
+    },
+    "code": "BQ"
+  },
+  {
+    "name": {
+      "en": "Bosnia and Herzegovina",
+      "zh-Hant": "波斯尼亞和黑塞哥維那"
+    },
+    "code": "BA"
+  },
+  {
+    "name": {
+      "en": "Botswana",
+      "zh-Hant": "博茨瓦納"
+    },
+    "code": "BW"
+  },
+  {
+    "name": {
+      "en": "Bouvet Island",
+      "zh-Hant": "布維島"
+    },
+    "code": "BV"
+  },
+  {
+    "name": {
+      "en": "Brazil",
+      "zh-Hant": "巴西"
+    },
+    "code": "BR"
+  },
+  {
+    "name": {
+      "en": "British Indian Ocean Territory",
+      "zh-Hant": "英屬印度洋領地"
+    },
+    "code": "IO"
+  },
+  {
+    "name": {
+      "en": "Brunei Darussalam",
+      "zh-Hant": "汶萊"
+    },
+    "code": "BN"
+  },
+  {
+    "name": {
+      "en": "Bulgaria",
+      "zh-Hant": "保加利亞"
+    },
+    "code": "BG"
+  },
+  {
+    "name": {
+      "en": "Burkina Faso",
+      "zh-Hant": "布基納法索"
+    },
+    "code": "BF"
+  },
+  {
+    "name": {
+      "en": "Burundi",
+      "zh-Hant": "布隆迪"
+    },
+    "code": "BI"
+  },
+  {
+    "name": {
+      "en": "Cabo Verde",
+      "zh-Hant": "佛得角"
+    },
+    "code": "CV"
+  },
+  {
+    "name": {
+      "en": "Cambodia",
+      "zh-Hant": "柬埔寨"
+    },
+    "code": "KH"
+  },
+  {
+    "name": {
+      "en": "Cameroon",
+      "zh-Hant": "喀麥隆"
+    },
+    "code": "CM"
+  },
+  {
+    "name": {
+      "en": "Canada",
+      "zh-Hant": "加拿大"
+    },
+    "code": "CA"
+  },
+  {
+    "name": {
+      "en": "Cayman Islands",
+      "zh-Hant": "開曼群島"
+    },
+    "code": "KY"
+  },
+  {
+    "name": {
+      "en": "Central African Republic",
+      "zh-Hant": "中非共和國"
+    },
+    "code": "CF"
+  },
+  {
+    "name": {
+      "en": "Chad",
+      "zh-Hant": "乍得"
+    },
+    "code": "TD"
+  },
+  {
+    "name": {
+      "en": "Chile",
+      "zh-Hant": "智利"
+    },
+    "code": "CL"
+  },
+  {
+    "name": {
+      "en": "China",
+      "zh-Hant": "中國"
+    },
+    "code": "CN"
+  },
+  {
+    "name": {
+      "en": "Christmas Island",
+      "zh-Hant": "聖誕島"
+    },
+    "code": "CX"
+  },
+  {
+    "name": {
+      "en": "Cocos (Keeling) Islands",
+      "zh-Hant": "科科斯（基林）群島"
+    },
+    "code": "CC"
+  },
+  {
+    "name": {
+      "en": "Colombia",
+      "zh-Hant": "哥倫比亞"
+    },
+    "code": "CO"
+  },
+  {
+    "name": {
+      "en": "Comoros",
+      "zh-Hant": "科摩羅"
+    },
+    "code": "KM"
+  },
+  {
+    "name": {
+      "en": "Congo",
+      "zh-Hant": "剛果共和國"
+    },
+    "code": "CG"
+  },
+  {
+    "name": {
+      "en": "Congo (Democratic Republic of the)",
+      "zh-Hant": "剛果民主共和國"
+    },
+    "code": "CD"
+  },
+  {
+    "name": {
+      "en": "Cook Islands",
+      "zh-Hant": "庫克群島"
+    },
+    "code": "CK"
+  },
+  {
+    "name": {
+      "en": "Costa Rica",
+      "zh-Hant": "哥斯達黎加"
+    },
+    "code": "CR"
+  },
+  {
+    "name": {
+      "en": "Côte d'Ivoire",
+      "zh-Hant": "科特迪瓦"
+    },
+    "code": "CI"
+  },
+  {
+    "name": {
+      "en": "Croatia",
+      "zh-Hant": "克羅地亞"
+    },
+    "code": "HR"
+  },
+  {
+    "name": {
+      "en": "Cuba",
+      "zh-Hant": "古巴"
+    },
+    "code": "CU"
+  },
+  {
+    "name": {
+      "en": "Curaçao",
+      "zh-Hant": "庫拉索"
+    },
+    "code": "CW"
+  },
+  {
+    "name": {
+      "en": "Cyprus",
+      "zh-Hant": "塞浦路斯"
+    },
+    "code": "CY"
+  },
+  {
+    "name": {
+      "en": "Czechia",
+      "zh-Hant": "捷克"
+    },
+    "code": "CZ"
+  },
+  {
+    "name": {
+      "en": "Denmark",
+      "zh-Hant": "丹麥"
+    },
+    "code": "DK"
+  },
+  {
+    "name": {
+      "en": "Djibouti",
+      "zh-Hant": "吉布提"
+    },
+    "code": "DJ"
+  },
+  {
+    "name": {
+      "en": "Dominica",
+      "zh-Hant": "多米尼克"
+    },
+    "code": "DM"
+  },
+  {
+    "name": {
+      "en": "Dominican Republic",
+      "zh-Hant": "多明尼加共和國"
+    },
+    "code": "DO"
+  },
+  {
+    "name": {
+      "en": "Ecuador",
+      "zh-Hant": "厄瓜多爾"
+    },
+    "code": "EC"
+  },
+  {
+    "name": {
+      "en": "Egypt",
+      "zh-Hant": "埃及"
+    },
+    "code": "EG"
+  },
+  {
+    "name": {
+      "en": "El Salvador",
+      "zh-Hant": "薩爾瓦多"
+    },
+    "code": "SV"
+  },
+  {
+    "name": {
+      "en": "Equatorial Guinea",
+      "zh-Hant": "赤道幾內亞"
+    },
+    "code": "GQ"
+  },
+  {
+    "name": {
+      "en": "Eritrea",
+      "zh-Hant": "厄立特里亞"
+    },
+    "code": "ER"
+  },
+  {
+    "name": {
+      "en": "Estonia",
+      "zh-Hant": "愛沙尼亞"
+    },
+    "code": "EE"
+  },
+  {
+    "name": {
+      "en": "Eswatini",
+      "zh-Hant": "埃斯瓦蒂尼"
+    },
+    "code": "SZ"
+  },
+  {
+    "name": {
+      "en": "Ethiopia",
+      "zh-Hant": "埃塞俄比亞"
+    },
+    "code": "ET"
+  },
+  {
+    "name": {
+      "en": "Falkland Islands",
+      "zh-Hant": "福克蘭群島"
+    },
+    "code": "FK"
+  },
+  {
+    "name": {
+      "en": "Faroe Islands",
+      "zh-Hant": "法羅群島"
+    },
+    "code": "FO"
+  },
+  {
+    "name": {
+      "en": "Fiji",
+      "zh-Hant": "斐濟"
+    },
+    "code": "FJ"
+  },
+  {
+    "name": {
+      "en": "Finland",
+      "zh-Hant": "芬蘭"
+    },
+    "code": "FI"
+  },
+  {
+    "name": {
+      "en": "France",
+      "zh-Hant": "法國"
+    },
+    "code": "FR"
+  },
+  {
+    "name": {
+      "en": "French Guiana",
+      "zh-Hant": "法屬圭亞那"
+    },
+    "code": "GF"
+  },
+  {
+    "name": {
+      "en": "French Polynesia",
+      "zh-Hant": "法屬波利尼西亞"
+    },
+    "code": "PF"
+  },
+  {
+    "name": {
+      "en": "French Southern Territories",
+      "zh-Hant": "法屬南方領地"
+    },
+    "code": "TF"
+  },
+  {
+    "name": {
+      "en": "Gabon",
+      "zh-Hant": "加蓬"
+    },
+    "code": "GA"
+  },
+  {
+    "name": {
+      "en": "Gambia",
+      "zh-Hant": "岡比亞"
+    },
+    "code": "GM"
+  },
+  {
+    "name": {
+      "en": "Georgia",
+      "zh-Hant": "格魯吉亞"
+    },
+    "code": "GE"
+  },
+  {
+    "name": {
+      "en": "Germany",
+      "zh-Hant": "德國"
+    },
+    "code": "DE"
+  },
+  {
+    "name": {
+      "en": "Ghana",
+      "zh-Hant": "加納"
+    },
+    "code": "GH"
+  },
+  {
+    "name": {
+      "en": "Gibraltar",
+      "zh-Hant": "直布羅陀"
+    },
+    "code": "GI"
+  },
+  {
+    "name": {
+      "en": "Greece",
+      "zh-Hant": "希臘"
+    },
+    "code": "GR"
+  },
+  {
+    "name": {
+      "en": "Greenland",
+      "zh-Hant": "格陵蘭"
+    },
+    "code": "GL"
+  },
+  {
+    "name": {
+      "en": "Grenada",
+      "zh-Hant": "格林納達"
+    },
+    "code": "GD"
+  },
+  {
+    "name": {
+      "en": "Guadeloupe",
+      "zh-Hant": "瓜德羅普"
+    },
+    "code": "GP"
+  },
+  {
+    "name": {
+      "en": "Guam",
+      "zh-Hant": "關島"
+    },
+    "code": "GU"
+  },
+  {
+    "name": {
+      "en": "Guatemala",
+      "zh-Hant": "危地馬拉"
+    },
+    "code": "GT"
+  },
+  {
+    "name": {
+      "en": "Guernsey",
+      "zh-Hant": "根西"
+    },
+    "code": "GG"
+  },
+  {
+    "name": {
+      "en": "Guinea",
+      "zh-Hant": "幾內亞"
+    },
+    "code": "GN"
+  },
+  {
+    "name": {
+      "en": "Guinea-Bissau",
+      "zh-Hant": "幾內亞比索"
+    },
+    "code": "GW"
+  },
+  {
+    "name": {
+      "en": "Guyana",
+      "zh-Hant": "圭亞那"
+    },
+    "code": "GY"
+  },
+  {
+    "name": {
+      "en": "Haiti",
+      "zh-Hant": "海地"
+    },
+    "code": "HT"
+  },
+  {
+    "name": {
+      "en": "Heard Island and McDonald Islands",
+      "zh-Hant": "赫德島和麥克唐納群島"
+    },
+    "code": "HM"
+  },
+  {
+    "name": {
+      "en": "Holy See",
+      "zh-Hant": "教廷"
+    },
+    "code": "VA"
+  },
+  {
+    "name": {
+      "en": "Honduras",
+      "zh-Hant": "洪都拉斯"
+    },
+    "code": "HN"
+  },
+  {
+    "name": {
+      "en": "Hong Kong",
+      "zh-Hant": "香港"
+    },
+    "code": "HK"
+  },
+  {
+    "name": {
+      "en": "Hungary",
+      "zh-Hant": "匈牙利"
+    },
+    "code": "HU"
+  },
+  {
+    "name": {
+      "en": "Iceland",
+      "zh-Hant": "冰島"
+    },
+    "code": "IS"
+  },
+  {
+    "name": {
+      "en": "India",
+      "zh-Hant": "印度"
+    },
+    "code": "IN"
+  },
+  {
+    "name": {
+      "en": "Indonesia",
+      "zh-Hant": "印尼"
+    },
+    "code": "ID"
+  },
+  {
+    "name": {
+      "en": "Iran",
+      "zh-Hant": "伊朗"
+    },
+    "code": "IR"
+  },
+  {
+    "name": {
+      "en": "Iraq",
+      "zh-Hant": "伊拉克"
+    },
+    "code": "IQ"
+  },
+  {
+    "name": {
+      "en": "Ireland",
+      "zh-Hant": "愛爾蘭"
+    },
+    "code": "IE"
+  },
+  {
+    "name": {
+      "en": "Isle of Man",
+      "zh-Hant": "曼島"
+    },
+    "code": "IM"
+  },
+  {
+    "name": {
+      "en": "Israel",
+      "zh-Hant": "以色列"
+    },
+    "code": "IL"
+  },
+  {
+    "name": {
+      "en": "Italy",
+      "zh-Hant": "意大利"
+    },
+    "code": "IT"
+  },
+  {
+    "name": {
+      "en": "Jamaica",
+      "zh-Hant": "牙買加"
+    },
+    "code": "JM"
+  },
+  {
+    "name": {
+      "en": "Japan",
+      "zh-Hant": "日本"
+    },
+    "code": "JP"
+  },
+  {
+    "name": {
+      "en": "Jersey",
+      "zh-Hant": "澤西"
+    },
+    "code": "JE"
+  },
+  {
+    "name": {
+      "en": "Jordan",
+      "zh-Hant": "約旦"
+    },
+    "code": "JO"
+  },
+  {
+    "name": {
+      "en": "Kazakhstan",
+      "zh-Hant": "哈薩克斯坦"
+    },
+    "code": "KZ"
+  },
+  {
+    "name": {
+      "en": "Kenya",
+      "zh-Hant": "肯尼亞"
+    },
+    "code": "KE"
+  },
+  {
+    "name": {
+      "en": "Kiribati",
+      "zh-Hant": "基里巴斯"
+    },
+    "code": "KI"
+  },
+  {
+    "name": {
+      "en": "Korea (Democratic People's Republic of)",
+      "zh-Hant": "朝鮮"
+    },
+    "code": "KP"
+  },
+  {
+    "name": {
+      "en": "Korea (Republic of)",
+      "zh-Hant": "韓國"
+    },
+    "code": "KR"
+  },
+  {
+    "name": {
+      "en": "Kuwait",
+      "zh-Hant": "科威特"
+    },
+    "code": "KW"
+  },
+  {
+    "name": {
+      "en": "Kyrgyzstan",
+      "zh-Hant": "吉爾吉斯斯坦"
+    },
+    "code": "KG"
+  },
+  {
+    "name": {
+      "en": "Lao People's Democratic Republic",
+      "zh-Hant": "老撾"
+    },
+    "code": "LA"
+  },
+  {
+    "name": {
+      "en": "Latvia",
+      "zh-Hant": "拉脫維亞"
+    },
+    "code": "LV"
+  },
+  {
+    "name": {
+      "en": "Lebanon",
+      "zh-Hant": "黎巴嫩"
+    },
+    "code": "LB"
+  },
+  {
+    "name": {
+      "en": "Lesotho",
+      "zh-Hant": "萊索托"
+    },
+    "code": "LS"
+  },
+  {
+    "name": {
+      "en": "Liberia",
+      "zh-Hant": "利比里亞"
+    },
+    "code": "LR"
+  },
+  {
+    "name": {
+      "en": "Libya",
+      "zh-Hant": "利比亞"
+    },
+    "code": "LY"
+  },
+  {
+    "name": {
+      "en": "Liechtenstein",
+      "zh-Hant": "列支敦士登"
+    },
+    "code": "LI"
+  },
+  {
+    "name": {
+      "en": "Lithuania",
+      "zh-Hant": "立陶宛"
+    },
+    "code": "LT"
+  },
+  {
+    "name": {
+      "en": "Luxembourg",
+      "zh-Hant": "盧森堡"
+    },
+    "code": "LU"
+  },
+  {
+    "name": {
+      "en": "Macao",
+      "zh-Hant": "澳門"
+    },
+    "code": "MO"
+  },
+  {
+    "name": {
+      "en": "Madagascar",
+      "zh-Hant": "馬達加斯加"
+    },
+    "code": "MG"
+  },
+  {
+    "name": {
+      "en": "Malawi",
+      "zh-Hant": "馬拉維"
+    },
+    "code": "MW"
+  },
+  {
+    "name": {
+      "en": "Malaysia",
+      "zh-Hant": "馬來西亞"
+    },
+    "code": "MY"
+  },
+  {
+    "name": {
+      "en": "Maldives",
+      "zh-Hant": "馬爾代夫"
+    },
+    "code": "MV"
+  },
+  {
+    "name": {
+      "en": "Mali",
+      "zh-Hant": "馬里"
+    },
+    "code": "ML"
+  },
+  {
+    "name": {
+      "en": "Malta",
+      "zh-Hant": "馬爾他"
+    },
+    "code": "MT"
+  },
+  {
+    "name": {
+      "en": "Marshall Islands",
+      "zh-Hant": "馬紹爾群島"
+    },
+    "code": "MH"
+  },
+  {
+    "name": {
+      "en": "Martinique",
+      "zh-Hant": "馬提尼克"
+    },
+    "code": "MQ"
+  },
+  {
+    "name": {
+      "en": "Mauritania",
+      "zh-Hant": "毛里塔尼亞"
+    },
+    "code": "MR"
+  },
+  {
+    "name": {
+      "en": "Mauritius",
+      "zh-Hant": "毛里裘斯"
+    },
+    "code": "MU"
+  },
+  {
+    "name": {
+      "en": "Mayotte",
+      "zh-Hant": "馬約特"
+    },
+    "code": "YT"
+  },
+  {
+    "name": {
+      "en": "Mexico",
+      "zh-Hant": "墨西哥"
+    },
+    "code": "MX"
+  },
+  {
+    "name": {
+      "en": "Micronesia (Federated States of)",
+      "zh-Hant": "密克羅尼西亞聯邦"
+    },
+    "code": "FM"
+  },
+  {
+    "name": {
+      "en": "Moldova",
+      "zh-Hant": "摩爾多瓦"
+    },
+    "code": "MD"
+  },
+  {
+    "name": {
+      "en": "Monaco",
+      "zh-Hant": "摩納哥"
+    },
+    "code": "MC"
+  },
+  {
+    "name": {
+      "en": "Mongolia",
+      "zh-Hant": "蒙古"
+    },
+    "code": "MN"
+  },
+  {
+    "name": {
+      "en": "Montenegro",
+      "zh-Hant": "黑山"
+    },
+    "code": "ME"
+  },
+  {
+    "name": {
+      "en": "Montserrat",
+      "zh-Hant": "蒙特塞拉特"
+    },
+    "code": "MS"
+  },
+  {
+    "name": {
+      "en": "Morocco",
+      "zh-Hant": "摩洛哥"
+    },
+    "code": "MA"
+  },
+  {
+    "name": {
+      "en": "Mozambique",
+      "zh-Hant": "莫桑比克"
+    },
+    "code": "MZ"
+  },
+  {
+    "name": {
+      "en": "Myanmar",
+      "zh-Hant": "緬甸"
+    },
+    "code": "MM"
+  },
+  {
+    "name": {
+      "en": "Namibia",
+      "zh-Hant": "納米比亞"
+    },
+    "code": "NA"
+  },
+  {
+    "name": {
+      "en": "Nauru",
+      "zh-Hant": "瑙魯"
+    },
+    "code": "NR"
+  },
+  {
+    "name": {
+      "en": "Nepal",
+      "zh-Hant": "尼泊爾"
+    },
+    "code": "NP"
+  },
+  {
+    "name": {
+      "en": "Netherlands",
+      "zh-Hant": "荷蘭"
+    },
+    "code": "NL"
+  },
+  {
+    "name": {
+      "en": "New Caledonia",
+      "zh-Hant": "新喀里多尼亞"
+    },
+    "code": "NC"
+  },
+  {
+    "name": {
+      "en": "New Zealand",
+      "zh-Hant": "新西蘭"
+    },
+    "code": "NZ"
+  },
+  {
+    "name": {
+      "en": "Nicaragua",
+      "zh-Hant": "尼加拉瓜"
+    },
+    "code": "NI"
+  },
+  {
+    "name": {
+      "en": "Niger",
+      "zh-Hant": "尼日爾"
+    },
+    "code": "NE"
+  },
+  {
+    "name": {
+      "en": "Nigeria",
+      "zh-Hant": "尼日利亞"
+    },
+    "code": "NG"
+  },
+  {
+    "name": {
+      "en": "Niue",
+      "zh-Hant": "紐埃"
+    },
+    "code": "NU"
+  },
+  {
+    "name": {
+      "en": "Norfolk Island",
+      "zh-Hant": "諾福克島"
+    },
+    "code": "NF"
+  },
+  {
+    "name": {
+      "en": "North Macedonia",
+      "zh-Hant": "北馬其頓"
+    },
+    "code": "MK"
+  },
+  {
+    "name": {
+      "en": "Northern Mariana Islands",
+      "zh-Hant": "北馬里亞納群島"
+    },
+    "code": "MP"
+  },
+  {
+    "name": {
+      "en": "Norway",
+      "zh-Hant": "挪威"
+    },
+    "code": "NO"
+  },
+  {
+    "name": {
+      "en": "Oman",
+      "zh-Hant": "阿曼"
+    },
+    "code": "OM"
+  },
+  {
+    "name": {
+      "en": "Pakistan",
+      "zh-Hant": "巴基斯坦"
+    },
+    "code": "PK"
+  },
+  {
+    "name": {
+      "en": "Palau",
+      "zh-Hant": "帕勞"
+    },
+    "code": "PW"
+  },
+  {
+    "name": {
+      "en": "Palestine, State of",
+      "zh-Hant": "巴勒斯坦"
+    },
+    "code": "PS"
+  },
+  {
+    "name": {
+      "en": "Panama",
+      "zh-Hant": "巴拿馬"
+    },
+    "code": "PA"
+  },
+  {
+    "name": {
+      "en": "Papua New Guinea",
+      "zh-Hant": "巴布亞新幾內亞"
+    },
+    "code": "PG"
+  },
+  {
+    "name": {
+      "en": "Paraguay",
+      "zh-Hant": "巴拉圭"
+    },
+    "code": "PY"
+  },
+  {
+    "name": {
+      "en": "Peru",
+      "zh-Hant": "秘魯"
+    },
+    "code": "PE"
+  },
+  {
+    "name": {
+      "en": "Philippines",
+      "zh-Hant": "菲律賓"
+    },
+    "code": "PH"
+  },
+  {
+    "name": {
+      "en": "Pitcairn",
+      "zh-Hant": "皮特凱恩群島"
+    },
+    "code": "PN"
+  },
+  {
+    "name": {
+      "en": "Poland",
+      "zh-Hant": "波蘭"
+    },
+    "code": "PL"
+  },
+  {
+    "name": {
+      "en": "Portugal",
+      "zh-Hant": "葡萄牙"
+    },
+    "code": "PT"
+  },
+  {
+    "name": {
+      "en": "Puerto Rico",
+      "zh-Hant": "波多黎各"
+    },
+    "code": "PR"
+  },
+  {
+    "name": {
+      "en": "Qatar",
+      "zh-Hant": "卡塔爾"
+    },
+    "code": "QA"
+  },
+  {
+    "name": {
+      "en": "Réunion",
+      "zh-Hant": "留尼旺"
+    },
+    "code": "RE"
+  },
+  {
+    "name": {
+      "en": "Romania",
+      "zh-Hant": "羅馬尼亞"
+    },
+    "code": "RO"
+  },
+  {
+    "name": {
+      "en": "Russian Federation",
+      "zh-Hant": "俄羅斯"
+    },
+    "code": "RU"
+  },
+  {
+    "name": {
+      "en": "Rwanda",
+      "zh-Hant": "盧旺達"
+    },
+    "code": "RW"
+  },
+  {
+    "name": {
+      "en": "Saint Barthélemy",
+      "zh-Hant": "聖巴泰勒米"
+    },
+    "code": "BL"
+  },
+  {
+    "name": {
+      "en": "Saint Helena, Ascension and Tristan da Cunha",
+      "zh-Hant": "聖赫勒拿、阿森松和特里斯坦-達庫尼亞"
+    },
+    "code": "SH"
+  },
+  {
+    "name": {
+      "en": "Saint Kitts and Nevis",
+      "zh-Hant": "聖基茨和尼維斯"
+    },
+    "code": "KN"
+  },
+  {
+    "name": {
+      "en": "Saint Lucia",
+      "zh-Hant": "聖盧西亞"
+    },
+    "code": "LC"
+  },
+  {
+    "name": {
+      "en": "Saint Martin (French part)",
+      "zh-Hant": "法屬聖馬丁"
+    },
+    "code": "MF"
+  },
+  {
+    "name": {
+      "en": "Saint Pierre and Miquelon",
+      "zh-Hant": "聖皮埃爾和密克隆"
+    },
+    "code": "PM"
+  },
+  {
+    "name": {
+      "en": "Saint Vincent and the Grenadines",
+      "zh-Hant": "聖文森特和格林納丁斯"
+    },
+    "code": "VC"
+  },
+  {
+    "name": {
+      "en": "Samoa",
+      "zh-Hant": "薩摩亞"
+    },
+    "code": "WS"
+  },
+  {
+    "name": {
+      "en": "San Marino",
+      "zh-Hant": "聖馬力諾"
+    },
+    "code": "SM"
+  },
+  {
+    "name": {
+      "en": "Sao Tome and Principe",
+      "zh-Hant": "聖多美普林西比"
+    },
+    "code": "ST"
+  },
+  {
+    "name": {
+      "en": "Saudi Arabia",
+      "zh-Hant": "沙特阿拉伯"
+    },
+    "code": "SA"
+  },
+  {
+    "name": {
+      "en": "Senegal",
+      "zh-Hant": "塞內加爾"
+    },
+    "code": "SN"
+  },
+  {
+    "name": {
+      "en": "Serbia",
+      "zh-Hant": "塞爾維亞"
+    },
+    "code": "RS"
+  },
+  {
+    "name": {
+      "en": "Seychelles",
+      "zh-Hant": "塞舌爾"
+    },
+    "code": "SC"
+  },
+  {
+    "name": {
+      "en": "Sierra Leone",
+      "zh-Hant": "塞拉利昂"
+    },
+    "code": "SL"
+  },
+  {
+    "name": {
+      "en": "Singapore",
+      "zh-Hant": "新加坡"
+    },
+    "code": "SG"
+  },
+  {
+    "name": {
+      "en": "Sint Maarten (Dutch part)",
+      "zh-Hant": "荷屬聖馬丁"
+    },
+    "code": "SX"
+  },
+  {
+    "name": {
+      "en": "Slovakia",
+      "zh-Hant": "斯洛伐克"
+    },
+    "code": "SK"
+  },
+  {
+    "name": {
+      "en": "Slovenia",
+      "zh-Hant": "斯洛文尼亞"
+    },
+    "code": "SI"
+  },
+  {
+    "name": {
+      "en": "Solomon Islands",
+      "zh-Hant": "所羅門群島"
+    },
+    "code": "SB"
+  },
+  {
+    "name": {
+      "en": "Somalia",
+      "zh-Hant": "索馬里"
+    },
+    "code": "SO"
+  },
+  {
+    "name": {
+      "en": "South Africa",
+      "zh-Hant": "南非"
+    },
+    "code": "ZA"
+  },
+  {
+    "name": {
+      "en": "South Georgia and the South Sandwich Islands",
+      "zh-Hant": "南喬治亞和南桑威奇群島"
+    },
+    "code": "GS"
+  },
+  {
+    "name": {
+      "en": "South Sudan",
+      "zh-Hant": "南蘇丹"
+    },
+    "code": "SS"
+  },
+  {
+    "name": {
+      "en": "Spain",
+      "zh-Hant": "西班牙"
+    },
+    "code": "ES"
+  },
+  {
+    "name": {
+      "en": "Sri Lanka",
+      "zh-Hant": "斯里蘭卡"
+    },
+    "code": "LK"
+  },
+  {
+    "name": {
+      "en": "Sudan",
+      "zh-Hant": "蘇丹"
+    },
+    "code": "SD"
+  },
+  {
+    "name": {
+      "en": "Suriname",
+      "zh-Hant": "蘇里南"
+    },
+    "code": "SR"
+  },
+  {
+    "name": {
+      "en": "Svalbard and Jan Mayen",
+      "zh-Hant": "斯瓦爾巴和揚馬延"
+    },
+    "code": "SJ"
+  },
+  {
+    "name": {
+      "en": "Sweden",
+      "zh-Hant": "瑞典"
+    },
+    "code": "SE"
+  },
+  {
+    "name": {
+      "en": "Switzerland",
+      "zh-Hant": "瑞士"
+    },
+    "code": "CH"
+  },
+  {
+    "name": {
+      "en": "Syrian Arab Republic",
+      "zh-Hant": "敘利亞"
+    },
+    "code": "SY"
+  },
+  {
+    "name": {
+      "en": "Taiwan",
+      "zh-Hant": "台灣"
+    },
+    "code": "TW"
+  },
+  {
+    "name": {
+      "en": "Tajikistan",
+      "zh-Hant": "塔吉克斯坦"
+    },
+    "code": "TJ"
+  },
+  {
+    "name": {
+      "en": "Tanzania, United Republic of",
+      "zh-Hant": "坦桑尼亞"
+    },
+    "code": "TZ"
+  },
+  {
+    "name": {
+      "en": "Thailand",
+      "zh-Hant": "泰國"
+    },
+    "code": "TH"
+  },
+  {
+    "name": {
+      "en": "Timor-Leste",
+      "zh-Hant": "東帝汶"
+    },
+    "code": "TL"
+  },
+  {
+    "name": {
+      "en": "Togo",
+      "zh-Hant": "多哥"
+    },
+    "code": "TG"
+  },
+  {
+    "name": {
+      "en": "Tokelau",
+      "zh-Hant": "托克勞"
+    },
+    "code": "TK"
+  },
+  {
+    "name": {
+      "en": "Tonga",
+      "zh-Hant": "湯加"
+    },
+    "code": "TO"
+  },
+  {
+    "name": {
+      "en": "Trinidad and Tobago",
+      "zh-Hant": "特立尼達和多巴哥"
+    },
+    "code": "TT"
+  },
+  {
+    "name": {
+      "en": "Tunisia",
+      "zh-Hant": "突尼斯"
+    },
+    "code": "TN"
+  },
+  {
+    "name": {
+      "en": "Türkiye",
+      "zh-Hant": "土耳其"
+    },
+    "code": "TR"
+  },
+  {
+    "name": {
+      "en": "Turkmenistan",
+      "zh-Hant": "土庫曼斯坦"
+    },
+    "code": "TM"
+  },
+  {
+    "name": {
+      "en": "Turks and Caicos Islands",
+      "zh-Hant": "特克斯和凱科斯群島"
+    },
+    "code": "TC"
+  },
+  {
+    "name": {
+      "en": "Tuvalu",
+      "zh-Hant": "圖瓦盧"
+    },
+    "code": "TV"
+  },
+  {
+    "name": {
+      "en": "Uganda",
+      "zh-Hant": "烏干達"
+    },
+    "code": "UG"
+  },
+  {
+    "name": {
+      "en": "Ukraine",
+      "zh-Hant": "烏克蘭"
+    },
+    "code": "UA"
+  },
+  {
+    "name": {
+      "en": "United Arab Emirates",
+      "zh-Hant": "阿拉伯聯合酋長國"
+    },
+    "code": "AE"
+  },
+  {
+    "name": {
+      "en": "United Kingdom",
+      "zh-Hant": "英國"
+    },
+    "code": "GB"
+  },
+  {
+    "name": {
+      "en": "United States of America",
+      "zh-Hant": "美國"
+    },
+    "code": "US"
+  },
+  {
+    "name": {
+      "en": "United States Minor Outlying Islands",
+      "zh-Hant": "美國本土外小島嶼"
+    },
+    "code": "UM"
+  },
+  {
+    "name": {
+      "en": "Uruguay",
+      "zh-Hant": "烏拉圭"
+    },
+    "code": "UY"
+  },
+  {
+    "name": {
+      "en": "Uzbekistan",
+      "zh-Hant": "烏茲別克斯坦"
+    },
+    "code": "UZ"
+  },
+  {
+    "name": {
+      "en": "Vanuatu",
+      "zh-Hant": "瓦努阿圖"
+    },
+    "code": "VU"
+  },
+  {
+    "name": {
+      "en": "Venezuela",
+      "zh-Hant": "委內瑞拉"
+    },
+    "code": "VE"
+  },
+  {
+    "name": {
+      "en": "Viet Nam",
+      "zh-Hant": "越南"
+    },
+    "code": "VN"
+  },
+  {
+    "name": {
+      "en": "Virgin Islands (British)",
+      "zh-Hant": "英屬維爾京群島"
+    },
+    "code": "VG"
+  },
+  {
+    "name": {
+      "en": "Virgin Islands (U.S.)",
+      "zh-Hant": "美屬維爾京群島"
+    },
+    "code": "VI"
+  },
+  {
+    "name": {
+      "en": "Wallis and Futuna",
+      "zh-Hant": "瓦利斯和富圖納"
+    },
+    "code": "WF"
+  },
+  {
+    "name": {
+      "en": "Western Sahara",
+      "zh-Hant": "西撒哈拉"
+    },
+    "code": "EH"
+  },
+  {
+    "name": {
+      "en": "Yemen",
+      "zh-Hant": "也門"
+    },
+    "code": "YE"
+  },
+  {
+    "name": {
+      "en": "Zambia",
+      "zh-Hant": "贊比亞"
+    },
+    "code": "ZM"
+  },
+  {
+    "name": {
+      "en": "Zimbabwe",
+      "zh-Hant": "津巴布韋"
+    },
+    "code": "ZW"
+  }
+]

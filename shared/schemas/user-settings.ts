@@ -1,4 +1,5 @@
 import * as v from 'valibot'
+import { COUNTRY_CODES } from '~~/shared/constants/countries'
 
 export const UserSettingsUpdateSchema = v.pipe(
   v.strictObject({
@@ -6,6 +7,7 @@ export const UserSettingsUpdateSchema = v.pipe(
     currency: v.optional(v.picklist(['auto', 'hkd', 'twd', 'usd'])),
     colorMode: v.optional(v.picklist(['light', 'dark', 'system'])),
     isAdultContentEnabled: v.optional(v.boolean()),
+    region: v.optional(v.picklist(COUNTRY_CODES)),
   }, 'INVALID_KEYS'),
   v.check(input => Object.keys(input).length > 0, 'MISSING_BODY'),
 )
