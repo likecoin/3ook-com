@@ -194,7 +194,11 @@ export function useSubscriptionCheckout() {
           })
         }
         blockingModal.open({ title: $t('common_processing') })
-        await pollSessionUntilPlus()
+        const isPlusConfirmed = await pollSessionUntilPlus()
+        // Only once the backend has actually granted Plus: asking on the store's
+        // purchase result would catch the user while the app still shows them as a
+        // non-subscriber, since the webhook can lag. A slow webhook means no prompt.
+        if (isPlusConfirmed) requestNativeStoreReview('purchase_confirmed')
         // Flag a pending gift so the success page waits for the webhook to attach the
         // book (the cart is created async on grant) before routing to the claim page.
         const hasGift = isYearly && Boolean(nftClassId)

@@ -38,6 +38,14 @@ export function getInstallAttribution(): InstallAttribution | null {
   }
 }
 
+// A hint, not a command: the shell applies its own engagement gate and both
+// stores silently quota the prompt, so it usually will not appear. Store policy
+// forbids tying it to a button press or preceding it with a question.
+export function requestNativeStoreReview(reason: string): void {
+  if (!isNativeWebView() || !isNativeFeatureSupported('storeReview')) return
+  postToNative({ type: 'requestStoreReview', reason })
+}
+
 export function isNativeIntercomAvailable(): boolean {
   return isNativeWebView() && isNativeFeatureSupported('intercom')
 }
