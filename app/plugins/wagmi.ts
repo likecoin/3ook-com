@@ -18,6 +18,8 @@ export default defineNuxtPlugin((nuxtApp) => {
     isTestnet: !!config.public.isTestnet,
     isApp: isApp.value,
   })
+  // TanStack Query is installed solely for wagmi's internal hooks;
+  // app queries use Pinia Colada.
   nuxtApp.vueApp
     .use(WagmiPlugin, { config: wagmiConfig as Config, reconnectOnMount: false })
     .use(VueQueryPlugin, {})

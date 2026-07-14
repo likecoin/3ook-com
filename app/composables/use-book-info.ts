@@ -2,12 +2,17 @@ import type { LocationQueryRaw } from 'vue-router'
 import { getGenreI18nKey } from '~~/shared/constants/book-categories'
 
 export default function (
-  { nftClassId }: { nftClassId: string | Ref<string> | ComputedRef<string> },
+  { nftClassId, isOwnerInfoEnabled = false }: {
+    nftClassId: string | Ref<string> | ComputedRef<string>
+    // Off by default: this composable is instantiated once per card in book
+    // grids, so fetching here would fan out one profile request per item.
+    // Single-book contexts that render the owner opt in.
+    isOwnerInfoEnabled?: MaybeRefOrGetter<boolean>
+  },
 ) {
   const { t: $t } = useI18n()
   const localeRoute = useLocaleRoute()
   const localeString = useLocaleString()
-  const metadataStore = useMetadataStore()
   const bookstoreStore = useBookstoreStore()
   const bookInfo = useEVMBookInfo({ nftClassId })
   const bookshelfStore = useBookshelfStore()
@@ -18,13 +23,11 @@ export default function (
   })
 
   const nftClassOwnerWalletAddress = computed(() => bookstoreInfo.value?.ownerWallet || '')
-  const nftClassOwnerName = computed(() => {
-    return metadataStore.getLikerInfoByWalletAddress(nftClassOwnerWalletAddress.value)?.displayName || ''
+  const nftClassOwnerInfoQuery = useLikerInfoByWalletAddressQuery(nftClassOwnerWalletAddress, {
+    enabled: isOwnerInfoEnabled,
   })
-
-  const nftClassOwnerAvatar = computed(() => {
-    return metadataStore.getLikerInfoByWalletAddress(nftClassOwnerWalletAddress.value)?.avatarSrc || ''
-  })
+  const nftClassOwnerName = computed(() => nftClassOwnerInfoQuery.data.value?.displayName || '')
+  const nftClassOwnerAvatar = computed(() => nftClassOwnerInfoQuery.data.value?.avatarSrc || '')
 
   const authorName = computed(() => {
     const author = bookInfo.author.value

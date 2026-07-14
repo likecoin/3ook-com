@@ -747,7 +747,6 @@ const plusReadingTagRoute = computed(() =>
       }),
 )
 
-const metadataStore = useMetadataStore()
 const { handleError } = useErrorHandler()
 const { getAnalyticsParameters } = useAnalytics()
 
@@ -757,7 +756,8 @@ const isAdultContentEnabled = useAdultContentSetting()
 
 const nftClassId = computed(() => getRouteParam('nftClassId'))
 const { isOwner: isUserBookOwner } = useUserBookOwnership(nftClassId)
-const bookInfo = useBookInfo({ nftClassId })
+// The product page renders the owner, so it opts into fetching their profile.
+const bookInfo = useBookInfo({ nftClassId, isOwnerInfoEnabled: true })
 
 const isLibrary = computed(() => getRouteBaseName(route) === 'library-nftClassId')
 const listingRouteName = computed(() => (isLibrary.value ? 'library' : 'store'))
@@ -1280,9 +1280,6 @@ onMounted(async () => {
   })
   const ownerWalletAddress = bookInfo.nftClassOwnerWalletAddress.value
   if (ownerWalletAddress) {
-    metadataStore.lazyFetchLikerInfoByWalletAddress(ownerWalletAddress).catch((error) => {
-      console.error(`Failed to fetch owner liker info for wallet address ${ownerWalletAddress}:`, error)
-    })
     authorStore.lazyFetchBookClassByOwnerWallet(ownerWalletAddress).catch((error) => {
       console.error(`Failed to fetch author owned class for wallet address ${ownerWalletAddress}:`, error)
     })

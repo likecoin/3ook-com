@@ -38,6 +38,7 @@ export default defineNuxtConfig({
     '@nuxt/icon',
     '@nuxtjs/i18n',
     '@pinia/nuxt',
+    '@pinia/colada-nuxt',
     'nuxt-auth-utils',
     '@vueuse/nuxt',
     'nuxt-security',

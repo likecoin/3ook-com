@@ -234,7 +234,7 @@ const emit = defineEmits([
 
 const { t: $t, locale } = useI18n()
 const nftStore = useNFTStore()
-const metadataStore = useMetadataStore()
+const queryCache = useQueryCache()
 const bookInfo = useBookInfo({ nftClassId: props.nftClassId })
 const { downloadBookFile } = useBookDownload()
 const getContentTypeLabel = useContentTypeLabel()
@@ -450,7 +450,10 @@ function fetchBookInfo() {
     console.warn(`Failed to fetch aggregated metadata for the NFT class [${props.nftClassId}]`)
   })
   if (bookInfo.nftClassOwnerWalletAddress.value) {
-    metadataStore.lazyFetchLikerInfoByWalletAddress(bookInfo.nftClassOwnerWalletAddress.value).catch(() => {
+    fetchLikerInfoByWalletAddressThroughCache(
+      queryCache,
+      bookInfo.nftClassOwnerWalletAddress.value,
+    ).catch(() => {
       console.warn(`Failed to fetch Liker info of the wallet [${bookInfo.nftClassOwnerWalletAddress.value}] for the NFT class [${props.nftClassId}]`)
     })
   }

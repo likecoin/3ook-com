@@ -18,7 +18,6 @@
 </template>
 
 <script setup lang="ts">
-const metadataStore = useMetadataStore()
 const { t: $t } = useI18n()
 const getRouteQuery = useRouteQuery()
 const isCacheDisabled = useNoCache()
@@ -29,28 +28,18 @@ const affiliateId = computed(() => {
   return from.value?.startsWith('@') ? from.value.slice(1) : undefined
 })
 
-async function fetchInfo() {
-  if (!affiliateId.value) return
-  try {
-    await metadataStore.lazyFetchLikerInfoById(affiliateId.value, { nocache: isCacheDisabled.value })
-  }
-  catch {
+const affiliateInfoQuery = useLikerInfoByIdQuery(affiliateId, { nocache: isCacheDisabled })
+// Resolve during SSR so the alert renders server-side; the guard is required
+// because refresh() bypasses the enabled gate and would fetch an empty id.
+if (import.meta.server && affiliateId.value) {
+  const { status } = await affiliateInfoQuery.refresh()
+  if (status === 'error') {
     console.warn(`Failed to fetch Liker info of the affiliate ID [${affiliateId.value}]`)
   }
 }
 
-if (affiliateId.value) {
-  await callOnce(affiliateId.value, fetchInfo)
-}
-
-watch(affiliateId, async (newId, oldId) => {
-  if (newId !== oldId) {
-    await fetchInfo()
-  }
-})
-
 const affiliateInfo = computed(() => {
-  return affiliateId.value ? metadataStore.getLikerInfoById(affiliateId.value) : undefined
+  return affiliateId.value ? affiliateInfoQuery.data.value : undefined
 })
 
 const affiliateName = computed(() => {

@@ -5,7 +5,7 @@ export function useBookOwnerAffiliate(
   nftClassId: MaybeRefOrGetter<string | undefined>,
 ) {
   const { user } = useUserSession()
-  const metadataStore = useMetadataStore()
+  const queryCache = useQueryCache()
   const bookstoreStore = useBookstoreStore()
 
   const nftClassIdRef = computed(() => toValue(nftClassId) || '')
@@ -18,11 +18,10 @@ export function useBookOwnerAffiliate(
   const loadedLikerId = useState<string | null>('book-owner-affiliate-loaded-liker-id', () => null)
   const isLoading = useState<boolean>('book-owner-affiliate-loading', () => false)
 
-  const ownerLikerId = computed(() => {
-    const wallet = ownerWallet.value
-    if (!wallet) return undefined
-    return metadataStore.getLikerInfoByWalletAddress(wallet)?.likerId
-  })
+  // fetchConfig below drives the fetch (it chains the /affiliate call off the
+  // resolved liker id), so this observer only mirrors the cache.
+  const ownerInfoQuery = useLikerInfoByWalletAddressQuery(ownerWallet, { enabled: false })
+  const ownerLikerId = computed(() => ownerInfoQuery.data.value?.likerId)
 
   async function fetchConfig() {
     if (user.value?.isLikerPlus) {
@@ -34,8 +33,10 @@ export function useBookOwnerAffiliate(
     if (!wallet || isLoading.value) return
     isLoading.value = true
     try {
-      await metadataStore.lazyFetchLikerInfoByWalletAddress(wallet)
-      const likerId = ownerLikerId.value
+      // Read the fetch result directly: the reader computed above updates in a
+      // batched microtask, so it may not have flushed right after this await.
+      const info = await fetchLikerInfoByWalletAddressThroughCache(queryCache, wallet)
+      const likerId = info?.likerId
       if (!likerId || loadedLikerId.value === likerId) return
       const data = await apiFetch<AffiliatePublicConfig>(`/affiliate/${encodeURIComponent(likerId)}`)
       loadedConfig.value = data?.active ? data : null

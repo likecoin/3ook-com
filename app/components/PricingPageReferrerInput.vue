@@ -49,13 +49,14 @@
 <script setup lang="ts">
 import { FetchError } from 'ofetch'
 import { normalizeLikerId } from '~~/shared/utils/liker-id'
+import type { LikerInfo } from '~/composables/use-liker-info'
 
 const emit = defineEmits<{
   applied: [likerId: string]
 }>()
 
 const { t: $t } = useI18n()
-const metadataStore = useMetadataStore()
+const queryCache = useQueryCache()
 const { user } = useUserSession()
 
 const isExpanded = ref(false)
@@ -95,9 +96,10 @@ async function handleSubmit() {
 
   // Resolving the public Liker profile is the validation — there is no separate
   // code registry, and hardcoding a length would reject legacy 7-20 char IDs.
+  let referrerInfo: LikerInfo | undefined
   try {
     isVerifying.value = true
-    await metadataStore.lazyFetchLikerInfoById(likerId)
+    referrerInfo = await fetchLikerInfoByIdThroughCache(queryCache, likerId)
   }
   catch (error) {
     // Only a 404 proves the code is wrong. A network or 5xx failure must not tell
@@ -115,9 +117,9 @@ async function handleSubmit() {
     isVerifying.value = false
   }
 
-  // Check `likerId`, not the entry itself: the store always caches a normalized
+  // Check `likerId`, not the result itself: normalization always yields an
   // object, so a resolved-but-empty response would otherwise look valid.
-  if (!metadataStore.getLikerInfoById(likerId)?.likerId) {
+  if (!referrerInfo?.likerId) {
     rejectAsNotFound()
     return
   }

@@ -290,7 +290,7 @@ const isLibraryTab = computed(() => routeName.value === 'library')
 const getRouteQuery = useRouteQuery()
 const runtimeConfig = useRuntimeConfig()
 const bookstoreStore = useBookstoreStore()
-const metadataStore = useMetadataStore()
+const queryCache = useQueryCache()
 const nftStore = useNFTStore()
 const infiniteScrollDetectorElement = useTemplateRef<HTMLLIElement>('infiniteScrollDetector')
 const shouldLoadMore = useElementVisibility(infiniteScrollDetectorElement)
@@ -316,10 +316,8 @@ const queryAffiliate = computed(() => normalizeLikerId(getRouteQuery('affiliate'
 // Set by the post-purchase redirect (plus/success) to greet a just-subscribed member.
 const queryWelcome = computed(() => getRouteQuery('welcome', ''))
 
-const ownerWalletInfo = computed(() => {
-  if (!queryOwnerWallet.value) return null
-  return metadataStore.getLikerInfoByWalletAddress(queryOwnerWallet.value) || null
-})
+const ownerWalletInfoQuery = useLikerInfoByWalletAddressQuery(queryOwnerWallet)
+const ownerWalletInfo = computed(() => ownerWalletInfoQuery.data.value)
 const ownerWalletAvatarSrc = computed(() => {
   return ownerWalletInfo.value?.avatarSrc || ''
 })
@@ -327,10 +325,8 @@ const ownerWalletDisplayName = computed(() => {
   return ownerWalletInfo.value?.displayName || ''
 })
 
-const affiliateInfo = computed(() => {
-  if (!queryAffiliate.value) return null
-  return metadataStore.getLikerInfoById(queryAffiliate.value) || null
-})
+const affiliateInfoQuery = useLikerInfoByIdQuery(queryAffiliate)
+const affiliateInfo = computed(() => affiliateInfoQuery.data.value)
 const affiliateDisplayName = computed(() => affiliateInfo.value?.displayName || queryAffiliate.value)
 const affiliateAvatarSrc = computed(() => affiliateInfo.value?.avatarSrc || '')
 const affiliateConfig = computed(() => {
@@ -339,13 +335,13 @@ const affiliateConfig = computed(() => {
 })
 // Publisher drill-down links rendered as header chrome — the affiliate view only
 // loads each publisher's first page, so these point at the full owner_wallet list.
-const affiliatePublishers = computed(() => {
-  if (!affiliateConfig.value?.active) return []
-  return affiliateConfig.value.affiliatePublisherWallets.map(wallet => ({
-    wallet,
-    name: metadataStore.getLikerInfoByWalletAddress(wallet)?.displayName || shortenWalletAddress(wallet),
-  }))
-})
+const affiliatePublisherWallets = computed(() =>
+  (affiliateConfig.value?.active ? affiliateConfig.value.affiliatePublisherWallets : []))
+const affiliatePublisherInfoQueries = useLikerInfosByWalletAddressesQuery(affiliatePublisherWallets)
+const affiliatePublishers = computed(() => affiliatePublisherWallets.value.map((wallet, index) => ({
+  wallet,
+  name: affiliatePublisherInfoQueries.value[index]?.data?.displayName || shortenWalletAddress(wallet),
+})))
 // Only affiliates that actually ship a voice can promise voice playback; some
 // affiliates curate books without one.
 const affiliateHasVoices = computed(() =>
@@ -362,15 +358,17 @@ const affiliateSubscribeRoute = computed(() => localeRoute({
 
 // Resolve the affiliate's profile during SSR so its display name and avatar land
 // in the title/OG tags (the watcher-based client fetch happens too late for that),
-// and detect an invalid affiliate id (404) to render a not-found state. Populates
-// the shared metadata store, so the client hydrates from the payload without refetching.
+// and detect an invalid affiliate id (404) to render a not-found state. useAsyncData
+// carries the 404 boolean in the payload (error-state queries don't serialize), while
+// the helper primes the query cache, which colada-nuxt serializes into the payload
+// so the client hydrates without refetching.
 const { data: isAffiliateLookupNotFound } = await useAsyncData(
   'store-affiliate-info',
   async () => {
     const likerId = queryAffiliate.value
     if (!likerId) return false
     try {
-      await metadataStore.lazyFetchLikerInfoById(likerId)
+      await fetchLikerInfoByIdThroughCache(queryCache, likerId)
       return false
     }
     catch (error) {
@@ -923,31 +921,6 @@ watch([querySearchTerm, queryAuthorName, queryPublisherName, queryOwnerWallet, q
   }
 })
 
-// The affiliate's own profile (header/title/OG) is resolved by the SSR-aware
-// useAsyncData above; here we only resolve its publishers' names (links).
-// Watch the raw wallet list, not affiliatePublishers — that computed reads each
-// publisher's liker info, so it recomputes as profiles load, re-running this
-// fetch loop (lazyFetch has no in-flight dedupe → duplicate concurrent requests).
-watchImmediate(
-  () => (affiliateConfig.value?.active ? affiliateConfig.value.affiliatePublisherWallets : undefined),
-  (wallets) => {
-    wallets?.forEach((wallet) => {
-      metadataStore.lazyFetchLikerInfoByWalletAddress(wallet).catch(() => { /* ignore */ })
-    })
-  },
-)
-
-watch(queryOwnerWallet, async (wallet) => {
-  if (wallet) {
-    try {
-      await metadataStore.lazyFetchLikerInfoByWalletAddress(wallet)
-    }
-    catch (error) {
-      console.error('Failed to fetch wallet info:', error)
-    }
-  }
-})
-
 watch(ownerWalletInfo, (info) => {
   if (info?.evmWallet && queryOwnerWallet.value.toLowerCase() !== info.evmWallet.toLowerCase()) {
     navigateTo(localeRoute({
@@ -1129,23 +1102,13 @@ onMounted(async () => {
   }
 
   if (isSearchMode.value) {
-    const promises: Promise<unknown>[] = [
+    // The owner-wallet profile resolves via its own query, keyed off the route.
+    await Promise.all([
       fetchItems({ lazy: true }),
       fetchTagItems().catch(() => {
         // Ignore errors when fetching tag items in search mode
       }),
-    ]
-
-    if (queryOwnerWallet.value) {
-      promises.push(
-        metadataStore.lazyFetchLikerInfoByWalletAddress(queryOwnerWallet.value)
-          .catch((error) => {
-            console.error('Failed to fetch wallet info:', error)
-          }),
-      )
-    }
-
-    await Promise.all(promises)
+    ])
     return
   }
 

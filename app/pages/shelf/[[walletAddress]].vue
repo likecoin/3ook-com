@@ -385,7 +385,6 @@ const getRouteQuery = useRouteQuery()
 const getRouteParam = useRouteParam()
 const bookshelfStore = useBookshelfStore()
 const uploadedBooksStore = useUploadedBooksStore()
-const metadataStore = useMetadataStore()
 const stakingStore = useStakingStore()
 const toast = useToast()
 const { isLikerPlus, isExpiredLikerPlus } = useSubscription()
@@ -714,9 +713,12 @@ const isMyBookshelf = computed(() => {
 
 const isGuestShelf = computed(() => !walletAddress.value && !hasLoggedIn.value)
 
-const shelfOwner = computed(() => {
-  return metadataStore.getLikerInfoByWalletAddress(walletAddress.value)
+// Only someone else's shelf needs a fetch — its title renders the owner's name.
+// One's own shelf reads whatever other pages have already cached.
+const shelfOwnerQuery = useLikerInfoByWalletAddressQuery(walletAddress, {
+  enabled: () => !isMyBookshelf.value,
 })
+const shelfOwner = computed(() => shelfOwnerQuery.data.value)
 const shelfOwnerDisplayName = computed(() => {
   return shelfOwner.value?.displayName || shelfOwner.value?.evmWallet
 })
@@ -739,16 +741,12 @@ useHead(() => ({
   ],
 }))
 
-await callOnce(async () => {
-  if (!isMyBookshelf.value && walletAddress.value) {
-    try {
-      await metadataStore.lazyFetchLikerInfoByWalletAddress(walletAddress.value)
-    }
-    catch {
-      // Ignore error
-    }
-  }
-}, { mode: 'navigation' })
+// Await so the owner name lands in the SSR title. The guard is required because
+// refresh() bypasses the enabled gate and would fetch one's own (or an empty)
+// wallet; it resolves error states instead of rejecting, so no catch is needed.
+if (!isMyBookshelf.value && walletAddress.value) {
+  await shelfOwnerQuery.refresh()
+}
 
 const isOnline = useOnline()
 const retryActions = computed(() => [{
