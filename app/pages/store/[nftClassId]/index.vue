@@ -1250,6 +1250,11 @@ onMounted(async () => {
     return
   }
 
+  // The metadata fetch runs in callOnce, so it never reruns on the client and
+  // never trips lazyFetch's SWR path — nudge it here so a stale flag (試閱, Plus
+  // reading) heals and its CTA self-corrects.
+  nftStore.revalidateNFTClassAggregatedMetadata([nftClassId.value])
+
   useLogEvent('view_item', formattedLogPayload.value)
   nftStore.lazyFetchMessagesByClassId(nftClassId.value).catch((error) => {
     console.error(`Failed to fetch messages for NFT class ${nftClassId.value}:`, error)

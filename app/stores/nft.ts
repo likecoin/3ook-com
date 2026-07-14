@@ -4,11 +4,13 @@ export const useNFTStore = defineStore('nft', () => {
   const nftClassByIdMap = ref<Record<string, Partial<NFTClass>>>({})
   const messagesByNFTClassIdMap = ref<Record<string, NFTBuyerMessage[]>>({})
 
-  // Class IDs whose class + bookstore metadata was fetched live this session.
-  // Those caches are persisted to localStorage and hydrate stale; this set
-  // (never persisted) marks what's been revalidated since load and drives the
-  // stale-while-revalidate path in lazyFetch.
+  // Class IDs whose class + bookstore metadata was confirmed against origin, not
+  // the CDN. Never persisted, so localStorage and SSR-hydrated caches start
+  // unconfirmed and drive the stale-while-revalidate path in lazyFetch.
   const revalidatedNFTClassIds = ref<Set<string>>(new Set())
+  // Class IDs already tried this session, successfully or not. Caps the fan-out at
+  // one origin request per class, so a failing upstream can't be retried on every mount.
+  const attemptedRevalidationNFTClassIds = new Set<string>()
   // In-flight background revalidations, coalesced by class ID. A bounded runner
   // caps fan-out so a freshly-loaded grid of cached books doesn't fire one
   // request per item at once.
@@ -67,12 +69,14 @@ export const useNFTStore = defineStore('nft', () => {
     if (data.bookstoreInfo !== undefined) {
       bookstoreStore.addBookstoreInfoByNFTClassId(nftClassId, data.bookstoreInfo)
     }
-    // Count as fresh when both displayed aspects were requested — not when the
-    // payload is truthy. A partial (e.g. purchase-only) fetch then can't
-    // suppress revalidation, while a legitimately null classData still marks
-    // the class fresh instead of leaving it perpetually stale.
+    // Key off the requested options, not payload truthiness — a null classData is
+    // a legitimate answer. nocache is required: a plain response may be the CDN's
+    // day-old stale-while-revalidate body, so it cannot confirm liveness.
     const requestedOptions = resolveLikeCoinNFTMetadataDataOptions(options)
-    if (requestedOptions.includes('class_chain') && requestedOptions.includes('bookstore')) {
+    const hasConfirmedLiveMetadata = !!options?.nocache
+      && requestedOptions.includes('class_chain')
+      && requestedOptions.includes('bookstore')
+    if (hasConfirmedLiveMetadata) {
       revalidatedNFTClassIds.value.add(normalizeNFTClassId(nftClassId))
     }
     return data
@@ -93,6 +97,10 @@ export const useNFTStore = defineStore('nft', () => {
     const key = normalizeNFTClassId(nftClassId)
     const existing = inflightRevalidations.get(key)
     if (existing) return existing
+    // A failed attempt leaves the class unconfirmed, so without this every later
+    // mount would refire an origin-hitting request while the upstream stays down.
+    if (attemptedRevalidationNFTClassIds.has(key)) return Promise.resolve()
+    attemptedRevalidationNFTClassIds.add(key)
     revalidatingCount.value += 1
     const promise = new Promise<void>((resolve) => {
       queuedRevalidations.push(() => {
