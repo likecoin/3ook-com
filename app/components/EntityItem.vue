@@ -61,26 +61,22 @@ const props = defineProps({
 })
 
 const localeRoute = useLocaleRoute()
-const metadataStore = useMetadataStore()
 
-useVisibility('lazyLoadTrigger', (visible) => {
-  if (visible) {
-    if (props.walletAddress) {
-      metadataStore.lazyFetchLikerInfoByWalletAddress(props.walletAddress).catch(() => {
-        console.warn(`Failed to fetch Liker info of the wallet [${props.walletAddress}]`)
-      })
-    }
-  }
-})
+// Gate the fetch on viewport: these render in long lists, so an eager query per
+// item would fan out one profile request per row on mount.
+const { isVisible } = useVisibility('lazyLoadTrigger')
+
+const likerInfoQuery = useLikerInfoByWalletAddressQuery(
+  () => props.walletAddress,
+  { enabled: isVisible },
+)
 
 const displayName = computed(() => {
-  const likerInfo = metadataStore.getLikerInfoByWalletAddress(props.walletAddress)
-  return likerInfo?.displayName || props.name
+  return likerInfoQuery.data.value?.displayName || props.name
 })
 
 const avatar = computed(() => {
-  const likerInfo = metadataStore.getLikerInfoByWalletAddress(props.walletAddress)
-  return likerInfo?.avatarSrc || defaultAvatar
+  return likerInfoQuery.data.value?.avatarSrc || defaultAvatar
 })
 
 const label = computed(() => {

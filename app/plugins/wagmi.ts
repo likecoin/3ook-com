@@ -1,6 +1,5 @@
 import { WagmiPlugin, type Config } from '@wagmi/vue'
 import { reconnect } from '@wagmi/core'
-import { VueQueryPlugin } from '@tanstack/vue-query'
 import { defineNuxtPlugin } from 'nuxt/app'
 
 import { createWagmiConfig } from '../../wagmi'
@@ -18,9 +17,10 @@ export default defineNuxtPlugin((nuxtApp) => {
     isTestnet: !!config.public.isTestnet,
     isApp: isApp.value,
   })
+  // VueQueryPlugin (required by wagmi hooks) is installed in vue-query.ts;
+  // wagmi hooks inject the query client at component setup, after all plugins.
   nuxtApp.vueApp
     .use(WagmiPlugin, { config: wagmiConfig as Config, reconnectOnMount: false })
-    .use(VueQueryPlugin, {})
 
   // Avoid wagmi's default reconnectOnMount, which probes every connector —
   // including walletConnect, which lazy-loads a ~451 KB chunk. Instead,

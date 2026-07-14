@@ -894,7 +894,6 @@ const config = useRuntimeConfig()
 const baseURL = config.public.baseURL
 const newsletterEmail = ref('')
 
-const metadataStore = useMetadataStore()
 const { isApp } = useAppDetection()
 const { canStartSubscribeFlow } = useNativeIAP()
 
@@ -996,28 +995,29 @@ const featuredPublishers = [
   { name: '崧博出版', likerId: 'zsnzbv' },
 ]
 
+const featuredLikerIds = [...new Set([
+  'nghengsun',
+  'ckxpress',
+  ...featuredAuthors.filter(a => a.likerId).map(a => a.likerId!),
+  ...featuredPublishers.map(p => p.likerId),
+])]
+
+const likerInfoQueries = useLikerInfosByIdsQuery(featuredLikerIds)
+const likerInfoById = computed(() => Object.fromEntries(
+  featuredLikerIds.map((likerId, index) => [likerId, likerInfoQueries.value[index]?.data]),
+))
+
 function getAvatarSrc(likerId: string) {
-  return metadataStore.getLikerInfoById(likerId)?.avatarSrc
+  return likerInfoById.value[likerId]?.avatarSrc
 }
 
 function getEntityStoreRoute(name: string, fallbackType: 'author' | 'publisher', likerId?: string) {
   if (likerId) {
-    const wallet = metadataStore.getLikerInfoById(likerId)?.evmWallet
+    const wallet = likerInfoById.value[likerId]?.evmWallet
     if (wallet) return localeRoute({ name: 'store', query: { owner_wallet: wallet } })
   }
   return localeRoute({ name: 'store', query: { [fallbackType]: name } })
 }
-
-onMounted(async () => {
-  const likerIds = [
-    'nghengsun',
-    'ckxpress',
-    ...featuredAuthors.filter(a => a.likerId).map(a => a.likerId!),
-    ...featuredPublishers.map(p => p.likerId),
-  ]
-  const uniqueLikerIds = [...new Set(likerIds)]
-  await Promise.allSettled(uniqueLikerIds.map(id => metadataStore.lazyFetchLikerInfoById(id)))
-})
 
 function onClickFeaturedAuthor() {
   useLogEvent('about_featured_author_click')

@@ -103,17 +103,21 @@ const open = defineModel<boolean>('open', { default: false })
 
 const { t: $t } = useI18n()
 const localeRoute = useLocaleRoute()
-const metadataStore = useMetadataStore()
-
 const config = ref<AffiliatePublicConfig | null>(null)
-const isLoading = ref(false)
+const isConfigLoading = ref(false)
 
 const bookClassIds = computed(() => (config.value?.active ? config.value.affiliateClassIds : []))
 const publisherWallets = computed(() => (config.value?.active ? config.value.affiliatePublisherWallets : []))
-const publishers = computed(() => publisherWallets.value.map(wallet => ({
+// The wallets only appear once the config lands, so these stay idle until then.
+const publisherInfoQueries = useLikerInfosByWalletAddressesQuery(publisherWallets)
+const publishers = computed(() => publisherWallets.value.map((wallet, index) => ({
   wallet,
-  name: metadataStore.getLikerInfoByWalletAddress(wallet)?.displayName || shortenWalletAddress(wallet),
+  name: publisherInfoQueries.value[index]?.data?.displayName || shortenWalletAddress(wallet),
 })))
+// Hold the skeleton until the names land, so the list never renders shortened
+// wallets and then swaps them for display names.
+const isLoading = computed(() =>
+  isConfigLoading.value || publisherInfoQueries.value.some(query => query.isPending))
 
 function getPublisherStoreRoute(wallet: string) {
   return localeRoute({ name: 'store', query: { owner_wallet: wallet } })
@@ -124,23 +128,20 @@ const affiliateStoreRoute = computed(() =>
 )
 
 async function loadData() {
-  if (config.value || isLoading.value) return
-  isLoading.value = true
+  if (config.value || isConfigLoading.value) return
+  isConfigLoading.value = true
   const likerId = props.affiliateLikerId
   try {
     const result = await apiFetch<AffiliatePublicConfig>(`/affiliate/${encodeURIComponent(likerId)}`)
     // Discard a response superseded by a newer affiliateLikerId
     if (likerId !== props.affiliateLikerId) return
     config.value = result
-    await Promise.all(publisherWallets.value.map(wallet =>
-      metadataStore.lazyFetchLikerInfoByWalletAddress(wallet).catch(() => { /* ignore */ }),
-    ))
   }
   catch (error) {
     console.error('[AffiliateBooksModal] Failed to load:', error)
   }
   finally {
-    isLoading.value = false
+    isConfigLoading.value = false
   }
 }
 

@@ -71,6 +71,8 @@
 </template>
 
 <script setup lang="ts">
+import { useQueryClient } from '@tanstack/vue-query'
+
 const props = defineProps({
   nftClassId: {
     type: String,
@@ -126,7 +128,7 @@ const emit = defineEmits(['visible', 'open'])
 
 const { formatPrice, formatDiscountedPrice } = useCurrency()
 const nftStore = useNFTStore()
-const metadataStore = useMetadataStore()
+const queryClient = useQueryClient()
 const bookInfo = useBookInfo({ nftClassId: props.nftClassId })
 const { getResizedImageURL } = useImageResize()
 const bookCoverSrc = computed(() => getResizedImageURL(bookInfo.coverSrc.value || props.bookCoverSrc, { size: 300 }))
@@ -193,7 +195,9 @@ function fetchBookInfo() {
     console.warn(`Failed to fetch aggregated metadata for the NFT class [${props.nftClassId}]`)
   })
   if (bookInfo.nftClassOwnerWalletAddress.value) {
-    metadataStore.lazyFetchLikerInfoByWalletAddress(bookInfo.nftClassOwnerWalletAddress.value).catch(() => {
+    queryClient.fetchQuery(getLikerInfoByWalletAddressQueryOptions({
+      walletAddress: bookInfo.nftClassOwnerWalletAddress.value,
+    })).catch(() => {
       console.warn(`Failed to fetch Liker info of the wallet [${bookInfo.nftClassOwnerWalletAddress.value}] for the NFT class [${props.nftClassId}]`)
     })
   }
