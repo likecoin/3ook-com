@@ -67,6 +67,7 @@ function normalizeCMSTag(tag: {
   description?: { zh?: string, en?: string }
   isPublic?: boolean
   isForLibrary?: boolean
+  isForStore?: boolean
   order?: string
 }): BookstoreCMSTag {
   return {
@@ -75,6 +76,7 @@ function normalizeCMSTag(tag: {
     description: { zh: tag.description?.zh || '', en: tag.description?.en || '' },
     isPublic: !!tag.isPublic,
     isForLibrary: !!tag.isForLibrary,
+    isForStore: !!tag.isForStore,
   }
 }
 

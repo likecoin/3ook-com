@@ -48,8 +48,25 @@ export function useStoreTags({ routeName, isLibraryTab }: StoreTagsOptions) {
     return id.startsWith(STAKING_SORT_TAG_PREFIX)
   }
 
+  // Strict tab separation: a tag only belongs to the tab it's flagged for,
+  // so a cross-tab deep link (e.g. /library?tag=<store-only tag>) resolves to the default.
+  function getIsTagIdValidForTab(id: string) {
+    // The tab's default tag is always valid.
+    if (getIsDefaultTagId(id)) return true
+    // Staking sort and local histories are store-only entries.
+    if (getIsStakingTagId(id) || getIsLocalHistoriesTagId(id)) return !isLibraryTab.value
+    // CMS tags must carry the flag matching the current tab.
+    // Unknown tags (not yet loaded) are treated as valid until their data arrives to avoid a false redirect.
+    const tag = bookstoreStore.getBookstoreCMSTagById(id)
+    if (!tag) return true
+    return isLibraryTab.value ? tag.isForLibrary : tag.isForStore
+  }
+
   const tagId = computed({
-    get: () => getRouteQuery('tag', defaultTagId.value),
+    get: () => {
+      const id = getRouteQuery('tag', defaultTagId.value)
+      return getIsTagIdValidForTab(id) ? id : defaultTagId.value
+    },
     set: async (id) => {
       if (getIsLocalHistoriesTagId(id)) {
         await navigateTo(localeRoute({ name: 'local-histories' }))
@@ -117,9 +134,11 @@ export function useStoreTags({ routeName, isLibraryTab }: StoreTagsOptions) {
     // control their ordering here, hence they surface through cmsTags like any other tag.
     const cmsTags = bookstoreStore.bookstoreCMSTags
       .filter((tag) => {
-        // The library tab only lists tags flagged with isForLibrary.
-        if (isLibraryTab.value && !tag.isForLibrary && tag.id !== tagId.value) return false
-        return !!tag.isPublic || tag.id === tagId.value
+        // Always surface the active tag, even if it isn't flagged for this tab.
+        if (tag.id === tagId.value) return true
+        // Each tab only lists tags flagged for it (isForLibrary / isForStore).
+        if (!(isLibraryTab.value ? tag.isForLibrary : tag.isForStore)) return false
+        return !!tag.isPublic
       })
       .map(tag => ({
         label: tag.name[normalizedLocale.value],
