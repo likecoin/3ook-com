@@ -46,7 +46,7 @@
     "@wagmi/core": "^3.4.1",
     "@wagmi/vue": "^0.5.1",
     "@walletconnect/ethereum-provider": "~2.23.8",
-    "firebase-admin": "^13.4.0",
+    "firebase-admin": "^14.1.0",
     "jwt-decode": "^4.0.0",
     "markdown-it": "^14.2.0",
     "minimax-speech-ts": "^0.4.1",
