@@ -52,18 +52,32 @@ export default defineNuxtPlugin((nuxtApp) => {
     // error, else a SW that appears after the soft reload would skip the purge too.
     const effectiveAttempt = hadSW && attempt === 0 ? 1 : attempt
 
-    const logChunkError = (reloaded: boolean, escalated: boolean) =>
+    const logChunkError = (
+      reloaded: boolean,
+      escalated: boolean,
+      extra?: Record<string, unknown>,
+    ) =>
       useLogEvent('chunk_error', {
         error_message: message,
         url: window.location.pathname,
         reloaded,
         escalated,
         had_sw: hadSW,
+        ...extra,
       })
 
-    // Both the soft reload (if any) and the cache purge failed (e.g. the network
-    // is genuinely unreachable). Stop reloading and surface the error instead of
-    // looping. Reached at the second error when a SW is present, the third otherwise.
+    // Web purge failed too. On native, escalate to a native clear that can evict
+    // the SW registration WebKit won't drop — once (attempt 2); a further error
+    // falls through to surface below so a dead network can't loop forever.
+    if (effectiveAttempt === 2 && requestNativeClearWebViewCache()) {
+      reloadCount.value = effectiveAttempt + 1
+      logChunkError(true, true, { native_cleared: true })
+      console.warn('[chunk-error] requested native cache clear')
+      return
+    }
+
+    // Both the soft reload (if any) and the cache purge failed, and no native
+    // clear applied. Stop reloading and surface the error instead of looping.
     if (effectiveAttempt >= 2) {
       logChunkError(false, true)
       console.error('[chunk-error] already escalated, surfacing error', error)
