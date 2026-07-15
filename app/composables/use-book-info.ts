@@ -1,5 +1,6 @@
 import type { LocationQueryRaw } from 'vue-router'
 import { getGenreI18nKey } from '~~/shared/constants/book-categories'
+import { getHasFreeEdition } from '~~/shared/utils/bookstore'
 
 export default function (
   { nftClassId, isOwnerInfoEnabled = false }: {
@@ -229,6 +230,13 @@ export default function (
     return bookstoreInfo.value?.isPreviewEnabled || false
   })
 
+  const hasFreeEdition = computed(() => getHasFreeEdition(bookstoreInfo.value?.prices))
+
+  // Non-Plus readers may borrow a Plus-reading book when it also has a free edition.
+  const isFreeBorrowEnabled = computed(() => {
+    return isPlusReadingEnabled.value && hasFreeEdition.value
+  })
+
   const formattedReadingMethods = computed(() => {
     const methods: string[] = []
     if (isDownloadable.value) {
@@ -390,6 +398,8 @@ export default function (
     isPlusPromoEnabled,
     isPlusReadingEnabled,
     isPreviewEnabled,
+    hasFreeEdition,
+    isFreeBorrowEnabled,
     formattedTTSSupportLabel,
     formattedReadingMethods,
     tableOfContents,

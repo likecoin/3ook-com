@@ -763,21 +763,26 @@ const listingRouteName = computed(() => (isLibrary.value ? 'library' : 'store'))
 
 const isPlusReadingEnabled = bookInfo.isPlusReadingEnabled
 
-// Non-owners of a Plus-reading book see a CTA: Plus members read it directly,
-// while guests/non-Plus users are routed to subscribe.
+// Non-owners of a Plus-reading book see a CTA: Plus members and free-edition
+// borrowers read it directly, other non-Plus users are routed to subscribe.
 const isPlusReadingCTAVisible = computed(() =>
   !isUserBookOwner.value && isPlusReadingEnabled.value,
 )
-// An active Plus member who already borrowed this book reads it now, so the CTA shows Read instead of Borrow.
+// A member who already borrowed this book reads it now, so the CTA shows Read
+// instead of Borrow — for Plus members and non-Plus free-book borrowers alike.
+// Gate on the session: plusReadingBookIds is persisted, so without this a stale
+// borrowed id could flip a free-borrow book to Read after logout/session expiry.
 const isBookBorrowed = computed(() =>
-  isLikerPlus.value && bookshelfStore.plusReadingBookIds.includes(nftClassId.value.toLowerCase()),
+  hasLoggedIn.value
+  && (isLikerPlus.value || bookInfo.isFreeBorrowEnabled.value)
+  && bookshelfStore.plusReadingBookIds.includes(nftClassId.value.toLowerCase()),
 )
 // 試閱: non-owners may read the first chapters free when the listing opted in;
-// hidden for Plus members who can already borrow the full book.
+// hidden for anyone who can already borrow the full book (Plus or free-book).
 const isPreviewCTAVisible = computed(() =>
   !isUserBookOwner.value
   && bookInfo.isPreviewEnabled.value
-  && !(isLikerPlus.value && isPlusReadingEnabled.value),
+  && !(isPlusReadingEnabled.value && (isLikerPlus.value || bookInfo.hasFreeEdition.value)),
 )
 const plusReadingCTALabel = computed(() =>
   isBookBorrowed.value
@@ -1461,8 +1466,9 @@ async function handlePlusReadButtonClick() {
     if (!hasLoggedIn.value) return
   }
 
-  // Non-Plus users are routed to the membership page to subscribe.
-  if (!isLikerPlus.value) {
+  // Non-Plus users are routed to the membership page to subscribe, unless the
+  // book has a free edition — then they may borrow it without a subscription.
+  if (!isLikerPlus.value && !bookInfo.isFreeBorrowEnabled.value) {
     await navigateTo(localeRoute({
       name: 'member',
       query: {

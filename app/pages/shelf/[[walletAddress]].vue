@@ -165,7 +165,7 @@
               :nft-ids="item.nftIds"
               :is-owned="isMyBookshelf && item.isOwned"
               :is-plus-reading="item.isPlusReading"
-              :is-plus-reading-accessible="isPlusReadingAccessible"
+              :is-plus-reading-accessible="item.isPlusReadingAccessible"
               :can-archive="isMyBookshelf"
               :can-edit-reading-state="isMyBookshelf"
               :is-finished="item.completedAt != null"
@@ -362,6 +362,7 @@
 <script setup lang="ts">
 import { formatUnits } from 'viem'
 import { DeleteUploadedBookModal } from '#components'
+import { getHasFreeEdition } from '~~/shared/utils/bookstore'
 
 import type { BookshelfItem } from '~/stores/bookshelf'
 import type { StakingItem } from '~/stores/staking'
@@ -373,6 +374,7 @@ interface BookshelfItemWithStaking extends BookshelfItem {
   pendingRewards: number
   isOwned: boolean
   isPlusReading?: boolean
+  isPlusReadingAccessible?: boolean
 }
 
 const { likeCoinTokenDecimals } = useRuntimeConfig().public
@@ -384,6 +386,7 @@ const router = useRouter()
 const getRouteQuery = useRouteQuery()
 const getRouteParam = useRouteParam()
 const bookshelfStore = useBookshelfStore()
+const queryCache = useQueryCache()
 const uploadedBooksStore = useUploadedBooksStore()
 const stakingStore = useStakingStore()
 const toast = useToast()
@@ -403,9 +406,14 @@ const overlay = useOverlay()
 const deleteModal = overlay.create(DeleteUploadedBookModal)
 
 const isUploadedBookAccessible = computed(() => isLikerPlus.value && !isExpiredLikerPlus.value)
-// Borrowed Plus-reading books are readable only with active Plus; once it lapses
-// they render locked (with a resubscribe CTA) rather than disappearing.
-const isPlusReadingAccessible = computed(() => isLikerPlus.value && !isExpiredLikerPlus.value)
+// Active Plus reads any borrowed book; free-edition borrows stay readable without
+// it. A lapsed member's paid borrows render locked (resubscribe CTA), free ones don't.
+const isActivePlusReadingAccessible = computed(() => isLikerPlus.value && !isExpiredLikerPlus.value)
+function getIsPlusReadingItemAccessible(nftClassId: string) {
+  if (isActivePlusReadingAccessible.value) return true
+  const info = getBookstoreInfoByNFTClassIdFromCache(queryCache, nftClassId)
+  return !!info?.isPlusReadingEnabled && getHasFreeEdition(info?.prices)
+}
 const canUploadBook = computed(() => isMyBookshelf.value && isUploadedBookFeatureEnabled.value && isUploadedBookAccessible.value && !isApp.value)
 const isUploadedBookVisible = computed(() => isMyBookshelf.value && isUploadedBookFeatureEnabled.value && hasUploadedBooks.value)
 
@@ -456,6 +464,7 @@ const plusReadingItemsAll = computed<BookshelfItemWithStaking[]>(() => {
     pendingRewards: 0,
     isOwned: false,
     isPlusReading: true,
+    isPlusReadingAccessible: getIsPlusReadingItemAccessible(item.nftClassId),
   }))
 })
 

@@ -16,3 +16,9 @@ export function isBookstoreBuiltInListType(value: string): value is BookstoreBui
 export function getBookstoreScopedKey(key: string, isLibrary: boolean) {
   return isLibrary ? `library:${key}` : key
 }
+
+// A free edition is a listed (non-unlisted) price-0 edition. Kept in lockstep
+// with ebook-cors, which independently gates free library access the same way.
+export function getHasFreeEdition(prices?: BookstorePrice[]): boolean {
+  return !!prices?.some(price => price.price === 0 && !price.isUnlisted)
+}

@@ -389,6 +389,7 @@ const { isLibraryBook } = usePlusReadingTracker({
   nftClassId,
   isUploadedBook,
   isPlusReadingEnabled: bookInfo.isPlusReadingEnabled,
+  hasFreeEdition: bookInfo.hasFreeEdition,
   nftId,
 })
 

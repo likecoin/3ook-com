@@ -45,6 +45,7 @@ export default function (
   const isDownloadable = computed(() => false)
   const isPlusReadingEnabled = computed(() => false)
   const isPreviewEnabled = computed(() => false)
+  const hasFreeEdition = computed(() => false)
   const isUpsellDisabled = computed(() => true)
   const authorName = computed(() => '')
   const inLanguage = computed(() => 'zh')
@@ -64,6 +65,7 @@ export default function (
     isDownloadable,
     isPlusReadingEnabled,
     isPreviewEnabled,
+    hasFreeEdition,
     isUpsellDisabled,
     authorName,
     inLanguage,

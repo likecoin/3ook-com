@@ -88,15 +88,16 @@ else {
   }
   else {
     // Resolve ownership and the Plus-reading flag together: a non-owner may still
-    // borrow when they're an active Plus member and the book allows Plus reading.
+    // borrow when the book allows Plus reading and they're an active Plus member
+    // or the book has a free edition.
     const [isOwner] = await Promise.all([
       checkOwnership(),
       ensureNFTClassAggregatedMetadataThroughCache(queryCache, nftClassId.value)
         .catch(error => console.warn('Failed to fetch NFT metadata:', error)),
     ])
-    // Only a non-owner Plus member on a Plus-reading book can borrow.
-    const canBorrowWithPlus = !isOwner && isLikerPlus.value && bookInfo.isPlusReadingEnabled.value
-    if (isPreviewRequested && (isOwner || canBorrowWithPlus)) {
+    const canBorrow = !isOwner && bookInfo.isPlusReadingEnabled.value
+      && (isLikerPlus.value || bookInfo.hasFreeEdition.value)
+    if (isPreviewRequested && (isOwner || canBorrow)) {
       // Real access wins over preview: strip the param (and canonicalize nft_id
       // for owners, as the block below would) so the full file is fetched and a
       // borrow is registered/resumed as usual.
@@ -111,7 +112,7 @@ else {
       }), { replace: true })
     }
     const canPreview = isPreviewRequested && bookInfo.isPreviewEnabled.value
-    if (!isOwner && !canBorrowWithPlus && !canPreview) {
+    if (!isOwner && !canBorrow && !canPreview) {
       await navigateTo(rejectRoute.value)
     }
 
