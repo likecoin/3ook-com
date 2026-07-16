@@ -108,7 +108,9 @@ export async function parsePDFMetadata(file: File): Promise<ParsedBookMetadata> 
     return { title }
   }
   finally {
-    doc.destroy()
+    // Best-effort teardown; a rejected destroy() must not surface as an
+    // unhandled rejection or mask the parse result.
+    doc.loadingTask.destroy().catch(() => {})
   }
 }
 

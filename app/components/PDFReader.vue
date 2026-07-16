@@ -286,7 +286,7 @@
 <script setup lang="ts">
 import type { DropdownMenuItem } from '@nuxt/ui'
 import type { RouteLocationRaw } from 'vue-router'
-import type { PDFDocumentProxy, PDFPageProxy, PageViewport } from 'pdfjs-dist'
+import type { PDFDocumentLoadingTask, PDFDocumentProxy, PDFPageProxy, PageViewport } from 'pdfjs-dist'
 import type { TextItem, TextMarkedContent } from 'pdfjs-dist/types/src/display/api'
 import type { ReaderLeftSidebarTab } from './ReaderLeftSidebar.props'
 import { ANNOTATION_TEXT_MAX_LENGTH } from '~~/shared/constants/annotations'
@@ -387,6 +387,9 @@ const scaleMenuItems = computed<DropdownMenuItem[]>(() => {
 })
 
 const pdfDocument = shallowRef<PDFDocumentProxy>()
+// Tracked separately from pdfDocument so an in-flight getDocument() can be
+// canceled on reload/unmount; destroying the task also destroys the document.
+const pdfLoadingTask = shallowRef<PDFDocumentLoadingTask>()
 const textContentCache = new Map<number, Awaited<ReturnType<PDFPageProxy['getTextContent']>>>()
 const pageSearchTextCache = new Map<number, { raw: string, lower: string }>()
 const renderQueue = ref<(() => Promise<void>)[]>([])
@@ -607,7 +610,8 @@ onBeforeUnmount(() => {
   renderQueue.value = []
   textContentCache.clear()
   pageSearchTextCache.clear()
-  pdfDocument.value?.destroy()
+  pdfLoadingTask.value?.destroy().catch(() => {})
+  pdfLoadingTask.value = undefined
   pdfDocument.value = undefined
 })
 
@@ -672,20 +676,24 @@ async function loadPDF() {
     return
   }
 
-  if (pdfDocument.value) {
-    pdfDocument.value.destroy()
-    pdfDocument.value = undefined
-  }
+  pdfLoadingTask.value?.destroy().catch(() => {})
+  pdfDocument.value = undefined
 
+  let loadingTask: PDFDocumentLoadingTask | undefined
   try {
-    const loadingTask = pdfjsLib.value.getDocument({
+    loadingTask = pdfjsLib.value.getDocument({
       data: props.pdfBuffer,
       wasmUrl: `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.value.version}/wasm/`,
       cMapUrl: `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.value.version}/cmaps/`,
       cMapPacked: true,
     })
+    pdfLoadingTask.value = loadingTask
 
-    pdfDocument.value = await loadingTask.promise
+    const doc = await loadingTask.promise
+    // Superseded by a newer load or unmount while awaiting.
+    if (pdfLoadingTask.value !== loadingTask) return
+
+    pdfDocument.value = doc
     totalPages.value = pdfDocument.value.numPages
 
     outlineItems.value = []
@@ -698,6 +706,8 @@ async function loadPDF() {
     renderPages()
   }
   catch (error) {
+    // Destroying a superseded task rejects its promise; not a real error.
+    if (loadingTask && pdfLoadingTask.value !== loadingTask) return
     emit('error', error as Error)
   }
 }
@@ -912,19 +922,13 @@ async function renderPageToCanvas(
   const page = await pdfDocument.value.getPage(pageNum)
   const viewport = page.getViewport({ scale: scale.value })
 
-  const context = canvas.getContext('2d')
-  if (!context) {
-    page.cleanup()
-    return
-  }
-
   canvas.height = viewport.height * pixelRatio.value
   canvas.width = viewport.width * pixelRatio.value
   canvas.style.width = `${viewport.width}px`
   canvas.style.height = `${viewport.height}px`
 
   await page.render({
-    canvasContext: context,
+    canvas,
     transform: pixelRatio.value !== 1
       ? [pixelRatio.value, 0, 0, pixelRatio.value, 0, 0]
       : undefined,
