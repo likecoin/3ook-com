@@ -656,10 +656,25 @@ async function handleUpload() {
     }
   }
   catch (error: unknown) {
-    const message = error instanceof Error ? error.message : String(error)
-    errorMessage.value = message
+    errorMessage.value = getUploadErrorMessage(error)
     console.error('[CustomVoice] Upload failed:', error)
   }
+}
+
+const uploadErrorMessages = computed<Record<string, string>>(() => ({
+  AUDIO_TOO_LARGE: $t('tts_custom_voice_error_audio_too_large'),
+  PROMPT_AUDIO_TOO_LARGE: $t('tts_custom_voice_error_prompt_audio_too_large'),
+  AVATAR_TOO_LARGE: $t('tts_custom_voice_error_avatar_too_large'),
+  INVALID_AUDIO_FORMAT: $t('tts_custom_voice_error_invalid_audio_format'),
+  INVALID_PROMPT_AUDIO_FORMAT: $t('tts_custom_voice_error_invalid_audio_format'),
+}))
+
+function getUploadErrorMessage(error: unknown): string {
+  if (getErrorStatusCode(error) === 413) {
+    return $t('tts_custom_voice_error_audio_too_large')
+  }
+  const code = getErrorMessage(error)
+  return uploadErrorMessages.value[code] || $t('tts_custom_voice_error_upload_failed')
 }
 
 async function handleDelete() {

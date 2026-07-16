@@ -163,6 +163,14 @@ export default defineNuxtConfig({
     '/api/store/tags': STORE_API_CORS_RULE,
     '/api/store/tags/**': STORE_API_CORS_RULE,
     '/api/store/staking-books': STORE_API_CORS_RULE,
+    // Custom-voice uploads bundle audio (≤20MB) + prompt (≤2MB) + avatar (≤2MB).
+    '/api/user/custom-voice': {
+      security: {
+        requestSizeLimiter: {
+          maxUploadFileRequestInBytes: 28 * 1024 * 1024,
+        },
+      },
+    },
   },
 
   sourcemap: {
