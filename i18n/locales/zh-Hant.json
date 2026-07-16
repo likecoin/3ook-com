@@ -988,8 +988,8 @@
   "tts_custom_voice_error_mic_denied": "麥克風權限被拒絕，請允許麥克風權限後重試",
   "tts_custom_voice_error_prompt_audio_duration": "短句音檔長度須介於 1 至 8 秒之間",
   "tts_custom_voice_error_prompt_audio_too_large": "短句音檔大小不能超過 2MB",
-  "tts_custom_voice_error_upload_failed": "上傳失敗，請稍後再試",
   "tts_custom_voice_error_recording_failed": "錄音處理失敗，請重試或改用上傳音檔",
+  "tts_custom_voice_error_upload_failed": "上傳失敗，請稍後再試"
   "tts_custom_voice_instructions": "請提供一段 10 秒至 5 分鐘的錄音",
   "tts_custom_voice_language_label": "語言",
   "tts_custom_voice_language_option_cantonese": "粵語",
