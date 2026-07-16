@@ -73,6 +73,13 @@ export const useAccountStore = defineStore('account', () => {
     return $wagmiConfig.chains[0].id
   })
 
+  // Pass to signMessage so wagmi re-reads the chain from the connector,
+  // avoiding a mismatch when Magic cached chainId 0 during connect.
+  function getActiveConnector() {
+    const { state } = $wagmiConfig
+    return state.current ? state.connections.get(state.current)?.connector : undefined
+  }
+
   const isLoginWithMagic = computed(() => {
     return user.value && user.value.loginMethod === 'magic'
   })
@@ -224,7 +231,7 @@ export const useAccountStore = defineStore('account', () => {
                   magicDIDToken,
                   ts: Date.now(),
                 }, null, 2)
-                const signature = await signMessageAsync({ message })
+                const signature = await signMessageAsync({ message, connector: getActiveConnector() })
                 const res = await userAccountSessionAPI.migrateMagicEmailUser({
                   wallet: walletAddress,
                   signature,
@@ -329,7 +336,7 @@ export const useAccountStore = defineStore('account', () => {
           null,
           2,
         )
-        const signature = await signMessageAsync({ message })
+        const signature = await signMessageAsync({ message, connector: getActiveConnector() })
 
         await $fetch('/api/register', {
           method: 'POST',
@@ -547,7 +554,7 @@ export const useAccountStore = defineStore('account', () => {
       )
 
       blockingModal.patch({ title: $t('account_signing_in') })
-      const signature = await signMessageAsync({ message })
+      const signature = await signMessageAsync({ message, connector: getActiveConnector() })
 
       blockingModal.patch({ title: $t('account_logging_in') })
       await apiFetch('/login', {
