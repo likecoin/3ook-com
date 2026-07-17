@@ -70,7 +70,8 @@ env:
   - variable: MAGIC_LINK_CUSTOM_LOGO_URL
     value: https://3ook.com/pwa-512x512.png
   - variable: NODE_OPTIONS
-    value: --max-old-space-size=8192
+    # Build worker is e2-standard-2 (~7957 MiB); keep heap below total RAM
+    value: --max-old-space-size=6144
     availability:
       - BUILD
   - variable: NUXT_AIRTABLE_API_SECRET

@@ -453,6 +453,7 @@ export default defineNuxtConfig({
   },
 
   sentry: {
+    telemetry: false,
     sourceMapsUploadOptions: {
       org: 'likerland-team',
       project: '3ook-com',
