@@ -1,5 +1,5 @@
 import * as v from 'valibot'
-import { COUNTRY_CODES } from '~~/shared/constants/countries'
+import { COUNTRY_CODES } from '~~/shared/constants/country-codes'
 
 export const UserSettingsUpdateSchema = v.pipe(
   v.strictObject({

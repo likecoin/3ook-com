@@ -1,4 +1,4 @@
-import type { COUNTRY_CODES } from '~~/shared/constants/countries'
+import type { COUNTRY_CODES } from '~~/shared/constants/country-codes'
 
 export type LocaleCode = 'en' | 'zh-Hant'
 export type PaymentCurrency = 'auto' | 'hkd' | 'twd' | 'usd'

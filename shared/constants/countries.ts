@@ -10,6 +10,3 @@ export const COUNTRIES: readonly Country[] = countries
 
 // Pulled to the top of the Region selector, in this order.
 export const PRIORITY_COUNTRY_CODES = ['HK', 'TW'] as const
-
-// All ISO-3166-1 alpha-2 codes
-export const COUNTRY_CODES = Object.freeze(COUNTRIES.map(country => country.code))

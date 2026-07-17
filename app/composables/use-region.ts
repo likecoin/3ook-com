@@ -1,5 +1,5 @@
 import { useStorage } from '@vueuse/core'
-import { COUNTRY_CODES } from '~~/shared/constants/countries'
+import { COUNTRY_CODES } from '~~/shared/constants/country-codes'
 import type { RegionCode } from '~~/shared/types/user-settings'
 
 const DEFAULT_REGION: RegionCode = 'HK'

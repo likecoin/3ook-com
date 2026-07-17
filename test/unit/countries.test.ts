@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import {
-  COUNTRIES,
-  COUNTRY_CODES,
-  PRIORITY_COUNTRY_CODES,
-} from '~~/shared/constants/countries'
+import { COUNTRIES, PRIORITY_COUNTRY_CODES } from '~~/shared/constants/countries'
+import { COUNTRY_CODES } from '~~/shared/constants/country-codes'
 
 describe('country constants', () => {
+  it('keeps country-codes.ts in sync with countries.json', () => {
+    expect(COUNTRY_CODES).toEqual(COUNTRIES.map(country => country.code))
+  })
+
   it('uses unique ISO-3166-1 alpha-2 codes', () => {
     expect(new Set(COUNTRY_CODES).size).toBe(COUNTRY_CODES.length)
     for (const code of COUNTRY_CODES) {
