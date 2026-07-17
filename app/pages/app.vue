@@ -15,7 +15,7 @@
             <div class="flex max-md:flex-col items-center justify-center md:justify-start gap-4">
               <img
                 src="~/assets/images/about/app-icon.webp"
-                alt="3ook Reader App"
+                :alt="$t('app_name')"
                 class="size-16 md:size-20 rounded-2xl"
               >
               <i18n-t
@@ -24,7 +24,10 @@
                 tag="h1"
               >
                 <template #appName>
-                  <span class="whitespace-nowrap">3ook Reader</span>
+                  <span
+                    class="whitespace-nowrap"
+                    v-text="$t('app_name')"
+                  />
                 </template>
               </i18n-t>
             </div>
@@ -54,7 +57,7 @@
               v-gsap.entrance.fade="{ delay: 0.4, duration: 1, ease: 'power1.out' }"
               class="-my-40 max-md:scale-200 origin-center object-contain"
               src="~/assets/images/about/app-mockup.png"
-              alt="3ook Reader App"
+              :alt="$t('app_name')"
               fetchpriority="high"
             >
           </aside>
@@ -168,7 +171,7 @@
           <img
             v-gsap.whenVisible.once="{ y: 30, opacity: 0, duration: 0.8, ease: 'power1.out' }"
             src="~/assets/images/mockup.png"
-            alt="3ook Reader running on laptop, tablet, and phone"
+            :alt="$t('app_page_showcase_title')"
             class="w-full max-w-4xl mx-auto"
             loading="lazy"
             decoding="async"
@@ -265,7 +268,7 @@ useHead({
       innerHTML: JSON.stringify({
         '@context': 'https://schema.org',
         '@type': 'MobileApplication',
-        'name': '3ook Reader',
+        'name': $t('app_name'),
         'description': pageDescription.value,
         'url': canonicalURL.value,
         'applicationCategory': 'BookApplication',

@@ -277,7 +277,7 @@ useHead({
       {
         '@context': 'https://schema.org',
         '@type': 'MobileApplication',
-        'name': '3ook Reader',
+        'name': $t('app_name'),
         'operatingSystem': 'iOS',
         'applicationCategory': 'BookReaderApplication',
         'offers': {
@@ -290,7 +290,7 @@ useHead({
       {
         '@context': 'https://schema.org',
         '@type': 'MobileApplication',
-        'name': '3ook.com',
+        'name': $t('app_name'),
         'operatingSystem': 'Android',
         'applicationCategory': 'BookReaderApplication',
         'offers': {

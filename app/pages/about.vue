@@ -742,7 +742,7 @@
             <div class="flex items-center justify-center md:justify-start gap-4">
               <img
                 src="~assets/images/about/app-icon.webp"
-                alt="3ook Reader App"
+                :alt="$t('app_name')"
                 class="size-16 md:size-20 rounded-2xl"
               >
               <h2 class="text-2xl md:text-3xl font-bold text-white">
@@ -777,7 +777,7 @@
               v-gsap.entrance.fade="{ delay: 0.5, duration: 1, ease: 'power1.out' }"
               class="-my-40 max-md:scale-200 origin-center object-contain"
               src="~assets/images/about/app-mockup.png"
-              alt="3ook Reader App"
+              :alt="$t('app_name')"
             >
           </aside>
         </div>
