@@ -322,7 +322,7 @@ const ttsButtonUI = computed(() =>
     : undefined,
 )
 
-const pdfjsLib = ref<typeof import('pdfjs-dist') | undefined>(undefined)
+const pdfjsLib = ref<typeof import('pdfjs-dist/legacy/build/pdf.mjs') | undefined>(undefined)
 const singleCanvas = useTemplateRef<HTMLCanvasElement>('singleCanvas')
 const leftCanvas = useTemplateRef<HTMLCanvasElement>('leftCanvas')
 const rightCanvas = useTemplateRef<HTMLCanvasElement>('rightCanvas')
@@ -585,9 +585,10 @@ const isAtLastPage = computed(() =>
 async function loadPDFLib() {
   if (pdfjsLib.value) return pdfjsLib.value
 
-  const pdfjs = await import('pdfjs-dist')
+  // Use the legacy build
+  const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs')
   pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-    'pdfjs-dist/build/pdf.worker.min.mjs',
+    'pdfjs-dist/legacy/build/pdf.worker.min.mjs',
     import.meta.url,
   ).toString()
   pdfjsLib.value = pdfjs
