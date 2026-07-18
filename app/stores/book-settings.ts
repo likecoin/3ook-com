@@ -8,6 +8,7 @@ const SERVER_TIMESTAMP_KEYS: ReadonlySet<string> = new Set<BookTimestampField>([
   'completedAt',
   'didNotFinishAt',
   'archivedAt',
+  'preLentReturnedAt',
   'lastOpenedTime',
 ])
 

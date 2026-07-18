@@ -36,7 +36,6 @@ const INTERCOM_EVENT_ALLOWLIST = new Set<string>([
   'claim_error',
   'claim_timeout',
   'plus_gift_claimed',
-  'shelf_claim_free_book',
 
   // Subscription
   'start_trial',

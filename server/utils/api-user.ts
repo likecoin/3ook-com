@@ -144,6 +144,7 @@ function normalizeBookSettings(data: BookSettingsFirestoreData): BookSettingsDat
     completedAt: timestampToMillis(data.completedAt),
     didNotFinishAt: timestampToMillis(data.didNotFinishAt),
     archivedAt: timestampToMillis(data.archivedAt),
+    preLentReturnedAt: timestampToMillis(data.preLentReturnedAt),
     lastOpenedTime: rawLastOpened instanceof Timestamp ? rawLastOpened.toMillis() : rawLastOpened,
   } as BookSettingsData
 }
@@ -178,12 +179,19 @@ export async function updateBookSettings(
     completedAt,
     didNotFinishAt,
     archivedAt,
+    preLentReturnedAt,
     lastOpenedTime,
     ...restSettings
   } = settings
 
   const timestampFields = Object.fromEntries(
-    Object.entries({ completedAt, didNotFinishAt, archivedAt, lastOpenedTime })
+    Object.entries({
+      completedAt,
+      didNotFinishAt,
+      archivedAt,
+      preLentReturnedAt,
+      lastOpenedTime,
+    })
       .filter(([, value]) => value !== undefined)
       .map(([key, value]) => [
         key,

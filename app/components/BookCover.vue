@@ -12,7 +12,7 @@
         'group',
         {
           'cursor-pointer': isClickable,
-          'relative': isShowPlaceholder || hasShadow || isShowRibbon || hasOverlay,
+          'relative': isShowPlaceholder || hasShadow || hasOverlay,
           'w-full': isShowPlaceholder || hasShadow || hasOverlay,
           'h-full': isShowPlaceholder,
         },
@@ -91,41 +91,6 @@
         />
       </div>
 
-      <!-- Ribbon -->
-      <div
-        v-if="isShowRibbon"
-        :class="[
-          'pointer-events-none',
-          'absolute',
-          'inset-0',
-          'overflow-hidden',
-          ...(isClickable ? coverHoverScaleAnimationClass : []),
-          'drop-shadow-md',
-        ]"
-      >
-        <div
-          :class="[
-            'absolute',
-            'top-0',
-            'right-0',
-            'translate-x-1/2',
-            '-translate-y-1/2',
-            'rotate-45',
-            'origin-center',
-            'w-full',
-            'mt-6 laptop:mt-8',
-            'mr-6 laptop:mr-8',
-            'p-0.5 laptop:p-1',
-            'text-theme-black',
-            'text-center',
-            'text-[10px] laptop:text-sm',
-            'font-bold',
-            'bg-theme-cyan',
-          ]"
-          v-text="ribbonText"
-        />
-      </div>
-
       <div
         v-if="hasOverlay"
         :class="[
@@ -176,10 +141,6 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-  ribbonText: {
-    type: String,
-    default: '',
-  },
 })
 const emit = defineEmits(['click'])
 
@@ -191,8 +152,6 @@ const imgElement = useTemplateRef<HTMLImageElement>('imgElement')
 const borderRadiusClass = 'rounded-lg'
 
 const isClickable = computed(() => !!props.to || !!getCurrentInstance()?.vnode.props?.onClick)
-
-const isShowRibbon = computed(() => !!props.ribbonText)
 
 const slots = useSlots()
 const hasOverlay = computed(() => !!slots.overlay)

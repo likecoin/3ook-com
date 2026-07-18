@@ -8,7 +8,6 @@
       :src="bookCoverSrc"
       :alt="bookInfo.name.value"
       :lazy="props.lazy"
-      :ribbon-text="props.isClaimable ? $t('bookshelf_claimable_label') : ''"
       :has-shadow="true"
       @click="handleCoverClick"
     >
@@ -155,10 +154,6 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-  isClaimable: {
-    type: Boolean,
-    default: false,
-  },
   isOwned: {
     type: Boolean,
     default: true,
@@ -223,7 +218,6 @@ const emit = defineEmits([
   'visible',
   'open',
   'download',
-  'claim',
   'mark-as-reading',
   'mark-as-finished',
   'mark-as-did-not-finish',
@@ -262,16 +256,6 @@ const isMobileMenuOpen = ref(false)
 
 const menuItems = computed<DropdownMenuItem[]>(() => {
   const items: DropdownMenuItem[] = []
-
-  if (props.isClaimable) {
-    items.push({
-      label: $t('bookshelf_item_menu_claim_book'),
-      icon: 'i-material-symbols-add-circle-outline-rounded',
-      onSelect: claimBook,
-    })
-    // NOTE: No other actions are available for claimable items
-    return items
-  }
 
   // Reader items: only show if more than one content file
   if (canRead.value && bookInfo.sortedContentURLs.value.length > 1) {
@@ -499,18 +483,9 @@ async function downloadURL({ name, type, fileIndex }: { name: string, type: stri
   })
 }
 
-function claimBook() {
-  emit('claim', props.nftClassId)
-}
-
 const localeRoute = useLocaleRoute()
 
 function handleCoverClick() {
-  if (props.isClaimable) {
-    claimBook()
-    return
-  }
-
   // Lapsed Plus on a borrowed book: route to the membership page to resubscribe.
   if (props.isPlusReading && !props.isPlusReadingAccessible) {
     useLogEvent('shelf_plus_reading_resub_click', { nft_class_id: props.nftClassId })

@@ -15,6 +15,7 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
   const queryCache = useQueryCache()
   const likeNFTClassContract = useLikeNFTClassContract()
   const bookSettingsStore = useBookSettingsStore()
+  const preLentBookSessionAPI = usePreLentBookSessionAPI()
 
   const nftClassIds = ref<string[]>([])
   const tokenIdsByNFTClassId = ref<Record<string, string[]>>({})
@@ -23,6 +24,8 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
   const plusReadingBookIds = ref<string[]>([])
   const hasFetchedPlusReadingBooks = ref(false)
   let plusReadingBooksPromise: Promise<void> | null = null
+  const preLentNFTClassIds = ref<string[]>([])
+  const isFetchingPreLentBooks = ref(false)
   const persistedWalletAddress = ref<string | null>(null)
   const isFetching = ref(false)
   const hasFetched = ref(false)
@@ -66,16 +69,44 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
       .map(nftClassId => buildBookshelfItem(nftClassId, tokenIdsByNFTClassId.value[nftClassId] || [])),
   )
 
+  const ownedNFTClassIdSet = computed(() =>
+    new Set(nftClassIds.value.map(id => id.toLowerCase())),
+  )
+
   // Borrowed Plus-reading books are listed via a dedicated endpoint (they live
   // outside the NFT-ownership-driven `items`). Deduped against owned books, and
   // gated on Book metadata so the cover/title can render.
   const plusReadingItems = computed<BookshelfItem[]>(() => {
-    const ownedNFTClassIds = new Set(nftClassIds.value.map(id => id.toLowerCase()))
     return plusReadingBookIds.value
-      .filter(nftClassId => !ownedNFTClassIds.has(nftClassId))
+      .filter(nftClassId => !ownedNFTClassIdSet.value.has(nftClassId))
       .filter(getIsBookNFTClass)
       .map(nftClassId => buildBookshelfItem(nftClassId, []))
   })
+
+  // Pre-lent ids excluding owned/borrowed/returned
+  const visiblePreLentNFTClassIds = computed<string[]>(() => {
+    const borrowedNFTClassIds = new Set(plusReadingBookIds.value)
+    return preLentNFTClassIds.value.filter(nftClassId =>
+      !ownedNFTClassIdSet.value.has(nftClassId)
+      && !borrowedNFTClassIds.has(nftClassId)
+      && bookSettingsStore.getSettings(nftClassId)?.preLentReturnedAt == null,
+    )
+  })
+
+  const preLentItems = computed<BookshelfItem[]>(() =>
+    visiblePreLentNFTClassIds.value
+      .filter(getIsBookNFTClass)
+      .map(nftClassId => buildBookshelfItem(nftClassId, [])),
+  )
+
+  // Hydrate aggregated metadata + book settings
+  async function hydrateShelfBooks(ids: string[]) {
+    await Promise.allSettled([
+      ...ids.map(id => ensureNFTClassAggregatedMetadataThroughCache(queryCache, id)),
+      // Force-refresh: reading/TTS totals accumulate server-side and would otherwise go stale.
+      bookSettingsStore.fetchBatchSettings(ids, { force: true }),
+    ])
+  }
 
   async function fetchPlusReadingBooks() {
     if (!hasLoggedIn.value) return
@@ -84,17 +115,7 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
       plusReadingBookIds.value = ids.map(id => id.toLowerCase())
       hasFetchedPlusReadingBooks.value = true
       if (!plusReadingBookIds.value.length) return
-
-      // Hydrate aggregated metadata (so the Book filter passes) + book settings
-      // (progress) for display. One failure shouldn't drop the rest.
-      await Promise.allSettled([
-        ...plusReadingBookIds.value.map(id =>
-          ensureNFTClassAggregatedMetadataThroughCache(queryCache, id),
-        ),
-        // Force-refresh: server-accumulated reading/TTS totals change outside
-        // the client, so skip-if-initialized would surface a stale cached 0.
-        bookSettingsStore.fetchBatchSettings(plusReadingBookIds.value, { force: true }),
-      ])
+      await hydrateShelfBooks(plusReadingBookIds.value)
     }
     catch (error) {
       console.warn('Failed to fetch plus reading books:', error)
@@ -109,6 +130,45 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
       })
     }
     return plusReadingBooksPromise
+  }
+
+  async function fetchPreLentBooks() {
+    if (!hasLoggedIn.value || isFetchingPreLentBooks.value) return
+    const generation = resetGeneration
+    const isStale = () => !hasLoggedIn.value || generation !== resetGeneration
+    try {
+      isFetchingPreLentBooks.value = true
+      const ids = await preLentBookSessionAPI.fetchPreLentNFTClassIds()
+      if (isStale()) return
+      preLentNFTClassIds.value = ids.map(id => id.toLowerCase())
+      if (!preLentNFTClassIds.value.length) return
+      await hydrateShelfBooks(preLentNFTClassIds.value)
+    }
+    catch (error) {
+      console.warn('Failed to fetch pre-lent books:', error)
+    }
+    finally {
+      isFetchingPreLentBooks.value = false
+    }
+  }
+
+  async function markPreLentBookReturned(nftClassId: string) {
+    const normalizedNFTClassId = nftClassId.toLowerCase()
+    preLentNFTClassIds.value = preLentNFTClassIds.value.filter(id => id !== normalizedNFTClassId)
+    bookSettingsStore.queueUpdate(normalizedNFTClassId, 'preLentReturnedAt', true)
+    await bookSettingsStore.flushBatch(normalizedNFTClassId)
+  }
+
+  async function returnBook(nftClassId: string) {
+    const normalizedNFTClassId = nftClassId.toLowerCase()
+    const promises: Promise<void>[] = []
+    if (preLentNFTClassIds.value.includes(normalizedNFTClassId)) {
+      promises.push(markPreLentBookReturned(normalizedNFTClassId))
+    }
+    if (plusReadingBookIds.value.includes(normalizedNFTClassId)) {
+      promises.push(removePlusReadingBook(normalizedNFTClassId))
+    }
+    await Promise.all(promises)
   }
 
   // "Return" a borrowed book: drop it from the shelf entirely (progress kept).
@@ -348,6 +408,8 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
     plusReadingBookIds.value = []
     hasFetchedPlusReadingBooks.value = false
     plusReadingBooksPromise = null
+    preLentNFTClassIds.value = []
+    isFetchingPreLentBooks.value = false
     nextKey.value = undefined
     persistedWalletAddress.value = null
     lastError.value = null
@@ -375,10 +437,17 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
     items,
     plusReadingItems,
 
+    isFetchingPreLentBooks,
+    preLentNFTClassIds,
+    visiblePreLentNFTClassIds,
+    preLentItems,
+
     fetchItems,
     fetchAllItems,
     fetchPlusReadingBooks,
     lazyFetchPlusReadingBooks,
+    fetchPreLentBooks,
+    returnBook,
     getTokenIdsByNFTClassId,
     getFirstTokenIdByNFTClassId,
     fetchNFTByNFTClassIdAndOwnerWalletAddressThroughContract,
@@ -394,6 +463,6 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
   }
 }, {
   persist: {
-    pick: ['nftClassIds', 'tokenIdsByNFTClassId', 'plusReadingBookIds', 'persistedWalletAddress'],
+    pick: ['nftClassIds', 'tokenIdsByNFTClassId', 'plusReadingBookIds', 'preLentNFTClassIds', 'persistedWalletAddress'],
   },
 })

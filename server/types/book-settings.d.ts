@@ -10,6 +10,7 @@ export interface BookSettingsFirestoreData extends Omit<BaseBookSettingsData, Bo
   completedAt?: Timestamp | null
   didNotFinishAt?: Timestamp | null
   archivedAt?: Timestamp | null
+  preLentReturnedAt?: Timestamp | null
   plusBorrowedAt?: Timestamp | null
   sessionCount?: number
 }

@@ -144,23 +144,11 @@
               'mt-4',
             ]"
           >
-            <template v-if="isMyBookshelf">
-              <BookshelfItem
-                v-for="(nftClassId, index) in claimableNFTClassIds"
-                :id="nftClassId"
-                :key="nftClassId"
-                :class="getGridItemClassesByIndex(index)"
-                :nft-class-id="nftClassId"
-                :lazy="index >= columnMax"
-                :is-claimable="true"
-                @claim="handleBookClaim"
-              />
-            </template>
             <BookshelfItem
               v-for="(item, index) in readingItems"
               :id="item.nftClassId"
               :key="item.nftClassId"
-              :class="getGridItemClassesByIndex(claimableNFTClassIds.length + index)"
+              :class="getGridItemClassesByIndex(index)"
               :nft-class-id="item.nftClassId"
               :nft-ids="item.nftIds"
               :is-owned="isMyBookshelf && item.isOwned"
@@ -174,7 +162,7 @@
               :is-my-bookshelf="isMyBookshelf"
               :total-reading-time-ms="item.totalReadingTimeMs"
               :total-tts-listening-time-ms="item.totalTTSListeningTimeMs"
-              :lazy="(claimableNFTClassIds.length + index) >= columnMax"
+              :lazy="index >= columnMax"
               @open="handleBookshelfItemOpen"
               @download="handleBookshelfItemDownload"
               @mark-as-reading="handleMarkBookAsReading"
@@ -393,15 +381,6 @@ const toast = useToast()
 const { isLikerPlus, isExpiredLikerPlus } = useSubscription()
 const { isApp } = useAppDetection()
 const isUploadedBookFeatureEnabled = useFeatureFlagEnabled('plus-upload-files')
-const {
-  isLoading: isLoadingClaimableFreeBooks,
-  nftClassIds: claimableNFTClassIds,
-  count: claimableFreeBooksCount,
-  fetchClaimableFreeBooks,
-  claimFreeBook,
-  reset: resetClaimableBooks,
-} = useClaimableBooks()
-
 const overlay = useOverlay()
 const deleteModal = overlay.create(DeleteUploadedBookModal)
 
@@ -453,18 +432,21 @@ const bookshelfItemsAll = computed<BookshelfItemWithStaking[]>(() => {
   })
 })
 
-// Borrowed (non-owned) Plus-reading books. Only on my own shelf; deduped vs
-// owned books by the store. They have no terminal state — they live in the
-// Reading tab until returned (還書), so they never reach Finished/DNF/Archived.
+// Borrowed (non-owned) Plus-reading books plus pre-lent free books, rendered
+// identically. Only on my own shelf; deduped vs owned books by the store. They
+// have no terminal state — they live in the Reading tab until returned (還書).
 const plusReadingItemsAll = computed<BookshelfItemWithStaking[]>(() => {
   if (!isMyBookshelf.value) return []
-  return bookshelfStore.plusReadingItems.map(item => ({
+  return [...bookshelfStore.plusReadingItems, ...bookshelfStore.preLentItems].map(item => ({
     ...item,
     stakedAmount: 0,
     pendingRewards: 0,
     isOwned: false,
     isPlusReading: true,
-    isPlusReadingAccessible: getIsPlusReadingItemAccessible(item.nftClassId),
+    // Raw free list on purpose (covers borrowed free books too):
+    // free books never lock behind a resubscribe CTA; the reader gate is the backstop.
+    isPlusReadingAccessible: bookshelfStore.preLentNFTClassIds.includes(item.nftClassId)
+      || getIsPlusReadingItemAccessible(item.nftClassId),
   }))
 })
 
@@ -582,7 +564,8 @@ const stakingItems = computed<BookshelfItemWithStaking[]>(() => {
 
 const shelfTabs = computed(() => {
   const tabs: { value: ShelfTab, label: string }[] = []
-  if (readingItems.value.length > 0 || claimableFreeBooksCount.value > 0) {
+  // Not metadata-gated (my shelf only), so the tab doesn't flash while metadata hydrates.
+  if (readingItems.value.length > 0 || (isMyBookshelf.value && bookshelfStore.visiblePreLentNFTClassIds.length > 0)) {
     tabs.push({ value: 'reading', label: $t('bookshelf_tab_reading') })
   }
   if (stakingItems.value.length > 0) {
@@ -610,7 +593,7 @@ const shelfTabs = computed(() => {
 // nftClassIds is persisted, so on warm loads tabs can render before any fetch resolves.
 const isTabsLoading = computed(() => {
   const hasAnyData = (
-    claimableFreeBooksCount.value > 0
+    (isMyBookshelf.value && bookshelfStore.visiblePreLentNFTClassIds.length > 0)
     || bookshelfStore.nftClassIds.length > 0
     || stakingData.value.items.length > 0
     || (isUploadedBookFeatureEnabled.value && hasUploadedBooks.value)
@@ -622,7 +605,7 @@ const isTabsLoading = computed(() => {
 const isCurrentTabFetching = computed(() => {
   switch (activeTab.value) {
     case 'reading':
-      return bookshelfStore.isFetching || isLoadingClaimableFreeBooks.value
+      return bookshelfStore.isFetching || bookshelfStore.isFetchingPreLentBooks
     case 'finished':
     case 'dnf':
       return bookshelfStore.isFetching
@@ -640,8 +623,8 @@ const isCurrentTabFetching = computed(() => {
 const isCurrentTabEmpty = computed(() => {
   switch (activeTab.value) {
     case 'reading':
-      if (!bookshelfStore.hasFetched || isLoadingClaimableFreeBooks.value) return false
-      return readingItems.value.length === 0 && claimableFreeBooksCount.value === 0
+      if (!bookshelfStore.hasFetched || bookshelfStore.isFetchingPreLentBooks) return false
+      return readingItems.value.length === 0
     case 'finished':
       if (!bookshelfStore.hasFetched) return false
       return finishedItems.value.length === 0
@@ -684,7 +667,7 @@ const currentTabEmptyMessage = computed(() => {
 const itemsCount = computed(() => {
   switch (activeTab.value) {
     case 'reading':
-      return claimableFreeBooksCount.value + readingItems.value.length
+      return readingItems.value.length
     case 'finished':
       return finishedItems.value.length
     case 'dnf':
@@ -799,7 +782,7 @@ async function loadBookshelfData(addr: string, { isRefresh = false } = {}) {
   ]
   if (isMyBookshelf.value) {
     promises.push(
-      fetchClaimableFreeBooks(),
+      bookshelfStore.fetchPreLentBooks(),
       stakingStore.fetchUserStakingData(user.value!.evmWallet),
       // Unconditional (not Plus-gated): lapsed users still see locked borrows.
       bookshelfStore.fetchPlusReadingBooks(),
@@ -845,7 +828,6 @@ watch(
 onUnmounted(() => {
   if (paramWalletAddress.value) {
     bookshelfStore.reset()
-    resetClaimableBooks()
   }
 })
 
@@ -859,7 +841,6 @@ watch(
     const isAccountSwitch = oldValue !== undefined && oldValue !== value
     if (isAccountSwitch) {
       bookshelfStore.reset()
-      resetClaimableBooks()
       uploadedBooksStore.reset()
     }
     if (value) {
@@ -871,12 +852,21 @@ watch(
 // If the session hydrates after the page mounts with an explicit
 // `/shelf/0xMyAddr` URL, `isMyBookshelf` flips from false → true without
 // `walletAddress` changing, so the initial `loadBookshelfData` skipped the
-// my-only fetches (uploads, staking, claimables). Re-trigger once here.
+// my-only fetches (uploads, staking, pre-lent books). Re-trigger once here.
 watch(isMyBookshelf, async (isMine, wasMine) => {
   if (isMine && !wasMine && walletAddress.value) {
     await loadBookshelfData(walletAddress.value)
   }
 })
+
+function getShelfItemType(nftClassId?: string) {
+  if (!nftClassId) return undefined
+  const normalizedNFTClassId = nftClassId.toLowerCase()
+  if (bookshelfStore.nftClassIds.includes(normalizedNFTClassId)) return 'owned'
+  if (bookshelfStore.plusReadingBookIds.includes(normalizedNFTClassId)) return 'borrowed'
+  if (bookshelfStore.preLentNFTClassIds.includes(normalizedNFTClassId)) return 'pre_lent'
+  return undefined
+}
 
 function handleBookshelfItemOpen({
   type,
@@ -892,6 +882,7 @@ function handleBookshelfItemOpen({
   useLogEvent('shelf_open_book', {
     content_type: type,
     nft_class_id: nftClassId,
+    shelf_item_type: getShelfItemType(nftClassId),
     ...(isTTS && { tts: '1' }),
   })
 }
@@ -921,11 +912,11 @@ function handleMarkBookAsFinished(nftClassId: string) {
   bookshelfStore.markBookAsFinished(nftClassId)
 }
 
-// "Return" a borrowed Plus-reading book: drop it from the shelf entirely.
+// The store owns the whole return: borrow drop + pre-lent tombstone.
 function handleReturnPlusReadingBook(nftClassId: string) {
   if (!isMyBookshelf.value) return
   useLogEvent('shelf_return_plus_reading_book', { nft_class_id: nftClassId })
-  bookshelfStore.removePlusReadingBook(nftClassId)
+  bookshelfStore.returnBook(nftClassId)
   toast.add({
     title: $t('bookshelf_plus_reading_returned_toast'),
     icon: 'i-material-symbols-assignment-return-outline-rounded',
@@ -949,11 +940,5 @@ function handleUnarchiveBook(nftClassId: string) {
   if (!isMyBookshelf.value) return
   useLogEvent('shelf_unarchive_book', { nft_class_id: nftClassId })
   bookshelfStore.unarchiveBook(nftClassId)
-}
-
-async function handleBookClaim(nftClassId: string) {
-  useLogEvent('shelf_claim_free_book', { nft_class_id: nftClassId })
-  await claimFreeBook(nftClassId)
-  await bookshelfStore.fetchAllItems({ walletAddress: walletAddress.value as string, isRefresh: true })
 }
 </script>

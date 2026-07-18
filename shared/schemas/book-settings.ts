@@ -16,6 +16,7 @@ export const BookSettingsUpdateSchema = v.pipe(
     'completedAt': v.optional(v.nullable(v.literal(true))),
     'didNotFinishAt': v.optional(v.nullable(v.literal(true))),
     'archivedAt': v.optional(v.nullable(v.literal(true))),
+    'preLentReturnedAt': v.optional(v.nullable(v.literal(true))),
   }, 'INVALID_KEYS'),
   v.check(input => Object.keys(input).length > 0, 'MISSING_BODY'),
 )
