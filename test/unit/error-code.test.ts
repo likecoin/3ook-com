@@ -1,7 +1,7 @@
 import { RpcRequestError } from 'viem'
 import { FetchError } from 'ofetch'
 import { describe, expect, it } from 'vitest'
-import { getErrorCode, getErrorEventMessage } from '~/utils/error'
+import { getErrorCode, getErrorEventMessage, getErrorStack } from '~/utils/error'
 
 function createFetchError(statusCode: number, data?: unknown) {
   const error = new FetchError('fetch failed')
@@ -48,6 +48,26 @@ describe('getErrorCode', () => {
   it('returns undefined for non-Error values', () => {
     expect(getErrorCode('some string')).toBeUndefined()
     expect(getErrorCode(undefined)).toBeUndefined()
+  })
+})
+
+describe('getErrorStack', () => {
+  it('returns the stack of an Error', () => {
+    const error = new Error('boom')
+    expect(getErrorStack(error)).toBe(error.stack)
+    expect(getErrorStack(error)).toContain('boom')
+  })
+
+  it('returns undefined for an Error without a stack', () => {
+    const error = new Error('no stack')
+    error.stack = undefined
+    expect(getErrorStack(error)).toBeUndefined()
+  })
+
+  it('returns undefined for non-Error values', () => {
+    expect(getErrorStack('some string')).toBeUndefined()
+    expect(getErrorStack({ stack: 'fake stack' })).toBeUndefined()
+    expect(getErrorStack(undefined)).toBeUndefined()
   })
 })
 
