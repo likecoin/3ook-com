@@ -26,11 +26,40 @@
         v-text="props.description"
       />
 
-      <code
+      <div
         v-if="props.rawMessage"
-        class="block not-first:mt-4 px-2 py-1 text-xs font-mono font-medium rounded-md border border-accented bg-elevated break-all whitespace-pre-wrap"
-        v-text="props.rawMessage"
-      />
+        class="not-first:mt-4"
+      >
+        <div class="relative">
+          <code
+            :class="[CODE_BLOCK_CLASS, { 'pr-10': props.rawStack }]"
+            v-text="props.rawMessage"
+          />
+          <UButton
+            v-if="props.rawStack"
+            class="absolute bottom-0.5 right-0.5"
+            :icon="isStackExpanded ? 'i-material-symbols-expand-less-rounded' : 'i-material-symbols-expand-more-rounded'"
+            :aria-label="$t('error_modal_show_details')"
+            :aria-expanded="isStackExpanded"
+            color="neutral"
+            variant="subtle"
+            size="xs"
+            @click="isStackExpanded = !isStackExpanded"
+          />
+        </div>
+
+        <UCollapsible
+          v-if="props.rawStack"
+          v-model:open="isStackExpanded"
+        >
+          <template #content>
+            <code
+              :class="[CODE_BLOCK_CLASS, 'mt-2 max-h-48 overflow-y-auto']"
+              v-text="props.rawStack"
+            />
+          </template>
+        </UCollapsible>
+      </div>
 
       <ul
         v-if="props.tags?.length"
@@ -62,6 +91,7 @@ const props = defineProps<{
   title?: string
   description?: string
   rawMessage?: string
+  rawStack?: string
   tags?: Array<UBadgeProps>
   actions?: Array<BaseModalAction>
 }>()
@@ -69,6 +99,22 @@ const props = defineProps<{
 const emit = defineEmits<{ close: [result?: unknown] }>()
 
 const { t: $t } = useI18n()
+
+const isStackExpanded = ref(false)
+
+watch(() => [props.rawMessage, props.rawStack], () => {
+  isStackExpanded.value = false
+})
+
+const CODE_BLOCK_CLASS = [
+  'block',
+  'px-2.5 py-1.5',
+  'text-xs font-mono font-medium',
+  'rounded-md',
+  'border border-accented',
+  'bg-elevated',
+  'break-all whitespace-pre-wrap',
+]
 
 const LEVEL_STYLES = {
   info: {

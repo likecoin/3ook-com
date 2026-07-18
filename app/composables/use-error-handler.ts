@@ -105,6 +105,7 @@ export default function () {
       title: props.title || handlerProps?.title || parseErrorData<string>(error, 'title') || $t('error_modal_title'),
       description,
       rawMessage: !handler ? `${url ? `${url}\n\n` : ''}${rawErrorMessage}` : '',
+      rawStack: !handler ? getErrorStack(error) || '' : '',
       tags: handlerProps?.tags || parseErrorData<Array<ErrorHandlerTag>>(error, 'tags') || [],
       actions: props.actions || handlerProps?.actions || parseErrorData<Array<ErrorHandlerAction>>(error, 'actions') || [],
     }

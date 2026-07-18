@@ -474,6 +474,7 @@
   "error_insufficient_amount_description": "你需要 {amount} LIKE，但你只有 {balance} LIKE。\n\n",
   "error_internal_server_error": "伺服器錯誤。",
   "error_manage_subscription_failed": "開啟訂閱管理時發生錯誤。",
+  "error_modal_show_details": "顯示錯誤詳細資料",
   "error_modal_title": "錯誤",
   "error_network_error": "網絡錯誤，請重試。",
   "error_page_not_found": "找不到此頁",

@@ -474,6 +474,7 @@
   "error_insufficient_amount_description": "You need {amount} LIKE but only have {balance} LIKE",
   "error_internal_server_error": "Internal server error.",
   "error_manage_subscription_failed": "Failed to open subscription management",
+  "error_modal_show_details": "Show error details",
   "error_modal_title": "Error",
   "error_network_error": "Network error, please try again.",
   "error_page_not_found": "Page not found",

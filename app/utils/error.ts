@@ -62,6 +62,13 @@ export function getErrorEventMessage(error: unknown) {
   return message.slice(0, MAX_ERROR_EVENT_MESSAGE_LENGTH)
 }
 
+export function getErrorStack(error: unknown) {
+  if (error instanceof Error && error.stack) {
+    return error.stack
+  }
+  return undefined
+}
+
 export function parseErrorData<T>(error: unknown, key: string): T | undefined {
   if (error instanceof Error && 'data' in error && error.data && typeof error.data === 'object') {
     const data = error.data as Record<string, unknown>
