@@ -55,7 +55,7 @@
     "nuxt-auth-utils": "^0.5.29",
     "nuxt-security": "^2.6.0",
     "nuxt-svgo": "^4.2.2",
-    "pdfjs-dist": "^5.3.31",
+    "pdfjs-dist": "5.4.624",
     "pinia": "^3.0.1",
     "pinia-plugin-persistedstate": "^4.7.1",
     "posthog-js": "^1.373.2",

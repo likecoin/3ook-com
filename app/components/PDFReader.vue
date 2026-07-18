@@ -924,6 +924,7 @@ async function renderPageToCanvas(
   canvas.style.height = `${viewport.height}px`
 
   await page.render({
+    canvas,
     canvasContext: context,
     transform: pixelRatio.value !== 1
       ? [pixelRatio.value, 0, 0, pixelRatio.value, 0, 0]
