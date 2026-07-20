@@ -121,8 +121,12 @@ export function useTextToSpeech(options: TTSOptions) {
   const isTextToSpeechLoading = ref(false)
   const isStartingTextToSpeech = ref(false)
   const isOffline = ref(false)
-  const showOfflineModal = ref(false)
   const shouldResumeWhenOnline = ref(false)
+  // Timestamp the offline modal was raised, so resolution can report how long
+  // it blocked playback. Null when no modal is open; it is the single source of
+  // truth for the modal's visibility below.
+  const offlineModalShownAt = ref<number | null>(null)
+  const showOfflineModal = computed(() => offlineModalShownAt.value !== null)
   const consecutiveAudioErrors = ref(0)
   const MAX_CONSECUTIVE_ERRORS = 3
   const currentTTSSegmentIndex = ref(0)
@@ -305,7 +309,7 @@ export function useTextToSpeech(options: TTSOptions) {
       // Network issue detected, handle similar to offline event
       isOffline.value = true
       shouldResumeWhenOnline.value = true
-      showOfflineModal.value = true
+      showOfflineModalWithLog('network_error')
       pauseTextToSpeech()
       return
     }
@@ -342,18 +346,50 @@ export function useTextToSpeech(options: TTSOptions) {
     return currentTTSSegmentIndex.value + 1 < ttsSegments.value.length
   }
 
+  // Raise the offline modal and log an impression, deduping re-entry so a
+  // network error firing on top of an 'offline' event doesn't double-count.
+  // Persist a durable breadcrumb so an abandon-while-offline (the live event is
+  // then lost) can be reported on next launch — see tts-offline-modal.
+  function showOfflineModalWithLog(trigger: 'network_error' | 'offline_event') {
+    if (offlineModalShownAt.value !== null) return
+    const shownAt = Date.now()
+    offlineModalShownAt.value = shownAt
+    const payload = buildTTSEventPayload()
+    setPendingOfflineModal({ shownAt, payload })
+    useLogEvent('tts_offline_modal_shown', {
+      ...payload,
+      trigger,
+      position_ms: getPositionMs(),
+      is_online: navigator.onLine,
+    })
+  }
+
+  // Dismiss the offline modal and, if it was actually shown, log how it ended.
+  // The shownAt guard keeps normal stops (no modal) from logging a resolution.
+  function resolveOfflineModal(outcome: Exclude<TTSOfflineModalOutcome, 'abandoned'>) {
+    const shownAt = offlineModalShownAt.value
+    if (shownAt === null) return
+    offlineModalShownAt.value = null
+    clearPendingOfflineModal()
+    useLogEvent('tts_offline_modal_resolved', buildTTSEventPayload({
+      outcome,
+      duration_ms: Date.now() - shownAt,
+      is_online: navigator.onLine,
+    }))
+  }
+
   function handleOffline() {
     isOffline.value = true
     if (isTextToSpeechPlaying.value && hasMoreTracks()) {
       shouldResumeWhenOnline.value = true
-      showOfflineModal.value = true
+      showOfflineModalWithLog('offline_event')
       pauseTextToSpeech()
     }
   }
 
   function handleOnline() {
     isOffline.value = false
-    showOfflineModal.value = false
+    resolveOfflineModal('reconnected')
     if (shouldResumeWhenOnline.value && isTextToSpeechOn.value && !isTextToSpeechPlaying.value) {
       shouldResumeWhenOnline.value = false
       startTextToSpeech(currentTTSSegmentIndex.value)
@@ -361,7 +397,7 @@ export function useTextToSpeech(options: TTSOptions) {
   }
 
   function forceResume() {
-    showOfflineModal.value = false
+    resolveOfflineModal('manual_resume')
     shouldResumeWhenOnline.value = false
     startTextToSpeech(currentTTSSegmentIndex.value)
   }
@@ -618,7 +654,7 @@ export function useTextToSpeech(options: TTSOptions) {
   function stopTextToSpeech() {
     cancelPendingSkip()
     clearSegmentLoadTimer()
-    showOfflineModal.value = false
+    resolveOfflineModal('stopped')
     shouldResumeWhenOnline.value = false
     player.stop()
     isTextToSpeechOn.value = false
