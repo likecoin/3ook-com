@@ -35,6 +35,7 @@ export function useTTSVoice(options: TTSVoiceOptions = {}) {
 
   if (config.public.isTestnet) {
     ttsLanguageVoiceOptions.push(
+      { label: 'Phoebe 2.6 - 粵語口語', value: 'zh-HK_phoebe26' },
       { label: 'Karenly - 粵語', value: 'zh-HK_karenly' },
       { label: '粵語男聲', value: 'zh-HK_1' },
       { label: '粵語女聲', value: 'zh-HK_0' },
@@ -168,6 +169,7 @@ export function useTTSVoice(options: TTSVoiceOptions = {}) {
 
     switch (languageVoice) {
       case 'zh-HK_phoebe':
+      case 'zh-HK_phoebe26':
         return phoebeAvatar
 
       case 'zh-HK_pazu':
