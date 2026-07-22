@@ -139,7 +139,7 @@
   "account_page_stripe_connect_resume_button": "繼續設定",
   "account_page_stripe_connect_setup_button": "設定",
   "account_page_stripe_connect_setup_failed": "無法啟動 Stripe 設定",
-  "account_page_stripe_connect_status_none": "連結 Stripe 以收取書籍銷售款項。",
+  "account_page_stripe_connect_status_none": "連結 Stripe 以收取書籍銷售款項",
   "account_page_stripe_connect_status_pending": "尚未完成設定。",
   "account_page_stripe_connect_status_ready": "已可收款。",
   "account_page_subscription": "會員",
