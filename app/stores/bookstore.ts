@@ -419,6 +419,7 @@ export const useBookstoreStore = defineStore('bookstore', () => {
       })
 
       const currentOffset = Number(stakingBooksMap.value[sortBy].offset ?? 0)
+      const isStartingFromFirstPage = currentOffset === 0
       const bookNFTs = result.data
         .filter(bookNFT => BigInt(bookNFT.staked_amount || 0) > 0)
         .map((bookNFT, index) => ({
@@ -429,14 +430,23 @@ export const useBookstoreStore = defineStore('bookstore', () => {
           likeRank: currentOffset + index + 1,
         }))
 
-      if (isRefresh) {
+      // A failed refresh keeps items but clears the cursor, so page 1 must replace, not append.
+      if (isStartingFromFirstPage) {
         stakingBooksMap.value[sortBy].items = bookNFTs
       }
       else {
-        stakingBooksMap.value[sortBy].items.push(...bookNFTs)
+        // The indexer paginates by numeric offset over a live staking ranking, so a book
+        // whose rank shifts across the page boundary can come back on both pages.
+        const seenNFTClassIds = new Set(stakingBooksMap.value[sortBy].items.map(item => item.nftClassId))
+        stakingBooksMap.value[sortBy].items.push(
+          ...bookNFTs.filter(bookNFT => !seenNFTClassIds.has(bookNFT.nftClassId)),
+        )
       }
 
-      stakingBooksMap.value[sortBy].offset = result.data.length < limit ? undefined : result.pagination?.next_key?.toString()
+      // The indexer reports both end-of-list and start-of-list as `next_key: 0`, so an
+      // exactly-full last page would otherwise wrap and replay the listing from the top.
+      const nextKey = result.pagination?.next_key
+      stakingBooksMap.value[sortBy].offset = (result.data.length < limit || !nextKey) ? undefined : nextKey.toString()
       stakingBooksMap.value[sortBy].hasFetched = true
     }
     finally {
