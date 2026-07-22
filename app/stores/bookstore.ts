@@ -229,7 +229,7 @@ export const useBookstoreStore = defineStore('bookstore', () => {
           minPrice: undefined,
         }))
 
-      const nextKey = result.data.length === options.limit ? result.pagination?.next_key?.toString() : undefined
+      const nextKey = getIndexerNextKey(result, options.limit)?.toString()
       updateSearchResults(queryKey, mappedItems, nextKey, isRefresh)
     }
   }
@@ -256,7 +256,7 @@ export const useBookstoreStore = defineStore('bookstore', () => {
           minPrice: undefined,
         }))
 
-      const nextKey = result.data.length === options.limit ? result.pagination?.next_key?.toString() : undefined
+      const nextKey = getIndexerNextKey(result, options.limit)?.toString()
       updateSearchResults(queryKey, mappedItems, nextKey, isRefresh)
     }
   }
@@ -443,10 +443,7 @@ export const useBookstoreStore = defineStore('bookstore', () => {
         )
       }
 
-      // The indexer reports both end-of-list and start-of-list as `next_key: 0`, so an
-      // exactly-full last page would otherwise wrap and replay the listing from the top.
-      const nextKey = result.pagination?.next_key
-      stakingBooksMap.value[sortBy].offset = (result.data.length < limit || !nextKey) ? undefined : nextKey.toString()
+      stakingBooksMap.value[sortBy].offset = getIndexerNextKey(result, limit)?.toString()
       stakingBooksMap.value[sortBy].hasFetched = true
     }
     finally {

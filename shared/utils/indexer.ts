@@ -3,6 +3,16 @@ export interface PaginationResponse {
   count: number
 }
 
+// The indexer reports end-of-list and start-of-list both as `next_key: 0`, so an
+// exactly-full last page would otherwise wrap and replay the listing from the top.
+export function getIndexerNextKey(
+  response: { data: unknown[], pagination?: { next_key?: number } },
+  limit: number,
+) {
+  const nextKey = response.pagination?.next_key
+  return response.data.length < limit || !nextKey ? undefined : nextKey
+}
+
 export interface NFTClassWithTokenId extends NFTClass {
   token_id?: string
 }
@@ -131,12 +141,12 @@ export async function fetchNFTClassesByMetadata(
   const combinedData = Object.values(combinedDataMap)
 
   const actualLimit = options.limit || 30
-  // Merging two queries can yield more than `actualLimit` items; cap to keep
-  // the caller's `data.length === limit` pagination check working.
+  // Merging two queries can yield more than `actualLimit` items; cap so we
+  // never hand the caller a page larger than it asked for.
   const limitedData = combinedData.slice(0, actualLimit)
 
-  const nameNextKey = nameResult.data.length >= actualLimit ? nameResult.pagination.next_key : undefined
-  const valueNextKey = valueResult.data.length >= actualLimit ? valueResult.pagination.next_key : undefined
+  const nameNextKey = getIndexerNextKey(nameResult, actualLimit)
+  const valueNextKey = getIndexerNextKey(valueResult, actualLimit)
   const combinedNextKey = nameNextKey !== undefined && valueNextKey !== undefined
     ? Math.min(nameNextKey, valueNextKey)
     : nameNextKey ?? valueNextKey
