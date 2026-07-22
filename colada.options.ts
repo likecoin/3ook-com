@@ -6,7 +6,7 @@ import { createDebouncedStorage } from './app/utils/debounced-storage'
 import { PERSISTED_QUERY_KEY_ROOTS } from './app/utils/query-key-roots'
 
 // Bump to discard persisted caches whose shape is no longer compatible.
-const PERSISTED_CACHE_VERSION = 'v1'
+const PERSISTED_CACHE_VERSION = 'v2'
 const PERSISTED_CACHE_PREFIX = `${PERSISTED_CACHE_VERSION}|`
 
 // The persisted set grows with every book ever browsed (entries are

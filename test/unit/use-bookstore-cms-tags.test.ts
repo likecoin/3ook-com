@@ -18,9 +18,21 @@ const { mockFetchTags, mockFetchTagById } = vi.hoisted(() => ({
 mockNuxtImport('fetchBookstoreCMSTagsForAll', () => mockFetchTags)
 mockNuxtImport('fetchBookstoreCMSTagById', () => mockFetchTagById)
 
-const tags = [
-  { id: 'latest', name: { zh: '最新', en: 'Latest' }, isPublic: true },
-  { id: 'featured', name: { zh: '精選', en: 'Featured' }, isPublic: true },
+function makeTag(overrides: Partial<BookstoreCMSTag> & Pick<BookstoreCMSTag, 'id'>): BookstoreCMSTag {
+  return {
+    name: { zh: '', en: '' },
+    description: { zh: '', en: '' },
+    isPublic: true,
+    isForLibrary: false,
+    isForStore: true,
+    isConditional: false,
+    ...overrides,
+  }
+}
+
+const tags: BookstoreCMSTag[] = [
+  makeTag({ id: 'latest', name: { zh: '最新', en: 'Latest' } }),
+  makeTag({ id: 'featured', name: { zh: '精選', en: 'Featured' }, isConditional: true }),
 ]
 
 describe('use-bookstore-cms-tags', () => {
@@ -60,7 +72,7 @@ describe('use-bookstore-cms-tags', () => {
   })
 
   it('fetches a single tag absent from the list once per session', async () => {
-    const hiddenTag = { id: 'hidden', name: { zh: '隱', en: 'Hidden' }, isPublic: false }
+    const hiddenTag = makeTag({ id: 'hidden', name: { zh: '隱', en: 'Hidden' }, isPublic: false })
     mockFetchTagById.mockResolvedValue(hiddenTag)
 
     const first = await fetchBookstoreCMSTagThroughCache(queryCache, 'hidden')

@@ -47,7 +47,7 @@ describe('colada cache persistence', () => {
     await flushPersist(storage)
 
     const stored = storage.dump()
-    expect(stored).toMatch(/^v1\|/)
+    expect(stored).toMatch(/^v2\|/)
     expect(stored).toContain('nft-class')
     expect(stored).toContain('bookstore-info')
     expect(stored).not.toContain('liker-info')
@@ -70,7 +70,7 @@ describe('colada cache persistence', () => {
   })
 
   it('discards corrupted storage without crashing', () => {
-    const storage = createMemoryStorage({ [STORAGE_KEY]: 'v1|{not json' })
+    const storage = createMemoryStorage({ [STORAGE_KEY]: 'v2|{not json' })
 
     expect(() => installPersister(storage)).not.toThrow()
     expect(queryCache.getEntries()).toHaveLength(0)

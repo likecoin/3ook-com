@@ -985,6 +985,22 @@ async function fetchTagItems({ isRefresh = false } = {}) {
     return
   }
 
+  // Resolve the tag through the cache when state restore raced fetchTags,
+  // so isConditionalTag below reflects this batch's tag; a miss keeps current behavior.
+  let cmsTag = getBookstoreCMSTagByIdFromCache(queryCache, currentTagId)
+  if (!cmsTag && !isBookstoreBuiltInListType(currentTagId)) {
+    cmsTag = await fetchBookstoreCMSTagThroughCache(queryCache, currentTagId).catch((error) => {
+      // 404 is the expected miss for unknown tag ids; anything else is upstream trouble.
+      if (!(error instanceof FetchError && error.statusCode === 404)) {
+        console.warn('[store] Failed to fetch CMS tag for sort decision:', error)
+      }
+      return undefined
+    })
+  }
+  // Conditional tags arrive pre-sorted from the API so they skip the staking re-sort only;
+  // the staking fetch still runs since cmsProducts decorates items with staking data.
+  const isConditionalTag = !!cmsTag?.isConditional
+
   // Fetch staking books first so CMS tag items can be sorted by staking. The popular
   // list arrives ranked by reading time, so it needs neither the fetch nor the sort.
   if (!isPopularTag) {
@@ -1001,8 +1017,8 @@ async function fetchTagItems({ isRefresh = false } = {}) {
   await bookstoreStore.fetchCMSProductsByTagId(currentTagId, { isRefresh, isLibrary: isLibraryTab.value })
 
   // Sort only the new batch by staking amount (skip 'latest' which preserves Airtable
-  // order, and 'popular' which arrives ranked by reading time)
-  if (currentTagId !== 'latest' && !isPopularTag) {
+  // order, 'popular' which arrives ranked by reading time, and conditional tags)
+  if (currentTagId !== 'latest' && !isPopularTag && !isConditionalTag) {
     const items = bookstoreStore.bookstoreCMSProductsByTagKeyMap[currentTagKey]?.items
     if (items === itemsBefore && items?.length === countBefore) return
     // If the array was replaced (refresh or offset-refresh), sort from 0

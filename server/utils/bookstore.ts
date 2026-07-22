@@ -68,6 +68,7 @@ function normalizeCMSTag(tag: {
   isPublic?: boolean
   isForLibrary?: boolean
   isForStore?: boolean
+  isConditional?: boolean
   order?: string
 }): BookstoreCMSTag {
   return {
@@ -77,6 +78,7 @@ function normalizeCMSTag(tag: {
     isPublic: !!tag.isPublic,
     isForLibrary: !!tag.isForLibrary,
     isForStore: !!tag.isForStore,
+    isConditional: !!tag.isConditional,
   }
 }
 
