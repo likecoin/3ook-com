@@ -5,33 +5,6 @@
   >
     <UCard :ui="{ body: '!p-0 divide-y-1 divide-(--ui-border)' }">
       <AccountSettingsItem
-        v-if="user?.likerId"
-        icon="i-material-symbols-3p-outline-rounded"
-        :label="$t('account_page_account_id')"
-      >
-        <UButton
-          class="-ml-2 text-sm font-mono"
-          :label="user?.likerId"
-          trailing-icon="i-material-symbols-content-copy-outline-rounded"
-          variant="ghost"
-          color="neutral"
-          size="xs"
-          @click="handleLikerIdClick"
-        />
-
-        <template #right>
-          <UButton
-            class="cursor-pointer"
-            :to="localeRoute({ name: 'list' })"
-            icon="i-material-symbols-favorite-outline-rounded"
-            :label="$t('account_page_book_list')"
-            variant="outline"
-            color="neutral"
-          />
-        </template>
-      </AccountSettingsItem>
-
-      <AccountSettingsItem
         icon="i-material-symbols-account-circle-outline"
         :label="$t('account_page_account_display_name')"
       >
@@ -116,6 +89,33 @@
             color="error"
             size="xs"
             @click="handleMagicButtonClick"
+          />
+        </template>
+      </AccountSettingsItem>
+
+      <AccountSettingsItem
+        v-if="user?.likerId"
+        icon="i-material-symbols-3p-outline-rounded"
+        :label="$t('account_page_account_id')"
+      >
+        <UButton
+          class="-ml-2 text-sm font-mono"
+          :label="user?.likerId"
+          trailing-icon="i-material-symbols-content-copy-outline-rounded"
+          variant="ghost"
+          color="neutral"
+          size="xs"
+          @click="handleLikerIdClick"
+        />
+
+        <template #right>
+          <UButton
+            class="cursor-pointer"
+            :to="localeRoute({ name: 'list' })"
+            icon="i-material-symbols-favorite-outline-rounded"
+            :label="$t('account_page_book_list')"
+            variant="outline"
+            color="neutral"
           />
         </template>
       </AccountSettingsItem>
