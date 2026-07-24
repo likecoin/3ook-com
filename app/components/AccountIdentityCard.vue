@@ -107,17 +107,6 @@
           size="xs"
           @click="handleLikerIdClick"
         />
-
-        <template #right>
-          <UButton
-            class="cursor-pointer"
-            :to="localeRoute({ name: 'list' })"
-            icon="i-material-symbols-favorite-outline-rounded"
-            :label="$t('account_page_book_list')"
-            variant="outline"
-            color="neutral"
-          />
-        </template>
       </AccountSettingsItem>
     </UCard>
   </section>
@@ -129,7 +118,6 @@ import { AccountDisplayNameModal, AccountEmailModal } from '#components'
 const { t: $t } = useI18n()
 const { loggedIn: hasLoggedIn, user } = useUserSession()
 const accountStore = useAccountStore()
-const localeRoute = useLocaleRoute()
 const toast = useToast()
 const { copy: copyToClipboard } = useClipboard()
 
