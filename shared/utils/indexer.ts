@@ -15,6 +15,10 @@ export function getIndexerNextKey(
 
 export interface NFTClassWithTokenId extends NFTClass {
   token_id?: string
+  // Latest acquisition time across the queried account's owned copies of this
+  // class. Only populated by /account/{address}/token-booknfts. Distinct from
+  // the sibling `updated_at`, which is the class's own metadata update time.
+  token_updated_at?: string
 }
 
 export interface FetchNFTClassesByOwnerWalletAddressResponseData {

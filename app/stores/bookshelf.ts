@@ -20,12 +20,10 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
 
   const nftClassIds = ref<string[]>([])
   const tokenIdsByNFTClassId = ref<Record<string, string[]>>({})
-  // When each owned book was acquired, in ms. Sourced from token rows, not the
-  // shelf listing: the latter is ordered by publication date, so it can't tell a
-  // just-bought backlist book from an old one.
+  // When each owned book was acquired, in ms. From the listing's
+  // `token_updated_at` (indexer-maxed across owned copies), not from the
+  // listing's own order, which is by publication date.
   const acquiredAtByNFTClassId = ref<Record<string, number>>({})
-  const isFetchingAcquiredAt = ref(false)
-  const hasFetchedAcquiredAt = ref(false)
   // Borrowed (non-owned) Plus-reading books, most-recent first. LRU-capped at 20
   // server-side; the only terminal action is "return" (drop). See api-user.ts.
   const plusReadingBookIds = ref<string[]>([])
@@ -258,9 +256,9 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
 
       // O(1) dedup across the page — otherwise paginated loads hit O(n²).
       const seenNFTClassIds = new Set(nftClassIds.value)
-      // Dedup progress-fetch NFT Class IDs: the API returns one row per owned
-      // token_id, so a class with N tokens would otherwise appear N times and
-      // inflate chunked settings requests when force-refreshing.
+      // Defensive dedup for the chunked settings request below. The listing
+      // collapses a class the wallet owns N copies of into a single row, but
+      // nothing in the response contract guarantees that.
       const progressFetchNFTClassIds = new Set<string>()
       res.data.forEach((nftClass) => {
         const nftClassId = nftClass.address.toLowerCase() as `0x${string}`
@@ -277,6 +275,20 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
         }
         else {
           tokenIdsByNFTClassId.value[nftClassId] ??= []
+        }
+
+        // Skipped when absent or unparsable so a not-yet-backfilled row can't
+        // wipe a value in persisted state or one an earlier page already
+        // recorded. Kept at the max to stay the latest acquisition even if the
+        // response repeats a class across rows or pages.
+        if (nftClass.token_updated_at) {
+          const acquiredAt = new Date(nftClass.token_updated_at).getTime()
+          if (Number.isFinite(acquiredAt)) {
+            acquiredAtByNFTClassId.value[nftClassId] = Math.max(
+              acquiredAt,
+              acquiredAtByNFTClassId.value[nftClassId] || 0,
+            )
+          }
         }
 
         if (nftClass.metadata && (shouldForceRefreshCache || !getNFTClassMetadataByIdFromCache(queryCache, nftClassId))) {
@@ -331,59 +343,6 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
       }
       visitedKeys.add(nextKey.value)
       await fetchItems({ walletAddress })
-    }
-  }
-
-  // Prefers `updated_at` (moves on transfer) over `minted_at` so a gifted or
-  // resold copy dates from when this wallet got it. Merged in per page so a
-  // mid-sweep failure still improves the ordering.
-  async function fetchAcquiredAt(walletAddress: string, {
-    isRefresh = false,
-    limit = 100,
-  }: { isRefresh?: boolean, limit?: number } = {}) {
-    if (!walletAddress || isFetchingAcquiredAt.value) return
-    if (hasFetchedAcquiredAt.value && !isRefresh) return
-
-    const generation = resetGeneration
-    const isStale = () => generation !== resetGeneration
-
-    try {
-      isFetchingAcquiredAt.value = true
-      let key: string | undefined
-      // Mirrors fetchAllItems: a cursor that cycles must not loop forever.
-      const visitedKeys = new Set<string>()
-      do {
-        const res = await fetchNFTsByOwnerWalletAddress(walletAddress, { key, limit, nocache: isRefresh })
-        if (isStale()) return
-
-        res.data.forEach((nft) => {
-          const nftClassId = nft.contract_address?.toLowerCase()
-          if (!nftClassId) return
-          const acquiredAt = new Date(nft.updated_at || nft.minted_at).getTime()
-          if (!Number.isFinite(acquiredAt)) return
-          // Owning several copies: the latest one is what "just bought" means.
-          const existing = acquiredAtByNFTClassId.value[nftClassId] || 0
-          if (acquiredAt > existing) {
-            acquiredAtByNFTClassId.value[nftClassId] = acquiredAt
-          }
-        })
-
-        key = getIndexerNextKey(res, limit)?.toString()
-        if (key) {
-          if (visitedKeys.has(key)) break
-          visitedKeys.add(key)
-        }
-      } while (key)
-      hasFetchedAcquiredAt.value = true
-    }
-    catch (error) {
-      // Non-fatal: the shelf still renders, just without acquisition ordering.
-      console.warn('Failed to fetch book acquisition times:', error)
-    }
-    finally {
-      if (!isStale()) {
-        isFetchingAcquiredAt.value = false
-      }
     }
   }
 
@@ -467,8 +426,6 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
     nftClassIds.value = []
     tokenIdsByNFTClassId.value = {}
     acquiredAtByNFTClassId.value = {}
-    isFetchingAcquiredAt.value = false
-    hasFetchedAcquiredAt.value = false
     plusReadingBookIds.value = []
     hasFetchedPlusReadingBooks.value = false
     plusReadingBooksPromise = null
@@ -509,7 +466,6 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
 
     fetchItems,
     fetchAllItems,
-    fetchAcquiredAt,
     fetchPlusReadingBooks,
     lazyFetchPlusReadingBooks,
     fetchPreLentBooks,

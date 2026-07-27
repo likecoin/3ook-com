@@ -912,9 +912,6 @@ const { gridClasses, getGridItemClassesByIndex, columnMax } = usePaginatedGrid({
 async function loadBookshelfData(addr: string, { isRefresh = false } = {}) {
   const promises: Promise<unknown>[] = [
     bookshelfStore.fetchAllItems({ walletAddress: addr, isRefresh }),
-    // Separate sweep: the shelf listing is ordered by publication date, so
-    // acquisition dates only come from the wallet's token rows.
-    bookshelfStore.fetchAcquiredAt(addr, { isRefresh }),
   ]
   if (isMyBookshelf.value) {
     promises.push(
