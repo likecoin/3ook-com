@@ -22,7 +22,7 @@ const STATIC_MEDIUM = 'app_download'
 const APP_STORE_PROVIDER_TOKEN = ''
 
 export function useAppDownloadUrls(placement: AppDownloadPlacement) {
-  const attribution = usePostHogAttribution()
+  const { lastTouch: attribution } = usePostHogAttribution()
   const getRouteQuery = useRouteQuery()
 
   const params: Record<string, string> = {

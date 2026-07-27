@@ -397,8 +397,10 @@ function handleWelcomeBannerDismiss() {
 // "Organic or direct" = the bare store landing with no campaign/affiliate attribution.
 // Campaign, paid, and affiliate traffic always carry one of these query params.
 const STORE_INTRO_ATTRIBUTION_KEYS = [
-  'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term',
-  'gclid', 'gad_source', 'fbclid', 'll_source', 'll_medium', 'affiliate', 'from',
+  ...POSTHOG_ATTRIBUTION_KEYS,
+  ...POSTHOG_LINK_TAG_KEYS,
+  'affiliate',
+  'from',
 ]
 const hasCampaignAttribution = computed(() =>
   STORE_INTRO_ATTRIBUTION_KEYS.some(key => !!getRouteQuery(key)),

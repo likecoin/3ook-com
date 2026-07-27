@@ -654,6 +654,7 @@
 <script setup lang="ts">
 import type { AccordionItem } from '@nuxt/ui'
 import MarkdownIt from 'markdown-it'
+import type { PlusUpsellSlot } from '~~/shared/constants/analytics'
 
 const bookPurchaseSessionAPI = useBookPurchaseSessionAPI()
 const route = useRoute()
@@ -1465,6 +1466,10 @@ async function openContentURL(contentURL: ContentURL, nftId?: string, { isPrevie
   await navigateTo(readerRoute)
 }
 
+function logPlusUpsellClick(llMedium: PlusUpsellSlot) {
+  useLogPlusUpsell('click', { llMedium, llSource: 'product-page', nftClassId: nftClassId.value })
+}
+
 async function handlePlusReadButtonClick() {
   useLogEvent('product_page_plus_reading_button_click', {
     nft_class_id: nftClassId.value,
@@ -1482,6 +1487,9 @@ async function handlePlusReadButtonClick() {
   // Non-Plus users are routed to the membership page to subscribe, unless the
   // book has a free edition — then they may borrow it without a subscription.
   if (!isLikerPlus.value && !bookInfo.isFreeBorrowEnabled.value) {
+    // Only this branch is an upsell — the event above also covers Plus members
+    // and free borrows, which never reach the membership page.
+    logPlusUpsellClick('plus-reading-cta')
     await navigateTo(localeRoute({
       name: 'member',
       query: {
@@ -1544,6 +1552,7 @@ function handlePlusReadingTagClick() {
   }
   else {
     useLogEvent('plus_reading_tag_click', { nft_class_id: nftClassId.value })
+    logPlusUpsellClick('plus-reading-tag')
   }
 }
 
@@ -1567,11 +1576,13 @@ function handleTTSTagClick() {
   }
   else {
     useLogEvent('tts_plus_tag_click', { nft_class_id: nftClassId.value })
+    logPlusUpsellClick('tts-plus-tag')
   }
 }
 
 function handleTTSExplainerClick() {
   useLogEvent('tts_plus_explainer_click', { nft_class_id: nftClassId.value })
+  logPlusUpsellClick('tts-plus-explainer')
 }
 
 async function handleBackButtonClick() {

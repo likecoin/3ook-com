@@ -489,6 +489,11 @@ function handleCoverClick() {
   // Lapsed Plus on a borrowed book: route to the membership page to resubscribe.
   if (props.isPlusReading && !props.isPlusReadingAccessible) {
     useLogEvent('shelf_plus_reading_resub_click', { nft_class_id: props.nftClassId })
+    useLogPlusUpsell('click', {
+      llMedium: 'plus-reading-locked',
+      llSource: 'shelf',
+      nftClassId: props.nftClassId,
+    })
     navigateTo(localeRoute({
       name: 'member',
       query: {

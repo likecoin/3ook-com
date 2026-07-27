@@ -59,11 +59,13 @@
           <ColorModeSwitcher v-if="user?.isLikerPlus" />
           <UButton
             v-else
+            ref="colorModeUpsell"
             :label="$t('account_page_upgrade_to_plus')"
             icon="i-material-symbols-lock-outline"
             variant="solid"
             color="primary"
             :to="localeRoute({ name: 'member', query: { ll_medium: 'color-mode' } })"
+            @click="handleColorModeUpsellClick"
           />
         </template>
       </AccountSettingsItem>
@@ -115,6 +117,12 @@ const colorModeLabel = computed(
 )
 
 const isPlusFeatureVisible = usePlusFeatureVisibility()
+
+const { handlePlusUpsellClick: handleColorModeUpsellClick } = usePlusUpsellSlot({
+  templateRef: 'colorModeUpsell',
+  slot: 'color-mode',
+  source: 'account-page',
+})
 
 const isAdultContentEnabled = useAdultContentSetting()
 const overlay = useOverlay()

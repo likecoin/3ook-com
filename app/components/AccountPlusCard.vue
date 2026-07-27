@@ -78,11 +78,13 @@
           />
           <UButton
             v-else
+            ref="customVoiceUpsell"
             :label="$t('account_page_upgrade_to_plus')"
             icon="i-material-symbols-lock-outline"
             variant="solid"
             color="primary"
             :to="localeRoute({ name: 'member', query: { ll_medium: 'custom-voice' } })"
+            @click="handleCustomVoiceUpsellClick"
           />
         </template>
       </AccountSettingsItem>
@@ -122,6 +124,12 @@ const civicUpgradeRoute = computed(() => localeRoute({
 function handleUpgradeToCivicButtonClick() {
   useLogEvent('account_civic_upgrade_button_click')
 }
+
+const { handlePlusUpsellClick: handleCustomVoiceUpsellClick } = usePlusUpsellSlot({
+  templateRef: 'customVoiceUpsell',
+  slot: 'custom-voice',
+  source: 'account-page',
+})
 
 const { customVoice, hasCustomVoice } = useCustomVoice()
 const overlay = useOverlay()

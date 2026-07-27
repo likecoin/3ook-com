@@ -17,20 +17,48 @@ export const POSTHOG_ATTRIBUTION_KEYS = [
   'fbclid',
 ] as const
 
-export function usePostHogAttribution(): Record<string, string> {
+// Internal in-product link tags. They still collapse into last-touch
+// `utm_source`/`utm_medium` (the backend/Stripe contract depends on it), but
+// must never seed `initial_utm_*`: a direct or organic visitor clicking an
+// in-product upsell would lose their real acquisition source to a page name.
+export const POSTHOG_LINK_TAG_KEYS = [
+  'll_source',
+  'll_medium',
+] as const
+
+export interface PostHogAttribution {
+  lastTouch: Record<string, string>
+  externalAttribution: Record<string, string>
+  linkTags: Record<string, string>
+}
+
+export function usePostHogAttribution(): PostHogAttribution {
   const getRouteQuery = useRouteQuery()
 
   const hasSrsltid = !!getRouteQuery('srsltid')
-  const utmSource = getRouteQuery('utm_source') || (hasSrsltid ? 'google' : '') || getRouteQuery('ll_source')
-  const utmMedium = getRouteQuery('utm_medium') || (hasSrsltid ? 'organic' : '') || getRouteQuery('ll_medium')
+  const externalUTMSource = getRouteQuery('utm_source') || (hasSrsltid ? 'google' : '')
+  const externalUTMMedium = getRouteQuery('utm_medium') || (hasSrsltid ? 'organic' : '')
 
-  const attribution: Record<string, string> = {}
-  if (utmSource) attribution.utm_source = utmSource
-  if (utmMedium) attribution.utm_medium = utmMedium
+  const linkTags: Record<string, string> = {}
+  for (const key of POSTHOG_LINK_TAG_KEYS) {
+    const value = getRouteQuery(key)
+    if (value) linkTags[key] = value
+  }
+
+  const externalAttribution: Record<string, string> = {}
+  if (externalUTMSource) externalAttribution.utm_source = externalUTMSource
+  if (externalUTMMedium) externalAttribution.utm_medium = externalUTMMedium
   for (const key of POSTHOG_ATTRIBUTION_KEYS) {
     if (key === 'utm_source' || key === 'utm_medium') continue
     const value = getRouteQuery(key)
-    if (value) attribution[key] = value
+    if (value) externalAttribution[key] = value
   }
-  return attribution
+
+  const utmSource = externalUTMSource || linkTags.ll_source
+  const utmMedium = externalUTMMedium || linkTags.ll_medium
+  const lastTouch: Record<string, string> = { ...externalAttribution, ...linkTags }
+  if (utmSource) lastTouch.utm_source = utmSource
+  if (utmMedium) lastTouch.utm_medium = utmMedium
+
+  return { lastTouch, externalAttribution, linkTags }
 }

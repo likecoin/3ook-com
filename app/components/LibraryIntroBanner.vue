@@ -54,6 +54,9 @@ function handleDismiss() {
 
 function handleCTAClick() {
   useLogEvent('library_intro_cta_click', { is_plus: isPlusOrDevicePlus.value })
+  // Plus members are sent to the explainer, not the paywall — not an upsell.
+  if (isPlusOrDevicePlus.value) return
+  useLogPlusUpsell('click', { llMedium: 'library-intro', llSource: 'library' })
 }
 </script>
 

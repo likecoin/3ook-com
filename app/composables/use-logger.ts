@@ -2,6 +2,7 @@ import { setUser as setSentryUser } from '@sentry/nuxt'
 import { v5 as uuidv5 } from 'uuid'
 import { sha256 } from 'viem'
 import type { User } from '#auth-utils'
+import type { PlusUpsellSlot, PlusUpsellSource } from '~~/shared/constants/analytics'
 import { getEffectiveLikerPlusTier } from '~~/shared/utils/subscription'
 
 interface EventParams {
@@ -257,6 +258,28 @@ export function useLogEvent(eventName: string, eventParams: EventParams = {}) {
   }
 }
 
+// The slot rides its own properties rather than being read back off the URL:
+// `middleware/query.global.ts` carries `ll_*` across every navigation, so a
+// tagged pageview does not mean the user clicked that slot.
+export function useLogPlusUpsell(
+  action: 'click' | 'impression',
+  {
+    llMedium,
+    llSource,
+    nftClassId,
+  }: {
+    llMedium: PlusUpsellSlot
+    llSource?: PlusUpsellSource
+    nftClassId?: string
+  },
+) {
+  useLogEvent(`plus_upsell_${action}`, {
+    ll_medium: llMedium,
+    ll_source: llSource,
+    nft_class_id: nftClassId,
+  })
+}
+
 // Person-property writes outside the identify flow (e.g. settings changes).
 export function useSetLogPersonProperties(properties: Record<string, unknown>) {
   try {
@@ -373,7 +396,7 @@ export function useSetLogUser(user: User | null, locale: string) {
         // been stripped by a Magic Link redirect before identify fires.
         const lastTouch: Record<string, string> = {}
         const firstTouch: Record<string, string> = {}
-        for (const key of POSTHOG_ATTRIBUTION_KEYS) {
+        for (const key of [...POSTHOG_ATTRIBUTION_KEYS, ...POSTHOG_LINK_TAG_KEYS]) {
           const last = posthog.get_property(key)
           if (typeof last === 'string' && last) lastTouch[key] = last
           const first = posthog.get_property(`initial_${key}`)
