@@ -1,7 +1,11 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+import { readFileSync } from 'node:fs'
+
 import { createResolver } from '@nuxt/kit'
 import type { NitroRouteConfig } from 'nitropack'
 import type { ConfigDefaults } from 'posthog-js'
+
+import { CUSTOMER_SERVICE_EMAIL } from './app/utils/business-info'
 
 const { resolve } = createResolver(import.meta.url)
 
@@ -17,6 +21,17 @@ const isDevelopment = NODE_ENV === 'development'
 // Workbox cacheName for document navigations; shared so the offline app-shell
 // fallback below opens the same cache the NetworkFirst route writes to.
 const HTML_PAGES_CACHE = 'html-pages'
+
+// Read as raw text, not imported: this ES5 guard must reach the browser
+// untranspiled and ahead of the module bundle, so browsers too old to run the
+// app still get a readable message. See the file header for the rationale.
+const BROWSER_SUPPORT_CHECK_PATH = 'app/assets/js/browser-support-check.js'
+const BROWSER_SUPPORT_CHECK_SCRIPT = readFileSync(
+  resolve(BROWSER_SUPPORT_CHECK_PATH),
+  'utf8',
+)
+  .replace('__3OOK_COMMIT_SHA__', process.env.COMMIT_SHA || 'dev')
+  .replace('__3OOK_SUPPORT_EMAIL__', CUSTOMER_SERVICE_EMAIL)
 
 // Shared CORS rule for public store API routes consumed by *.3ook.com origins.
 const STORE_API_CORS_RULE: NitroRouteConfig = {
@@ -53,6 +68,16 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
 
   app: {
+    head: {
+      script: [
+        // First script in <head> on purpose — it must run before the bundle.
+        // nuxt-security's SSR plugin stamps the CSP nonce onto it.
+        {
+          innerHTML: BROWSER_SUPPORT_CHECK_SCRIPT,
+          tagPriority: -100,
+        },
+      ],
+    },
     layoutTransition: {
       name: 'fade',
       mode: 'out-in',
@@ -184,6 +209,10 @@ export default defineNuxtConfig({
   sourcemap: {
     client: 'hidden',
   },
+
+  // readFileSync creates no module edge for the config watcher, so without this
+  // dev never picks up edits to the guard.
+  watch: [BROWSER_SUPPORT_CHECK_PATH],
 
   future: {
     compatibilityVersion: 4,
