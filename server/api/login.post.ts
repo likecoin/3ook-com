@@ -95,6 +95,7 @@ export default defineEventHandler(async (event) => {
     likerPlusPeriod: userInfoRes.likerPlusPeriod,
     likerPlusTier: userInfoRes.likerPlusTier,
     likerPlusProvider: userInfoRes.likerPlusProvider,
+    likerPlusStore: userInfoRes.likerPlusStore,
     likerPlusSubscriptionStatus: userInfoRes.likerPlusSubscriptionStatus,
     plusAffiliateFrom: userInfoRes.plusAffiliateFrom,
     ttsKey: generateTTSKey(),

@@ -1,23 +1,15 @@
-// How the subscriber can manage their plan, by where they subscribed:
-// - native-store: store-owned (App Store/Play) and in-app → native manage sheet
-// - store-info:   store-owned but not in a build that can open the sheet (web,
-//                 or an app build without IAP) → "manage on your device" text
-// - stripe-portal: Stripe (incl. legacy/undefined provider, which predates IAP)
-//                 on web → Stripe customer portal; hidden in-app for now
-// - none:         not a subscriber, or Stripe in-app (no portal button in-app)
-type LikerPlusManageMode = 'native-store' | 'store-info' | 'stripe-portal' | 'none'
-
 // Liker Plus subscription-management state machine for the account page.
 export function usePlusManagement() {
   const { t: $t } = useI18n()
   const { user } = useUserSession()
-  const { isApp } = useAppDetection()
-  const { isIAPSupported, isCivicIAPSupported, manageSubscription: manageViaIAP } = useNativeIAP()
+  const { manageSubscription: manageViaIAP } = useNativeIAP()
   const accountStore = useAccountStore()
   const localeRoute = useLocaleRoute()
   const { handleError } = useErrorHandler()
   const plusSessionAPI = usePlusSessionAPI()
   const { isCivicMember } = useSubscription()
+  const eligibility = usePlusEligibility()
+  const { likerPlusManageMode } = eligibility
 
   const isPaymentPastDue = computed(() =>
     !!user.value?.isExpiredLikerPlus && user.value?.likerPlusSubscriptionStatus === 'past_due',
@@ -49,29 +41,6 @@ export function usePlusManagement() {
     if (user.value?.isLikerPlus) return $t('account_page_manage_subscription')
     if (isPaymentPastDue.value) return $t('account_page_update_payment')
     return $t('account_page_renew_subscription')
-  })
-
-  const likerPlusManageMode = computed<LikerPlusManageMode>(() => {
-    if (!user.value?.isLikerPlus && !user.value?.isExpiredLikerPlus) return 'none'
-    // Seat-granted members have no billing of their own: the membership
-    // follows the giver's Civic subscription, so there is nothing to manage.
-    if (user.value?.likerPlusProvider === 'shared') return 'none'
-    if (user.value?.likerPlusProvider === 'revenuecat') {
-      return isIAPSupported.value ? 'native-store' : 'store-info'
-    }
-    return isApp.value ? 'none' : 'stripe-portal'
-  })
-
-  // Whether this Plus member can actually upgrade to Civic in place. Web: only
-  // self-billed Stripe subscribers (the portal path). In-app: only shells whose
-  // store offers Civic IAP. Trials and seat-granted members can't upgrade —
-  // /member routes them to /account instead of offering an upgrade that would 400.
-  const canUpgradeToCivic = computed(() => {
-    if (!user.value?.isLikerPlus || isCivicMember.value || user.value.isLikerPlusTrial) {
-      return false
-    }
-    if (isApp.value) return isIAPSupported.value && isCivicIAPSupported.value
-    return likerPlusManageMode.value === 'stripe-portal'
   })
 
   const isOpeningBillingPortal = ref(false)
@@ -141,11 +110,12 @@ export function usePlusManagement() {
   }
 
   return {
+    // Re-exported so the account page reads plan state and management from one
+    // composable; other surfaces call usePlusEligibility() directly.
+    ...eligibility,
     isPaymentPastDue,
     subscriptionStateLabel,
     likerPlusButtonLabel,
-    likerPlusManageMode,
-    canUpgradeToCivic,
     isOpeningBillingPortal,
     isManagingSubscription,
     handleLikerPlusButtonClick,

@@ -24,7 +24,8 @@ export function useSubscriptionCheckout() {
   const blockingModal = useBlockingModal()
   const { getAnalyticsParameters } = useAnalytics()
   const { isApp } = useAppDetection()
-  const { isIAPSupported, isCivicIAPSupported, purchase: purchaseViaIAP } = useNativeIAP()
+  const { isIAPSupported, purchase: purchaseViaIAP } = useNativeIAP()
+  const { isCivicOfferable } = usePlusEligibility()
   const runtimeConfig = useRuntimeConfig()
   // Defer exposure to the checkout decision point (post-login) instead of mount,
   // so only treatment-eligible users are counted and we avoid re-bucketing across
@@ -139,10 +140,13 @@ export function useSubscriptionCheckout() {
     // comes from the backend session, so poll it after a successful purchase.
     if (isIAPSupported.value) {
       if (isProcessingSubscription.value) return
-      // Old app shells can't buy Civic (they'd silently buy Plus); callers hide
-      // the option via isCivicIAPSupported, this is the flow-level backstop.
-      if (isCivicTier && !isCivicIAPSupported.value) {
-        useLogEvent('subscription_iap_civic_unsupported')
+      // Old shells would silently buy Plus from the default offering, and an IAP
+      // over a plan billed elsewhere would stack a second subscription rather
+      // than replace it. Callers hide the option; this is the flow-level backstop.
+      if (isCivicTier && !isCivicOfferable.value) {
+        useLogEvent(isLikerPlus.value
+          ? 'subscription_iap_civic_wrong_billing_source'
+          : 'subscription_iap_civic_unsupported')
         toast.add({
           title: $t('plus_checkout_error_description'),
           color: 'warning',

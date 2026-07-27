@@ -343,9 +343,9 @@ const isDesktopScreen = useDesktopScreen()
 const { t: $t } = useI18n()
 const getRouteQuery = useRouteQuery()
 const { isApp } = useAppDetection()
-const { canStartSubscribeFlow, canStartCivicSubscribeFlow, ensureOfferings } = useNativeIAP()
+const { canStartSubscribeFlow, ensureOfferings } = useNativeIAP()
 const { isLikerPlus, isCivicMember, likerPlusTier, isPlanPeriodUpgrade } = useSubscription()
-const { canUpgradeToCivic } = usePlusManagement()
+const { isCivicOfferable } = usePlusEligibility()
 
 const emit = defineEmits<{
   'open': []
@@ -396,16 +396,8 @@ function handlePricingPanelLeave(el: Element, done: () => void) {
 }
 const isVoicesModalOpen = ref(false)
 
-// Old app shells can't buy Civic, and Civic members have nothing to buy here
-// (the page redirects them anyway) — mirrors the old PricingCivicSection gate.
-const isCivicOfferable = computed(() => {
-  if (!props.isCivicVisible || isCivicMember.value) return false
-  // An existing Plus member can only be offered Civic where the in-place upgrade
-  // is actually chargeable; otherwise the CTA would 400. New subscribers can buy.
-  if (isLikerPlus.value && !canUpgradeToCivic.value) return false
-  return canStartCivicSubscribeFlow.value
-})
-const isTierSelectorVisible = computed(() => isCivicOfferable.value && canStartSubscribeFlow.value)
+const isTierSelectorVisible = computed(() =>
+  props.isCivicVisible && isCivicOfferable.value && canStartSubscribeFlow.value)
 
 // Plus members are kept on /member for the Civic upsell (see member.vue), so open
 // on the Civic view rather than the Plus box with its new-subscriber CTA. Seed

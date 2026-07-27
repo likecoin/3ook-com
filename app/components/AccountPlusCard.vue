@@ -34,10 +34,8 @@
         </template>
       </AccountSettingsItem>
 
-      <!-- Pitch Civic sharing to any non-Civic member wherever Civic is
-           sellable (web, or an app shell with Civic IAP). -->
       <AccountSettingsItem
-        v-if="hasLoggedIn && !isCivicMember && canStartCivicSubscribeFlow"
+        v-if="hasLoggedIn && isCivicOfferable"
         icon="i-material-symbols-group-outline-rounded"
         :label="$t('account_page_civic_upgrade')"
       >
@@ -98,7 +96,6 @@ import { CustomVoiceUploadModal } from '#components'
 const { t: $t } = useI18n()
 const { loggedIn: hasLoggedIn, user } = useUserSession()
 const localeRoute = useLocaleRoute()
-const { canStartCivicSubscribeFlow } = useNativeIAP()
 
 const isPlusFeatureVisible = usePlusFeatureVisibility()
 
@@ -106,12 +103,13 @@ const {
   subscriptionStateLabel,
   likerPlusButtonLabel,
   likerPlusManageMode,
+  isCivicOfferable,
   isOpeningBillingPortal,
   isManagingSubscription,
   handleLikerPlusButtonClick,
 } = usePlusManagement()
 
-const { isCivicMember, likerPlusPeriod } = useSubscription()
+const { likerPlusPeriod } = useSubscription()
 
 // Send the upgrade to the pricing page — the surface that shows Civic's
 // benefits and price with an explicit CTA — rather than charging straight

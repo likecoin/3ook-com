@@ -18,6 +18,7 @@ export interface LikerProfileResponseData extends LikerInfoResponseData {
   likerPlusTier?: LikerPlusTier
   // Owning billing system; drives manage-subscription routing on the client.
   likerPlusProvider?: LikerPlusProvider
+  likerPlusStore?: LikerPlusStore
   plusAffiliateFrom?: string
   intercomToken?: string
 }
