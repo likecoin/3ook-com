@@ -419,12 +419,15 @@ const isAffiliateBooksModalOpen = ref(false)
 // is still the reason they shared the link — show the samples card for them.
 const hasReferrerSystemVoice = computed(() => !!getSystemVoiceByOwnerLikerId(props.affiliateLikerId))
 
+const isTTSSamplesForceHidden = computed(() => getRouteQuery('samples') === '0')
+
 const shouldShowTTSSamples = computed(() => {
+  if (isTTSSamplesForceHidden.value) return false
   return getRouteQuery('samples') === '1' || isCustomVoiceCampaign.value
     || hasAffiliateVoices.value || hasReferrerSystemVoice.value
 })
 
-const abTest = shouldShowTTSSamples.value
+const ttsSamplesABTest = shouldShowTTSSamples.value || isTTSSamplesForceHidden.value
   ? undefined
   : useABTest({
       experimentKey: computed(() => isDesktopScreen.value
@@ -432,7 +435,7 @@ const abTest = shouldShowTTSSamples.value
         : 'pricing-page-tts-sample-mobile'),
     })
 
-const isShowTTSSamples = computed(() => shouldShowTTSSamples.value || abTest?.isVariant('tts-sample'))
+const isShowTTSSamples = computed(() => shouldShowTTSSamples.value || ttsSamplesABTest?.isVariant('tts-sample'))
 
 const utmCampaign = computed(() => {
   return getRouteQuery('utm_campaign') || props.utmCampaign
