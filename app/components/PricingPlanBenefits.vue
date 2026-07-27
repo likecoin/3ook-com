@@ -18,27 +18,8 @@
       :ui="{
         root: 'w-full mb-2',
         fieldset: 'w-full',
-        item: [
-          'flex-1',
-          'py-2',
-          'text-theme-black',
-          'has-data-[state=checked]:text-theme-cyan',
-          'cursor-pointer',
-          'transition-colors',
-          'duration-200',
-          'border-0',
-          'ring-2',
-          'ring-inset',
-          'ring-theme-black/20 dark:ring-theme-cyan/20',
-          'has-data-[state=checked]:ring-theme-black',
-          'dark:has-data-[state=checked]:ring-theme-cyan',
-        ],
-        label: [
-          'text-xl',
-          'text-inherit dark:text-theme-cyan',
-          'font-bold',
-          'cursor-pointer',
-        ],
+        item: tierItemClass,
+        label: tierLabelClass,
       }"
     />
     <div
@@ -120,7 +101,10 @@
         size="xs"
         trailing-icon="i-material-symbols-expand-circle-down-outline-rounded"
         :label="$t('pricing_page_civic_upgrade_cta')"
-        class="font-semibold dark:hover:text-theme-cyan"
+        class="font-semibold"
+        :class="isDarkBackground
+          ? 'text-white/80 hover:text-theme-cyan'
+          : 'dark:hover:text-theme-cyan'"
         @click="handleUpgradeToCivic"
       />
       <span class="h-px flex-1 bg-current" />
@@ -132,7 +116,10 @@
     >
       <span class="h-px flex-1 bg-current" />
       <span
-        class="px-2 text-highlighted dark:text-theme-cyan font-semibold"
+        class="px-2 font-semibold"
+        :class="isDarkBackground
+          ? 'text-theme-cyan'
+          : 'text-highlighted dark:text-theme-cyan'"
         v-text="$t('pricing_page_civic_extra_divider')"
       />
       <span class="h-px flex-1 bg-current" />
@@ -217,22 +204,63 @@ const tierOptions = computed<{
     value: 'plus',
     label: $t('pricing_page_tier_plus'),
     isCurrent: props.currentTier === 'plus',
-    class: [
-      'bg-theme-cyan/10 dark:bg-theme-cyan/5',
-      'has-data-[state=checked]:bg-theme-black/90',
-      'dark:has-data-[state=checked]:bg-theme-cyan/10',
-    ],
+    class: props.isDarkBackground
+      ? [
+          'bg-theme-cyan/5',
+          'has-data-[state=checked]:bg-theme-cyan/10',
+        ]
+      : [
+          'bg-theme-cyan/10 dark:bg-theme-cyan/5',
+          'has-data-[state=checked]:bg-theme-black/90',
+          'dark:has-data-[state=checked]:bg-theme-cyan/10',
+        ],
   },
   {
     value: 'civic',
     label: $t('pricing_page_tier_civic'),
     isCurrent: props.currentTier === 'civic',
-    class: [
-      'bg-theme-cyan/30 dark:bg-theme-cyan/20',
-      'has-data-[state=checked]:bg-theme-black/90',
-      'dark:has-data-[state=checked]:bg-theme-cyan/30',
-    ],
+    class: props.isDarkBackground
+      ? [
+          'bg-theme-cyan/20',
+          'has-data-[state=checked]:bg-theme-cyan/30',
+        ]
+      : [
+          'bg-theme-cyan/30 dark:bg-theme-cyan/20',
+          'has-data-[state=checked]:bg-theme-black/90',
+          'dark:has-data-[state=checked]:bg-theme-cyan/30',
+        ],
   },
+])
+
+const tierItemClass = computed(() => [
+  'flex-1',
+  'py-2',
+  'cursor-pointer',
+  'transition-colors',
+  'duration-200',
+  'border-0',
+  'ring-2',
+  'ring-inset',
+  ...(props.isDarkBackground
+    ? [
+        'text-theme-cyan',
+        'ring-theme-cyan/20',
+        'has-data-[state=checked]:ring-theme-cyan',
+      ]
+    : [
+        'text-theme-black',
+        'has-data-[state=checked]:text-theme-cyan',
+        'ring-theme-black/20 dark:ring-theme-cyan/20',
+        'has-data-[state=checked]:ring-theme-black',
+        'dark:has-data-[state=checked]:ring-theme-cyan',
+      ]),
+])
+
+const tierLabelClass = computed(() => [
+  'text-xl',
+  'font-bold',
+  'cursor-pointer',
+  props.isDarkBackground ? 'text-theme-cyan' : 'text-inherit dark:text-theme-cyan',
 ])
 
 const featureListClass = computed(() => [
@@ -247,9 +275,11 @@ const featureListClass = computed(() => [
   { '[&>li>span:last-child]:text-white': props.isDarkBackground },
 ])
 
-// Shared chrome for the two mutually-exclusive tier dividers (Plus upgrade CTA
-// and Civic section header).
-const dividerClass = 'flex items-center gap-3 w-full text-xs text-muted min-h-6'
+// Tier dividers
+const dividerClass = computed(() => [
+  'flex items-center gap-3 w-full text-xs min-h-6',
+  props.isDarkBackground ? 'text-white/60' : 'text-muted',
+])
 
 function handleClickLibrary() {
   useLogEvent('pricing_benefit_click_library')

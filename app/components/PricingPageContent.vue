@@ -15,7 +15,19 @@
     <template v-if="isDesktopScreen && isShowTTSSamples">
       <aside class="relative flex justify-end w-full bg-theme-black min-h-max overflow-hidden">
         <PaywallBookstoreBackdrop class="!opacity-20" />
-        <div class="flex flex-col justify-center items-center relative w-full max-w-[512px] min-h-max">
+        <div
+          :class="[
+            'flex',
+            'flex-col',
+            { 'justify-center': !campaignContent },
+            'items-center',
+            'relative',
+            'w-full',
+            'max-w-[512px]',
+            'min-h-max',
+            { 'laptop:py-12': !campaignContent },
+          ]"
+        >
           <LazyPlusBlocktrendBundleBanner
             v-if="isBlocktrendCampaign"
             class="w-full shrink-0"
@@ -43,11 +55,15 @@
             </div>
 
             <PricingPageIntroSection
+              v-model:tier="selectedTier"
               class="relative w-full max-w-[420px]"
               :is-dark-background="true"
               :title="campaignContent?.title"
               :description="campaignContent?.description"
               :prepended-features="prependedFeatures"
+              :is-tier-selector-visible="isTierSelectorVisible"
+              :current-tier="likerPlusTier"
+              @show-voices="isVoicesModalOpen = true"
             />
           </div>
         </div>
@@ -139,6 +155,7 @@
         ]"
       >
         <div class="grow">
+          <slot name="affiliate-alert" />
           <PricingPageIntroSection
             v-if="!(isShowTTSSamples && isDesktopScreen)"
             v-model:tier="selectedTier"
@@ -151,7 +168,6 @@
             :current-tier="likerPlusTier"
             @show-voices="isVoicesModalOpen = true"
           />
-          <slot name="affiliate-alert" />
           <TTSSamplesSection
             v-if="isShowTTSSamples"
             :affiliate-voices="affiliateVoices"
