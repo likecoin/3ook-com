@@ -162,7 +162,6 @@
             class="mb-4 laptop:mb-6"
             :title="campaignContent?.title"
             :description="campaignContent?.description"
-            :is-compact="isShowTTSSamples || !!$slots['affiliate-alert'] || !!$slots['affiliate-promo']"
             :prepended-features="prependedFeatures"
             :is-tier-selector-visible="isTierSelectorVisible"
             :current-tier="likerPlusTier"

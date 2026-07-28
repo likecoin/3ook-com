@@ -63,7 +63,6 @@
           :title="$t('gift_plus_claim_info_title')"
           :is-title-center="true"
           :is-dark-background="true"
-          :is-compact="true"
         />
       </div>
     </div>

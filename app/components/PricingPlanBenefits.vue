@@ -66,28 +66,6 @@
         <UIcon name="i-material-symbols-check" />
         <span v-text="$t('pricing_page_feature_2')" />
       </li>
-      <template v-if="!isCompact">
-        <li>
-          <UIcon name="i-material-symbols-check" />
-          <span v-text="$t('pricing_page_feature_3')" />
-        </li>
-        <li>
-          <UIcon name="i-material-symbols-check" />
-          <i18n-t
-            keypath="pricing_page_feature_4"
-            tag="span"
-          >
-            <template #customerService>
-              <button
-                type="button"
-                class="underline cursor-pointer"
-                @click="handleOpenIntercom"
-                v-text="$t('pricing_page_feature_4_customer_service')"
-              />
-            </template>
-          </i18n-t>
-        </li>
-      </template>
     </ul>
 
     <div
@@ -167,7 +145,6 @@ const props = withDefaults(defineProps<{
   isTitleCenter?: boolean
   isTitleHidden?: boolean
   isDarkBackground?: boolean
-  isCompact?: boolean
   isAudioHidden?: boolean
   prependedFeatures?: string[]
   // Shows a tier selector in place of the title and, on Civic, appends the
@@ -179,7 +156,6 @@ const props = withDefaults(defineProps<{
   isTitleCenter: false,
   isTitleHidden: false,
   isDarkBackground: false,
-  isCompact: false,
   isAudioHidden: false,
   prependedFeatures: () => [],
   isTierSelectorVisible: false,
@@ -192,7 +168,6 @@ const selectedTier = defineModel<LikerPlusTier>('tier', { default: 'plus' })
 
 const { t: $t } = useI18n()
 const localeRoute = useLocaleRoute()
-const intercom = useIntercom()
 
 const tierOptions = computed<{
   value: LikerPlusTier
@@ -283,11 +258,6 @@ const dividerClass = computed(() => [
 
 function handleClickLibrary() {
   useLogEvent('pricing_benefit_click_library')
-}
-
-function handleOpenIntercom() {
-  useLogEvent('pricing_benefit_click_intercom')
-  intercom.showNewMessage($t('pricing_page_intercom_prefill'))
 }
 
 function handleShowVoices() {

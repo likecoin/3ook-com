@@ -25,7 +25,6 @@
         class="self-center"
         :title="$t('upsell_plus_benefits_title')"
         :is-title-center="true"
-        :is-compact="false"
         :is-audio-hidden="isAudioHidden"
       />
 

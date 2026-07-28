@@ -76,7 +76,7 @@
     <div class="flex flex-col items-center grow bg-white px-4 pt-8 pb-16">
       <div class="grid tablet:grid-cols-2 gap-12 max-w-3xl w-full">
         <!-- Plus Benefits Section -->
-        <PricingPlanBenefits :is-compact="true" />
+        <PricingPlanBenefits />
 
         <!-- Plan Selection -->
         <PricingPlanSelect v-model="selectedPlan" />

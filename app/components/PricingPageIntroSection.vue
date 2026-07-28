@@ -26,7 +26,6 @@
     <PricingPlanBenefits
       v-model:tier="selectedTier"
       :is-dark-background="props.isDarkBackground"
-      :is-compact="props.isCompact || (!!title && !!description)"
       :prepended-features="props.prependedFeatures"
       :is-tier-selector-visible="props.isTierSelectorVisible"
       :current-tier="props.currentTier"
@@ -38,10 +37,6 @@
 <script setup lang="ts">
 const props = defineProps({
   isDarkBackground: {
-    type: Boolean,
-    default: false,
-  },
-  isCompact: {
     type: Boolean,
     default: false,
   },
