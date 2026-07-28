@@ -697,24 +697,10 @@
             </li>
             <li>
               <UIcon
-                name="i-material-symbols-dark-mode-outline-rounded"
-                size="20"
-              />
-              <span v-text="$t('about_page_plus_feature_early_access')" />
-            </li>
-            <li>
-              <UIcon
                 name="i-3ook-com-library-rounded"
                 size="20"
               />
               <span v-text="$t('about_page_plus_feature_library')" />
-            </li>
-            <li>
-              <UIcon
-                name="i-material-symbols-support-agent-rounded"
-                size="20"
-              />
-              <span v-text="$t('about_page_plus_feature_support')" />
             </li>
           </ul>
           <UButton
