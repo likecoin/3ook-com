@@ -1,10 +1,5 @@
-// Where the viewer's Plus plan is billable from, and what that lets them do on
-// the current surface:
-// - native-store: store-owned (App Store/Play) and reachable from this device
-// - store-info:   store-owned but not actionable here (web, an app build without
-//                 IAP, or the other platform's app) → "manage on your device"
-// - stripe-portal: Stripe (incl. legacy/undefined provider) on web
-// - none:         not a subscriber, seat-granted, or Stripe in-app
+// Plus plan billability + what can be done on this surface.
+// Modes: native-store (actionable here), store-info (manage on device), stripe-portal (web), none.
 export type LikerPlusManageMode = 'native-store' | 'store-info' | 'stripe-portal' | 'none'
 
 // Read-only eligibility, split from usePlusManagement so pricing and checkout
