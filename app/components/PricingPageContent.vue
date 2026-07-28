@@ -368,8 +368,11 @@ const props = withDefaults(
 )
 
 // The Plus/Civic tier the pricing box and feature list reflect. Only 'civic'
-// when the toggle is offered and picked; otherwise the page stays Plus-only.
-const selectedTier = ref<LikerPlusTier>('plus')
+// when a deep link asks for it, or the toggle is offered and picked;
+// otherwise the page stays Plus-only.
+const selectedTier = ref<LikerPlusTier>(
+  props.isCivicVisible && props.initialTier === 'civic' ? 'civic' : 'plus',
+)
 const isCivicTierSelected = computed(() => selectedTier.value === 'civic')
 
 const gsap = useGSAP()
@@ -412,6 +415,15 @@ watchImmediate([isLikerPlus, isCivicMember], ([isPlus, isCivic]) => {
     selectedTier.value = 'civic'
     hasSeededCivicDefault = true
   }
+})
+
+// A deep link or the post-login Plus-member seeding can select Civic where it
+// can't be sold (an app shell without the Civic IAP), leaving no toggle back to
+// Plus. Correct after mount: checking during setup would hydrate-mismatch.
+onMounted(() => {
+  watchImmediate([isTierSelectorVisible, isCivicTierSelected], ([isVisible, isCivicSelected]) => {
+    if (!isVisible && isCivicSelected) selectedTier.value = 'plus'
+  })
 })
 
 const isCustomVoiceCampaign = computed(() => {

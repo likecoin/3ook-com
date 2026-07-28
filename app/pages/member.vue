@@ -4,6 +4,7 @@
     v-bind="iapOverrides"
     class="min-h-screen"
     :is-civic-visible="true"
+    :initial-tier="initialTier"
     :is-processing-subscription="checkout.isProcessingSubscription.value"
     :trial-period-days="trialPeriodDays"
     :must-collect-payment-method="mustCollectPaymentMethod"
@@ -202,6 +203,10 @@ const { displayCurrency } = usePaymentCurrency()
 
 const initialPlan: SubscriptionPlan = getRouteQuery('plan') === 'monthly' ? 'monthly' : 'yearly'
 const selectedPlan = ref<SubscriptionPlan>(initialPlan)
+
+// `?tier=civic` lets an upsell elsewhere (e.g. the account page's Civic row)
+// land on the Civic view instead of the Plus box.
+const initialTier: LikerPlusTier = getRouteQuery('tier') === 'civic' ? 'civic' : 'plus'
 
 const { memberProgramData } = useMemberProgramStructuredData()
 

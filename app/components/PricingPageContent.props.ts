@@ -11,6 +11,8 @@ export interface PricingPageContentProps {
   // Offers the Civic tier below the Plus plans (member page only — upsell
   // paywalls keep the Plus-only funnel).
   isCivicVisible?: boolean
+  // Tier the page opens on, for deep links that pitch a specific tier. Defaults to Plus.
+  initialTier?: LikerPlusTier
   trialPeriodDays?: number
   // Store-driven (IAP) trial overrides — see IAPTrialInfo in use-native-iap.ts.
   isPaidTrialOverride?: boolean

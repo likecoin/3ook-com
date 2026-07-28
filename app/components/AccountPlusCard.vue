@@ -112,11 +112,14 @@ const {
 const { likerPlusPeriod } = useSubscription()
 
 // Send the upgrade to the pricing page — the surface that shows Civic's
-// benefits and price with an explicit CTA — rather than charging straight
-// from this row. Preselect the member's billing period (yearly for non-members).
+// benefits and price with an explicit CTA. Preselect the billing period
+// (yearly for non-members) and Civic, which the page won't default to.
 const civicUpgradeRoute = computed(() => localeRoute({
   name: 'member',
-  query: { plan: likerPlusPeriod.value === 'month' ? 'monthly' : 'yearly' },
+  query: {
+    plan: likerPlusPeriod.value === 'month' ? 'monthly' : 'yearly',
+    tier: 'civic',
+  },
 }))
 
 function handleUpgradeToCivicButtonClick() {
