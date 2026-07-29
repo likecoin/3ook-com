@@ -24,6 +24,71 @@ export function getReaderCacheKeyWithSuffix(key: string, suffix: ReaderCacheKeyS
 }
 
 /**
+ * Prefix shared by every cached variant of one book — a book has one cache per
+ * file index x custom-message flag — so callers can sweep them all at once.
+ * Omit nftClassId for the prefix covering every book file in the app.
+ */
+export function getBookFileCacheKeyPrefix({
+  cacheKeyPrefix,
+  nftClassId,
+  isUploadedBook = false,
+}: {
+  cacheKeyPrefix: string
+  nftClassId?: string
+  isUploadedBook?: boolean
+}): string {
+  const segments = [cacheKeyPrefix, READER_CACHE_KEY]
+  if (isUploadedBook) segments.push('upload')
+  if (nftClassId) segments.push(isUploadedBook ? nftClassId : nftClassId.toLowerCase())
+  return segments.join('-')
+}
+
+/**
+ * Cache name of a single book file variant. Lives here, not in use-reader, so
+ * the shelf can predict the exact name the reader will look up without opening
+ * the book — the two drifting apart would silently break the offline badge.
+ */
+export function getBookFileCacheKey({
+  cacheKeyPrefix,
+  nftClassId,
+  nftId,
+  fileIndex = '0',
+  isCustomMessageEnabled = false,
+  isUploadedBook = false,
+  isPreview = false,
+}: {
+  cacheKeyPrefix: string
+  nftClassId: string
+  nftId?: string
+  fileIndex?: string | number
+  isCustomMessageEnabled?: boolean
+  isUploadedBook?: boolean
+  isPreview?: boolean
+}): string {
+  const prefix = getBookFileCacheKeyPrefix({ cacheKeyPrefix, nftClassId, isUploadedBook })
+  // An upload has a single file, so the prefix is already the whole name.
+  if (isUploadedBook) return prefix
+  return [
+    prefix,
+    nftId,
+    fileIndex,
+    isCustomMessageEnabled ? '1' : '0',
+    // Explicit marker: a Plus borrow also carries no nftId, so without it
+    // the truncated preview and the full borrowed file would share a cache.
+    isPreview ? 'preview' : undefined,
+  ].filter(value => value !== undefined).join('-')
+}
+
+/**
+ * Whether a cache name belongs to the given book. The `-` boundary matters:
+ * a bare startsWith would also match a different book whose id extends this
+ * one's, and uploaded-book ids are not fixed-length.
+ */
+export function isBookFileCacheKeyOfPrefix(cacheKey: string, prefix: string): boolean {
+  return cacheKey === prefix || cacheKey.startsWith(`${prefix}-`)
+}
+
+/**
  * Total byte budget for cached EPUB/PDF book files. The Cache API has no
  * built-in quota eviction, so we run an LRU sweep to stay under this limit.
  * 500 MB holds dozens of books while staying within typical browser/WebView
@@ -119,6 +184,28 @@ export function touchBookFileCacheEntry({
 }
 
 /**
+ * Drop index entries for caches that were deleted outside the LRU sweep (a
+ * returned borrow, a deleted upload). Without this the entries linger and
+ * inflate the total the sweep budgets against until it next reconciles.
+ */
+export function removeBookFileCacheEntries({
+  cacheKeyPrefix,
+  cacheKeys,
+}: {
+  cacheKeyPrefix: string
+  cacheKeys: string[]
+}) {
+  if (!cacheKeys.length) return
+  const index = readBookFileCacheIndex(cacheKeyPrefix)
+  const removed = new Set(cacheKeys.filter(cacheKey => cacheKey in index))
+  if (!removed.size) return
+  writeBookFileCacheIndex(
+    cacheKeyPrefix,
+    Object.fromEntries(Object.entries(index).filter(([name]) => !removed.has(name))),
+  )
+}
+
+/**
  * LRU sweep over cached book files. Reconciles the index with the real
  * CacheStorage, then — if the total exceeds BOOK_FILE_CACHE_MAX_BYTES —
  * deletes the least-recently-opened book caches until back under budget.
@@ -138,9 +225,9 @@ export async function pruneBookFileCaches({
 }) {
   if (typeof window === 'undefined' || !window.caches) return
   try {
-    const bookCachePrefix = [cacheKeyPrefix, READER_CACHE_KEY].join('-')
+    const bookCachePrefix = getBookFileCacheKeyPrefix({ cacheKeyPrefix })
     const liveNames = new Set(
-      (await window.caches.keys()).filter(name => name.startsWith(bookCachePrefix)),
+      (await window.caches.keys()).filter(name => isBookFileCacheKeyOfPrefix(name, bookCachePrefix)),
     )
 
     const stored = providedIndex ?? readBookFileCacheIndex(cacheKeyPrefix)

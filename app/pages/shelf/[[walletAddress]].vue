@@ -39,6 +39,7 @@
         v-if="shelfNotice"
         class="w-full mt-4"
         :title="shelfNotice.title"
+        :description="shelfNotice.description"
         :icon="shelfNotice.icon"
         :color="shelfNotice.color"
         variant="subtle"
@@ -207,6 +208,8 @@
               :total-reading-time-ms="item.totalReadingTimeMs"
               :total-tts-listening-time-ms="item.totalTTSListeningTimeMs"
               :lazy="index >= columnMax"
+              :offline-cache-keys="offlineCacheKeys"
+              :is-offline="!isOnline"
               @open="handleBookshelfItemOpen"
               @download="handleBookshelfItemDownload"
               @mark-as-reading="handleMarkBookAsReading"
@@ -242,6 +245,8 @@
               :total-reading-time-ms="item.totalReadingTimeMs"
               :total-tts-listening-time-ms="item.totalTTSListeningTimeMs"
               :lazy="index >= columnMax"
+              :offline-cache-keys="offlineCacheKeys"
+              :is-offline="!isOnline"
               @open="handleBookshelfItemOpen"
               @download="handleBookshelfItemDownload"
               @mark-as-reading="handleMarkBookAsReading"
@@ -275,6 +280,8 @@
               :total-reading-time-ms="item.totalReadingTimeMs"
               :total-tts-listening-time-ms="item.totalTTSListeningTimeMs"
               :lazy="index >= columnMax"
+              :offline-cache-keys="offlineCacheKeys"
+              :is-offline="!isOnline"
               @open="handleBookshelfItemOpen"
               @download="handleBookshelfItemDownload"
               @mark-as-reading="handleMarkBookAsReading"
@@ -300,6 +307,8 @@
               :content-type="item.contentType"
               :progress="item.progress"
               :lazy="index >= columnMax"
+              :offline-cache-keys="offlineCacheKeys"
+              :is-offline="!isOnline"
               :is-accessible="isUploadedBookAccessible"
               @delete="handleDeleteUploadedBook"
             />
@@ -330,6 +339,8 @@
               :total-tts-listening-time-ms="item.totalTTSListeningTimeMs"
               :staked-like="item.stakedAmount"
               :lazy="index >= columnMax"
+              :offline-cache-keys="offlineCacheKeys"
+              :is-offline="!isOnline"
               @open="handleBookshelfItemOpen"
               @download="handleBookshelfItemDownload"
               @archive="handleArchiveBook"
@@ -364,6 +375,8 @@
               :total-reading-time-ms="item.totalReadingTimeMs"
               :total-tts-listening-time-ms="item.totalTTSListeningTimeMs"
               :lazy="index >= columnMax"
+              :offline-cache-keys="offlineCacheKeys"
+              :is-offline="!isOnline"
               @open="handleBookshelfItemOpen"
               @download="handleBookshelfItemDownload"
               @mark-as-reading="handleMarkBookAsReading"
@@ -874,6 +887,7 @@ if (!isMyBookshelf.value && walletAddress.value) {
 }
 
 const isOnline = useOnline()
+const { offlineCacheKeys, refreshOfflineBooks, removeOfflineBook } = useOfflineBooks()
 const retryActions = computed(() => [{
   label: $t('bookshelf_refresh_failed_retry'),
   color: 'warning' as const,
@@ -888,6 +902,7 @@ const shelfNotice = computed(() => {
   if (!isOnline.value) {
     return {
       title: $t('bookshelf_offline_notice'),
+      description: $t('bookshelf_offline_notice_description'),
       icon: 'i-material-symbols-signal-wifi-off-outline-rounded',
       color: 'neutral' as const,
     }
@@ -895,6 +910,7 @@ const shelfNotice = computed(() => {
   if (bookshelfStore.lastError) {
     return {
       title: $t('bookshelf_refresh_failed_notice'),
+      description: undefined,
       icon: 'i-material-symbols-cloud-off-outline-rounded',
       color: 'warning' as const,
       // Suppress the Retry button while a fetch is already in flight to avoid
@@ -937,11 +953,17 @@ const visibleUploadedBookItems = computed(() => {
   return uploadedBookItems.value.filter(item => item.name?.toLowerCase().includes(searchTerm.value))
 })
 
-function handleDeleteUploadedBook(bookId: string) {
-  deleteModal.open({ bookId })
+async function handleDeleteUploadedBook(bookId: string) {
+  const result = await deleteModal.open({ bookId }).result
+  // Only on a confirmed delete: a dismissed modal leaves the book on the shelf,
+  // where its cached file is still what makes it readable offline.
+  if (result?.isDeleted) await removeOfflineBook({ nftClassId: bookId, isUploadedBook: true })
 }
 
 onMounted(async () => {
+  // Not awaited with the shelf data: which books are cached is independent of
+  // the network round-trip, and offline it is the only status worth showing.
+  refreshOfflineBooks()
   if (walletAddress.value) {
     await loadBookshelfData(walletAddress.value)
   }
@@ -1056,6 +1078,10 @@ function handleReturnPlusReadingBook(nftClassId: string) {
   if (!isMyBookshelf.value) return
   useLogEvent('shelf_return_plus_reading_book', { nft_class_id: nftClassId })
   bookshelfStore.returnBook(nftClassId)
+  // The reader reads its cache before the network, and a still-active Plus
+  // member re-satisfies the borrow gate — so a returned book left in the cache
+  // would keep opening from local bytes as if it had never been returned.
+  removeOfflineBook({ nftClassId })
   toast.add({
     title: $t('bookshelf_plus_reading_returned_toast'),
     icon: 'i-material-symbols-assignment-return-outline-rounded',

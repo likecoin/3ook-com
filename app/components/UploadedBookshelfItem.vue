@@ -1,7 +1,7 @@
 <template>
   <li
     class="flex flex-col justify-end"
-    :class="isAccessible ? 'opacity-100' : 'opacity-50'"
+    :class="isAccessible && !isUnreachableOffline ? 'opacity-100' : 'opacity-50'"
   >
     <BookCover
       :src="bookCoverSrc"
@@ -10,11 +10,13 @@
       :has-shadow="true"
       @click="handleCoverClick"
     >
-      <template
-        v-if="!isAccessible"
-        #overlay
-      >
-        <div class="absolute inset-0 flex items-center justify-center bg-theme-black/50 rounded-[inherit]">
+      <template #overlay>
+        <BookOfflineBadge v-if="isAvailableOffline" />
+
+        <div
+          v-if="!isAccessible"
+          class="absolute inset-0 flex items-center justify-center bg-theme-black/50 rounded-[inherit]"
+        >
           <UIcon
             class="text-theme-white"
             name="i-material-symbols-lock-outline"
@@ -133,11 +135,23 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
+  // Cache names of every book file currently in CacheStorage, resolved once by
+  // the shelf page — see BookshelfItem for why it isn't read per item.
+  offlineCacheKeys: {
+    type: Object as PropType<Set<string>>,
+    default: () => new Set<string>(),
+  },
+  isOffline: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 const emit = defineEmits(['delete'])
 
 const { t: $t } = useI18n()
+const config = useRuntimeConfig()
+const toast = useToast()
 const bookInfo = useUploadedBookInfo({ bookId: props.bookId })
 const isDesktopScreen = useDesktopScreen()
 const { getResizedImageURL } = useImageResize()
@@ -148,6 +162,19 @@ const { exportAnnotations } = useExportAnnotations({
 const bookCoverSrc = computed(() => getResizedImageURL(bookInfo.coverSrc.value, { size: 300 }))
 
 const progressPercentage = computed(() => Math.round(props.progress * 100))
+
+// An upload has a single file, so one cache name covers the whole book.
+const bookFileCacheKey = computed(() => getBookFileCacheKey({
+  cacheKeyPrefix: config.public.cacheKeyPrefix,
+  nftClassId: props.bookId,
+  isUploadedBook: true,
+}))
+
+const isAvailableOffline = computed(() =>
+  props.isAccessible && props.offlineCacheKeys.has(bookFileCacheKey.value),
+)
+
+const isUnreachableOffline = computed(() => props.isOffline && !isAvailableOffline.value)
 
 const isMobileMenuOpen = ref(false)
 
@@ -191,6 +218,16 @@ function navigateToReader({ isTTS = false } = {}) {
 }
 
 function openBook() {
+  // Pre-empt the reader: offline without the file cached it would boot, fail to
+  // fetch and strand the user on its error modal.
+  if (isUnreachableOffline.value) {
+    toast.add({
+      title: $t('error_reader_book_not_available_offline'),
+      icon: 'i-material-symbols-signal-wifi-off-outline-rounded',
+      color: 'neutral',
+    })
+    return
+  }
   navigateToReader()
 }
 

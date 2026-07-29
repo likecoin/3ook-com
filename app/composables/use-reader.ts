@@ -52,22 +52,15 @@ export default function (params: {
 
   const bookCoverSrc = computed(() => getResizedImageURL(bookInfo.coverSrc.value, { size: 300 }))
 
-  const bookFileCacheKey = computed(() => {
-    if (isUploadedBook.value) {
-      return [config.public.cacheKeyPrefix, READER_CACHE_KEY, 'upload', nftClassId.value].join('-')
-    }
-    return [
-      config.public.cacheKeyPrefix,
-      READER_CACHE_KEY,
-      nftClassId.value,
-      nftId.value,
-      fileIndex.value,
-      isCustomMessageEnabled.value ? '1' : '0',
-      // Explicit marker: a Plus borrow also carries no nftId, so without it
-      // the truncated preview and the full borrowed file would share a cache.
-      isPreviewMode.value ? 'preview' : undefined,
-    ].filter(value => value !== undefined).join('-')
-  })
+  const bookFileCacheKey = computed(() => getBookFileCacheKey({
+    cacheKeyPrefix: config.public.cacheKeyPrefix,
+    nftClassId: nftClassId.value,
+    nftId: nftId.value,
+    fileIndex: fileIndex.value,
+    isCustomMessageEnabled: isCustomMessageEnabled.value,
+    isUploadedBook: isUploadedBook.value,
+    isPreview: isPreviewMode.value,
+  }))
 
   // Progress/config key prefix - per book ID (NFT class or uploaded book)
   const bookProgressKeyPrefix = computed(() =>

@@ -2,7 +2,7 @@
   <li
     ref="lazyLoadTrigger"
     class="flex flex-col justify-end"
-    :class="canRead ? 'opacity-100' : 'opacity-50'"
+    :class="canRead && !isUnreachableOffline ? 'opacity-100' : 'opacity-50'"
   >
     <BookCover
       :src="bookCoverSrc"
@@ -11,13 +11,12 @@
       :has-shadow="true"
       @click="handleCoverClick"
     >
-      <template
-        v-if="props.isPlusReading"
-        #overlay
-      >
+      <template #overlay>
+        <BookOfflineBadge v-if="isAvailableOffline" />
+
         <!-- Locked overlay when Plus has lapsed; the cover's own click routes to resubscribe. -->
         <div
-          v-if="!props.isPlusReadingAccessible"
+          v-if="props.isPlusReading && !props.isPlusReadingAccessible"
           class="absolute inset-0 flex items-center justify-center bg-theme-black/50 rounded-[inherit]"
           :aria-label="$t('bookshelf_plus_reading_locked_cta')"
         >
@@ -30,6 +29,7 @@
 
         <!-- Marks a borrowed (non-owned) book so owned books read as premium. -->
         <UBadge
+          v-if="props.isPlusReading"
           class="absolute top-2 left-2"
           icon="i-3ook-com-library-rounded"
           :title="$t('bookshelf_plus_reading_badge_label')"
@@ -212,6 +212,19 @@ const props = defineProps({
     type: Number,
     default: 0,
   },
+  // Cache names of every book file currently in CacheStorage. Resolved once by
+  // the shelf page and passed down: the page renders dozens of these items and
+  // each reading CacheStorage itself would repeat the same async call.
+  offlineCacheKeys: {
+    type: Object as PropType<Set<string>>,
+    default: () => new Set<string>(),
+  },
+  // Passed down rather than each item calling useOnline(), which would attach
+  // its own pair of window listeners per book on the shelf.
+  isOffline: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 const emit = defineEmits([
@@ -227,6 +240,8 @@ const emit = defineEmits([
 ])
 
 const { t: $t, locale } = useI18n()
+const config = useRuntimeConfig()
+const toast = useToast()
 const queryCache = useQueryCache()
 const bookInfo = useBookInfo({ nftClassId: props.nftClassId })
 const { downloadBookFile } = useBookDownload()
@@ -249,6 +264,29 @@ const progressPercentage = computed(() => Math.round(props.progress * 100))
 const canRead = computed(() =>
   props.isOwned || (props.isPlusReading && props.isPlusReadingAccessible),
 )
+
+// Borrowed books never qualify: the reader's gate re-derives the borrow from
+// metadata that isn't persisted across a reload, so offline it turns them away
+// and the badge would be a false promise.
+function checkContentURLAvailableOffline(contentURL: ContentURL) {
+  if (!canRead.value || props.isPlusReading) return false
+  return props.offlineCacheKeys.has(getBookFileCacheKey({
+    cacheKeyPrefix: config.public.cacheKeyPrefix,
+    nftClassId: props.nftClassId,
+    nftId: props.nftIds?.[0],
+    fileIndex: contentURL.index,
+    isCustomMessageEnabled: bookInfo.isCustomMessageEnabled.value,
+  }))
+}
+
+// Tracks the file a cover click opens; a multi-file book can have only its
+// other format cached, which the per-file check above still catches.
+const isAvailableOffline = computed(() => {
+  const contentURL = bookInfo.defaultContentURL.value
+  return !!contentURL && checkContentURLAvailableOffline(contentURL)
+})
+
+const isUnreachableOffline = computed(() => props.isOffline && !isAvailableOffline.value)
 
 const isDesktopScreen = useDesktopScreen()
 
@@ -443,6 +481,17 @@ function fetchBookInfo() {
 }
 
 function openContentURL(contentURL: ContentURL, { isTTS = false } = {}) {
+  // Pre-empt the reader: offline without this exact file cached it would boot,
+  // fail to fetch and strand the user on its error modal.
+  if (props.isOffline && !checkContentURLAvailableOffline(contentURL)) {
+    toast.add({
+      title: $t('error_reader_book_not_available_offline'),
+      icon: 'i-material-symbols-signal-wifi-off-outline-rounded',
+      color: 'neutral',
+    })
+    return
+  }
+
   // TODO: UI to select specific NFT Id
   const nftId = props.nftIds?.[0]
   const readerRoute = bookInfo.getReaderRoute.value({ nftId, contentURL })
