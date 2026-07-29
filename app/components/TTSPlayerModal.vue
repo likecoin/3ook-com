@@ -91,7 +91,7 @@
           />
         </div>
 
-        <!-- Floating controls -->
+        <!-- Floating elements -->
         <div class="absolute inset-x-0 bottom-4 pb-safe px-4 flex flex-col items-center">
           <div
             v-if="shouldShowTrialChip"
@@ -104,10 +104,11 @@
             />
           </div>
 
-          <div class="flex flex-col gap-1 px-3 pt-2 pb-3 rounded-4xl bg-(--ui-bg)/80 backdrop-blur-sm ring-1 ring-(--ui-border)">
+          <!-- Controls -->
+          <div class="flex flex-col gap-0.5 px-3 py-2 rounded-4xl bg-(--ui-bg)/80 backdrop-blur-sm ring-1 ring-default">
             <div
               v-if="ttsProgress"
-              class="flex items-center justify-between px-2 text-xs text-muted tabular-nums"
+              class="flex items-center justify-between px-2 pt-2 text-xs text-muted tabular-nums"
             >
               <span
                 role="progressbar"
@@ -239,7 +240,7 @@
                   class="rounded-full w-16 h-10 select-none shrink-0 justify-center"
                   :label="getTTSPlaybackRateLabel"
                   size="md"
-                  variant="soft"
+                  variant="ghost"
                   :ui="{ label: 'font-mono font-bold whitespace-nowrap' }"
                   @click="handleTTSPlaybackRateButton"
                 />
