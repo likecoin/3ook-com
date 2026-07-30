@@ -29,11 +29,11 @@ export function useStoreTags({ routeName, isLibraryTab }: StoreTagsOptions) {
   }))
   const STAKING_TAG_DEFAULT = STAKING_SORT_OPTIONS[0]!.value
   // The library always lands on the usage-ranked (熱門) tab regardless of login status.
-  // On the store, signed-in readers land on the freshest titles while signed-out
+  // On the store, signed-in readers land on their personalized feed while signed-out
   // visitors get the staking-ranked landing as the default tab.
   const defaultTagId = computed(() => {
     if (isLibraryTab.value) return BOOKSTORE_POPULAR_LIST_TYPE
-    return hasLoggedIn.value ? BOOKSTORE_DEFAULT_LIST_TYPE : STAKING_TAG_DEFAULT
+    return hasLoggedIn.value ? BOOKSTORE_FOR_YOU_LIST_TYPE : STAKING_TAG_DEFAULT
   })
 
   function getIsDefaultTagId(id: string) {

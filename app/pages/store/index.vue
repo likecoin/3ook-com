@@ -947,18 +947,26 @@ useHead(() => {
   }
 })
 
+// Keyed on the resolved tag, not the raw query: logging in flips the store's
+// default tab to For You without the URL changing, so watching the query alone
+// would leave the listing on the previous tab's unfetched bucket.
+const ownRouteName = routeName.value
 watch(
-  () => route.query.tag,
-  async (newTag, oldTag) => {
-    if (newTag !== oldTag) {
-      await fetchItems({ lazy: true })
+  tagId,
+  async () => {
+    // /store and /library share this component, so the outgoing instance also
+    // reacts to the incoming tab's default; that instance fetches on mount.
+    if (routeName.value !== ownRouteName) return
+    // Captured with the same intent as fetchTagItems' currentTagId: a mid-fetch
+    // navigation would otherwise reset persisted state against the new tag.
+    const hasTagQuery = !!route.query.tag
+    await fetchItems({ lazy: true })
 
-      if (!isSearchMode.value) {
-        if (!newTag) {
-          storePageState.clear()
-        }
-        storePageState.restoreScrollIfNeeded()
+    if (!isSearchMode.value) {
+      if (!hasTagQuery) {
+        storePageState.clear()
       }
+      storePageState.restoreScrollIfNeeded()
     }
   },
 )
