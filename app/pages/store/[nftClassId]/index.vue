@@ -563,7 +563,7 @@
           :class="getGridItemClassesByIndex(index)"
           :nft-class-id="classId"
           :lazy="true"
-          :ll-medium="personalizedRecommendedClassIdSet.has(classId.toLowerCase()) ? 'recommendation-personalized' : 'recommendation'"
+          :ll-medium="getRecommendationLLMedium(getIsPersonalizedRecommendation(classId))"
           :ll-source="nftClassId"
           :is-library="isLibrary"
           @open="handleRecommendedBookCoverClick"
@@ -759,7 +759,7 @@ const plusReadingTagRoute = computed(() =>
 
 const { handleError } = useErrorHandler()
 const { getAnalyticsParameters } = useAnalytics()
-const { fetchRecommendedNFTClassIds } = useBookRecommendations()
+const { fetchBookRecommendations } = useBookRecommendations()
 
 const isDesktopScreen = useDesktopScreen()
 const { isApp } = useAppDetection()
@@ -1246,10 +1246,14 @@ const checkoutButtonProps = computed<{
 // Personalized candidates for the related-books section, seeded by this book.
 // Fetched client-side for logged-in users only; empty (guests, errors, pending)
 // leaves the section purely editorial, so there is no layout shift.
-const personalizedRecommendedClassIds = ref<string[]>([])
-const personalizedRecommendedClassIdSet = computed(() =>
-  new Set(personalizedRecommendedClassIds.value.map(id => id.toLowerCase())),
+const feedRecommendations = ref<BookRecommendations>(getEmptyBookRecommendations())
+const feedRecommendedClassIdSet = computed(() =>
+  new Set(feedRecommendations.value.nftClassIds.map(normalizeNFTClassId)),
 )
+// Fallback-list ids still blend into the section, but are not personalized picks.
+function getIsPersonalizedRecommendation(classId: string) {
+  return feedRecommendations.value.isPersonalized && feedRecommendedClassIdSet.value.has(normalizeNFTClassId(classId))
+}
 
 function getAuthorNameFromCache(classId: string): string {
   return getBookEntityName(getNFTClassMetadataByIdFromCache(queryCache, classId)?.author)
@@ -1275,15 +1279,15 @@ const recommendedClassIds = computed(() => {
 
   // Deterministic slots: same-author editorial leads first (capped), then
   // personalized candidates in server order, then the remaining editorial picks.
-  const seenClassIds = new Set([nftClassId.value.toLowerCase()])
+  const seenClassIds = new Set([normalizeNFTClassId(nftClassId.value)])
   const blendedClassIds: string[] = []
   for (const id of [
     ...sameAuthorClassIds.slice(0, MAX_SAME_AUTHOR_LEAD_BOOKS),
-    ...personalizedRecommendedClassIds.value,
+    ...feedRecommendations.value.nftClassIds,
     ...sameAuthorClassIds,
     ...otherClassIds,
   ]) {
-    const key = id.toLowerCase()
+    const key = normalizeNFTClassId(id)
     if (seenClassIds.has(key)) continue
     seenClassIds.add(key)
     blendedClassIds.push(id)
@@ -1326,12 +1330,12 @@ onMounted(async () => {
 
   // Personalized related books, seeded by this title; empty results (guests,
   // errors) keep the section purely editorial.
-  fetchRecommendedNFTClassIds({
+  fetchBookRecommendations({
     seed: nftClassId.value,
     limit: 10,
     isLibrary: isLibrary.value,
-  }).then((classIds) => {
-    personalizedRecommendedClassIds.value = classIds
+  }).then((recommendations) => {
+    feedRecommendations.value = recommendations
   })
 
   useLogEvent('view_item', formattedLogPayload.value)
@@ -1470,9 +1474,11 @@ function handleGiftButtonClick() {
 }
 
 function handleRecommendedBookCoverClick(classId: string) {
-  useLogEvent('recommend_book_click', {
-    nft_class_id: classId,
-    is_personalized: personalizedRecommendedClassIdSet.value.has(classId.toLowerCase()),
+  const isPersonalized = getIsPersonalizedRecommendation(classId)
+  useLogRecommendBookClick({
+    nftClassId: classId,
+    isPersonalized,
+    llMedium: getRecommendationLLMedium(isPersonalized),
   })
 }
 

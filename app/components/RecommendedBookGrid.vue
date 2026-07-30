@@ -18,7 +18,7 @@
         :class="isCompact ? undefined : getGridItemClassesByIndex(index)"
         :nft-class-id="classId"
         :lazy="true"
-        :ll-medium="llMedium"
+        :ll-medium="resolvedLLMedium"
         :ll-source="llSource"
         :is-library="isLibrary"
         @open="handleBookOpen"
@@ -34,6 +34,8 @@ const props = withDefaults(defineProps<{
   llMedium?: string
   llSource?: string
   isLibrary?: boolean
+  // False when the feed fell back to the popular list, so clicks report honestly.
+  isPersonalized?: boolean
   // Fixed 3-column layout for narrow containers (e.g. modals).
   isCompact?: boolean
 }>(), {
@@ -41,6 +43,7 @@ const props = withDefaults(defineProps<{
   llMedium: undefined,
   llSource: '',
   isLibrary: false,
+  isPersonalized: false,
   isCompact: false,
 })
 
@@ -62,11 +65,15 @@ const { gridClasses, getGridItemClassesByIndex } = usePaginatedGrid({
   hasMore: false,
 })
 
+// Surfaces that name themselves (e.g. read-next) pass their own medium; the
+// rest report provenance, which is the personalization flag they already carry.
+const resolvedLLMedium = computed(() => props.llMedium ?? getRecommendationLLMedium(props.isPersonalized))
+
 function handleBookOpen(classId: string) {
-  useLogEvent('recommend_book_click', {
-    nft_class_id: classId,
-    is_personalized: true,
-    ll_medium: props.llMedium,
+  useLogRecommendBookClick({
+    nftClassId: classId,
+    isPersonalized: props.isPersonalized,
+    llMedium: resolvedLLMedium.value,
   })
 }
 </script>

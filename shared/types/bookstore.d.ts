@@ -35,6 +35,12 @@ export interface FetchBookstoreForYouResponseData extends FetchBookstoreCMSProdu
   isPersonalized: boolean
 }
 
+// Keeps `isPersonalized` paired with the ids it describes.
+export interface BookRecommendations {
+  nftClassIds: string[]
+  isPersonalized: boolean
+}
+
 export interface BookstoreCMSTag {
   id: string
   name: {

@@ -79,6 +79,17 @@ export function parseErrorData<T>(error: unknown, key: string): T | undefined {
   return undefined
 }
 
+// A hung request, as opposed to a superseded one. Both are abort errors, so
+// callers that report failures need to tell them apart.
+export function getIsTimeoutError(error: unknown): boolean {
+  const isTimeoutLike = (e: unknown): boolean => {
+    if (typeof DOMException !== 'undefined' && e instanceof DOMException) return e.name === 'TimeoutError'
+    return e instanceof Error && e.name === 'TimeoutError'
+  }
+  if (isTimeoutLike(error)) return true
+  return error instanceof Error && isTimeoutLike((error as { cause?: unknown }).cause)
+}
+
 // A navigation/timeout-cancelled fetch surfaces as an `AbortError`/`TimeoutError`
 // DOMException, which ofetch rewraps in a `<no response>` FetchError under
 // `cause`. Benign (superseded, not failed), so callers can skip the error modal.

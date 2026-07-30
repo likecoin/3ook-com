@@ -426,9 +426,9 @@
       <RecommendedBookGrid
         v-if="isMyBookshelf"
         class="w-full mt-12"
-        :nft-class-ids="recommendedNFTClassIds"
+        :nft-class-ids="recommendedBooks.nftClassIds"
+        :is-personalized="recommendedBooks.isPersonalized"
         :title="$t('bookshelf_recommendations_title')"
-        ll-medium="recommendation-personalized"
         ll-source="bookshelf"
       />
     </main>
@@ -443,7 +443,8 @@
     >
       <template #body>
         <RecommendedBookGrid
-          :nft-class-ids="readNextNFTClassIds"
+          :nft-class-ids="readNextBooks.nftClassIds"
+          :is-personalized="readNextBooks.isPersonalized"
           is-compact
           ll-medium="recommendation-read-next"
           ll-source="bookshelf-finished"
@@ -996,23 +997,37 @@ onMounted(async () => {
 
 /* Personalized recommendations (own shelf only) */
 
-const { fetchRecommendedNFTClassIds } = useBookRecommendations()
-const recommendedNFTClassIds = ref<string[]>([])
+const { fetchBookRecommendations } = useBookRecommendations()
+// Ids and `isPersonalized` stay in one ref: both are assigned after an await, and
+// splitting them lets one fetch's ids pair with another fetch's provenance flag.
+const recommendedBooks = ref<BookRecommendations>(getEmptyBookRecommendations())
 const isReadNextModalOpen = ref(false)
-const readNextNFTClassIds = ref<string[]>([])
+const readNextBooks = ref<BookRecommendations>(getEmptyBookRecommendations())
 
 // Watch both flags: the session may hydrate after mount (own-shelf check flips
 // without a remount), and an account switch changes the wallet while the
 // own-shelf check stays true — stale recommendations must not leak across.
 watch([isMyBookshelf, walletAddress], async ([isMine, wallet]) => {
-  if (!isMine) {
-    recommendedNFTClassIds.value = []
+  // The endpoint needs the session cookie that apiFetch does not forward, so on
+  // the server this only ever 401s; the client watcher refetches on hydration.
+  if (import.meta.server) return
+  // No wallet means signed out, or a session that has yet to hydrate: clear
+  // instead of fetching, so the impression event below counts one view per
+  // shelf rather than also firing for the pre-hydration pass.
+  if (!isMine || !wallet) {
+    recommendedBooks.value = getEmptyBookRecommendations()
     return
   }
-  const classIds = await fetchRecommendedNFTClassIds()
+  const recommendations = await fetchBookRecommendations()
   // An account switch mid-fetch must not resolve into the new account's list.
   if (walletAddress.value !== wallet) return
-  recommendedNFTClassIds.value = classIds
+  recommendedBooks.value = recommendations
+  // Impression event: the grid hides itself when empty, so without this the
+  // click event has no denominator and empty feeds are indistinguishable.
+  useLogEvent('shelf_recommendations_view', {
+    book_count: recommendations.nftClassIds.length,
+    is_personalized: recommendations.isPersonalized,
+  })
 }, { immediate: true })
 
 // PostHog loads lazily via @nuxt/scripts, so the flag may resolve after onMounted.
@@ -1122,17 +1137,18 @@ async function handleMarkBookAsFinished(nftClassId: string) {
   // (guest, error, no candidates) simply skips the modal. Finishing a borrowed
   // book suggests library picks, so the next read stays included in Plus.
   const shelfItemType = getShelfItemType(nftClassId)
-  const classIds = await fetchRecommendedNFTClassIds({
+  const recommendations = await fetchBookRecommendations({
     seed: nftClassId,
     limit: 6,
     isLibrary: shelfItemType === 'borrowed',
   })
-  if (classIds.length === 0) return
-  readNextNFTClassIds.value = classIds
+  if (recommendations.nftClassIds.length === 0) return
+  readNextBooks.value = recommendations
   isReadNextModalOpen.value = true
   useLogEvent('shelf_read_next_modal_open', {
     nft_class_id: nftClassId,
     shelf_item_type: shelfItemType,
+    is_personalized: recommendations.isPersonalized,
   })
 }
 

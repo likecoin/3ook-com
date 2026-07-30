@@ -39,3 +39,9 @@ export function getBookEntityName(entity?: BookEntity): string {
 export function getHasFreeEdition(prices?: BookstorePrice[]): boolean {
   return !!prices?.some(price => price.price === 0 && !price.isUnlisted)
 }
+
+// The For You feed falls back to the popular list below the cold-start signal
+// threshold, so personalization is a property of the response, not the surface.
+export function getRecommendationLLMedium(isPersonalized: boolean) {
+  return isPersonalized ? 'recommendation-personalized' : 'recommendation'
+}

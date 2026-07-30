@@ -280,6 +280,44 @@ export function useLogPlusUpsell(
   })
 }
 
+// `isPersonalized` is the response's own flag, never the surface's assumption.
+export function useLogRecommendBookClick({
+  nftClassId,
+  isPersonalized,
+  llMedium,
+}: {
+  nftClassId: string
+  isPersonalized: boolean
+  llMedium?: string
+}) {
+  useLogEvent('recommend_book_click', {
+    nft_class_id: nftClassId,
+    is_personalized: isPersonalized,
+    ll_medium: llMedium,
+  })
+}
+
+// A superseded fetch and an offline device are not feed failures; the store
+// page's own fetch path discards both. Timeouts are kept: apiFetch surfaces
+// them as TimeoutError, and a hung feed is the failure most worth seeing.
+export function useLogRecommendFetchError(error: unknown, {
+  isSeeded = false,
+  isLibrary = false,
+}: {
+  isSeeded?: boolean
+  isLibrary?: boolean
+} = {}) {
+  const isTimeout = getIsTimeoutError(error)
+  if (!isTimeout && getIsAbortError(error)) return
+  if (import.meta.client && !navigator.onLine) return
+  useLogEvent('recommend_fetch_error', {
+    is_seeded: isSeeded,
+    is_library: isLibrary,
+    error_code: isTimeout ? 'timeout' : getErrorCode(error),
+    error_message: getErrorEventMessage(error),
+  })
+}
+
 // Person-property writes outside the identify flow (e.g. settings changes).
 export function useSetLogPersonProperties(properties: Record<string, unknown>) {
   try {

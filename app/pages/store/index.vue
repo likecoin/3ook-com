@@ -253,6 +253,7 @@
           :should-show-plus-reading-icon="!isLibraryTab"
           :is-library="isLibraryTab"
           ll-source="bookstore"
+          @open="handleBookstoreItemOpen"
         />
       </ul>
       <div
@@ -793,10 +794,16 @@ const storeListStatus = computed(() => {
   return null
 })
 
+// For You stays the signed-in default tag during a search, so gate on what is
+// actually rendered: search results come from the search list, not the feed.
+const isForYouFeedVisible = computed(() =>
+  isForYouTagId.value && (!isSearchMode.value || isSearchResultEmpty.value),
+)
+
 // Tell a low-signal member why the personalized tab is showing the popular list.
 // Requires items so the hint never renders above an error or empty state.
 const isForYouFallbackHintVisible = computed(() =>
-  isForYouTagId.value
+  isForYouFeedVisible.value
   && products.value.hasFetchedItems
   && itemsCount.value > 0
   && !bookstoreStore.getIsForYouPersonalized(isLibraryTab.value),
@@ -1007,8 +1014,46 @@ const llMedium = computed(() => {
   if (isSearchMode.value) {
     return 'search-result'
   }
+  if (isForYouTagId.value) {
+    return 'for-you'
+  }
   return undefined
 })
+
+const hasForYouFetchError = ref(false)
+
+function handleBookstoreItemOpen(classId: string) {
+  if (!isForYouFeedVisible.value) return
+  useLogRecommendBookClick({
+    nftClassId: classId,
+    isPersonalized: bookstoreStore.getIsForYouPersonalized(isLibraryTab.value),
+    llMedium: llMedium.value,
+  })
+}
+
+// A view is the feed rendered with its data resolved, which a call to fetch it
+// cannot define: fetchForYouProducts no-ops on a cache hit and on re-entry.
+// The key carries ll_medium so the search-empty surface counts as its own view.
+const forYouFeedViewKey = computed(() => {
+  // Same reason as the tagId watcher: the outgoing instance of this shared page
+  // also reacts to the incoming tab's default, and would log its view.
+  if (routeName.value !== ownRouteName) return undefined
+  if (!isForYouFeedVisible.value || !products.value.hasFetchedItems) return undefined
+  // fetchForYouProducts marks hasFetched even when it throws, so a failed feed
+  // would otherwise log a view and consume the one its retry should log.
+  if (hasForYouFetchError.value) return undefined
+  // Wallet included so a switched-to reader's feed counts as their own view.
+  return `${isLibraryTab.value ? 'library' : 'store'}:${llMedium.value}:${walletAddress.value}`
+})
+
+watch(forYouFeedViewKey, (key) => {
+  if (!key) return
+  useLogEvent(isLibraryTab.value ? 'library_for_you_view' : 'store_for_you_view', {
+    is_personalized: bookstoreStore.getIsForYouPersonalized(isLibraryTab.value),
+    book_count: itemsCount.value,
+    ll_medium: llMedium.value,
+  })
+}, { immediate: true })
 
 const { gridClasses, getGridItemClassesByIndex, columnMax } = usePaginatedGrid({
   itemsCount,
@@ -1033,10 +1078,17 @@ async function fetchTagItems({ isRefresh = false } = {}) {
   // The personalized feed is server-ranked and a single fixed page: skip the
   // staking fetch and the client-side staking re-sort below entirely.
   if (isForYouTagId.value) {
-    await bookstoreStore.fetchForYouProducts({ isRefresh, isLibrary: isLibraryTab.value })
-    useLogEvent(isLibraryTab.value ? 'library_for_you_view' : 'store_for_you_view', {
-      is_personalized: bookstoreStore.getIsForYouPersonalized(isLibraryTab.value),
-    })
+    // Report before rethrowing: the caller turns this into a generic listing
+    // error, so the feed's own failure rate is otherwise invisible.
+    try {
+      await bookstoreStore.fetchForYouProducts({ isRefresh, isLibrary: isLibraryTab.value })
+      hasForYouFetchError.value = false
+    }
+    catch (error) {
+      hasForYouFetchError.value = true
+      useLogRecommendFetchError(error, { isLibrary: isLibraryTab.value })
+      throw error
+    }
     return
   }
 
