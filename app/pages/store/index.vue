@@ -216,6 +216,12 @@
         @contact-click="handleContactUsClick"
       />
 
+      <p
+        v-if="isForYouFallbackHintVisible"
+        class="w-full mb-6 text-sm text-muted text-center"
+        v-text="$t('store_for_you_fallback_hint')"
+      />
+
       <h2
         v-if="queryAffiliate && itemsCount > 0"
         class="mb-6 text-xl text-highlighted font-bold"
@@ -290,6 +296,8 @@ const isLibraryTab = computed(() => routeName.value === 'library')
 const getRouteQuery = useRouteQuery()
 const runtimeConfig = useRuntimeConfig()
 const bookstoreStore = useBookstoreStore()
+const { user } = useUserSession()
+const walletAddress = computed(() => user.value?.evmWallet?.toLowerCase())
 const queryCache = useQueryCache()
 const isRevalidatingNFTClassMetadata = useIsRevalidatingNFTClassMetadata()
 const infiniteScrollDetectorElement = useTemplateRef<HTMLLIElement>('infiniteScrollDetector')
@@ -448,6 +456,7 @@ const {
   isStakingTagId,
   isPopularTagId,
   isBestsellingTagId,
+  isForYouTagId,
   getIsLocalHistoriesTagId,
   normalizedLocale,
   activeCMSTag,
@@ -468,6 +477,7 @@ await callOnce(async () => {
     !tagId.value
     || isDefaultTagId.value
     || isStakingTagId.value
+    || isForYouTagId.value
     || isBookstoreBuiltInListType(tagId.value)
   ) return
 
@@ -643,10 +653,10 @@ const cmsProducts = computed<BookstoreItemList>(() => {
       ...item,
       totalStaked: stakingInfo?.totalStaked ?? 0n,
       stakerCount: stakingInfo?.stakerCount ?? 0,
-      // `likeRank` is a stake rank linking to the staking page,
-      // so it's meaningless on the reading-ranked popular and sales-ranked bestselling lists
-      // suppress the badge rather than mislabel it.
-      likeRank: (isPopularTagId.value || isBestsellingTagId.value) ? 0 : (stakingInfo?.likeRank ?? 0),
+      // `likeRank` is a stake rank linking to the staking page, so it's meaningless on
+      // the reading/sales-ranked popular list and the personalized feed — suppress the
+      // badge rather than mislabel it.
+      likeRank: (isPopularTagId.value || isBestsellingTagId.value || isForYouTagId.value) ? 0 : (stakingInfo?.likeRank ?? 0),
     }
   })
 
@@ -664,6 +674,14 @@ const isSearchResultEmpty = computed(() => (
 
 function shouldFilterAdultOnly(bookstoreInfo: BookstoreInfo | null | undefined): boolean {
   return !isAdultContentEnabled.value && !!bookstoreInfo?.isAdultOnly
+}
+
+// Returns the source array when nothing was dropped. The For You gate below
+// reads the query cache, so it re-runs on any cache write; a fresh array would
+// then invalidate every downstream computed for an unchanged list.
+function filterKeepingIdentity<T>(items: T[], getIsKept: (item: T) => boolean): T[] {
+  const filtered = items.filter(getIsKept)
+  return filtered.length === items.length ? items : filtered
 }
 
 // Library mode keeps only Plus-reading books. CMS/built-in listings carry the
@@ -715,11 +733,20 @@ const baseProducts = computed<BookstoreItemList>(() => {
     }
   }
 
-  if (!isAdultContentEnabled.value) {
-    const filtered = cmsProducts.value.items.filter(item => !item.isAdultOnly)
-    return { ...cmsProducts.value, items: filtered }
+  let items = cmsProducts.value.items
+  // Scoped to the feed: CMS tag listings come from the bookstore API, which
+  // already excludes hidden books, while the feed's Airtable-sourced pools carry
+  // no such flag.
+  if (isForYouTagId.value) {
+    items = filterKeepingIdentity(items, (item) => {
+      const bookstoreInfo = getBookstoreInfoByNFTClassIdFromCache(queryCache, item.classId || item.id || '')
+      return !bookstoreInfo?.isHidden
+    })
   }
-  return cmsProducts.value
+  if (!isAdultContentEnabled.value) {
+    items = filterKeepingIdentity(items, item => !item.isAdultOnly)
+  }
+  return items === cmsProducts.value.items ? cmsProducts.value : { ...cmsProducts.value, items }
 })
 
 // Coalesce to an empty list: at the async-setup mount/hydration boundary the
@@ -765,6 +792,15 @@ const storeListStatus = computed(() => {
   if (itemsCount.value === 0 && !products.value.isFetchingItems && products.value.hasFetchedItems) return 'no-items' as const
   return null
 })
+
+// Tell a low-signal member why the personalized tab is showing the popular list.
+// Requires items so the hint never renders above an error or empty state.
+const isForYouFallbackHintVisible = computed(() =>
+  isForYouTagId.value
+  && products.value.hasFetchedItems
+  && itemsCount.value > 0
+  && !bookstoreStore.getIsForYouPersonalized(isLibraryTab.value),
+)
 
 const itemsForStructuredData = computed(() => products.value.items.slice(0, Math.min(20, itemsCount.value)))
 const structuredData = useStorePageStructuredData({
@@ -861,6 +897,33 @@ useHead(() => {
   }
 
   const encodedTagId = encodeURIComponent(tagId.value)
+  const listingPreloadLinks = []
+  if (isStakingTagId.value) {
+    // Same-origin proxy preload: the staking listing now routes through our own
+    // origin (/api/store/staking-books), so priming it is safe on iOS — the
+    // cross-origin indexer hop happens server-side and can't poison WKWebView's
+    // NSURLSession pool the way a direct cross-origin fetch could.
+    listingPreloadLinks.push({
+      rel: 'preload',
+      href: `/api/store/staking-books?sort_by=${mapTagIdToAPIStakingSortValue(tagId.value)}&sort_order=desc&limit=100`,
+      as: 'fetch' as const,
+      crossorigin: 'anonymous' as const,
+      key: 'preload-staking-books',
+    })
+  }
+  // The for-you feed is authed and `private, no-store`, so a preload can't be
+  // reused by the page fetch and would only waste a request. The library scopes
+  // its listing with `library=1`; preloading without it primes a different
+  // response than the one the page goes on to fetch.
+  else if (!isForYouTagId.value) {
+    listingPreloadLinks.push({
+      rel: 'preload',
+      href: `/api/store/products?tag=${encodedTagId}&limit=${MAX_BOOKSTORE_PAGE_SIZE}&ts=${getTimestampRoundedToMinute()}${isLibraryTab.value ? '&library=1' : ''}`,
+      as: 'fetch' as const,
+      crossorigin: 'anonymous' as const,
+      key: 'preload-store-products',
+    })
+  }
   const link = [
     {
       rel: 'canonical',
@@ -873,27 +936,7 @@ useHead(() => {
       crossorigin: 'anonymous' as const,
       key: 'preload-store-tags',
     },
-    // Same-origin proxy preload: the staking listing now routes through our own
-    // origin (/api/store/staking-books), so priming it is safe on iOS — the
-    // cross-origin indexer hop happens server-side and can't poison WKWebView's
-    // NSURLSession pool the way a direct cross-origin fetch could.
-    ...(isStakingTagId.value
-      ? [{
-          rel: 'preload',
-          href: `/api/store/staking-books?sort_by=${mapTagIdToAPIStakingSortValue(tagId.value)}&sort_order=desc&limit=100`,
-          as: 'fetch' as const,
-          crossorigin: 'anonymous' as const,
-          key: 'preload-staking-books',
-        }]
-      // The library scopes its listing with `library=1`; preloading without it primes a
-      // different response than the one the page goes on to fetch.
-      : [{
-          rel: 'preload',
-          href: `/api/store/products?tag=${encodedTagId}&limit=${MAX_BOOKSTORE_PAGE_SIZE}&ts=${getTimestampRoundedToMinute()}${isLibraryTab.value ? '&library=1' : ''}`,
-          as: 'fetch' as const,
-          crossorigin: 'anonymous' as const,
-          key: 'preload-store-products',
-        }]),
+    ...listingPreloadLinks,
   ]
 
   return {
@@ -919,6 +962,16 @@ watch(
     }
   },
 )
+
+// The store drops the previous reader's feed on an account switch, leaving this
+// page on an empty tab. Refetching here rather than in the store keeps the
+// error modal and hasForYouFetchError with the surface that renders them.
+watch(walletAddress, (wallet, previousWallet) => {
+  if (routeName.value !== ownRouteName) return
+  if (!previousWallet) return
+  if (!isForYouTagId.value) return
+  fetchItems({ isRefresh: true })
+})
 
 // Watch for changes in search parameters
 watch([querySearchTerm, queryAuthorName, queryPublisherName, queryOwnerWallet, queryGenre, queryAffiliate], async () => {
@@ -969,6 +1022,16 @@ async function fetchTags() {
 }
 
 async function fetchTagItems({ isRefresh = false } = {}) {
+  // The personalized feed is server-ranked and a single fixed page: skip the
+  // staking fetch and the client-side staking re-sort below entirely.
+  if (isForYouTagId.value) {
+    await bookstoreStore.fetchForYouProducts({ isRefresh, isLibrary: isLibraryTab.value })
+    useLogEvent(isLibraryTab.value ? 'library_for_you_view' : 'store_for_you_view', {
+      is_personalized: bookstoreStore.getIsForYouPersonalized(isLibraryTab.value),
+    })
+    return
+  }
+
   const currentTagId = tagId.value
   // Captured with currentTagId: both guards below run after awaits, and reading the
   // reactive computed there would follow a mid-fetch tab switch instead of this batch.

@@ -1,4 +1,4 @@
-import { getBookstoreScopedKey } from '~~/shared/utils/bookstore'
+import { BOOKSTORE_FOR_YOU_LIST_TYPE, getBookstoreScopedKey } from '~~/shared/utils/bookstore'
 
 interface BookstoreSearchOptions {
   isRefresh?: boolean
@@ -12,6 +12,8 @@ interface BookstoreCMSTagProducts {
   offset?: string
   mayHaveMore?: boolean
   ts?: number
+  // For You entries only: false when the popular cold-start fallback was served.
+  isPersonalized?: boolean
 }
 
 interface BookstoreSearchResults {
@@ -42,6 +44,7 @@ interface StakingBooks {
 
 export const useBookstoreStore = defineStore('bookstore', () => {
   const queryCache = useQueryCache()
+  const { user } = useUserSession()
 
   /* Bookstore CMS Products */
 
@@ -104,6 +107,81 @@ export const useBookstoreStore = defineStore('bookstore', () => {
     }
     finally {
       bookstoreCMSProductsByTagKeyMap.value[tagKey].isFetching = false
+    }
+  }
+
+  /* For You Products */
+
+  // Every other tag is the same for everyone; only these two buckets are keyed
+  // to the reader, so an account switch must drop them and nothing else.
+  function resetForYouProducts() {
+    const forYouKeys = [
+      getBookstoreScopedKey(BOOKSTORE_FOR_YOU_LIST_TYPE, false),
+      getBookstoreScopedKey(BOOKSTORE_FOR_YOU_LIST_TYPE, true),
+    ]
+    bookstoreCMSProductsByTagKeyMap.value = Object.fromEntries(
+      Object.entries(bookstoreCMSProductsByTagKeyMap.value)
+        .filter(([key]) => !forYouKeys.includes(key)),
+    )
+  }
+
+  // Skipped on session hydration (undefined -> wallet): no earlier reader's
+  // feed to drop. Lowercased so a casing change alone is not a switch.
+  watch(() => user.value?.evmWallet?.toLowerCase(), (wallet, previousWallet) => {
+    if (previousWallet && wallet !== previousWallet) {
+      resetForYouProducts()
+    }
+  })
+
+  const getIsForYouPersonalized = computed(() => (isLibrary = false) =>
+    bookstoreCMSProductsByTagKeyMap.value[getBookstoreScopedKey(BOOKSTORE_FOR_YOU_LIST_TYPE, isLibrary)]?.isPersonalized || false)
+
+  // Reuses bookstoreCMSProductsByTagKeyMap so the listing page's getters, skeleton
+  // and empty states work unchanged; the feed is a single fixed page (no cursor).
+  async function fetchForYouProducts({
+    isRefresh = false,
+    isLibrary = false,
+  }: {
+    isRefresh?: boolean
+    isLibrary?: boolean
+  } = {}) {
+    const tagKey = getBookstoreScopedKey(BOOKSTORE_FOR_YOU_LIST_TYPE, isLibrary)
+    if (bookstoreCMSProductsByTagKeyMap.value[tagKey]?.isFetching) {
+      return
+    }
+    if (bookstoreCMSProductsByTagKeyMap.value[tagKey]?.hasFetched && !isRefresh) {
+      return
+    }
+
+    if (!bookstoreCMSProductsByTagKeyMap.value[tagKey]) {
+      bookstoreCMSProductsByTagKeyMap.value[tagKey] = {
+        items: [],
+        isFetching: false,
+        hasFetched: false,
+        offset: undefined,
+      }
+    }
+    // Held across the await: resetForYouProducts drops the entry on an account
+    // switch, so writing the key back would resurrect the previous reader's
+    // feed under the new one — or throw, once the key is gone.
+    const entry = bookstoreCMSProductsByTagKeyMap.value[tagKey]!
+    const getIsEntryCurrent = () => bookstoreCMSProductsByTagKeyMap.value[tagKey] === entry
+    try {
+      entry.isFetching = true
+      const result = await fetchBookstoreForYouProducts({ isLibrary })
+      if (!getIsEntryCurrent()) return
+      entry.items = result.records
+      entry.offset = undefined
+      entry.mayHaveMore = false
+      entry.hasFetched = true
+      entry.isPersonalized = result.isPersonalized
+    }
+    catch (error) {
+      if (getIsEntryCurrent()) entry.hasFetched = true
+      throw error
+    }
+    finally {
+      entry.isFetching = false
     }
   }
 
@@ -459,6 +537,12 @@ export const useBookstoreStore = defineStore('bookstore', () => {
     getBookstoreCMSProductsByTagId,
 
     fetchCMSProductsByTagId,
+
+    /* For You Products */
+
+    getIsForYouPersonalized,
+
+    fetchForYouProducts,
 
     /* Bookstore Search Results */
 

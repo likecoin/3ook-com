@@ -563,7 +563,7 @@
           :class="getGridItemClassesByIndex(index)"
           :nft-class-id="classId"
           :lazy="true"
-          :ll-medium="'recommendation'"
+          :ll-medium="personalizedRecommendedClassIdSet.has(classId.toLowerCase()) ? 'recommendation-personalized' : 'recommendation'"
           :ll-source="nftClassId"
           :is-library="isLibrary"
           @open="handleRecommendedBookCoverClick"
@@ -759,6 +759,7 @@ const plusReadingTagRoute = computed(() =>
 
 const { handleError } = useErrorHandler()
 const { getAnalyticsParameters } = useAnalytics()
+const { fetchRecommendedNFTClassIds } = useBookRecommendations()
 
 const isDesktopScreen = useDesktopScreen()
 const { isApp } = useAppDetection()
@@ -1242,24 +1243,52 @@ const checkoutButtonProps = computed<{
   }
 })
 
+// Personalized candidates for the related-books section, seeded by this book.
+// Fetched client-side for logged-in users only; empty (guests, errors, pending)
+// leaves the section purely editorial, so there is no layout shift.
+const personalizedRecommendedClassIds = ref<string[]>([])
+const personalizedRecommendedClassIdSet = computed(() =>
+  new Set(personalizedRecommendedClassIds.value.map(id => id.toLowerCase())),
+)
+
+function getAuthorNameFromCache(classId: string): string {
+  return getBookEntityName(getNFTClassMetadataByIdFromCache(queryCache, classId)?.author)
+}
+
+const MAX_RECOMMENDED_BOOKS = 10
+const MAX_SAME_AUTHOR_LEAD_BOOKS = 4
+
 const recommendedClassIds = computed(() => {
   const ownedClassIds = authorStore.getOwnedBookClassIds(bookInfo.nftClassOwnerWalletAddress.value)
   const bookstoreRecommendedClassIds = bookInfo.bookstoreInfo.value?.recommendedClassIds || []
   const currentAuthorName = bookInfo.authorName.value
 
-  return ownedClassIds
-    .concat(bookstoreRecommendedClassIds)
-    .filter(id => id !== nftClassId.value)
-    .sort((a, b) => {
-      const metadataA = getNFTClassMetadataByIdFromCache(queryCache, a)
-      const metadataB = getNFTClassMetadataByIdFromCache(queryCache, b)
-      const authorA = getBookEntityName(metadataA?.author)
-      const authorB = getBookEntityName(metadataB?.author)
-      if (authorA === currentAuthorName && authorB !== currentAuthorName) return -1
-      if (authorA !== currentAuthorName && authorB === currentAuthorName) return 1
-      return 0
-    })
-    .slice(0, 10)
+  // Order-preserving partition by author, so the blend below can lead with
+  // same-author picks without a comparator or a second metadata pass.
+  const sameAuthorClassIds: string[] = []
+  const otherClassIds: string[] = []
+  for (const id of ownedClassIds.concat(bookstoreRecommendedClassIds)) {
+    if (id === nftClassId.value) continue
+    const isSameAuthor = !!currentAuthorName && getAuthorNameFromCache(id) === currentAuthorName
+    ;(isSameAuthor ? sameAuthorClassIds : otherClassIds).push(id)
+  }
+
+  // Deterministic slots: same-author editorial leads first (capped), then
+  // personalized candidates in server order, then the remaining editorial picks.
+  const seenClassIds = new Set([nftClassId.value.toLowerCase()])
+  const blendedClassIds: string[] = []
+  for (const id of [
+    ...sameAuthorClassIds.slice(0, MAX_SAME_AUTHOR_LEAD_BOOKS),
+    ...personalizedRecommendedClassIds.value,
+    ...sameAuthorClassIds,
+    ...otherClassIds,
+  ]) {
+    const key = id.toLowerCase()
+    if (seenClassIds.has(key)) continue
+    seenClassIds.add(key)
+    blendedClassIds.push(id)
+  }
+  return blendedClassIds.slice(0, MAX_RECOMMENDED_BOOKS)
 })
 
 const filteredRecommendedClassIds = computed(() => {
@@ -1294,6 +1323,16 @@ onMounted(async () => {
   // never trips lazyFetch's SWR path — nudge it here so a stale flag (試閱, Plus
   // reading) heals and its CTA self-corrects.
   revalidateNFTClassAggregatedMetadata(queryCache, [nftClassId.value])
+
+  // Personalized related books, seeded by this title; empty results (guests,
+  // errors) keep the section purely editorial.
+  fetchRecommendedNFTClassIds({
+    seed: nftClassId.value,
+    limit: 10,
+    isLibrary: isLibrary.value,
+  }).then((classIds) => {
+    personalizedRecommendedClassIds.value = classIds
+  })
 
   useLogEvent('view_item', formattedLogPayload.value)
   fetchNFTClassMessagesThroughCache(queryCache, nftClassId.value).catch((error) => {
@@ -1433,6 +1472,7 @@ function handleGiftButtonClick() {
 function handleRecommendedBookCoverClick(classId: string) {
   useLogEvent('recommend_book_click', {
     nft_class_id: classId,
+    is_personalized: personalizedRecommendedClassIdSet.value.has(classId.toLowerCase()),
   })
 }
 

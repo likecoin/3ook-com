@@ -1,3 +1,6 @@
+import { getBookstoreScopedKey } from '~~/shared/utils/bookstore'
+import { filterMeaningfulKeywords } from '~~/shared/utils/recommendation'
+
 const AIRTABLE_RECORDS_TTL = 86400 // 1 day
 const AIRTABLE_OFFSET_TTL = 120 // 2 minutes (Airtable offsets expire ~5 min)
 
@@ -107,6 +110,9 @@ export interface FetchAirtableCMSProductsByTagIdResponseData {
       'Calculation'?: boolean
       'Adult Only'?: boolean
       'In Library'?: boolean
+      'Author'?: string
+      'Genre'?: string
+      'Keywords Text'?: string
     }
   }>
   offset?: string
@@ -149,6 +155,12 @@ function normalizeMinPriceInDecimalByCurrency(
   return Object.keys(result).length ? result : undefined
 }
 
+// "Keywords Text" is a flat string whose delimiter is inconsistent across rows —
+// commas (with or without spaces) and ideographic enumeration marks both appear.
+function parseAirtableKeywordsText(keywordsText?: string): string[] {
+  return filterMeaningfulKeywords((keywordsText || '').split(/[,，;；、]/))
+}
+
 function normalizeProductRecord({ id, fields }: FetchAirtableCMSProductsByTagIdResponseData['records'][number]): BookstoreCMSProduct {
   const classIds = fields.IDs
   const isMultiple = classIds && classIds.length > 1
@@ -168,6 +180,9 @@ function normalizeProductRecord({ id, fields }: FetchAirtableCMSProductsByTagIdR
     minPrice: fields['Min Price'],
     minPriceInDecimalByCurrency: normalizeMinPriceInDecimalByCurrency(fields),
     timestamp: fields.Timestamp,
+    genre: fields.Genre || undefined,
+    authorName: fields.Author || undefined,
+    keywords: parseAirtableKeywordsText(fields['Keywords Text']),
   }
 }
 
@@ -210,6 +225,13 @@ export async function fetchAirtableCMSPublicationsBySearchTerm(
 
 export function sanitizeAirtableGenre(genre: string): string {
   return genre.replaceAll('"', '')
+}
+
+// Cache key for a genre listing's first page. Shared by /api/store/genre and the
+// for-you candidate pools so both hit the same cached records; keep in one place
+// so the formats can't silently drift apart.
+export function getGenreListingCacheKey(genre: string, pageSize: number, isLibrary: boolean): string {
+  return getBookstoreScopedKey(`genre:${sanitizeAirtableGenre(genre)}:${pageSize}`, isLibrary)
 }
 
 export async function fetchAirtableCMSPublicationsByGenre(

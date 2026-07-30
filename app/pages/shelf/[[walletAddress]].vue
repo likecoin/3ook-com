@@ -422,9 +422,34 @@
           </div>
         </template>
       </template>
+
+      <RecommendedBookGrid
+        v-if="isMyBookshelf"
+        class="w-full mt-12"
+        :nft-class-ids="recommendedNFTClassIds"
+        :title="$t('bookshelf_recommendations_title')"
+        ll-medium="recommendation-personalized"
+        ll-source="bookshelf"
+      />
     </main>
 
     <AppFooter v-if="isGuestShelf && !isApp" />
+
+    <!-- Read-next suggestions after marking a book finished -->
+    <UModal
+      v-model:open="isReadNextModalOpen"
+      :title="$t('bookshelf_read_next_modal_title')"
+      :description="$t('bookshelf_read_next_modal_description')"
+    >
+      <template #body>
+        <RecommendedBookGrid
+          :nft-class-ids="readNextNFTClassIds"
+          is-compact
+          ll-medium="recommendation-read-next"
+          ll-source="bookshelf-finished"
+        />
+      </template>
+    </UModal>
   </div>
 </template>
 
@@ -969,6 +994,27 @@ onMounted(async () => {
   }
 })
 
+/* Personalized recommendations (own shelf only) */
+
+const { fetchRecommendedNFTClassIds } = useBookRecommendations()
+const recommendedNFTClassIds = ref<string[]>([])
+const isReadNextModalOpen = ref(false)
+const readNextNFTClassIds = ref<string[]>([])
+
+// Watch both flags: the session may hydrate after mount (own-shelf check flips
+// without a remount), and an account switch changes the wallet while the
+// own-shelf check stays true — stale recommendations must not leak across.
+watch([isMyBookshelf, walletAddress], async ([isMine, wallet]) => {
+  if (!isMine) {
+    recommendedNFTClassIds.value = []
+    return
+  }
+  const classIds = await fetchRecommendedNFTClassIds()
+  // An account switch mid-fetch must not resolve into the new account's list.
+  if (walletAddress.value !== wallet) return
+  recommendedNFTClassIds.value = classIds
+}, { immediate: true })
+
 // PostHog loads lazily via @nuxt/scripts, so the flag may resolve after onMounted.
 watch(
   [isUploadedBookFeatureEnabled, hasLoggedIn, walletAddress],
@@ -1067,10 +1113,27 @@ function handleMarkBookAsReading(nftClassId: string) {
   bookshelfStore.markBookAsReading(nftClassId)
 }
 
-function handleMarkBookAsFinished(nftClassId: string) {
+async function handleMarkBookAsFinished(nftClassId: string) {
   if (!isMyBookshelf.value) return
   useLogEvent('shelf_mark_book_finished', { nft_class_id: nftClassId })
   bookshelfStore.markBookAsFinished(nftClassId)
+
+  // Suggest what to read next, seeded by the finished book; an empty result
+  // (guest, error, no candidates) simply skips the modal. Finishing a borrowed
+  // book suggests library picks, so the next read stays included in Plus.
+  const shelfItemType = getShelfItemType(nftClassId)
+  const classIds = await fetchRecommendedNFTClassIds({
+    seed: nftClassId,
+    limit: 6,
+    isLibrary: shelfItemType === 'borrowed',
+  })
+  if (classIds.length === 0) return
+  readNextNFTClassIds.value = classIds
+  isReadNextModalOpen.value = true
+  useLogEvent('shelf_read_next_modal_open', {
+    nft_class_id: nftClassId,
+    shelf_item_type: shelfItemType,
+  })
 }
 
 // The store owns the whole return: borrow drop + pre-lent tombstone.

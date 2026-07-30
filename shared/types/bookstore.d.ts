@@ -16,12 +16,23 @@ export interface BookstoreCMSProduct {
   timestamp?: number
   totalStaked?: bigint
   stakerCount?: number
+  // Recommendation metadata, read by the For You scorer and stripped before
+  // responding. Absent on sources that don't supply them; `keywords` is already
+  // run through filterMeaningfulKeywords by every normalizer that sets it.
+  genre?: string
+  authorName?: string
+  keywords?: string[]
 }
 
 export interface FetchBookstoreCMSProductsResponseData {
   records: Array<BookstoreCMSProduct>
   offset?: string
   hasMore?: boolean
+}
+
+export interface FetchBookstoreForYouResponseData extends FetchBookstoreCMSProductsResponseData {
+  // False when the user lacks reading signal and the popular list is served instead.
+  isPersonalized: boolean
 }
 
 export interface BookstoreCMSTag {

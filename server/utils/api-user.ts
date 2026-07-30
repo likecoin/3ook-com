@@ -120,7 +120,7 @@ export async function updateUserTTSCharacterUsage(
   })
 }
 
-function timestampToMillis(value: Timestamp | null | undefined): number | undefined {
+export function timestampToMillis(value: unknown): number | undefined {
   return value instanceof Timestamp ? value.toMillis() : undefined
 }
 

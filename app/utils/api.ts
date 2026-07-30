@@ -60,6 +60,25 @@ export function fetchBookstoreCMSProductsByTagId(tagId: string, {
   })
 }
 
+// Authed personalized feed; a single fixed page (no offset pagination).
+export function fetchBookstoreForYouProducts({
+  limit,
+  seed,
+  isLibrary = false,
+}: {
+  limit?: number
+  seed?: string
+  isLibrary?: boolean
+} = {}) {
+  return apiFetch<FetchBookstoreForYouResponseData>('/store/for-you', {
+    query: {
+      limit,
+      seed,
+      library: isLibrary ? '1' : undefined,
+    },
+  })
+}
+
 export function fetchBookstoreCMSPublicationsBySearchTerm(searchTerm: string, {
   offset,
   limit = MAX_BOOKSTORE_PAGE_SIZE,

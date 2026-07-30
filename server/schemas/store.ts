@@ -1,5 +1,7 @@
 import * as v from 'valibot'
 
+import { checkIsEVMAddress } from '~~/shared/utils'
+
 const PaginationFields = {
   limit: v.optional(v.union([v.string(), v.array(v.string())])),
   offset: v.optional(v.union([v.string(), v.array(v.string())])),
@@ -37,6 +39,18 @@ export const StoreSearchQuerySchema = v.object({
     ),
   ),
   ...PaginationFields,
+  ...LibraryFilterField,
+})
+
+export const StoreForYouQuerySchema = v.object({
+  // Product-page seed: biases scoring toward this book's genre/author pools.
+  seed: v.pipe(
+    v.optional(v.union([v.string(), v.array(v.string())])),
+    v.transform(val => (Array.isArray(val) ? val[0] : val)),
+    v.check(val => !val || checkIsEVMAddress(val), 'INVALID_SEED'),
+  ),
+  // Fixed single page — personalized rankings don't paginate stably.
+  limit: PaginationFields.limit,
   ...LibraryFilterField,
 })
 

@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
       isLibrary,
     })
     setHeader(event, 'cache-control', 'public, max-age=60, stale-while-revalidate=600')
-    return result
+    return stripRecommendationMetadata(result)
   }
   catch (error) {
     if (error instanceof FetchError) {

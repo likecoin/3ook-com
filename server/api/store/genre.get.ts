@@ -1,7 +1,6 @@
 import { FetchError } from 'ofetch'
 
 import { StoreGenreQuerySchema } from '~~/server/schemas/store'
-import { getBookstoreScopedKey } from '~~/shared/utils/bookstore'
 
 export default defineEventHandler(async (event) => {
   try {
@@ -14,15 +13,19 @@ export default defineEventHandler(async (event) => {
 
     if (offset) {
       setHeader(event, 'cache-control', 'no-store')
-      return await fetchAirtableCMSPublicationsByGenre(genre, { pageSize, offset, isLibrary })
+      return stripRecommendationMetadata(
+        await fetchAirtableCMSPublicationsByGenre(genre, { pageSize, offset, isLibrary }),
+      )
     }
 
+    // Cached rows keep their recommendation metadata: the For You candidate
+    // pools read this same cache entry. Strip only on the way out.
     const result = await fetchWithAirtableCache(
-      getBookstoreScopedKey(`genre:${genre}:${pageSize}`, isLibrary),
+      getGenreListingCacheKey(genre, pageSize, isLibrary),
       () => fetchAirtableCMSPublicationsByGenre(genre, { pageSize, isLibrary }),
     )
     setHeader(event, 'cache-control', 'public, max-age=60')
-    return result
+    return stripRecommendationMetadata(result)
   }
   catch (error) {
     if (error instanceof FetchError) {

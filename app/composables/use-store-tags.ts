@@ -48,11 +48,17 @@ export function useStoreTags({ routeName, isLibraryTab }: StoreTagsOptions) {
     return id.startsWith(STAKING_SORT_TAG_PREFIX)
   }
 
+  function getIsForYouTagId(id: string) {
+    return id === BOOKSTORE_FOR_YOU_LIST_TYPE
+  }
+
   // Strict tab separation: a tag only belongs to the tab it's flagged for,
   // so a cross-tab deep link (e.g. /library?tag=<store-only tag>) resolves to the default.
   function getIsTagIdValidForTab(id: string) {
     // The tab's default tag is always valid.
     if (getIsDefaultTagId(id)) return true
+    // The personalized feed is logged-in only; guest deep links resolve to the default.
+    if (getIsForYouTagId(id)) return hasLoggedIn.value
     // Staking sort and local histories are store-only entries.
     if (getIsStakingTagId(id) || getIsLocalHistoriesTagId(id)) return !isLibraryTab.value
     // CMS tags must carry the flag matching the current tab.
@@ -87,6 +93,7 @@ export function useStoreTags({ routeName, isLibraryTab }: StoreTagsOptions) {
   const isStakingTagId = computed(() => getIsStakingTagId(tagId.value))
   const isPopularTagId = computed(() => tagId.value === BOOKSTORE_POPULAR_LIST_TYPE)
   const isBestsellingTagId = computed(() => tagId.value === BOOKSTORE_BESTSELLING_LIST_TYPE)
+  const isForYouTagId = computed(() => getIsForYouTagId(tagId.value))
 
   const normalizedLocale = computed(() => locale.value === 'zh-Hant' ? 'zh' : 'en')
 
@@ -121,6 +128,11 @@ export function useStoreTags({ routeName, isLibraryTab }: StoreTagsOptions) {
   }
 
   const allTagItems = computed(() => {
+    // The personalized feed needs a session; guests never see the pill.
+    const forYouTags = hasLoggedIn.value
+      ? [{ label: $t('store_tag_for_you'), value: BOOKSTORE_FOR_YOU_LIST_TYPE }]
+      : []
+
     // Stake ranking is a storefront signal; the library ranks by reading instead.
     const stakingTags = isLibraryTab.value
       ? []
@@ -164,7 +176,7 @@ export function useStoreTags({ routeName, isLibraryTab }: StoreTagsOptions) {
       : cmsTags
 
     // On mobile, pin the local-histories CMS tag last.
-    const ordered = [...stakingTags, ...visibleCMSTags]
+    const ordered = [...forYouTags, ...stakingTags, ...visibleCMSTags]
     if (isMobile.value) {
       const localHistoriesIndex = ordered.findIndex(tag => getIsLocalHistoriesTagId(tag.value))
       if (localHistoriesIndex !== -1) {
@@ -205,6 +217,7 @@ export function useStoreTags({ routeName, isLibraryTab }: StoreTagsOptions) {
     isStakingTagId,
     isPopularTagId,
     isBestsellingTagId,
+    isForYouTagId,
     getIsLocalHistoriesTagId,
     normalizedLocale,
     activeCMSTag,

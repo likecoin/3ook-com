@@ -1,7 +1,8 @@
 import type { H3Event } from 'h3'
 import { FetchError } from 'ofetch'
 import { getLikeCoinAPIFetch } from '~~/shared/utils/api'
-import { MAX_BOOKSTORE_PAGE_SIZE, type BookstoreBuiltInListType } from '~~/shared/utils/bookstore'
+import { MAX_BOOKSTORE_PAGE_SIZE, type BookstoreBuiltInListType, getBookEntityName } from '~~/shared/utils/bookstore'
+import { filterMeaningfulKeywords } from '~~/shared/utils/recommendation'
 
 export const BOOKSTORE_API_BASE_PATH = '/likernft/book/store'
 
@@ -33,6 +34,10 @@ interface NFTBookListingInfo {
   // Denormalized cheapest listed price (in major units, i.e. priceInDecimal/100).
   // Falls back to scanning `prices` when absent (e.g. docs predating backfill).
   minPrice?: number
+  // Recommendation metadata. `author` is a BookEntity, hence getBookEntityName.
+  genre?: string
+  author?: BookEntity
+  keywords?: string[]
 }
 
 interface NFTBookCMSTagsResponse {
@@ -106,6 +111,9 @@ function normalizeBookListingToProduct(book: NFTBookListingInfo): BookstoreCMSPr
     minPrice: book.minPrice ?? cheapest?.price,
     minPriceInDecimalByCurrency: cheapest?.priceInDecimalByCurrency,
     timestamp: book.timestamp,
+    genre: book.genre || undefined,
+    authorName: getBookEntityName(book.author) || undefined,
+    keywords: filterMeaningfulKeywords(book.keywords),
   }
 }
 
@@ -206,12 +214,31 @@ export async function fetchBookstorePopularListing(
 // limit falls back to the max, while `limit=0` clamps to 1 (not the max — `0 || max`
 // would have swallowed it). `limit=` alone is treated as missing so it doesn't slip
 // through as Number('')=0.
+// Parse the `library=1` query flag shared by the store listing endpoints.
+export function parseIsLibraryQuery(library: string | string[] | undefined): boolean {
+  return (Array.isArray(library) ? library[0] : library) === '1'
+}
+
 export function parseBookstorePageSize(limit: string | string[] | undefined): number {
   const raw = Array.isArray(limit) ? limit[0] : limit
   const limitNum = raw === undefined || raw === '' ? NaN : Number(raw)
   return Number.isFinite(limitNum)
     ? Math.min(Math.max(1, Math.floor(limitNum)), MAX_BOOKSTORE_PAGE_SIZE)
     : MAX_BOOKSTORE_PAGE_SIZE
+}
+
+/**
+ * Drops the fields the For You scorer reads off candidate products. Nothing in
+ * the UI renders them, and carrying them adds ~24% to a gzipped listing page,
+ * so they stay server-side: strip at every boundary that responds to a client.
+ */
+export function stripRecommendationMetadata(
+  result: FetchBookstoreCMSProductsResponseData,
+): FetchBookstoreCMSProductsResponseData {
+  return {
+    ...result,
+    records: result.records.map(({ genre, authorName, keywords, ...record }) => record),
+  }
 }
 
 export async function respondWithBookstoreAPI(
@@ -253,7 +280,7 @@ export async function respondWithBookstoreAPI(
   try {
     const result = await fetcher({ pageSize, nextKey, isLibrary })
     setHeader(event, 'cache-control', 'public, max-age=60')
-    return result
+    return stripRecommendationMetadata(result)
   }
   catch (error) {
     if (error instanceof FetchError && error.statusCode === 404) {

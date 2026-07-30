@@ -17,6 +17,9 @@ export const BOOKSTORE_POPULAR_LIST_TYPE: BookstoreBuiltInListType = 'popular'
 
 // Ranked upstream by paid sales.
 export const BOOKSTORE_BESTSELLING_LIST_TYPE: BookstoreBuiltInListType = 'bestselling'
+// Personalized feed backed by the authed /api/store/for-you endpoint. Deliberately
+// not a built-in list type: /api/store/products does not serve it.
+export const BOOKSTORE_FOR_YOU_LIST_TYPE = 'for-you'
 
 export function isBookstoreBuiltInListType(value: string): value is BookstoreBuiltInListType {
   return (BOOKSTORE_BUILT_IN_LIST_TYPES as readonly string[]).includes(value)

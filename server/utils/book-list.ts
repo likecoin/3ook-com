@@ -21,9 +21,12 @@ function normalizeBookListItemData(doc: DocumentSnapshot<BookListItemData>): Boo
 
 export async function fetchUserBookList(
   userWallet: string,
+  { limit }: { limit?: number } = {},
 ): Promise<BookListItem[]> {
   const bookListCollection = getBookListCollection(userWallet)
-  const snapshot = await bookListCollection.orderBy('timestamp', 'desc').get()
+  let query = bookListCollection.orderBy('timestamp', 'desc')
+  if (limit) query = query.limit(limit)
+  const snapshot = await query.get()
 
   return snapshot.docs.map(doc => normalizeBookListItemData(doc))
 }
