@@ -47,6 +47,13 @@ const OWNED_BOOKS_MAX_PAGES = 5
 const OWNED_BOOKS_DRAIN_TIMEOUT_MS = 5000
 
 const FEED_CACHE_TTL_MS = 15 * 60 * 1000
+// Single staleness authority for both portrait cache tiers — the in-memory
+// maxAge derives from it, so the L1 can't outlive the durable layer.
+const PORTRAIT_CACHE_TTL_MS = 60 * 60 * 1000
+const PORTRAIT_CACHE_DOC_ID = 'for-you-portrait'
+// Bump whenever UserAffinityPortrait gains or renames a field: cached payloads
+// are rehydrated straight into the scorer, so an older shape must count as a miss.
+const PORTRAIT_CACHE_VERSION = 1
 
 export interface ForYouFetchOptions {
   isLibrary?: boolean
@@ -138,13 +145,62 @@ async function buildUserPortrait(wallet: string): Promise<UserAffinityPortrait> 
   return derivePortraitFromDocs(bookEntries, wishlistClassIds, metadataByClassId, Date.now())
 }
 
-// Per-instance cache; the durable Firestore feed cache below is what keeps warm
-// latency low across deploys/scale-out, so a portrait cache miss is acceptable.
-const fetchUserPortrait = defineCachedFunction(buildUserPortrait, {
+function getUserCacheDocRef(wallet: string, docId: string) {
+  return getUserCollection().doc(wallet).collection('cache').doc(docId)
+}
+
+interface PortraitCacheDocData {
+  // Stored as a JSON string, not a Firestore map: the affinity keys are Airtable
+  // genres/authors/keywords, which as map keys become field names and would then
+  // be subject to Firestore's reserved-name rules.
+  portrait: string
+  version: number
+  computedAt: Timestamp
+}
+
+async function readPortraitCache(wallet: string): Promise<UserAffinityPortrait | undefined> {
+  try {
+    const cached = (await getUserCacheDocRef(wallet, PORTRAIT_CACHE_DOC_ID).get())
+      .data() as PortraitCacheDocData | undefined
+    if (!cached || cached.version !== PORTRAIT_CACHE_VERSION) return undefined
+    if (Date.now() - cached.computedAt.toMillis() >= PORTRAIT_CACHE_TTL_MS) return undefined
+    return JSON.parse(cached.portrait) as UserAffinityPortrait
+  }
+  catch (error) {
+    console.warn('[for-you] Failed to read portrait cache:', error)
+    return undefined
+  }
+}
+
+async function fetchDurableUserPortrait(wallet: string): Promise<UserAffinityPortrait> {
+  const cached = await readPortraitCache(wallet)
+  if (cached) return cached
+
+  const portrait = await buildUserPortrait(wallet)
+  // Cold-start portraits gate the personalized/popular switch, so persisting one
+  // would pin a user who just crossed the threshold to the popular feed for a
+  // whole TTL. They are also the cheapest to rebuild.
+  if (portrait.signalBookCount >= FOR_YOU_MIN_SIGNAL_BOOKS) {
+    // Fire-and-forget; a failed write only costs the next request a rebuild.
+    getUserCacheDocRef(wallet, PORTRAIT_CACHE_DOC_ID).set({
+      portrait: JSON.stringify(portrait),
+      version: PORTRAIT_CACHE_VERSION,
+      computedAt: Timestamp.now(),
+    }).catch((error) => {
+      console.warn('[for-you] Failed to write portrait cache:', error)
+    })
+  }
+  return portrait
+}
+
+// Two tiers: this per-instance cache flushes on deploy/scale-out, so the durable
+// read-through above is what spares a cold instance the portrait's ~50 metadata
+// fetches. A warm hit here never touches Firestore.
+const fetchUserPortrait = defineCachedFunction(fetchDurableUserPortrait, {
   name: 'for-you-portrait',
   group: 'store',
   swr: true,
-  maxAge: 3600,
+  maxAge: PORTRAIT_CACHE_TTL_MS / 1000,
   getKey: (wallet: string) => wallet.toLowerCase(),
 })
 
@@ -448,10 +504,7 @@ interface ForYouFeedCacheDocData {
 }
 
 function getFeedCacheDocRef(wallet: string, isLibrary: boolean) {
-  return getUserCollection()
-    .doc(wallet)
-    .collection('cache')
-    .doc(isLibrary ? 'for-you-library' : 'for-you-store')
+  return getUserCacheDocRef(wallet, isLibrary ? 'for-you-library' : 'for-you-store')
 }
 
 /**
