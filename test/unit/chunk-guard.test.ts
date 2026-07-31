@@ -6,6 +6,7 @@ import {
   CHUNK_ERROR_PATTERNS,
   CHUNK_ERROR_PREBOOT_KEY,
   CHUNK_ERROR_RELOADS_KEY,
+  CHUNK_GUARD_OVERLAY_ID,
   CHUNK_GUARD_SCRIPT,
 } from '~~/shared/utils/chunk-guard'
 
@@ -84,6 +85,11 @@ function setup(options: SetupOptions = {}) {
     win.document.head.appendChild(script)
     script.dispatchEvent(new win.Event('error'))
   }
+  // Raised by the plugin the moment Nuxt boots, which routinely happens inside
+  // the guard's flush delay — i.e. after install, mid-incident.
+  const boot = () => {
+    globalWin.__chunkLadderActive = true
+  }
   const failLink = (href: string, rel = 'prefetch') => {
     const link = win.document.createElement('link')
     link.setAttribute('rel', rel)
@@ -109,6 +115,7 @@ function setup(options: SetupOptions = {}) {
     postMessage,
     swUnregister,
     cacheDelete,
+    boot,
     failEntryScript,
     failLink,
     rejectWith,
@@ -132,6 +139,7 @@ describe('CHUNK_GUARD_SCRIPT serialization', () => {
     expect(CHUNK_GUARD_SCRIPT).toContain(CHUNK_ERROR_FIRST_AT_KEY)
     expect(CHUNK_GUARD_SCRIPT).toContain(CHUNK_ERROR_RELOADS_KEY)
     expect(CHUNK_GUARD_SCRIPT).toContain(CHUNK_ERROR_PREBOOT_KEY)
+    expect(CHUNK_GUARD_SCRIPT).toContain(CHUNK_GUARD_OVERLAY_ID)
     for (const pattern of CHUNK_ERROR_PATTERNS) {
       expect(CHUNK_GUARD_SCRIPT).toContain(pattern)
     }
@@ -200,6 +208,8 @@ describe('installChunkGuard', () => {
     expect(t.timers).toHaveLength(0)
     const button = t.win.document.querySelector('button')
     expect(button?.textContent).toBe('重試 Retry')
+    // The booted app finds the banner by id and tears it down.
+    expect(t.win.document.getElementById(CHUNK_GUARD_OVERLAY_ID)).not.toBeNull()
     button!.click()
     expect(t.win.localStorage.getItem(CHUNK_ERROR_RELOADS_KEY)).toBe('0')
     expect(t.reload).toHaveBeenCalledOnce()
@@ -270,6 +280,46 @@ describe('installChunkGuard', () => {
     t.failLink(`${ENTRY_SRC}?v=1`, 'modulepreload')
 
     expect(t.breadcrumb()).toMatchObject({ action: 'reload' })
+  })
+
+  it('abandons the pending reload when the app boots first', () => {
+    const t = setup()
+    t.failEntryScript()
+    t.boot()
+    t.timers[0]!.fn()
+
+    expect(t.reload).not.toHaveBeenCalled()
+    // The rung never ran, so it must not consume a step of the ladder.
+    expect(t.win.localStorage.getItem(CHUNK_ERROR_RELOADS_KEY)).toBe('0')
+    expect(t.breadcrumb()).toMatchObject({ action: 'reload', stood_down: true })
+  })
+
+  it('abandons the pending purge when the app boots first', async () => {
+    const t = setup({ sw: true })
+    t.failEntryScript()
+    t.boot()
+    t.timers[0]!.fn()
+
+    // Let the async purge run if it is going to, then assert it never did:
+    // the offline caches survive and the live page is not navigated away from.
+    await new Promise(resolve => setTimeout(resolve, 0))
+    expect(t.cacheDelete).not.toHaveBeenCalled()
+    expect(t.swUnregister).not.toHaveBeenCalled()
+    expect(t.replace).not.toHaveBeenCalled()
+    expect(t.win.localStorage.getItem(CHUNK_ERROR_RELOADS_KEY)).toBe('1')
+    expect(t.breadcrumb()).toMatchObject({ action: 'purge', stood_down: true })
+  })
+
+  it('completes a purge that was already destructive when the app boots', async () => {
+    const t = setup({ sw: true })
+    t.failEntryScript()
+    t.timers[0]!.fn()
+    // Booting mid-purge is too late to bail: the worker is already gone and
+    // only a fresh load re-registers it.
+    t.boot()
+
+    await vi.waitFor(() => expect(t.replace).toHaveBeenCalledOnce())
+    expect(t.swUnregister).toHaveBeenCalledOnce()
   })
 
   it('stands down when the booted app owns the ladder', () => {

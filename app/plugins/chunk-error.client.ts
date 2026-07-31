@@ -4,6 +4,7 @@ import {
   CHUNK_ERROR_FIRST_AT_KEY,
   CHUNK_ERROR_PATTERNS,
   CHUNK_ERROR_RELOADS_KEY,
+  CHUNK_GUARD_OVERLAY_ID,
   clearPrebootChunkError,
   readPrebootChunkError,
 } from '~~/shared/utils/chunk-guard'
@@ -25,6 +26,11 @@ export default defineNuxtPlugin((nuxtApp) => {
   // SSR <head>) that the in-app ladder owns recovery from here on.
   window.__chunkLadderActive = true
 
+  // The guard surrenders before the app exists, so its full-screen retry banner
+  // outlives a boot that then succeeds — most do, within seconds. Reaching here
+  // is the boot signal it never had.
+  document.getElementById(CHUNK_GUARD_OVERLAY_ID)?.remove()
+
   // A breadcrumb from the pre-boot guard means an earlier document died before
   // Nuxt booted and this boot is its recovery — report the incident PostHog
   // never saw. Clear only after the event is queued (inside onLoaded), so a
@@ -40,6 +46,7 @@ export default defineNuxtPlugin((nuxtApp) => {
         attempt: preboot.attempt,
         had_sw: preboot.had_sw,
         native_cleared: preboot.native_cleared,
+        stood_down: !!preboot.stood_down,
         error_message: preboot.error_message,
         // A breadcrumb can outlive its session (PostHog never loaded); age
         // separates a just-now recovery from a days-old incident.

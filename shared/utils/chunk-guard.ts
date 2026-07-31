@@ -16,6 +16,9 @@ export const CHUNK_ERROR_FIRST_AT_KEY = 'chunk_error_first_at'
 export const CHUNK_ERROR_RELOADS_KEY = 'chunk_error_reloads'
 // Breadcrumb handed to the app after a successful boot for deferred telemetry.
 export const CHUNK_ERROR_PREBOOT_KEY = 'chunk_error_preboot'
+// Id on the surrender overlay. The guard has no boot signal of its own, so
+// plugins/chunk-error.client.ts tears the banner down once the app is up.
+export const CHUNK_GUARD_OVERLAY_ID = 'chunk-guard-overlay'
 
 // Browser messages for a failed chunk/module load. Duplicated as literals
 // inside installChunkGuard (self-containment); the serialization test keeps
@@ -33,6 +36,9 @@ export interface PrebootChunkError {
   had_sw: boolean
   native_cleared: boolean
   error_message: string
+  // The app booted before this rung fired, so the action was chosen but never
+  // taken. Without it the funnel counts purges and reloads that never ran.
+  stood_down: boolean
 }
 
 declare global {
@@ -116,6 +122,11 @@ export function installChunkGuard(): void {
     const NATIVE_CLEAR_FALLBACK_MS = 3000
     let handled = false
 
+    // Recovery is scheduled, not immediate, and the app often boots inside that
+    // window. Once it has, the plugin owns the ladder (see recover below) and a
+    // reload or cache wipe would only disrupt a page that already healed.
+    const hasBooted = (): boolean => !!window.__chunkLadderActive
+
     const readNumber = (key: string): number => {
       try {
         return Number(localStorage.getItem(key)) || 0
@@ -135,6 +146,7 @@ export function installChunkGuard(): void {
 
     const showRetryBanner = (): void => {
       const overlay = document.createElement('div')
+      overlay.setAttribute('id', 'chunk-guard-overlay')
       overlay.setAttribute(
         'style',
         'position:fixed;top:0;left:0;right:0;bottom:0;z-index:2147483647;'
@@ -163,7 +175,7 @@ export function installChunkGuard(): void {
 
     const recover = (message: string): void => {
       // Once Nuxt has booted, its chunk-error plugin owns recovery.
-      if (handled || window.__chunkLadderActive) return
+      if (handled || hasBooted()) return
       handled = true
 
       const now = Date.now()
@@ -178,7 +190,11 @@ export function installChunkGuard(): void {
       const hadSW = !!(navigator.serviceWorker && navigator.serviceWorker.controller)
       const effectiveAttempt = hadSW && attempt === 0 ? 1 : attempt
 
-      const record = (action: PrebootChunkError['action'], nativeCleared: boolean): void => {
+      const record = (
+        action: PrebootChunkError['action'],
+        nativeCleared: boolean,
+        stoodDown?: boolean,
+      ): void => {
         write('chunk_error_preboot', JSON.stringify({
           at: now,
           action,
@@ -186,7 +202,16 @@ export function installChunkGuard(): void {
           had_sw: hadSW,
           native_cleared: nativeCleared,
           error_message: message.slice(0, 100),
+          stood_down: !!stoodDown,
         }))
+      }
+
+      // The app booted while this rung was pending. Give the ladder position
+      // back so a later failure still gets a real attempt, and mark the
+      // breadcrumb so telemetry doesn't credit an action that never ran.
+      const standDown = (action: PrebootChunkError['action'], nativeCleared: boolean): void => {
+        write('chunk_error_reloads', String(effectiveAttempt))
+        record(action, nativeCleared, true)
       }
 
       if (effectiveAttempt >= 2) {
@@ -213,6 +238,10 @@ export function installChunkGuard(): void {
         }
         record('purge', nativeClearRequested)
         setTimeout(() => {
+          if (hasBooted()) {
+            standDown('purge', nativeClearRequested)
+            return
+          }
           const purge = async (): Promise<void> => {
             try {
               const regs = navigator.serviceWorker
@@ -228,6 +257,9 @@ export function installChunkGuard(): void {
             catch {
               // Best effort — the cache-busted replace below still helps.
             }
+            // No second stand-down check here: past this point the worker is
+            // unregistered and the caches are gone, and only a fresh load
+            // re-registers. Bailing would strand the page with neither.
             const url = new URL(window.location.href)
             url.searchParams.set('_swrefresh', String(now))
             window.location.replace(url.toString())
@@ -239,7 +271,13 @@ export function installChunkGuard(): void {
 
       // First error with no controlling SW: a plain reload refetches from network.
       record('reload', false)
-      setTimeout(() => window.location.reload(), RELOAD_FLUSH_DELAY_MS)
+      setTimeout(() => {
+        if (hasBooted()) {
+          standDown('reload', false)
+          return
+        }
+        window.location.reload()
+      }, RELOAD_FLUSH_DELAY_MS)
     }
 
     window.addEventListener('error', (event) => {
