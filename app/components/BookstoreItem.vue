@@ -162,7 +162,7 @@ const priceCurrencyOverride = computed(() => (
 const formattedPrice = computed(() => formatPrice(price.value, priceCurrencyOverride.value))
 
 const isPlusReadingIconVisible = computed(() =>
-  props.shouldShowPlusReadingIcon && price.value > 0 && bookInfo.isPlusReadingEnabled.value,
+  props.shouldShowPlusReadingIcon && bookInfo.isPlusReadingEnabled.value,
 )
 
 const formattedDiscountPrice = computed(() => {
