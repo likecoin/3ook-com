@@ -55,7 +55,7 @@
       </UFieldGroup>
 
       <div
-        v-if="!isLibrary && pricingItems.length"
+        v-if="!isLibrary && !isPurchaseHidden && pricingItems.length"
         class="flex items-center justify-between flex-wrap gap-2"
       >
         <span class="shrink-0 space-x-0.5 text-xl font-semibold leading-none">
@@ -102,7 +102,7 @@
 
       <div class="flex gap-2">
         <UButton
-          v-if="!isLibrary && pricingItems.length"
+          v-if="!isLibrary && !isPurchaseHidden && pricingItems.length"
           v-bind="checkoutButtonProps"
           class="flex-1 cursor-pointer justify-center"
           color="primary"

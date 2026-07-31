@@ -10,6 +10,7 @@ export interface ProductPricingSelectorItem {
 
 export interface ProductPricingSelectorProps {
   items: ProductPricingSelectorItem[]
+  isPriceHidden?: boolean
   isLikerPlus: boolean
   contentTypes: string[]
   isDownloadable: boolean

@@ -67,7 +67,7 @@
               v-text="$t('product_page_sold_out_button_label')"
             />
             <span
-              v-else
+              v-else-if="!isPriceHidden"
               class="flex flex-col items-end text-right"
             >
               <template v-if="item?.discountedPrice">

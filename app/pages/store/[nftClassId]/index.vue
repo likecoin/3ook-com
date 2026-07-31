@@ -412,6 +412,7 @@
               <ProductPricingSelector
                 v-if="pricingItems.length && !isLibrary"
                 :items="pricingItems"
+                :is-price-hidden="isFreeBorrowOnly"
                 :is-liker-plus="isLikerPlus"
                 :content-types="bookInfo.contentTypes.value"
                 :is-downloadable="bookInfo.isDownloadable.value"
@@ -425,7 +426,7 @@
               <!-- [購買/再次購買][閱讀/借閱] -->
               <footer class="flex gap-3">
                 <UButton
-                  v-if="!isLibrary && pricingItems.length"
+                  v-if="!isLibrary && !isFreeBorrowOnly && pricingItems.length"
                   v-bind="checkoutButtonProps"
                   class="flex-1 cursor-pointer justify-center"
                   size="xl"
@@ -463,7 +464,7 @@
             </div>
 
             <div
-              v-if="pricingItems.length && !isLibrary"
+              v-if="pricingItems.length && !isLibrary && !isFreeBorrowOnly"
               class="flex gap-3 px-4"
             >
               <UButton
@@ -516,7 +517,7 @@
           </ul>
 
           <p
-            v-if="!isLibrary && selectedPricingItem"
+            v-if="!isLibrary && selectedPricingItem && !isSelectedPricingItemFree"
             class="px-4 text-xs text-muted text-center leading-4"
           >
             <span v-text="deliveryRefundNote" />
@@ -582,6 +583,7 @@
       :is-user-book-owner="isUserBookOwner"
       :is-plus-reading-cta-visible="isPlusReadingCTAVisible"
       :is-preview-cta-visible="isPreviewCTAVisible"
+      :is-purchase-hidden="isFreeBorrowOnly"
       :plus-reading-cta-label="plusReadingCTALabel"
       :plus-reading-cta-variant="plusReadingCTAVariant"
       :read-button-variant="readButtonVariant"
@@ -798,6 +800,12 @@ const plusReadingCTALabel = computed(() =>
     ? $t('product_page_read_button_label')
     : $t('product_page_plus_reading_borrow'),
 )
+
+const isFreeBorrowOnly = computed(() =>
+  bookInfo.isFreeBorrowEnabled.value
+  && bookInfo.pricingItems.value.every(item => item.price === 0),
+)
+
 // Read is a quiet secondary action for Plus members (outline); non-Plus owners get a prominent solid button instead.
 const readButtonVariant = computed(() => (isLikerPlus.value ? 'outline' : 'solid'))
 // The shared borrow/read CTA shows Read (outline) once borrowed, else Borrow (solid).
