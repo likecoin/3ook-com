@@ -592,14 +592,20 @@ export const useBookstoreStore = defineStore('bookstore', () => {
       }),
     },
     // A persisted isFetching:true (app killed mid-fetch) would dead-lock the
-    // guard in fetchStakingBooks, so clear in-flight flags on restore.
+    // guard in fetchStakingBooks, so restore normalizes the previous session's
+    // fetch bookkeeping rather than carrying it into this one.
     afterHydrate: ({ store }) => {
       // Corrupted/version-skewed storage could hydrate a non-object here; a throw
       // would abort afterHydrate and break hydration of the whole store.
       const map = store.stakingBooksMap as unknown
       if (!map || typeof map !== 'object') return
       for (const entry of Object.values(map as Record<string, StakingBooks>)) {
-        if (entry && typeof entry === 'object') entry.isFetching = false
+        if (!entry || typeof entry !== 'object') continue
+        entry.isFetching = false
+        // Restored items are a paint-now snapshot, not a completed fetch: a kept
+        // hasFetched freezes the stale ranking, a kept offset splices page 2 onto it.
+        entry.hasFetched = false
+        entry.offset = undefined
       }
     },
   },

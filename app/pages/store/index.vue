@@ -967,12 +967,15 @@ watch(
     // Captured with the same intent as fetchTagItems' currentTagId: a mid-fetch
     // navigation would otherwise reset persisted state against the new tag.
     const hasTagQuery = !!route.query.tag
+    // Scroll to top before the fetch: a restored listing revalidates on the way
+    // in, and awaiting that first would strand the reader mid-page meanwhile.
+    // Restoring a saved position still waits, since it needs the list rendered.
+    if (!isSearchMode.value && !hasTagQuery) {
+      storePageState.clear()
+    }
     await fetchItems({ lazy: true })
 
     if (!isSearchMode.value) {
-      if (!hasTagQuery) {
-        storePageState.clear()
-      }
       storePageState.restoreScrollIfNeeded()
     }
   },
@@ -1170,7 +1173,9 @@ async function fetchTagItems({ isRefresh = false } = {}) {
 // (e.g. the infinite-scroll watcher) can avoid chaining a follow-up fetch —
 // and a second error modal — after a genuine failure.
 async function fetchItems({ lazy = false, isRefresh = false } = {}): Promise<boolean> {
-  if (lazy && products.value.items.length > 0) {
+  // Both halves carry weight: a restored listing has items but was never fetched
+  // this session, and a fetched-but-empty listing must stay retryable.
+  if (lazy && products.value.items.length > 0 && products.value.hasFetchedItems) {
     return true
   }
   if (isSearchMode.value) {
