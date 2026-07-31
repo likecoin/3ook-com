@@ -79,7 +79,10 @@
         <PricingPlanBenefits />
 
         <!-- Plan Selection -->
-        <PricingPlanSelect v-model="selectedPlan" />
+        <PricingPlanSelect
+          v-model="selectedPlan"
+          :trial-period-days="0"
+        />
       </div>
 
       <!-- Gift Form Card -->
