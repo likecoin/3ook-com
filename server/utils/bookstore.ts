@@ -10,6 +10,7 @@ export const BUILT_IN_LIST_PATHS: Record<BookstoreBuiltInListType, string> = {
   'free': `${BOOKSTORE_API_BASE_PATH}/list/free`,
   'drm-free': `${BOOKSTORE_API_BASE_PATH}/list/drm-free`,
   'popular': `${BOOKSTORE_API_BASE_PATH}/list/popular`,
+  'bestselling': `${BOOKSTORE_API_BASE_PATH}/list/bestselling`,
 }
 
 interface NFTBookPrice {

@@ -86,6 +86,7 @@ export function useStoreTags({ routeName, isLibraryTab }: StoreTagsOptions) {
   const isDefaultTagId = computed(() => getIsDefaultTagId(tagId.value))
   const isStakingTagId = computed(() => getIsStakingTagId(tagId.value))
   const isPopularTagId = computed(() => tagId.value === BOOKSTORE_POPULAR_LIST_TYPE)
+  const isBestsellingTagId = computed(() => tagId.value === BOOKSTORE_BESTSELLING_LIST_TYPE)
 
   const normalizedLocale = computed(() => locale.value === 'zh-Hant' ? 'zh' : 'en')
 
@@ -203,6 +204,7 @@ export function useStoreTags({ routeName, isLibraryTab }: StoreTagsOptions) {
     isDefaultTagId,
     isStakingTagId,
     isPopularTagId,
+    isBestsellingTagId,
     getIsLocalHistoriesTagId,
     normalizedLocale,
     activeCMSTag,
