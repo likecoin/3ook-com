@@ -251,6 +251,11 @@ export function installChunkGuard(): void {
       if (tagName !== 'SCRIPT' && tagName !== 'LINK') return
       const src = target.src || target.href || ''
       if (src.indexOf('/_nuxt/') === -1) return
+      // Nuxt prefetches build images, CSS and fonts from /_nuxt/ as <link> too,
+      // and blockers eat names like "affiliate"/"banner". Only a failed JS
+      // module leaves the page unhydrated — the rest must not purge the SW.
+      const isScriptAsset = /\.m?js($|[?#])/.test(src)
+      if (!isScriptAsset) return
       recover('Failed to load ' + src)
     }, true)
 

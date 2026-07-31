@@ -84,6 +84,13 @@ function setup(options: SetupOptions = {}) {
     win.document.head.appendChild(script)
     script.dispatchEvent(new win.Event('error'))
   }
+  const failLink = (href: string, rel = 'prefetch') => {
+    const link = win.document.createElement('link')
+    link.setAttribute('rel', rel)
+    link.setAttribute('href', href)
+    win.document.head.appendChild(link)
+    link.dispatchEvent(new win.Event('error'))
+  }
   const rejectWith = (message: string) => {
     const event = new win.Event('unhandledrejection')
     ;(event as unknown as Record<string, unknown>).reason = new Error(message)
@@ -103,6 +110,7 @@ function setup(options: SetupOptions = {}) {
     swUnregister,
     cacheDelete,
     failEntryScript,
+    failLink,
     rejectWith,
     breadcrumb,
   }
@@ -236,6 +244,32 @@ describe('installChunkGuard', () => {
     expect(t.breadcrumb()).toBeNull()
     expect(t.timers).toHaveLength(0)
     expect(t.win.localStorage.getItem(CHUNK_ERROR_RELOADS_KEY)).toBeNull()
+  })
+
+  it('ignores blocked /_nuxt/ asset prefetches', () => {
+    const t = setup()
+
+    t.failLink('https://3ook.com/_nuxt/affiliate-cta-banner-backdrop._QrDO68Y.webp')
+    t.failLink('https://3ook.com/_nuxt/entry.ABC123.css')
+
+    expect(t.breadcrumb()).toBeNull()
+    expect(t.timers).toHaveLength(0)
+    expect(t.win.localStorage.getItem(CHUNK_ERROR_RELOADS_KEY)).toBeNull()
+  })
+
+  it('still recovers when a preloaded module script is blocked', () => {
+    const t = setup()
+    t.failLink(ENTRY_SRC, 'modulepreload')
+
+    expect(t.breadcrumb()).toMatchObject({ action: 'reload' })
+    expect(t.win.localStorage.getItem(CHUNK_ERROR_RELOADS_KEY)).toBe('1')
+  })
+
+  it('recovers when the chunk URL carries a query string', () => {
+    const t = setup()
+    t.failLink(`${ENTRY_SRC}?v=1`, 'modulepreload')
+
+    expect(t.breadcrumb()).toMatchObject({ action: 'reload' })
   })
 
   it('stands down when the booted app owns the ladder', () => {
