@@ -310,7 +310,6 @@
   "bookshelf_plus_reading_returned_toast": "Returned",
   "bookshelf_read_next_modal_description": "Based on the book you just finished, here are some picks you might enjoy.",
   "bookshelf_read_next_modal_title": "Nice! What's next?",
-  "bookshelf_recommendations_title": "You might also like",
   "bookshelf_refresh_failed_notice": "Couldn't refresh your shelf. Showing your saved shelf.",
   "bookshelf_refresh_failed_retry": "Retry",
   "bookshelf_search_clear_label": "Clear search",

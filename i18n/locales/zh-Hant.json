@@ -310,7 +310,6 @@
   "bookshelf_plus_reading_returned_toast": "已還書",
   "bookshelf_read_next_modal_description": "根據你剛讀完的書，為你推薦以下書籍。",
   "bookshelf_read_next_modal_title": "恭喜讀完！接下來讀什麼？",
-  "bookshelf_recommendations_title": "你可能也會喜歡",
   "bookshelf_refresh_failed_notice": "無法更新書架 — 顯示已儲存的書架",
   "bookshelf_refresh_failed_retry": "重試",
   "bookshelf_search_clear_label": "清除搜尋",

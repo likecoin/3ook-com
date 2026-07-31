@@ -422,15 +422,6 @@
           </div>
         </template>
       </template>
-
-      <RecommendedBookGrid
-        v-if="isMyBookshelf"
-        class="w-full mt-12"
-        :nft-class-ids="recommendedBooks.nftClassIds"
-        :is-personalized="recommendedBooks.isPersonalized"
-        :title="$t('bookshelf_recommendations_title')"
-        ll-source="bookshelf"
-      />
     </main>
 
     <AppFooter v-if="isGuestShelf && !isApp" />
@@ -998,37 +989,10 @@ onMounted(async () => {
 /* Personalized recommendations (own shelf only) */
 
 const { fetchBookRecommendations } = useBookRecommendations()
+const isReadNextModalOpen = ref(false)
 // Ids and `isPersonalized` stay in one ref: both are assigned after an await, and
 // splitting them lets one fetch's ids pair with another fetch's provenance flag.
-const recommendedBooks = ref<BookRecommendations>(getEmptyBookRecommendations())
-const isReadNextModalOpen = ref(false)
 const readNextBooks = ref<BookRecommendations>(getEmptyBookRecommendations())
-
-// Watch both flags: the session may hydrate after mount (own-shelf check flips
-// without a remount), and an account switch changes the wallet while the
-// own-shelf check stays true — stale recommendations must not leak across.
-watch([isMyBookshelf, walletAddress], async ([isMine, wallet]) => {
-  // The endpoint needs the session cookie that apiFetch does not forward, so on
-  // the server this only ever 401s; the client watcher refetches on hydration.
-  if (import.meta.server) return
-  // No wallet means signed out, or a session that has yet to hydrate: clear
-  // instead of fetching, so the impression event below counts one view per
-  // shelf rather than also firing for the pre-hydration pass.
-  if (!isMine || !wallet) {
-    recommendedBooks.value = getEmptyBookRecommendations()
-    return
-  }
-  const recommendations = await fetchBookRecommendations()
-  // An account switch mid-fetch must not resolve into the new account's list.
-  if (walletAddress.value !== wallet) return
-  recommendedBooks.value = recommendations
-  // Impression event: the grid hides itself when empty, so without this the
-  // click event has no denominator and empty feeds are indistinguishable.
-  useLogEvent('shelf_recommendations_view', {
-    book_count: recommendations.nftClassIds.length,
-    is_personalized: recommendations.isPersonalized,
-  })
-}, { immediate: true })
 
 // PostHog loads lazily via @nuxt/scripts, so the flag may resolve after onMounted.
 watch(
