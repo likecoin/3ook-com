@@ -81,7 +81,9 @@
         <!-- Plan Selection -->
         <PricingPlanSelect
           v-model="selectedPlan"
+          v-model:quantity="selectedQuantity"
           :trial-period-days="0"
+          :gift-month-quantity="[3, 6]"
         />
       </div>
 
@@ -194,9 +196,10 @@ useHead({
 })
 
 const selectedPlan = ref<SubscriptionPlan>('yearly')
+const selectedQuantity = ref(1)
 const selectedPlanLabel = computed(() => {
-  if (selectedPlan.value === 'monthly') return $t('pricing_page_monthly')
-  return $t('pricing_page_yearly')
+  const count = selectedPlan.value === 'yearly' ? 12 : selectedQuantity.value
+  return $t('pricing_page_n_months', { count })
 })
 const isProcessing = ref(false)
 
@@ -245,6 +248,7 @@ async function handleCheckout() {
     const analyticsParams = getAnalyticsParameters()
     const { url } = await plusGiftSessionAPI.fetchLikerPlusGiftCheckoutLink({
       period: selectedPlan.value,
+      quantity: selectedQuantity.value,
       giftInfo: {
         toEmail: formData.toEmail.trim(),
         toName: formData.toName.trim(),

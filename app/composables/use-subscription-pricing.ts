@@ -43,6 +43,11 @@ export default function useSubscriptionPricing() {
 
   const yearlyDiscountPercent = computed(() => calcYearlyDiscountPercent(actualMonthlyPrice.value, actualYearlyPrice.value))
 
+  // Multiply after conversion; the tier-table lookup is non-linear.
+  function getMonthsPrice(months: number): number {
+    return actualMonthlyPrice.value * months
+  }
+
   // Single source of truth for the tier × period → price grid, so checkout and
   // the success-page conversion value resolve the same number.
   function getTierPrice(tier: LikerPlusTier, plan: SubscriptionPlan): number {
@@ -58,6 +63,7 @@ export default function useSubscriptionPricing() {
     originalMonthlyPrice: readonly(originalMonthlyPrice),
     civicYearlyPrice: readonly(civicYearlyPrice),
     civicMonthlyPrice: readonly(civicMonthlyPrice),
+    getMonthsPrice,
     getTierPrice,
     currency,
     convertToDisplayCurrency,

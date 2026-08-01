@@ -36,6 +36,7 @@ export function usePlusGiftSessionAPI() {
 
   function fetchLikerPlusGiftCheckoutLink({
     period = 'yearly',
+    quantity = 1,
     giftInfo,
     coupon,
     from,
@@ -56,6 +57,8 @@ export function usePlusGiftSessionAPI() {
     posthogDistinctId,
   }: {
     period?: SubscriptionPlan
+    // Number of monthly gift units (i.e. gifted months, 1–11); only meaningful with period=monthly.
+    quantity?: number
     giftInfo: BookGiftInfo
     coupon?: string
     from?: string
@@ -77,7 +80,12 @@ export function usePlusGiftSessionAPI() {
   }) {
     return fetch.value<FetchLikerPlusCheckoutLinkResponseData>(`/plus/gift/new`, {
       method: 'POST',
-      query: { period, from, currency },
+      query: {
+        period,
+        quantity,
+        from,
+        currency,
+      },
       body: {
         giftInfo,
         referrer,
@@ -145,6 +153,7 @@ export function usePlusGiftSessionAPI() {
     return fetch.value<{
       giftInfo?: BookGiftInfo
       period?: string
+      quantity?: number
     }>(`/plus/gift/${cartId}/status`, {
       query: { token },
     })

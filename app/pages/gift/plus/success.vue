@@ -139,7 +139,7 @@
           </li>
           <li>
             <span v-text="$t('gift_plus_success_plan')" />
-            <span v-text="period === 'yearly' ? $t('pricing_page_yearly') : $t('pricing_page_monthly')" />
+            <span v-text="planLabel" />
           </li>
         </ul>
       </UCard>
@@ -212,7 +212,7 @@ const { t: $t } = useI18n()
 const localeRoute = useLocaleRoute()
 const { handleError } = useErrorHandler()
 const plusGiftSessionAPI = usePlusGiftSessionAPI()
-const { yearlyPrice, monthlyPrice } = useSubscription()
+const { yearlyPrice, monthlyPrice, getMonthsPrice } = useSubscription()
 
 const getRouteQuery = useRouteQuery()
 const route = useRoute()
@@ -238,9 +238,16 @@ const cartId = computed(() => getRouteQuery('cart_id') as string || '')
 const claimingToken = computed(() => getRouteQuery('claiming_token') as string || '')
 const paymentId = computed(() => getRouteQuery('payment_id') as string || '')
 const period = computed(() => (getRouteQuery('period') as SubscriptionPlan) || 'yearly')
+const quantity = computed(() => Number(getRouteQuery('quantity')) || 1)
 const isRedirected = computed(() => !!getRouteQuery('redirect'))
 
-const giftPrice = computed(() => period.value === 'yearly' ? yearlyPrice.value : monthlyPrice.value)
+const giftPrice = computed(() => period.value === 'yearly' ? yearlyPrice.value : getMonthsPrice(quantity.value))
+
+const planLabel = computed(() => {
+  if (period.value === 'yearly') return $t('pricing_page_yearly')
+  if (quantity.value > 1) return $t('pricing_page_n_months', { count: quantity.value })
+  return $t('pricing_page_monthly')
+})
 
 async function fetchGiftInfo() {
   const maxRetries = 12 // 60 seconds total with 5 second intervals
@@ -272,8 +279,8 @@ async function fetchGiftInfo() {
             items: [{
               id: `plus-gift-${period.value}`,
               name: `Plus Gift (${period.value})`,
-              price: giftPrice.value,
-              quantity: 1,
+              price: period.value === 'yearly' ? yearlyPrice.value : monthlyPrice.value,
+              quantity: quantity.value,
             }],
             gift_to_email: giftInfo.value.toEmail,
             gift_from_name: giftInfo.value.fromName,

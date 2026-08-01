@@ -9,7 +9,7 @@
       <div class="inline-flex ml-auto p-0.5 bg-theme-black/8 dark:bg-theme-white/8 rounded-full">
         <button
           v-for="option in toggleOptions"
-          :key="option.value"
+          :key="option.key"
           type="button"
           :class="[
             'px-4 py-1',
@@ -17,11 +17,11 @@
             'rounded-full',
             'transition-all duration-200',
             'cursor-pointer',
-            selectedPlan === option.value
+            selectedKey === option.key
               ? 'bg-theme-white dark:bg-theme-black text-theme-black dark:text-theme-white shadow-sm'
               : 'text-theme-black/40 dark:text-theme-white/40',
           ]"
-          @click="selectedPlan = option.value"
+          @click="selectedKey = option.key"
           v-text="option.label"
         />
       </div>
@@ -29,7 +29,7 @@
 
     <label
       v-for="plan in plans"
-      :key="plan.value"
+      :key="plan.key"
       :class="[
         'relative',
 
@@ -207,10 +207,10 @@
       </div>
 
       <input
-        v-model="selectedPlan"
+        v-model="selectedKey"
         type="radio"
         name="plan"
-        :value="plan.value"
+        :value="plan.key"
         class="hidden"
       >
     </label>
@@ -244,6 +244,7 @@ const props = withDefaults(defineProps<{
   yearlyBadgeText?: string
   monthlyBadgeText?: string
   promoPricing?: PricingPagePromoPricing
+  giftMonthQuantity?: number[]
 }>(), {
   tier: 'plus',
   isYearlyHidden: false,
@@ -260,6 +261,7 @@ const props = withDefaults(defineProps<{
   yearlyBadgeText: undefined,
   monthlyBadgeText: undefined,
   promoPricing: undefined,
+  giftMonthQuantity: () => [],
 })
 
 const { t: $t } = useI18n()
@@ -276,6 +278,7 @@ const {
   hasYearlyDiscount,
   currency,
   convertToDisplayCurrency,
+  getMonthsPrice,
 } = useSubscriptionPricing()
 const { getIAPPlanPrice } = useNativeIAP()
 
@@ -283,8 +286,24 @@ const selectedPlan = defineModel({
   type: String,
   default: 'yearly',
 })
+const selectedQuantity = defineModel('quantity', {
+  type: Number,
+  default: 1,
+})
+
+const selectedKey = computed({
+  get: () => (selectedQuantity.value > 1
+    ? `${selectedPlan.value}-${selectedQuantity.value}`
+    : selectedPlan.value),
+  set: (key: string) => {
+    const [plan, quantity] = key.split('-')
+    selectedPlan.value = plan as SubscriptionPlan
+    selectedQuantity.value = Number(quantity) || 1
+  },
+})
 
 const isCivic = computed(() => props.tier === 'civic')
+const isGiftMode = computed(() => props.giftMonthQuantity.length > 0)
 // Civic has no trial, so its selector never shows trial pricing or hints.
 const effectiveTrialPeriodDays = computed(() => (isCivic.value ? 0 : props.trialPeriodDays))
 const civicYearlyDiscountPercent = computed(() =>
@@ -306,14 +325,41 @@ const yearlyDiscountBadge = computed(() => {
 })
 
 const plans = computed(() => {
-  const values: SubscriptionPlan[] = []
+  const values: { value: SubscriptionPlan, quantity: number }[] = []
   if (!props.isYearlyHidden) {
-    values.push('yearly')
+    values.push({ value: 'yearly', quantity: 1 })
   }
+  [...props.giftMonthQuantity]
+    .filter(months => months > 1)
+    .sort((a, b) => b - a)
+    .forEach((months) => {
+      values.push({ value: 'monthly', quantity: months })
+    })
   if (!props.isMonthlyHidden) {
-    values.push('monthly')
+    values.push({ value: 'monthly', quantity: 1 })
   }
-  return values.map((value) => {
+  return values.map(({ value, quantity }) => {
+    const key = quantity > 1 ? `${value}-${quantity}` : value
+
+    if (quantity > 1) {
+      return {
+        isSelected: selectedKey.value === key,
+        key,
+        label: $t('pricing_page_n_months', { count: quantity }),
+        hint: undefined,
+        badgeText: undefined,
+        perUnit: $t('pricing_page_price_per_n_months', { count: quantity }),
+        price: getMonthsPrice(quantity),
+        priceString: undefined,
+        originalPrice: 0,
+        hasDiscount: false,
+        promoPrice: undefined as number | undefined,
+        showTrialPrice: false,
+        promoFreeKey: '',
+        promoAmountKey: '',
+      }
+    }
+
     const isMonthly = value === 'monthly'
     let hint: string | undefined
     if (!isPaidTrial.value && effectiveTrialPeriodDays.value && (isMonthly || props.isAllowYearlyTrial)) {
@@ -349,11 +395,13 @@ const plans = computed(() => {
         }
 
     return {
-      isSelected: selectedPlan.value === value,
-      value,
+      isSelected: selectedKey.value === key,
+      key,
       label: isMonthly
-        ? (props.monthlyDescription || $t('pricing_page_monthly'))
-        : (props.yearlyDescription || $t('pricing_page_yearly')),
+        ? (props.monthlyDescription
+          || (isGiftMode.value ? $t('pricing_page_n_months', { count: 1 }) : $t('pricing_page_monthly')))
+        : (props.yearlyDescription
+          || (isGiftMode.value ? $t('pricing_page_n_months', { count: 12 }) : $t('pricing_page_yearly'))),
       hint,
       badgeText,
       perUnit: isMonthly ? $t('pricing_page_price_per_month') : $t('pricing_page_price_per_year'),
@@ -369,5 +417,5 @@ const plans = computed(() => {
   })
 })
 
-const toggleOptions = computed(() => plans.value.map(p => ({ value: p.value, label: p.label })))
+const toggleOptions = computed(() => plans.value.map(p => ({ key: p.key, label: p.label })))
 </script>

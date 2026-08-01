@@ -88,7 +88,7 @@
           </li>
           <li class="flex justify-between">
             <span class="font-medium">{{ $t('gift_plus_claim_plan') }}</span>
-            <span v-text="period === 'yearly' ? $t('pricing_page_yearly') : $t('pricing_page_monthly')" />
+            <span v-text="planLabel" />
           </li>
         </ul>
 
@@ -217,7 +217,7 @@ const { handleError } = useErrorHandler()
 const plusGiftSessionAPI = usePlusGiftSessionAPI()
 const accountStore = useAccountStore()
 const { loggedIn: hasLoggedIn, user } = useUserSession()
-const { yearlyPrice, monthlyPrice } = useSubscription()
+const { yearlyPrice, getMonthsPrice } = useSubscription()
 
 const getRouteQuery = useRouteQuery()
 
@@ -231,6 +231,7 @@ const isClaiming = ref(false)
 const isRedirecting = ref(false)
 const error = ref<string | null>(null)
 const period = ref<SubscriptionPlan>('yearly')
+const quantity = ref(1)
 const giftInfo = ref<{
   fromName?: string
   message?: string
@@ -243,7 +244,13 @@ const cartId = computed(() => getRouteQuery('cart_id') as string || '')
 const claimingToken = computed(() => getRouteQuery('claiming_token') as string || '')
 
 const isYearly = computed(() => period.value === 'yearly')
-const giftPrice = computed(() => isYearly.value ? yearlyPrice.value : monthlyPrice.value)
+const giftPrice = computed(() => isYearly.value ? yearlyPrice.value : getMonthsPrice(quantity.value))
+
+const planLabel = computed(() => {
+  if (isYearly.value) return $t('pricing_page_yearly')
+  if (quantity.value > 1) return $t('pricing_page_n_months', { count: quantity.value })
+  return $t('pricing_page_monthly')
+})
 
 async function fetchGiftInfo() {
   try {
@@ -267,6 +274,7 @@ async function fetchGiftInfo() {
       if (cartData.period && (cartData.period === 'yearly' || cartData.period === 'monthly')) {
         period.value = cartData.period as SubscriptionPlan
       }
+      quantity.value = cartData.quantity || 1
     }
     else {
       error.value = $t('gift_plus_claim_fetch_error_description')
