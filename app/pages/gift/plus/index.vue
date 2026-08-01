@@ -184,6 +184,8 @@ const accountStore = useAccountStore()
 const { getCheckoutCurrency } = usePaymentCurrency()
 const { getAnalyticsParameters } = useAnalytics()
 
+definePageMeta({ colorMode: 'light' })
+
 useHead({
   title: $t('gift_plus_page_title'),
   meta: [
