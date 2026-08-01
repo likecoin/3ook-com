@@ -93,7 +93,7 @@
         <!-- Recipient Email -->
         <UFormField
           :label="$t('gift_plus_recipient_email')"
-          :error="errors.toEmail"
+          :error="errors.toEmail ? errors.toEmail : undefined"
           :required="true"
         >
           <UInput
@@ -110,7 +110,7 @@
         <UFormField
           class="mt-6"
           :label="$t('gift_plus_recipient_name')"
-          :error="errors.toName"
+          :error="errors.toName ? errors.toName : undefined"
           :required="true"
         >
           <UInput
@@ -127,7 +127,7 @@
         <UFormField
           class="mt-6"
           :label="$t('gift_plus_sender_name')"
-          :error="errors.fromName"
+          :error="errors.fromName ? errors.fromName : undefined"
           :required="true"
           :help="$t('gift_plus_sender_name_hint_text')"
         >
