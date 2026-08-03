@@ -224,6 +224,15 @@ const isFormValid = computed(() => {
   )
 })
 
+watch(
+  () => ({ ...formData }),
+  (newVal, oldVal) => {
+    for (const key of Object.keys(errors) as (keyof typeof errors)[]) {
+      if (newVal[key] !== oldVal[key]) errors[key] = ''
+    }
+  },
+)
+
 async function handleCheckout() {
   // Validate email
   if (!validateEmail(formData.toEmail)) {
