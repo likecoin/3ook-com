@@ -84,6 +84,7 @@
           v-model:quantity="selectedQuantity"
           :trial-period-days="0"
           :gift-month-quantity="[3, 6]"
+          :gift-year-quantity="[2]"
         />
       </div>
 
@@ -197,10 +198,9 @@ useHead({
 
 const selectedPlan = ref<SubscriptionPlan>('yearly')
 const selectedQuantity = ref(1)
-const selectedPlanLabel = computed(() => {
-  const count = selectedPlan.value === 'yearly' ? 12 : selectedQuantity.value
-  return $t('pricing_page_n_months', { count })
-})
+const selectedPlanLabel = computed(() => (selectedPlan.value === 'yearly'
+  ? $t('pricing_page_n_years', { count: selectedQuantity.value })
+  : $t('pricing_page_n_months', { count: selectedQuantity.value })))
 const isProcessing = ref(false)
 
 const formData = reactive({

@@ -244,10 +244,16 @@ const cartId = computed(() => getRouteQuery('cart_id') as string || '')
 const claimingToken = computed(() => getRouteQuery('claiming_token') as string || '')
 
 const isYearly = computed(() => period.value === 'yearly')
-const giftPrice = computed(() => isYearly.value ? yearlyPrice.value : getMonthsPrice(quantity.value))
+const giftPrice = computed(() => isYearly.value
+  ? yearlyPrice.value * quantity.value
+  : getMonthsPrice(quantity.value))
 
 const planLabel = computed(() => {
-  if (isYearly.value) return $t('pricing_page_yearly')
+  if (isYearly.value) {
+    return quantity.value > 1
+      ? $t('pricing_page_n_years', { count: quantity.value })
+      : $t('pricing_page_yearly')
+  }
   if (quantity.value > 1) return $t('pricing_page_n_months', { count: quantity.value })
   return $t('pricing_page_monthly')
 })
@@ -274,7 +280,7 @@ async function fetchGiftInfo() {
       if (cartData.period && (cartData.period === 'yearly' || cartData.period === 'monthly')) {
         period.value = cartData.period as SubscriptionPlan
       }
-      quantity.value = cartData.quantity || 1
+      quantity.value = clampGiftQuantity(cartData.quantity)
     }
     else {
       error.value = $t('gift_plus_claim_fetch_error_description')

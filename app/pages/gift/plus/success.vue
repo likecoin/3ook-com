@@ -238,13 +238,19 @@ const cartId = computed(() => getRouteQuery('cart_id') as string || '')
 const claimingToken = computed(() => getRouteQuery('claiming_token') as string || '')
 const paymentId = computed(() => getRouteQuery('payment_id') as string || '')
 const period = computed(() => (getRouteQuery('period') as SubscriptionPlan) || 'yearly')
-const quantity = computed(() => Number(getRouteQuery('quantity')) || 1)
+const quantity = computed(() => clampGiftQuantity(getRouteQuery('quantity')))
 const isRedirected = computed(() => !!getRouteQuery('redirect'))
 
-const giftPrice = computed(() => period.value === 'yearly' ? yearlyPrice.value : getMonthsPrice(quantity.value))
+const giftPrice = computed(() => period.value === 'yearly'
+  ? yearlyPrice.value * quantity.value
+  : getMonthsPrice(quantity.value))
 
 const planLabel = computed(() => {
-  if (period.value === 'yearly') return $t('pricing_page_yearly')
+  if (period.value === 'yearly') {
+    return quantity.value > 1
+      ? $t('pricing_page_n_years', { count: quantity.value })
+      : $t('pricing_page_yearly')
+  }
   if (quantity.value > 1) return $t('pricing_page_n_months', { count: quantity.value })
   return $t('pricing_page_monthly')
 })

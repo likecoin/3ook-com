@@ -245,6 +245,7 @@ const props = withDefaults(defineProps<{
   monthlyBadgeText?: string
   promoPricing?: PricingPagePromoPricing
   giftMonthQuantity?: number[]
+  giftYearQuantity?: number[]
 }>(), {
   tier: 'plus',
   isYearlyHidden: false,
@@ -262,6 +263,7 @@ const props = withDefaults(defineProps<{
   monthlyBadgeText: undefined,
   promoPricing: undefined,
   giftMonthQuantity: () => [],
+  giftYearQuantity: () => [],
 })
 
 const { t: $t } = useI18n()
@@ -298,12 +300,12 @@ const selectedKey = computed({
   set: (key: string) => {
     const [plan, quantity] = key.split('-')
     selectedPlan.value = plan as SubscriptionPlan
-    selectedQuantity.value = Number(quantity) || 1
+    selectedQuantity.value = quantity ? clampGiftQuantity(quantity) : 1
   },
 })
 
 const isCivic = computed(() => props.tier === 'civic')
-const isGiftMode = computed(() => props.giftMonthQuantity.length > 0)
+const isGiftMode = computed(() => props.giftMonthQuantity.length > 0 || props.giftYearQuantity.length > 0)
 // Civic has no trial, so its selector never shows trial pricing or hints.
 const effectiveTrialPeriodDays = computed(() => (isCivic.value ? 0 : props.trialPeriodDays))
 const civicYearlyDiscountPercent = computed(() =>
@@ -326,6 +328,10 @@ const yearlyDiscountBadge = computed(() => {
 
 const plans = computed(() => {
   const values: { value: SubscriptionPlan, quantity: number }[] = []
+  const yearQuantity = [...props.giftYearQuantity].filter(years => years > 1).sort((a, b) => b - a)
+  yearQuantity.forEach((years) => {
+    values.push({ value: 'yearly', quantity: years })
+  })
   if (!props.isYearlyHidden) {
     values.push({ value: 'yearly', quantity: 1 })
   }
@@ -342,14 +348,19 @@ const plans = computed(() => {
     const key = quantity > 1 ? `${value}-${quantity}` : value
 
     if (quantity > 1) {
+      const isYears = value === 'yearly'
       return {
         isSelected: selectedKey.value === key,
         key,
-        label: $t('pricing_page_n_months', { count: quantity }),
+        label: isYears
+          ? $t('pricing_page_n_years', { count: quantity })
+          : $t('pricing_page_n_months', { count: quantity }),
         hint: undefined,
-        badgeText: undefined,
-        perUnit: $t('pricing_page_price_per_n_months', { count: quantity }),
-        price: getMonthsPrice(quantity),
+        badgeText: isYears ? (props.yearlyBadgeText ?? yearlyDiscountBadge.value) : undefined,
+        perUnit: isYears
+          ? $t('pricing_page_price_per_n_years', { count: quantity })
+          : $t('pricing_page_price_per_n_months', { count: quantity }),
+        price: isYears ? yearlyPrice.value * quantity : getMonthsPrice(quantity),
         priceString: undefined,
         originalPrice: 0,
         hasDiscount: false,
@@ -401,7 +412,7 @@ const plans = computed(() => {
         ? (props.monthlyDescription
           || (isGiftMode.value ? $t('pricing_page_n_months', { count: 1 }) : $t('pricing_page_monthly')))
         : (props.yearlyDescription
-          || (isGiftMode.value ? $t('pricing_page_n_months', { count: 12 }) : $t('pricing_page_yearly'))),
+          || (isGiftMode.value ? $t('pricing_page_n_years', { count: 1 }) : $t('pricing_page_yearly'))),
       hint,
       badgeText,
       perUnit: isMonthly ? $t('pricing_page_price_per_month') : $t('pricing_page_price_per_year'),

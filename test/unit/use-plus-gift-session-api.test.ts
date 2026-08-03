@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 import { usePlusGiftSessionAPI } from '~/composables/use-plus-gift-session-api'
+import { clampGiftQuantity } from '~~/shared/utils/subscription'
 
 const { mockFetch, mockIsApp, mockDetectedCountry } = vi.hoisted(() => ({
   mockFetch: vi.fn(),
@@ -44,6 +45,32 @@ describe('fetchLikerPlusGiftCheckoutLink', () => {
     const [, options] = mockFetch.mock.calls[0]!
     expect(options.query.period).toBe('yearly')
     expect(options.query.quantity).toBe(1)
+  })
+
+  it('supports quantity for yearly gifts', () => {
+    const { fetchLikerPlusGiftCheckoutLink } = usePlusGiftSessionAPI()
+    fetchLikerPlusGiftCheckoutLink({ period: 'yearly', quantity: 2, giftInfo: GIFT_INFO })
+    const [, options] = mockFetch.mock.calls[0]!
+    expect(options.query.period).toBe('yearly')
+    expect(options.query.quantity).toBe(2)
+  })
+})
+
+describe('clampGiftQuantity', () => {
+  it('passes through positive integers', () => {
+    expect(clampGiftQuantity(3)).toBe(3)
+    expect(clampGiftQuantity('2')).toBe(2)
+  })
+
+  it('falls back to 1 on invalid values', () => {
+    expect(clampGiftQuantity(-3)).toBe(1)
+    expect(clampGiftQuantity(0)).toBe(1)
+    expect(clampGiftQuantity('abc')).toBe(1)
+    expect(clampGiftQuantity(undefined)).toBe(1)
+  })
+
+  it('floors non-integer values', () => {
+    expect(clampGiftQuantity(3.7)).toBe(3)
   })
 })
 
