@@ -39,33 +39,59 @@
     v-else-if="status === 'search-empty'"
     class="w-full mb-8"
   >
-    <div class="flex flex-col items-center py-8">
+    <div class="flex flex-col items-center gap-6 py-8">
       <UIcon
         class="opacity-20 mb-4"
         name="i-material-symbols-search-off-rounded"
         size="64"
       />
-      <h2
-        class="text-xl font-bold text-highlighted mb-2"
-        v-text="$t('store_no_search_results')"
-      />
-      <p
-        class="text-muted"
-        v-text="$t('store_showing_recommendations')"
-      />
-      <p
-        class="text-muted mt-4"
-        v-text="$t('store_no_search_results_contact_message')"
-      />
-      <UButton
-        class="mt-2"
-        :label="$t('store_no_search_results_contact')"
-        leading-icon="i-material-symbols-chat-bubble-outline-rounded"
-        variant="outline"
-        color="neutral"
-        @click="emit('contactClick')"
-      />
+
+      <div class="flex flex-col items-center gap-2">
+        <h2
+          class="text-xl font-bold text-highlighted text-center"
+          v-text="isLibrary ? $t('library_no_search_results') : $t('store_no_search_results')"
+        />
+        <template v-if="isLibrary">
+          <p
+            v-if="isApp"
+            class="text-muted text-center"
+            v-text="$t('library_no_search_results_discover_more_app')"
+          />
+          <i18n-t
+            v-else
+            class="text-muted text-center"
+            keypath="library_no_search_results_discover_more"
+            tag="p"
+          >
+            <template #store>
+              <ULink
+                class="border-y border-t-transparent leading-5"
+                :to="localeRoute({ name: 'store', query: route.query })"
+              >{{ $t('store_page_title') }}</ULink>
+            </template>
+          </i18n-t>
+        </template>
+      </div>
+
+      <aside class="flex flex-col items-center gap-2">
+        <p
+          class="text-muted"
+          v-text="$t('store_no_search_results_contact_message')"
+        />
+        <UButton
+          :label="$t('store_no_search_results_contact')"
+          leading-icon="i-material-symbols-chat-bubble-outline-rounded"
+          variant="outline"
+          color="neutral"
+          @click="emit('contactClick')"
+        />
+      </aside>
     </div>
+
+    <h3
+      class="text-center font-semibold"
+      v-text="$t('store_showing_recommendations')"
+    />
   </div>
 
   <div
@@ -96,10 +122,15 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{
+const props = defineProps<{
   status: 'affiliate-not-found' | 'loading' | 'search-empty' | 'no-items'
   routeName: string
 }>()
+
+const route = useRoute()
+const { isApp } = useAppDetection()
+
+const isLibrary = computed(() => props.routeName === 'library')
 
 const emit = defineEmits<{
   contactClick: []

@@ -1249,6 +1249,9 @@ async function handleLibraryLogoClick() {
 function handleContactUsClick() {
   useLogEvent(isLibraryTab.value ? 'library_no_search_results_contact_click' : 'store_no_search_results_contact_click', { search_term: querySearchTerm.value })
   const searchTerm = querySearchTerm.value || queryAuthorName.value || queryPublisherName.value || queryOwnerWallet.value
-  intercom.showNewMessage($t('store_no_search_results_contact_prefill', { term: searchTerm }))
+  const prefilledMessage = isLibraryTab.value
+    ? $t('library_no_search_results_contact_prefill', { term: searchTerm })
+    : $t('store_no_search_results_contact_prefill', { term: searchTerm })
+  intercom.showNewMessage(prefilledMessage)
 }
 </script>
