@@ -282,9 +282,7 @@
 <script setup lang="ts">
 import { FetchError } from 'ofetch'
 
-import { getGenreI18nKey } from '~~/shared/constants/book-categories'
 import { MAX_BOOKSTORE_PAGE_SIZE, isBookstoreBuiltInListType } from '~~/shared/utils/bookstore'
-import { normalizeLikerId } from '~~/shared/utils/liker-id'
 
 const nuxtApp = useNuxtApp()
 const { t: $t } = useI18n()
@@ -314,34 +312,31 @@ const intercom = useIntercom()
 // just-subscribed member isn't briefly treated as non-Plus before the webhook lands.
 const { isPlusOrDevicePlus } = useDevicePlusEntitlement()
 
-const querySearchTerm = computed(() => getRouteQuery('q', ''))
-const queryAuthorName = computed(() => getRouteQuery('author', ''))
-const queryPublisherName = computed(() => getRouteQuery('publisher', ''))
-const queryOwnerWallet = computed(() => getRouteQuery('owner_wallet', ''))
-const queryGenre = computed(() => getRouteQuery('genre', ''))
-// Normalize so a stray leading `@` (manual URL, or `from=@id` reuse) resolves
-// the same as a bare likerId for profile lookup, config fetch, and the subscribe CTA.
-const queryAffiliate = computed(() => normalizeLikerId(getRouteQuery('affiliate', '')))
+// Search-ish query params, resolved profiles, and the derived search-mode
+// context live in a composable so other store surfaces can share them.
+const {
+  querySearchTerm,
+  queryAuthorName,
+  queryPublisherName,
+  queryOwnerWallet,
+  queryGenre,
+  queryAffiliate,
+  ownerWalletInfo,
+  ownerWalletAvatarSrc,
+  ownerWalletDisplayName,
+  affiliateDisplayName,
+  affiliateAvatarSrc,
+  affiliateConfig,
+  affiliateHasVoices,
+  isAffiliateNotFound,
+  searchQuery,
+  isSearchMode,
+  searchModeContext,
+} = await useStoreSearchMode()
+
 // Set by the post-purchase redirect (plus/success) to greet a just-subscribed member.
 const queryWelcome = computed(() => getRouteQuery('welcome', ''))
 
-const ownerWalletInfoQuery = useLikerInfoByWalletAddressQuery(queryOwnerWallet)
-const ownerWalletInfo = computed(() => ownerWalletInfoQuery.data.value)
-const ownerWalletAvatarSrc = computed(() => {
-  return ownerWalletInfo.value?.avatarSrc || ''
-})
-const ownerWalletDisplayName = computed(() => {
-  return ownerWalletInfo.value?.displayName || ''
-})
-
-const affiliateInfoQuery = useLikerInfoByIdQuery(queryAffiliate)
-const affiliateInfo = computed(() => affiliateInfoQuery.data.value)
-const affiliateDisplayName = computed(() => affiliateInfo.value?.displayName || queryAffiliate.value)
-const affiliateAvatarSrc = computed(() => affiliateInfo.value?.avatarSrc || '')
-const affiliateConfig = computed(() => {
-  if (!queryAffiliate.value) return null
-  return getAffiliateStoreConfigByLikerIdFromCache(queryCache, queryAffiliate.value)
-})
 // Publisher drill-down links rendered as header chrome — the affiliate view only
 // loads each publisher's first page, so these point at the full owner_wallet list.
 const affiliatePublisherWallets = computed(() =>
@@ -351,11 +346,6 @@ const affiliatePublishers = computed(() => affiliatePublisherWallets.value.map((
   wallet,
   name: affiliatePublisherInfoQueries.value[index]?.data?.displayName || shortenWalletAddress(wallet),
 })))
-// Only affiliates that actually ship a voice can promise voice playback; some
-// affiliates curate books without one.
-const affiliateHasVoices = computed(() =>
-  !!(affiliateConfig.value?.active && affiliateConfig.value.customVoices?.length),
-)
 // Gate on a real voice so we never promise narration the affiliate doesn't offer.
 const isAffiliateCTAVisible = computed(() =>
   !!queryAffiliate.value && !isPlusOrDevicePlus.value && affiliateHasVoices.value,
@@ -364,31 +354,6 @@ const affiliateSubscribeRoute = computed(() => localeRoute({
   name: 'member',
   query: { from: `@${queryAffiliate.value}`, ll_medium: 'affiliate-store' },
 }))
-
-// Resolve the affiliate's profile during SSR so its display name and avatar land
-// in the title/OG tags (the watcher-based client fetch happens too late for that),
-// and detect an invalid affiliate id (404) to render a not-found state. useAsyncData
-// carries the 404 boolean in the payload (error-state queries don't serialize), while
-// the helper primes the query cache, which colada-nuxt serializes into the payload
-// so the client hydrates without refetching.
-const { data: isAffiliateLookupNotFound } = await useAsyncData(
-  'store-affiliate-info',
-  async () => {
-    const likerId = queryAffiliate.value
-    if (!likerId) return false
-    try {
-      await fetchLikerInfoByIdThroughCache(queryCache, likerId)
-      return false
-    }
-    catch (error) {
-      if (error instanceof FetchError && error.statusCode === 404) return true
-      console.error('Failed to fetch affiliate info:', error)
-      return false
-    }
-  },
-  { watch: [queryAffiliate] },
-)
-const isAffiliateNotFound = computed(() => !!queryAffiliate.value && !!isAffiliateLookupNotFound.value)
 
 // Only greet actual members, so a shared/bookmarked `welcome` link can't surface
 // the banner for non-subscribers.
@@ -430,24 +395,6 @@ const isStoreIntroBannerVisible = computed(() =>
   && !hasCampaignAttribution.value,
 )
 
-// Search query key for bookstore store
-const searchQuery = computed(() => {
-  if (queryAffiliate.value) return `affiliate:${queryAffiliate.value}`
-  if (querySearchTerm.value) return `q:${querySearchTerm.value}`
-  if (queryAuthorName.value) return `author:${queryAuthorName.value}`
-  if (queryPublisherName.value) return `publisher:${queryPublisherName.value}`
-  if (queryOwnerWallet.value) return `owner_wallet:${queryOwnerWallet.value}`
-  if (queryGenre.value) return `genre:${queryGenre.value}`
-  return ''
-})
-
-const localizedGenreName = computed(() => {
-  if (!queryGenre.value) return ''
-  const i18nKey = getGenreI18nKey(queryGenre.value)
-  return i18nKey ? $t(i18nKey) : queryGenre.value
-})
-
-const isSearchMode = computed(() => !!searchQuery.value)
 const isLibraryIntroBannerVisible = computed(() => isLibraryTab.value && !isSearchMode.value && !entity.value)
 
 const {
@@ -495,59 +442,6 @@ await callOnce(async () => {
     // Restore Nuxt context lost across the await before calling navigateTo/localeRoute.
     await nuxtApp.runWithContext(() => navigateTo(localeRoute({ name: routeName.value, query }), { replace: true }))
   }
-})
-
-const searchModeContext = computed(() => {
-  if (!isSearchMode.value) return null
-  if (queryAffiliate.value) {
-    // Suppress affiliate chrome/title for an unknown id so the raw liker id never
-    // surfaces as a name; the page falls back to the generic store title instead.
-    if (isAffiliateNotFound.value) return null
-    return {
-      label: affiliateDisplayName.value,
-      titlePrefix: $t('store_affiliate_prefix'),
-      description: affiliateHasVoices.value
-        ? $t('store_page_affiliate_description', { name: affiliateDisplayName.value })
-        : $t('store_page_affiliate_description_no_voice', { name: affiliateDisplayName.value }),
-    }
-  }
-  if (querySearchTerm.value) {
-    return {
-      label: querySearchTerm.value,
-      titlePrefix: $t('store_search_prefix'),
-      description: $t('store_page_search_description', { term: querySearchTerm.value }),
-    }
-  }
-  if (queryAuthorName.value) {
-    return {
-      label: queryAuthorName.value,
-      titlePrefix: $t('store_author_prefix'),
-      description: $t('store_page_author_description', { author: queryAuthorName.value }),
-    }
-  }
-  if (queryPublisherName.value) {
-    return {
-      label: queryPublisherName.value,
-      titlePrefix: $t('store_publisher_prefix'),
-      description: $t('store_page_publisher_description', { publisher: queryPublisherName.value }),
-    }
-  }
-  if (queryOwnerWallet.value) {
-    const displayName = ownerWalletDisplayName.value || queryOwnerWallet.value
-    return {
-      label: displayName,
-      titlePrefix: $t('store_owner_wallet_prefix'),
-      description: $t('store_page_owner_description', { owner: displayName }),
-    }
-  }
-  if (queryGenre.value) {
-    return {
-      label: localizedGenreName.value,
-      titlePrefix: $t('store_genre_prefix'),
-      description: $t('store_page_genre_description', { genre: localizedGenreName.value }),
-    }
-  }
-  return null
 })
 
 const pageTitle = computed(() => isLibraryTab.value ? $t('library_tab_title') : $t('store_page_title'))
