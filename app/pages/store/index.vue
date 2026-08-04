@@ -1,147 +1,5 @@
 <template>
   <div class="relative">
-    <header
-      :class="[
-        'sticky',
-        'z-1',
-        'top-0',
-
-        ...(isSearchMode ? [] : gridClasses),
-        'gap-4',
-
-        'section-container',
-        'py-4',
-
-        'bg-linear-to-b from-(--app-bg)/90 to-(--app-bg)/0',
-      ]"
-    >
-      <!-- Search mode header -->
-      <div
-        v-if="isSearchMode"
-        class="flex items-center gap-1 phone:gap-2 w-full"
-      >
-        <PillButton
-          :to="localeRoute({ name: routeName })"
-          icon="i-material-symbols-close-rounded"
-        />
-
-        <div
-          v-if="queryOwnerWallet"
-          class="flex items-center gap-3 min-w-0 flex-1"
-        >
-          <UAvatar
-            :src="ownerWalletAvatarSrc"
-            :alt="ownerWalletDisplayName || queryOwnerWallet"
-            icon="i-material-symbols-person-2-rounded"
-            size="lg"
-          />
-          <div class="flex flex-col min-w-0 flex-1">
-            <p
-              class="text-xs text-muted uppercase tracking-wide"
-              v-text="$t('store_owner_wallet_prefix')"
-            />
-            <h1
-              class="text-xl laptop:text-2xl font-bold text-default truncate"
-              v-text="ownerWalletDisplayName || queryOwnerWallet"
-            />
-          </div>
-        </div>
-        <div
-          v-else-if="queryAffiliate && !isAffiliateNotFound"
-          class="flex items-center min-w-0 ring-inset ring-2 ring-theme-black dark:ring-muted bg-(--app-bg) rounded-full"
-        >
-          <UAvatar
-            :src="affiliateAvatarSrc"
-            :alt="affiliateDisplayName"
-            icon="i-material-symbols-person-2-rounded"
-            :ui="{ root: 'size-8 tablet:size-9 border border-2 border-theme-black dark:border-muted' }"
-          />
-          <div class="flex flex-col justify-center min-w-0 pt-0.5 pl-2 pr-4">
-            <span
-              class="text-[0.625rem] tablet:text-xs text-muted uppercase tracking-wide leading-none"
-              v-text="$t('store_affiliate_prefix')"
-            />
-            <h1
-              class="-mt-1 font-bold text-sm tablet:text-default truncate"
-              v-text="affiliateDisplayName"
-            />
-          </div>
-        </div>
-        <h1 v-else-if="searchModeContext">
-          <PillButton
-            is-active
-            is-static
-            :label="`${searchModeContext.titlePrefix}${searchModeContext.label}`"
-          />
-        </h1>
-      </div>
-
-      <!-- Tag selector -->
-      <div
-        v-else
-        class="flex items-center gap-1 phone:gap-2 w-full col-span-full"
-      >
-        <UButton
-          v-if="!isApp && !isLibraryTab"
-          :to="isDefaultTagId
-            ? localeRoute({ name: 'about', query: { ll_medium: 'about-logo' } })
-            : localeRoute({ name: routeName })"
-          variant="link"
-          :ui="{
-            base: ['shrink-0', 'p-0 sm:p-0'],
-          }"
-          :title="'3ook.com'"
-          @click="handleLogoClick"
-        >
-          <img
-            src="/logo.svg"
-            alt="3ook.com"
-            class="w-8 h-8 block"
-          >
-        </UButton>
-
-        <UButton
-          v-if="!isApp && isLibraryTab"
-          :to="isDefaultTagId
-            ? localeRoute({ name: 'about', hash: '#library', query: { ll_medium: 'about-logo' } })
-            : localeRoute({ name: routeName })"
-          variant="link"
-          icon="i-3ook-com-library-rounded"
-          color="neutral"
-          :ui="{
-            base: ['shrink-0', 'p-0 sm:p-0'],
-            leadingIcon: ['size-8', 'text-highlighted'],
-          }"
-          :title="$t('library_tab_title')"
-          :aria-label="$t('library_tab_title')"
-          @click="handleLibraryLogoClick"
-        />
-
-        <PillButtonGroup
-          :model-value="tagId"
-          :items="allTagItems"
-          :aria-label="$t('store_tag_more_categories_label')"
-          :is-loading="!hasFetchedCMSTags && isDefaultTagId"
-          class="grow min-w-0"
-          @click="(item) => handleTagClick(item.value)"
-        />
-
-        <StoreSearchModal :is-library-tab="isLibraryTab" />
-
-        <UTooltip
-          v-if="!isLibraryTab"
-          :text="$t('book_list_title')"
-        >
-          <PillButton
-            icon="i-material-symbols-shopping-cart-outline-rounded"
-            :aria-label="$t('book_list_title')"
-            :to="localeRoute({ name: 'list' })"
-            @click="handleBookListTagClick"
-          />
-        </UTooltip>
-      </div>
-    </header>
-
     <!-- Alerts section, don't put them in <main/> -->
     <section
       v-if="isStoreIntroBannerVisible || isLibraryIntroBannerVisible || isAffiliateCTAVisible || isWelcomeBannerVisible"
@@ -252,6 +110,7 @@
           :ll-medium="llMedium"
           :should-show-plus-reading-icon="!isLibraryTab"
           :is-library="isLibraryTab"
+          :tag="tagId"
           ll-source="bookstore"
           @open="handleBookstoreItemOpen"
         />
@@ -302,7 +161,6 @@ const isRevalidatingNFTClassMetadata = useIsRevalidatingNFTClassMetadata()
 const infiniteScrollDetectorElement = useTemplateRef<HTMLLIElement>('infiniteScrollDetector')
 const shouldLoadMore = useElementVisibility(infiniteScrollDetectorElement)
 const { handleError } = useErrorHandler()
-const { dismissLibraryIntroBanner } = useLibraryIntroBanner()
 const storePageState = useStorePageState(routeName)
 const isOnline = useOnline()
 const isAdultContentEnabled = useAdultContentSetting()
@@ -313,7 +171,7 @@ const intercom = useIntercom()
 const { isPlusOrDevicePlus } = useDevicePlusEntitlement()
 
 // Search-ish query params, resolved profiles, and the derived search-mode
-// context live in a composable so other store surfaces can share them.
+// context are shared with the tags header in the store.vue parent route.
 const {
   querySearchTerm,
   queryAuthorName,
@@ -322,8 +180,6 @@ const {
   queryGenre,
   queryAffiliate,
   ownerWalletInfo,
-  ownerWalletAvatarSrc,
-  ownerWalletDisplayName,
   affiliateDisplayName,
   affiliateAvatarSrc,
   affiliateConfig,
@@ -382,7 +238,7 @@ const hasCampaignAttribution = computed(() =>
 // Welcome a fresh organic/direct visitor on the bare store landing. Gate on mount
 // and the persisted dismiss so the alerts section collapses instead of leaving an
 // empty wrapper, and skip `tag` deep-links since those are category pages.
-const { isDismissed: isStoreIntroBannerDismissed, dismissStoreIntroBanner } = useStoreIntroBanner()
+const { isDismissed: isStoreIntroBannerDismissed } = useStoreIntroBanner()
 const isMounted = useMounted()
 const isStoreIntroBannerVisible = computed(() =>
   isMounted.value
@@ -408,12 +264,9 @@ const {
   getIsLocalHistoriesTagId,
   normalizedLocale,
   activeCMSTag,
-  allTagItems,
   mapTagIdToAPIStakingSortValue,
   tagName,
 } = useStoreTags({ routeName, isLibraryTab })
-
-const hasFetchedCMSTags = computed(() => getHasFetchedBookstoreCMSTagsFromCache(queryCache))
 
 await callOnce(async () => {
   if (getIsLocalHistoriesTagId(tagId.value)) {
@@ -957,20 +810,6 @@ const { gridClasses, getGridItemClassesByIndex, columnMax } = usePaginatedGrid({
   hasMore: hasMoreItems,
 })
 
-async function fetchTags() {
-  try {
-    await fetchBookstoreCMSTagsThroughCache(queryCache)
-  }
-  catch (error) {
-    // Offline cold launch fails these network fetches expectedly; the cached
-    // shell still renders, so don't surface a blocking error modal.
-    if (!isOnline.value) return
-    await handleError(error, {
-      title: $t('store_fetch_tags_error'),
-    })
-  }
-}
-
 async function fetchTagItems({ isRefresh = false } = {}) {
   // The personalized feed is server-ranked and a single fixed page: skip the
   // staking fetch and the client-side staking re-sort below entirely.
@@ -1010,7 +849,7 @@ async function fetchTagItems({ isRefresh = false } = {}) {
     return
   }
 
-  // Resolve the tag through the cache when state restore raced fetchTags,
+  // Resolve the tag through the cache when state restore raced the parent's tags fetch,
   // so isConditionalTag below reflects this batch's tag; a miss keeps current behavior.
   let cmsTag = getBookstoreCMSTagByIdFromCache(queryCache, currentTagId)
   if (!cmsTag && !isBookstoreBuiltInListType(currentTagId)) {
@@ -1158,19 +997,14 @@ onMounted(async () => {
     return
   }
 
-  // Stale-while-revalidate: when persisted data already fills the landing,
-  // render it immediately and refresh in the background instead of blocking
-  // (or, offline, instead of failing) on the network.
+  // Stale-while-revalidate: render persisted data immediately and refresh in the background.
+  // The tags fetch lives with the header in the store.vue parent.
   if (products.value.items.length > 0 && isOnline.value) {
-    fetchTags()
     fetchItems({ isRefresh: true })
     return
   }
 
-  await Promise.all([
-    fetchTags(),
-    fetchItems({ lazy: true }),
-  ])
+  await fetchItems({ lazy: true })
 })
 
 onBeforeRouteLeave((to) => {
@@ -1223,49 +1057,6 @@ async function handleFetchItemsErrorRetryButtonClick() {
   useLogEvent('store_fetch_items_error_retry', { tag_id: tagId.value })
   window.scrollTo({ top: 0 })
   await fetchItems({ isRefresh: true })
-}
-
-async function handleTagClick(tagValue?: string) {
-  if (!tagValue || tagValue === tagId.value) {
-    return
-  }
-
-  // Engaging with a category means the intro has served its purpose.
-  if (isLibraryTab.value) dismissLibraryIntroBanner()
-  else dismissStoreIntroBanner()
-
-  if (tagValue === 'local-histories') {
-    useLogEvent(isLibraryTab.value ? 'library_tag_click' : 'store_tag_click', { tag_id: tagValue })
-    await navigateTo(localeRoute({ name: 'local-histories' }))
-    return
-  }
-
-  useLogEvent(isLibraryTab.value ? 'library_tag_click' : 'store_tag_click', { tag_id: tagValue })
-  tagId.value = tagValue
-}
-
-async function handleBookListTagClick() {
-  useLogEvent('store_tag_book_list_click')
-}
-
-async function handleLogoClick() {
-  if (isDefaultTagId.value) {
-    useLogEvent('store_about_logo_click')
-  }
-  else {
-    useLogEvent('store_logo_click')
-    storePageState.clear()
-  }
-}
-
-async function handleLibraryLogoClick() {
-  if (isDefaultTagId.value) {
-    useLogEvent('library_about_logo_click')
-  }
-  else {
-    useLogEvent('library_logo_click')
-    storePageState.clear()
-  }
 }
 
 function handleContactUsClick() {

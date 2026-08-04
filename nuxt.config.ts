@@ -240,18 +240,24 @@ export default defineNuxtConfig({
   },
 
   hooks: {
-    // /library reuses the store page (same file), distinguished by route name.
+    // /library reuses the store pages (same files), distinguished by route name.
     // It surfaces only Plus-reading books; see app/pages/store/index.vue.
     'pages:extend'(pages) {
       pages.push({
-        name: 'library',
         path: '/library',
-        file: resolve('app/pages/store/index.vue'),
-      })
-      pages.push({
-        name: 'library-nftClassId',
-        path: '/library/:nftClassId',
-        file: resolve('app/pages/store/[nftClassId]/index.vue'),
+        file: resolve('app/pages/store.vue'),
+        children: [
+          {
+            name: 'library',
+            path: '',
+            file: resolve('app/pages/store/index.vue'),
+          },
+          {
+            name: 'library-nftClassId',
+            path: ':nftClassId',
+            file: resolve('app/pages/store/[nftClassId]/index.vue'),
+          },
+        ],
       })
     },
   },

@@ -108,6 +108,10 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  tag: {
+    type: String,
+    default: '',
+  },
   likeRank: {
     type: Number,
     default: 0,
@@ -137,6 +141,7 @@ const productPageRoute = computed(() => {
     llMedium: props.llMedium || undefined,
     llSource: props.llSource || undefined,
     isLibrary: props.isLibrary,
+    query: props.tag ? { tag: props.tag } : undefined,
   })
 })
 const stakingRoute = computed(() => {

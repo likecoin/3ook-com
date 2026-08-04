@@ -3,42 +3,12 @@
     :class="[
       'max-tablet:relative',
       'items-center',
-      'px-4 laptop:px-12',
+      'section-container',
       pricingItems.length > 1 ? 'pb-[152px]' : 'pb-[120px]',
     ]"
   >
-    <div
-      :class="[
-        'z-10',
-        'h-[62px]',
-        'w-full',
-        'max-w-[1200px]',
-        'pt-2',
-
-        'flex',
-        'items-center',
-      ]"
-    >
-      <UButton
-        variant="link"
-        color="neutral"
-        :ui="{ base: '!px-0' }"
-        :label="isLibrary ? $t('product_page_back_to_library_label') : $t('product_page_back_to_store_label')"
-        @click="handleBackButtonClick"
-      >
-        <template #leading>
-          <div class="rounded-full p-1 border border-muted flex items-center justify-center">
-            <UIcon
-              name="i-material-symbols-arrow-back-rounded"
-              class="w-4 h-4"
-            />
-          </div>
-        </template>
-      </UButton>
-    </div>
-
     <!-- Main content -->
-    <section class="grid tablet:grid-cols-[1fr_300px] laptop:grid-cols-[1fr_380px] gap-x-[44px] w-full max-w-[1200px]">
+    <section class="grid tablet:grid-cols-[1fr_300px] laptop:grid-cols-[1fr_380px] gap-x-[44px] w-full">
       <!-- Primary content column -->
       <div class="pt-5">
         <AffiliateAlert class="mb-6" />
@@ -339,7 +309,6 @@
         :ui="{
           root: [
             'w-full',
-            'max-w-[1200px]',
             'mt-4',
             'max-tablet:flex-col',
             'max-tablet:text-center',
@@ -541,7 +510,7 @@
 
     <section
       v-if="filteredRecommendedClassIds.length"
-      class="w-full max-w-[1200px] mx-auto mt-12 laptop:mt-20"
+      class="w-full mt-12 laptop:mt-20"
     >
       <h2
         class="text-lg font-bold"
@@ -1637,14 +1606,6 @@ function handleTTSTagClick() {
 function handleTTSExplainerClick() {
   useLogEvent('tts_plus_explainer_click', { nft_class_id: nftClassId.value })
   logPlusUpsellClick('tts-plus-explainer')
-}
-
-async function handleBackButtonClick() {
-  useLogEvent('product_page_back_button_click')
-  await navigateTo(localeRoute({
-    name: listingRouteName.value,
-    query: route.query,
-  }))
 }
 
 function handleBookReviewClick() {

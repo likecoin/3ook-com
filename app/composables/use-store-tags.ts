@@ -5,11 +5,22 @@ export const STAKING_SORT_TAG_PREFIX = 'staking-'
 interface StoreTagsOptions {
   routeName: Ref<string>
   isLibraryTab: Ref<boolean>
+  // Default true. Product routes pass false: when ?tag= is absent,
+  // tagId resolves to '' so no pill is highlighted.
+  shouldFallbackToDefaultTag?: MaybeRefOrGetter<boolean>
+  // Default true. Product routes pass false so their query params
+  // (ll_source etc.) don't leak into listing URLs on tag click.
+  shouldPreserveQuery?: MaybeRefOrGetter<boolean>
 }
 
 // Tag selector state for the store/library listing page: staking sort tabs,
 // CMS tags, the tag route query, and tag-derived labels.
-export function useStoreTags({ routeName, isLibraryTab }: StoreTagsOptions) {
+export function useStoreTags({
+  routeName,
+  isLibraryTab,
+  shouldFallbackToDefaultTag = true,
+  shouldPreserveQuery = true,
+}: StoreTagsOptions) {
   const { t: $t, locale } = useI18n()
   const localeRoute = useLocaleRoute()
   const route = useRoute()
@@ -68,10 +79,14 @@ export function useStoreTags({ routeName, isLibraryTab }: StoreTagsOptions) {
     return isLibraryTab.value ? tag.isForLibrary : tag.isForStore
   }
 
+  const fallbackTagId = computed(() =>
+    toValue(shouldFallbackToDefaultTag) ? defaultTagId.value : '')
+
   const tagId = computed({
     get: () => {
-      const id = getRouteQuery('tag', defaultTagId.value)
-      return getIsTagIdValidForTab(id) ? id : defaultTagId.value
+      const id = getRouteQuery('tag', '')
+      if (!id) return fallbackTagId.value
+      return getIsTagIdValidForTab(id) ? id : fallbackTagId.value
     },
     set: async (id) => {
       if (getIsLocalHistoriesTagId(id)) {
@@ -81,7 +96,7 @@ export function useStoreTags({ routeName, isLibraryTab }: StoreTagsOptions) {
       await navigateTo(localeRoute({
         name: routeName.value,
         query: {
-          ...route.query,
+          ...(toValue(shouldPreserveQuery) ? route.query : {}),
           ll_medium: `tag-${id}`,
           // NOTE: Remove the tag query if it is the listing tag
           tag: getIsDefaultTagId(id) ? undefined : id,
@@ -121,7 +136,7 @@ export function useStoreTags({ routeName, isLibraryTab }: StoreTagsOptions) {
     return localeRoute({
       name: routeName.value,
       query: {
-        ...route.query,
+        ...(toValue(shouldPreserveQuery) ? route.query : {}),
         tag: getIsDefaultTagId(value) ? undefined : value,
       },
     })

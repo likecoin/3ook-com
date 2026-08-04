@@ -87,6 +87,23 @@ body {
   opacity: 0;
 }
 
+.store-header-logo-forward-enter-active,
+.store-header-logo-forward-leave-active,
+.store-header-logo-back-enter-active,
+.store-header-logo-back-leave-active {
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+.store-header-logo-forward-enter-from,
+.store-header-logo-back-leave-to {
+  transform: translateX(-0.5rem);
+  opacity: 0;
+}
+.store-header-logo-forward-leave-to,
+.store-header-logo-back-enter-from {
+  transform: translateX(0.5rem);
+  opacity: 0;
+}
+
 .markdown {
   overflow-wrap: anywhere;
 }
