@@ -17,9 +17,6 @@
           @click="onClickHeroLogo"
         >
           <div class="relative flex justify-center items-center">
-            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
-              <div class="logo-glow rounded-full blur-3xl" />
-            </div>
             <AppLogo
               height="auto"
               :is-icon="false"
