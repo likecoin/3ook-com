@@ -15,7 +15,7 @@ body {
 
 .dark {
   --color-theme-50:  #7aefd9;
-  --color-theme-100: #6aebce;
+  --color-theme-100: #6e968e;
   --color-theme-200: #5de7c9;
   --color-theme-300: #56e5c6;
   --color-theme-400: #50e3c2;
@@ -120,21 +120,6 @@ body {
 .intercom-launcher,
 .intercom-app > [class*="intercom-with-namespace-"] {
   bottom: calc(var(--intercom-launcher-offset) + 20px) !important;
-}
-
-.logo-glow {
-  background: conic-gradient(
-    from 0deg,
-    rgba(83, 131, 139, 0.6) 0deg,
-    rgba(40, 100, 110, 0.3) 120deg,
-    transparent 180deg,
-    rgba(40, 100, 110, 0.3) 240deg,
-    rgba(83, 131, 139, 0.6) 360deg
-  );
-  width: min(60vw, 280px);
-  height: min(60vw, 280px);
-  animation: rotate-glow 8s linear infinite;
-  will-change: transform;
 }
 
 @keyframes rotate-glow {
