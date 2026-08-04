@@ -80,7 +80,7 @@
           </template>
           <template v-else>
             <UIcon
-              name="i-material-symbols-favorite-outline-rounded"
+              name="i-material-symbols-shopping-cart-outline-rounded"
               size="48"
             />
             <span

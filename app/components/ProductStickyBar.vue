@@ -87,7 +87,7 @@
             @click="emit('gift')"
           />
           <UButton
-            :icon="isInBookList ? 'i-material-symbols-favorite-rounded' : 'i-material-symbols-add-2-rounded'"
+            :icon="isInBookList ? 'i-material-symbols-shopping-cart-rounded' : 'i-material-symbols-add-shopping-cart-rounded'"
             color="neutral"
             variant="outline"
             size="sm"

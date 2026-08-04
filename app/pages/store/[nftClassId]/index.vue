@@ -484,7 +484,7 @@
                 variant="outline"
                 color="primary"
                 size="lg"
-                :leading-icon="isInBookList ? 'i-material-symbols-favorite-rounded' : 'i-material-symbols-favorite-outline-rounded'"
+                :leading-icon="isInBookList ? 'i-material-symbols-shopping-cart-rounded' : 'i-material-symbols-add-shopping-cart-rounded'"
                 :loading="isCheckingBookList || isUpdatingBookList"
                 @click="handleBookListButtonClickDebounced"
               />

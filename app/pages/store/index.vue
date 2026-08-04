@@ -133,7 +133,7 @@
           :text="$t('book_list_title')"
         >
           <PillButton
-            icon="i-material-symbols-favorite-outline-rounded"
+            icon="i-material-symbols-shopping-cart-outline-rounded"
             :aria-label="$t('book_list_title')"
             :to="localeRoute({ name: 'list' })"
             @click="handleBookListTagClick"

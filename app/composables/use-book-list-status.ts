@@ -82,7 +82,7 @@ export function useBookListStatus(options: BookListStatusOptions) {
         toast.add({
           title: $t('book_list_item_removed_toast_description'),
           description: bookName.value,
-          icon: 'i-material-symbols-heart-broken',
+          icon: 'i-material-symbols-remove-shopping-cart-rounded',
           color: 'secondary',
         })
       }
@@ -94,7 +94,8 @@ export function useBookListStatus(options: BookListStatusOptions) {
       }
     }
     else {
-      // Add to book list (a save-for-later wishlist, not the checkout cart)
+      // UI copy says "add to cart", but the event stays `add_to_wishlist`:
+      // `add_to_cart` maps to Meta's AddToCart, reserved for real checkout intent.
       useLogEvent('add_to_wishlist', getLogPayload())
       try {
         await bookListStore.addItem(
@@ -105,7 +106,7 @@ export function useBookListStatus(options: BookListStatusOptions) {
         toast.add({
           title: $t('book_list_item_added_toast_description'),
           description: bookName.value,
-          icon: 'i-material-symbols-shopping-bag',
+          icon: 'i-material-symbols-shopping-cart-rounded',
           color: 'success',
           actions: [
             {
