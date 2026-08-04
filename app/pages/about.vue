@@ -1192,4 +1192,13 @@ useHead({
 </script>
 
 <style scoped>
+.logo-glow {
+  animation: rotate-glow 8s linear infinite, pulse-glow 3s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .logo-glow {
+    animation: none;
+  }
+}
 </style>
