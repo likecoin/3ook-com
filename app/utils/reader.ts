@@ -80,6 +80,38 @@ export function getBookFileCacheKey({
 }
 
 /**
+ * Which copy of a book file is stored offline, or undefined when none is. The
+ * reader caches under whichever nft_id it opened with, so the hit may not be
+ * nftIds[0]. Empty nftIds means a borrow, which caches under no nft_id at all.
+ */
+export function findOfflineBookCopy({
+  offlineCacheKeys,
+  cacheKeyPrefix,
+  nftClassId,
+  nftIds,
+  fileIndex,
+  isCustomMessageEnabled,
+}: {
+  offlineCacheKeys: Set<string>
+  cacheKeyPrefix: string
+  nftClassId: string
+  nftIds?: string[]
+  fileIndex?: string | number
+  isCustomMessageEnabled?: boolean
+}): { nftId?: string } | undefined {
+  const candidates: Array<string | undefined> = nftIds?.length ? nftIds : [undefined]
+  // findIndex and a wrapped result, since a borrow's hit is itself undefined.
+  const index = candidates.findIndex(candidate => offlineCacheKeys.has(getBookFileCacheKey({
+    cacheKeyPrefix,
+    nftClassId,
+    nftId: candidate,
+    fileIndex,
+    isCustomMessageEnabled,
+  })))
+  return index === -1 ? undefined : { nftId: candidates[index] }
+}
+
+/**
  * Whether a cache name belongs to the given book. The `-` boundary matters:
  * a bare startsWith would also match a different book whose id extends this
  * one's, and uploaded-book ids are not fixed-length.

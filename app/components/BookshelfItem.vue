@@ -265,25 +265,26 @@ const canRead = computed(() =>
   props.isOwned || (props.isPlusReading && props.isPlusReadingAccessible),
 )
 
-// Borrowed books never qualify: the reader's gate re-derives the borrow from
-// metadata that isn't persisted across a reload, so offline it turns them away
-// and the badge would be a false promise.
-function checkContentURLAvailableOffline(contentURL: ContentURL) {
-  if (!canRead.value || props.isPlusReading) return false
-  return props.offlineCacheKeys.has(getBookFileCacheKey({
+// Borrowed books qualify too: the reader's gate reads the borrow from the
+// persisted shelf and Plus status from the session, both of which survive an
+// offline reload, so canRead is the whole condition on this side as well.
+function findOfflineCopy(contentURL: ContentURL) {
+  if (!canRead.value) return undefined
+  return findOfflineBookCopy({
+    offlineCacheKeys: props.offlineCacheKeys,
     cacheKeyPrefix: config.public.cacheKeyPrefix,
     nftClassId: props.nftClassId,
-    nftId: props.nftIds?.[0],
+    nftIds: props.nftIds,
     fileIndex: contentURL.index,
     isCustomMessageEnabled: bookInfo.isCustomMessageEnabled.value,
-  }))
+  })
 }
 
 // Tracks the file a cover click opens; a multi-file book can have only its
 // other format cached, which the per-file check above still catches.
 const isAvailableOffline = computed(() => {
   const contentURL = bookInfo.defaultContentURL.value
-  return !!contentURL && checkContentURLAvailableOffline(contentURL)
+  return !!contentURL && !!findOfflineCopy(contentURL)
 })
 
 const isUnreachableOffline = computed(() => props.isOffline && !isAvailableOffline.value)
@@ -481,19 +482,24 @@ function fetchBookInfo() {
 }
 
 function openContentURL(contentURL: ContentURL, { isTTS = false } = {}) {
-  // Pre-empt the reader: offline without this exact file cached it would boot,
-  // fail to fetch and strand the user on its error modal.
-  if (props.isOffline && !checkContentURLAvailableOffline(contentURL)) {
-    toast.add({
-      title: $t('error_reader_book_not_available_offline'),
-      icon: 'i-material-symbols-signal-wifi-off-outline-rounded',
-      color: 'neutral',
-    })
-    return
-  }
-
   // TODO: UI to select specific NFT Id
-  const nftId = props.nftIds?.[0]
+  let nftId = props.nftIds?.[0]
+  if (props.isOffline) {
+    // Pre-empt the reader: without this exact file cached it would boot, fail
+    // to fetch and strand the user on its error modal.
+    const offlineCopy = findOfflineCopy(contentURL)
+    if (!offlineCopy) {
+      toast.add({
+        title: $t('error_reader_book_not_available_offline'),
+        icon: 'i-material-symbols-signal-wifi-off-outline-rounded',
+        color: 'neutral',
+      })
+      return
+    }
+    // Open the copy actually cached; reader.vue only defaults nft_id when the
+    // route carries none, so this choice sticks.
+    nftId = offlineCopy.nftId
+  }
   const readerRoute = bookInfo.getReaderRoute.value({ nftId, contentURL })
   if (!readerRoute) {
     errorModal.open({ description: $t('bookshelf_item_open_content_failed') })

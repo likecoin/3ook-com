@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isLikelyGarbledPDFText, isPDFCorpusUnreadable } from '~/utils/reader'
+import { findOfflineBookCopy, getBookFileCacheKey, isLikelyGarbledPDFText, isPDFCorpusUnreadable } from '~/utils/reader'
 
 describe('isLikelyGarbledPDFText', () => {
   it('returns false for short strings', () => {
@@ -33,6 +33,65 @@ describe('isLikelyGarbledPDFText', () => {
   it('returns true for sustained Latin-1 symbol density', () => {
     const text = 'V«JBCB¬¬ ôB«AP«6 +T ñ ½üî\\ïð ¬¦¯¨¶§¤¼½¾'.repeat(4)
     expect(isLikelyGarbledPDFText(text)).toBe(true)
+  })
+})
+
+describe('findOfflineBookCopy', () => {
+  const CACHE_KEY_PREFIX = '3ook'
+  const NFT_CLASS_ID = '0xabc'
+
+  function findIn(cacheKeys: string[], params: {
+    nftIds?: string[]
+    fileIndex?: string | number
+  } = {}) {
+    return findOfflineBookCopy({
+      offlineCacheKeys: new Set(cacheKeys),
+      cacheKeyPrefix: CACHE_KEY_PREFIX,
+      nftClassId: NFT_CLASS_ID,
+      ...params,
+    })
+  }
+
+  function keyFor(nftId: string | undefined, fileIndex: string | number = '0') {
+    return getBookFileCacheKey({
+      cacheKeyPrefix: CACHE_KEY_PREFIX,
+      nftClassId: NFT_CLASS_ID,
+      nftId,
+      fileIndex,
+    })
+  }
+
+  it('returns undefined when nothing is cached', () => {
+    expect(findIn([], { nftIds: ['1'] })).toBeUndefined()
+    expect(findIn([])).toBeUndefined()
+  })
+
+  // The reader caches under the nft_id it was opened with — a claim link or an
+  // older bookmark can leave the file under a copy that isn't nftIds[0].
+  it('matches a copy that is not the first owned one', () => {
+    expect(findIn([keyFor('2')], { nftIds: ['1', '2'] })).toEqual({ nftId: '2' })
+  })
+
+  it('prefers the first owned copy when several are cached', () => {
+    expect(findIn([keyFor('1'), keyFor('2')], { nftIds: ['1', '2'] })).toEqual({ nftId: '1' })
+  })
+
+  // A borrow owns no copy, so the reader sets no nft_id and the shelf passes
+  // an empty list. The hit must be distinguishable from no hit at all.
+  it('matches the borrow variant when no copy is owned', () => {
+    expect(findIn([keyFor(undefined)])).toEqual({ nftId: undefined })
+    expect(findIn([keyFor(undefined)], { nftIds: [] })).toEqual({ nftId: undefined })
+  })
+
+  // reader.vue injects an nft_id whenever an owner's route lacks one, so an
+  // owner can never reach an nftId-less entry — claiming it would be a false promise.
+  it('ignores the borrow variant for an owner', () => {
+    expect(findIn([keyFor(undefined)], { nftIds: ['1'] })).toBeUndefined()
+  })
+
+  it('does not match a different file of a multi-format book', () => {
+    expect(findIn([keyFor('1', 1)], { nftIds: ['1'], fileIndex: 0 })).toBeUndefined()
+    expect(findIn([keyFor('1', 1)], { nftIds: ['1'], fileIndex: 1 })).toEqual({ nftId: '1' })
   })
 })
 
