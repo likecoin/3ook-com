@@ -32,6 +32,14 @@ export function useUserBookOwnership(nftClassId: MaybeRef<string>) {
         return true
       }
 
+      // Offline the contract call below can only fail, and the reader's gate
+      // awaits it. navigator directly, not useOnline(): this runs per shelf
+      // item, where a reactive read would add a listener pair for every book.
+      if (import.meta.client && !navigator.onLine) {
+        hasChecked.value = true
+        return false
+      }
+
       // If not found in store, check via contract
       await bookshelfStore.fetchNFTByNFTClassIdAndOwnerWalletAddressThroughContract(
         nftClassIdRef.value,

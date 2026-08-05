@@ -52,8 +52,9 @@ if (isUploadedBook) {
 else {
   const bookInfo = useBookInfo({ nftClassId })
   const { checkOwnership } = useUserBookOwnership(nftClassId)
-  const { isLikerPlus } = useSubscription()
+  const { isLikerPlus, isExpiredLikerPlus } = useSubscription()
   const queryCache = useQueryCache()
+  const bookshelfStore = useBookshelfStore()
 
   const isPreviewRequested = getRouteQuery('preview') === '1'
 
@@ -95,8 +96,18 @@ else {
       ensureNFTClassAggregatedMetadataThroughCache(queryCache, nftClassId.value)
         .catch(error => console.warn('Failed to fetch NFT metadata:', error)),
     ])
-    const canBorrow = !isOwner && bookInfo.isPlusReadingEnabled.value
+    const canBorrowFromMetadata = bookInfo.isPlusReadingEnabled.value
       && (isLikerPlus.value || bookInfo.hasFreeEdition.value)
+    // Offline the metadata above can be gone (capped, version-bumped query
+    // cache), so fall back to the persisted shelf under the accessibility the
+    // shelf locks on. The server still gates fetches; a return purges the file.
+    const normalizedNFTClassId = normalizeNFTClassId(nftClassId.value)
+    const isPreLent = bookshelfStore.preLentNFTClassIds.includes(normalizedNFTClassId)
+    const hasPersistedBorrow = isPreLent
+      || (isLikerPlus.value && !isExpiredLikerPlus.value
+        && bookshelfStore.plusReadingBookIds.includes(normalizedNFTClassId))
+    const isOffline = import.meta.client && !navigator.onLine
+    const canBorrow = !isOwner && (canBorrowFromMetadata || (isOffline && hasPersistedBorrow))
     if (isPreviewRequested && (isOwner || canBorrow)) {
       // Real access wins over preview: strip the param (and canonicalize nft_id
       // for owners, as the block below would) so the full file is fetched and a
