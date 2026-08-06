@@ -69,6 +69,7 @@ export function usePreviewEndModal(params: {
       const query = { ...route.query }
       delete query.preview
       await openPaywallModal({
+        checkoutPlacement: 'preview-end',
         redirectRoute: {
           name: getRouteBaseNameString(),
           query,

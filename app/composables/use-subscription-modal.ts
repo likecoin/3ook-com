@@ -2,9 +2,11 @@ import type { RouteLocationAsRelativeGeneric } from 'vue-router'
 import { PaywallModal, UpsellPlusModal } from '#components'
 import type { PaywallModalProps } from '~/components/PaywallModal.props'
 import type { UpsellPlusModalProps } from '~/components/UpsellPlusModal.props'
+import type { PlusCheckoutPlacement } from '~~/shared/constants/analytics'
 
 type OpenPaywallModalOptions = PaywallModalProps & {
   redirectRoute?: RouteLocationAsRelativeGeneric
+  checkoutPlacement?: PlusCheckoutPlacement
 }
 
 export function useSubscriptionModal() {
@@ -63,7 +65,7 @@ export function useSubscriptionModal() {
     return {
       isLikerPlus: isLikerPlus.value,
       likerPlusPeriod: likerPlusPeriod.value,
-      onSubscribe: startSubscription,
+      onSubscribe: payload => startSubscription({ ...payload, checkoutPlacement: 'book-upsell-modal' }),
       ...getIAPOverrides('yearly'),
     }
   }
@@ -96,7 +98,7 @@ export function useSubscriptionModal() {
       paywallModal.close()
     }
 
-    const { redirectRoute, ...modalProps } = options
+    const { redirectRoute, checkoutPlacement, ...modalProps } = options
     const baseProps = getPaywallModalProps()
     paywallModalProps.value = {
       ...baseProps,
@@ -107,7 +109,7 @@ export function useSubscriptionModal() {
         // Stripe flow either navigates away (closing the tab's page) or, on error,
         // leaves the paywall in place to retry. A successful in-app/embedded flow
         // changes the route, which closes the modal via router.afterEach below.
-        startSubscription({ ...payload, redirectRoute })
+        startSubscription({ ...payload, redirectRoute, checkoutPlacement })
       },
     }
     return paywallModal.open(paywallModalProps.value).result

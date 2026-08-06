@@ -193,7 +193,7 @@ watchImmediate(hasLoggedIn, async (loggedIn) => {
     if (isCustomVoiceAction) {
       if (!user.value?.isLikerPlus) {
         if (canStartSubscribeFlow.value) {
-          subscription.openPaywallModal({ utmSource: 'custom_voice' })
+          subscription.openPaywallModal({ utmSource: 'custom_voice', checkoutPlacement: 'account-custom-voice' })
         }
         return
       }

@@ -1,6 +1,13 @@
 import type { UpsellPlusModalSubscribeEventPayload } from '~/components/UpsellPlusModal.props'
 import type { CheckoutUIMode } from '~/composables/use-plus-session-api'
+import type { PlusCheckoutPlacement } from '~~/shared/constants/analytics'
 import { usePlusCheckoutStore } from '~/stores/plus-checkout'
+
+// The modal emits the payload; the opener adds the placement, which is
+// analytics-only and never reaches checkout metadata.
+export type StartSubscriptionOptions = UpsellPlusModalSubscribeEventPayload & {
+  checkoutPlacement?: PlusCheckoutPlacement
+}
 
 export function useSubscriptionCheckout() {
   const {
@@ -89,12 +96,13 @@ export function useSubscriptionCheckout() {
     utmCampaign,
     utmMedium,
     utmSource,
+    checkoutPlacement,
     coupon = getRouteQuery('coupon'),
     plan = 'yearly',
     tier = 'plus',
     nftClassId,
     redirectRoute,
-  }: UpsellPlusModalSubscribeEventPayload = {}) {
+  }: StartSubscriptionOptions = {}) {
     const isYearly = plan === 'yearly'
     const isCivicTier = tier === 'civic'
     if (isCivicTier) {
@@ -123,8 +131,17 @@ export function useSubscriptionCheckout() {
       promotion_name: coupon,
     }
     useLogEvent('add_to_cart', eventPayloadWithCoupon)
-    useLogEvent('subscription_button_click')
-    useLogEvent(`subscription_button_click_${plan}`)
+    // No `value`: GA4 reads it as revenue, and the add_to_cart above already
+    // reports this amount for this click. No `nft_class_id` either — here it is
+    // the attached gift book, not the book that drove the upsell.
+    const subscriptionClickPayload = {
+      currency: currency.value,
+      product_type: tier,
+      plan,
+      checkout_placement: checkoutPlacement,
+    }
+    useLogEvent('subscription_button_click', subscriptionClickPayload)
+    useLogEvent(`subscription_button_click_${plan}`, subscriptionClickPayload)
 
     const isSubscribed = await redirectIfSubscribed({ plan, tier })
     if (isSubscribed) return

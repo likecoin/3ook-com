@@ -500,6 +500,7 @@ async function handleSubscribe(payload: {
   const isCivicTier = payload.tier === 'civic'
   await checkout.startSubscription({
     ...payload,
+    checkoutPlacement: 'member-page',
     coupon: coupon.value,
     // Carry the subscriber's chosen gift book; the API validates it against
     // the affiliate's gift list and resolves the (free) price index itself.

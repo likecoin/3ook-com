@@ -17,6 +17,7 @@
         <!-- Locked overlay when Plus has lapsed; the cover's own click routes to resubscribe. -->
         <div
           v-if="props.isPlusReading && !props.isPlusReadingAccessible"
+          ref="plusReadingLockedUpsell"
           class="absolute inset-0 flex items-center justify-center bg-theme-black/50 rounded-[inherit]"
           :aria-label="$t('bookshelf_plus_reading_locked_cta')"
         >
@@ -539,6 +540,12 @@ async function downloadURL({ name, type, fileIndex }: { name: string, type: stri
 }
 
 const localeRoute = useLocaleRoute()
+
+usePlusUpsellImpression({
+  templateRef: 'plusReadingLockedUpsell',
+  slot: 'plus-reading-locked',
+  source: 'shelf',
+})
 
 function handleCoverClick() {
   // Lapsed Plus on a borrowed book: route to the membership page to resubscribe.

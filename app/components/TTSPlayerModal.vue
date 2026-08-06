@@ -167,7 +167,7 @@
                       variant="soft"
                       :label="$t('tts_custom_voice_upgrade_button')"
                       icon="i-material-symbols-lock-outline"
-                      @click="subscription.openPaywallModal({ utmSource: 'tts_custom_voice', redirectRoute: buildSubscribeRedirectRoute() })"
+                      @click="subscription.openPaywallModal({ utmSource: 'tts_custom_voice', checkoutPlacement: 'tts-custom-voice', redirectRoute: buildSubscribeRedirectRoute() })"
                     />
                   </div>
 
@@ -462,6 +462,7 @@ function handleTrialExhausted(source: 'server_402' | 'client_gate') {
     utmSource: 'epub_reader',
     utmCampaign: props.nftClassId,
     utmMedium: 'tts',
+    checkoutPlacement: 'tts-trial-limit',
     redirectRoute: buildSubscribeRedirectRoute(),
   })
 }
@@ -796,6 +797,7 @@ function handleTrialChipClick() {
     utmSource: 'epub_reader',
     utmCampaign: props.nftClassId,
     utmMedium: 'tts_chip',
+    checkoutPlacement: 'tts-trial-chip',
     redirectRoute: buildSubscribeRedirectRoute(),
   })
 }

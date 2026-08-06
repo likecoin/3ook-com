@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 import { nextTick } from 'vue'
-import { usePlusUpsellSlot } from '~/composables/use-plus-upsell-slot'
+import { usePlusUpsellImpression, usePlusUpsellSlot } from '~/composables/use-plus-upsell-slot'
 
 const { mockLogPlusUpsell, visibilityHandlers } = vi.hoisted(() => ({
   mockLogPlusUpsell: vi.fn(),
@@ -29,6 +29,16 @@ function mountSlot(slot: string, source = 'account-page') {
   return { handlePlusUpsellClick, setVisible: visibilityHandlers.at(-1)! }
 }
 
+function mountImpression(slot: string, isEligible: boolean, source = 'account-page') {
+  usePlusUpsellImpression({
+    templateRef: `${slot}Ref`,
+    slot: slot as never,
+    source: source as never,
+    isEligible,
+  })
+  return { setVisible: visibilityHandlers.at(-1)! }
+}
+
 beforeEach(() => {
   sessionStorage.clear()
   visibilityHandlers.length = 0
@@ -43,21 +53,46 @@ describe('usePlusUpsellSlot', () => {
       llSource: 'account-page',
     })
 
-    // The sessionStorage write flushes on `pre`, so a remount only sees the
-    // recorded slot after a tick.
-    await nextTick()
     mountSlot('color-mode').setVisible(true)
     expect(mockLogPlusUpsell).toHaveBeenCalledOnce()
   })
 
-  it('dedups each slot independently', async () => {
+  // The shelf mounts one slot per locked cover, and they all intersect in the
+  // same observer callback — the dedup has to hold without a tick in between.
+  it('logs one impression when sibling slots become visible together', () => {
+    const covers = [mountSlot('plus-reading-locked', 'shelf'), mountSlot('plus-reading-locked', 'shelf')]
+    covers.forEach(cover => cover.setVisible(true))
+
+    expect(mockLogPlusUpsell).toHaveBeenCalledExactlyOnceWith('impression', {
+      llMedium: 'plus-reading-locked',
+      llSource: 'shelf',
+    })
+  })
+
+  it('dedups each slot independently', () => {
     mountSlot('color-mode').setVisible(true)
-    await nextTick()
     mountSlot('custom-voice').setVisible(true)
 
     expect(mockLogPlusUpsell).toHaveBeenCalledTimes(2)
     expect(mockLogPlusUpsell).toHaveBeenLastCalledWith('impression', {
       llMedium: 'custom-voice',
+      llSource: 'account-page',
+    })
+  })
+
+  it('logs no impression for an ineligible view', () => {
+    mountImpression('tts-plus-tag', false).setVisible(true)
+    expect(mockLogPlusUpsell).not.toHaveBeenCalled()
+  })
+
+  // An ineligible view must not consume the slot: a member sees the tag as a
+  // keyword link, and that must not silence the next non-member's impression.
+  it('leaves the slot unrecorded when an ineligible view is seen first', () => {
+    mountImpression('tts-plus-tag', false).setVisible(true)
+    mountImpression('tts-plus-tag', true).setVisible(true)
+
+    expect(mockLogPlusUpsell).toHaveBeenCalledExactlyOnceWith('impression', {
+      llMedium: 'tts-plus-tag',
       llSource: 'account-page',
     })
   })

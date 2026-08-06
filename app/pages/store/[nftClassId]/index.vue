@@ -200,6 +200,7 @@
             </li>
             <li v-if="!bookInfo.isAudioHidden.value">
               <UButton
+                ref="ttsPlusTagUpsell"
                 :label="ttsTagLabel"
                 :to="ttsTagRoute"
                 variant="subtle"
@@ -210,6 +211,7 @@
             </li>
             <li v-if="!isLibrary && isPlusReadingEnabled">
               <UButton
+                ref="plusReadingTagUpsell"
                 :label="plusReadingTagLabel"
                 :to="plusReadingTagRoute"
                 variant="subtle"
@@ -320,6 +322,7 @@
       >
         <template #actions>
           <UButton
+            ref="ttsPlusExplainerUpsell"
             :label="$t('product_page_tts_plus_explainer_cta')"
             :to="ttsExplainerRoute"
             trailing-icon="i-material-symbols-arrow-forward-rounded"
@@ -413,6 +416,7 @@
                 />
                 <UButton
                   v-else-if="isPlusReadingCTAVisible"
+                  ref="plusReadingCTAUpsell"
                   :variant="plusReadingCTAVariant"
                   class="flex-1 cursor-pointer justify-center"
                   :label="plusReadingCTALabel"
@@ -680,7 +684,7 @@ const colorMode = useColorMode()
 const ttsTagColor = computed(() => colorMode.value === 'dark' ? 'primary' : 'secondary')
 const ttsTagLabel = computed(() => $t('product_page_support_tts_label'))
 const ttsTagRoute = computed(() =>
-  isLikerPlus.value || isApp.value
+  !isTagUpsellEligible.value
     ? localeRoute({
         name: listingRouteName.value,
         query: {
@@ -708,7 +712,7 @@ const ttsExplainerRoute = computed(() => localeRoute({
 const plusReadingTagColor = computed(() => colorMode.value === 'dark' ? 'primary' : 'secondary')
 const plusReadingTagLabel = computed(() => $t('product_page_plus_reading_label'))
 const plusReadingTagRoute = computed(() =>
-  isLikerPlus.value || isApp.value
+  !isTagUpsellEligible.value
     ? localeRoute({
         name: listingRouteName.value,
         query: {
@@ -749,6 +753,38 @@ const isPlusReadingEnabled = bookInfo.isPlusReadingEnabled
 const isPlusReadingCTAVisible = computed(() =>
   !isUserBookOwner.value && isPlusReadingEnabled.value,
 )
+// The tags link members and in-app users to a keyword search instead, so only
+// these arms are upsells. Shared with the click handlers below: an impression
+// gate that drifts from its click gate silently corrupts the slot's CTR.
+const isTagUpsellEligible = computed(() => !isLikerPlus.value && !isApp.value)
+const isPlusReadingUpsellEligible = computed(() =>
+  !isLikerPlus.value && !bookInfo.isFreeBorrowEnabled.value,
+)
+
+usePlusUpsellImpression({
+  templateRef: 'plusReadingCTAUpsell',
+  slot: 'plus-reading-cta',
+  source: 'product-page',
+  isEligible: isPlusReadingUpsellEligible,
+})
+usePlusUpsellImpression({
+  templateRef: 'plusReadingTagUpsell',
+  slot: 'plus-reading-tag',
+  source: 'product-page',
+  isEligible: isTagUpsellEligible,
+})
+usePlusUpsellImpression({
+  templateRef: 'ttsPlusTagUpsell',
+  slot: 'tts-plus-tag',
+  source: 'product-page',
+  isEligible: isTagUpsellEligible,
+})
+usePlusUpsellImpression({
+  templateRef: 'ttsPlusExplainerUpsell',
+  slot: 'tts-plus-explainer',
+  source: 'product-page',
+})
+
 // A member who already borrowed this book reads it now, so the CTA shows Read
 // instead of Borrow — for Plus members and non-Plus free-book borrowers alike.
 // Gate on the session: plusReadingBookIds is persisted, so without this a stale
@@ -1509,7 +1545,7 @@ async function handlePlusReadButtonClick() {
 
   // Non-Plus users are routed to the membership page to subscribe, unless the
   // book has a free edition — then they may borrow it without a subscription.
-  if (!isLikerPlus.value && !bookInfo.isFreeBorrowEnabled.value) {
+  if (isPlusReadingUpsellEligible.value) {
     // Only this branch is an upsell — the event above also covers Plus members
     // and free borrows, which never reach the membership page.
     logPlusUpsellClick('plus-reading-cta')
@@ -1570,13 +1606,12 @@ async function handlePreviewButtonClick() {
 }
 
 function handlePlusReadingTagClick() {
-  if (isLikerPlus.value || isApp.value) {
+  if (!isTagUpsellEligible.value) {
     handleKeywordClick(plusReadingTagLabel.value)
+    return
   }
-  else {
-    useLogEvent('plus_reading_tag_click', { nft_class_id: nftClassId.value })
-    logPlusUpsellClick('plus-reading-tag')
-  }
+  useLogEvent('plus_reading_tag_click', { nft_class_id: nftClassId.value })
+  logPlusUpsellClick('plus-reading-tag')
 }
 
 function calculateCustomPrice(editionPrice: number, tippingAmount: number | undefined): number {
@@ -1594,13 +1629,12 @@ function handleKeywordClick(keyword: string) {
 }
 
 function handleTTSTagClick() {
-  if (isLikerPlus.value || isApp.value) {
+  if (!isTagUpsellEligible.value) {
     handleKeywordClick(ttsTagLabel.value)
+    return
   }
-  else {
-    useLogEvent('tts_plus_tag_click', { nft_class_id: nftClassId.value })
-    logPlusUpsellClick('tts-plus-tag')
-  }
+  useLogEvent('tts_plus_tag_click', { nft_class_id: nftClassId.value })
+  logPlusUpsellClick('tts-plus-tag')
 }
 
 function handleTTSExplainerClick() {

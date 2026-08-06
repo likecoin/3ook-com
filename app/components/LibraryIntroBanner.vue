@@ -1,6 +1,7 @@
 <template>
   <UAlert
     v-if="isVisible"
+    ref="libraryIntroUpsell"
     :title="$t('library_intro_banner_title')"
     :description="$t('library_intro_banner_description')"
     :actions="actions"
@@ -33,6 +34,13 @@ const { isDismissed, dismissLibraryIntroBanner } = useLibraryIntroBanner()
 // Gate behind mount so the SSR'd grid doesn't hydrate-mismatch on persisted state.
 const isMounted = useMounted()
 const isVisible = computed(() => isMounted.value && !isDismissed.value)
+
+usePlusUpsellImpression({
+  templateRef: 'libraryIntroUpsell',
+  slot: 'library-intro',
+  source: 'library',
+  isEligible: () => !isPlusOrDevicePlus.value,
+})
 
 // Plus members already subscribe, so point them to the explainer; others to the paywall.
 const actions = computed(() => [{
