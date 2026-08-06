@@ -31,6 +31,10 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
   let plusReadingBooksPromise: Promise<void> | null = null
   const preLentNFTClassIds = ref<string[]>([])
   const isFetchingPreLentBooks = ref(false)
+  // Success-only, and deliberately not persisted: analytics gates the pre-lent
+  // impression on it, so a failed fetch must emit nothing rather than report an
+  // empty shelf as "nothing was on offer".
+  const hasFetchedPreLentBooks = ref(false)
   const persistedWalletAddress = ref<string | null>(null)
   const isFetching = ref(false)
   const hasFetched = ref(false)
@@ -147,8 +151,12 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
       const ids = await preLentBookSessionAPI.fetchPreLentNFTClassIds()
       if (isStale()) return
       preLentNFTClassIds.value = ids.map(id => id.toLowerCase())
-      if (!preLentNFTClassIds.value.length) return
-      await hydrateShelfBooks(preLentNFTClassIds.value)
+      if (preLentNFTClassIds.value.length) {
+        await hydrateShelfBooks(preLentNFTClassIds.value)
+        if (isStale()) return
+      }
+      // Only after hydration, so `preLentItems` is settled when this flips.
+      hasFetchedPreLentBooks.value = true
     }
     catch (error) {
       console.warn('Failed to fetch pre-lent books:', error)
@@ -431,6 +439,7 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
     plusReadingBooksPromise = null
     preLentNFTClassIds.value = []
     isFetchingPreLentBooks.value = false
+    hasFetchedPreLentBooks.value = false
     nextKey.value = undefined
     persistedWalletAddress.value = null
     lastError.value = null
@@ -460,6 +469,7 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
     plusReadingItems,
 
     isFetchingPreLentBooks,
+    hasFetchedPreLentBooks,
     preLentNFTClassIds,
     visiblePreLentNFTClassIds,
     preLentItems,

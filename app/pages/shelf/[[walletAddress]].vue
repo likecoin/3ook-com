@@ -92,6 +92,7 @@
         <!-- Search + tab selector -->
         <header
           v-if="isMyBookshelf"
+          ref="shelfTabsHeader"
           class="flex flex-col w-full mt-4"
         >
           <UCollapsible
@@ -1053,6 +1054,41 @@ function getShelfItemType(nftClassId?: string) {
   if (bookshelfStore.preLentNFTClassIds.includes(normalizedNFTClassId)) return 'pre_lent'
   return undefined
 }
+
+// Pre-lent books are granted server-side and never claimed, so nothing recorded
+// that a free book was on offer. Anchored on the tab header, not the grid: the
+// case worth catching is a grid that renders nothing at all.
+const hasLoggedPreLentImpression = useSessionStorage('3ook_shelf_pre_lent_impression', false)
+// Latched by hand because `useVisibility`'s `once` stops the observer on the
+// first true->false edge, leaving the ref stuck false. Scrolling past the header
+// before the fetch lands would otherwise lose the impression for the session.
+const hasSeenShelfTabsHeader = ref(false)
+useVisibility('shelfTabsHeader', (isVisible) => {
+  if (isVisible) hasSeenShelfTabsHeader.value = true
+})
+
+watch(
+  () => isMyBookshelf.value && hasSeenShelfTabsHeader.value && bookshelfStore.hasFetchedPreLentBooks,
+  (canLogPreLentImpression) => {
+    if (!canLogPreLentImpression || hasLoggedPreLentImpression.value) return
+    hasLoggedPreLentImpression.value = true
+    // Matched against the rendered items, not the raw fetched ids: an id that is
+    // also owned would otherwise match the owned row and report its index.
+    const renderedPreLentNFTClassIds = new Set(bookshelfStore.preLentItems.map(item => item.nftClassId))
+    const currentReadingItems = visibleReadingItems.value
+    useLogEvent('shelf_pre_lent_impression', {
+      fetched_count: bookshelfStore.preLentNFTClassIds.length,
+      available_count: bookshelfStore.visiblePreLentNFTClassIds.length,
+      rendered_count: renderedPreLentNFTClassIds.size,
+      // Pre-lent items lose every sort tiebreaker, so they land last. Separates
+      // an offer below the fold from one the user scrolled past.
+      first_pre_lent_index: currentReadingItems.findIndex(item => renderedPreLentNFTClassIds.has(item.nftClassId)),
+      reading_item_count: currentReadingItems.length,
+      tab: activeTab.value,
+    })
+  },
+  { immediate: true },
+)
 
 function handleBookshelfItemOpen({
   type,
