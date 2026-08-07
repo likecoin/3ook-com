@@ -16,14 +16,11 @@
           :aria-label="$t('about_page_hero_cta_store')"
           @click="onClickHeroLogo"
         >
-          <div class="relative flex justify-center items-center">
-            <AppLogo
-              height="auto"
-              :is-icon="false"
-              :is-padded="false"
-              class="relative"
-            />
-          </div>
+          <AppLogo
+            height="auto"
+            :is-icon="false"
+            :is-padded="false"
+          />
         </NuxtLink>
 
         <div class="space-y-4 text-gray-100">
