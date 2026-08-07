@@ -8,29 +8,50 @@
       'w-full',
     ]"
   >
-    <URadioGroup
+    <div
       v-if="isTierSelectorVisible"
-      v-model="selectedTier"
-      :items="tierOptions"
-      orientation="horizontal"
-      variant="table"
-      indicator="hidden"
-      :ui="{
-        root: 'w-full mb-2',
-        fieldset: 'w-full',
-        item: tierItemClass,
-        label: tierLabelClass,
-      }"
-    />
+      class="flex items-center gap-3 w-full"
+    >
+      <div
+        v-if="!isTitleHidden"
+        :class="titleClass"
+        v-text="benefitsTitle"
+      />
+      <div
+        class="inline-flex shrink-0 ml-auto p-0.5 rounded-full"
+        :class="tierToggleClass.track"
+        role="radiogroup"
+        :aria-label="$t('pricing_page_tier_selector_label')"
+      >
+        <button
+          v-for="(option, index) in tierOptions"
+          :key="option.value"
+          ref="tierButtons"
+          type="button"
+          role="radio"
+          :aria-checked="option.value === selectedTier"
+          :tabindex="option.value === selectedTier ? 0 : -1"
+          :aria-label="option.value === currentTier
+            ? `${option.label} (${$t('pricing_page_current_plan')})`
+            : undefined"
+          :class="[
+            'px-4 py-1',
+            'text-xs font-semibold',
+            'rounded-full',
+            'transition-all duration-200',
+            'cursor-pointer',
+            option.value === selectedTier ? tierToggleClass.active : tierToggleClass.inactive,
+          ]"
+          @click="handleSelectTier(option.value)"
+          @keydown.exact="handleTierKeydown($event, index)"
+          v-text="option.label"
+        />
+      </div>
+    </div>
     <div
       v-else-if="!isTitleHidden"
-      :class="[
-        isDarkBackground ? 'text-theme-cyan' : 'text-theme-black dark:text-theme-cyan',
-        isTitleCenter ? 'text-center' : 'text-left',
-        'font-bold',
-        'border-b-2 border-current',
-      ]"
-      v-text="title || $t('pricing_page_subscription')"
+      :class="titleClass"
+      v-text="benefitsTitle"
     />
 
     <ul :class="featureListClass">
@@ -147,7 +168,7 @@ const props = withDefaults(defineProps<{
   isDarkBackground?: boolean
   isAudioHidden?: boolean
   prependedFeatures?: string[]
-  // Shows a tier selector in place of the title and, on Civic, appends the
+  // Shows a tier toggle beside the title and, on Civic, appends the
   // Civic-only benefits below the shared Plus list.
   isTierSelectorVisible?: boolean
   // The viewer's active tier, marked as "current plan" in the toggle.
@@ -169,73 +190,41 @@ const selectedTier = defineModel<LikerPlusTier>('tier', { default: 'plus' })
 const { t: $t } = useI18n()
 const localeRoute = useLocaleRoute()
 
-const tierOptions = computed<{
-  value: LikerPlusTier
-  label: string
-  isCurrent: boolean
-  class: string[]
-}[]>(() => [
-  {
-    value: 'plus',
-    label: $t('pricing_page_tier_plus'),
-    isCurrent: props.currentTier === 'plus',
-    class: props.isDarkBackground
-      ? [
-          'bg-theme-cyan/5',
-          'has-data-[state=checked]:bg-theme-cyan/10',
-        ]
-      : [
-          'bg-theme-cyan/10 dark:bg-theme-cyan/5',
-          'has-data-[state=checked]:bg-theme-black/90',
-          'dark:has-data-[state=checked]:bg-theme-cyan/10',
-        ],
-  },
-  {
-    value: 'civic',
-    label: $t('pricing_page_tier_civic'),
-    isCurrent: props.currentTier === 'civic',
-    class: props.isDarkBackground
-      ? [
-          'bg-theme-cyan/20',
-          'has-data-[state=checked]:bg-theme-cyan/30',
-        ]
-      : [
-          'bg-theme-cyan/30 dark:bg-theme-cyan/20',
-          'has-data-[state=checked]:bg-theme-black/90',
-          'dark:has-data-[state=checked]:bg-theme-cyan/30',
-        ],
-  },
+const tierOptions = computed<{ value: LikerPlusTier, label: string }[]>(() => [
+  { value: 'plus', label: $t('pricing_page_tier_plus') },
+  { value: 'civic', label: $t('pricing_page_tier_civic') },
 ])
 
-const tierItemClass = computed(() => [
-  'flex-1',
-  'py-2',
-  'cursor-pointer',
-  'transition-colors',
-  'duration-200',
-  'border-0',
-  'ring-2',
-  'ring-inset',
-  ...(props.isDarkBackground
-    ? [
-        'text-theme-cyan',
-        'ring-theme-cyan/20',
-        'has-data-[state=checked]:ring-theme-cyan',
-      ]
-    : [
-        'text-theme-black',
-        'has-data-[state=checked]:text-theme-cyan',
-        'ring-theme-black/20 dark:ring-theme-cyan/20',
-        'has-data-[state=checked]:ring-theme-black',
-        'dark:has-data-[state=checked]:ring-theme-cyan',
-      ]),
-])
+const tierButtons = useTemplateRef<HTMLButtonElement[]>('tierButtons')
 
-const tierLabelClass = computed(() => [
-  'text-xl',
+// The radio group uses a roving tabindex, so arrows are the only way to reach
+// the unselected option by keyboard.
+const TIER_ARROW_OFFSETS: Record<string, number> = {
+  ArrowRight: 1,
+  ArrowDown: 1,
+  ArrowLeft: -1,
+  ArrowUp: -1,
+}
+
+const tierToggleClass = computed(() => (props.isDarkBackground
+  ? {
+      track: 'bg-white/10',
+      active: 'bg-theme-cyan/20 text-theme-cyan',
+      inactive: 'text-white/50',
+    }
+  : {
+      track: 'bg-theme-black/8 dark:bg-theme-white/8',
+      active: 'bg-theme-white dark:bg-theme-black text-theme-black dark:text-theme-cyan shadow-sm',
+      inactive: 'text-theme-black/40 dark:text-theme-white/40',
+    }))
+
+const benefitsTitle = computed(() => props.title || $t('pricing_page_subscription'))
+
+const titleClass = computed(() => [
+  props.isDarkBackground ? 'text-theme-cyan' : 'text-theme-black dark:text-theme-cyan',
+  props.isTitleCenter ? 'text-center' : 'text-left',
   'font-bold',
-  'cursor-pointer',
-  props.isDarkBackground ? 'text-theme-cyan' : 'text-inherit dark:text-theme-cyan',
+  'border-b-2 border-current',
 ])
 
 const featureListClass = computed(() => [
@@ -265,8 +254,31 @@ function handleShowVoices() {
   emit('showVoices')
 }
 
+function handleSelectTier(tier: LikerPlusTier) {
+  if (tier === selectedTier.value) return
+  useLogEvent('pricing_page_tier_select', { tier })
+  selectedTier.value = tier
+}
+
+function handleTierKeydown(event: KeyboardEvent, index: number) {
+  const offset = TIER_ARROW_OFFSETS[event.key]
+  if (offset === undefined) return
+  event.preventDefault()
+  // Key repeat would otherwise oscillate the tiers, restarting the panel
+  // transition and logging a select event every frame.
+  if (event.repeat) return
+  const options = tierOptions.value
+  const nextIndex = (index + offset + options.length) % options.length
+  const nextOption = options[nextIndex]
+  if (!nextOption) return
+  handleSelectTier(nextOption.value)
+  tierButtons.value?.[nextIndex]?.focus()
+}
+
+// Also emits the tier switch, so `pricing_page_tier_select` counts every way
+// into Civic while this event stays scoped to the CTA itself.
 function handleUpgradeToCivic() {
   useLogEvent('pricing_page_civic_upgrade_cta_click')
-  selectedTier.value = 'civic'
+  handleSelectTier('civic')
 }
 </script>
