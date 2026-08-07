@@ -35,8 +35,33 @@ export default function useReaderFileLoad({
   let loadAttempt = 0
   let wasHiddenWhileLoading = false
 
+  // The loading screen plays a cover animation on its way out, and the pages
+  // surface their prompts before it finishes: loadEPub resolves ahead of the
+  // isReaderLoading flip below, and PDFReader only mounts after it. Queue those
+  // prompts until the screen is actually gone, which the page reports from the
+  // transition's own after-leave.
+  let hasLoadingScreenLeft = false
+  let pendingUntilLoadingScreenLeft: (() => void)[] = []
+
+  function handleLoadingScreenAfterLeave() {
+    hasLoadingScreenLeft = true
+    const queued = pendingUntilLoadingScreenLeft
+    pendingUntilLoadingScreenLeft = []
+    queued.forEach(show => show())
+  }
+
+  function afterLoadingScreen(show: () => void) {
+    // The PDF reader can reach here after the screen has already gone.
+    if (hasLoadingScreenLeft) {
+      show()
+      return
+    }
+    pendingUntilLoadingScreenLeft.push(show)
+  }
+
   async function startReaderLoad() {
     const attempt = ++loadAttempt
+    hasLoadingScreenLeft = false
     isReaderLoading.value = true
     try {
       await load()
@@ -77,5 +102,5 @@ export default function useReaderFileLoad({
     startReaderLoad()
   })
 
-  return { startReaderLoad }
+  return { startReaderLoad, afterLoadingScreen, handleLoadingScreenAfterLeave }
 }

@@ -45,6 +45,7 @@
         :icon-label="claimTitle"
         :loading-label="currentLoadingLabel"
         :is-printing="!canStartReading"
+        :has-arrived="canStartReading"
       >
         <template
           v-if="canStartReading"
@@ -541,10 +542,22 @@ watch(hasLoggedIn, (value) => {
   }
 })
 
-watch([hasLoggedIn, canStartReading], () => {
+const preferredMotion = usePreferredReducedMotion()
+
+// Outlasts the cover-settle animation (--book-arrive-duration in main.css) so
+// the modal opens after the cover lands rather than over it. Skipped under
+// reduced motion, where main.css disables the arrival animation entirely.
+const COLLECTOR_MODAL_DELAY_MS = 800
+
+watch([hasLoggedIn, canStartReading], async () => {
   if (!hasLoggedIn.value || isOpenCollectorMessageModal.value) return
 
   if (canStartReading.value) {
+    if (preferredMotion.value !== 'reduce') await sleep(COLLECTOR_MODAL_DELAY_MS)
+    // Every condition is rechecked: the watcher can fire again while this one
+    // sleeps, and reopening a modal the user dismissed meanwhile is worse than
+    // not showing it at all.
+    if (!hasLoggedIn.value || !canStartReading.value || isOpenCollectorMessageModal.value) return
     openCollectorModal()
   }
 }, { immediate: true })

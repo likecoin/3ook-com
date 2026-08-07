@@ -149,3 +149,57 @@ body {
   opacity: 0;
   transform: scale(1.5);
 }
+
+/* Separate from reader-load, which the footnote-return button also uses: the
+   loading screen only fades, because its cover carries the zoom below and
+   scaling both would compound into a lurch. */
+.book-open-leave-active {
+  transition: opacity 1000ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.book-open-leave-to {
+  opacity: 0;
+}
+
+/* The two animations below both target BookLoadingScreen.vue's cover element. */
+body {
+  /* COLLECTOR_MODAL_DELAY_MS in app/pages/store/claim.vue must stay above this,
+     so the modal opens after the cover lands rather than over it. */
+  --book-arrive-duration: 600ms;
+  /* Must stay under the book-open leave above, which governs the unmount. */
+  --book-enter-duration: 700ms;
+}
+
+/* A delivered book lands. */
+@keyframes book-arrive {
+  from { transform: rotateY(-28deg) scale(0.94); }
+  /* Overshoot, so it settles like an object rather than easing to a stop. */
+  65% { transform: rotateY(4deg) scale(1.015); }
+  to { transform: rotateY(0) scale(1); }
+}
+
+/* Gentler than the expo-out used elsewhere in this file, which would finish a
+   move this small almost immediately and read as a snap. */
+.has-book-arrived [data-book-cover] {
+  animation: book-arrive var(--book-arrive-duration) cubic-bezier(0.3, 0.1, 0.3, 1) forwards;
+}
+
+/* An opened book passes the viewer. Restrained on purpose: this runs on every
+   open, not once per purchase. */
+@keyframes book-enter {
+  from { transform: rotateY(0) scale(1); }
+  to { transform: rotateY(-8deg) scale(1.35); }
+}
+
+/* Accelerating, unlike the arrival: it should read as passing through the
+   cover, not stopping at it. */
+.book-open-leave-active [data-book-cover] {
+  animation: book-enter var(--book-enter-duration) cubic-bezier(0.5, 0, 0.9, 0.5) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .has-book-arrived [data-book-cover],
+  .book-open-leave-active [data-book-cover] {
+    animation: none;
+  }
+}

@@ -1,6 +1,9 @@
 <template>
   <main>
-    <Transition name="reader-load">
+    <Transition
+      name="book-open"
+      @after-leave="handleLoadingScreenAfterLeave"
+    >
       <BookLoadingScreen
         v-if="isReaderLoading"
         class="absolute inset-0"
@@ -482,7 +485,7 @@ const { getBookLoadErrorActions } = useReaderErrorActions({
   isUploadedBook,
 })
 
-const { startReaderLoad } = useReaderFileLoad({
+const { startReaderLoad, afterLoadingScreen, handleLoadingScreenAfterLeave } = useReaderFileLoad({
   isReaderLoading,
   readerType: 'epub',
   load: () => loadEPub(),
@@ -1240,22 +1243,25 @@ async function loadEPub() {
 
   if (isTTSQueryParam.value) {
     if (bookInfo.isAudioHidden.value) {
-      toast.add({
+      setTTSQueryParam(false)
+      afterLoadingScreen(() => toast.add({
         title: $t('reader_text_to_speech_button_disabled_tooltip'),
         duration: 3000,
         progress: false,
-      })
-      setTTSQueryParam(false)
+      }))
     }
     else if (shouldShowTTSTryModal.value) {
-      openTTSTryModal()
+      afterLoadingScreen(openTTSTryModal)
     }
     else {
-      onClickTTSPlay()
+      // Extraction is the slow part, so start it against the animation instead
+      // of after it. It memoises, so the deferred play reuses this same run.
+      ensureTTSExtracted()
+      afterLoadingScreen(onClickTTSPlay)
     }
   }
   else if (shouldShowTTSTryModal.value && !bookInfo.isAudioHidden.value) {
-    openTTSTryModal()
+    afterLoadingScreen(openTTSTryModal)
   }
 }
 

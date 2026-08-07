@@ -1,6 +1,9 @@
 <template>
   <main class="relative">
-    <Transition name="reader-load">
+    <Transition
+      name="book-open"
+      @after-leave="handleLoadingScreenAfterLeave"
+    >
       <BookLoadingScreen
         v-if="isReaderLoading"
         class="absolute inset-0 z-10 bg-background"
@@ -158,7 +161,7 @@ const { getBookLoadErrorActions } = useReaderErrorActions({
   isUploadedBook,
 })
 
-const { startReaderLoad } = useReaderFileLoad({
+const { startReaderLoad, afterLoadingScreen, handleLoadingScreenAfterLeave } = useReaderFileLoad({
   isReaderLoading,
   readerType: 'pdf',
   load: () => loadPDF(),
@@ -208,7 +211,10 @@ function handlePDFLoaded(pdfDocument: PDFDocumentProxy) {
       setTTSQueryParam(false)
     }
     else {
-      handleTTSPlay()
+      // Extraction is the slow part, so start it against the animation instead
+      // of after it. It memoises, so the deferred play reuses this same run.
+      ensureTTSExtracted()
+      afterLoadingScreen(handleTTSPlay)
     }
   }
 }
