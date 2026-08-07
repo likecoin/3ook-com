@@ -351,18 +351,66 @@ export default defineNuxtConfig({
                 // cached document — client-side navigations never hit the SW — so
                 // NetworkFirst throws `no-response`. Serve any cached document as
                 // the shell; Nuxt boots and routes to the real URL client-side.
-                handlerDidError: async () => {
-                  // Inline the cache name: this handler is serialized into the
-                  // generated sw.js via toString(), so the HTML_PAGES_CACHE
-                  // closure isn't in scope at runtime — referencing it throws.
+                handlerDidError: async ({ request }) => {
+                  // Inline the cache names and breadcrumb URL: this handler is
+                  // serialized into the generated sw.js via toString(), so no
+                  // module-scope closure is in scope at runtime — one throws.
                   const cache = await caches.open('html-pages')
                   // ignoreSearch: the homepage is often cached with UTM query
                   // params (query.global middleware), so a bare '/' would miss.
                   const shell = await cache.match('/', { ignoreSearch: true })
                   if (shell) return shell
-                  const [firstKey] = await cache.keys()
+                  const keys = await cache.keys()
+                  const firstKey = keys[0]
                   const fallback = firstKey ? await cache.match(firstKey) : undefined
-                  return fallback ?? Response.error()
+                  if (fallback) return fallback
+
+                  // Nothing cached. Almost all of these report the device as
+                  // online, so the 10s NetworkFirst race likely abandoned a
+                  // response that would still have arrived — retry it. The
+                  // worker can't reach PostHog, so leave a breadcrumb instead
+                  // for utils/sw-dead-end to report on the next boot.
+                  const at = Date.now()
+                  const writeCrumb = async (retry: string) => {
+                    try {
+                      const diagnostics = await caches.open('sw-diagnostics')
+                      await diagnostics.put('/__sw_dead_end', new Response(JSON.stringify({
+                        at,
+                        wasOnline: navigator.onLine,
+                        cacheKeysCount: keys.length,
+                        pathname: new URL(request.url).pathname,
+                        retry,
+                      })))
+                    }
+                    catch {
+                      // Storage full or evicted — best effort.
+                    }
+                  }
+                  // AbortController, not AbortSignal.timeout: the latter needs
+                  // iOS 16+ inside a service worker, and this rung has to
+                  // survive the oldest WebKit we serve. 20s doubles the budget
+                  // NetworkFirst already spent.
+                  const controller = new AbortController()
+                  const timer = setTimeout(() => controller.abort(), 20000)
+                  try {
+                    const response = await fetch(request, { signal: controller.signal })
+                    const isCacheable = response.status === 200
+                    // Repair the empty cache so a repeat offender takes the
+                    // shell rung next time. Swallows its own rejection: a quota
+                    // failure must not sink the response the retry just won.
+                    await Promise.all([
+                      writeCrumb(isCacheable ? 'ok' : `status_${response.status}`),
+                      isCacheable ? cache.put(request, response.clone()).catch(() => {}) : undefined,
+                    ])
+                    return response
+                  }
+                  catch {
+                    await writeCrumb('failed')
+                    return Response.error()
+                  }
+                  finally {
+                    clearTimeout(timer)
+                  }
                 },
               },
             ],
