@@ -447,6 +447,9 @@ export function useSetLogUser(user: User | null, locale: string) {
             name: user.displayName || user.evmWallet || user.likeWallet,
             locale,
             is_liker_plus: !!user.isLikerPlus,
+            // Discriminates Civic from Plus; `is_liker_plus` stays true for both.
+            // Null rather than undefined so a downgrade clears the stored value.
+            liker_plus_tier: getEffectiveLikerPlusTier(user) ?? null,
             login_method: user.loginMethod,
             ...lastTouch,
           },
