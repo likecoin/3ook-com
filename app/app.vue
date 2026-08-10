@@ -33,7 +33,7 @@ const { memberProgramData } = useMemberProgramStructuredData()
 const { initializeServerGeolocation, initializeClientGeolocation } = useDetectedGeolocation()
 const { initializePaymentCurrency } = usePaymentCurrency()
 const { initializeLocale } = useAutoLocale()
-const { initializeRegion } = useRegion()
+const { initializeRegion, resetRegionForGuest } = useRegion()
 const { isApp, isIOS } = useAppDetection()
 
 callOnce(() => {
@@ -53,12 +53,17 @@ const { loggedIn: hasLoggedIn, user } = useUserSession()
 const accountStore = useAccountStore()
 
 // Login is a route change, not a reload, so re-resolve here: the account's saved
-// locale and currency only land after the guest/detected ones were already
+// locale, currency and region only land after the guest/detected ones were already
 // applied. Registered once at the root because every caller shares the same state.
 watch(hasLoggedIn, (isLoggedIn, wasLoggedIn) => {
-  if (!isLoggedIn || wasLoggedIn) return
-  initializePaymentCurrency()
-  initializeLocale()
+  if (isLoggedIn && !wasLoggedIn) {
+    initializePaymentCurrency()
+    initializeLocale()
+    initializeRegion()
+  }
+  else if (wasLoggedIn && !isLoggedIn) {
+    resetRegionForGuest()
+  }
 })
 
 // JWT lifetime is 1d; refreshing at the 12h mark keeps a 12h headroom so

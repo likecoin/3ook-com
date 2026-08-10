@@ -6,6 +6,11 @@ const DEFAULT_REGION: RegionCode = 'HK'
 
 const COUNTRY_CODE_SET = new Set<string>(COUNTRY_CODES)
 
+// One ref per document, not per call: useStorage defers its write-back a tick,
+// so a sibling copy would still read the old value when initializeRegion
+// resolves in the same tick.
+const localStorageRegion = useStorage<string>('user_region', '')
+
 export function parseRegionCode(value: string | null | undefined): RegionCode | undefined {
   if (!value) return undefined
   const code = value.toUpperCase()
@@ -21,8 +26,6 @@ export function useRegion() {
     key: 'region',
     defaultValue: DEFAULT_REGION,
   })
-
-  const localStorageRegion = useStorage<string>('user_region', '')
 
   // `undefined` until initializeRegion() resolves, so the UI can show a
   // placeholder instead of a concrete region the user may not actually be in.
@@ -44,19 +47,17 @@ export function useRegion() {
     region.value = value
   }
 
-  watch(hasLoggedIn, (isLoggedIn, wasLoggedIn) => {
-    if (wasLoggedIn && !isLoggedIn) {
-      // Drop the guest copy on logout so the next account starts from its own saved region,
-      // not whatever this browser was left holding.
-      localStorageRegion.value = ''
-      region.value = parseRegionCode(detectedCountry.value) || DEFAULT_REGION
-    }
-    else if (isLoggedIn && !wasLoggedIn) {
-      // Login is a route change, not a reload, so pull this account's saved region now
-      // otherwise it stays on the guest/detected value.
-      initializeRegion()
-    }
-  })
+  function getDetectedOrDefaultRegion(): RegionCode {
+    return parseRegionCode(detectedCountry.value) || DEFAULT_REGION
+  }
+
+  // Drop the guest copy on logout so the next account starts from its own saved region,
+  // not whatever this browser was left holding. Driven from app.vue, once, because
+  // watching here would repeat the reset for every caller.
+  function resetRegionForGuest() {
+    localStorageRegion.value = ''
+    region.value = getDetectedOrDefaultRegion()
+  }
 
   // Resolve the pre-selected region.
   // A merely IP-detected default is not persisted,
@@ -74,13 +75,13 @@ export function useRegion() {
 
     region.value = storedRegion
       || parseRegionCode(localStorageRegion.value)
-      || parseRegionCode(detectedCountry.value)
-      || DEFAULT_REGION
+      || getDetectedOrDefaultRegion()
   }
 
   return {
     region: readonly(region),
     setRegion,
     initializeRegion,
+    resetRegionForGuest,
   }
 }
