@@ -45,7 +45,8 @@ export function useSyncedUserSettings<K extends UserSettingKey>({
 
   watch(hasLoggedIn, (isLoggedIn, wasLoggedIn) => {
     if (!isLoggedIn && wasLoggedIn) {
-      userSettingsStore.flushBatch()
+      // Writes still queued are dropped: the session is gone, and flushBatch
+      // already no-ops once hasLoggedIn is false.
       userSettingsStore.clearSettings()
       localState.value = defaultValue
     }

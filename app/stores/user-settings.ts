@@ -10,6 +10,7 @@ export const useUserSettingsStore = defineStore('user-settings', () => {
   const { loggedIn: hasLoggedIn } = useUserSession()
   const settingsEntry = ref<UserSettingsEntry | null>(null)
   const fetchPromise = ref<Promise<UserSettingsData> | null>(null)
+  const flushPromise = ref<Promise<void> | null>(null)
 
   const batchQueue = ref<Map<UserSettingKey, UserSettingsData[UserSettingKey]>>(new Map())
 
@@ -67,23 +68,46 @@ export const useUserSettingsStore = defineStore('user-settings', () => {
     fetchPromise.value = null
   }
 
-  async function flushBatch() {
+  async function flushBatch(): Promise<void> {
     if (!hasLoggedIn.value) return
+
+    // One POST at a time: concurrent syncs can land out of order, and a failed one
+    // requeuing behind a newer write would resurrect the value that replaced it.
+    if (flushPromise.value) {
+      await flushPromise.value
+      return flushBatch()
+    }
+
     if (batchQueue.value.size === 0) return
 
-    const updates = Object.fromEntries(batchQueue.value.entries())
+    // Clear before awaiting, like the book settings store: leaving a page fires one
+    // flush per useSyncedUserSettings instance in the same tick, and a book grid
+    // holds dozens of them.
+    const entries = [...batchQueue.value.entries()]
+    const updates = Object.fromEntries(entries)
+    batchQueue.value.clear()
 
-    try {
-      await apiFetch('/user/settings', {
-        method: 'POST',
-        retry: API_MAX_RETRIES,
-        body: updates,
-      })
-      batchQueue.value.clear()
-    }
-    catch (error) {
-      console.warn('Failed to sync user settings:', error)
-    }
+    flushPromise.value = (async () => {
+      try {
+        await apiFetch('/user/settings', {
+          method: 'POST',
+          retry: API_MAX_RETRIES,
+          body: updates,
+        })
+      }
+      catch (error) {
+        console.warn('Failed to sync user settings:', error)
+        // Requeue only what no newer write replaced, so a failed sync isn't lost.
+        for (const [key, value] of entries) {
+          if (!batchQueue.value.has(key)) batchQueue.value.set(key, value)
+        }
+      }
+      finally {
+        flushPromise.value = null
+      }
+    })()
+
+    await flushPromise.value
   }
 
   const debouncedFlush = useDebounceFn(() => flushBatch(), 1000)
