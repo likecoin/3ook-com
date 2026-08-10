@@ -11,8 +11,8 @@
 
       <StoreAffiliateCTABanner
         v-if="isAffiliateCTAVisible"
-        :display-name="affiliateDisplayName"
-        :avatar-src="affiliateAvatarSrc"
+        :display-name="profileDisplayName"
+        :avatar-src="profileAvatarSrc"
         :subscribe-route="affiliateSubscribeRoute"
       />
 
@@ -29,7 +29,7 @@
     so link to the full owner_wallet listing.
     -->
     <section
-      v-if="queryAffiliate && affiliatePublishers.length"
+      v-if="affiliateLikerId && affiliatePublishers.length"
       class="flex flex-col items-center w-full mt-6 pb-6"
     >
       <h2
@@ -44,7 +44,7 @@
         >
           <PillButton
             :label="publisher.name"
-            :to="localeRoute({ name: routeName, query: { owner_wallet: publisher.wallet } })"
+            :to="localeRoute({ name: listingRouteName, query: { owner_wallet: publisher.wallet } })"
           />
         </li>
       </ul>
@@ -70,7 +70,7 @@
       <StoreListStatus
         v-if="storeListStatus"
         :status="storeListStatus"
-        :route-name="routeName"
+        :route-name="listingRouteName"
         @contact-click="handleContactUsClick"
       />
 
@@ -81,7 +81,7 @@
       />
 
       <h2
-        v-if="queryAffiliate && itemsCount > 0"
+        v-if="affiliateLikerId && itemsCount > 0"
         class="mb-6 text-xl text-highlighted font-bold"
         v-text="$t('store_affiliate_books_label')"
       />
@@ -142,15 +142,22 @@
 import { FetchError } from 'ofetch'
 
 import { MAX_BOOKSTORE_PAGE_SIZE, isBookstoreBuiltInListType } from '~~/shared/utils/bookstore'
+import { getStorePublisherRouteName } from '~~/shared/constants/store-routes'
+import { formatLikerIdHandle } from '~~/shared/utils/liker-id'
 
 const nuxtApp = useNuxtApp()
 const { t: $t } = useI18n()
 const localeRoute = useLocaleRoute()
 const route = useRoute()
 const getRouteBaseNameString = useRouteBaseNameString()
-// /store and /library share this file; the route name selects the mode.
+// /store and /library share this file; the route name selects the mode. Each
+// tab also has a publisher variant (store-userId / library-userId) rendering
+// the same grid scoped to one profile, so match on the prefix.
 const routeName = computed(() => getRouteBaseNameString() || 'store')
-const isLibraryTab = computed(() => routeName.value === 'library')
+const isLibraryTab = computed(() => routeName.value.startsWith('library'))
+// Navigations that mean "the plain listing" — tag routes, tab redirects, the
+// close button's destination — target the tab, never the publisher variant.
+const listingRouteName = computed(() => (isLibraryTab.value ? 'library' : 'store'))
 const getRouteQuery = useRouteQuery()
 const runtimeConfig = useRuntimeConfig()
 const bookstoreStore = useBookstoreStore()
@@ -161,7 +168,7 @@ const isRevalidatingNFTClassMetadata = useIsRevalidatingNFTClassMetadata()
 const infiniteScrollDetectorElement = useTemplateRef<HTMLLIElement>('infiniteScrollDetector')
 const shouldLoadMore = useElementVisibility(infiniteScrollDetectorElement)
 const { handleError } = useErrorHandler()
-const storePageState = useStorePageState(routeName)
+const storePageState = useStorePageState(listingRouteName)
 const isOnline = useOnline()
 const isAdultContentEnabled = useAdultContentSetting()
 const { isApp } = useAppDetection()
@@ -179,14 +186,20 @@ const {
   queryOwnerWallet,
   queryGenre,
   queryAffiliate,
+  routeUserId,
+  profileDisplayName,
+  profileAvatarSrc,
+  isProfileNotFound,
+  isProfileListingEmpty,
+  affiliateLikerId,
+  ownerWallet,
   ownerWalletInfo,
-  affiliateDisplayName,
-  affiliateAvatarSrc,
   affiliateConfig,
   affiliateHasVoices,
-  isAffiliateNotFound,
+  canonicalProfileLikerId,
   searchQuery,
   isSearchMode,
+  storeEntity,
   searchModeContext,
 } = await useStoreSearchMode()
 
@@ -204,24 +217,24 @@ const affiliatePublishers = computed(() => affiliatePublisherWallets.value.map((
 })))
 // Gate on a real voice so we never promise narration the affiliate doesn't offer.
 const isAffiliateCTAVisible = computed(() =>
-  !!queryAffiliate.value && !isPlusOrDevicePlus.value && affiliateHasVoices.value,
+  !!affiliateLikerId.value && !isPlusOrDevicePlus.value && affiliateHasVoices.value,
 )
 const affiliateSubscribeRoute = computed(() => localeRoute({
   name: 'member',
-  query: { from: `@${queryAffiliate.value}`, ll_medium: 'affiliate-store' },
+  query: { from: formatLikerIdHandle(affiliateLikerId.value), ll_medium: 'affiliate-store' },
 }))
 
 // Only greet actual members, so a shared/bookmarked `welcome` link can't surface
 // the banner for non-subscribers.
 const isWelcomeBannerVisible = computed(() => queryWelcome.value === '1' && isPlusOrDevicePlus.value)
 const welcomeBannerDescription = computed(() =>
-  queryAffiliate.value && affiliateHasVoices.value
-    ? $t('plus_welcome_banner_affiliate_description', { name: affiliateDisplayName.value })
+  affiliateLikerId.value && affiliateHasVoices.value
+    ? $t('plus_welcome_banner_affiliate_description', { name: profileDisplayName.value })
     : $t('plus_welcome_banner_description'),
 )
 function handleWelcomeBannerDismiss() {
   const { welcome: _welcome, ...query } = route.query
-  navigateTo(localeRoute({ name: routeName.value, query }), { replace: true })
+  navigateTo(localeRoute({ name: routeName.value, params: route.params, query }), { replace: true })
 }
 
 // "Organic or direct" = the bare store landing with no campaign/affiliate attribution.
@@ -266,7 +279,7 @@ const {
   activeCMSTag,
   mapTagIdToAPIStakingSortValue,
   tagName,
-} = useStoreTags({ routeName, isLibraryTab })
+} = useStoreTags({ routeName: listingRouteName, isLibraryTab })
 
 await callOnce(async () => {
   if (getIsLocalHistoriesTagId(tagId.value)) {
@@ -293,7 +306,7 @@ await callOnce(async () => {
   if (!tag) {
     const { tag: _tag, ...query } = route.query
     // Restore Nuxt context lost across the await before calling navigateTo/localeRoute.
-    await nuxtApp.runWithContext(() => navigateTo(localeRoute({ name: routeName.value, query }), { replace: true }))
+    await nuxtApp.runWithContext(() => navigateTo(localeRoute({ name: routeName.value, params: route.params, query }), { replace: true }))
   }
 })
 
@@ -315,6 +328,18 @@ const tagDescription = computed(() => {
 
 const canonicalURL = computed(() => {
   const baseURL = runtimeConfig.public.baseURL
+
+  // `?affiliate=` and `?owner_wallet=` keep serving 200s, but /store/@<id> is
+  // the one indexed URL for a profile, so they canonicalize to it whenever the
+  // Liker ID resolves. A wallet without one has nothing to point at.
+  if (canonicalProfileLikerId.value) {
+    const publisherPath = localeRoute({
+      name: getStorePublisherRouteName(listingRouteName.value),
+      params: { userId: canonicalProfileLikerId.value },
+    })?.path
+    if (publisherPath) return `${baseURL}${publisherPath}`
+  }
+
   const path = route.path
 
   const canonicalParams = new URLSearchParams()
@@ -350,19 +375,21 @@ const ogTitle = computed(() => {
   if (searchModeContext.value) {
     return `${searchModeContext.value.titlePrefix}${searchModeContext.value.label} - ${pageTitle.value}`
   }
-  if (tagName.value) {
+  // An entity listing isn't the tag's page, so don't borrow its name: a profile
+  // that fails to resolve would otherwise be titled with the default tag.
+  if (tagName.value && !isSearchMode.value) {
     return [tagName.value, pageTitle.value].join(' - ')
   }
   return pageTitle.value
 })
 
 const ogImage = computed(() => {
-  // Surface the affiliate's avatar on their curated store link when resolved.
-  if (queryAffiliate.value && affiliateAvatarSrc.value) {
-    return affiliateAvatarSrc.value
+  // Surface the publisher's own avatar on their store link when one resolved,
+  // whichever URL form named them.
+  if (storeEntity.value?.avatarSrc) {
+    return storeEntity.value.avatarSrc
   }
-  const tab = isLibraryTab.value ? 'library' : 'store'
-  return `${runtimeConfig.public.baseURL}/images/og/${tab}.jpg`
+  return `${runtimeConfig.public.baseURL}/images/og/${listingRouteName.value}.jpg`
 })
 
 const searchResults = computed<BookstoreItemList | null>(() => {
@@ -534,7 +561,9 @@ const hasMoreItems = computed(() => !!products.value.nextItemsKey || !!products.
 
 // Order matters: the first matching status wins.
 const storeListStatus = computed(() => {
-  if (isAffiliateNotFound.value) return 'affiliate-not-found' as const
+  if (isProfileNotFound.value) return 'profile-not-found' as const
+  // Ahead of the loading check: this profile has no listing to wait for.
+  if (isProfileListingEmpty.value) return 'no-items' as const
   if (isLoadingInitialItems.value) return 'loading' as const
   if (isSearchResultEmpty.value) return 'search-empty' as const
   if (itemsCount.value === 0 && !products.value.isFetchingItems && products.value.hasFetchedItems) return 'no-items' as const
@@ -598,7 +627,7 @@ useHead(() => {
   const meta = []
   const script = []
 
-  if (isSearchResultEmpty.value || isAffiliateNotFound.value) {
+  if (isSearchResultEmpty.value || isProfileNotFound.value) {
     meta.push({
       name: 'robots',
       content: 'noindex, nofollow',
@@ -738,14 +767,20 @@ watch(walletAddress, (wallet, previousWallet) => {
   fetchItems({ isRefresh: true })
 })
 
-// Watch for changes in search parameters
-watch([querySearchTerm, queryAuthorName, queryPublisherName, queryOwnerWallet, queryGenre, queryAffiliate], async () => {
+// Watch the resolved key, not the raw params: on the publisher route it only
+// settles once the profile lookup returns, and a params-only watcher would
+// leave that first listing latched on its skeleton.
+watch(searchQuery, async () => {
   if (isSearchMode.value) {
     await fetchItems({ lazy: true })
   }
 })
 
+// Normalize a lowercased ?owner_wallet= to its checksummed form. Gated on the
+// query being present: the publisher route derives its wallet from the profile
+// and must not grow an owner_wallet param it never had.
 watch(ownerWalletInfo, (info) => {
+  if (!queryOwnerWallet.value) return
   if (info?.evmWallet && queryOwnerWallet.value.toLowerCase() !== info.evmWallet.toLowerCase()) {
     navigateTo(localeRoute({
       name: routeName.value,
@@ -973,7 +1008,9 @@ onMounted(async () => {
   // web visitors stay on whichever tab they landed on.
   const targetName = (isLibraryTab.value || isApp.value) ? 'library' : 'store'
   const viewEvent = targetName === 'library' ? 'library_view' : 'store_view'
-  if (routeName.value !== targetName) {
+  // The publisher route is a destination in its own right, not a tab to be
+  // redirected: an in-app visitor on /store/@<id> stays on that publisher.
+  if (!routeUserId.value && routeName.value !== targetName) {
     // Log before redirecting: this shared page component won't re-run onMounted
     // after navigateTo, so app users sent /store -> /library would never log.
     useLogEvent(viewEvent)
@@ -1011,7 +1048,7 @@ onBeforeRouteLeave((to) => {
   // Keep scroll/tag state only when staying within the same tab (store ↔ store,
   // library ↔ library); switching tabs or leaving clears it.
   const toBaseName = getRouteBaseNameString(to)
-  if (toBaseName && toBaseName.startsWith(routeName.value)) {
+  if (toBaseName && toBaseName.startsWith(listingRouteName.value)) {
     storePageState.save(tagId.value, route.query as Record<string, string>)
   }
   else {
@@ -1061,7 +1098,7 @@ async function handleFetchItemsErrorRetryButtonClick() {
 
 function handleContactUsClick() {
   useLogEvent(isLibraryTab.value ? 'library_no_search_results_contact_click' : 'store_no_search_results_contact_click', { search_term: querySearchTerm.value })
-  const searchTerm = querySearchTerm.value || queryAuthorName.value || queryPublisherName.value || queryOwnerWallet.value
+  const searchTerm = querySearchTerm.value || queryAuthorName.value || queryPublisherName.value || ownerWallet.value
   const prefilledMessage = isLibraryTab.value
     ? $t('library_no_search_results_contact_prefill', { term: searchTerm })
     : $t('store_no_search_results_contact_prefill', { term: searchTerm })

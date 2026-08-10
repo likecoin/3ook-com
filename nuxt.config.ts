@@ -6,6 +6,7 @@ import type { NitroRouteConfig } from 'nitropack'
 import type { ConfigDefaults } from 'posthog-js'
 
 import { CUSTOMER_SERVICE_EMAIL } from './app/utils/business-info'
+import { STORE_PUBLISHER_ROUTE_PATH, getStorePublisherRouteName } from './shared/constants/store-routes'
 
 const { resolve } = createResolver(import.meta.url)
 
@@ -243,6 +244,21 @@ export default defineNuxtConfig({
     // /library reuses the store pages (same files), distinguished by route name.
     // It surfaces only Plus-reading books; see app/pages/store/index.vue.
     'pages:extend'(pages) {
+      // Branded publisher storefront at /<tab>/@<likerId>. Declared here rather
+      // than as a page file so both tabs share one component.
+      const getPublisherRoute = (listingRouteName: string) => ({
+        name: getStorePublisherRouteName(listingRouteName),
+        path: STORE_PUBLISHER_ROUTE_PATH,
+        file: resolve('app/pages/store/index.vue'),
+      })
+
+      const storePage = pages.find(page => page.path === '/store')
+      if (!storePage?.children) {
+        throw new Error('[pages:extend] /store page tree not found; the publisher storefront route cannot be registered')
+      }
+      // Unshifted so it reads ahead of the :nftClassId sibling.
+      storePage.children.unshift(getPublisherRoute('store'))
+
       pages.push({
         path: '/library',
         file: resolve('app/pages/store.vue'),
@@ -252,6 +268,7 @@ export default defineNuxtConfig({
             path: '',
             file: resolve('app/pages/store/index.vue'),
           },
+          getPublisherRoute('library'),
           {
             name: 'library-nftClassId',
             path: ':nftClassId',

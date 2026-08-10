@@ -25,45 +25,28 @@
           icon="i-material-symbols-close-rounded"
         />
 
+        <!--
+        One chip for every publisher identity: the /store/@<id> route, ?affiliate=
+        and ?owner_wallet= all resolve to the same shape in useStoreSearchMode.
+        -->
         <div
-          v-if="queryOwnerWallet"
-          class="flex items-center gap-3 min-w-0 flex-1"
-        >
-          <UAvatar
-            :src="ownerWalletAvatarSrc"
-            :alt="ownerWalletDisplayName || queryOwnerWallet"
-            icon="i-material-symbols-person-2-rounded"
-            size="lg"
-          />
-          <div class="flex flex-col min-w-0 flex-1">
-            <p
-              class="text-xs text-muted uppercase tracking-wide"
-              v-text="$t('store_owner_wallet_prefix')"
-            />
-            <h1
-              class="text-xl laptop:text-2xl font-bold text-default truncate"
-              v-text="ownerWalletDisplayName || queryOwnerWallet"
-            />
-          </div>
-        </div>
-        <div
-          v-else-if="queryAffiliate && !isAffiliateNotFound"
+          v-if="storeEntity"
           class="flex items-center min-w-0 ring-inset ring-2 ring-theme-black dark:ring-muted bg-(--app-bg) rounded-full"
         >
           <UAvatar
-            :src="affiliateAvatarSrc"
-            :alt="affiliateDisplayName"
+            :src="storeEntity.avatarSrc"
+            :alt="storeEntity.displayName"
             icon="i-material-symbols-person-2-rounded"
             :ui="{ root: 'size-8 tablet:size-9 border border-2 border-theme-black dark:border-muted' }"
           />
           <div class="flex flex-col justify-center min-w-0 pt-0.5 pl-2 pr-4">
             <span
               class="text-[0.625rem] tablet:text-xs text-muted uppercase tracking-wide leading-none"
-              v-text="$t('store_affiliate_prefix')"
+              v-text="storeEntity.titlePrefix"
             />
             <h1
               class="-mt-1 font-bold text-sm tablet:text-default truncate"
-              v-text="affiliateDisplayName"
+              v-text="storeEntity.displayName"
             />
           </div>
         </div>
@@ -162,6 +145,9 @@
 </template>
 
 <script setup lang="ts">
+import type { StoreListingRouteName } from '~~/shared/constants/store-routes'
+import { STORE_LISTING_ROUTE_NAMES, STORE_PUBLISHER_ROUTE_NAMES } from '~~/shared/constants/store-routes'
+
 const { t: $t } = useI18n()
 const localeRoute = useLocaleRoute()
 const route = useRoute()
@@ -175,7 +161,12 @@ const { dismissLibraryIntroBanner } = useLibraryIntroBanner()
 
 // /store and /library share this parent; the route name selects the mode.
 const routeName = computed(() => getRouteBaseNameString() || 'store')
-const isListingRoute = computed(() => ['store', 'library'].includes(routeName.value))
+// The publisher route (/store/@<id>) is a listing too — it renders the same
+// grid, just scoped to one profile.
+const isListingRoute = computed(() => (
+  STORE_LISTING_ROUTE_NAMES.includes(routeName.value as StoreListingRouteName)
+  || STORE_PUBLISHER_ROUTE_NAMES.includes(routeName.value)
+))
 const isProductRoute = computed(() =>
   ['store-nftClassId', 'library-nftClassId', 'store-nftClassId-nftId'].includes(routeName.value))
 // The claim page nests here too but keeps its own chrome.
@@ -188,14 +179,8 @@ const listingRouteName = computed(() => (isLibraryTab.value ? 'library' : 'store
 const storePageState = useStorePageState(listingRouteName.value)
 
 const {
-  queryOwnerWallet,
-  queryAffiliate,
-  ownerWalletAvatarSrc,
-  ownerWalletDisplayName,
-  affiliateDisplayName,
-  affiliateAvatarSrc,
-  isAffiliateNotFound,
   isSearchMode,
+  storeEntity,
   searchModeContext,
 } = await useStoreSearchMode()
 

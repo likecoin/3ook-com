@@ -1,6 +1,6 @@
 <template>
   <div
-    v-if="status === 'affiliate-not-found'"
+    v-if="status === 'profile-not-found'"
     class="flex flex-col items-center m-auto py-16 text-center"
   >
     <UIcon
@@ -10,14 +10,14 @@
     />
     <h2
       class="text-xl font-bold text-highlighted mb-2"
-      v-text="$t('store_affiliate_not_found_title')"
+      v-text="$t('store_profile_not_found_title')"
     />
     <p
       class="text-muted mb-4"
-      v-text="$t('store_affiliate_not_found_description')"
+      v-text="$t('store_profile_not_found_description')"
     />
     <UButton
-      :label="$t('store_affiliate_not_found_back_button')"
+      :label="$t('store_profile_not_found_back_button')"
       :to="localeRoute({ name: routeName })"
       color="primary"
       trailing-icon="i-material-symbols-arrow-forward-rounded"
@@ -123,7 +123,7 @@
 
 <script setup lang="ts">
 const props = defineProps<{
-  status: 'affiliate-not-found' | 'loading' | 'search-empty' | 'no-items'
+  status: 'profile-not-found' | 'loading' | 'search-empty' | 'no-items'
   routeName: string
 }>()
 
