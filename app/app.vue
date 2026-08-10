@@ -49,8 +49,17 @@ onMounted(async () => {
 
 const i18nHead = useLocaleHead()
 
-const { user } = useUserSession()
+const { loggedIn: hasLoggedIn, user } = useUserSession()
 const accountStore = useAccountStore()
+
+// Login is a route change, not a reload, so re-resolve here: the account's saved
+// locale and currency only land after the guest/detected ones were already
+// applied. Registered once at the root because every caller shares the same state.
+watch(hasLoggedIn, (isLoggedIn, wasLoggedIn) => {
+  if (!isLoggedIn || wasLoggedIn) return
+  initializePaymentCurrency()
+  initializeLocale()
+})
 
 // JWT lifetime is 1d; refreshing at the 12h mark keeps a 12h headroom so
 // timing slips around expiry don't leave a stale token in the cookie session

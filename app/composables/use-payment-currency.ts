@@ -37,12 +37,18 @@ export function usePaymentCurrency() {
 
   const detectedCurrency = computed(() => getDefaultCurrencyFromCountry(detectedCountry.value))
 
+  // Automatic sources (geolocation, a device-local leftover) must never overwrite
+  // an explicit user choice, so this stops short of the account setting.
+  function applyCurrency(value: PaymentCurrency) {
+    localStorageCurrency.value = value
+    currency.value = value
+  }
+
   function setCurrency(value: PaymentCurrency) {
     if (hasLoggedIn.value) {
       syncedCurrency.value = value
     }
-    localStorageCurrency.value = value
-    currency.value = value
+    applyCurrency(value)
   }
 
   const displayCurrency = computed<PricingCurrency>(() => {
@@ -70,7 +76,7 @@ export function usePaymentCurrency() {
       storedCurrency = userSettingsStore.getSettings()?.currency
     }
 
-    setCurrency(storedCurrency || localStorageCurrency.value || 'auto')
+    applyCurrency(storedCurrency || localStorageCurrency.value || 'auto')
   }
 
   return {

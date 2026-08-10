@@ -30,12 +30,18 @@ export function useAutoLocale() {
 
   const detectedLocale = computed(() => getDefaultLocaleFromCountry(detectedCountry.value))
 
+  // Automatic sources (geolocation, campaign links) must never overwrite
+  // an explicit user choice, so this stops short of the account setting.
+  function applyLocale(locale: LocaleCode) {
+    localStorageLocale.value = locale
+    i18n.setLocale(locale)
+  }
+
   function setLocale(locale: LocaleCode) {
     if (hasLoggedIn.value) {
       syncedLocale.value = locale
     }
-    localStorageLocale.value = locale
-    i18n.setLocale(locale)
+    applyLocale(locale)
   }
 
   async function initializeLocale() {
@@ -52,7 +58,7 @@ export function useAutoLocale() {
     // Force Chinese locale when UTM campaign is set (campaign content is Chinese)
     const hasCampaignUtm = !!(route.query.utm_campaign || route.query.utm_term)
     if (hasCampaignUtm) {
-      setLocale('zh-Hant')
+      applyLocale('zh-Hant')
       return
     }
 
@@ -64,7 +70,7 @@ export function useAutoLocale() {
       await userSettingsStore.ensureInitialized()
     }
 
-    setLocale(syncedLocale.value || localStorageLocale.value || detectedLocale.value)
+    applyLocale(syncedLocale.value || localStorageLocale.value || detectedLocale.value)
   }
 
   return {
