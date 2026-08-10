@@ -15,6 +15,11 @@ function getDefaultLocaleFromCountry(country: string | null): LocaleCode {
   }
 }
 
+// One ref per document, not per call: useStorage defers its write-back a tick,
+// so a sibling copy would still read the old value when initializeLocale
+// resolves in the same tick.
+const localStorageLocale = useStorage<LocaleCode | null>('user_locale', null)
+
 export function useAutoLocale() {
   const i18n = useI18n()
   const userSettingsStore = useUserSettingsStore()
@@ -25,8 +30,6 @@ export function useAutoLocale() {
     key: 'locale',
     defaultValue: null,
   })
-
-  const localStorageLocale = useStorage<LocaleCode | null>('user_locale', null)
 
   const detectedLocale = computed(() => getDefaultLocaleFromCountry(detectedCountry.value))
 

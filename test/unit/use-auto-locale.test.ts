@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 import { ref } from 'vue'
-import { useAutoLocale } from '~/composables/use-auto-locale'
 import type { LocaleCode } from '~~/shared/types/user-settings'
+
+type UseAutoLocale = typeof import('~/composables/use-auto-locale').useAutoLocale
 
 const {
   mockDetectedCountry,
@@ -35,7 +36,9 @@ mockNuxtImport('useDetectedGeolocation', () => () => ({
 }))
 
 describe('useAutoLocale', () => {
-  beforeEach(() => {
+  let useAutoLocale: UseAutoLocale
+
+  beforeEach(async () => {
     localStorage.clear()
     mockSetLocale.mockClear()
     mockDetectedCountry.value = 'US'
@@ -43,6 +46,10 @@ describe('useAutoLocale', () => {
     mockRoute.path = '/'
     mockRoute.query = {}
     mockSyncedLocale.value = null
+    // The localStorage ref is module-scoped and shared, so re-evaluate the module
+    // to hand each test a fresh one reading the storage cleared above.
+    vi.resetModules()
+    ;({ useAutoLocale } = await import('~/composables/use-auto-locale'))
   })
 
   it('applies the account locale over the environment-detected one after logging in', async () => {

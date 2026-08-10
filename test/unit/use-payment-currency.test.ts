@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 import { ref, type Ref } from 'vue'
-import { usePaymentCurrency } from '~/composables/use-payment-currency'
 import type { PaymentCurrency, UserSettingsData } from '~~/shared/types/user-settings'
+
+type UsePaymentCurrency = typeof import('~/composables/use-payment-currency').usePaymentCurrency
 
 const {
   mockAccountSettings,
@@ -39,13 +40,19 @@ mockNuxtImport('useDetectedGeolocation', () => () => ({
 }))
 
 describe('usePaymentCurrency', () => {
-  beforeEach(() => {
+  let usePaymentCurrency: UsePaymentCurrency
+
+  beforeEach(async () => {
     localStorage.clear()
     mockAccountSettings.value = {}
     mockDetectedCountry.value = 'US'
     mockHasLoggedIn.value = false
     mockStates.clear()
     mockSyncedCurrency.value = 'auto'
+    // The localStorage ref is module-scoped and shared, so re-evaluate the module
+    // to hand each test a fresh one reading the storage cleared above.
+    vi.resetModules()
+    ;({ usePaymentCurrency } = await import('~/composables/use-payment-currency'))
   })
 
   it('applies the account currency over the detected default after logging in', async () => {
@@ -74,13 +81,28 @@ describe('usePaymentCurrency', () => {
   })
 
   it('keeps a device-local leftover out of the account', async () => {
+    // A currency this device kept from an earlier session, restored before login
     localStorage.setItem('payment_currency', 'hkd')
+    vi.resetModules()
+    const { usePaymentCurrency: reload } = await import('~/composables/use-payment-currency')
     mockHasLoggedIn.value = true
-    const { currency, initializePaymentCurrency } = usePaymentCurrency()
+    const { currency, initializePaymentCurrency } = reload()
     await initializePaymentCurrency()
 
     expect(currency.value).toBe('hkd')
     expect(mockSyncedCurrency.value).toBe('auto')
+  })
+
+  it('shares one localStorage ref across instances', async () => {
+    const { setCurrency } = usePaymentCurrency()
+    const { currency, initializePaymentCurrency } = usePaymentCurrency()
+
+    setCurrency('hkd')
+    await initializePaymentCurrency()
+
+    // useStorage's write-back lands a tick later, so a per-instance copy would
+    // still read 'auto' here and resolve the shared state back down to it
+    expect(currency.value).toBe('hkd')
   })
 
   it('persists an explicit currency choice to the account', () => {

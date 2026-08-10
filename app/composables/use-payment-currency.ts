@@ -13,6 +13,11 @@ function getDefaultCurrencyFromCountry(country: string | null): PricingCurrency 
   }
 }
 
+// One ref per document, not per call: book cards instantiate this composable
+// ~3x each, and useStorage defers its write-back a tick, so sibling copies would
+// still read the old value when initialization resolves in the same tick.
+const localStorageCurrency = useStorage<PaymentCurrency>('payment_currency', 'auto')
+
 export function usePaymentCurrency() {
   const { t: $t } = useI18n()
   const userSettingsStore = useUserSettingsStore()
@@ -30,8 +35,6 @@ export function usePaymentCurrency() {
     key: 'currency',
     defaultValue: 'auto',
   })
-
-  const localStorageCurrency = useStorage<PaymentCurrency>('payment_currency', 'auto')
 
   const currency = useState<PaymentCurrency>('payment-currency', () => 'auto')
 
