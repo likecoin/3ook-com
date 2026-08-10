@@ -24,9 +24,7 @@ const isCacheDisabled = useNoCache()
 
 const from = computed(() => getRouteQuery('from'))
 
-const affiliateId = computed(() => {
-  return from.value?.startsWith('@') ? from.value.slice(1) : undefined
-})
+const affiliateId = computed(() => parseLikerIdHandle(from.value))
 
 const affiliateInfoQuery = useLikerInfoByIdQuery(affiliateId, { nocache: isCacheDisabled })
 // Resolve during SSR so the alert renders server-side; the guard is required

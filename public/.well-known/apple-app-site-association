@@ -13,6 +13,14 @@
             "exclude": true
           },
           {
+            "/": "/s",
+            "exclude": true
+          },
+          {
+            "/": "/s/*",
+            "exclude": true
+          },
+          {
             "/": "/checkout",
             "exclude": true
           },

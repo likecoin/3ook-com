@@ -464,10 +464,7 @@
             </div>
           </div>
 
-          <ul
-            v-if="!isLibrary"
-            class="flex justify-center items-center gap-2"
-          >
+          <ul class="flex justify-center items-center gap-2">
             <li
               v-for="button in socialButtons"
               :key="button.icon"
@@ -1203,7 +1200,9 @@ const { socialButtons, handleSocialButtonClick } = useBookSocialShare({
   authorName: bookInfo.authorName,
   canonicalURL,
   from,
+  priceIndex,
   selectedPricingItemIndex,
+  isLibrary,
 })
 
 const isSelectedPricingItemSoldOut = computed(() => {

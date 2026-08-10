@@ -50,6 +50,7 @@ export function useAutoLocale() {
   async function initializeLocale() {
     // Don't override locale if the URL has an explicit locale prefix (e.g. /en/about)
     const route = useRoute()
+    const getRouteQuery = useRouteQuery()
     const hasExplicitLocalePrefix = i18n.locales.value.some(
       (l) => {
         const code = typeof l === 'string' ? l : l.code
@@ -58,9 +59,11 @@ export function useAutoLocale() {
     )
     if (hasExplicitLocalePrefix) return
 
-    // Force Chinese locale when UTM campaign is set (campaign content is Chinese)
-    const hasCampaignUtm = !!(route.query.utm_campaign || route.query.utm_term)
-    if (hasCampaignUtm) {
+    // Force Chinese locale when UTM campaign is set (campaign content is Chinese),
+    // except user share links (utm_campaign=share) which come from any locale
+    const utmCampaign = getRouteQuery('utm_campaign')
+    const hasCampaignUTM = !!(utmCampaign || getRouteQuery('utm_term')) && utmCampaign !== 'share'
+    if (hasCampaignUTM) {
       applyLocale('zh-Hant')
       return
     }

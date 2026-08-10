@@ -4,7 +4,9 @@ interface BookSocialShareOptions {
   authorName: Ref<string>
   canonicalURL: Ref<string>
   from: Ref<string | undefined>
+  priceIndex: Ref<number>
   selectedPricingItemIndex: Ref<number>
+  isLibrary: Ref<boolean>
 }
 
 // Social share buttons for a book product page.
@@ -15,25 +17,49 @@ export function useBookSocialShare(options: BookSocialShareOptions) {
     authorName,
     canonicalURL,
     from,
+    priceIndex,
     selectedPricingItemIndex,
+    isLibrary,
   } = options
 
+  const config = useRuntimeConfig()
   const { t: $t } = useI18n()
   const toast = useToast()
   const { copy: copyToClipboard } = useClipboard()
+  const { user } = useUserSession()
 
-  const socialButtons = computed(() => [
-    { key: 'copy-links', label: $t('share_button_hint_copy_link'), icon: 'i-material-symbols-link-rounded' },
-    { key: 'threads', label: $t('share_button_hint_threads'), icon: 'i-simple-icons-threads' },
-    { key: 'facebook', label: $t('share_button_hint_facebook'), icon: 'i-simple-icons-facebook' },
-    { key: 'whatsapp', label: $t('share_button_hint_whatsapp'), icon: 'i-simple-icons-whatsapp' },
-    { key: 'x', label: $t('share_button_hint_x'), icon: 'i-simple-icons-x' },
-  ])
+  const socialButtons = computed(() => {
+    const buttons = [{ key: 'copy-links', label: $t('share_button_hint_copy_link'), icon: 'i-material-symbols-link-rounded' }]
+    if (!isLibrary.value) {
+      buttons.push(
+        { key: 'threads', label: $t('share_button_hint_threads'), icon: 'i-simple-icons-threads' },
+        { key: 'facebook', label: $t('share_button_hint_facebook'), icon: 'i-simple-icons-facebook' },
+        { key: 'whatsapp', label: $t('share_button_hint_whatsapp'), icon: 'i-simple-icons-whatsapp' },
+        { key: 'x', label: $t('share_button_hint_x'), icon: 'i-simple-icons-x' },
+      )
+    }
+    return buttons
+  })
 
-  function getShareURL(medium: string) {
-    const baseURL = canonicalURL.value
-    const url = new URL(baseURL)
-    url.searchParams.set('utm_source', medium)
+  function getShortLink() {
+    // The logged-in sharer takes the affiliate credit over the original `?from=@likerId`
+    const likerId = user.value?.likerId || parseLikerIdHandle(from.value)
+    const slug = formatShortLinkSegment({
+      nftClassId: nftClassId.value,
+      priceIndex: priceIndex.value,
+      likerId,
+    })
+    if (!slug) return ''
+    return `${config.public.baseURL}/${isLibrary.value ? 'l' : 's'}/${slug}`
+  }
+
+  function getShareURL(utmSource: string) {
+    const shortLink = getShortLink()
+    if (shortLink) return shortLink
+
+    // Fallback
+    const url = new URL(canonicalURL.value)
+    url.searchParams.set('utm_source', utmSource)
     url.searchParams.set('utm_medium', 'social')
     url.searchParams.set('utm_campaign', 'share')
     if (from.value) {

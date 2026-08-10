@@ -1,5 +1,4 @@
 import type { AffiliatePublicConfig } from '~~/shared/types/affiliate'
-import { normalizeLikerId } from '~~/shared/utils/liker-id'
 
 export function useAffiliateConfig(affiliateId: MaybeRefOrGetter<string | undefined>) {
   const { user } = useUserSession()
@@ -15,7 +14,8 @@ export function useAffiliateConfig(affiliateId: MaybeRefOrGetter<string | undefi
 
   async function fetchConfig() {
     const fromValue = toValue(affiliateId)
-    if (!fromValue?.startsWith('@') || !user.value?.isLikerPlus) {
+    const likerId = parseLikerIdHandle(fromValue)
+    if (!fromValue || !likerId || !user.value?.isLikerPlus) {
       clearLoaded()
       return
     }
@@ -26,7 +26,6 @@ export function useAffiliateConfig(affiliateId: MaybeRefOrGetter<string | undefi
     // doesn't compute using the wrong flag while the new fetch is in flight.
     clearLoaded()
     try {
-      const likerId = normalizeLikerId(requestedFrom)
       const config = await $fetch<AffiliatePublicConfig>(
         `/api/affiliate/${encodeURIComponent(likerId)}`,
       )

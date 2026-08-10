@@ -7,3 +7,8 @@ export function normalizeLikerId(likerId: string): string {
 export function formatLikerIdHandle(likerId: string): string {
   return `@${normalizeLikerId(likerId)}`
 }
+
+// Liker ID of an `@`-prefixed handle; undefined otherwise (e.g. bare channel strings)
+export function parseLikerIdHandle(handle?: string): string | undefined {
+  return handle?.startsWith('@') ? normalizeLikerId(handle) : undefined
+}
