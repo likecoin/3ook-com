@@ -12,6 +12,9 @@
   var SUPPORT_EMAIL = '__3OOK_SUPPORT_EMAIL__'
   var SKIP_KEY = '3ook-skip-browser-check'
   var SKIP_PARAM = 'skipBrowserCheck'
+  // Written to and read from both, so an override survives either one being
+  // blocked or full.
+  var SKIP_STORAGES = ['localStorage', 'sessionStorage']
   // Tailwind v4's own baseline. Firefox needs 128 for @property, above the 113
   // that the blocking check below settles for.
   var MIN_VERSIONS = 'Chrome 111+ · Edge 111+ · Safari 16.4+ · Firefox 128+'
@@ -78,7 +81,11 @@
     + 'font-size:12px;line-height:1.5;white-space:pre-wrap;word-break:break-word}'
     + '.bsc-copy{margin:0 12px 0 0;padding:8px 16px;border:1px solid #131313;border-radius:999px;'
     + 'background:#fff;color:#131313;font:inherit;font-size:14px;cursor:pointer}'
-    + '.bsc-proceed{color:#6b6b6b;font-size:14px}'
+    // Filled and full-contrast: on the e-ink readers that cannot update at all
+    // this is the only action left, and greyscale panels swallow subtle links.
+    // Overrides `.bsc a`, which is the more specific selector.
+    + '.bsc a.bsc-proceed{display:inline-block;padding:10px 20px;border-radius:999px;'
+    + 'background:#131313;color:#f9f9f9;font-size:15px;text-decoration:none}'
 
   function findMissing(checks) {
     var missing = []
@@ -95,16 +102,36 @@
     return missing
   }
 
-  // Session-scoped on purpose: an accidental "continue anyway" must not hide
-  // the diagnostic from CS forever.
-  function isSkipRequested() {
-    if (new RegExp('[?&]' + SKIP_PARAM + '(=|&|$)').test(window.location.search)) return true
+  function readSkip(storage) {
     try {
-      return window.sessionStorage.getItem(SKIP_KEY) === '1'
+      return window[storage].getItem(SKIP_KEY)
     }
     catch (error) {
-      return false
+      return null
     }
+  }
+
+  function rememberSkip() {
+    for (var i = 0; i < SKIP_STORAGES.length; i += 1) {
+      try {
+        window[SKIP_STORAGES[i]].setItem(SKIP_KEY, navigator.userAgent)
+      }
+      catch (error) {
+        // Best effort — a blocked or full storage just misses the override,
+        // and the other may still take it.
+      }
+    }
+  }
+
+  // Persist by user agent so firmware-bound WebViews (e.g. Boox) can keep the
+  // override; an upgrade changes the string and expires it. Match each storage
+  // separately so a stale value in one cannot mask a current one in the other.
+  function isSkipRequested() {
+    if (new RegExp('[?&]' + SKIP_PARAM + '(=|&|$)').test(window.location.search)) return true
+    for (var i = 0; i < SKIP_STORAGES.length; i += 1) {
+      if (readSkip(SKIP_STORAGES[i]) === navigator.userAgent) return true
+    }
+    return false
   }
 
   function buildReport(blocking) {
@@ -175,13 +202,15 @@
       + '<h1>' + escapeHTML(texts.title) + '</h1>'
       + '<p>' + escapeHTML(texts.body) + '</p>'
       + '<p class="bsc-versions">' + escapeHTML(MIN_VERSIONS) + '</p>'
+      // Above the details block: expanding that pushed the only usable action
+      // off the bottom of a small e-ink screen.
+      + '<p><a class="bsc-proceed" data-proceed href="#">' + escapeHTML(texts.proceed) + '</a></p>'
       + '<details class="bsc-details">'
       + '<summary>' + escapeHTML(texts.details) + '</summary>'
       + '<pre class="bsc-report">' + escapeHTML(report) + '</pre>'
       + '<p><button type="button" class="bsc-copy" data-copy>' + escapeHTML(texts.copy) + '</button>'
       + '<a data-email href="#">' + escapeHTML(texts.email) + '</a></p>'
       + '</details>'
-      + '<p><a class="bsc-proceed" data-proceed href="#">' + escapeHTML(texts.proceed) + '</a></p>'
       + '</div>'
 
     overlay.querySelector('[data-email]').href = 'mailto:' + SUPPORT_EMAIL
@@ -197,12 +226,7 @@
 
     overlay.querySelector('[data-proceed]').onclick = function (event) {
       event.preventDefault()
-      try {
-        window.sessionStorage.setItem(SKIP_KEY, '1')
-      }
-      catch (error) {
-        // Private mode — the override then lasts for this view only.
-      }
+      rememberSkip()
       styleElement.parentNode.removeChild(styleElement)
       overlay.parentNode.removeChild(overlay)
     }
@@ -212,10 +236,13 @@
 
   try {
     var blocking = findMissing(BLOCKING_CHECKS)
-    if (!blocking.length || isSkipRequested()) return
+    if (!blocking.length) return
 
+    // Logged before the skip check: the override now outlives the session, so
+    // this is all CS has left to go on once a user has dismissed the overlay.
     var report = buildReport(blocking)
     if (window.console && console.error) console.error('[3ook.com] Unsupported browser\n' + report)
+    if (isSkipRequested()) return
 
     var styleElement = injectStyles()
     if (document.body) {

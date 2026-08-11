@@ -15,6 +15,10 @@ interface SetupOptions {
   hasStructuredClone?: boolean
   url?: string
   language?: string
+  userAgent?: string
+  // Reuse a window from an earlier run to carry its storage across, standing in
+  // for relaunching the app on the same device.
+  win?: Window
 }
 
 // Runs the guard against a fresh happy-dom window with the feature detections
@@ -25,13 +29,15 @@ function setup(options: SetupOptions = {}) {
     hasStructuredClone = true,
     url = 'https://3ook.com/en/store',
     language = 'en-US',
+    userAgent = 'Chrome/108.0.0.0',
   } = options
 
-  const win = new Window({
+  const win = options.win ?? new Window({
     url,
     settings: { disableJavaScriptFileLoading: true, disableCSSFileLoading: true },
   })
   Object.defineProperty(win.navigator, 'language', { value: language, configurable: true })
+  Object.defineProperty(win.navigator, 'userAgent', { value: userAgent, configurable: true })
 
   const css = {
     supports: (value: string) => (value.indexOf('color-mix') === -1 ? true : hasColorMix),
@@ -55,6 +61,7 @@ function setup(options: SetupOptions = {}) {
   return {
     win,
     overlay,
+    proceed: () => (overlay?.querySelector('[data-proceed]') as HTMLElement | null)?.click(),
     report: overlay?.querySelector('.bsc-report')?.textContent ?? '',
     title: overlay?.querySelector('h1')?.textContent ?? '',
   }
@@ -102,6 +109,51 @@ describe('browser support check', () => {
     // A lookalike query value must not disable it.
     const notSkipped = setup({ hasColorMix: false, url: 'https://3ook.com/en/store?utm_content=skipBrowserCheck' })
     expect(notSkipped.overlay).not.toBeNull()
+  })
+
+  // Devices that ship WebView in firmware can never satisfy the gate, so the
+  // override has to survive relaunching the app.
+  it('remembers "continue anyway" across reloads on the same browser', () => {
+    const first = setup({ hasColorMix: false })
+    first.proceed()
+    expect(first.win.document.querySelector('.bsc')).toBeNull()
+
+    // A relaunch drops sessionStorage, so only localStorage may satisfy the gate.
+    first.win.sessionStorage.clear()
+    expect(first.win.localStorage.getItem('3ook-skip-browser-check')).toBe('Chrome/108.0.0.0')
+    expect(setup({ hasColorMix: false, win: first.win }).overlay).toBeNull()
+  })
+
+  // The two storages drift apart when a write succeeds in one and throws in the
+  // other, so a match in either has to count on its own.
+  it('accepts an override in one storage while the other holds a stale agent', () => {
+    const first = setup({ hasColorMix: false })
+    first.proceed()
+    // Stands in for a later dismissal that only sessionStorage accepted,
+    // leaving localStorage behind on the agent it recorded first.
+    first.win.sessionStorage.setItem('3ook-skip-browser-check', 'Chrome/120.0.0.0')
+
+    const upgraded = setup({ hasColorMix: false, win: first.win, userAgent: 'Chrome/120.0.0.0' })
+    expect(upgraded.overlay).toBeNull()
+  })
+
+  // The override expires exactly when it stops applying.
+  it('restores the gate once the browser is upgraded', () => {
+    const first = setup({ hasColorMix: false })
+    first.proceed()
+
+    const upgraded = setup({ hasColorMix: false, win: first.win, userAgent: 'Chrome/120.0.0.0' })
+    expect(upgraded.overlay).not.toBeNull()
+  })
+
+  // The only action a blocked user can take must not sit below an expandable
+  // block that pushes it off a small screen.
+  it('puts the escape hatch above the technical details', () => {
+    const { overlay, win } = setup({ hasColorMix: false })
+    const proceed = overlay!.querySelector('[data-proceed]')!
+    const details = overlay!.querySelector('.bsc-details')!
+    const isDetailsAfter = proceed.compareDocumentPosition(details) & win.Node.DOCUMENT_POSITION_FOLLOWING
+    expect(isDetailsAfter).toBeTruthy()
   })
 
   it('picks the locale from the path, falling back to the browser language', () => {
