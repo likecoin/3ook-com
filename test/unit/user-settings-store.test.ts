@@ -111,6 +111,64 @@ describe('useUserSettingsStore', () => {
     expect(mockApiFetch.mock.calls[1]?.[1]?.body).toEqual({ currency: 'hkd' })
   })
 
+  it('drops a failed sync belonging to a session that has ended', async () => {
+    let rejectFetch: (error: Error) => void = () => {}
+    mockApiFetch.mockImplementationOnce(() => new Promise<void>((_resolve, reject) => {
+      rejectFetch = reject
+    }))
+
+    store.queueUpdate('currency', 'hkd')
+    const pendingFlush = store.flushBatch()
+
+    // Logging out mid-request, so the POST fails against the dead session
+    store.clearSettings()
+    rejectFetch(new Error('unauthorized'))
+    await pendingFlush
+
+    await store.flushBatch()
+
+    // The next account must not inherit the previous one's queued write
+    expect(mockApiFetch).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not make the next session queue behind the previous request', async () => {
+    let rejectFetch: (error: Error) => void = () => {}
+    mockApiFetch.mockImplementationOnce(() => new Promise<void>((_resolve, reject) => {
+      rejectFetch = reject
+    }))
+
+    store.queueUpdate('currency', 'hkd')
+    const pendingFlush = store.flushBatch()
+    store.clearSettings()
+
+    // The retrying POST can outlive the logout by ~90s, so waiting on it here
+    // would strand the next account's first write for that long
+    store.queueUpdate('locale', 'en')
+    await store.flushBatch()
+
+    expect(mockApiFetch).toHaveBeenCalledTimes(2)
+    expect(mockApiFetch.mock.calls[1]?.[1]?.body).toEqual({ locale: 'en' })
+
+    rejectFetch(new Error('unauthorized'))
+    await pendingFlush
+  })
+
+  it('ignores a settings response that lands after the session has ended', async () => {
+    let resolveFetch: (settings: unknown) => void = () => {}
+    mockApiFetch.mockImplementationOnce(() => new Promise((resolve) => {
+      resolveFetch = resolve
+    }))
+
+    const pendingFetch = store.fetchSettings()
+    store.clearSettings()
+    resolveFetch({ currency: 'hkd' })
+    await pendingFetch
+
+    // Caching it would mark the store initialized with the previous account's data
+    expect(store.isInitialized()).toBe(false)
+    expect(store.getSettings()).toBeUndefined()
+  })
+
   it('leaves a newer write in place when requeuing a failed sync', async () => {
     mockApiFetch.mockRejectedValueOnce(new Error('offline'))
 
