@@ -1,5 +1,5 @@
 <template>
-  <main class="justify-center items-center min-h-svh mb-safe py-[48px] px-[24px]">
+  <main class="justify-center items-center min-h-svh mb-safe p-6 laptop:py-12">
     <template v-if="!hasLoggedIn">
       <p
         class="text-center text-gray-500 mb-4"
@@ -55,6 +55,7 @@
             :to="readerRoute"
             :label="$t('claim_page_start_reading_button_label')"
             size="xl"
+            color="neutral"
             block
             @click="handleStartReadingButtonClick"
           />

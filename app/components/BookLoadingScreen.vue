@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex flex-col justify-center items-center py-[56px]"
+    class="flex flex-col justify-center items-center py-8 laptop:py-14"
     :class="{ 'has-book-arrived': props.hasArrived }"
   >
     <PillButton
@@ -17,9 +17,7 @@
         props.coverClass,
       ]"
     >
-      <!-- Animated by .has-book-arrived (claim) and .book-open-leave-active
-           (readers) in main.css. Separate from the perspective container above,
-           and wraps the overlay so the sheen turns with the artwork. -->
+      <!-- Animated by .has-book-arrived and .book-open-leave-active in main.css -->
       <div
         data-book-cover
         class="w-full h-full"
@@ -30,32 +28,35 @@
           :alt="props.bookName"
           :has-shadow="true"
           :is-vertical-center="true"
-        />
-        <Transition
-          name="fade"
-          :duration="2000"
         >
-          <div
-            v-if="isPrintingAnimated"
-            class="absolute inset-0 rounded-lg overflow-hidden pointer-events-none"
-          >
-            <div
-              v-gsap.to.infinitely="scanLineGSAPState"
-              class="absolute inset-0"
-              :style="scanLineStyle"
-            />
-            <div
-              v-gsap.fromTo.infinitely="fillGSAPState"
-              class="absolute inset-0"
-              :style="fillStyle"
-            />
-            <div
-              v-gsap.fromTo.infinitely="revealGSAPState"
-              class="absolute inset-0"
-              :style="revealStyle"
-            />
-          </div>
-        </Transition>
+          <template #overlay>
+            <Transition
+              name="fade"
+              :duration="2000"
+            >
+              <div
+                v-if="isPrintingAnimated"
+                class="absolute inset-0 rounded-lg overflow-hidden"
+              >
+                <div
+                  v-gsap.to.infinitely="scanLineGSAPState"
+                  class="absolute inset-0"
+                  :style="scanLineStyle"
+                />
+                <div
+                  v-gsap.fromTo="fillGSAPState"
+                  class="absolute inset-0"
+                  :style="fillStyle"
+                />
+                <div
+                  v-gsap.fromTo="revealGSAPState"
+                  class="absolute inset-0"
+                  :style="revealStyle"
+                />
+              </div>
+            </Transition>
+          </template>
+        </BookCover>
       </div>
     </div>
     <span
@@ -80,10 +81,10 @@
       v-text="props.bookName"
     />
 
-    <footer class="flex flex-col items-center w-full min-h-10 mt-[56px] px-4 text-center">
+    <!-- min-h matches the tallest footer state so swapping footer content doesn't shift the centered layout. -->
+    <footer class="flex flex-col items-center gap-2 w-full min-h-22 mt-8 laptop:mt-14 px-4 text-center">
       <slot
         v-if="$slots.footer"
-        class="mt-[56px]"
         name="footer"
       />
       <template v-else-if="!props.loadingProgress || props.loadingProgress < 100">
@@ -160,13 +161,14 @@ const backRoute = computed(() => props.backTo ?? localeRoute({ name: 'shelf' }))
 
 // Sweeps left to right, matching the rotateY axis of the arrival that follows,
 // so the wait and the payoff read as one gesture.
-const PRINTING_PERIOD_SECONDS = 2.4
+const PRINTING_PERIOD_SECONDS = 1.6
 
-// Deliberately neutral white: covers are arbitrary artwork, and a tinted wash
-// casts the colour of whatever it crosses. White reads as light on anything.
+// Neutral white so the sheen reads as light on any cover artwork.
+// Tile width sets the band spacing; gradient stops set the band width.
 const scanLineStyle = {
-  background: 'linear-gradient(to right, transparent 30%, rgba(255, 255, 255, 0.4) 50%, transparent 70%)',
-  backgroundSize: '50% 100%',
+  background: 'linear-gradient(to right, transparent 37.5%, rgba(255, 255, 255, 0.4) 50%, transparent 62.5%)',
+  backgroundSize: '80% 100%',
+  transform: 'rotate(-35deg) scale(1.8)',
 }
 
 const fillStyle = {
@@ -190,17 +192,17 @@ const scanLineGSAPState = computed(() => {
     backgroundPosition: '200% 0%',
     duration: PRINTING_PERIOD_SECONDS,
     ease: 'none',
-    startAt: { backgroundPosition: '-100% 0%' },
+    startAt: { backgroundPosition: '-200% 0%' },
   }
 })
 
-// Halved so the yoyo round trip matches the scan line's period and the three
-// layers share one beat rather than drifting against each other.
+// Yoyo round trip spans two scan sweeps, so the wash breathes at half tempo
+// while staying in phase with the scan line.
 const fillGSAPState = computed(() => {
   if (!isPrintingAnimated.value) return null
   return [
     { opacity: 0 },
-    { opacity: 1, duration: PRINTING_PERIOD_SECONDS / 2, yoyo: true, ease: 'power1.inOut' },
+    { opacity: 1, duration: PRINTING_PERIOD_SECONDS, repeat: -1, yoyo: true, ease: 'power1.inOut' },
   ]
 })
 
@@ -208,7 +210,7 @@ const revealGSAPState = computed(() => {
   if (!isPrintingAnimated.value) return null
   return [
     { clipPath: 'inset(0 100% 0 0)' },
-    { clipPath: 'inset(0 0 0 0)', duration: PRINTING_PERIOD_SECONDS / 2, yoyo: true, ease: 'power1.inOut' },
+    { clipPath: 'inset(0 0 0 0)', duration: PRINTING_PERIOD_SECONDS, repeat: -1, yoyo: true, ease: 'power1.inOut' },
   ]
 })
 </script>
