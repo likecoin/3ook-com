@@ -35,13 +35,14 @@
           'h-full',
           'object-cover',
           borderRadiusClass,
-          'opacity-20',
+          hasLoaded ? 'opacity-20' : 'opacity-0',
           'brightness-50',
           'blur-xl',
           'scale-110',
           'origin-[top_center]',
           '-translate-x-[10px]',
           'pointer-events-none',
+          ...opacityTransitionClass,
         ]"
       >
       <img
@@ -65,7 +66,6 @@
         @error="handleImageError"
       >
       <div
-        v-show="isShowPlaceholder"
         :class="[
           coverClass,
           'absolute',
@@ -75,6 +75,7 @@
           'inset-0',
           'bg-theme-black/10 dark:bg-theme-white/10',
           'pointer-events-none',
+          isShowPlaceholder ? 'opacity-100' : 'opacity-0',
           { 'animate-pulse': !hasLoaded },
         ]"
       >
@@ -82,9 +83,7 @@
           :class="[
             'text-dimmed/50',
             hasError || !props.src ? 'opacity-100' : 'opacity-0',
-            'transition-opacity',
-            'duration-300',
-            'ease-out',
+            ...opacityTransitionClass,
           ]"
           name="i-material-symbols-book-2-outline-rounded"
           size="100"
@@ -98,7 +97,7 @@
           'inset-0',
           'pointer-events-none',
           borderRadiusClass,
-          ...(isClickable ? coverHoverScaleAnimationClass : []),
+          ...(isClickable ? [...coverTransitionClass, ...coverHoverScaleClass] : []),
         ]"
       >
         <slot name="overlay" />
@@ -156,12 +155,24 @@ const isClickable = computed(() => !!props.to || !!getCurrentInstance()?.vnode.p
 const slots = useSlots()
 const hasOverlay = computed(() => !!slots.overlay)
 
-const coverHoverScaleAnimationClass = [
-  'group-hover:scale-105',
-  'transition-all',
-  'origin-bottom',
+const transitionTimingClass = [
   'duration-300',
   'ease-out',
+]
+
+const coverTransitionClass = [
+  'transition-[opacity,scale,box-shadow]',
+  ...transitionTimingClass,
+]
+
+const opacityTransitionClass = [
+  'transition-opacity',
+  ...transitionTimingClass,
+]
+
+const coverHoverScaleClass = [
+  'group-hover:scale-105',
+  'origin-bottom',
 ]
 
 const coverClass = computed(() => {
@@ -172,12 +183,13 @@ const coverClass = computed(() => {
     'border-t',
     'border-muted',
     borderRadiusClass,
+    ...coverTransitionClass,
     { 'shadow-[0_2px_4px_0_rgba(0,0,0,0.10)]': props.hasShadow },
   ]
   if (isClickable.value) {
     classes.push(
       'group-hover:shadow-xl',
-      ...coverHoverScaleAnimationClass,
+      ...coverHoverScaleClass,
     )
   }
   return classes
