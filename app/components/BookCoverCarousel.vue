@@ -125,7 +125,6 @@
     :is-vertical-center="true"
     :has-shadow="props.hasShadow"
     :priority="true"
-    @click="handleSingleCoverClick"
   />
 </template>
 
@@ -193,14 +192,6 @@ function navigateModal(direction: number) {
     direction: direction > 0 ? 'next' : 'previous',
     item_type: item?.type,
     item_index: modalItemIndex.value,
-  })
-}
-
-function handleSingleCoverClick() {
-  useLogEvent('carousel_item_click', {
-    nft_class_id: props.nftClassId,
-    item_type: 'cover',
-    item_index: 0,
   })
 }
 
