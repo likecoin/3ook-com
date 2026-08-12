@@ -28,18 +28,13 @@ export function useBookSocialShare(options: BookSocialShareOptions) {
   const { copy: copyToClipboard } = useClipboard()
   const { user } = useUserSession()
 
-  const socialButtons = computed(() => {
-    const buttons = [{ key: 'copy-links', label: $t('share_button_hint_copy_link'), icon: 'i-material-symbols-link-rounded' }]
-    if (!isLibrary.value) {
-      buttons.push(
-        { key: 'threads', label: $t('share_button_hint_threads'), icon: 'i-simple-icons-threads' },
-        { key: 'facebook', label: $t('share_button_hint_facebook'), icon: 'i-simple-icons-facebook' },
-        { key: 'whatsapp', label: $t('share_button_hint_whatsapp'), icon: 'i-simple-icons-whatsapp' },
-        { key: 'x', label: $t('share_button_hint_x'), icon: 'i-simple-icons-x' },
-      )
-    }
-    return buttons
-  })
+  const socialButtons = computed(() => [
+    { key: 'copy-links', label: $t('share_button_hint_copy_link'), icon: 'i-material-symbols-link-rounded' },
+    { key: 'threads', label: $t('share_button_hint_threads'), icon: 'i-simple-icons-threads' },
+    { key: 'facebook', label: $t('share_button_hint_facebook'), icon: 'i-simple-icons-facebook' },
+    { key: 'whatsapp', label: $t('share_button_hint_whatsapp'), icon: 'i-simple-icons-whatsapp' },
+    { key: 'x', label: $t('share_button_hint_x'), icon: 'i-simple-icons-x' },
+  ])
 
   function getShortLink() {
     // The logged-in sharer takes the affiliate credit over the original `?from=@likerId`
