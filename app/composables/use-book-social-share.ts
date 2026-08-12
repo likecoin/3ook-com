@@ -41,20 +41,26 @@ export function useBookSocialShare(options: BookSocialShareOptions) {
     return buttons
   })
 
-  function getShortLink() {
+  function getShortLink(utmSource: string) {
     // The logged-in sharer takes the affiliate credit over the original `?from=@likerId`
     const likerId = user.value?.likerId || parseLikerIdHandle(from.value)
-    const slug = formatShortLinkSegment({
+    const slug = formatShortLinkSlug({
       nftClassId: nftClassId.value,
       priceIndex: priceIndex.value,
       likerId,
+      utmSource,
     })
     if (!slug) return ''
-    return `${config.public.baseURL}/${isLibrary.value ? 'l' : 's'}/${slug}`
+    const shortURL = new URL(`${config.public.baseURL}/${isLibrary.value ? 'l' : 's'}/${slug}`)
+    // A utm_source that cannot be encoded into the slug falls back to the query string
+    if (utmSource && !getUTMSourceCode(utmSource)) {
+      shortURL.searchParams.set('utm_source', utmSource)
+    }
+    return shortURL.toString()
   }
 
   function getShareURL(utmSource: string) {
-    const shortLink = getShortLink()
+    const shortLink = getShortLink(utmSource)
     if (shortLink) return shortLink
 
     // Fallback
