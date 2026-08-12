@@ -130,10 +130,15 @@
           v-if="!isLibraryTab"
           :text="$t('book_list_title')"
         >
-          <PillButton
+          <UButton
+            class="rounded-full p-1"
             icon="i-material-symbols-shopping-cart-outline-rounded"
             :aria-label="$t('book_list_title')"
             :to="localeRoute({ name: 'list' })"
+            color="neutral"
+            size="lg"
+            variant="ghost"
+            :ui="{ leadingIcon: 'size-6 sm:size-7' }"
             @click="handleBookListTagClick"
           />
         </UTooltip>

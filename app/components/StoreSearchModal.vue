@@ -5,7 +5,7 @@
     :ui="{
       // translate-y-0 cancels the modal theme's default -translate-y-1/2 so the
       // box anchors by its top edge and grows downward as suggestions appear.
-      content: 'max-phone:top-30 top-1/4 translate-y-0',
+      content: 'max-phone:top-30 top-1/4 translate-y-0 rounded-full',
       body: 'p-0 sm:p-0',
       footer: [
         'flex',
@@ -18,11 +18,18 @@
       ],
     }"
   >
-    <PillButton
-      icon="i-material-symbols-search-rounded"
-      :aria-label="$t('store_search_label')"
-      @click="handleSearchTagClick"
-    />
+    <UTooltip :text="$t('store_search_label')">
+      <UButton
+        class="rounded-full p-1"
+        icon="i-material-symbols-search-rounded"
+        :aria-label="$t('store_search_label')"
+        color="neutral"
+        variant="ghost"
+        size="lg"
+        :ui="{ leadingIcon: 'size-6 sm:size-7' }"
+        @click="handleSearchTagClick"
+      />
+    </UTooltip>
 
     <template #body>
       <form
