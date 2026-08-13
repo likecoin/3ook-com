@@ -126,17 +126,24 @@
         ]"
       >
         <PaywallBookstoreBackdrop />
-        <NuxtLink
-          class="relative flex justify-center items-center"
-          :to="localeRoute({ name: 'store', query: { ll_medium: 'plus-logo', ll_source: 'plus-modal' } })"
-        >
-          <AppLogo
-            class="max-w-2/3 max-laptop:h-16"
-            height="128"
-            :is-icon="false"
-            :is-padded="false"
+        <div class="relative flex flex-col items-center w-full">
+          <NuxtLink
+            class="flex justify-center items-center w-full"
+            :to="localeRoute({ name: 'store', query: { ll_medium: 'plus-logo', ll_source: 'plus-modal' } })"
+          >
+            <AppLogo
+              class="max-w-2/3 max-laptop:h-16 laptop:h-auto"
+              height="128"
+              :is-icon="false"
+              :is-padded="false"
+            />
+          </NuxtLink>
+          <!-- The tagline is laptop-only to keep the mobile banner above the fold slim -->
+          <p
+            class="hidden laptop:block max-w-[420px] mt-4 text-center text-white/70"
+            v-text="$t('about_page_hero_title')"
           />
-        </NuxtLink>
+        </div>
       </aside>
     </template>
 
