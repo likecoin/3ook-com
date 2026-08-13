@@ -1,8 +1,19 @@
+import { getIsInternalLLSource } from '~~/shared/constants/analytics'
 import { getInstallAttribution } from '~/utils/native-bridge'
 
 // Meta's click-attribution window; install click ids older than this are dropped
 // so stale clicks aren't sent to CAPI. UTM has no window (tagged instead).
 const INSTALL_CLICK_FRESHNESS_MS = 7 * 24 * 60 * 60 * 1000
+
+// Blocked or half-initialized PostHog builds can lack `get_property` entirely;
+// omit the field rather than throwing out of the `onLoaded` callback.
+function getPostHogProperty(
+  posthog: { get_property?: (key: string) => unknown },
+  key: string,
+) {
+  const value = posthog.get_property?.(key)
+  return typeof value === 'string' && value ? value : undefined
+}
 
 export function useAnalytics() {
   const getRouteQuery = useRouteQuery()
@@ -14,6 +25,9 @@ export function useAnalytics() {
   const gaSessionId = ref('')
   const referrer = ref('')
   const posthogDistinctId = ref<string | undefined>(undefined)
+  const initialUTMSource = ref<string | undefined>(undefined)
+  const initialUTMMedium = ref<string | undefined>(undefined)
+  const initialUTMCampaign = ref<string | undefined>(undefined)
   const fbp = useCookie('_fbp', { readonly: true })
   const fbc = useCookie('_fbc', { readonly: true })
   onMounted(() => {
@@ -28,6 +42,15 @@ export function useAnalytics() {
     }
     onPostHogLoaded(({ posthog }) => {
       posthogDistinctId.value = posthog.get_distinct_id?.() || undefined
+      // First-touch super-properties, seeded once per browser. Require a genuine
+      // external source before trusting any of the triple: pre-split clients hold
+      // internal surfaces here, sometimes as a medium with no source at all, and a
+      // bad value sticks forever once on a RevenueCat subscriber.
+      const source = getPostHogProperty(posthog, 'initial_utm_source')
+      if (!source || getIsInternalLLSource(source)) return
+      initialUTMSource.value = source
+      initialUTMMedium.value = getPostHogProperty(posthog, 'initial_utm_medium')
+      initialUTMCampaign.value = getPostHogProperty(posthog, 'initial_utm_campaign')
     })
   })
 
@@ -98,6 +121,12 @@ export function useAnalytics() {
       fbp: fbp.value || undefined,
       fbc: fbc.value || undefined,
       posthogDistinctId: posthogDistinctId.value,
+      // Never falls back to the install referrer or query: both are last-touch.
+      // Keys stay `initialUtm*`: they are the `/plus/new` body and RevenueCat
+      // subscriber attribute names, not local identifiers.
+      initialUtmSource: initialUTMSource.value,
+      initialUtmMedium: initialUTMMedium.value,
+      initialUtmCampaign: initialUTMCampaign.value,
       attributionSource: usedInstall ? 'install_referrer' : undefined,
     }
   }

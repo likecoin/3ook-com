@@ -228,6 +228,12 @@ export function useSubscriptionCheckout() {
         setAttribute('utmCampaign', analyticsParams.utmCampaign || utmCampaign)
         setAttribute('utmContent', analyticsParams.utmContent)
         setAttribute('utmTerm', analyticsParams.utmTerm)
+        // First-touch gets no tombstone (unlike plusGiftClassId above): RevenueCat's
+        // per-subscriber stickiness is wanted here, and blanking it on a later
+        // session with no first-touch would erase the real acquisition source.
+        setAttribute('initialUtmSource', analyticsParams.initialUtmSource)
+        setAttribute('initialUtmMedium', analyticsParams.initialUtmMedium)
+        setAttribute('initialUtmCampaign', analyticsParams.initialUtmCampaign)
         setAttribute('referrer', analyticsParams.referrer)
         setAttribute('posthogDistinctId', analyticsParams.posthogDistinctId)
         // Reflects THIS purchase's attribution origin. Unlike the sticky values

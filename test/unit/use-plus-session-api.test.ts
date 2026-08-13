@@ -55,6 +55,25 @@ describe('fetchLikerPlusCheckoutLink', () => {
     expect(options.body.isApp).toBeUndefined()
   })
 
+  // The body is an explicit allowlist, so a caller spreading analytics params
+  // silently drops anything missing here.
+  it('forwards first-touch attribution to the request body', () => {
+    const { fetchLikerPlusCheckoutLink } = usePlusSessionAPI()
+    fetchLikerPlusCheckoutLink({
+      period: 'yearly',
+      utmSource: 'plus-modal',
+      initialUtmSource: 'facebookads',
+      initialUtmMedium: 'paid_Instagram_Feed',
+      initialUtmCampaign: '120210000000000000',
+    })
+    const [, options] = mockFetch.mock.calls[0]!
+    expect(options.body.initialUtmSource).toBe('facebookads')
+    expect(options.body.initialUtmMedium).toBe('paid_Instagram_Feed')
+    expect(options.body.initialUtmCampaign).toBe('120210000000000000')
+    // Last-touch is untouched by the addition.
+    expect(options.body.utmSource).toBe('plus-modal')
+  })
+
   it('defaults the period to monthly', () => {
     const { fetchLikerPlusCheckoutLink } = usePlusSessionAPI()
     fetchLikerPlusCheckoutLink({} as Parameters<typeof fetchLikerPlusCheckoutLink>[0])

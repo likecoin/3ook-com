@@ -1,3 +1,5 @@
+import { checkIsEVMAddress } from '~~/shared/utils'
+
 export const MAX_SESSION_DURATION_MS = 4 * 60 * 60 * 1000
 export const HEARTBEAT_INTERVAL_MS = 5 * 60 * 1000
 export const MAX_HEARTBEAT_DELTA_MS = 10 * 60 * 1000
@@ -45,3 +47,44 @@ export const PLUS_CHECKOUT_PLACEMENTS = [
 ] as const
 
 export type PlusCheckoutPlacement = typeof PLUS_CHECKOUT_PLACEMENTS[number]
+
+// Every internal surface ever shipped as `ll_source`. Pre-split clients still
+// hold these in PostHog's `initial_utm_source`, where a page name would outrank
+// the real channel; also the filter list for the attribution-ladder query.
+export const INTERNAL_LL_SOURCES = [
+  ...PLUS_UPSELL_SOURCES,
+  '3ookcom',
+  'about-library',
+  'about-page',
+  'bookshelf',
+  'bookshelf-finished',
+  'bookshelf-item',
+  'bookstore',
+  'bookstore-item',
+  'button',
+  'copy-link',
+  'cs',
+  'epub_reader',
+  'library-intro',
+  'plus-modal',
+  'pricing_page',
+  'reader',
+  'store',
+  'store-empty',
+  'store-intro',
+  'website',
+] as const
+
+// Lowercased at build so an entry added with capitals can't silently never match.
+const INTERNAL_LL_SOURCE_SET = new Set<string>(
+  INTERNAL_LL_SOURCES.map(source => source.toLowerCase()),
+)
+
+// Legacy values arrive with the rest of the query glued on
+// (`bookshelf-item?from=@someone`), and a book page passes its NFT class id, so
+// no fixed list can cover the internal value space on its own.
+export function getIsInternalLLSource(source?: string) {
+  const value = source?.split('?')[0]?.toLowerCase()
+  if (!value) return false
+  return checkIsEVMAddress(value) || INTERNAL_LL_SOURCE_SET.has(value)
+}

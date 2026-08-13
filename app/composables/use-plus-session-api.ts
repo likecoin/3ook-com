@@ -31,6 +31,9 @@ export function usePlusSessionAPI() {
     utmSource,
     utmContent,
     utmTerm,
+    initialUtmCampaign,
+    initialUtmMedium,
+    initialUtmSource,
     gaClientId,
     gaSessionId,
     gadClickId,
@@ -55,6 +58,9 @@ export function usePlusSessionAPI() {
     utmSource?: string
     utmContent?: string
     utmTerm?: string
+    initialUtmCampaign?: string
+    initialUtmMedium?: string
+    initialUtmSource?: string
     gaClientId?: string
     gaSessionId?: string
     gadClickId?: string
@@ -79,6 +85,9 @@ export function usePlusSessionAPI() {
         utmSource,
         utmContent,
         utmTerm,
+        initialUtmCampaign,
+        initialUtmMedium,
+        initialUtmSource,
         gaClientId,
         gaSessionId,
         gadClickId,
