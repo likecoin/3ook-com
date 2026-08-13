@@ -57,6 +57,10 @@ const getRouteQuery = useRouteQuery()
 const getRouteBaseName = useRouteBaseName()
 
 const isRedirected = computed(() => !!getRouteQuery('redirect'))
+// Return from the Billing Portal upgrade-confirm flow (Plus→Civic). Fires the
+// conversion logging like `redirect` does, but deliberately NOT the gift-cart
+// read: an in-place upgrade must not re-open a pre-existing gift cart.
+const isPortalReturn = computed(() => getRouteQuery('via') === 'portal')
 const targetPeriod = computed(() => getRouteQuery('period'))
 const isYearly = computed(() => targetPeriod.value === 'yearly')
 const paymentId = computed(() => getRouteQuery('payment_id') || getRouteQuery('session_id'))
@@ -166,13 +170,14 @@ onMounted(async () => {
       giftPaymentId,
       giftClaimToken,
     } = gift
-    if (isRedirected.value) {
+    if (isRedirected.value || isPortalReturn.value) {
       // Restore the persisted currency before logging: post-Stripe-redirect the
       // payment-currency state is fresh 'auto' and resolves to USD until
       // geolocation lands, which would mislabel the analytics value/currency.
       await initializePaymentCurrency()
-      // Civic has no trial, so never log one for it regardless of the query flag.
-      const isTrial = !isCivic.value && getRouteQuery('trial') !== '0'
+      // Civic has no trial, so never log one for it regardless of the query flag;
+      // a portal upgrade is always a paid charge, never a trial.
+      const isTrial = !isCivic.value && !isPortalReturn.value && getRouteQuery('trial') !== '0'
 
       const PREDICTED_LTV_USD = 100
       const TRIAL_TO_PAID_CONVERSION = 0.5
@@ -202,11 +207,13 @@ onMounted(async () => {
       // (mirrored server-side from Stripe + RevenueCat). Optimize Meta on this.
       useLogEvent('plus_acquisition', { ...conversionParams, is_trial: isTrial })
 
+      // Strip the fire-once flags so a refresh doesn't re-log the conversion.
       await navigateTo(localeRoute({
         name: getRouteBaseName(route),
         query: {
           ...route.query,
           redirect: undefined,
+          via: undefined,
         },
       }), { replace: true })
     }

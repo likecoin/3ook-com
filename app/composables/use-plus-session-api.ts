@@ -122,6 +122,26 @@ export function usePlusSessionAPI() {
     return fetch.value<FetchLikerPlusBillingPortalLinkResponseData>(`/plus/portal`, { method: 'POST' })
   }
 
+  // Stripe-hosted confirmation for a paid tier upgrade (Plus→Civic): a Billing
+  // Portal deep link pinned to the target plan, which shows the prorated charge
+  // and card on file before the member confirms. See /plus/portal upgrade_confirm.
+  function fetchLikerPlusUpgradePortalLink({
+    period,
+    tier,
+  }: {
+    period: SubscriptionPlan
+    tier: LikerPlusTier
+  }) {
+    return fetch.value<FetchLikerPlusBillingPortalLinkResponseData>(`/plus/portal`, {
+      method: 'POST',
+      body: {
+        flow: 'upgrade_confirm',
+        period,
+        tier,
+      },
+    })
+  }
+
   function retryLikerPlusPayment() {
     return fetch.value(`/plus/retry`, { method: 'POST' })
   }
@@ -130,6 +150,7 @@ export function usePlusSessionAPI() {
     fetchLikerPlusCheckoutLink,
     updateLikerPlusSubscription,
     fetchLikerPlusBillingPortalLink,
+    fetchLikerPlusUpgradePortalLink,
     retryLikerPlusPayment,
   }
 }

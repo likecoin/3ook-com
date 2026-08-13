@@ -151,25 +151,29 @@ export function useSubscriptionCheckout() {
       if (!hasLoggedIn.value) return
     }
 
+    // Civic must be bought where the plan is already billed: an in-place upgrade
+    // charges through the existing subscription, so a mismatched surface either
+    // 400s or stacks a second subscription over the first. Old shells would also
+    // silently buy Plus from the default offering. Callers hide the option; this
+    // is the flow-level backstop, shared by the store and Stripe paths — checking
+    // it inside either one leaves the other open.
+    if (isCivicTier && !isCivicOfferable.value) {
+      useLogEvent(isLikerPlus.value
+        ? 'subscription_civic_wrong_billing_source'
+        : 'subscription_iap_civic_unsupported')
+      toast.add({
+        title: $t('plus_checkout_error_description'),
+        color: 'warning',
+      })
+      return
+    }
+
     // In the native app, route Plus purchases through StoreKit / Play Billing
     // (RevenueCat) instead of Stripe. RevenueCat is keyed by likerId (the backend
     // internal user id) already synced via `identifyUser`; entitlement truth still
     // comes from the backend session, so poll it after a successful purchase.
     if (isIAPSupported.value) {
       if (isProcessingSubscription.value) return
-      // Old shells would silently buy Plus from the default offering, and an IAP
-      // over a plan billed elsewhere would stack a second subscription rather
-      // than replace it. Callers hide the option; this is the flow-level backstop.
-      if (isCivicTier && !isCivicOfferable.value) {
-        useLogEvent(isLikerPlus.value
-          ? 'subscription_iap_civic_wrong_billing_source'
-          : 'subscription_iap_civic_unsupported')
-        toast.add({
-          title: $t('plus_checkout_error_description'),
-          color: 'warning',
-        })
-        return
-      }
       // RevenueCat is keyed by likerId (the backend internal user id), so a
       // missing likerId can't attribute the purchase — gate it like Stripe does.
       if (!user.value?.likerId) {
@@ -301,19 +305,29 @@ export function useSubscriptionCheckout() {
       const analyticsParams = getAnalyticsParameters()
       if (isLikerPlus.value) {
         useLogEvent('begin_checkout', eventPayloadWithCoupon)
+        if (isCivicTier && !isCivicMember.value) {
+          // Tier upgrades are a large immediate charge on a card saved long ago,
+          // so confirm on a Stripe-hosted page (Billing Portal confirm flow): it
+          // shows the exact prorated amount and card on file, and runs 3DS
+          // on-session. Conversion events fire on the success-page return
+          // (via=portal) instead of optimistically before the charge settles.
+          // Only Stripe-billed members reach here — the eligibility guard above
+          // turns back store-billed and seat-granted members, who have no Stripe
+          // subscription for the portal to upgrade.
+          const { url } = await plusSessionAPI.fetchLikerPlusUpgradePortalLink({
+            period: plan,
+            tier,
+          })
+          await navigateTo(url, { external: true })
+          return
+        }
+        // Period-only change (monthly→yearly): charged in place. Not an
+        // acquisition, so no subscribe/plus_acquisition signal here.
         await plusSessionAPI.updateLikerPlusSubscription({
           period: plan,
           tier,
           giftNFTClassId: isYearly ? nftClassId : undefined,
         })
-        // The in-place upgrade skips the success-page redirect that fires
-        // conversions for new subscribers. A Plus→Civic tier upgrade is a real
-        // paid conversion worth signalling; a monthly→yearly period change is not
-        // an acquisition, so keep it out of the Meta-optimized acquisition event.
-        if (isCivicTier) {
-          useLogEvent('subscribe', eventPayloadWithCoupon)
-          useLogEvent('plus_acquisition', { ...eventPayloadWithCoupon, is_trial: false })
-        }
         await navigateTo(localeRoute({
           name: 'plus-success',
           query: { period: plan, ...(isCivicTier ? { tier } : {}) },

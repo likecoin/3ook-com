@@ -91,6 +91,19 @@ describe('fetchLikerPlusBillingPortalLink', () => {
   })
 })
 
+describe('fetchLikerPlusUpgradePortalLink', () => {
+  it('posts the pinned upgrade_confirm flow to /plus/portal', () => {
+    const { fetchLikerPlusUpgradePortalLink } = usePlusSessionAPI()
+    fetchLikerPlusUpgradePortalLink({ period: 'monthly', tier: 'civic' })
+    const [url, options] = mockFetch.mock.calls[0]!
+    expect(url).toBe('/plus/portal')
+    expect(options.method).toBe('POST')
+    expect(options.body).toEqual({
+      flow: 'upgrade_confirm', period: 'monthly', tier: 'civic',
+    })
+  })
+})
+
 describe('retryLikerPlusPayment', () => {
   it('posts to /plus/retry', () => {
     const { retryLikerPlusPayment } = usePlusSessionAPI()
