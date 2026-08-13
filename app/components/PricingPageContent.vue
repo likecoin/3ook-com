@@ -149,7 +149,7 @@
           'max-w-[512px]',
           'max-laptop:mx-auto',
           'p-5 laptop:p-12',
-          'pt-12',
+          'pt-8 laptop:pt-12',
           // NOTE: Prevent content from being covered by the Intercom banner at the top
           { 'laptop:pt-16': !campaignContent },
         ]"
