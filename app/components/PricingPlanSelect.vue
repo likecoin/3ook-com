@@ -121,7 +121,7 @@
         />
       </div>
 
-      <div class="flex flex-col justify-center min-h-16 text-xs laptop:text-sm text-right">
+      <div class="flex flex-col justify-center min-h-16 laptop:min-h-18 text-xs laptop:text-sm text-right">
         <template v-if="isPaidTrial && plan.showTrialPrice">
           <span class="font-bold whitespace-nowrap text-theme-black dark:text-theme-white">
             <span
