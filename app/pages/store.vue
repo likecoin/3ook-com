@@ -134,7 +134,7 @@
             class="rounded-full p-1"
             icon="i-material-symbols-shopping-cart-outline-rounded"
             :aria-label="$t('book_list_title')"
-            :to="localeRoute({ name: 'list' })"
+            :to="localeRoute({ name: 'cart' })"
             color="neutral"
             size="lg"
             variant="ghost"

@@ -113,7 +113,7 @@ export function useBookListStatus(options: BookListStatusOptions) {
               label: $t('book_list_added_toast_view_button_label'),
               variant: 'outline',
               onClick: () => {
-                navigateTo(localeRoute({ name: 'list' }))
+                navigateTo(localeRoute({ name: 'cart' }))
               },
             },
           ],
