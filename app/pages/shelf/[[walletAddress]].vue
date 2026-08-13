@@ -436,7 +436,7 @@
       <template #body>
         <RecommendedBookGrid
           :nft-class-ids="readNextBooks.nftClassIds"
-          :is-personalized="readNextBooks.isPersonalized"
+          :personalized-nft-class-ids="personalizedReadNextClassIds"
           is-compact
           ll-medium="recommendation-read-next"
           ll-source="bookshelf-finished"
@@ -994,6 +994,9 @@ const isReadNextModalOpen = ref(false)
 // Ids and `isPersonalized` stay in one ref: both are assigned after an await, and
 // splitting them lets one fetch's ids pair with another fetch's provenance flag.
 const readNextBooks = ref<BookRecommendations>(getEmptyBookRecommendations())
+const personalizedReadNextClassIds = computed(() =>
+  readNextBooks.value.isPersonalized ? readNextBooks.value.nftClassIds : [],
+)
 
 // PostHog loads lazily via @nuxt/scripts, so the flag may resolve after onMounted.
 watch(

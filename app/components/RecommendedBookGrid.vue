@@ -18,7 +18,7 @@
         :class="isCompact ? undefined : getGridItemClassesByIndex(index)"
         :nft-class-id="classId"
         :lazy="true"
-        :ll-medium="resolvedLLMedium"
+        :ll-medium="getItemLLMedium(classId)"
         :ll-source="llSource"
         :is-library="isLibrary"
         @open="handleBookOpen"
@@ -30,12 +30,14 @@
 <script setup lang="ts">
 const props = withDefaults(defineProps<{
   nftClassIds: string[]
+  // Personalized picks among `nftClassIds`
+  personalizedNFTClassIds?: string[]
   title?: string
+  // Caps visible rows per breakpoint; extras are hidden. 0 shows every row.
+  maxRows?: number
   llMedium?: string
   llSource?: string
   isLibrary?: boolean
-  // False when the feed fell back to the popular list, so clicks report honestly.
-  isPersonalized?: boolean
   // Fixed 3-column layout for narrow containers (e.g. modals).
   isCompact?: boolean
 }>(), {
@@ -43,8 +45,9 @@ const props = withDefaults(defineProps<{
   llMedium: undefined,
   llSource: '',
   isLibrary: false,
-  isPersonalized: false,
+  personalizedNFTClassIds: () => [],
   isCompact: false,
+  maxRows: 0,
 })
 
 const queryCache = useQueryCache()
@@ -63,17 +66,27 @@ const visibleNFTClassIds = computed(() => props.nftClassIds.filter((nftClassId) 
 const { gridClasses, getGridItemClassesByIndex } = usePaginatedGrid({
   itemsCount: computed(() => visibleNFTClassIds.value.length),
   hasMore: false,
+  maxRows: computed(() => props.maxRows),
 })
 
-// Surfaces that name themselves (e.g. read-next) pass their own medium; the
-// rest report provenance, which is the personalization flag they already carry.
-const resolvedLLMedium = computed(() => props.llMedium ?? getRecommendationLLMedium(props.isPersonalized))
+const personalizedClassIdSet = computed(() =>
+  new Set(props.personalizedNFTClassIds.map(normalizeNFTClassId)),
+)
+
+function getIsItemPersonalized(classId: string) {
+  return personalizedClassIdSet.value.has(normalizeNFTClassId(classId))
+}
+
+// An explicit `llMedium` wins; otherwise report the item's provenance.
+function getItemLLMedium(classId: string) {
+  return props.llMedium ?? getRecommendationLLMedium(getIsItemPersonalized(classId))
+}
 
 function handleBookOpen(classId: string) {
   useLogRecommendBookClick({
     nftClassId: classId,
-    isPersonalized: props.isPersonalized,
-    llMedium: resolvedLLMedium.value,
+    isPersonalized: getIsItemPersonalized(classId),
+    llMedium: getItemLLMedium(classId),
   })
 }
 </script>

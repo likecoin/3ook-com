@@ -509,37 +509,15 @@
       </div>
     </section>
 
-    <section
-      v-if="filteredRecommendedClassIds.length"
+    <RecommendedBookGrid
       class="w-full mt-12 laptop:mt-20"
-    >
-      <h2
-        class="text-lg font-bold"
-        v-text="$t('product_page_related_books_title')"
-      />
-
-      <ul
-        :class="[
-          ...gridClasses,
-          'flex-wrap',
-          'flex',
-          'mt-6',
-        ]"
-      >
-        <BookstoreItem
-          v-for="(classId, index) in filteredRecommendedClassIds"
-          :id="classId"
-          :key="classId"
-          :class="getGridItemClassesByIndex(index)"
-          :nft-class-id="classId"
-          :lazy="true"
-          :ll-medium="getRecommendationLLMedium(getIsPersonalizedRecommendation(classId))"
-          :ll-source="nftClassId"
-          :is-library="isLibrary"
-          @open="handleRecommendedBookCoverClick"
-        />
-      </ul>
-    </section>
+      :title="$t('product_page_related_books_title')"
+      :nft-class-ids="filteredRecommendedClassIds"
+      :personalized-nft-class-ids="personalizedRecommendedClassIds"
+      :ll-source="nftClassId"
+      :is-library="isLibrary"
+      :max-rows="MAX_RECOMMENDED_ROWS"
+    />
 
     <AppFooter
       v-if="!isApp"
@@ -733,7 +711,6 @@ const { fetchBookRecommendations } = useBookRecommendations()
 
 const isDesktopScreen = useDesktopScreen()
 const { isApp } = useAppDetection()
-const isAdultContentEnabled = useAdultContentSetting()
 
 const nftClassId = computed(() => getRouteParam('nftClassId'))
 const { isOwner: isUserBookOwner } = useUserBookOwnership(nftClassId)
@@ -1251,19 +1228,18 @@ const checkoutButtonProps = computed<{
 // Fetched client-side for logged-in users only; empty (guests, errors, pending)
 // leaves the section purely editorial, so there is no layout shift.
 const feedRecommendations = ref<BookRecommendations>(getEmptyBookRecommendations())
-const feedRecommendedClassIdSet = computed(() =>
-  new Set(feedRecommendations.value.nftClassIds.map(normalizeNFTClassId)),
-)
 // Fallback-list ids still blend into the section, but are not personalized picks.
-function getIsPersonalizedRecommendation(classId: string) {
-  return feedRecommendations.value.isPersonalized && feedRecommendedClassIdSet.value.has(normalizeNFTClassId(classId))
-}
+const personalizedRecommendedClassIds = computed(() =>
+  feedRecommendations.value.isPersonalized ? feedRecommendations.value.nftClassIds : [],
+)
 
 function getAuthorNameFromCache(classId: string): string {
   return getBookEntityName(getNFTClassMetadataByIdFromCache(queryCache, classId)?.author)
 }
 
-const MAX_RECOMMENDED_BOOKS = 10
+// Cap the section at whole rows: enough books to fill them at the widest grid.
+const MAX_RECOMMENDED_ROWS = 2
+const MAX_RECOMMENDED_BOOKS = MAX_RECOMMENDED_ROWS * GRID_COLUMN_MAX
 const MAX_SAME_AUTHOR_LEAD_BOOKS = 4
 
 const recommendedClassIds = computed(() => {
@@ -1303,17 +1279,11 @@ const filteredRecommendedClassIds = computed(() => {
   return recommendedClassIds.value
     .filter((classId) => {
       const bookstoreInfo = getBookstoreInfoByNFTClassIdFromCache(queryCache, classId)
-      if (bookstoreInfo === null || bookstoreInfo?.isHidden) return false
-      if (!isAdultContentEnabled.value && bookstoreInfo?.isAdultOnly) return false
+      if (bookstoreInfo === null) return false
       // Only shows Plus reading enabled titles in the library
       if (isLibrary.value && !bookstoreInfo?.isPlusReadingEnabled) return false
       return true
     })
-})
-
-const { gridClasses, getGridItemClassesByIndex } = usePaginatedGrid({
-  itemsCount: computed(() => filteredRecommendedClassIds.value.length),
-  hasMore: false,
 })
 
 onMounted(async () => {
@@ -1336,7 +1306,7 @@ onMounted(async () => {
   // errors) keep the section purely editorial.
   fetchBookRecommendations({
     seed: nftClassId.value,
-    limit: 10,
+    limit: MAX_RECOMMENDED_BOOKS,
     isLibrary: isLibrary.value,
   }).then((recommendations) => {
     feedRecommendations.value = recommendations
@@ -1475,15 +1445,6 @@ const isGiftModalOpen = ref(false)
 function handleGiftButtonClick() {
   useLogEvent('gift_button_click', { nft_class_id: nftClassId.value })
   isGiftModalOpen.value = true
-}
-
-function handleRecommendedBookCoverClick(classId: string) {
-  const isPersonalized = getIsPersonalizedRecommendation(classId)
-  useLogRecommendBookClick({
-    nftClassId: classId,
-    isPersonalized,
-    llMedium: getRecommendationLLMedium(isPersonalized),
-  })
 }
 
 async function handleReadButtonClick() {

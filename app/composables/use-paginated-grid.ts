@@ -8,7 +8,8 @@ const COLUMN_CLASSES = [
   ['widescreen:grid-cols-7', 'widescreen:hidden'],
 ]
 
-const COLUMN_MAX = 7
+export const GRID_COLUMN_MAX = 7
+
 const COLUMN_MIN = 2
 
 function getColumnClass(column: number) {
@@ -21,12 +22,15 @@ export default function usePaginatedGrid(props: {
   columnMin?: number
   itemsCount?: Ref<number> | number
   hasMore?: Ref<boolean> | boolean
+  // Caps visible rows per breakpoint
+  maxRows?: Ref<number> | number
   gapClass?: string
 }) {
-  const columnMax = computed(() => Math.min(props.columnMax || COLUMN_MAX, COLUMN_MAX))
+  const columnMax = computed(() => Math.min(props.columnMax || GRID_COLUMN_MAX, GRID_COLUMN_MAX))
   const columnMin = computed(() => Math.max(props.columnMin || COLUMN_MIN, COLUMN_MIN))
   const itemsCount = computed(() => toValue(props.itemsCount) || 0)
   const hasMore = computed(() => toValue(props.hasMore) || false)
+  const maxRows = computed(() => toValue(props.maxRows) || 0)
 
   const gridClasses = computed(() => {
     const classes = ['grid']
@@ -54,15 +58,18 @@ export default function usePaginatedGrid(props: {
 
   function getGridItemClassesByIndex(index: number) {
     const classes: string[] = []
-    if (hasMore.value) {
-      const isPossiblyLastRow = index >= itemsCount.value - 1 - columnMax.value
-      if (isPossiblyLastRow) {
-        for (let column = columnMin.value; column <= columnMax.value; column++) {
-          if (isInIncompleteRow(index, column)) {
-            const gridItemClass = getColumnClass(column).gridItem
-            if (gridItemClass) classes.push(gridItemClass)
-          }
-        }
+    if (!hasMore.value && maxRows.value <= 0) return classes
+    const isTrimmedLastRow = hasMore.value && index >= itemsCount.value - 1 - columnMax.value
+    for (let column = columnMin.value; column <= columnMax.value; column++) {
+      const isHiddenIncompleteRow = isTrimmedLastRow && isInIncompleteRow(index, column)
+      // Whole rows only: under the cap, the ragged last row is trimmed too.
+      const maxVisibleCount = maxRows.value * column
+      const isBeyondMaxRows = maxRows.value > 0
+        && (index >= maxVisibleCount
+          || (itemsCount.value <= maxVisibleCount && isInIncompleteRow(index, column)))
+      if (isHiddenIncompleteRow || isBeyondMaxRows) {
+        const gridItemClass = getColumnClass(column).gridItem
+        if (gridItemClass) classes.push(gridItemClass)
       }
     }
     return classes
