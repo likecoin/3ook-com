@@ -154,10 +154,6 @@
       #cta-mobile
     >
       <div class="flex flex-col items-center gap-3">
-        <span
-          class="text-sm text-center opacity-70"
-          v-text="$t('pricing_page_login_cta_description')"
-        />
         <UButton
           :label="$t('pricing_page_login_cta_button')"
           icon="i-material-symbols-login-rounded"
@@ -166,6 +162,10 @@
           :loading="accountStore.isLoggingIn"
           :ui="{ base: 'py-2 laptop:py-3 cursor-pointer', label: 'font-bold' }"
           @click="handleRegisterClick"
+        />
+        <span
+          class="text-sm text-center opacity-70"
+          v-text="$t('pricing_page_login_cta_description')"
         />
       </div>
     </template>
