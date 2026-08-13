@@ -49,10 +49,9 @@ export function useAnalytics() {
       }
     }
 
-    // Fall back to the install referrer only when the live session has no value,
-    // so last-touch always wins. Click ids (`gated`) are additionally limited to
-    // the freshness window. Any fill is flagged via `attributionSource` so it is
-    // never confused with live last-touch attribution downstream.
+    // Fall back to the install referrer only when the live session has no external
+    // value, so live last-touch always wins; click ids (`gated`) are additionally
+    // limited to the freshness window. Fills are flagged via `attributionSource`.
     const install = getInstallAttribution()
     const now = Date.now()
     // Reject future timestamps (clock skew / malformed payload) — a negative
@@ -73,8 +72,11 @@ export function useAnalytics() {
     // Resolve every field before the return so `usedInstall` is fully
     // accumulated, keeping `attributionSource` independent of property order.
     const utmCampaign = withInstall(getRouteQuery('utm_campaign'), 'utm_campaign')
-    const utmMediumResolved = withInstall(resolvedUtmMedium || getRouteQuery('ll_medium') || utmMedium, 'utm_medium')
-    const utmSourceResolved = withInstall(resolvedUtmSource || getRouteQuery('ll_source') || utmSource, 'utm_source')
+    // The install referrer outranks internal link tags (`ll_*`) and caller
+    // defaults — in the app, checkout is always reached via an upsell that sets
+    // `ll_source`, so folding those into `live` would never let install fill.
+    const utmMediumResolved = withInstall(resolvedUtmMedium, 'utm_medium') || getRouteQuery('ll_medium') || utmMedium
+    const utmSourceResolved = withInstall(resolvedUtmSource, 'utm_source') || getRouteQuery('ll_source') || utmSource
     const utmContent = withInstall(getRouteQuery('utm_content'), 'utm_content')
     const utmTerm = withInstall(getRouteQuery('utm_term'), 'utm_term')
     const gadClickId = withInstall(getRouteQuery('gclid'), 'gclid', true)

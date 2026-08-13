@@ -13,7 +13,8 @@ export function isNativeFeatureSupported(feature: string): boolean {
   return Array.isArray(features) && features.includes(feature)
 }
 
-// Android install-referrer attribution the native shell exposes; null on web/iOS.
+// Install attribution the native shell exposes (Play Install Referrer on
+// Android, Apple AdServices on iOS); null on web.
 // Reads off `window`, so the value is untrusted: validate and sanitize into a
 // fresh object (finite installedAt, string-only values) inside try/catch, so a
 // malformed injection can't throw into — or leak non-strings through — checkout's

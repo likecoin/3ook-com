@@ -1,5 +1,5 @@
 interface InstallAttribution {
-  // utm_* / click ids parsed from the native Play install referrer.
+  // utm_* / click ids from the native install referrer (Play / Apple AdServices).
   attribution: Record<string, string>
   // Epoch ms of first capture, for freshness gating (e.g. fbclid).
   installedAt: number
