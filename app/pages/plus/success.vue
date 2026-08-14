@@ -1,11 +1,10 @@
 <template>
   <main class="items-center justify-center w-full max-w-xl mx-auto p-4 space-y-4 text-center">
-    <PlusMembershipStamp :has-stamped="hasMembershipLanded" />
-
-    <UIcon
-      name="i-material-symbols-check-circle-rounded"
-      class="text-theme-cyan mb-4"
-      size="64"
+    <!-- The check shows while the session refreshes, then flips on the Y axis
+         to reveal the stamped avatar once the entitlement lands. -->
+    <PlusMembershipTada
+      class="mx-auto mb-4"
+      :has-landed="hasMembershipLanded"
     />
 
     <h1
@@ -39,6 +38,8 @@
 
 <script setup lang="ts">
 import type { RouteLocationRaw } from 'vue-router'
+
+import { PLUS_TADA_TOTAL_MS } from '~/components/PlusMembershipTada.vue'
 
 const { t: $t } = useI18n()
 const localeRoute = useLocaleRoute()
@@ -89,31 +90,30 @@ const isPeriodMatch = computed(() => {
 // loop until the session actually reports Civic so /account reflects it.
 const isTierMatch = computed(() => !isCivicExpected.value || isCivicMember.value)
 
-// The stamp marks the entitlement landing, not the page loading — it is part of
-// the refresh loop's exit condition below. Guarded on isLikerPlus because that
-// loop can exhaust its retries without the session ever reporting a member.
+// The tada marks the entitlement landing, not the page loading — it is part
+// of the refresh loop's exit condition below. Guarded on isLikerPlus because
+// that loop can exhaust its retries without the session ever reporting a member.
 const hasMembershipLanded = computed(() => isLikerPlus.value && isTierMatch.value)
 
 const preferredMotion = usePreferredReducedMotion()
 
-// Must outlast the whole sequence in PlusMembershipStamp.vue
-// (--plus-stamp-duration plus --plus-stamp-shimmer-duration), so the badge
-// lands and the sweep finishes before any branch below navigates away.
-const PLUS_STAMP_HOLD_MS = 1600
+// Slack over the component's summed sequence so the shimmer fully lands
+// before any branch below navigates away.
+const PLUS_TADA_HOLD_MS = PLUS_TADA_TOTAL_MS + 180
 // Re-armed on every rising edge, not just the first: a failed session fetch
-// mid-poll flaps this false and remounts the badge, replaying the animation
-// from zero against what would otherwise be a spent origin.
-const stampStartedAt = ref<number | null>(null)
+// mid-poll flaps this false and replays the tada from zero against what
+// would otherwise be a spent origin.
+const tadaStartedAt = ref<number | null>(null)
 watch(hasMembershipLanded, (value) => {
-  if (value) stampStartedAt.value = performance.now()
+  if (value) tadaStartedAt.value = performance.now()
 }, { immediate: true })
 
-// Measured from when the stamp started rather than from the call site: the gift
-// poll above can already have outlasted it. Monotonic on purpose — a device
-// clock correction across those polls would otherwise stretch the hold.
-async function holdForStamp() {
-  if (stampStartedAt.value === null || preferredMotion.value === 'reduce') return
-  const remaining = PLUS_STAMP_HOLD_MS - (performance.now() - stampStartedAt.value)
+// Measured from when the tada started rather than from the call site: the
+// gift poll above can already have outlasted it. Monotonic on purpose — a
+// device clock correction across those polls would otherwise stretch the hold.
+async function holdForTada() {
+  if (tadaStartedAt.value === null || preferredMotion.value === 'reduce') return
+  const remaining = PLUS_TADA_HOLD_MS - (performance.now() - tadaStartedAt.value)
   if (remaining > 0) await sleep(remaining)
 }
 
@@ -249,9 +249,9 @@ onMounted(async () => {
     const shouldShowContinueButton = !hasGiftToClaim
       && (isCivic.value || !(redirectRoute?.name || affiliateFrom.value))
     if (shouldShowContinueButton) isRefreshing.value = false
-    // Every branch below leaves within a second or instantly, so the stamp only
-    // has somewhere to play if the page is held open first.
-    await holdForStamp()
+    // Every branch below leaves within a second or instantly, so the tada
+    // only has somewhere to play if the page is held open first.
+    await holdForTada()
 
     if (hasGiftToClaim) {
       accountStore.savePlusRedirectRoute(null)
