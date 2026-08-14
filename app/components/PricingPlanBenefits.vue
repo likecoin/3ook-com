@@ -62,68 +62,16 @@
         <UIcon name="i-material-symbols-check" />
         <span v-text="feature" />
       </li>
-      <template v-if="benefitsCopyVariant === 'variant-a'">
-        <li>
-          <UIcon name="i-material-symbols-check" />
-          <i18n-t
-            keypath="pricing_page_feature_variant_a_library"
-            tag="span"
-          >
-            <template #library>
-              <NuxtLink
-                :to="localeRoute({ name: 'library' })"
-                class="underline"
-                @click="handleClickLibrary"
-              >
-                {{ $t('pricing_page_feature_library_link') }}
-              </NuxtLink>
-            </template>
-          </i18n-t>
-        </li>
-        <li v-if="!isAudioHidden">
-          <UIcon name="i-material-symbols-check" />
-          <i18n-t
-            keypath="pricing_page_feature_variant_a_voice"
-            tag="span"
-          >
-            <template #voiceActor>
-              <button
-                v-if="isVoiceSampleEnabled"
-                type="button"
-                class="underline cursor-pointer"
-                @click="handleShowVoiceSample"
-                v-text="$t('pricing_page_feature_1_voice_actor')"
-              />
-              <span
-                v-else
-                v-text="$t('pricing_page_feature_1_voice_actor')"
-              />
-            </template>
-          </i18n-t>
-        </li>
-        <li v-if="!isAudioHidden">
-          <UIcon name="i-material-symbols-check" />
-          <span v-text="$t('pricing_page_feature_variant_a_preset_voices')" />
-        </li>
-        <li>
-          <UIcon name="i-material-symbols-check" />
-          <span v-text="$t('pricing_page_feature_2')" />
-        </li>
-      </template>
-      <template v-else-if="benefitsCopyVariant === 'variant-b'">
+      <template v-if="benefitsCopyVariant">
         <li>
           <UIcon name="i-material-symbols-check" />
           <!-- featureListClass's dark-bg text rule only targets span children,
             so the div binds text-white itself. -->
           <div :class="{ 'text-white': isDarkBackground }">
-            <p
-              class="font-bold"
-              v-text="$t('pricing_page_feature_variant_b_1_title')"
-            />
             <i18n-t
-              keypath="pricing_page_feature_variant_b_1_desc"
+              keypath="pricing_page_benefit_library"
               tag="p"
-              class="mt-1 text-sm opacity-80"
+              :class="{ 'font-bold': isBenefitDetailShown }"
             >
               <template #library>
                 <NuxtLink
@@ -135,19 +83,22 @@
                 </NuxtLink>
               </template>
             </i18n-t>
+            <!-- The only detail line that claims audio, so it needs the guard
+              the voice item gets from its own v-if. -->
+            <p
+              v-if="isBenefitDetailShown && !isAudioHidden"
+              :class="BENEFIT_DETAIL_CLASS"
+              v-text="$t('pricing_page_benefit_library_detail')"
+            />
           </div>
         </li>
         <li v-if="!isAudioHidden">
           <UIcon name="i-material-symbols-check" />
           <div :class="{ 'text-white': isDarkBackground }">
-            <p
-              class="font-bold"
-              v-text="$t('pricing_page_feature_variant_b_2_title')"
-            />
             <i18n-t
-              keypath="pricing_page_feature_variant_b_2_desc"
+              keypath="pricing_page_benefit_voice"
               tag="p"
-              class="mt-1 text-sm opacity-80"
+              :class="{ 'font-bold': isBenefitDetailShown }"
             >
               <template #voiceActor>
                 <button
@@ -163,18 +114,24 @@
                 />
               </template>
             </i18n-t>
+            <p
+              v-if="isBenefitDetailShown"
+              :class="BENEFIT_DETAIL_CLASS"
+              v-text="$t('pricing_page_benefit_voice_detail')"
+            />
           </div>
         </li>
         <li>
           <UIcon name="i-material-symbols-check" />
           <div :class="{ 'text-white': isDarkBackground }">
             <p
-              class="font-bold"
-              v-text="$t('pricing_page_feature_variant_b_3_title')"
+              :class="{ 'font-bold': isBenefitDetailShown }"
+              v-text="$t('pricing_page_benefit_discount')"
             />
             <p
-              class="mt-1 text-sm opacity-80"
-              v-text="$t('pricing_page_feature_variant_b_3_desc')"
+              v-if="isBenefitDetailShown"
+              :class="BENEFIT_DETAIL_CLASS"
+              v-text="$t('pricing_page_benefit_discount_detail')"
             />
           </div>
         </li>
@@ -332,6 +289,12 @@ const selectedTier = defineModel<LikerPlusTier>('tier', { default: 'plus' })
 
 const { t: $t } = useI18n()
 const localeRoute = useLocaleRoute()
+
+const BENEFIT_DETAIL_CLASS = 'mt-1 text-sm opacity-80'
+
+// Only variant-b adds a detail line, so variant-a stays line-for-line
+// comparable with the control list.
+const isBenefitDetailShown = computed(() => props.benefitsCopyVariant === 'variant-b')
 
 const tierOptions = computed<{ value: LikerPlusTier, label: string }[]>(() => [
   { value: 'plus', label: $t('pricing_page_tier_plus') },
