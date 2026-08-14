@@ -63,6 +63,7 @@
               :prepended-features="prependedFeatures"
               :is-tier-selector-visible="isTierSelectorVisible"
               :current-tier="likerPlusTier"
+              :benefits-copy-variant="benefitsCopyVariant"
               is-voice-sample-enabled
               @show-voices="isVoicesModalOpen = true"
               @show-voice-sample="handleShowVoiceSample"
@@ -174,6 +175,7 @@
             :prepended-features="prependedFeatures"
             :is-tier-selector-visible="isTierSelectorVisible"
             :current-tier="likerPlusTier"
+            :benefits-copy-variant="benefitsCopyVariant"
             is-voice-sample-enabled
             @show-voices="isVoicesModalOpen = true"
             @show-voice-sample="handleShowVoiceSample"
@@ -361,7 +363,7 @@ import { getSystemVoiceByOwnerLikerId } from '~~/shared/utils/tts-sample'
 const localeRoute = useLocaleRoute()
 const isDesktopScreen = useDesktopScreen()
 const { handleError } = useErrorHandler()
-const { t: $t } = useI18n()
+const { t: $t, locale } = useI18n()
 const getRouteQuery = useRouteQuery()
 const { isApp } = useAppDetection()
 const { canStartSubscribeFlow, ensureOfferings } = useNativeIAP()
@@ -509,6 +511,16 @@ const shouldShowTTSSamples = computed(() => {
   return getRouteQuery('samples') === '1' || isCustomVoiceCampaign.value
     || hasAffiliateVoices.value || hasReferrerSystemVoice.value
 })
+
+// Resolved here rather than inside PricingPlanBenefits so the upsell modal and
+// gift pages keep the control copy and stay out of the experiment population.
+// Chinese-only, matching usePricingPageCampaign — the variant copy is authored
+// for zh-Hant, and English traffic would only dilute the split.
+const benefitsCopyABTest = locale.value === 'zh-Hant'
+  ? useABTest({ experimentKey: 'pricing-benefits-copy' })
+  : undefined
+
+const benefitsCopyVariant = computed(() => benefitsCopyABTest?.variant.value ?? undefined)
 
 const utmCampaign = computed(() => {
   return getRouteQuery('utm_campaign') || props.utmCampaign

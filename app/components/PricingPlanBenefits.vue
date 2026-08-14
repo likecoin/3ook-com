@@ -62,7 +62,7 @@
         <UIcon name="i-material-symbols-check" />
         <span v-text="feature" />
       </li>
-      <template v-if="isBenefitsCopyVariant('variant-a')">
+      <template v-if="benefitsCopyVariant === 'variant-a'">
         <li>
           <UIcon name="i-material-symbols-check" />
           <i18n-t
@@ -110,7 +110,7 @@
           <span v-text="$t('pricing_page_feature_2')" />
         </li>
       </template>
-      <template v-else-if="isBenefitsCopyVariant('variant-b')">
+      <template v-else-if="benefitsCopyVariant === 'variant-b'">
         <li>
           <UIcon name="i-material-symbols-check" />
           <!-- featureListClass's dark-bg text rule only targets span children,
@@ -312,6 +312,9 @@ const props = withDefaults(defineProps<{
   // Turns the voice-actor phrase into a sample-playing button. Only the pricing
   // page hosts the player modal, so it stays plain text everywhere else.
   isVoiceSampleEnabled?: boolean
+  // Copy variant from the pricing page experiment. Only the pricing page
+  // resolves it, so the upsell modal and gift pages keep the control copy.
+  benefitsCopyVariant?: string
 }>(), {
   isTitleCenter: false,
   isTitleHidden: false,
@@ -321,6 +324,7 @@ const props = withDefaults(defineProps<{
   isTierSelectorVisible: false,
   currentTier: undefined,
   isVoiceSampleEnabled: false,
+  benefitsCopyVariant: undefined,
 })
 
 const emit = defineEmits<{ showVoices: [], showVoiceSample: [] }>()
@@ -329,10 +333,6 @@ const selectedTier = defineModel<LikerPlusTier>('tier', { default: 'plus' })
 
 const { t: $t } = useI18n()
 const localeRoute = useLocaleRoute()
-
-const { variant: benefitsCopyVariant, isVariant: isBenefitsCopyVariant } = useABTest({
-  experimentKey: 'pricing-benefits-copy',
-})
 
 const tierOptions = computed<{ value: LikerPlusTier, label: string }[]>(() => [
   { value: 'plus', label: $t('pricing_page_tier_plus') },
@@ -391,7 +391,7 @@ const dividerClass = computed(() => [
 
 function handleClickLibrary() {
   useLogEvent('pricing_benefit_click_library', {
-    pricing_benefits_variant: benefitsCopyVariant.value ?? undefined,
+    pricing_benefits_variant: props.benefitsCopyVariant,
   })
 }
 
@@ -402,7 +402,7 @@ function handleShowVoices() {
 
 function handleShowVoiceSample() {
   useLogEvent('pricing_benefit_click_voice_sample', {
-    pricing_benefits_variant: benefitsCopyVariant.value ?? undefined,
+    pricing_benefits_variant: props.benefitsCopyVariant,
   })
   emit('showVoiceSample')
 }

@@ -30,6 +30,7 @@
       :is-tier-selector-visible="props.isTierSelectorVisible"
       :current-tier="props.currentTier"
       :is-voice-sample-enabled="props.isVoiceSampleEnabled"
+      :benefits-copy-variant="props.benefitsCopyVariant"
       @show-voices="emit('showVoices')"
       @show-voice-sample="emit('showVoiceSample')"
     />
@@ -66,6 +67,11 @@ const props = defineProps({
   isVoiceSampleEnabled: {
     type: Boolean,
     default: false,
+  },
+  // Copy variant from the pricing page experiment, forwarded to the benefits list.
+  benefitsCopyVariant: {
+    type: String,
+    default: undefined,
   },
 })
 
