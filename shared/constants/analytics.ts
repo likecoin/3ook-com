@@ -58,6 +58,17 @@ export const TTS_SAMPLE_PLACEMENTS = [
 
 export type TTSSamplePlacement = typeof TTS_SAMPLE_PLACEMENTS[number]
 
+// The `tts_sample_*` event suffixes, so the player and the logger agree on them.
+export const TTS_SAMPLE_ACTIONS = [
+  'pause',
+  'play',
+  'play_complete',
+  'resume',
+  'stop',
+] as const
+
+export type TTSSampleAction = typeof TTS_SAMPLE_ACTIONS[number]
+
 // Every internal surface ever shipped as `ll_source`. Pre-split clients still
 // hold these in PostHog's `initial_utm_source`, where a page name would outrank
 // the real channel; also the filter list for the attribution-ladder query.

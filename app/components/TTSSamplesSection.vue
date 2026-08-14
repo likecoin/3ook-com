@@ -32,8 +32,11 @@
       v-model:open="isPlayerModalOpen"
       :sample="activeTTSSample"
       :is-playing="isPlayingSample"
+      :is-loading="isLoadingSample"
+      :progress-percentage="sampleProgress"
       :current-segment-index="currentSegmentIndex"
       :longest-segment-text="longestSegmentText"
+      @toggle-playback="handleToggleSamplePlayback"
     />
   </UCard>
 </template>
@@ -61,8 +64,11 @@ const {
   currentSegmentIndex,
   longestSegmentText,
   isPlaying: isPlayingSample,
+  isLoading: isLoadingSample,
+  progressPercentage: sampleProgress,
   play: playSample,
   stop: stopSample,
+  togglePlayback: toggleSamplePlayback,
 } = useTTSSamplesPlayer({
   onError: (error: unknown) => handleError(error),
   onEnd: () => {
@@ -81,6 +87,10 @@ watch(isPlayerModalOpen, (open) => {
     stopSample()
   }
 })
+
+function handleToggleSamplePlayback() {
+  useLogTTSSample(toggleSamplePlayback(), { sample: activeTTSSample.value, placement: VOICE_SAMPLE_PLACEMENT })
+}
 
 function handleSampleClick(sample: { id: string, languageVoice: string }) {
   const sampleId = sample.id

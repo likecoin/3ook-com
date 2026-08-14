@@ -20,7 +20,7 @@
         >
 
         <div
-          v-if="isPlaying"
+          v-if="isAudible"
           class="absolute -bottom-0.5 -right-0.5 w-6 h-6 rounded-full bg-inverted ring-2 ring-(--ui-bg) shadow-md flex items-center justify-center gap-0.5"
           aria-hidden="true"
         >
@@ -82,6 +82,42 @@
         />
       </div>
 
+      <div
+        v-if="sample"
+        class="flex flex-col gap-2"
+      >
+        <div class="flex items-center gap-3">
+          <!-- Not `:loading`: that disables the button, so a mid-playback
+               rebuffer would take pause away until the audio recovers. -->
+          <UButton
+            class="rounded-full shrink-0"
+            :ui="{ leadingIcon: isLoading ? 'size-7 animate-spin' : 'size-7' }"
+            :icon="playbackButtonIcon"
+            :aria-label="isPlaying ? $t('tts_sample_player_modal_pause_button') : $t('tts_sample_player_modal_play_button')"
+            @click="emit('togglePlayback')"
+          />
+
+          <UProgress
+            class="grow"
+            size="sm"
+            :model-value="progressPercentage"
+            :get-value-label="getProgressLabel"
+          />
+        </div>
+
+        <!-- Kept in the layout while hidden so pausing doesn't resize the modal. -->
+        <p
+          class="flex items-center justify-center gap-1 text-xs text-dimmed"
+          :class="{ invisible: !isAudible }"
+        >
+          <UIcon
+            class="shrink-0"
+            name="i-material-symbols-volume-up-outline-rounded"
+          />
+          <span v-text="$t('tts_sample_player_modal_volume_hint')" />
+        </p>
+      </div>
+
       <footer
         v-if="sample?.attribution || isPlusUpsellVisible"
         class="text-xs text-muted text-center space-y-1"
@@ -112,15 +148,39 @@
 const props = defineProps<{
   sample: TTSSample | null
   isPlaying: boolean
+  isLoading: boolean
+  progressPercentage: number
   currentSegmentIndex: number
   longestSegmentText: string
   // Ties the sample back to the Plus benefit that sent the viewer here.
   isPlusUpsellVisible?: boolean
 }>()
 
+const emit = defineEmits<{
+  togglePlayback: []
+}>()
+
 const isOpen = defineModel<boolean>('open', { default: false })
 
+const { t: $t } = useI18n()
 const localeRoute = useLocaleRoute()
+
+// `play` fires before any audio arrives, so a cache-miss stall would otherwise
+// animate the wave bars and prompt for volume while nothing is audible yet.
+const isAudible = computed(() => props.isPlaying && !props.isLoading)
+
+const playbackButtonIcon = computed(() => {
+  if (props.isLoading) return 'i-material-symbols-progress-activity'
+  return props.isPlaying
+    ? 'i-material-symbols-pause-rounded'
+    : 'i-material-symbols-play-arrow-rounded'
+})
+
+// UProgress writes its own `aria-label` from this, so a plain `aria-label`
+// binding on the component would be overwritten.
+function getProgressLabel(percentage: number | null | undefined) {
+  return $t('tts_sample_player_modal_progress_label', { percentage: percentage ?? 0 })
+}
 
 const segmentsContainerRef = ref<HTMLElement | null>(null)
 const segmentRefs = ref<HTMLElement[]>([])

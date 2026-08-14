@@ -2,7 +2,7 @@ import { setUser as setSentryUser } from '@sentry/nuxt'
 import { v5 as uuidv5 } from 'uuid'
 import { sha256 } from 'viem'
 import type { User } from '#auth-utils'
-import type { PlusUpsellSlot, PlusUpsellSource, TTSSamplePlacement } from '~~/shared/constants/analytics'
+import type { PlusUpsellSlot, PlusUpsellSource, TTSSampleAction, TTSSamplePlacement } from '~~/shared/constants/analytics'
 import { getEffectiveLikerPlusTier } from '~~/shared/utils/subscription'
 
 interface EventParams {
@@ -284,7 +284,7 @@ export function useLogPlusUpsell(
 // play without the placement and language needed to tell the two /member
 // surfaces apart.
 export function useLogTTSSample(
-  action: 'play' | 'stop' | 'play_complete',
+  action: TTSSampleAction,
   {
     sample,
     placement,

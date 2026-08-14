@@ -346,9 +346,12 @@
           v-model:open="isVoiceSampleModalOpen"
           :sample="activeVoiceSample"
           :is-playing="isPlayingVoiceSample"
+          :is-loading="isLoadingVoiceSample"
+          :progress-percentage="voiceSampleProgress"
           :current-segment-index="voiceSampleSegmentIndex"
           :longest-segment-text="voiceSampleLongestSegmentText"
           is-plus-upsell-visible
+          @toggle-playback="handleToggleVoiceSamplePlayback"
         />
       </div>
     </div>
@@ -434,8 +437,11 @@ const {
   currentSegmentIndex: voiceSampleSegmentIndex,
   longestSegmentText: voiceSampleLongestSegmentText,
   isPlaying: isPlayingVoiceSample,
+  isLoading: isLoadingVoiceSample,
+  progressPercentage: voiceSampleProgress,
   play: playVoiceSample,
   stop: stopVoiceSample,
+  togglePlayback: toggleVoiceSamplePlayback,
 } = useTTSSamplesPlayer({
   onError: (error: unknown) => handleError(error),
   onEnd: () => {
@@ -463,6 +469,10 @@ function handleShowVoiceSample() {
   if (!sample) return
   useLogTTSSample('play', { sample, placement: VOICE_SAMPLE_PLACEMENT })
   playVoiceSample(sample.id)
+}
+
+function handleToggleVoiceSamplePlayback() {
+  useLogTTSSample(toggleVoiceSamplePlayback(), { sample: activeVoiceSample.value, placement: VOICE_SAMPLE_PLACEMENT })
 }
 
 const isTierSelectorVisible = computed(() =>
