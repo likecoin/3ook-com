@@ -2,7 +2,7 @@ import { setUser as setSentryUser } from '@sentry/nuxt'
 import { v5 as uuidv5 } from 'uuid'
 import { sha256 } from 'viem'
 import type { User } from '#auth-utils'
-import type { PlusUpsellSlot, PlusUpsellSource } from '~~/shared/constants/analytics'
+import type { PlusUpsellSlot, PlusUpsellSource, TTSSamplePlacement } from '~~/shared/constants/analytics'
 import { getEffectiveLikerPlusTier } from '~~/shared/utils/subscription'
 
 interface EventParams {
@@ -277,6 +277,27 @@ export function useLogPlusUpsell(
     ll_medium: llMedium,
     ll_source: llSource,
     nft_class_id: nftClassId,
+  })
+}
+
+// Every property travels with the sample object, so no call site can report a
+// play without the placement and language needed to tell the two /member
+// surfaces apart.
+export function useLogTTSSample(
+  action: 'play' | 'stop' | 'play_complete',
+  {
+    sample,
+    placement,
+  }: {
+    sample: TTSSample | null
+    placement: TTSSamplePlacement
+  },
+) {
+  if (!sample) return
+  useLogEvent(`tts_sample_${action}`, {
+    sample: sample.id,
+    language: sample.language,
+    placement,
   })
 }
 

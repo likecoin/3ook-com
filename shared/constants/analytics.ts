@@ -48,6 +48,16 @@ export const PLUS_CHECKOUT_PLACEMENTS = [
 
 export type PlusCheckoutPlacement = typeof PLUS_CHECKOUT_PLACEMENTS[number]
 
+// Which /member entry point a `tts_sample_*` event came from. Both surfaces can
+// render on the same page and an affiliate link makes them offer the same voice,
+// so the `sample` id alone cannot tell them apart.
+export const TTS_SAMPLE_PLACEMENTS = [
+  'benefit-link',
+  'samples-card',
+] as const
+
+export type TTSSamplePlacement = typeof TTS_SAMPLE_PLACEMENTS[number]
+
 // Every internal surface ever shipped as `ll_source`. Pre-split clients still
 // hold these in PostHog's `initial_utm_source`, where a page name would outrank
 // the real channel; also the filter list for the attribution-ladder query.

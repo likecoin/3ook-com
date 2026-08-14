@@ -5,7 +5,7 @@ import { getAffiliateSampleScript, getFlagshipSystemVoice, getSystemVoiceByOwner
 
 interface TTSSamplesPlayerOptions {
   onError?: (error: unknown) => void
-  onEnd?: (sampleId: string | null) => void
+  onEnd?: () => void
   affiliateVoices?: MaybeRefOrGetter<AffiliateVoiceData[] | undefined>
   affiliateLikerId?: MaybeRefOrGetter<string | undefined>
   affiliateExclusiveBadgeText?: MaybeRefOrGetter<string | undefined>
@@ -233,7 +233,7 @@ export function useTTSSamplesPlayer(options: TTSSamplesPlayerOptions = {}) {
   function playNextSegment() {
     if (currentSegmentIndex.value + 1 >= segments.value.length) {
       // All segments played, complete playback
-      onEnd?.(activeSampleId.value)
+      onEnd?.()
       stop()
       return
     }
@@ -253,6 +253,8 @@ export function useTTSSamplesPlayer(options: TTSSamplesPlayerOptions = {}) {
     // Set up new playback
     currentSegmentIndex.value = 0
     playCurrentSegment()
+
+    return activeSample.value
   }
 
   function resetAudio() {

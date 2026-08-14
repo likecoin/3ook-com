@@ -357,6 +357,7 @@
 
 <script setup lang="ts">
 import type { PricingPageContentProps } from './PricingPageContent.props'
+import type { TTSSamplePlacement } from '~~/shared/constants/analytics'
 import { resolveIsPaidTrial } from '~~/shared/utils/pricing'
 import { getSystemVoiceByOwnerLikerId } from '~~/shared/utils/tts-sample'
 
@@ -424,7 +425,7 @@ const isVoicesModalOpen = ref(false)
 
 // The benefit line is always on screen, so the sample is reachable without the
 // samples card displacing the pricing box — the shape the card test ruled out.
-const VOICE_SAMPLE_PLACEMENT = 'benefit-link'
+const VOICE_SAMPLE_PLACEMENT: TTSSamplePlacement = 'benefit-link'
 
 const {
   flagshipCloneSample,
@@ -437,8 +438,8 @@ const {
   stop: stopVoiceSample,
 } = useTTSSamplesPlayer({
   onError: (error: unknown) => handleError(error),
-  onEnd: (sampleId) => {
-    useLogEvent('tts_sample_play_complete', { sample: sampleId, placement: VOICE_SAMPLE_PLACEMENT })
+  onEnd: () => {
+    useLogTTSSample('play_complete', { sample: activeVoiceSample.value, placement: VOICE_SAMPLE_PLACEMENT })
   },
   affiliateVoices: () => props.affiliateVoices,
   affiliateLikerId: () => props.affiliateLikerId,
@@ -452,7 +453,7 @@ const isVoiceSampleModalOpen = computed({
   get: () => !!activeVoiceSampleId.value,
   set: (isOpen) => {
     if (isOpen || !activeVoiceSampleId.value) return
-    useLogEvent('tts_sample_stop', { sample: activeVoiceSampleId.value, placement: VOICE_SAMPLE_PLACEMENT })
+    useLogTTSSample('stop', { sample: activeVoiceSample.value, placement: VOICE_SAMPLE_PLACEMENT })
     stopVoiceSample()
   },
 })
@@ -460,7 +461,7 @@ const isVoiceSampleModalOpen = computed({
 function handleShowVoiceSample() {
   const sample = flagshipCloneSample.value
   if (!sample) return
-  useLogEvent('tts_sample_play', { sample: sample.id, placement: VOICE_SAMPLE_PLACEMENT })
+  useLogTTSSample('play', { sample, placement: VOICE_SAMPLE_PLACEMENT })
   playVoiceSample(sample.id)
 }
 
