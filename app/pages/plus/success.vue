@@ -25,12 +25,14 @@
         : 'subscription_success_continue_button')"
       color="primary"
       :loading="isRedirecting"
+      size="xl"
       @click="isCivic ? redirectToAccount() : redirectToLibrary()"
     />
     <UButton
       v-else
       :label="$t('subscription_success_loading')"
       color="primary"
+      size="xl"
       :loading="true"
     />
   </main>
