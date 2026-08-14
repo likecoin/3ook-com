@@ -163,10 +163,18 @@
           :ui="{ base: 'py-2 laptop:py-3 cursor-pointer', label: 'font-bold' }"
           @click="handleRegisterClick"
         />
-        <span
-          class="text-sm text-center opacity-70"
-          v-text="$t('pricing_page_login_cta_description')"
-        />
+        <!-- Mobile hides the subscribe button that normally carries the cancel
+          notice, so the logged-out CTA repeats it here. -->
+        <div class="flex flex-col gap-1">
+          <span
+            class="text-sm text-center opacity-70"
+            v-text="$t('pricing_page_login_cta_description')"
+          />
+          <span
+            class="text-xs text-center opacity-70"
+            v-text="$t('pricing_page_cancel_anytime')"
+          />
+        </div>
       </div>
     </template>
   </PricingPageContent>
