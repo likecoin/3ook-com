@@ -62,48 +62,167 @@
         <UIcon name="i-material-symbols-check" />
         <span v-text="feature" />
       </li>
-      <li>
-        <UIcon name="i-material-symbols-check" />
-        <i18n-t
-          keypath="pricing_page_feature_library"
-          tag="span"
-        >
-          <template #library>
-            <NuxtLink
-              :to="localeRoute({ name: 'library' })"
-              class="underline"
-              @click="handleClickLibrary"
+      <template v-if="isBenefitsCopyVariant('variant-a')">
+        <li>
+          <UIcon name="i-material-symbols-check" />
+          <i18n-t
+            keypath="pricing_page_feature_variant_a_library"
+            tag="span"
+          >
+            <template #library>
+              <NuxtLink
+                :to="localeRoute({ name: 'library' })"
+                class="underline"
+                @click="handleClickLibrary"
+              >
+                {{ $t('pricing_page_feature_library_link') }}
+              </NuxtLink>
+            </template>
+          </i18n-t>
+        </li>
+        <li v-if="!isAudioHidden">
+          <UIcon name="i-material-symbols-check" />
+          <i18n-t
+            keypath="pricing_page_feature_variant_a_voice"
+            tag="span"
+          >
+            <template #voiceActor>
+              <button
+                v-if="isVoiceSampleEnabled"
+                type="button"
+                class="underline cursor-pointer"
+                @click="handleShowVoiceSample"
+                v-text="$t('pricing_page_feature_1_voice_actor')"
+              />
+              <span
+                v-else
+                v-text="$t('pricing_page_feature_1_voice_actor')"
+              />
+            </template>
+          </i18n-t>
+        </li>
+        <li v-if="!isAudioHidden">
+          <UIcon name="i-material-symbols-check" />
+          <span v-text="$t('pricing_page_feature_variant_a_preset_voices')" />
+        </li>
+        <li>
+          <UIcon name="i-material-symbols-check" />
+          <span v-text="$t('pricing_page_feature_2')" />
+        </li>
+      </template>
+      <template v-else-if="isBenefitsCopyVariant('variant-b')">
+        <li>
+          <UIcon name="i-material-symbols-check" />
+          <!-- featureListClass's dark-bg text rule only targets span children,
+            so the div binds text-white itself. -->
+          <div :class="{ 'text-white': isDarkBackground }">
+            <p
+              class="font-bold"
+              v-text="$t('pricing_page_feature_variant_b_1_title')"
+            />
+            <i18n-t
+              keypath="pricing_page_feature_variant_b_1_desc"
+              tag="p"
+              class="mt-1 text-sm opacity-80"
             >
-              {{ $t('pricing_page_feature_library_link') }}
-            </NuxtLink>
-          </template>
-        </i18n-t>
-      </li>
-      <li v-if="!isAudioHidden">
-        <UIcon name="i-material-symbols-check" />
-        <i18n-t
-          keypath="pricing_page_feature_1"
-          tag="span"
-        >
-          <template #voiceActor>
-            <button
-              v-if="isVoiceSampleEnabled"
-              type="button"
-              class="underline cursor-pointer"
-              @click="handleShowVoiceSample"
-              v-text="$t('pricing_page_feature_1_voice_actor')"
+              <template #library>
+                <NuxtLink
+                  :to="localeRoute({ name: 'library' })"
+                  class="underline"
+                  @click="handleClickLibrary"
+                >
+                  {{ $t('pricing_page_feature_library_link') }}
+                </NuxtLink>
+              </template>
+            </i18n-t>
+          </div>
+        </li>
+        <li v-if="!isAudioHidden">
+          <UIcon name="i-material-symbols-check" />
+          <div :class="{ 'text-white': isDarkBackground }">
+            <p
+              class="font-bold"
+              v-text="$t('pricing_page_feature_variant_b_2_title')"
             />
-            <span
-              v-else
-              v-text="$t('pricing_page_feature_1_voice_actor')"
+            <i18n-t
+              keypath="pricing_page_feature_variant_b_2_desc"
+              tag="p"
+              class="mt-1 text-sm opacity-80"
+            >
+              <template #voiceActor>
+                <button
+                  v-if="isVoiceSampleEnabled"
+                  type="button"
+                  class="underline cursor-pointer"
+                  @click="handleShowVoiceSample"
+                  v-text="$t('pricing_page_feature_1_voice_actor')"
+                />
+                <span
+                  v-else
+                  v-text="$t('pricing_page_feature_1_voice_actor')"
+                />
+              </template>
+            </i18n-t>
+          </div>
+        </li>
+        <li>
+          <UIcon name="i-material-symbols-check" />
+          <div :class="{ 'text-white': isDarkBackground }">
+            <p
+              class="font-bold"
+              v-text="$t('pricing_page_feature_variant_b_3_title')"
             />
-          </template>
-        </i18n-t>
-      </li>
-      <li>
-        <UIcon name="i-material-symbols-check" />
-        <span v-text="$t('pricing_page_feature_2')" />
-      </li>
+            <p
+              class="mt-1 text-sm opacity-80"
+              v-text="$t('pricing_page_feature_variant_b_3_desc')"
+            />
+          </div>
+        </li>
+      </template>
+      <template v-else>
+        <li>
+          <UIcon name="i-material-symbols-check" />
+          <i18n-t
+            keypath="pricing_page_feature_library"
+            tag="span"
+          >
+            <template #library>
+              <NuxtLink
+                :to="localeRoute({ name: 'library' })"
+                class="underline"
+                @click="handleClickLibrary"
+              >
+                {{ $t('pricing_page_feature_library_link') }}
+              </NuxtLink>
+            </template>
+          </i18n-t>
+        </li>
+        <li v-if="!isAudioHidden">
+          <UIcon name="i-material-symbols-check" />
+          <i18n-t
+            keypath="pricing_page_feature_1"
+            tag="span"
+          >
+            <template #voiceActor>
+              <button
+                v-if="isVoiceSampleEnabled"
+                type="button"
+                class="underline cursor-pointer"
+                @click="handleShowVoiceSample"
+                v-text="$t('pricing_page_feature_1_voice_actor')"
+              />
+              <span
+                v-else
+                v-text="$t('pricing_page_feature_1_voice_actor')"
+              />
+            </template>
+          </i18n-t>
+        </li>
+        <li>
+          <UIcon name="i-material-symbols-check" />
+          <span v-text="$t('pricing_page_feature_2')" />
+        </li>
+      </template>
     </ul>
 
     <div
@@ -211,6 +330,10 @@ const selectedTier = defineModel<LikerPlusTier>('tier', { default: 'plus' })
 const { t: $t } = useI18n()
 const localeRoute = useLocaleRoute()
 
+const { variant: benefitsCopyVariant, isVariant: isBenefitsCopyVariant } = useABTest({
+  experimentKey: 'pricing-benefits-copy',
+})
+
 const tierOptions = computed<{ value: LikerPlusTier, label: string }[]>(() => [
   { value: 'plus', label: $t('pricing_page_tier_plus') },
   { value: 'civic', label: $t('pricing_page_tier_civic') },
@@ -267,7 +390,9 @@ const dividerClass = computed(() => [
 ])
 
 function handleClickLibrary() {
-  useLogEvent('pricing_benefit_click_library')
+  useLogEvent('pricing_benefit_click_library', {
+    pricing_benefits_variant: benefitsCopyVariant.value ?? undefined,
+  })
 }
 
 function handleShowVoices() {
@@ -276,7 +401,9 @@ function handleShowVoices() {
 }
 
 function handleShowVoiceSample() {
-  useLogEvent('pricing_benefit_click_voice_sample')
+  useLogEvent('pricing_benefit_click_voice_sample', {
+    pricing_benefits_variant: benefitsCopyVariant.value ?? undefined,
+  })
   emit('showVoiceSample')
 }
 
