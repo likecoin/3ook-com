@@ -433,6 +433,8 @@
             >
               <div class="flex items-center gap-3">
                 <UAvatar
+                  :src="getLocalAvatar('fu-yue-an.png')"
+                  :alt="$t('about_page_author_fu_yue_an')"
                   icon="i-material-symbols-person-rounded"
                   size="md"
                 />
