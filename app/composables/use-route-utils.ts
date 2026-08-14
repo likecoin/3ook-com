@@ -14,10 +14,18 @@ export function getRouteParamString(
   return getFirstRouteValue(route.params[key], defaultValue)
 }
 
+export function getRouteQueryString(
+  route: { query: Record<string, RouteValue> },
+  key: string,
+  defaultValue = '',
+) {
+  return getFirstRouteValue(route.query[key], defaultValue)
+}
+
 export function useRouteQuery() {
   const route = useRoute()
   return function getRouteQuery(key: string, defaultValue = '') {
-    return getFirstRouteValue(route.query[key], defaultValue)
+    return getRouteQueryString(route, key, defaultValue)
   }
 }
 

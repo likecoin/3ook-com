@@ -176,6 +176,10 @@ async function handleSearchSubmit() {
   useLogEvent(props.isLibraryTab ? 'library_search_submit' : 'store_search_submit', query === 'owner_wallet' ? {} : { search_term: searchInputValue.value })
   await navigateTo(localeRoute({
     name: props.isLibraryTab ? 'library' : 'store',
+    params: {
+      // Clear the inherited tagId, so searching from a tag listing lands on clean results.
+      tagId: '',
+    },
     query: { [query]: searchInputValue.value },
   }))
 }

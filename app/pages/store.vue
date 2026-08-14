@@ -21,7 +21,7 @@
         class="flex items-center gap-1 phone:gap-2 w-full"
       >
         <PillButton
-          :to="localeRoute({ name: listingRouteName })"
+          :to="defaultListingRoute"
           icon="i-material-symbols-close-rounded"
         />
 
@@ -81,7 +81,7 @@
             key="logo"
             :to="isDefaultTagId
               ? localeRoute({ name: 'about', query: { ll_medium: 'about-logo' } })
-              : localeRoute({ name: listingRouteName })"
+              : defaultListingRoute"
             variant="link"
             :ui="{
               base: ['shrink-0', 'p-0 sm:p-0'],
@@ -101,7 +101,7 @@
             key="library-logo"
             :to="isDefaultTagId
               ? localeRoute({ name: 'about', hash: '#library', query: { ll_medium: 'about-logo' } })
-              : localeRoute({ name: listingRouteName })"
+              : defaultListingRoute"
             variant="link"
             icon="i-3ook-com-library-rounded"
             color="neutral"
@@ -150,9 +150,6 @@
 </template>
 
 <script setup lang="ts">
-import type { StoreListingRouteName } from '~~/shared/constants/store-routes'
-import { STORE_LISTING_ROUTE_NAMES, STORE_PUBLISHER_ROUTE_NAMES } from '~~/shared/constants/store-routes'
-
 const { t: $t } = useI18n()
 const localeRoute = useLocaleRoute()
 const route = useRoute()
@@ -168,16 +165,17 @@ const { dismissLibraryIntroBanner } = useLibraryIntroBanner()
 const routeName = computed(() => getRouteBaseNameString() || 'store')
 // The publisher route (/store/@<id>) is a listing too — it renders the same
 // grid, just scoped to one profile.
-const isListingRoute = computed(() => (
-  STORE_LISTING_ROUTE_NAMES.includes(routeName.value as StoreListingRouteName)
-  || STORE_PUBLISHER_ROUTE_NAMES.includes(routeName.value)
-))
+const isListingRoute = computed(() => getIsStoreListingRouteName(routeName.value))
 const isProductRoute = computed(() =>
   ['store-nftClassId', 'library-nftClassId', 'store-nftClassId-nftId'].includes(routeName.value))
 // The claim page nests here too but keeps its own chrome.
 const isHeaderVisible = computed(() => isListingRoute.value || isProductRoute.value)
 const isLibraryTab = computed(() => routeName.value.startsWith('library'))
 const listingRouteName = computed(() => (isLibraryTab.value ? 'library' : 'store'))
+const defaultListingRoute = computed(() => localeRoute({
+  name: listingRouteName.value,
+  params: { tagId: '' },
+}))
 
 // /store and /library are separate route records, so switching tabs remounts
 // this parent and the setup-time name resolution stays correct.
@@ -192,8 +190,8 @@ const {
 const isSearchHeaderVisible = computed(() => isListingRoute.value && isSearchMode.value)
 
 // The tag routes always target the listing route, so a tag click on a product
-// page lands back on /store or /library. Product pages highlight only an
-// explicit ?tag= and drop their own query params on tag navigation.
+// page lands back on /store or /library. Listings carry the tag in the path;
+// product pages keep ?tag= as context and drop their query on tag navigation.
 const {
   tagId,
   isDefaultTagId,
@@ -202,8 +200,7 @@ const {
 } = useStoreTags({
   routeName: listingRouteName,
   isLibraryTab,
-  shouldFallbackToDefaultTag: isListingRoute,
-  shouldPreserveQuery: isListingRoute,
+  isListingPage: isListingRoute,
 })
 
 const hasFetchedCMSTags = computed(() => getHasFetchedBookstoreCMSTagsFromCache(queryCache))

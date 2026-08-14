@@ -1,5 +1,7 @@
 import { bytesToHex, hexToBytes } from 'viem'
 
+import { getHasNFTClassIdPrefix } from '../constants/store-routes'
+
 export interface ShortLinkPayload {
   nftClassId: string
   priceIndex?: number
@@ -151,15 +153,19 @@ export function parseShortLinkSlug(segment: string): ShortLinkPayload | null {
   return payload
 }
 
-// Resolve a slug into a relative redirect URL, or null when invalid.
-// Query params pass through; slug values win; tracking defaults fill gaps.
+// A packed slug redirects to its product page; any other non-0x segment to the tag listing,
+// which drops unknown tags. Query params pass through, slug values win, tracking defaults fill gaps.
+// Invalid segments fall back to the default listing without query or tracking.
 export function resolveShortLinkRedirect(
   segment: string,
   incomingQuery: Record<string, string | string[] | undefined>,
   target: 'store' | 'library',
-): string | null {
+): string {
   const payload = parseShortLinkSlug(segment)
-  if (!payload) return null
+  if (!payload && (!segment || getHasNFTClassIdPrefix(segment))) {
+    return `/${target}`
+  }
+  const pathSegment = payload ? payload.nftClassId : encodeURIComponent(segment)
 
   const searchParams = new URLSearchParams()
   for (const [key, value] of Object.entries(incomingQuery)) {
@@ -169,25 +175,27 @@ export function resolveShortLinkRedirect(
     }
   }
 
-  if (payload.priceIndex) {
-    searchParams.set('price_index', String(payload.priceIndex))
-  }
-  else {
-    searchParams.delete('price_index')
-  }
-  if (payload.likerId) {
-    searchParams.set('from', formatLikerIdHandle(payload.likerId))
-  }
-  else {
-    searchParams.delete('from')
-  }
-  if (payload.utmSource) {
-    searchParams.set('utm_source', payload.utmSource)
+  if (payload) {
+    if (payload.priceIndex) {
+      searchParams.set('price_index', String(payload.priceIndex))
+    }
+    else {
+      searchParams.delete('price_index')
+    }
+    if (payload.likerId) {
+      searchParams.set('from', formatLikerIdHandle(payload.likerId))
+    }
+    else {
+      searchParams.delete('from')
+    }
+    if (payload.utmSource) {
+      searchParams.set('utm_source', payload.utmSource)
+    }
   }
 
   if (!searchParams.has('utm_source')) searchParams.set('utm_source', 'short-link')
   if (!searchParams.has('utm_medium')) searchParams.set('utm_medium', 'social')
   if (!searchParams.has('utm_campaign')) searchParams.set('utm_campaign', 'share')
 
-  return `/${target}/${payload.nftClassId}?${searchParams.toString()}`
+  return `/${target}/${pathSegment}?${searchParams.toString()}`
 }

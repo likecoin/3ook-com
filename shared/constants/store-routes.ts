@@ -7,6 +7,12 @@ export type StoreListingRouteName = typeof STORE_LISTING_ROUTE_NAMES[number]
 
 export const STORE_PUBLISHER_ROUTE_PATH = '@:userId'
 
+export const NFT_CLASS_ID_ROUTE_REGEX = '0x[0-9a-fA-F]+'
+
+export function getHasNFTClassIdPrefix(value: string) {
+  return value.startsWith('0x')
+}
+
 export function getStorePublisherRouteName(listingRouteName: StoreListingRouteName | string) {
   return `${listingRouteName}-userId`
 }

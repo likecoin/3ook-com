@@ -184,8 +184,27 @@ describe('resolveShortLinkRedirect', () => {
     expect(searchParams.get('bar')).toBe('c')
   })
 
-  it('returns null for invalid slugs', () => {
-    expect(resolveShortLinkRedirect('', {}, 'store')).toBeNull()
-    expect(resolveShortLinkRedirect('garbage!', {}, 'store')).toBeNull()
+  it('falls back to the default listing for an empty segment', () => {
+    expect(resolveShortLinkRedirect('', {}, 'store')).toBe('/store')
+  })
+
+  it('redirects a non-slug segment to the tag listing', () => {
+    expect(resolveShortLinkRedirect('latest', {}, 'store')).toBe(
+      '/store/latest?utm_source=short-link&utm_medium=social&utm_campaign=share',
+    )
+    expect(resolveShortLinkRedirect('staking-total-staked', {}, 'library')).toBe(
+      '/library/staking-total-staked?utm_source=short-link&utm_medium=social&utm_campaign=share',
+    )
+  })
+
+  it('passes query params through on tag redirects', () => {
+    const url = resolveShortLinkRedirect('latest', { utm_source: 'instagram', foo: 'bar' }, 'store')
+    const searchParams = new URL(url as string, 'https://3ook.com').searchParams
+    expect(searchParams.get('utm_source')).toBe('instagram')
+    expect(searchParams.get('foo')).toBe('bar')
+  })
+
+  it('falls back to the default listing for 0x-prefixed non-slug segments', () => {
+    expect(resolveShortLinkRedirect('0xdeadbeef', {}, 'store')).toBe('/store')
   })
 })

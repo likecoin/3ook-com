@@ -1,6 +1,6 @@
 export function useStorePageState(routeName: MaybeRefOrGetter<string> = 'store') {
   const localeRoute = useLocaleRoute()
-  const getRouteQuery = useRouteQuery()
+  const route = useRoute()
 
   // /store and /library reuse this composable; namespace state per route so
   // their scroll/tag memory doesn't clobber each other. The route name is fixed
@@ -44,17 +44,16 @@ export function useStorePageState(routeName: MaybeRefOrGetter<string> = 'store')
     }
     await navigateTo(localeRoute({
       name,
-      query: {
-        ...lastVisitedQuery.value,
-        tag: lastVisitedTag.value === 'default' ? undefined : lastVisitedTag.value,
-      },
+      // Map the 'default' marker to '', so restoring lands on the default listing URL.
+      params: { tagId: lastVisitedTag.value === 'default' ? '' : lastVisitedTag.value },
+      query: { ...lastVisitedQuery.value },
     }), { replace: true })
     return
   }
 
   function restoreScrollIfNeeded() {
-    const currentTag = getRouteQuery('tag', '')
-    const savedTag = lastVisitedTag.value
+    const currentTag = getStoreTagIdFromRoute(route)
+    const savedTag = lastVisitedTag.value === 'default' ? '' : lastVisitedTag.value
 
     if (currentTag === savedTag && lastScrollPosition.value > 0) {
       restoreScroll()

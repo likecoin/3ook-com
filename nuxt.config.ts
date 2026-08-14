@@ -7,7 +7,11 @@ import type { ConfigDefaults } from 'posthog-js'
 
 import { CUSTOMER_SERVICE_EMAIL } from './app/utils/business-info'
 import { SERVER_CACHE_STORAGE } from './shared/constants/server-cache'
-import { STORE_PUBLISHER_ROUTE_PATH, getStorePublisherRouteName } from './shared/constants/store-routes'
+import {
+  NFT_CLASS_ID_ROUTE_REGEX,
+  STORE_PUBLISHER_ROUTE_PATH,
+  getStorePublisherRouteName,
+} from './shared/constants/store-routes'
 import { TTS_AUDIO_CACHE } from './shared/constants/tts-cache'
 
 const { resolve } = createResolver(import.meta.url)
@@ -268,19 +272,33 @@ export default defineNuxtConfig({
       // Unshifted so it reads ahead of the :nftClassId sibling.
       storePage.children.unshift(getPublisherRoute('store'))
 
+      // The listing takes /<tab>/<tagId> via an optional param
+      // NFT Class IDs always start with 0x, so the regex below sends /<tab>/0x… to the product page
+      // (vue-router ranks a regex param above the plain :tagId?).
+      const listingRoute = storePage.children.find(child => child.name === 'store')
+      const productRoutes = storePage.children.filter(child => child.path.includes(':nftClassId'))
+      if (!listingRoute || !productRoutes.length) {
+        throw new Error('[pages:extend] /store listing or product route not found; the tag path cannot be registered')
+      }
+      listingRoute.path = ':tagId?'
+      for (const child of productRoutes) {
+        // The scanner formats dynamic params as ':nftClassId()'; tolerate both forms.
+        child.path = child.path.replace(/:nftClassId(\(\))?/, `:nftClassId(${NFT_CLASS_ID_ROUTE_REGEX})`)
+      }
+
       pages.push({
         path: '/library',
         file: resolve('app/pages/store.vue'),
         children: [
           {
             name: 'library',
-            path: '',
+            path: ':tagId?',
             file: resolve('app/pages/store/index.vue'),
           },
           getPublisherRoute('library'),
           {
             name: 'library-nftClassId',
-            path: ':nftClassId',
+            path: `:nftClassId(${NFT_CLASS_ID_ROUTE_REGEX})`,
             file: resolve('app/pages/store/[nftClassId]/index.vue'),
           },
         ],

@@ -3,6 +3,7 @@ import { fetchCollectiveBookNFTs } from '~~/shared/utils/collective-indexer'
 import { normalizeNFTClassId } from '~~/shared/utils/index'
 
 const SITEMAP_CLASS_IDS_CACHE_KEY = 'sitemap:store:class-ids'
+const SITEMAP_TAG_IDS_CACHE_KEY = 'sitemap:store:tag-ids'
 const SITEMAP_PAGE_SIZE = 100
 // Bound the latest-books walk by page count (~2000 books at SITEMAP_PAGE_SIZE).
 // A sitemap doesn't need the entire long tail, and this caps upstream work per cache miss.
@@ -54,6 +55,18 @@ async function collectStoreClassIds(): Promise<string[]> {
   return Array.from(new Set([...staked, ...latest].map(normalizeNFTClassId).filter(Boolean)))
 }
 
+// Tag listing pages live at /store/<tagId>; list them so crawlers find each tag.
+async function fetchPublicStoreTagIds(): Promise<string[]> {
+  try {
+    const { records } = await fetchBookstoreCMSTagsForAll()
+    return records.filter(tag => tag.isPublic && tag.isForStore).map(tag => tag.id)
+  }
+  catch (error) {
+    console.error('[sitemap] Error fetching store tags:', error)
+    return []
+  }
+}
+
 export default defineSitemapEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const baseURL = config.public.baseURL
@@ -76,16 +89,30 @@ export default defineSitemapEventHandler(async (event) => {
       }
     }
 
+    let tagIds = await storage.getItem<string[]>(SITEMAP_TAG_IDS_CACHE_KEY)
+    if (!tagIds) {
+      tagIds = await fetchPublicStoreTagIds()
+      if (tagIds.length > 0) {
+        storage
+          .setItem(SITEMAP_TAG_IDS_CACHE_KEY, tagIds)
+          .catch(err => console.error('[sitemap] failed to cache tag ids:', err))
+      }
+    }
+
     setHeader(event, 'Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400, stale-if-error=86400')
-    return classIds.flatMap(classId => locales.map((locale) => {
+    const paths = [
+      ...classIds.map(classId => `/store/${classId}`),
+      ...tagIds.map(tagId => `/store/${encodeURIComponent(tagId)}`),
+    ]
+    return paths.flatMap(path => locales.map((locale) => {
       const localePath = locale.code === defaultLocale ? '' : `/${locale.code}`
       return {
         _sitemap: locale.language,
-        loc: `${baseURL}${localePath}/store/${classId}`,
+        loc: `${baseURL}${localePath}${path}`,
         alternatives: locales.filter(l => l.code !== locale.code).map((l) => {
           const lPath = l.code === defaultLocale ? '' : `/${l.code}`
           return {
-            href: `${baseURL}${lPath}/store/${classId}`,
+            href: `${baseURL}${lPath}${path}`,
             hreflang: l.language,
           }
         }),

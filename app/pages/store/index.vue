@@ -107,7 +107,7 @@
           :like-rank="item.likeRank ?? 0"
           :lazy="index >= columnMax"
           :priority="index < columnMax"
-          :ll-medium="llMedium"
+          :ll-medium="itemLLMedium"
           :should-show-plus-reading-icon="!isLibraryTab"
           :is-library="isLibraryTab"
           :tag="tagId"
@@ -142,7 +142,7 @@
 import { FetchError } from 'ofetch'
 
 import { MAX_BOOKSTORE_PAGE_SIZE, isBookstoreBuiltInListType } from '~~/shared/utils/bookstore'
-import { getStorePublisherRouteName } from '~~/shared/constants/store-routes'
+import { getHasNFTClassIdPrefix, getStorePublisherRouteName } from '~~/shared/constants/store-routes'
 import { formatLikerIdHandle } from '~~/shared/utils/liker-id'
 
 const nuxtApp = useNuxtApp()
@@ -234,7 +234,14 @@ const welcomeBannerDescription = computed(() =>
 )
 function handleWelcomeBannerDismiss() {
   const { welcome: _welcome, ...query } = route.query
-  navigateTo(localeRoute({ name: routeName.value, params: route.params, query }), { replace: true })
+  navigateTo(
+    localeRoute({
+      name: routeName.value,
+      params: route.params,
+      query,
+    }),
+    { replace: true },
+  )
 }
 
 // "Organic or direct" = the bare store landing with no campaign/affiliate attribution.
@@ -250,7 +257,7 @@ const hasCampaignAttribution = computed(() =>
 )
 // Welcome a fresh organic/direct visitor on the bare store landing. Gate on mount
 // and the persisted dismiss so the alerts section collapses instead of leaving an
-// empty wrapper, and skip `tag` deep-links since those are category pages.
+// empty wrapper, and skip tag deep-links since those are category pages.
 const { isDismissed: isStoreIntroBannerDismissed } = useStoreIntroBanner()
 const isMounted = useMounted()
 const isStoreIntroBannerVisible = computed(() =>
@@ -260,7 +267,7 @@ const isStoreIntroBannerVisible = computed(() =>
   && !isLibraryTab.value
   && !isSearchMode.value
   && !isWelcomeBannerVisible.value
-  && !getRouteQuery('tag')
+  && !getStoreTagIdFromRoute(route)
   && !hasCampaignAttribution.value,
 )
 
@@ -281,34 +288,81 @@ const {
   tagName,
 } = useStoreTags({ routeName: listingRouteName, isLibraryTab })
 
-await callOnce(async () => {
-  if (getIsLocalHistoriesTagId(tagId.value)) {
-    await navigateTo(localeRoute({ name: 'local-histories' }), { replace: true })
-    return
-  }
+// Shared deep-link classification: the built-in guard list,
+// the CMS tag fetch (which also fills the cache so tag meta can server-render),
+// and 404 tolerance live here; the two callers below keep their own navigation and error policy.
+async function classifyTagDeepLink(): Promise<'local-histories' | 'skip' | 'valid' | 'invalid'> {
+  // Classify the raw route tag; the resolved tagId is coerced to the default for invalid tags,
+  // which would read as 'skip' and leave a stale URL.
+  const rawTagId = getStoreTagIdFromRoute(route)
+  if (getIsLocalHistoriesTagId(rawTagId)) return 'local-histories'
+  if (!rawTagId) return 'skip'
+
+  // Class ids never reach the listing route; anything 0x-ish is not a tag.
+  if (getHasNFTClassIdPrefix(rawTagId)) return 'invalid'
+
+  // A tag the tab coerced away (e.g. a cross-tab link) is invalid.
+  if (rawTagId !== tagId.value) return 'invalid'
 
   if (
-    !tagId.value
-    || isDefaultTagId.value
+    isDefaultTagId.value
     || isStakingTagId.value
     || isForYouTagId.value
-    || isBookstoreBuiltInListType(tagId.value)
-  ) return
+    || isBookstoreBuiltInListType(rawTagId)
+  ) return 'skip'
 
-  let tag: BookstoreCMSTag | undefined
   try {
-    tag = await fetchBookstoreCMSTagThroughCache(queryCache, tagId.value)
+    const tag = await fetchBookstoreCMSTagThroughCache(queryCache, rawTagId)
+    if (!tag) return 'invalid'
+    // The record settles cross-tab validity before the tags list arrives.
+    return (isLibraryTab.value ? tag.isForLibrary : tag.isForStore) ? 'valid' : 'invalid'
   }
   catch (error) {
-    // Ignore 404 error
-    if (!(error instanceof FetchError && error.statusCode === 404)) throw error
+    // 404 is the expected miss for an unknown tag id.
+    if (error instanceof FetchError && error.statusCode === 404) return 'invalid'
+    throw error
   }
-  if (!tag) {
+}
+
+// Redirects an invalid deep link away: local-histories to its page ('navigated'),
+// an unknown tag to the default listing ('stripped').
+async function redirectTagDeepLink(result: Awaited<ReturnType<typeof classifyTagDeepLink>>): Promise<'navigated' | 'stripped' | 'none'> {
+  if (result === 'local-histories') {
+    await navigateTo(localeRoute({ name: 'local-histories' }), { replace: true })
+    return 'navigated'
+  }
+  if (result === 'invalid') {
     const { tag: _tag, ...query } = route.query
-    // Restore Nuxt context lost across the await before calling navigateTo/localeRoute.
-    await nuxtApp.runWithContext(() => navigateTo(localeRoute({ name: routeName.value, params: route.params, query }), { replace: true }))
+    await navigateTo(localeRoute({
+      name: routeName.value,
+      params: { ...route.params, tagId: '' },
+      query,
+    }), { replace: true })
+    return 'stripped'
   }
+  return 'none'
+}
+
+// SSR validation for tag deep links, filling the CMS tag cache for tag meta.
+await callOnce(async () => {
+  const result = await classifyTagDeepLink()
+  // Restore Nuxt context lost across the await before calling navigateTo/localeRoute.
+  await nuxtApp.runWithContext(() => redirectTagDeepLink(result))
 })
+
+// Mount-time validation for SPA entries the SSR-time callOnce no longer covers.
+async function validateTagDeepLinkIfNeeded(): Promise<'navigated' | 'stripped' | 'none'> {
+  let result: Awaited<ReturnType<typeof classifyTagDeepLink>>
+  try {
+    result = await classifyTagDeepLink()
+  }
+  catch (error) {
+    // Keep the tag on non-404 failures; the items fetch surfaces the error.
+    console.warn('[store] Failed to validate tag deep link:', error)
+    return 'none'
+  }
+  return redirectTagDeepLink(result)
+}
 
 const pageTitle = computed(() => isLibraryTab.value ? $t('library_tab_title') : $t('store_page_title'))
 const pageDescription = computed(() => isLibraryTab.value ? $t('library_tab_description') : $t('store_page_description'))
@@ -340,13 +394,10 @@ const canonicalURL = computed(() => {
     if (publisherPath) return `${baseURL}${publisherPath}`
   }
 
+  // The tag rides in the path (/store/<tagId>), so it needs no canonical param.
   const path = route.path
 
   const canonicalParams = new URLSearchParams()
-
-  if (!isDefaultTagId.value && tagId.value) {
-    canonicalParams.set('tag', tagId.value)
-  }
 
   if (querySearchTerm.value) {
     canonicalParams.set('q', querySearchTerm.value)
@@ -742,11 +793,11 @@ watch(
     if (routeName.value !== ownRouteName) return
     // Captured with the same intent as fetchTagItems' currentTagId: a mid-fetch
     // navigation would otherwise reset persisted state against the new tag.
-    const hasTagQuery = !!route.query.tag
+    const hasTagInRoute = !!getStoreTagIdFromRoute(route)
     // Scroll to top before the fetch: a restored listing revalidates on the way
     // in, and awaiting that first would strand the reader mid-page meanwhile.
     // Restoring a saved position still waits, since it needs the list rendered.
-    if (!isSearchMode.value && !hasTagQuery) {
+    if (!isSearchMode.value && !hasTagInRoute) {
       storePageState.clear()
     }
     await fetchItems({ lazy: true })
@@ -784,6 +835,7 @@ watch(ownerWalletInfo, (info) => {
   if (info?.evmWallet && queryOwnerWallet.value.toLowerCase() !== info.evmWallet.toLowerCase()) {
     navigateTo(localeRoute({
       name: routeName.value,
+      params: route.params,
       query: {
         ...route.query,
         owner_wallet: info.evmWallet,
@@ -804,6 +856,11 @@ const llMedium = computed(() => {
   }
   return undefined
 })
+
+// Tag attribution rides on the product link, so opening a book from a tag
+// listing is what credits the tag; the default tab stays unattributed.
+const itemLLMedium = computed(() =>
+  llMedium.value || (isDefaultTagId.value ? undefined : `tag-${tagId.value}`))
 
 const hasForYouFetchError = ref(false)
 
@@ -1026,18 +1083,27 @@ onMounted(async () => {
   // web visitors stay on whichever tab they landed on.
   const targetName = (isLibraryTab.value || isApp.value) ? 'library' : 'store'
   const viewEvent = targetName === 'library' ? 'library_view' : 'store_view'
+
+  // Validate before the tab redirect below: onMounted won't re-run after it,
+  // so an invalid tag would otherwise never be cleaned on the target tab.
+  const tagValidation = await validateTagDeepLinkIfNeeded()
+  if (tagValidation === 'navigated') return
+
   // The publisher route is a destination in its own right, not a tab to be
   // redirected: an in-app visitor on /store/@<id> stays on that publisher.
   if (!routeUserId.value && routeName.value !== targetName) {
     // Log before redirecting: this shared page component won't re-run onMounted
     // after navigateTo, so app users sent /store -> /library would never log.
     useLogEvent(viewEvent)
-    await navigateTo(localeRoute({ name: targetName, query: route.query }), { replace: true })
+    await navigateTo(localeRoute({ name: targetName, params: route.params, query: route.query }), { replace: true })
     return
   }
   useLogEvent(viewEvent)
 
-  if (!route.query.tag && !isSearchMode.value) {
+  // Dropping an invalid tag resolves back to the default; the tagId watcher refetches.
+  if (tagValidation === 'stripped') return
+
+  if (!getStoreTagIdFromRoute(route) && !isSearchMode.value) {
     await storePageState.restoreIfNeeded()
   }
 
@@ -1067,7 +1133,9 @@ onBeforeRouteLeave((to) => {
   // library ↔ library); switching tabs or leaving clears it.
   const toBaseName = getRouteBaseNameString(to)
   if (toBaseName && toBaseName.startsWith(listingRouteName.value)) {
-    storePageState.save(tagId.value, route.query as Record<string, string>)
+    // Save the 'default' marker, not the resolved id: the default listing's URL
+    // carries no tag, and its id shifts with login state anyway.
+    storePageState.save(isDefaultTagId.value ? 'default' : tagId.value, route.query as Record<string, string>)
   }
   else {
     storePageState.clear()

@@ -1,16 +1,22 @@
 import { useMediaQuery } from '@vueuse/core'
+import type { RouteLocationNormalizedLoaded } from 'vue-router'
 
 export const STAKING_SORT_TAG_PREFIX = 'staking-'
+
+type StoreTagRoute = Pick<RouteLocationNormalizedLoaded, 'params' | 'query'>
+
+// The listing tag lives in the URL path (/store/<tagId>); ?tag= is a legacy
+// alias the store-tag middleware redirects into the path.
+export function getStoreTagIdFromRoute(route: StoreTagRoute): string {
+  return getRouteParamString(route, 'tagId') || getRouteQueryString(route, 'tag')
+}
 
 interface StoreTagsOptions {
   routeName: Ref<string>
   isLibraryTab: Ref<boolean>
-  // Default true. Product routes pass false: when ?tag= is absent,
-  // tagId resolves to '' so no pill is highlighted.
-  shouldFallbackToDefaultTag?: MaybeRefOrGetter<boolean>
-  // Default true. Product routes pass false so their query params
-  // (ll_source etc.) don't leak into listing URLs on tag click.
-  shouldPreserveQuery?: MaybeRefOrGetter<boolean>
+  // Default true. Product routes pass false: they read the tag from ?tag= only
+  // (their hash drives the info tabs) and keep their query out of tag links.
+  isListingPage?: MaybeRefOrGetter<boolean>
 }
 
 // Tag selector state for the store/library listing page: staking sort tabs,
@@ -18,8 +24,7 @@ interface StoreTagsOptions {
 export function useStoreTags({
   routeName,
   isLibraryTab,
-  shouldFallbackToDefaultTag = true,
-  shouldPreserveQuery = true,
+  isListingPage = true,
 }: StoreTagsOptions) {
   const { t: $t, locale } = useI18n()
   const localeRoute = useLocaleRoute()
@@ -80,28 +85,18 @@ export function useStoreTags({
   }
 
   const fallbackTagId = computed(() =>
-    toValue(shouldFallbackToDefaultTag) ? defaultTagId.value : '')
+    toValue(isListingPage) ? defaultTagId.value : '')
 
   const tagId = computed({
     get: () => {
-      const id = getRouteQuery('tag', '')
+      const id = toValue(isListingPage)
+        ? getStoreTagIdFromRoute(route)
+        : getRouteQuery('tag', '')
       if (!id) return fallbackTagId.value
       return getIsTagIdValidForTab(id) ? id : fallbackTagId.value
     },
     set: async (id) => {
-      if (getIsLocalHistoriesTagId(id)) {
-        await navigateTo(localeRoute({ name: 'local-histories' }))
-        return
-      }
-      await navigateTo(localeRoute({
-        name: routeName.value,
-        query: {
-          ...(toValue(shouldPreserveQuery) ? route.query : {}),
-          ll_medium: `tag-${id}`,
-          // NOTE: Remove the tag query if it is the listing tag
-          tag: getIsDefaultTagId(id) ? undefined : id,
-        },
-      }))
+      await navigateTo(getTagTo(id))
     },
   })
   const isDefaultTagId = computed(() => getIsDefaultTagId(tagId.value))
@@ -130,15 +125,14 @@ export function useStoreTags({
   })
 
   function getTagTo(value: string) {
-    if (value === 'local-histories') {
+    if (getIsLocalHistoriesTagId(value)) {
       return localeRoute({ name: 'local-histories' })
     }
     return localeRoute({
       name: routeName.value,
-      query: {
-        ...(toValue(shouldPreserveQuery) ? route.query : {}),
-        tag: getIsDefaultTagId(value) ? undefined : value,
-      },
+      // NOTE: The default tag maps to the default listing URL; '' drops the optional param
+      params: { tagId: getIsDefaultTagId(value) ? '' : value },
+      query: toValue(isListingPage) ? { ...route.query } : {},
     })
   }
 
