@@ -1118,6 +1118,7 @@
   "tts_sample_mandarin": "Mandarin",
   "tts_sample_mandarin_voice_name": "Aurora",
   "tts_sample_player_modal_plus_upsell": "Members can record their own voice to create a personal narrator.",
+  "tts_sample_system_voice_credit": "Voice licensed from {name}, based on their own voice.",
   "tts_samples_section_affiliate_books_modal_books_title": "Eligible books",
   "tts_samples_section_affiliate_books_modal_empty": "No eligible books yet.",
   "tts_samples_section_affiliate_books_modal_publisher_books": "All books by {name}",

@@ -141,6 +141,9 @@ export function useTTSSamplesPlayer(options: TTSSamplesPlayerOptions = {}) {
       language: voice.language,
       languageVoice,
       avatarSrc: getVoiceAvatar(languageVoice),
+      // These are lent by a real person, and the modal sells them as proof that
+      // a member can clone their own voice — so name the source of the clone.
+      attribution: { text: $t('tts_sample_system_voice_credit', { name: voice.name }) },
     }
   }
 

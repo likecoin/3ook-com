@@ -1118,6 +1118,7 @@
   "tts_sample_mandarin": "國語",
   "tts_sample_mandarin_voice_name": "Aurora",
   "tts_sample_player_modal_plus_upsell": "成為會員後，你亦可自行錄製聲線，塑造專屬聲優。",
+  "tts_sample_system_voice_credit": "本聲線由 {name} 授權，取自其本人聲線。",
   "tts_samples_section_affiliate_books_modal_books_title": "指定書目",
   "tts_samples_section_affiliate_books_modal_empty": "暫無指定書目。",
   "tts_samples_section_affiliate_books_modal_publisher_books": "{name} 的所有書目",
