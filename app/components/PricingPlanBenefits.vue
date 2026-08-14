@@ -312,9 +312,8 @@ const props = withDefaults(defineProps<{
   // Turns the voice-actor phrase into a sample-playing button. Only the pricing
   // page hosts the player modal, so it stays plain text everywhere else.
   isVoiceSampleEnabled?: boolean
-  // Copy variant from the pricing page experiment. Only the pricing page
-  // resolves it, so the upsell modal and gift pages keep the control copy.
-  benefitsCopyVariant?: string
+  // Only the pricing page resolves this, so every other mount renders control.
+  benefitsCopyVariant?: PricingBenefitsCopyVariant
 }>(), {
   isTitleCenter: false,
   isTitleHidden: false,

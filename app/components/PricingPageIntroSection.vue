@@ -68,9 +68,8 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-  // Copy variant from the pricing page experiment, forwarded to the benefits list.
   benefitsCopyVariant: {
-    type: String,
+    type: String as PropType<PricingBenefitsCopyVariant>,
     default: undefined,
   },
 })

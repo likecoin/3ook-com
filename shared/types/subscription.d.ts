@@ -7,3 +7,5 @@ declare type LikerPlusProvider = 'stripe' | 'revenuecat' | 'shared'
 declare type LikerPlusStore = 'app_store' | 'play_store'
 // Civic is a superset of Plus: isLikerPlus stays true, tier discriminates.
 declare type LikerPlusTier = 'plus' | 'civic'
+// Pricing page benefits copy experiment. Retire with the experiment.
+declare type PricingBenefitsCopyVariant = 'variant-a' | 'variant-b'
