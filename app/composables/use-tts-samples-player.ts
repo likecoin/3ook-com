@@ -12,6 +12,13 @@ interface TTSSamplesPlayerOptions {
   affiliateExclusiveBadgeText?: MaybeRefOrGetter<string | undefined>
 }
 
+// The spinner tracks readiness rather than the `waiting`/`playing` pairing:
+// a `waiting` is not guaranteed a matching `playing`, and an unmatched one
+// leaves the button spinning over audio that is already playing.
+function getCanPlayNow(audio: HTMLAudioElement) {
+  return audio.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA
+}
+
 export function useTTSSamplesPlayer(options: TTSSamplesPlayerOptions = {}) {
   const { onError, onEnd, affiliateVoices, affiliateLikerId, affiliateExclusiveBadgeText } = options
   const { t: $t } = useI18n()
@@ -224,6 +231,9 @@ export function useTTSSamplesPlayer(options: TTSSamplesPlayerOptions = {}) {
 
     newAudio.onplay = () => {
       isPlaying.value = true
+      // Resuming a stalled element re-buffers before it makes a sound, so keep
+      // the spinner up rather than animating the wave bars over silence.
+      isLoading.value = !getCanPlayNow(newAudio)
     }
 
     newAudio.onplaying = () => {
@@ -238,10 +248,14 @@ export function useTTSSamplesPlayer(options: TTSSamplesPlayerOptions = {}) {
 
     newAudio.onpause = () => {
       isPlaying.value = false
+      // A `waiting` that never gets its matching `playing` would otherwise pin
+      // the spinner up for good once the user pauses mid-buffer.
+      isLoading.value = false
     }
 
     newAudio.ontimeupdate = () => {
       const { currentTime, duration } = newAudio
+      if (getCanPlayNow(newAudio)) isLoading.value = false
       segmentProgress.value = Number.isFinite(duration) && duration > 0
         ? Math.min(1, currentTime / duration)
         : 0

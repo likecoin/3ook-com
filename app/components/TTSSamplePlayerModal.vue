@@ -97,12 +97,22 @@
             @click="emit('togglePlayback')"
           />
 
-          <UProgress
-            class="grow"
-            size="sm"
-            :model-value="progressPercentage"
-            :get-value-label="getProgressLabel"
-          />
+          <!-- A width-driven fill rather than UProgress:
+               its indicator is a full-width bar positioned by a transform,
+               which Chrome fails to clip to the rounded track. -->
+          <div
+            class="grow h-1 rounded-full bg-accented overflow-hidden"
+            role="progressbar"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            :aria-valuenow="progressPercentage"
+            :aria-label="getProgressLabel(progressPercentage)"
+          >
+            <div
+              class="h-full rounded-full bg-primary transition-[width] duration-200 ease-out"
+              :style="{ width: `${progressPercentage}%` }"
+            />
+          </div>
         </div>
 
         <!-- Kept in the layout while hidden so pausing doesn't resize the modal. -->
@@ -176,10 +186,8 @@ const playbackButtonIcon = computed(() => {
     : 'i-material-symbols-play-arrow-rounded'
 })
 
-// UProgress writes its own `aria-label` from this, so a plain `aria-label`
-// binding on the component would be overwritten.
-function getProgressLabel(percentage: number | null | undefined) {
-  return $t('tts_sample_player_modal_progress_label', { percentage: percentage ?? 0 })
+function getProgressLabel(percentage: number) {
+  return $t('tts_sample_player_modal_progress_label', { percentage })
 }
 
 const segmentsContainerRef = ref<HTMLElement | null>(null)
