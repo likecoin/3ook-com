@@ -550,7 +550,12 @@ const preferredMotion = usePreferredReducedMotion()
 // reduced motion, where main.css disables the arrival animation entirely.
 const COLLECTOR_MODAL_DELAY_MS = 800
 
-watch([hasLoggedIn, canStartReading], async () => {
+// Manual-delivery items never arrive on this page, so the collector message
+// prompt opens once claiming settles instead of waiting for delivery.
+const isClaimSettledWithoutDelivery = computed(() =>
+  isClaimed.value && !isAutoDeliver.value && !isLoading.value && !isClaiming.value)
+
+watch([hasLoggedIn, canStartReading, isClaimSettledWithoutDelivery], async () => {
   if (!hasLoggedIn.value || isOpenCollectorMessageModal.value) return
 
   if (canStartReading.value) {
@@ -559,6 +564,9 @@ watch([hasLoggedIn, canStartReading], async () => {
     // sleeps, and reopening a modal the user dismissed meanwhile is worse than
     // not showing it at all.
     if (!hasLoggedIn.value || !canStartReading.value || isOpenCollectorMessageModal.value) return
+    openCollectorModal()
+  }
+  else if (isClaimSettledWithoutDelivery.value) {
     openCollectorModal()
   }
 }, { immediate: true })
