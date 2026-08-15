@@ -95,7 +95,7 @@
         <UProgress
           class="mt-2 max-w-[160px]"
           size="sm"
-          :value="props.loadingProgress"
+          :model-value="props.loadingProgress"
         />
       </template>
     </footer>
@@ -126,8 +126,9 @@ const props = defineProps({
     type: String,
     default: 'Loading...',
   },
+  // null means indeterminate, matching UProgress's own model value.
   loadingProgress: {
-    type: Number,
+    type: [Number, null] as PropType<number | null>,
     default: null,
   },
   isPrinting: {

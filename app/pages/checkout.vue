@@ -25,7 +25,7 @@
         <UProgress
           class="mt-2 max-w-[160px]"
           size="sm"
-          :value="loadingProgress"
+          :model-value="loadingProgress"
         />
       </div>
     </template>
@@ -230,7 +230,9 @@ onMounted(async () => {
         if (!product) return
         try {
           await ensureNFTClassAggregatedMetadataThroughCache(queryCache, product.classId)
-          loadingProgress.value += (90 / products.value.length)
+          // Clamped because the repeated division overshoots 100 by a float
+          // epsilon for many cart sizes, which UProgress rejects outright.
+          loadingProgress.value = Math.min(100, loadingProgress.value + (90 / products.value.length))
         }
         catch (error) {
           console.error(`Failed to load metadata for ${product.classId}:`, error)

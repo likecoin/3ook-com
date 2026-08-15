@@ -34,9 +34,14 @@ export default function () {
     activeController?.abort(new DOMException('Book file load aborted', 'AbortError'))
   }
 
+  // null rather than 0 while the size is unknown — before the first byte, or for
+  // a response with no length header. The progress bar reads null as
+  // indeterminate, so it keeps animating instead of freezing at 0%.
   const loadingPercentage = computed(() => {
-    if (loadingFilesize.value === 0) return 0
-    return Math.floor((loadedFilesize.value / loadingFilesize.value) * 100)
+    if (loadingFilesize.value === 0) return null
+    // Cap at 100: an unreliable Content-Length lets loaded exceed the total,
+    // which would otherwise show as "103%" in the loading label.
+    return Math.min(100, Math.floor((loadedFilesize.value / loadingFilesize.value) * 100))
   })
 
   const loadingFilesizeInMB = computed(() => {
