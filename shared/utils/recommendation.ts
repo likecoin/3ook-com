@@ -134,10 +134,12 @@ export interface ScoredRecommendationCandidate extends RecommendationCandidate {
   score: number
 }
 
-export function computeBookEngagementWeight(
-  entry: PortraitBookEntry,
-  nowMs: number,
-): number {
+/**
+ * Engagement before recency decay. Whether a reader can be personalized is a
+ * question about what they read, not when — so the signal count uses this,
+ * while affinity uses the decayed weight below.
+ */
+export function computeBookEngagementStrength(entry: PortraitBookEntry): number {
   // An abandoned book is an explicit negative, so it must not push its own
   // author or genre up. Mutually exclusive with completedAt: marking a book
   // either way clears the other.
@@ -145,15 +147,28 @@ export function computeBookEngagementWeight(
   const readingMinutes = (entry.totalReadingTimeMs || 0) / 60000
   const ttsMinutes = (entry.totalTTSListeningTimeMs || 0) / 60000
   // log1p dampens whales so one binge-read book can't dominate the portrait.
-  let weight = Math.log1p(readingMinutes + ttsMinutes)
-  if (entry.completedAtMs) weight += 3
-  if (entry.plusBorrowedAtMs) weight += 1
+  let strength = Math.log1p(readingMinutes + ttsMinutes)
+  if (entry.completedAtMs) strength += 3
+  if (entry.plusBorrowedAtMs) strength += 1
+  return strength
+}
+
+function applyRecencyDecay(
+  strength: number,
+  entry: PortraitBookEntry,
+  nowMs: number,
+): number {
   const referenceMs = entry.lastOpenedTimeMs ?? entry.updatedAtMs
-  if (referenceMs) {
-    const ageDays = Math.max(0, (nowMs - referenceMs) / 86400000)
-    weight *= Math.exp(-ageDays / RECENCY_DECAY_DAYS)
-  }
-  return weight
+  if (!referenceMs) return strength
+  const ageDays = Math.max(0, (nowMs - referenceMs) / 86400000)
+  return strength * Math.exp(-ageDays / RECENCY_DECAY_DAYS)
+}
+
+export function computeBookEngagementWeight(
+  entry: PortraitBookEntry,
+  nowMs: number,
+): number {
+  return applyRecencyDecay(computeBookEngagementStrength(entry), entry, nowMs)
 }
 
 function addAffinity(map: Record<string, number>, key: string | undefined, weight: number) {
@@ -211,10 +226,13 @@ export function derivePortraitFromDocs(
   }
 
   for (const entry of bookEntries) {
-    const weight = computeBookEngagementWeight(entry, nowMs)
-    if (weight >= SIGNAL_WEIGHT_THRESHOLD) signalBookCount += 1
+    // Counted undecayed, weighted decayed: one number compounds the two
+    // thresholds, putting even a finished book under the signal bar at ~107 days.
+    // Wishlist entries below already count without decay.
+    const strength = computeBookEngagementStrength(entry)
+    if (strength >= SIGNAL_WEIGHT_THRESHOLD) signalBookCount += 1
     const metadata = metadataByClassId[entry.nftClassId.toLowerCase()]
-    if (metadata) addBookAffinity(metadata, weight)
+    if (metadata) addBookAffinity(metadata, applyRecencyDecay(strength, entry, nowMs))
   }
 
   // Wishlisted books have no reading data, so they contribute a fixed weight.

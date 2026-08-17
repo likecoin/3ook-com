@@ -144,6 +144,27 @@ describe('derivePortraitFromDocs', () => {
     expect(portrait.signalBookCount).toBe(2)
   })
 
+  it('counts a lapsed reader\'s books toward the signal but decays their affinity', () => {
+    const lastYear = { lastOpenedTimeMs: NOW - 300 * DAY_MS, completedAtMs: NOW - 300 * DAY_MS }
+    const portrait = derivePortraitFromDocs(
+      [
+        makeEntry({ nftClassId: '0xAAA', ...lastYear }),
+        makeEntry({ nftClassId: '0xBBB', ...lastYear }),
+        makeEntry({ nftClassId: '0xCCC', ...lastYear }),
+      ],
+      [],
+      metadata,
+      NOW,
+    )
+    // Decayed weight is far under SIGNAL_WEIGHT_THRESHOLD, which used to strand
+    // these readers on the cold-start list despite three finished books.
+    expect(computeBookEngagementWeight(makeEntry(lastYear), NOW)).toBeLessThan(0.5)
+    expect(portrait.signalBookCount).toBe(3)
+    // Affinity still normalizes, so the ranking sees the same proportions a
+    // recent reader of the same books would produce.
+    expect(Object.values(portrait.genres).reduce((sum, value) => sum + value, 0)).toBeCloseTo(1)
+  })
+
   it('builds keyword affinity from engaged and wishlisted books', () => {
     const portrait = derivePortraitFromDocs(
       [makeEntry({ nftClassId: '0xAAA' })],
