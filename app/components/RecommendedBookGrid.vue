@@ -30,17 +30,16 @@
 <script setup lang="ts">
 const props = withDefaults(defineProps<{
   nftClassIds: string[]
-  // Personalized picks among `nftClassIds`
-  personalizedNFTClassIds?: string[]
+  // The ranked feed blended into `nftClassIds`, kept whole so one fetch's ids can
+  // never pair with another's provenance. Undefined until it settles, so an
+  // impression is never billed to a feed that has no identity yet.
+  feed?: BookRecommendations
   title?: string
   // Caps visible rows per breakpoint; extras are hidden. 0 shows every row.
   maxRows?: number
   llMedium?: string
   llSource?: string
   isLibrary?: boolean
-  // Identifies the ranked list these ids came from; pairs an impression with
-  // the clicks it produced.
-  feedId?: string
   // Fixed 3-column layout for narrow containers (e.g. modals).
   isCompact?: boolean
 }>(), {
@@ -48,10 +47,9 @@ const props = withDefaults(defineProps<{
   llMedium: undefined,
   llSource: '',
   isLibrary: false,
-  personalizedNFTClassIds: () => [],
   isCompact: false,
   maxRows: 0,
-  feedId: undefined,
+  feed: undefined,
 })
 
 const queryCache = useQueryCache()
@@ -73,11 +71,16 @@ const { gridClasses, getGridItemClassesByIndex } = usePaginatedGrid({
   maxRows: computed(() => props.maxRows),
 })
 
-const personalizedClassIdSet = computed(() =>
-  new Set(props.personalizedNFTClassIds.map(normalizeNFTClassId)),
+// Fallback-list ids still blend into the grid, but are not personalized picks.
+const personalizedClassIds = computed(() =>
+  props.feed?.isPersonalized ? props.feed.nftClassIds : [],
 )
 
-const isFeedPersonalized = computed(() => props.personalizedNFTClassIds.length > 0)
+const personalizedClassIdSet = computed(() =>
+  new Set(personalizedClassIds.value.map(normalizeNFTClassId)),
+)
+
+const isFeedPersonalized = computed(() => personalizedClassIds.value.length > 0)
 
 function getIsItemPersonalized(classId: string) {
   return personalizedClassIdSet.value.has(normalizeNFTClassId(classId))
@@ -96,7 +99,7 @@ function handleBookOpen(classId: string, index: number) {
     // Rank within what was actually rendered: hidden books are filtered out
     // before this list, so the visible index is the rank the reader saw.
     rank: index,
-    feedId: props.feedId,
+    feedId: props.feed?.feedId,
     isLibrary: props.isLibrary,
   })
 }
@@ -105,24 +108,32 @@ function handleBookOpen(classId: string, index: number) {
 // as owned-book, author and bookstore-info lookups resolve, which would bill one
 // feed as several impressions and inflate the denominator this exists to give.
 const recommendationViewKey = computed(() => {
-  if (!visibleNFTClassIds.value.length) return undefined
-  return `${props.llSource}:${props.llMedium}:${props.feedId}`
+  if (!props.feed || !visibleNFTClassIds.value.length) return undefined
+  // `''` is a real key: an editorial-only feed still earns one impression.
+  return props.feed.feedId
 })
 
-watch(recommendationViewKey, (key) => {
-  if (!key || import.meta.server) return
-  useLogRecommendBooksView({
-    eventName: 'recommend_books_view',
-    // No grid-level medium: a blended grid's items report their own, so naming
-    // one here would mislabel the majority of the clicks it is joined to.
-    llMedium: props.llMedium,
-    llSource: props.llSource,
-    isPersonalized: isFeedPersonalized.value,
-    personalizedCount: props.personalizedNFTClassIds.length,
-    isLibrary: props.isLibrary,
-    bookCount: visibleNFTClassIds.value.length,
-    feedId: props.feedId,
-    nftClassIds: visibleNFTClassIds.value,
-  })
-}, { immediate: true })
+// The key can revert to one already reported — `visibleNFTClassIds` flaps empty
+// as lookups resolve — so `watch` alone would double-count.
+const loggedRecommendationViewKeys = new Set<string>()
+
+if (import.meta.client) {
+  watch(recommendationViewKey, (key) => {
+    if (key === undefined || loggedRecommendationViewKeys.has(key)) return
+    loggedRecommendationViewKeys.add(key)
+    useLogRecommendBooksView({
+      eventName: 'recommend_books_view',
+      // No grid-level medium: a blended grid's items report their own, so naming
+      // one here would mislabel the majority of the clicks it is joined to.
+      llMedium: props.llMedium,
+      llSource: props.llSource,
+      isPersonalized: isFeedPersonalized.value,
+      personalizedCount: personalizedClassIds.value.length,
+      isLibrary: props.isLibrary,
+      bookCount: visibleNFTClassIds.value.length,
+      feedId: key,
+      nftClassIds: visibleNFTClassIds.value,
+    })
+  }, { immediate: true })
+}
 </script>

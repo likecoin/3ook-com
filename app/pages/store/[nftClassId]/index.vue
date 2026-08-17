@@ -513,8 +513,7 @@
       class="w-full mt-12 laptop:mt-20"
       :title="$t('product_page_related_books_title')"
       :nft-class-ids="filteredRecommendedClassIds"
-      :personalized-nft-class-ids="personalizedRecommendedClassIds"
-      :feed-id="feedRecommendations.feedId"
+      :feed="feedRecommendations"
       :ll-source="nftClassId"
       :is-library="isLibrary"
       :max-rows="MAX_RECOMMENDED_ROWS"
@@ -1230,13 +1229,9 @@ const checkoutButtonProps = computed<{
 })
 
 // Personalized candidates for the related-books section, seeded by this book.
-// Fetched client-side for logged-in users only; empty (guests, errors, pending)
-// leaves the section purely editorial, so there is no layout shift.
-const feedRecommendations = ref<BookRecommendations>(getEmptyBookRecommendations())
-// Fallback-list ids still blend into the section, but are not personalized picks.
-const personalizedRecommendedClassIds = computed(() =>
-  feedRecommendations.value.isPersonalized ? feedRecommendations.value.nftClassIds : [],
-)
+// Fetched client-side for logged-in users only; undefined until it settles and
+// empty for guests and errors, either way leaving the section purely editorial.
+const feedRecommendations = ref<BookRecommendations>()
 
 function getAuthorNameFromCache(classId: string): string {
   return getBookEntityName(getNFTClassMetadataByIdFromCache(queryCache, classId)?.author)
@@ -1268,7 +1263,7 @@ const recommendedClassIds = computed(() => {
   const blendedClassIds: string[] = []
   for (const id of [
     ...sameAuthorClassIds.slice(0, MAX_SAME_AUTHOR_LEAD_BOOKS),
-    ...feedRecommendations.value.nftClassIds,
+    ...(feedRecommendations.value?.nftClassIds ?? []),
     ...sameAuthorClassIds,
     ...otherClassIds,
   ]) {

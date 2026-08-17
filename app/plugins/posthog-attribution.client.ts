@@ -8,9 +8,14 @@
 export default defineNuxtPlugin(() => {
   const { onLoaded } = useScriptPostHog()
   const { lastTouch, externalAttribution, linkTags } = usePostHogAttribution()
-  if (!Object.keys(lastTouch).length) return
 
   onLoaded(({ posthog }) => {
+    // Until Aug 2026 raw `ll_*` were registered as super properties, and
+    // posthog-js persists those, so a once-tagged browser keeps stamping a frozen
+    // slot. Unregister before the untagged early return — that load needs it most.
+    for (const key of POSTHOG_LINK_TAG_KEYS) posthog.unregister(key)
+
+    if (!Object.keys(lastTouch).length) return
     posthog.register(lastTouch)
     posthog.register_once(Object.fromEntries(
       Object.entries({ ...externalAttribution, ...linkTags })
