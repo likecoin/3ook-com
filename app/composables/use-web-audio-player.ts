@@ -357,13 +357,7 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
     }, STUCK_DETECTION_TIMEOUT_MS)
   }
 
-  function load(options: {
-    segments: TTSSegment[]
-    getAudioSrc: (segment: TTSSegment) => string
-    startIndex: number
-    rate: number
-    metadata: { bookTitle: string, authorName: string, coverUrl: string }
-  }) {
+  function load(options: Parameters<TTSAudioPlayer['load']>[0]) {
     active = true
     segments = options.segments
     getAudioSrc = options.getAudioSrc

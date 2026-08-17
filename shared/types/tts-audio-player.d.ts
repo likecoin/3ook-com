@@ -17,6 +17,9 @@ declare interface TTSAudioPlayer {
     startIndex: number
     rate: number
     metadata: { bookTitle: string, authorName: string, coverUrl: string }
+    // Segments the native shell keeps cached ahead of the playhead so a dropout
+    // doesn't stall playback. Native-only; the web player ignores it.
+    prefetchCount?: number
   }): void
   resume(): boolean
   pause(): void

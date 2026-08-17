@@ -3,6 +3,10 @@ import type { CustomVoiceData, AffiliateVoiceData } from '~~/shared/types/custom
 
 export const TTS_ERROR_NOT_ALLOWED = 'NotAllowedError'
 
+// ~13s segments, so 60 is roughly 13 minutes of runway for a few MB — enough
+// to ride out a tunnel. The shell clamps what it accepts.
+const TTS_NATIVE_PREFETCH_COUNT = 60
+
 const MEDIA_ERROR_NAMES: Record<number, string> = {
   1: 'MEDIA_ERR_ABORTED',
   2: 'MEDIA_ERR_NETWORK',
@@ -70,6 +74,17 @@ export function useTextToSpeech(options: TTSOptions) {
   })
 
   const { isNativeBridge } = useAppDetection()
+
+  const { isPlusOrDevicePlus } = useDevicePlusEntitlement()
+  const isDeepPrefetchEnabled = useFeatureFlagEnabled('app-tts-deep-prefetch')
+
+  // Only accounts with no daily TTS quota fill a runway: a free-trial user's
+  // whole allowance is ~19 segments, which prefetch would spend unheard.
+  function getTTSPrefetchCount(): number {
+    if (!isNativeBridge.value || !isNativeFeatureSupported('deepPrefetch')) return 1
+    if (!isPlusOrDevicePlus.value || !isDeepPrefetchEnabled.value) return 1
+    return TTS_NATIVE_PREFETCH_COUNT
+  }
 
   const ttsSessionId = ref('')
 
@@ -562,6 +577,7 @@ export function useTextToSpeech(options: TTSOptions) {
           authorName: toValue(bookAuthorName) || '',
           coverUrl: toValue(bookCoverSrc) || '',
         },
+        prefetchCount: getTTSPrefetchCount(),
       })
 
       setupMediaSession()

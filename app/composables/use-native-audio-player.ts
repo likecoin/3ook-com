@@ -49,13 +49,7 @@ export function useNativeAudioPlayer(isActive: Ref<boolean | undefined>): TTSAud
     }
   }) as EventListener)
 
-  function load(options: {
-    segments: TTSSegment[]
-    getAudioSrc: (segment: TTSSegment) => string
-    startIndex: number
-    rate: number
-    metadata: { bookTitle: string, authorName: string, coverUrl: string }
-  }) {
+  function load(options: Parameters<TTSAudioPlayer['load']>[0]) {
     const origin = window.location.origin
     const tracks = options.segments.map((segment, i) => ({
       index: i,
@@ -69,6 +63,7 @@ export function useNativeAudioPlayer(isActive: Ref<boolean | undefined>): TTSAud
       startIndex: options.startIndex,
       rate: options.rate,
       metadata: options.metadata,
+      prefetchCount: options.prefetchCount,
     })
     loaded = true
   }
