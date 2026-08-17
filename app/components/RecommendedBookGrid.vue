@@ -7,6 +7,7 @@
     />
 
     <ul
+      ref="bookGrid"
       :class="isCompact
         ? ['grid', 'grid-cols-3', 'gap-4', 'mt-2']
         : [...gridClasses, 'mt-6']"
@@ -104,11 +105,16 @@ function handleBookOpen(classId: string, index: number) {
   })
 }
 
+// Anchored on the list, not the section: its heading clears the fold well before
+// a cover does, and a heading nobody read is not an impression.
+const { hasBeenVisible: hasSeenBookGrid } = useVisibility('bookGrid')
+
 // Keyed on the feed, never on the ids: callers bind a list that keeps churning
 // as owned-book, author and bookstore-info lookups resolve, which would bill one
 // feed as several impressions and inflate the denominator this exists to give.
 const recommendationViewKey = computed(() => {
-  if (!props.feed || !visibleNFTClassIds.value.length) return undefined
+  // Rendering is not seeing: the product-page grid sits below the fold.
+  if (!hasSeenBookGrid.value || !props.feed || !visibleNFTClassIds.value.length) return undefined
   // `''` is a real key: an editorial-only feed still earns one impression.
   return props.feed.feedId
 })
@@ -134,6 +140,6 @@ if (import.meta.client) {
       feedId: key,
       nftClassIds: visibleNFTClassIds.value,
     })
-  }, { immediate: true })
+  })
 }
 </script>

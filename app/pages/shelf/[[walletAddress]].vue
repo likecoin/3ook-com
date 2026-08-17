@@ -1059,13 +1059,9 @@ function getShelfItemType(nftClassId?: string) {
 // that a free book was on offer. Anchored on the tab header, not the grid: the
 // case worth catching is a grid that renders nothing at all.
 const hasLoggedPreLentImpression = useSessionStorage('3ook_shelf_pre_lent_impression', false)
-// Latched by hand because `useVisibility`'s `once` stops the observer on the
-// first true->false edge, leaving the ref stuck false. Scrolling past the header
-// before the fetch lands would otherwise lose the impression for the session.
-const hasSeenShelfTabsHeader = ref(false)
-useVisibility('shelfTabsHeader', (isVisible) => {
-  if (isVisible) hasSeenShelfTabsHeader.value = true
-})
+// Latched, so scrolling past the header before the fetch lands does not lose the
+// impression for the session.
+const { hasBeenVisible: hasSeenShelfTabsHeader } = useVisibility('shelfTabsHeader')
 
 watch(
   () => isMyBookshelf.value && hasSeenShelfTabsHeader.value && bookshelfStore.hasFetchedPreLentBooks,
