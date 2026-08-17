@@ -514,6 +514,7 @@
       :title="$t('product_page_related_books_title')"
       :nft-class-ids="filteredRecommendedClassIds"
       :personalized-nft-class-ids="personalizedRecommendedClassIds"
+      :feed-id="feedRecommendations.feedId"
       :ll-source="nftClassId"
       :is-library="isLibrary"
       :max-rows="MAX_RECOMMENDED_ROWS"
@@ -708,6 +709,8 @@ const plusReadingTagRoute = computed(() =>
 const { handleError } = useErrorHandler()
 const { getAnalyticsParameters } = useAnalytics()
 const { fetchBookRecommendations } = useBookRecommendations()
+// Which surface sent the reader to this book; rides every conversion event below.
+const entryLinkTags = useEntryLinkTags()
 
 const isDesktopScreen = useDesktopScreen()
 const { isApp } = useAppDetection()
@@ -1155,6 +1158,8 @@ const formattedLogPayload = computed(() => {
     }],
     promotion_id: coupon.value || (user.value?.isLikerPlus ? 'plus' : undefined),
     promotion_name: coupon.value || (user.value?.isLikerPlus ? 'plus' : undefined),
+    ll_medium: entryLinkTags.llMedium,
+    ll_source: entryLinkTags.llSource,
   }
 })
 

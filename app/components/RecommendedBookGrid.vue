@@ -21,7 +21,7 @@
         :ll-medium="getItemLLMedium(classId)"
         :ll-source="llSource"
         :is-library="isLibrary"
-        @open="handleBookOpen"
+        @open="handleBookOpen($event, index)"
       />
     </ul>
   </section>
@@ -38,6 +38,9 @@ const props = withDefaults(defineProps<{
   llMedium?: string
   llSource?: string
   isLibrary?: boolean
+  // Identifies the ranked list these ids came from; pairs an impression with
+  // the clicks it produced.
+  feedId?: string
   // Fixed 3-column layout for narrow containers (e.g. modals).
   isCompact?: boolean
 }>(), {
@@ -48,6 +51,7 @@ const props = withDefaults(defineProps<{
   personalizedNFTClassIds: () => [],
   isCompact: false,
   maxRows: 0,
+  feedId: undefined,
 })
 
 const queryCache = useQueryCache()
@@ -73,6 +77,8 @@ const personalizedClassIdSet = computed(() =>
   new Set(props.personalizedNFTClassIds.map(normalizeNFTClassId)),
 )
 
+const isFeedPersonalized = computed(() => props.personalizedNFTClassIds.length > 0)
+
 function getIsItemPersonalized(classId: string) {
   return personalizedClassIdSet.value.has(normalizeNFTClassId(classId))
 }
@@ -82,11 +88,41 @@ function getItemLLMedium(classId: string) {
   return props.llMedium ?? getRecommendationLLMedium(getIsItemPersonalized(classId))
 }
 
-function handleBookOpen(classId: string) {
+function handleBookOpen(classId: string, index: number) {
   useLogRecommendBookClick({
     nftClassId: classId,
     isPersonalized: getIsItemPersonalized(classId),
     llMedium: getItemLLMedium(classId),
+    // Rank within what was actually rendered: hidden books are filtered out
+    // before this list, so the visible index is the rank the reader saw.
+    rank: index,
+    feedId: props.feedId,
+    isLibrary: props.isLibrary,
   })
 }
+
+// Keyed on the feed, never on the ids: callers bind a list that keeps churning
+// as owned-book, author and bookstore-info lookups resolve, which would bill one
+// feed as several impressions and inflate the denominator this exists to give.
+const recommendationViewKey = computed(() => {
+  if (!visibleNFTClassIds.value.length) return undefined
+  return `${props.llSource}:${props.llMedium}:${props.feedId}`
+})
+
+watch(recommendationViewKey, (key) => {
+  if (!key || import.meta.server) return
+  useLogRecommendBooksView({
+    eventName: 'recommend_books_view',
+    // No grid-level medium: a blended grid's items report their own, so naming
+    // one here would mislabel the majority of the clicks it is joined to.
+    llMedium: props.llMedium,
+    llSource: props.llSource,
+    isPersonalized: isFeedPersonalized.value,
+    personalizedCount: props.personalizedNFTClassIds.length,
+    isLibrary: props.isLibrary,
+    bookCount: visibleNFTClassIds.value.length,
+    feedId: props.feedId,
+    nftClassIds: visibleNFTClassIds.value,
+  })
+}, { immediate: true })
 </script>

@@ -112,7 +112,7 @@
           :is-library="isLibraryTab"
           :tag="tagId"
           ll-source="bookstore"
-          @open="handleBookstoreItemOpen"
+          @open="handleBookstoreItemOpen($event, index)"
         />
       </ul>
       <div
@@ -807,12 +807,17 @@ const llMedium = computed(() => {
 
 const hasForYouFetchError = ref(false)
 
-function handleBookstoreItemOpen(classId: string) {
+function handleBookstoreItemOpen(classId: string, index: number) {
   if (!isForYouFeedVisible.value) return
   useLogRecommendBookClick({
     nftClassId: classId,
     isPersonalized: bookstoreStore.getIsForYouPersonalized(isLibraryTab.value),
     llMedium: llMedium.value,
+    // The grid renders `products.items` in rank order, so the render index is
+    // the served rank.
+    rank: index,
+    feedId: bookstoreStore.getForYouFeedId(isLibraryTab.value),
+    isLibrary: isLibraryTab.value,
   })
 }
 
@@ -833,10 +838,15 @@ const forYouFeedViewKey = computed(() => {
 
 watch(forYouFeedViewKey, (key) => {
   if (!key) return
-  useLogEvent(isLibraryTab.value ? 'library_for_you_view' : 'store_for_you_view', {
-    is_personalized: bookstoreStore.getIsForYouPersonalized(isLibraryTab.value),
-    book_count: itemsCount.value,
-    ll_medium: llMedium.value,
+  useLogRecommendBooksView({
+    eventName: isLibraryTab.value ? 'library_for_you_view' : 'store_for_you_view',
+    llMedium: llMedium.value,
+    isPersonalized: bookstoreStore.getIsForYouPersonalized(isLibraryTab.value),
+    isLibrary: isLibraryTab.value,
+    bookCount: itemsCount.value,
+    feedId: bookstoreStore.getForYouFeedId(isLibraryTab.value),
+    // Ranked ids, so a click joins back to the list it came from.
+    nftClassIds: products.value.items.map(item => item.classId || item.id),
   })
 }, { immediate: true })
 

@@ -19,6 +19,8 @@ export function usePlusReadingTracker(params: {
 
   const nftClassIdRef = computed(() => toValue(params.nftClassId))
   const { checkOwnership } = useUserBookOwnership(nftClassIdRef)
+  // The surface that led to this read, snapshotted before any in-reader navigation.
+  const entryLinkTags = useEntryLinkTags()
 
   // True once the open is confirmed a borrowed Plus-library read (vs an owned or
   // free read). Resolved asynchronously, so read it at emit time, not on mount.
@@ -47,6 +49,8 @@ export function usePlusReadingTracker(params: {
       nft_class_id: nftClassIdRef.value,
       is_free_borrow: !isLikerPlus.value,
       is_first_borrow: !bookshelfStore.plusReadingBookIds.includes(normalizeNFTClassId(nftClassIdRef.value)),
+      ll_medium: entryLinkTags.llMedium,
+      ll_source: entryLinkTags.llSource,
     })
     await bookshelfStore.registerPlusReadingOpen(nftClassIdRef.value)
   }

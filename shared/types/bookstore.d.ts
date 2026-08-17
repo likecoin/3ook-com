@@ -33,12 +33,16 @@ export interface FetchBookstoreCMSProductsResponseData {
 export interface FetchBookstoreForYouResponseData extends FetchBookstoreCMSProductsResponseData {
   // False when the user lacks reading signal and the popular list is served instead.
   isPersonalized: boolean
+  // Identifies the exact ranked list, so an impression and a click on the same
+  // feed join to one row rather than being compared across recomputes.
+  feedId: string
 }
 
-// Keeps `isPersonalized` paired with the ids it describes.
+// Keeps `isPersonalized` and `feedId` paired with the ids they describe.
 export interface BookRecommendations {
   nftClassIds: string[]
   isPersonalized: boolean
+  feedId: string
 }
 
 export interface BookstoreCMSTag {

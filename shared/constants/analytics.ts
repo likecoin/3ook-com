@@ -32,10 +32,9 @@ export type PlusUpsellSource = typeof PLUS_UPSELL_SOURCES[number]
 
 // The checkout surface a subscribe click happened on, reported as
 // `checkout_placement`. It gets its own property rather than riding `ll_medium`
-// (a super-property carrying last-touch link tags, so writing it here would
-// erase the slot that sent the user) or the `utm_*` props these entry points
-// also set (forwarded to Stripe/RevenueCat, where an internal placement would
-// be indistinguishable from a real campaign).
+// (which names the slot that sent the user here, and would be erased) or the
+// `utm_*` props these entry points also set (forwarded to Stripe/RevenueCat,
+// where an internal placement would be indistinguishable from a real campaign).
 export const PLUS_CHECKOUT_PLACEMENTS = [
   'account-custom-voice',
   'book-upsell-modal',

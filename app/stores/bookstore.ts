@@ -14,6 +14,8 @@ interface BookstoreCMSTagProducts {
   ts?: number
   // For You entries only: false when the popular cold-start fallback was served.
   isPersonalized?: boolean
+  // For You entries only: identifies the ranked list the items came from.
+  feedId?: string
 }
 
 interface BookstoreSearchResults {
@@ -136,6 +138,9 @@ export const useBookstoreStore = defineStore('bookstore', () => {
   const getIsForYouPersonalized = computed(() => (isLibrary = false) =>
     bookstoreCMSProductsByTagKeyMap.value[getBookstoreScopedKey(BOOKSTORE_FOR_YOU_LIST_TYPE, isLibrary)]?.isPersonalized || false)
 
+  const getForYouFeedId = computed(() => (isLibrary = false) =>
+    bookstoreCMSProductsByTagKeyMap.value[getBookstoreScopedKey(BOOKSTORE_FOR_YOU_LIST_TYPE, isLibrary)]?.feedId)
+
   // Reuses bookstoreCMSProductsByTagKeyMap so the listing page's getters, skeleton
   // and empty states work unchanged; the feed is a single fixed page (no cursor).
   async function fetchForYouProducts({
@@ -175,6 +180,7 @@ export const useBookstoreStore = defineStore('bookstore', () => {
       entry.mayHaveMore = false
       entry.hasFetched = true
       entry.isPersonalized = result.isPersonalized
+      entry.feedId = result.feedId
     }
     catch (error) {
       if (getIsEntryCurrent()) entry.hasFetched = true
@@ -541,6 +547,7 @@ export const useBookstoreStore = defineStore('bookstore', () => {
     /* For You Products */
 
     getIsForYouPersonalized,
+    getForYouFeedId,
 
     fetchForYouProducts,
 

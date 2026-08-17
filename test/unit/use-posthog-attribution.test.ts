@@ -19,7 +19,10 @@ describe('usePostHogAttribution', () => {
     // Last touch still collapses, so the Stripe/Airtable contract is unchanged.
     expect(lastTouch.utm_source).toBe('product-page')
     expect(lastTouch.utm_medium).toBe('plus-reading-cta')
-    expect(lastTouch.ll_source).toBe('product-page')
+    // Raw `ll_*` must stay unregistered: a super property is frozen at SDK init,
+    // so it would stamp later events with this slot instead of their own.
+    expect(lastTouch.ll_source).toBeUndefined()
+    expect(lastTouch.ll_medium).toBeUndefined()
     // First touch must not be seeded from in-product navigation.
     expect(externalAttribution).toEqual({})
     expect(linkTags).toEqual({ ll_source: 'product-page', ll_medium: 'plus-reading-cta' })

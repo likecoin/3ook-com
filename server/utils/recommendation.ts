@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto'
+
 import { Timestamp } from 'firebase-admin/firestore'
 import { FetchError } from 'ofetch'
 
@@ -61,17 +63,29 @@ export interface ForYouFetchOptions {
   limit?: number
 }
 
+// Derived from the served ids rather than assigned per request, so a cache hit
+// and the recompute that replaces it share an id when the ranking didn't move —
+// which is what makes a click joinable to the impression that produced it.
+function getFeedId(records: BookstoreCMSProduct[]): string {
+  return createHash('sha256')
+    .update(records.map(getCandidateClassId).join(','))
+    .digest('hex')
+    .slice(0, 12)
+}
+
 function buildFeedResponse(
   records: BookstoreCMSProduct[],
   isPersonalized: boolean,
   limit: number,
 ): FetchBookstoreForYouResponseData {
   // Strip after ranking: scoring needs the metadata, the client does not.
-  const { records: strippedRecords } = stripRecommendationMetadata({ records: records.slice(0, limit) })
+  const servedRecords = records.slice(0, limit)
+  const { records: strippedRecords } = stripRecommendationMetadata({ records: servedRecords })
   return {
     records: strippedRecords,
     hasMore: false,
     isPersonalized,
+    feedId: getFeedId(servedRecords),
   }
 }
 

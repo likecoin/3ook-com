@@ -56,7 +56,10 @@ export function usePostHogAttribution(): PostHogAttribution {
 
   const utmSource = externalUTMSource || linkTags.ll_source
   const utmMedium = externalUTMMedium || linkTags.ll_medium
-  const lastTouch: Record<string, string> = { ...externalAttribution, ...linkTags }
+  // `ll_*` stay out of the registered set: super properties are frozen at SDK
+  // init and never refreshed on client-side navigation, so registering them
+  // would stamp every later event with the entry URL's slot instead of its own.
+  const lastTouch: Record<string, string> = { ...externalAttribution }
   if (utmSource) lastTouch.utm_source = utmSource
   if (utmMedium) lastTouch.utm_medium = utmMedium
 

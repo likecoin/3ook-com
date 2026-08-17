@@ -259,6 +259,17 @@ export function useLogEvent(eventName: string, eventParams: EventParams = {}) {
 }
 
 // The slot rides its own properties rather than being read back off the URL:
+// Snapshotted at setup, not read at emit time: `middleware/query.global.ts`
+// keeps rewriting the live query as the reader navigates on, so only the value
+// this route was entered with names the surface that sent them here.
+export function useEntryLinkTags() {
+  const getRouteQuery = useRouteQuery()
+  return {
+    llMedium: getRouteQuery('ll_medium') || undefined,
+    llSource: getRouteQuery('ll_source') || undefined,
+  }
+}
+
 // `middleware/query.global.ts` carries `ll_*` across every navigation, so a
 // tagged pageview does not mean the user clicked that slot.
 export function useLogPlusUpsell(
@@ -302,19 +313,68 @@ export function useLogTTSSample(
 }
 
 // `isPersonalized` is the response's own flag, never the surface's assumption.
+// `rank` and `feedId` are what make the click joinable to its impression, so a
+// ranking change can be measured instead of assumed.
 export function useLogRecommendBookClick({
   nftClassId,
   isPersonalized,
   llMedium,
+  rank,
+  feedId,
+  isLibrary,
 }: {
   nftClassId: string
   isPersonalized: boolean
   llMedium?: string
+  rank?: number
+  feedId?: string
+  isLibrary?: boolean
 }) {
   useLogEvent('recommend_book_click', {
-    nft_class_id: nftClassId,
+    // Normalized because the impression list is: surfaces spell class ids
+    // differently, and the join is an exact string match.
+    nft_class_id: normalizeNFTClassId(nftClassId),
     is_personalized: isPersonalized,
     ll_medium: llMedium,
+    rank,
+    feed_id: feedId || undefined,
+    is_library: isLibrary,
+  })
+}
+
+// The impression half of that join. Both feeds report the ids they showed, so a
+// click has a denominator; `personalizedCount` is separate from `isPersonalized`
+// because a blended grid is partly personalized and partly editorial.
+export function useLogRecommendBooksView({
+  eventName,
+  llMedium,
+  llSource,
+  isPersonalized,
+  personalizedCount,
+  isLibrary,
+  bookCount,
+  feedId,
+  nftClassIds,
+}: {
+  eventName: string
+  llMedium?: string
+  llSource?: string
+  isPersonalized: boolean
+  personalizedCount?: number
+  isLibrary?: boolean
+  bookCount: number
+  feedId?: string
+  nftClassIds: Array<string | undefined>
+}) {
+  useLogEvent(eventName, {
+    ll_medium: llMedium,
+    ll_source: llSource || undefined,
+    is_personalized: isPersonalized,
+    personalized_count: personalizedCount,
+    is_library: isLibrary,
+    book_count: bookCount,
+    feed_id: feedId || undefined,
+    nft_class_ids: getLoggedImpressionIds(nftClassIds),
   })
 }
 

@@ -1,5 +1,5 @@
 export function getEmptyBookRecommendations(): BookRecommendations {
-  return { nftClassIds: [], isPersonalized: false }
+  return { nftClassIds: [], isPersonalized: false, feedId: '' }
 }
 
 // The For You feed resolved to class ids. Resolves empty for guests and on
@@ -22,6 +22,7 @@ export function useBookRecommendations() {
       return {
         nftClassIds: result.records.map(getCandidateClassId).filter(Boolean),
         isPersonalized: result.isPersonalized,
+        feedId: result.feedId,
       }
     }
     catch (error) {

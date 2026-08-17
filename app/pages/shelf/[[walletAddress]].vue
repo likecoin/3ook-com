@@ -437,6 +437,7 @@
         <RecommendedBookGrid
           :nft-class-ids="readNextBooks.nftClassIds"
           :personalized-nft-class-ids="personalizedReadNextClassIds"
+          :feed-id="readNextBooks.feedId"
           is-compact
           ll-medium="recommendation-read-next"
           ll-source="bookshelf-finished"

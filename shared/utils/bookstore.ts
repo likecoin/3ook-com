@@ -45,3 +45,16 @@ export function getHasFreeEdition(prices?: BookstorePrice[]): boolean {
 export function getRecommendationLLMedium(isPersonalized: boolean) {
   return isPersonalized ? 'recommendation-personalized' : 'recommendation'
 }
+
+const LOGGED_IMPRESSION_COUNT = 20
+
+// The ids an impression event reports, so a later click joins back to it. One
+// spelling across every surface or the join silently misses, and capped because
+// a full feed of ids would otherwise ride on each event.
+export function getLoggedImpressionIds(nftClassIds: Array<string | undefined>): string {
+  return nftClassIds
+    .map(normalizeNFTClassId)
+    .filter(Boolean)
+    .slice(0, LOGGED_IMPRESSION_COUNT)
+    .join(',')
+}
