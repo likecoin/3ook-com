@@ -1,8 +1,8 @@
+import { SITEMAP_STORAGE_BASE } from '~~/shared/constants/server-cache'
 import { fetchCollectiveBookNFTs } from '~~/shared/utils/collective-indexer'
 import { normalizeNFTClassId } from '~~/shared/utils/index'
 
 const SITEMAP_CLASS_IDS_CACHE_KEY = 'sitemap:store:class-ids'
-const SITEMAP_CLASS_IDS_CACHE_TTL = 3600
 const SITEMAP_PAGE_SIZE = 100
 // Bound the latest-books walk by page count (~2000 books at SITEMAP_PAGE_SIZE).
 // A sitemap doesn't need the entire long tail, and this caps upstream work per cache miss.
@@ -60,7 +60,7 @@ export default defineSitemapEventHandler(async (event) => {
   const defaultLocale = config.public.i18n.defaultLocale
   const locales = config.public.i18n.locales as Array<{ code: string, language: string }>
   try {
-    const storage = useStorage('airtable')
+    const storage = useStorage(SITEMAP_STORAGE_BASE)
     let classIds = await storage.getItem<string[]>(SITEMAP_CLASS_IDS_CACHE_KEY)
     if (!classIds) {
       // Coalesce concurrent cache-miss requests into a single upstream fetch
@@ -71,7 +71,7 @@ export default defineSitemapEventHandler(async (event) => {
       // Don't cache empty results — a transient upstream outage shouldn't poison the sitemap for an hour
       if (classIds.length > 0) {
         storage
-          .setItem(SITEMAP_CLASS_IDS_CACHE_KEY, classIds, { ttl: SITEMAP_CLASS_IDS_CACHE_TTL })
+          .setItem(SITEMAP_CLASS_IDS_CACHE_KEY, classIds)
           .catch(err => console.error('[sitemap] failed to cache class ids:', err))
       }
     }

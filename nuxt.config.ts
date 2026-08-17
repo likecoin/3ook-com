@@ -6,6 +6,7 @@ import type { NitroRouteConfig } from 'nitropack'
 import type { ConfigDefaults } from 'posthog-js'
 
 import { CUSTOMER_SERVICE_EMAIL } from './app/utils/business-info'
+import { SERVER_CACHE_STORAGE } from './shared/constants/server-cache'
 import { STORE_PUBLISHER_ROUTE_PATH, getStorePublisherRouteName } from './shared/constants/store-routes'
 
 const { resolve } = createResolver(import.meta.url)
@@ -224,6 +225,13 @@ export default defineNuxtConfig({
   },
 
   compatibilityDate: '2024-11-01',
+
+  nitro: {
+    // An unmounted base falls back to the memory driver, which silently drops
+    // per-call ttls and never evicts. One mount per TTL, defined alongside the
+    // constants the server code reads.
+    storage: SERVER_CACHE_STORAGE,
+  },
 
   vite: {
     optimizeDeps: {

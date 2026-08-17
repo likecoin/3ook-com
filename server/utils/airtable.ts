@@ -1,47 +1,75 @@
+import {
+  AIRTABLE_OFFSET_STORAGE_BASE,
+  AIRTABLE_STORAGE_BASE,
+} from '~~/shared/constants/server-cache'
 import { getBookstoreScopedKey } from '~~/shared/utils/bookstore'
 import { filterMeaningfulKeywords } from '~~/shared/utils/recommendation'
 
-const AIRTABLE_RECORDS_TTL = 86400 // 1 day
-const AIRTABLE_OFFSET_TTL = 120 // 2 minutes (Airtable offsets expire ~5 min)
+interface AirtableCacheEntry<T> {
+  records: T[]
+  hasMore: boolean
+}
+
+// A cold For You compute fans out to ~10 Airtable requests at once against a
+// 5 req/s per-base limit, and N concurrent computes multiply that. Sharing one
+// in-flight promise per key is the cheapest way to keep the base under quota.
+const inflightFetches = new Map<string, Promise<{ records: unknown[], offset?: string }>>()
+
+function fetchAirtableOnce<T>(
+  cacheKey: string,
+  fetcher: () => Promise<{ records: T[], offset?: string }>,
+): Promise<{ records: T[], offset?: string }> {
+  const inflight = inflightFetches.get(cacheKey)
+  if (inflight) return inflight as Promise<{ records: T[], offset?: string }>
+
+  const pending = fetcher().finally(() => {
+    inflightFetches.delete(cacheKey)
+  })
+  inflightFetches.set(cacheKey, pending as Promise<{ records: unknown[], offset?: string }>)
+  return pending
+}
 
 /**
  * Dual-TTL cache for Airtable paginated responses.
- * Records are cached with a long TTL; offset cursor and hasMore flag are cached separately.
- * When offset expires, cached records are still served with hasMore to signal the client
- * should refresh page 1 for a new cursor.
+ * Records and hasMore are cached together with a long TTL; the offset cursor is
+ * cached separately with a short one. When the offset expires, cached records
+ * are still served with hasMore to signal the client should refresh page 1 for
+ * a new cursor.
+ *
+ * The two TTLs come from separate storage mounts (see nuxt.config.ts): unstorage
+ * drivers take ttl from their constructor and ignore per-call options. Records
+ * and hasMore share one key so eviction can never strand one without the other.
  */
 export async function fetchWithAirtableCache<T>(
   cacheKey: string,
   fetcher: () => Promise<{ records: T[], offset?: string }>,
 ): Promise<{ records: T[], offset?: string, hasMore: boolean }> {
-  const storage = useStorage('airtable')
+  const storage = useStorage(AIRTABLE_STORAGE_BASE)
+  const offsetStorage = useStorage(AIRTABLE_OFFSET_STORAGE_BASE)
   const recordsKey = `${cacheKey}:records`
   const offsetKey = `${cacheKey}:offset`
-  const hasMoreKey = `${cacheKey}:hasMore`
 
-  const [cachedRecords, cachedOffset, cachedHasMore] = await Promise.all([
-    storage.getItem<T[]>(recordsKey),
-    storage.getItem<string>(offsetKey),
-    storage.getItem<boolean>(hasMoreKey),
+  const [cached, cachedOffset] = await Promise.all([
+    storage.getItem<AirtableCacheEntry<T>>(recordsKey),
+    offsetStorage.getItem<string>(offsetKey),
   ])
 
-  if (cachedRecords) {
+  if (cached) {
     return {
-      records: cachedRecords,
+      records: cached.records,
       offset: cachedOffset ?? undefined,
-      hasMore: cachedHasMore ?? !!cachedOffset,
+      hasMore: cached.hasMore,
     }
   }
 
-  const result = await fetcher()
+  const result = await fetchAirtableOnce(cacheKey, fetcher)
   const hasMore = !!result.offset
 
   // Fire-and-forget cache writes
   const logCacheError = (key: string) => (err: unknown) => console.error(`[airtable-cache] failed to write ${key}:`, err)
-  storage.setItem(recordsKey, result.records, { ttl: AIRTABLE_RECORDS_TTL }).catch(logCacheError(recordsKey))
-  storage.setItem(hasMoreKey, hasMore, { ttl: AIRTABLE_RECORDS_TTL }).catch(logCacheError(hasMoreKey))
+  storage.setItem(recordsKey, { records: result.records, hasMore }).catch(logCacheError(recordsKey))
   if (result.offset) {
-    storage.setItem(offsetKey, result.offset, { ttl: AIRTABLE_OFFSET_TTL }).catch(logCacheError(offsetKey))
+    offsetStorage.setItem(offsetKey, result.offset).catch(logCacheError(offsetKey))
   }
 
   return { ...result, hasMore }
@@ -49,6 +77,8 @@ export async function fetchWithAirtableCache<T>(
 
 export function getAirtableCMSFetch() {
   const config = useRuntimeConfig()
+  // ofetch already retries 429 (and 5xx) once on GET by default; narrowing
+  // retryStatusCodes here would silently drop the rest.
   return $fetch.create({
     baseURL: `https://api.airtable.com/v0/${config.public.airtableCMSBaseId}`,
     headers: {
