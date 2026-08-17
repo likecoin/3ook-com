@@ -7,6 +7,7 @@ import type { ConfigDefaults } from 'posthog-js'
 
 import { CUSTOMER_SERVICE_EMAIL } from './app/utils/business-info'
 import { STORE_PUBLISHER_ROUTE_PATH, getStorePublisherRouteName } from './shared/constants/store-routes'
+import { TTS_AUDIO_CACHE } from './shared/constants/tts-cache'
 
 const { resolve } = createResolver(import.meta.url)
 
@@ -348,6 +349,39 @@ export default defineNuxtConfig({
             cacheName: 'i18n-messages',
             expiration: { maxEntries: 16, maxAgeSeconds: 60 * 60 * 24 * 30 },
             cacheableResponse: { statuses: [0, 200] },
+          },
+        },
+        {
+          // TTS segment audio, immutable for a given (text, voice, language), so
+          // CacheFirst spares re-listens and seek-backs a refetch. ~30KB a
+          // segment, so 1500 entries is ~45MB against the 500MB book budget.
+          urlPattern: ({ url }) => url.pathname === '/api/reader/tts',
+          handler: 'CacheFirst',
+          options: {
+            cacheName: TTS_AUDIO_CACHE,
+            // <audio> seeks with Range requests. Workbox stores the full 200 and
+            // synthesises 206s from it, so a seek-back never refetches.
+            rangeRequests: true,
+            // Edge copies minted before this deploy still carry `vary: Range`
+            // under a week-long max-age, and would never match again.
+            matchOptions: { ignoreVary: true },
+            expiration: { maxEntries: 1500, maxAgeSeconds: 60 * 60 * 24 * 7 },
+            // Never store a 206 — RangeRequestsPlugin needs a complete body to
+            // slice, and a partial one would be served as if it were whole.
+            cacheableResponse: { statuses: [200] },
+            plugins: [
+              {
+                // Warming fetches ask for blocking=1 and playback does not; the
+                // bytes are identical, so drop it or the two never share an entry.
+                cacheKeyWillBeUsed: async ({ request }: { request: Request }) => {
+                  const url = new URL(request.url)
+                  url.searchParams.delete('blocking')
+                  // A Request, not a string: Workbox wraps a string in a
+                  // header-less one, hiding Range from RangeRequestsPlugin.
+                  return new Request(url.href, request)
+                },
+              },
+            ],
           },
         },
         {

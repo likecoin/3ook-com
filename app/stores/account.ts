@@ -7,6 +7,8 @@ import type { RouteLocationAsRelativeGeneric } from 'vue-router'
 
 import { LazyLoginModal, LazyRegistrationModal } from '#components'
 
+import { TTS_AUDIO_CACHE } from '~~/shared/constants/tts-cache'
+
 const REGISTER_TIME_LIMIT_IN_TS = 15 * 60 * 1000 // 15 minutes
 
 const MAGIC_EMAIL_INPUT_ELEMENT_ID = 'MagicFormInput'
@@ -620,8 +622,8 @@ export const useAccountStore = defineStore('account', () => {
 
   async function clearCaches() {
     if (!import.meta.client) return
-    // Native content caches (TTS audio) live on the app's disk, invisible to
-    // the web-layer purge below; ask the shell to drop them too.
+    // The app keeps its own TTS segment cache on disk, invisible to the
+    // web-layer purge below; ask the shell to drop that too.
     requestNativeClearCaches()
     if (!window.caches) return
     try {
@@ -631,6 +633,9 @@ export const useAccountStore = defineStore('account', () => {
 
       const bookKeys = keys.filter(key => key.startsWith(config.public.cacheKeyPrefix))
       await Promise.all(bookKeys.map(key => caches.delete(key)))
+
+      // Workbox names its cache without the prefix, so the filter misses it.
+      await caches.delete(TTS_AUDIO_CACHE)
 
       if (!window.localStorage) return
 

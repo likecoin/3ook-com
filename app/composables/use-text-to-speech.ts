@@ -3,9 +3,10 @@ import type { CustomVoiceData, AffiliateVoiceData } from '~~/shared/types/custom
 
 export const TTS_ERROR_NOT_ALLOWED = 'NotAllowedError'
 
-// ~13s segments, so 60 is roughly 13 minutes of runway for a few MB — enough
-// to ride out a tunnel. The shell clamps what it accepts.
-const TTS_NATIVE_PREFETCH_COUNT = 60
+// ~4 minutes of runway at the observed 13s median segment. Sized against real
+// stalls, 99% of which recover inside 4 minutes and three quarters inside 2
+// seconds; a deeper window mostly buys unheard synthesis. Each player clamps it.
+const TTS_PREFETCH_COUNT = 20
 
 const MEDIA_ERROR_NAMES: Record<number, string> = {
   1: 'MEDIA_ERR_ABORTED',
@@ -76,14 +77,19 @@ export function useTextToSpeech(options: TTSOptions) {
   const { isNativeBridge } = useAppDetection()
 
   const { isPlusOrDevicePlus } = useDevicePlusEntitlement()
-  const isDeepPrefetchEnabled = useFeatureFlagEnabled('app-tts-deep-prefetch')
+  // Separate flags: the two lanes stage against different limits — backend
+  // synthesis load for the app, browser storage for the web.
+  const isNativePrefetchEnabled = useFeatureFlagEnabled('app-tts-deep-prefetch')
+  const isWebPrefetchEnabled = useFeatureFlagEnabled('web-tts-deep-prefetch')
 
   // Only accounts with no daily TTS quota fill a runway: a free-trial user's
   // whole allowance is ~19 segments, which prefetch would spend unheard.
   function getTTSPrefetchCount(): number {
-    if (!isNativeBridge.value || !isNativeFeatureSupported('deepPrefetch')) return 1
-    if (!isPlusOrDevicePlus.value || !isDeepPrefetchEnabled.value) return 1
-    return TTS_NATIVE_PREFETCH_COUNT
+    if (!isPlusOrDevicePlus.value) return 1
+    const isEnabled = isNativeBridge.value
+      ? isNativeFeatureSupported('deepPrefetch') && isNativePrefetchEnabled.value
+      : isWebPrefetchEnabled.value
+    return isEnabled ? TTS_PREFETCH_COUNT : 1
   }
 
   const ttsSessionId = ref('')
@@ -501,7 +507,7 @@ export function useTextToSpeech(options: TTSOptions) {
     ttsTrialUsage.recordOptimisticSegmentUsage(dedupKey, sanitizedText.length)
   }
 
-  function getAudioSrc(element: TTSSegment): string {
+  function getAudioSrc(element: TTSSegment, srcOptions?: { blocking?: boolean }): string {
     if (element.audioSrc) return element.audioSrc
 
     const sanitizedText = sanitizeTTSText(element.text)
@@ -511,7 +517,7 @@ export function useTextToSpeech(options: TTSOptions) {
       languageVoice: ttsLanguageVoice.value,
       bookLanguage: toValue(bookLanguage),
       ttsKey: sessionUser.value?.ttsKey,
-      isBlocking: isNativeBridge.value,
+      isBlocking: isNativeBridge.value || !!srcOptions?.blocking,
       affiliateVoices: options.affiliateVoices?.value,
       customVoice: options.customVoice?.value,
     })

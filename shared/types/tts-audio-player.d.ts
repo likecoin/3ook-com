@@ -13,12 +13,16 @@ declare interface TTSAudioPlayerEvents {
 declare interface TTSAudioPlayer {
   load(options: {
     segments: TTSSegment[]
-    getAudioSrc: (segment: TTSSegment) => string
+    // `blocking` asks the server for a complete buffered response instead of a
+    // stream. Prefetching needs it: an abandoned stream makes the server drop
+    // its half-written cache object, costing the next listener a regeneration.
+    getAudioSrc: (segment: TTSSegment, options?: { blocking?: boolean }) => string
     startIndex: number
     rate: number
     metadata: { bookTitle: string, authorName: string, coverUrl: string }
-    // Segments the native shell keeps cached ahead of the playhead so a dropout
-    // doesn't stall playback. Native-only; the web player ignores it.
+    // Segments to keep cached ahead of the playhead so a dropout doesn't stall
+    // playback — on disk natively, in the service worker cache on web. 1 means
+    // no lookahead beyond the idle player's next segment.
     prefetchCount?: number
   }): void
   resume(): boolean

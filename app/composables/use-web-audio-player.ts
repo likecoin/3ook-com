@@ -1,4 +1,11 @@
 const MAX_AUTO_RESUME_RETRIES = 3
+// Ceiling on the lookahead, whatever the caller asks for. Matches the native
+// shell's, so one shared depth means the same thing on both; downloads are
+// sequential, so this bounds total work rather than concurrency.
+const MAX_PREFETCH_COUNT = 120
+// Generous: a cold segment blocks on full synthesis. Only there to stop one
+// pathological request holding the whole runway behind it.
+const WARM_TIMEOUT_MS = 30000
 const STUCK_DETECTION_TIMEOUT_MS = 5000
 
 export function useWebAudioPlayer(): TTSAudioPlayer {
@@ -13,7 +20,18 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
   const slotUnlocked: Record<'A' | 'B', boolean> = { A: false, B: false }
 
   let segments: TTSSegment[] = []
-  let getAudioSrc: (segment: TTSSegment) => string = () => ''
+  let getAudioSrc: Parameters<TTSAudioPlayer['load']>[0]['getAudioSrc'] = () => ''
+  // Segments to pull into the service worker cache ahead of the playhead, and
+  // how far that has already reached. 1 means only the idle element's N+1.
+  let prefetchCount = 1
+  let warmedThrough = -1
+  // Playhead the mark was computed against, so a backward move is detectable.
+  let warmBase = -1
+  let warming = false
+  // Held until a segment boundary is crossed, matching the native shell: a book
+  // opened and abandoned would otherwise pull a whole window of audio nobody
+  // reaches, forcing the synthesis of any part of it the server hasn't cached.
+  let warmArmed = false
   let currentIndex = 0
   let currentRate = 1.0
   let pausedInternally = false
@@ -74,6 +92,9 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
       if (audio !== getActiveAudio() || swapping) return
       audible = true
       clearStuckTimer()
+      // Not only on track change: this is where warming resumes after a pause
+      // or a stall, both of which stand the loop down.
+      void runWarm()
       handlers.play?.()
     }
 
@@ -224,6 +245,57 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
       // Single mode — warm the HTTP cache so the next segment loads faster
       fetch(src).catch(() => {})
     }
+
+    void runWarm()
+  }
+
+  // Pull segments beyond the idle element's N+1 into the service worker cache.
+  // One at a time: a browser allows ~6 connections per origin, so firing the
+  // whole window at once would queue behind itself and starve the segment playing.
+  async function runWarm() {
+    if (warming) return
+    warming = true
+    try {
+      for (;;) {
+        if (!active || prefetchCount <= 1 || !warmArmed) return
+        // Backpressure, as on native. readyState rather than a flag of our own:
+        // it falls below HAVE_FUTURE_DATA exactly while the player is starved.
+        const audio = getActiveAudio()
+        if (!audible || !audio || audio.readyState < HTMLMediaElement.HAVE_FUTURE_DATA) return
+
+        const end = Math.min(currentIndex + prefetchCount, segments.length - 1)
+        // One scalar can't record gaps, so after any backward move the mark may
+        // claim a stretch that was never warmed — including the segments right
+        // ahead of the playhead, the ones a dropout needs. Re-walk the window.
+        if (currentIndex < warmBase || warmedThrough > end) warmedThrough = currentIndex + 1
+        warmBase = currentIndex
+        const index = Math.max(currentIndex + 2, warmedThrough + 1)
+        const segment = index <= end ? segments[index] : undefined
+        if (!segment) return // Window already warm.
+
+        try {
+          // Timeout because a cold segment blocks on full synthesis server-side,
+          // which would otherwise stall the whole runway behind it.
+          const response = await fetch(getAudioSrc(segment, { blocking: true }), {
+            signal: AbortSignal.timeout(WARM_TIMEOUT_MS),
+          })
+          // fetch only rejects on network errors, so an expired signature or a
+          // 5xx would otherwise mark a runway the cache never received.
+          if (!response.ok) return
+          // Drain rather than abandon, to release the connection. Not
+          // body.cancel() — that aborts the stream the worker is still caching.
+          await response.arrayBuffer()
+        }
+        catch {
+          // Bad network; the next track change re-arms us.
+          return
+        }
+        warmedThrough = index
+      }
+    }
+    finally {
+      warming = false
+    }
   }
 
   function handlePlayError(e: unknown, { clearStuck = false } = {}) {
@@ -362,6 +434,12 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
     segments = options.segments
     getAudioSrc = options.getAudioSrc
     currentRate = options.rate
+    // Clamped here for the same reason the native shell clamps what web sends:
+    // this side owns the connections it spends.
+    prefetchCount = Math.min(Math.max(options.prefetchCount ?? 1, 1), MAX_PREFETCH_COUNT)
+    warmedThrough = -1
+    warmBase = -1
+    warmArmed = false
 
     dualMode = true
     ensureAudioPool()
@@ -403,6 +481,9 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
     active = false
     backgroundInterrupted = false
     rateWasForced = false
+    warmedThrough = -1
+    warmBase = -1
+    warmArmed = false
     clearStuckTimer()
     clearAutoResumeTimer()
     resetAudio()
@@ -413,6 +494,7 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
   }
 
   function skipTo(index: number) {
+    warmArmed = true
     playAtIndex(index)
   }
 

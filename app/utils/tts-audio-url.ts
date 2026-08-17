@@ -20,7 +20,8 @@ export interface TTSAudioURLContext {
   bookLanguage?: string
   // Per-user signing token, required for private voices (custom + affiliate).
   ttsKey?: string
-  // Native bridge requests opt into blocking generation.
+  // Ask for a complete buffered response rather than a stream. Native bridge
+  // requests and web prefetch warms both opt in.
   isBlocking?: boolean
   affiliateVoices?: AffiliateVoiceData[]
   customVoice?: CustomVoiceData | null

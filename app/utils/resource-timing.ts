@@ -11,6 +11,9 @@ export type TTSCacheStatus = 'hit' | 'miss' | 'unknown'
 export type TTSAudioSource = 'browser_cache' | 'cdn_or_storage' | 'generated' | 'native' | 'unknown'
 
 const TTS_URL_PATTERN = /\/api\/reader\/tts(?:\?|$)/
+// Prefetch warms carry blocking=1 and are never played back, so tracking them
+// would spend half the window below on entries nothing ever looks up.
+const TTS_BLOCKING_URL_PATTERN = /[?&]blocking=1(?:&|$)/
 const MAX_TRACKED_URLS = 200
 
 const latestByURL = new Map<string, PerformanceResourceTiming>()
@@ -22,6 +25,7 @@ function ensureObserver() {
   const nextObserver = new PerformanceObserver((list) => {
     for (const entry of list.getEntries()) {
       if (!TTS_URL_PATTERN.test(entry.name)) continue
+      if (TTS_BLOCKING_URL_PATTERN.test(entry.name)) continue
       // delete+set so repeat URLs refresh their insertion order (LRU eviction)
       latestByURL.delete(entry.name)
       latestByURL.set(entry.name, entry as PerformanceResourceTiming)
