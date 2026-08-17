@@ -71,10 +71,9 @@ async function serveCachedTTS(
     if (range) {
       const { start, end } = range
       setResponseStatus(event, 206)
-      // System-voice URLs converge across users for shared edge caching, so a
-      // publicly cacheable partial could reach a later full GET as a truncated
-      // body. `private` keeps it out of shared caches while still letting the
-      // browser hold it — which is the hit rate dropping `vary` is chasing.
+      // System-voice URLs converge across users for shared edge caching.
+      // A publicly cacheable partial could be served for a later full GET as truncated.
+      // `private` avoids shared caching while still allowing browser caching.
       setHeader(event, 'cache-control', 'private, max-age=604800')
       setHeader(event, 'content-range', `bytes ${start}-${end}/${totalSize}`)
       setHeader(event, 'content-length', end - start + 1)
