@@ -328,6 +328,25 @@ describe('tts-audio-cache', () => {
       expect(result[1]).toBeUndefined()
     })
 
+    // Reads go out in batches, so ordering has to hold ACROSS batch boundaries,
+    // not just within one Promise.all.
+    it('preserves order across more segments than fit in one batch', async () => {
+      const urls = Array.from({ length: 70 }, (_, index) => `https://3ook.com/${index}`)
+      const bodyByURL = new Map(urls.map((url, index) => {
+        const frames = new Uint8Array([0xFF, 0xFB, index])
+        const tag = buildID3v2Tag({ title: 'segment' })
+        const tagged = new Uint8Array(tag.length + frames.length)
+        tagged.set(tag)
+        tagged.set(frames, tag.length)
+        return [url, tagged]
+      }))
+      installFakeCaches(urls, bodyByURL)
+
+      const frames = await readTTSSegmentAudio(urls)
+      expect(frames).toHaveLength(70)
+      expect(frames.map(frame => frame![2])).toEqual(urls.map((_, index) => index))
+    })
+
     it('matches a blocking URL against the stripped key the cache holds', async () => {
       const { tagged, frames } = buildTaggedSegment(0x01)
       installFakeCaches([], new Map([['https://3ook.com/api/reader/tts?text=a', tagged]]))

@@ -1157,6 +1157,7 @@
   "tts_offline_download_complete_toast": "本章已可離線收聽",
   "tts_offline_download_partial_toast": "本章已儲存，但有 {failed} 段無法生成",
   "tts_offline_export_button": "匯出本章為 MP3 檔案",
+  "tts_offline_export_empty_toast": "本章已下載的語音已不存在",
   "tts_offline_export_partial_toast": "已匯出，但有 {missing} 段未下載，檔案中缺少這些內容",
   "tts_offline_modal_description": "由於沒有網絡連接，無法載入下一個音軌，朗讀已暫停。網絡連接恢復後將自動繼續播放。",
   "tts_offline_modal_resume_button": "嘗試繼續",

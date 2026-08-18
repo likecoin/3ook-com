@@ -1157,6 +1157,7 @@
   "tts_offline_download_complete_toast": "This chapter is ready for offline listening",
   "tts_offline_download_partial_toast": "This chapter was saved, but {failed} passages could not be generated",
   "tts_offline_export_button": "Export this chapter as an MP3 file",
+  "tts_offline_export_empty_toast": "The downloaded audio for this chapter is no longer available",
   "tts_offline_export_partial_toast": "Exported, but {missing} passages were not downloaded and are missing from the file",
   "tts_offline_modal_description": "TTS has been paused because the next track could not be loaded without an internet connection. Playback will resume automatically when your connection is restored.",
   "tts_offline_modal_resume_button": "Try Anyway",

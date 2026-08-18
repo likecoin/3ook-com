@@ -88,5 +88,10 @@ export function stripID3v2Tag(audio: Uint8Array): Uint8Array {
   const size = ((audio[6]! & 0x7F) << 21) | ((audio[7]! & 0x7F) << 14)
     | ((audio[8]! & 0x7F) << 7) | (audio[9]! & 0x7F)
   const hasFooter = (audio[5]! & 0x10) !== 0
-  return audio.subarray(10 + size + (hasFooter ? 10 : 0))
+  const start = 10 + size + (hasFooter ? 10 : 0)
+  // A truncated or corrupt read can declare a size past the end. subarray would
+  // clamp it to an empty view, which reads downstream as a present-but-silent
+  // segment rather than the missing one it is.
+  if (start > audio.length) return audio
+  return audio.subarray(start)
 }

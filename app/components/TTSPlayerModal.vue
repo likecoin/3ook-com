@@ -23,37 +23,40 @@
             v-text="bookTitle"
           />
 
-          <UTooltip
-            v-if="shouldShowOfflineTTSButton"
-            :text="offlineTTSButton.label"
+          <div
+            v-if="shouldShowOfflineTTSButton || shouldShowOfflineTTSExportButton"
+            class="absolute top-4 left-4 flex items-center gap-1"
           >
-            <UButton
-              class="absolute top-4 left-4"
-              :icon="offlineTTSButton.icon"
-              :label="offlineTTSButton.progressLabel"
-              :aria-label="offlineTTSButton.label"
-              :color="offlineTTSButton.color"
-              size="md"
-              variant="ghost"
-              @click="handleOfflineTTSButtonClick"
-            />
-          </UTooltip>
+            <UTooltip
+              v-if="shouldShowOfflineTTSButton"
+              :text="offlineTTSButton.label"
+            >
+              <UButton
+                :icon="offlineTTSButton.icon"
+                :label="offlineTTSButton.progressLabel"
+                :aria-label="offlineTTSButton.label"
+                :color="offlineTTSButton.color"
+                size="md"
+                variant="ghost"
+                @click="handleOfflineTTSButtonClick"
+              />
+            </UTooltip>
 
-          <UTooltip
-            v-if="shouldShowOfflineTTSExportButton"
-            :text="$t('tts_offline_export_button')"
-          >
-            <UButton
-              class="absolute top-4 left-14"
-              icon="i-material-symbols-save-alt-rounded"
-              :aria-label="$t('tts_offline_export_button')"
-              :loading="isExportingOfflineTTS"
-              size="md"
-              variant="ghost"
-              color="neutral"
-              @click="handleOfflineTTSExportClick"
-            />
-          </UTooltip>
+            <UTooltip
+              v-if="shouldShowOfflineTTSExportButton"
+              :text="$t('tts_offline_export_button')"
+            >
+              <UButton
+                icon="i-material-symbols-save-alt-rounded"
+                :aria-label="$t('tts_offline_export_button')"
+                :loading="isExportingOfflineTTS"
+                size="md"
+                variant="ghost"
+                color="neutral"
+                @click="handleOfflineTTSExportClick"
+              />
+            </UTooltip>
+          </div>
 
           <UButton
             class="absolute top-4 right-4"
@@ -779,7 +782,19 @@ async function handleOfflineTTSExportClick() {
   isExportingOfflineTTS.value = true
   try {
     const result = await exportOfflineTTS()
-    if (!result) return
+    if (!result) {
+      // The button only shows when a download is pinned, so nothing to read
+      // means the cache was swept out from under it. Silence would read as a
+      // dead button.
+      toast.add({
+        title: $t('tts_offline_export_empty_toast'),
+        icon: 'i-material-symbols-warning-outline-rounded',
+        color: 'warning',
+      })
+      return
+    }
+    // Base64 through the native bridge: a chapter is tens of megabytes, so this
+    // is testnet-sized. Mainnet needs a URL handoff or chunking first.
     await saveAs(result.blob, result.filename)
     if (result.missing) {
       toast.add({

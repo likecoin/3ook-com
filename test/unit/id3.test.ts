@@ -45,6 +45,27 @@ describe('stripID3v2Tag', () => {
     expect([...stripID3v2Tag(tagged)]).toEqual([...frames])
   })
 
+  // A long title pushes the declared size past 127, exercising the multi-byte
+  // synchsafe groups in the parser rather than just the low one.
+  it('removes a tag whose declared size spans multiple synchsafe groups', () => {
+    const frames = new Uint8Array([0xFF, 0xFB, 0x90, 0x00])
+    const tag = buildID3v2Tag({ title: 'a'.repeat(500) })
+    expect(tag.length).toBeGreaterThan(127 + 10)
+    const tagged = new Uint8Array(tag.length + frames.length)
+    tagged.set(tag)
+    tagged.set(frames, tag.length)
+    expect([...stripID3v2Tag(tagged)]).toEqual([...frames])
+  })
+
+  // A truncated read declaring more than it holds must stay whole: subarray
+  // would clamp to empty, which downstream counts as present-but-silent.
+  it('returns the input when the declared size runs past the end', () => {
+    const audio = new Uint8Array(20)
+    audio.set([0x49, 0x44, 0x33, 0x04, 0x00])
+    audio[9] = 100 // declares 100 bytes of tag in a 20-byte buffer
+    expect(stripID3v2Tag(audio).length).toBe(20)
+  })
+
   it('leaves untagged audio alone', () => {
     const frames = new Uint8Array([0xFF, 0xFB, 0x90, 0x00])
     expect([...stripID3v2Tag(frames)]).toEqual([...frames])
