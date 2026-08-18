@@ -1,5 +1,6 @@
 import { useDocumentVisibility, useEventListener, useStorage } from '@vueuse/core'
 import type { CustomVoiceData, AffiliateVoiceData } from '~~/shared/types/custom-voice'
+import { buildID3v2Tag } from '~~/shared/utils/id3'
 
 export const TTS_ERROR_NOT_ALLOWED = 'NotAllowedError'
 export const TTS_ERROR_NOT_SUPPORTED = 'NotSupportedError'
@@ -74,7 +75,14 @@ export function useTextToSpeech(options: TTSOptions) {
 
   const ttsTrialUsage = useTTSTrialUsage()
 
-  const { sweepTTSAudioCache } = useOfflineTTS()
+  const {
+    offlinePinIds,
+    isDownloading: isDownloadingOfflineTTS,
+    downloadProgress: offlineTTSDownloadProgress,
+    downloadTTS,
+    removeOfflineTTS: removeOfflineTTSPins,
+    sweepTTSAudioCache,
+  } = useOfflineTTS()
 
   // Book+voice already swept this session, so a resume doesn't re-walk the cache.
   let sweptPinId: string | undefined
@@ -108,6 +116,10 @@ export function useTextToSpeech(options: TTSOptions) {
     isNativeBridge.value ? 'app-tts-deep-prefetch' : 'web-tts-deep-prefetch',
     { timeoutMs: TTS_PREFETCH_FLAG_TIMEOUT_MS },
   )
+  // Kill switch for offline listening on mainnet. Testnet ignores it so
+  // internal testing is never blocked on the flag resolving, or on PostHog
+  // being reachable at all.
+  const isOfflineTTSFlagEnabled = useFeatureFlagEnabled('tts-offline-download')
 
   // Only accounts with no daily TTS quota fill a runway: a free-trial user's
   // whole allowance is ~19 segments, which prefetch would spend unheard.
@@ -575,6 +587,111 @@ export function useTextToSpeech(options: TTSOptions) {
     })
   }
 
+  /**
+   * The cache pin this book+voice writes into, read off a real segment URL:
+   * custom and affiliate voice ids carry no language, so `ttsLanguageVoice`
+   * alone cannot name the pin the service worker will key on.
+   */
+  const ttsPinId = computed(() => {
+    const firstSegment = ttsSegments.value[0]
+    return firstSegment ? getTTSPinIdFromURL(getAudioSrc(firstSegment)) : undefined
+  })
+
+  const hasOfflineTTS = computed(() => !!ttsPinId.value && offlinePinIds.value.has(ttsPinId.value))
+
+  // CacheStorage is the whole mechanism, and without a pin there is nothing to
+  // name what a download would be keyed on.
+  const isOfflineTTSSupported = computed(() =>
+    import.meta.client && !!window.caches && !!ttsPinId.value,
+  )
+
+  // Capability and entitlement kept apart: the budget sweep below runs off
+  // `isOfflineTTSSupported` regardless, since the player's lookahead fills the
+  // same cache whether or not anyone can download into it.
+  const isOfflineTTSEnabled = computed(() =>
+    isOfflineTTSSupported.value && (config.public.isTestnet || !!isOfflineTTSFlagEnabled.value),
+  )
+
+  const offlineTTSDownloadPercentage = computed(() => {
+    const progress = offlineTTSDownloadProgress.value
+    if (!progress?.total) return 0
+    return Math.round((progress.completed / progress.total) * 100)
+  })
+
+  let offlineTTSDownloadController: AbortController | null = null
+
+  function cancelOfflineTTSDownload() {
+    offlineTTSDownloadController?.abort()
+  }
+
+  // The loop reads getAudioSrc per segment, so a voice change part-way through
+  // would fetch the rest under a different pin and then record those bytes
+  // against this one. Watched rather than hooked into the voice selector, which
+  // is not the only thing that reassigns the voice.
+  watch(ttsPinId, cancelOfflineTTSDownload)
+
+  // Closing the player disposes this scope; without this the loop keeps
+  // fetching a chapter nobody is listening to and leaves the pin in flight.
+  onScopeDispose(cancelOfflineTTSDownload)
+
+  /** Returns what landed, or undefined when there was nothing to do or it was cancelled. */
+  async function downloadOfflineTTS() {
+    const pinId = ttsPinId.value
+    if (!pinId || !ttsSegments.value.length) return undefined
+    const controller = new AbortController()
+    offlineTTSDownloadController = controller
+    try {
+      const result = await downloadTTS({
+        pinId,
+        segments: ttsSegments.value,
+        getAudioSrc,
+        signal: controller.signal,
+        // Yield to the playhead: a download racing the segment playback is
+        // waiting on only turns into a stall the listener hears.
+        shouldPause: () => isTextToSpeechLoading.value,
+      })
+      return controller.signal.aborted ? undefined : result
+    }
+    finally {
+      offlineTTSDownloadController = null
+    }
+  }
+
+  async function removeOfflineTTS() {
+    const pinId = ttsPinId.value
+    if (!pinId) return
+    await removeOfflineTTSPins([pinId])
+  }
+
+  /**
+   * Concatenate the chapter's cached segments into one MP3. Testnet-only, and
+   * gated on a completed download by its caller — this reads the cache, it
+   * never synthesises, so anything not downloaded is simply absent.
+   */
+  async function exportOfflineTTS() {
+    const segments = ttsSegments.value
+    if (!segments.length) return undefined
+    const cached = await readTTSSegmentAudio(segments.map(segment => getAudioSrc(segment)))
+    const frames = cached.filter((frame): frame is Uint8Array => !!frame)
+    if (!frames.length) return undefined
+
+    const title = toValue(bookChapterName) || toValue(bookName) || ''
+    // One tag for the whole file: a per-segment tag would litter ID3 headers
+    // through the middle of it.
+    const tag = buildID3v2Tag({
+      title,
+      artist: activeTTSLanguageVoiceLabel.value,
+      comment: `3ook.com TTS — ${toValue(bookName) || ''}`,
+    })
+    return {
+      // Blob takes the parts as they are; concatenating first would copy the
+      // whole chapter, which runs to tens of megabytes.
+      blob: new Blob([tag, ...frames], { type: 'audio/mpeg' }),
+      filename: `${title.replace(/[^\p{L}\p{N}]+/gu, '-').slice(0, 60) || 'chapter'}.mp3`,
+      missing: segments.length - frames.length,
+    }
+  }
+
   function playNextElement() {
     cancelPendingSkip()
     if (currentTTSSegmentIndex.value + 1 >= ttsSegments.value.length) {
@@ -668,8 +785,7 @@ export function useTextToSpeech(options: TTSOptions) {
       // a listener who never downloads still needs the budget enforced. Once per
       // book+voice: startTextToSpeech also runs on every resume, media-session
       // play and voice change, and each sweep walks the whole audio cache.
-      const firstSegment = ttsSegments.value[0]
-      const pinId = firstSegment ? getTTSPinIdFromURL(getAudioSrc(firstSegment)) : undefined
+      const pinId = ttsPinId.value
       if (pinId && pinId !== sweptPinId) {
         sweptPinId = pinId
         void sweepTTSAudioCache(pinId)
@@ -824,5 +940,14 @@ export function useTextToSpeech(options: TTSOptions) {
     cyclePlaybackRate,
     forceResume,
     buildTTSEventPayload,
+    // Offline listening
+    hasOfflineTTS,
+    isOfflineTTSEnabled,
+    isDownloadingOfflineTTS,
+    offlineTTSDownloadPercentage,
+    downloadOfflineTTS,
+    cancelOfflineTTSDownload,
+    removeOfflineTTS,
+    exportOfflineTTS,
   }
 }

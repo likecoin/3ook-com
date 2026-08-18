@@ -32,9 +32,9 @@ export function useOfflineBooks() {
   /**
    * Drop every cached variant of one book — a book has one cache per file
    * index x custom-message flag, so an exact key would leave the others
-   * behind. Used when access ends (a returned borrow, a deleted upload);
-   * reader progress keys are left alone so a re-borrow resumes where it
-   * stopped.
+   * behind — along with any TTS audio synthesised from it. Used when access
+   * ends (a returned borrow, a deleted upload); reader progress keys are left
+   * alone so a re-borrow resumes where it stopped.
    */
   async function removeOfflineBook({
     nftClassId,
@@ -52,13 +52,21 @@ export function useOfflineBooks() {
       })
       const keys = (await window.caches.keys())
         .filter(key => isBookFileCacheKeyOfPrefix(key, prefix))
-      if (!keys.length) return
-      await Promise.all(keys.map(key => window.caches.delete(key)))
-      removeBookFileCacheEntries({
+      if (keys.length) {
+        await Promise.all(keys.map(key => window.caches.delete(key)))
+        removeBookFileCacheEntries({
+          cacheKeyPrefix: config.public.cacheKeyPrefix,
+          cacheKeys: keys,
+        })
+        await refreshOfflineBooks()
+      }
+      // Last, and outside the branch above: a listener can have downloaded
+      // audio for a book whose file was never cached, and a failure here must
+      // not cost the file deletion that revokes access to the book itself.
+      await removeTTSPinsForBook({
         cacheKeyPrefix: config.public.cacheKeyPrefix,
-        cacheKeys: keys,
+        nftClassId,
       })
-      await refreshOfflineBooks()
     }
     catch (error) {
       console.error(error)

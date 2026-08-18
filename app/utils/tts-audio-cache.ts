@@ -1,4 +1,5 @@
 import { TTS_AUDIO_CACHE } from '~~/shared/constants/tts-cache'
+import { stripID3v2Tag } from '~~/shared/utils/id3'
 
 /**
  * Byte budget for TTS segment audio, separate from the book files' budget so an
@@ -166,10 +167,16 @@ async function groupEntriesByPin(cache: Cache): Promise<Map<string, Request[]>> 
 /** Pins with audio actually present, so a badge never promises an evicted download. */
 export async function getLiveTTSPinIds(): Promise<Set<string>> {
   if (typeof window === 'undefined' || !window.caches) return new Set()
-  const cache = await window.caches.open(TTS_AUDIO_CACHE)
-  const live = new Set((await groupEntriesByPin(cache)).keys())
-  live.delete('')
-  return live
+  try {
+    const cache = await window.caches.open(TTS_AUDIO_CACHE)
+    const live = new Set((await groupEntriesByPin(cache)).keys())
+    live.delete('')
+    return live
+  }
+  catch (error) {
+    console.error(error)
+    return new Set()
+  }
 }
 
 async function deleteEntries(cache: Cache, requests: Request[]) {
@@ -207,6 +214,55 @@ export async function removeTTSPins({
     console.error(error)
     return new Set()
   }
+}
+
+/**
+ * The key Workbox stored a segment under: its `cacheKeyWillBeUsed` strips
+ * `blocking`, which the native shell sets on every request, so matching the
+ * request URL as-issued would miss every entry inside the app.
+ */
+export function getTTSCacheKeyURL(rawURL: string): string {
+  const url = new URL(rawURL, window.location.origin)
+  url.searchParams.delete('blocking')
+  return url.href
+}
+
+/**
+ * Cached MP3 frames for the given segment URLs, in the order asked for, with
+ * each segment's own ID3 tag removed. Read by URL rather than by walking the
+ * cache, whose keys are text-hashed and carry no playback order. A miss comes
+ * back as undefined: a partial download is still worth exporting.
+ */
+export async function readTTSSegmentAudio(rawURLs: string[]): Promise<(Uint8Array | undefined)[]> {
+  if (typeof window === 'undefined' || !window.caches) return rawURLs.map(() => undefined)
+  const cache = await window.caches.open(TTS_AUDIO_CACHE)
+  const frames: (Uint8Array | undefined)[] = []
+  // Sequential: a whole chapter is tens of megabytes, and a 1500-way fan-out
+  // would hold every segment in memory at once to save a few seconds.
+  for (const rawURL of rawURLs) {
+    const response = await cache.match(getTTSCacheKeyURL(rawURL))
+    frames.push(response ? stripID3v2Tag(new Uint8Array(await response.arrayBuffer())) : undefined)
+  }
+  return frames
+}
+
+/**
+ * Drop every voice's audio for one book, e.g. when a borrow is returned. Covers
+ * the playback lookahead as well as downloads: both are local bytes that would
+ * otherwise outlive the access that produced them.
+ */
+export async function removeTTSPinsForBook({
+  cacheKeyPrefix,
+  nftClassId,
+}: {
+  cacheKeyPrefix: string
+  nftClassId: string
+}): Promise<Set<string>> {
+  const prefix = `${normalizeNFTClassId(nftClassId)}:`
+  const livePinIds = await getLiveTTSPinIds()
+  const pinIds = [...new Set([...livePinIds, ...Object.keys(readTTSPinIndex(cacheKeyPrefix))])]
+    .filter(pinId => pinId.startsWith(prefix))
+  return removeTTSPins({ cacheKeyPrefix, pinIds })
 }
 
 /**

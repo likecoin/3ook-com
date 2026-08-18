@@ -3,7 +3,7 @@ import { basename, join, resolve } from 'node:path'
 import { parseArgs } from 'node:util'
 import { sanitizeTTSText } from '../../app/utils/tts'
 import type { TTSRequestParams } from '../../server/utils/api-tts'
-import { buildID3v2Tag } from '../../server/utils/id3'
+import { buildID3v2Tag, stripID3v2Tag } from '../../shared/utils/id3'
 import { generateTTSCacheKey, getTTSCacheBucket } from '../../server/utils/storage'
 import {
   createTTSPronunciationSigGetter,
@@ -90,20 +90,6 @@ async function fetchEpub(source: string): Promise<Buffer> {
     return Buffer.from(await response.arrayBuffer())
   }
   return readFile(resolve(source))
-}
-
-/**
- * Drop a leading ID3v2 tag. Cached objects are stored tagged, so a downloaded
- * segment would otherwise splice an ID3 header into the middle of the chapter
- * MP3 it is concatenated into.
- */
-function stripID3v2Tag(buffer: Buffer): Buffer {
-  if (buffer.length < 10 || buffer.toString('ascii', 0, 3) !== 'ID3') return buffer
-  // Size is synchsafe: four 7-bit groups, excluding this 10-byte header.
-  const size = ((buffer[6]! & 0x7F) << 21) | ((buffer[7]! & 0x7F) << 14)
-    | ((buffer[8]! & 0x7F) << 7) | (buffer[9]! & 0x7F)
-  const hasFooter = (buffer[5]! & 0x10) !== 0
-  return buffer.subarray(10 + size + (hasFooter ? 10 : 0))
 }
 
 function toCSVCell(value: string | number): string {
@@ -303,7 +289,7 @@ export async function main(argv: string[]) {
           const [cached] = await bucket.file(segment.cacheKey).download()
           reused++
           consecutiveFailures = 0
-          return stripID3v2Tag(cached)
+          return Buffer.from(stripID3v2Tag(cached))
         }
         catch {
           // A miss is the normal case on a first run; fall through and generate.
