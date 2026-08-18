@@ -855,6 +855,18 @@ const { gridClasses, getGridItemClassesByIndex, columnMax } = usePaginatedGrid({
   hasMore: hasMoreItems,
 })
 
+// Offered for any listing failure, not just a 500: a dropped connection surfaces
+// as a `<no response>` with no status code, so a status-keyed retry can't reach
+// the most common failure.
+function getFetchItemsErrorActions(): ErrorHandlerAction[] {
+  return [{
+    label: $t('store_fetch_items_error_retry_button_label'),
+    color: 'secondary',
+    variant: 'subtle',
+    onClick: handleFetchItemsErrorRetryButtonClick,
+  }]
+}
+
 async function fetchTagItems({ isRefresh = false } = {}) {
   // The personalized feed is server-ranked and a single fixed page: skip the
   // staking fetch and the client-side staking re-sort below entirely.
@@ -982,6 +994,7 @@ async function fetchItems({ lazy = false, isRefresh = false } = {}): Promise<boo
       if (!isOnline.value || getIsAbortError(error)) return false
       await handleError(error, {
         title: isRefresh ? $t('store_fetch_items_error') : $t('store_fetch_more_items_error'),
+        actions: getFetchItemsErrorActions(),
       })
       return false
     }
@@ -995,17 +1008,12 @@ async function fetchItems({ lazy = false, isRefresh = false } = {}): Promise<boo
     if (!isOnline.value || getIsAbortError(error)) return false
     await handleError(error, {
       title: isRefresh ? $t('store_fetch_items_error') : $t('store_fetch_more_items_error'),
+      actions: getFetchItemsErrorActions(),
       customHandlerMap: {
+        // Still load-bearing without its own actions: downgrades the modal to a
+        // warning and suppresses the stack dump an upstream 500 doesn't warrant.
         500: {
           level: 'warning',
-          actions: [
-            {
-              label: $t('store_fetch_items_error_retry_button_label'),
-              color: 'secondary',
-              variant: 'subtle',
-              onClick: handleFetchItemsErrorRetryButtonClick,
-            },
-          ],
         },
       },
     })
