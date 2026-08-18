@@ -304,15 +304,12 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
         try {
           // Timeout because a cold segment blocks on full synthesis server-side,
           // which would otherwise stall the whole runway behind it.
-          const response = await fetch(warmURL, {
-            signal: AbortSignal.timeout(WARM_TIMEOUT_MS),
-          })
-          // fetch only rejects on network errors, so an expired signature or a
-          // 5xx would otherwise mark a runway the cache never received.
-          if (!response.ok) return
-          // Drain rather than abandon, to release the connection. Not
-          // body.cancel() — that aborts the stream the worker is still caching.
-          await response.arrayBuffer()
+          const byteLength = await fetchTTSSegmentIntoCache(
+            warmURL,
+            AbortSignal.timeout(WARM_TIMEOUT_MS),
+          )
+          // A non-200 would otherwise mark a runway the cache never received.
+          if (byteLength === undefined) return
         }
         catch {
           // Bad network; the next track change re-arms us.

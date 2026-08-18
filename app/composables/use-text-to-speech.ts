@@ -1,6 +1,7 @@
 import { useDocumentVisibility, useEventListener, useStorage } from '@vueuse/core'
 import type { CustomVoiceData, AffiliateVoiceData } from '~~/shared/types/custom-voice'
 import { buildID3v2Tag } from '~~/shared/utils/id3'
+import { getSafeFilenameSlug } from '~~/shared/utils/filename'
 
 export const TTS_ERROR_NOT_ALLOWED = 'NotAllowedError'
 export const TTS_ERROR_NOT_SUPPORTED = 'NotSupportedError'
@@ -667,6 +668,10 @@ export function useTextToSpeech(options: TTSOptions) {
    * Concatenate the chapter's cached segments into one MP3. Testnet-only, and
    * gated on a completed download by its caller — this reads the cache, it
    * never synthesises, so anything not downloaded is simply absent.
+   *
+   * Each segment is a complete MP3 and may carry its own Xing/Info VBR header,
+   * so some players read the duration off the first one and seek badly. The
+   * batch export script has the same property; audio itself is unaffected.
    */
   async function exportOfflineTTS() {
     const segments = ttsSegments.value
@@ -684,10 +689,10 @@ export function useTextToSpeech(options: TTSOptions) {
       comment: `3ook.com TTS — ${toValue(bookName) || ''}`,
     })
     return {
-      // Blob takes the parts as they are; concatenating first would copy the
-      // whole chapter, which runs to tens of megabytes.
+      // Handed to Blob as parts: it copies them into its own store either way,
+      // and concatenating first would add a second copy of the whole chapter.
       blob: new Blob([tag, ...frames], { type: 'audio/mpeg' }),
-      filename: `${title.replace(/[^\p{L}\p{N}]+/gu, '-').slice(0, 60) || 'chapter'}.mp3`,
+      filename: `${getSafeFilenameSlug(title, { fallback: 'chapter' })}.mp3`,
       missing: segments.length - frames.length,
     }
   }
