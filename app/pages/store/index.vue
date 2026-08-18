@@ -142,7 +142,7 @@
 import { FetchError } from 'ofetch'
 
 import { MAX_BOOKSTORE_PAGE_SIZE, isBookstoreBuiltInListType } from '~~/shared/utils/bookstore'
-import { getHasNFTClassIdPrefix, getStorePublisherRouteName } from '~~/shared/constants/store-routes'
+import { getStorePublisherRouteName } from '~~/shared/constants/store-routes'
 import { formatLikerIdHandle } from '~~/shared/utils/liker-id'
 
 const nuxtApp = useNuxtApp()
@@ -299,7 +299,7 @@ async function classifyTagDeepLink(): Promise<'local-histories' | 'skip' | 'vali
   if (!rawTagId) return 'skip'
 
   // Class ids never reach the listing route; anything 0x-ish is not a tag.
-  if (getHasNFTClassIdPrefix(rawTagId)) return 'invalid'
+  if (getHasEVMAddressPrefix(rawTagId)) return 'invalid'
 
   // A tag the tab coerced away (e.g. a cross-tab link) is invalid.
   if (rawTagId !== tagId.value) return 'invalid'

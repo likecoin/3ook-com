@@ -1,7 +1,5 @@
 import { bytesToHex, hexToBytes } from 'viem'
 
-import { getHasNFTClassIdPrefix } from '../constants/store-routes'
-
 export interface ShortLinkPayload {
   nftClassId: string
   priceIndex?: number
@@ -162,7 +160,7 @@ export function resolveShortLinkRedirect(
   target: 'store' | 'library',
 ): string {
   const payload = parseShortLinkSlug(segment)
-  if (!payload && (!segment || getHasNFTClassIdPrefix(segment))) {
+  if (!payload && (!segment || getHasEVMAddressPrefix(segment))) {
     return `/${target}`
   }
   const pathSegment = payload ? payload.nftClassId : encodeURIComponent(segment)
