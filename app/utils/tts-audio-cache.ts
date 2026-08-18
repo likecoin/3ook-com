@@ -19,21 +19,20 @@ const TTS_SEGMENT_ESTIMATE_BYTES = 30 * 1024
 // Skip a recency write if the pin was already touched within this window.
 const TTS_PIN_TOUCH_INTERVAL_MS = 60 * 1000
 
-// CacheStorage deletes are one backend round trip each; a whole pin is ~1500 of
-// them, so they go out in batches rather than as one unbounded fan-out that the
-// service worker's playback reads would queue behind.
-const DELETE_BATCH_SIZE = 32
+// CacheStorage reads and deletes are one backend round trip each; a whole pin is
+// ~1500 of them, so they go out in batches rather than as one unbounded fan-out
+// that the service worker's playback reads would queue behind.
+const CACHE_BATCH_SIZE = 32
 
 /**
  * A download is one book in one voice: switching voice invalidates it, because
  * voice is part of every segment URL and therefore of the cache entry.
  */
-export interface TTSPinEntry {
-  size: number
-  lastOpened: number
-}
-
-export type TTSPinIndex = Record<string, TTSPinEntry>
+/**
+ * A download is one book in one voice: switching voice invalidates it, because
+ * voice is part of every segment URL and therefore of the cache entry.
+ */
+export type TTSPinIndex = LRUCacheIndex
 
 /**
  * Pin id derived from the segment URL's own query params rather than from the
@@ -59,51 +58,13 @@ export function getTTSPinIndexKey(cacheKeyPrefix: string): string {
   return [cacheKeyPrefix, TTS_AUDIO_CACHE, 'pins'].join('-')
 }
 
+const ttsPinIndex = createLRUCacheIndex({
+  getIndexKey: getTTSPinIndexKey,
+  touchIntervalMs: TTS_PIN_TOUCH_INTERVAL_MS,
+})
+
 export function readTTSPinIndex(cacheKeyPrefix: string): TTSPinIndex {
-  if (typeof window === 'undefined' || !window.localStorage) return {}
-  try {
-    const raw = window.localStorage.getItem(getTTSPinIndexKey(cacheKeyPrefix))
-    if (!raw) return {}
-    const parsed = JSON.parse(raw)
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {}
-    // Coerce each entry — one NaN size would make the sweep's total NaN and
-    // silently disable the eviction this index exists to support.
-    const sanitized: TTSPinIndex = {}
-    for (const [key, value] of Object.entries(parsed)) {
-      if (!value || typeof value !== 'object' || Array.isArray(value)) continue
-      const size = Number((value as { size?: unknown }).size)
-      const lastOpened = Number((value as { lastOpened?: unknown }).lastOpened)
-      if (!Number.isFinite(size) || !Number.isFinite(lastOpened)) continue
-      sanitized[key] = { size, lastOpened }
-    }
-    return sanitized
-  }
-  catch {
-    return {}
-  }
-}
-
-function writeTTSPinIndex(cacheKeyPrefix: string, index: TTSPinIndex) {
-  if (typeof window === 'undefined' || !window.localStorage) return
-  try {
-    window.localStorage.setItem(getTTSPinIndexKey(cacheKeyPrefix), JSON.stringify(index))
-  }
-  catch (error) {
-    console.error(error)
-  }
-}
-
-/**
- * Drop pins from the index, re-reading it first so a download that registered
- * itself during this sweep's awaits is not clobbered by a stale snapshot.
- */
-function removeFromTTSPinIndex(cacheKeyPrefix: string, pinIds: Set<string>) {
-  if (!pinIds.size) return
-  const latest = readTTSPinIndex(cacheKeyPrefix)
-  writeTTSPinIndex(
-    cacheKeyPrefix,
-    Object.fromEntries(Object.entries(latest).filter(([pinId]) => !pinIds.has(pinId))),
-  )
+  return ttsPinIndex.read(cacheKeyPrefix)
 }
 
 /** Record a completed download. Returns the updated index for the sweep. */
@@ -116,21 +77,14 @@ export function recordTTSPin({
   pinId: string
   size: number
 }): TTSPinIndex {
-  const index = readTTSPinIndex(cacheKeyPrefix)
-  index[pinId] = { size, lastOpened: Date.now() }
-  writeTTSPinIndex(cacheKeyPrefix, index)
-  return index
+  return ttsPinIndex.record({ cacheKeyPrefix, key: pinId, size })
 }
 
 /** Bump recency so an actively replayed download is not evicted as stale. */
 export function touchTTSPin({ cacheKeyPrefix, pinId }: { cacheKeyPrefix: string, pinId: string }) {
-  const index = readTTSPinIndex(cacheKeyPrefix)
-  const entry = index[pinId]
-  if (!entry) return
-  const now = Date.now()
-  if (now - entry.lastOpened < TTS_PIN_TOUCH_INTERVAL_MS) return
-  index[pinId] = { ...entry, lastOpened: now }
-  writeTTSPinIndex(cacheKeyPrefix, index)
+  // No upsert, unlike the book index: membership here means "downloaded", so
+  // creating an entry would promote disposable lookahead into a protected pin.
+  ttsPinIndex.touch({ cacheKeyPrefix, key: pinId })
 }
 
 /**
@@ -180,8 +134,8 @@ export async function getLiveTTSPinIds(): Promise<Set<string>> {
 }
 
 async function deleteEntries(cache: Cache, requests: Request[]) {
-  for (let index = 0; index < requests.length; index += DELETE_BATCH_SIZE) {
-    const batch = requests.slice(index, index + DELETE_BATCH_SIZE)
+  for (let index = 0; index < requests.length; index += CACHE_BATCH_SIZE) {
+    const batch = requests.slice(index, index + CACHE_BATCH_SIZE)
     await Promise.all(batch.map(request => cache.delete(request)))
   }
 }
@@ -205,7 +159,7 @@ export async function removeTTSPins({
       await deleteEntries(cache, grouped.get(pinId) ?? [])
       grouped.delete(pinId)
     }
-    removeFromTTSPinIndex(cacheKeyPrefix, new Set(pinIds))
+    ttsPinIndex.remove({ cacheKeyPrefix, keys: pinIds })
     const live = new Set(grouped.keys())
     live.delete('')
     return live
@@ -219,10 +173,13 @@ export async function removeTTSPins({
 /**
  * The key Workbox stored a segment under: its `cacheKeyWillBeUsed` strips
  * `blocking`, which the native shell sets on every request, so matching the
- * request URL as-issued would miss every entry inside the app.
+ * request URL as-issued would miss every entry inside the app. Deliberately not
+ * shared with that handler, which generateSW serialises via toString() — an
+ * imported binding is out of scope there, and so is `window`.
  */
 export function getTTSCacheKeyURL(rawURL: string): string {
-  const url = new URL(rawURL, window.location.origin)
+  const origin = typeof window === 'undefined' ? 'http://localhost' : window.location.origin
+  const url = new URL(rawURL, origin)
   url.searchParams.delete('blocking')
   return url.href
 }
@@ -235,15 +192,26 @@ export function getTTSCacheKeyURL(rawURL: string): string {
  */
 export async function readTTSSegmentAudio(rawURLs: string[]): Promise<(Uint8Array | undefined)[]> {
   if (typeof window === 'undefined' || !window.caches) return rawURLs.map(() => undefined)
-  const cache = await window.caches.open(TTS_AUDIO_CACHE)
-  const frames: (Uint8Array | undefined)[] = []
-  // Sequential: a whole chapter is tens of megabytes, and a 1500-way fan-out
-  // would hold every segment in memory at once to save a few seconds.
-  for (const rawURL of rawURLs) {
-    const response = await cache.match(getTTSCacheKeyURL(rawURL))
-    frames.push(response ? stripID3v2Tag(new Uint8Array(await response.arrayBuffer())) : undefined)
+  try {
+    const cache = await window.caches.open(TTS_AUDIO_CACHE)
+    const frames: (Uint8Array | undefined)[] = []
+    // Concurrent within a batch: every frame is retained either way, so
+    // serialising saves no memory and only costs the user a spinner.
+    for (let index = 0; index < rawURLs.length; index += CACHE_BATCH_SIZE) {
+      const batch = rawURLs.slice(index, index + CACHE_BATCH_SIZE)
+      frames.push(...await Promise.all(batch.map(async (rawURL) => {
+        // ignoreVary mirrors the route that wrote these: edge copies minted
+        // before that deploy carry `vary: Range` and would never match.
+        const response = await cache.match(getTTSCacheKeyURL(rawURL), { ignoreVary: true })
+        return response ? stripID3v2Tag(new Uint8Array(await response.arrayBuffer())) : undefined
+      })))
+    }
+    return frames
   }
-  return frames
+  catch (error) {
+    console.error(error)
+    return rawURLs.map(() => undefined)
+  }
 }
 
 /**
@@ -345,7 +313,7 @@ export async function pruneTTSAudioCache({
       }
     }
 
-    removeFromTTSPinIndex(cacheKeyPrefix, new Set([...dropped, ...evicted]))
+    ttsPinIndex.remove({ cacheKeyPrefix, keys: [...dropped, ...evicted] })
     const live = new Set(grouped.keys())
     live.delete('')
     return live

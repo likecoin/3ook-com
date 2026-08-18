@@ -748,7 +748,10 @@ async function handleDownloadPreview() {
     if (!response.ok) throw new Error(`HTTP ${response.status}`)
     const blob = await response.blob()
     const rawName = customVoice.value?.voiceName || props.existingVoice?.voiceName || $t('tts_custom_voice_default_name')
-    const safeName = rawName.replace(/[^\p{L}\p{N}\-_]+/gu, '_').replace(/^_+|_+$/g, '').slice(0, 50) || 'voice'
+    // Sliced by code point: a name of astral characters (emoji, CJK ext-B) cut
+    // on UTF-16 units leaves a lone surrogate in the download name.
+    const trimmed = rawName.replace(/[^\p{L}\p{N}\-_]+/gu, '_').replace(/^_+|_+$/g, '')
+    const safeName = [...trimmed].slice(0, 50).join('') || 'voice'
     await saveAs(blob, `${safeName}-${voiceLanguage.value}-${Date.now()}.mp3`)
   }
   catch (error: unknown) {

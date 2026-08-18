@@ -4,6 +4,7 @@ import { parseArgs } from 'node:util'
 import { sanitizeTTSText } from '../../app/utils/tts'
 import type { TTSRequestParams } from '../../server/utils/api-tts'
 import { buildID3v2Tag, stripID3v2Tag } from '../../shared/utils/id3'
+import { getSafeFilenameSlug } from '../../shared/utils/filename'
 import { generateTTSCacheKey, getTTSCacheBucket } from '../../server/utils/storage'
 import {
   createTTSPronunciationSigGetter,
@@ -289,7 +290,7 @@ export async function main(argv: string[]) {
           const [cached] = await bucket.file(segment.cacheKey).download()
           reused++
           consecutiveFailures = 0
-          return Buffer.from(stripID3v2Tag(cached))
+          return stripID3v2Tag(cached)
         }
         catch {
           // A miss is the normal case on a first run; fall through and generate.
@@ -345,7 +346,7 @@ export async function main(argv: string[]) {
   // One MP3 per section, so a chapter is playable on its own. Segment audio is
   // concatenated raw and given a single leading tag — one tag per segment would
   // litter ID3 headers through the middle of the file.
-  const bySection = new Map<number, Buffer[]>()
+  const bySection = new Map<number, Uint8Array[]>()
   for (const segment of planned) {
     const buffer = bufferByText.get(segment.synthesisText)
     if (!buffer) continue
@@ -357,7 +358,7 @@ export async function main(argv: string[]) {
   for (const [sectionIndex, buffers] of [...bySection.entries()].sort((a, b) => a[0] - b[0])) {
     const title = chapterTitles[sectionIndex] || `Section ${sectionIndex}`
     const tag = buildID3v2Tag({ title, artist: voiceDisplayName, comment: `3ook.com TTS — ${sourceName}` })
-    const name = `${String(sectionIndex).padStart(3, '0')}-${title.replace(/[^\p{L}\p{N}]+/gu, '-').slice(0, 60)}.mp3`
+    const name = `${String(sectionIndex).padStart(3, '0')}-${getSafeFilenameSlug(title, { fallback: 'section' })}.mp3`
     await writeFile(join(outDir, name), Buffer.concat([tag, ...buffers]))
   }
 

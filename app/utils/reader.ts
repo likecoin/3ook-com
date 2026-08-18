@@ -132,7 +132,7 @@ export const BOOK_FILE_CACHE_MAX_BYTES = 500 * 1024 * 1024
 // re-reads during a session would otherwise rewrite the index repeatedly.
 const BOOK_FILE_CACHE_TOUCH_INTERVAL_MS = 60 * 1000
 
-type BookFileCacheIndex = Record<string, { size: number, lastOpened: number }>
+type BookFileCacheIndex = LRUCacheIndex
 
 /**
  * Recency lives in this localStorage sidecar, not in the Cache entry (which
@@ -142,39 +142,13 @@ export function getBookFileCacheIndexKey(cacheKeyPrefix: string): string {
   return [cacheKeyPrefix, READER_CACHE_KEY, 'cache-index'].join('-')
 }
 
-function readBookFileCacheIndex(cacheKeyPrefix: string): BookFileCacheIndex {
-  if (typeof window === 'undefined' || !window.localStorage) return {}
-  try {
-    const raw = window.localStorage.getItem(getBookFileCacheIndexKey(cacheKeyPrefix))
-    if (!raw) return {}
-    const parsed = JSON.parse(raw)
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {}
-    // Coerce each entry — a single NaN size would make the eviction total NaN
-    // and silently disable the LRU sweep that this index exists to support.
-    const sanitized: BookFileCacheIndex = {}
-    for (const [key, value] of Object.entries(parsed)) {
-      if (!value || typeof value !== 'object' || Array.isArray(value)) continue
-      const size = Number((value as { size?: unknown }).size)
-      const lastOpened = Number((value as { lastOpened?: unknown }).lastOpened)
-      if (!Number.isFinite(size) || !Number.isFinite(lastOpened)) continue
-      sanitized[key] = { size, lastOpened }
-    }
-    return sanitized
-  }
-  catch {
-    return {}
-  }
-}
-
-function writeBookFileCacheIndex(cacheKeyPrefix: string, index: BookFileCacheIndex) {
-  if (typeof window === 'undefined' || !window.localStorage) return
-  try {
-    window.localStorage.setItem(getBookFileCacheIndexKey(cacheKeyPrefix), JSON.stringify(index))
-  }
-  catch (error) {
-    console.error(error)
-  }
-}
+const bookFileCacheIndex = createLRUCacheIndex({
+  getIndexKey: getBookFileCacheIndexKey,
+  touchIntervalMs: BOOK_FILE_CACHE_TOUCH_INTERVAL_MS,
+  // A cache whose metadata was lost is still a real book; the sweep reconciles
+  // it back in at zero size rather than evicting on a guess.
+  shouldCreateMissingOnTouch: true,
+})
 
 /**
  * Record a freshly cached book file. Returns the updated index so the caller
@@ -189,10 +163,7 @@ export function recordBookFileCacheEntry({
   cacheKey: string
   size: number
 }): BookFileCacheIndex {
-  const index = readBookFileCacheIndex(cacheKeyPrefix)
-  index[cacheKey] = { size, lastOpened: Date.now() }
-  writeBookFileCacheIndex(cacheKeyPrefix, index)
-  return index
+  return bookFileCacheIndex.record({ cacheKeyPrefix, key: cacheKey, size })
 }
 
 /**
@@ -207,12 +178,7 @@ export function touchBookFileCacheEntry({
   cacheKeyPrefix: string
   cacheKey: string
 }) {
-  const index = readBookFileCacheIndex(cacheKeyPrefix)
-  const entry = index[cacheKey]
-  const now = Date.now()
-  if (entry && now - entry.lastOpened < BOOK_FILE_CACHE_TOUCH_INTERVAL_MS) return
-  index[cacheKey] = { size: entry?.size ?? 0, lastOpened: now }
-  writeBookFileCacheIndex(cacheKeyPrefix, index)
+  bookFileCacheIndex.touch({ cacheKeyPrefix, key: cacheKey })
 }
 
 /**
@@ -227,14 +193,7 @@ export function removeBookFileCacheEntries({
   cacheKeyPrefix: string
   cacheKeys: string[]
 }) {
-  if (!cacheKeys.length) return
-  const index = readBookFileCacheIndex(cacheKeyPrefix)
-  const removed = new Set(cacheKeys.filter(cacheKey => cacheKey in index))
-  if (!removed.size) return
-  writeBookFileCacheIndex(
-    cacheKeyPrefix,
-    Object.fromEntries(Object.entries(index).filter(([name]) => !removed.has(name))),
-  )
+  bookFileCacheIndex.remove({ cacheKeyPrefix, keys: cacheKeys })
 }
 
 /**
@@ -262,7 +221,7 @@ export async function pruneBookFileCaches({
       (await window.caches.keys()).filter(name => isBookFileCacheKeyOfPrefix(name, bookCachePrefix)),
     )
 
-    const stored = providedIndex ?? readBookFileCacheIndex(cacheKeyPrefix)
+    const stored = providedIndex ?? bookFileCacheIndex.read(cacheKeyPrefix)
 
     // Keep only entries whose cache still exists; synthesize entries for
     // caches with lost metadata as just-opened so a valid book is never
@@ -301,7 +260,7 @@ export async function pruneBookFileCaches({
     const next = evicted.size
       ? Object.fromEntries(Object.entries(index).filter(([name]) => !evicted.has(name)))
       : index
-    writeBookFileCacheIndex(cacheKeyPrefix, next)
+    bookFileCacheIndex.write(cacheKeyPrefix, next)
   }
   catch (error) {
     console.error(error)

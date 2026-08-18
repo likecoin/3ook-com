@@ -211,3 +211,20 @@ export function getTTSConfigCacheKey(cacheKeyPrefix: string) {
 export function getTTSConfigKeyWithSuffix(key: string, suffix: TTSConfigKeySuffix) {
   return `${key}-${suffix}`
 }
+
+/**
+ * Fetch one segment so the service worker caches it, returning its byte length.
+ *
+ * Undefined on a non-200: fetch only rejects on network errors, so an expired
+ * signature or a 5xx would otherwise count as a segment now playable offline.
+ * The body is drained rather than abandoned, to release the connection — not
+ * body.cancel(), which aborts the stream the worker is still caching.
+ */
+export async function fetchTTSSegmentIntoCache(
+  url: string,
+  signal?: AbortSignal,
+): Promise<number | undefined> {
+  const response = await fetch(url, { signal })
+  if (!response.ok) return undefined
+  return (await response.arrayBuffer()).byteLength
+}

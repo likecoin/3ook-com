@@ -115,21 +115,12 @@ export function useOfflineTTS() {
         if (signal?.aborted) break
 
         try {
-          // The drain runs inside the wrapper, not after it: a body that stalls
-          // mid-stream must still hit the timeout, and a cancel during the drain
-          // must still abort the request rather than wait it out.
-          const byteLength = await withDownloadTimeout(signal, async (fetchSignal) => {
-            const response = await fetch(
-              getAudioSrc(segment, { blocking: true }),
-              { signal: fetchSignal },
-            )
-            // fetch only rejects on network errors, so an expired signature or a
-            // 5xx would otherwise count as a segment we can play offline.
-            if (!response.ok) return undefined
-            // Drain rather than abandon, to release the connection. Not
-            // body.cancel() — that aborts the stream the worker is still caching.
-            return (await response.arrayBuffer()).byteLength
-          })
+          // The fetch runs inside the wrapper, not around it: the drain is part
+          // of what must hit the timeout, and a cancel mid-drain must abort the
+          // request rather than wait it out.
+          const byteLength = await withDownloadTimeout(signal, async fetchSignal =>
+            fetchTTSSegmentIntoCache(getAudioSrc(segment, { blocking: true }), fetchSignal),
+          )
           if (byteLength === undefined) {
             failed++
             continue
