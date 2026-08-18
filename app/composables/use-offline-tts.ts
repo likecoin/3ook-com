@@ -76,6 +76,13 @@ export function useOfflineTTS() {
       throw new Error('A TTS download is already running')
     }
 
+    // Segments already on disk — from a cancelled run, or from ordinary
+    // listening — are counted rather than refetched, so resuming costs one
+    // cache walk instead of a second pass over the whole book. Built once:
+    // every URL re-sanitizes and re-signs its segment text.
+    const urls = segments.map(segment => getAudioSrc(segment, { blocking: true }))
+    const cachedURLs = await getCachedTTSSegmentURLs(urls)
+
     const releasePin = markTTSPinInFlight(pinId)
     isDownloading.value = true
     let completed = 0
@@ -84,12 +91,18 @@ export function useOfflineTTS() {
     downloadProgress.value = { completed, total: segments.length, bytes }
 
     try {
-      for (const segment of segments) {
+      for (const url of urls) {
         if (signal?.aborted) break
         while (shouldPause?.() && !signal?.aborted) {
           await new Promise(resolve => setTimeout(resolve, BACKPRESSURE_POLL_MS))
         }
         if (signal?.aborted) break
+
+        if (cachedURLs.has(url)) {
+          completed++
+          downloadProgress.value = { completed, total: segments.length, bytes }
+          continue
+        }
 
         try {
           // The fetch runs inside the wrapper, not around it: the drain is part
@@ -97,10 +110,7 @@ export function useOfflineTTS() {
           // request rather than wait it out.
           const byteLength = await withAbortTimeout(
             DOWNLOAD_TIMEOUT_MS,
-            fetchSignal => fetchTTSSegmentIntoCache(
-              getAudioSrc(segment, { blocking: true }),
-              fetchSignal,
-            ),
+            fetchSignal => fetchTTSSegmentIntoCache(url, fetchSignal),
             signal,
           )
           if (byteLength === undefined) {
