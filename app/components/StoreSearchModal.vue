@@ -5,7 +5,7 @@
     :ui="{
       // translate-y-0 cancels the modal theme's default -translate-y-1/2 so the
       // box anchors by its top edge and grows downward as suggestions appear.
-      content: 'max-phone:top-30 top-1/4 translate-y-0 rounded-full',
+      content: 'max-phone:top-30 top-1/4 translate-y-0 rounded-[32px]',
       body: 'p-0 sm:p-0',
       footer: [
         'flex',
