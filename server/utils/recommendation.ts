@@ -230,6 +230,19 @@ async function fetchEngagedBookClassIds(wallet: string): Promise<string[]> {
   return snapshot.docs.map(doc => doc.id.toLowerCase())
 }
 
+// Resolves undefined once the budget runs out. The indexer fetch re-arms its own
+// per-attempt abort signal, so an external one gets clobbered — racing the
+// deadline is what actually bounds it. The abandoned request settles on its own;
+// its rejection is swallowed so a dropped page can't surface as unhandled.
+function withDeadline<T>(promise: Promise<T>, ms: number): Promise<T | undefined> {
+  promise.catch(() => {})
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const expiry = new Promise<undefined>((resolve) => {
+    timer = setTimeout(() => resolve(undefined), ms)
+  })
+  return Promise.race([promise, expiry]).finally(() => clearTimeout(timer))
+}
+
 // Owning a book writes no Firestore doc until it is opened, so ownership has to
 // come from the indexer — this is the half of the shelf the portrait can't see.
 // Pages arrive newest-acquired first, so a capped drain drops the coldest tail.
@@ -239,10 +252,18 @@ async function fetchOwnedBookClassIds(wallet: string): Promise<string[]> {
   let key: string | undefined
   try {
     for (let page = 0; page < OWNED_BOOKS_MAX_PAGES; page += 1) {
-      const response = await fetchTokenBookNFTsByAccount(wallet, { limit: OWNED_BOOKS_PAGE_SIZE, key })
+      // Checked before each page, not after: one wedged page would otherwise run
+      // to the indexer's own 30s x 3 policy and blow this budget many times over.
+      const remaining = deadline - Date.now()
+      if (remaining <= 0) break
+      const response = await withDeadline(
+        fetchTokenBookNFTsByAccount(wallet, { limit: OWNED_BOOKS_PAGE_SIZE, key }),
+        remaining,
+      )
+      if (!response) break
       classIds.push(...response.data.map(nftClass => nftClass.address.toLowerCase()))
       const nextKey = getIndexerNextKey(response, OWNED_BOOKS_PAGE_SIZE)
-      if (!nextKey || Date.now() > deadline) break
+      if (!nextKey) break
       key = nextKey.toString()
     }
   }

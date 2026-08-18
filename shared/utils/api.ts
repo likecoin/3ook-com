@@ -2,7 +2,9 @@ import type { LikerInfoResponseData } from '~~/shared/types/api'
 
 export function getLikeCoinAPIFetch() {
   const config = useRuntimeConfig()
-  return createRetryingFetch({ baseURL: config.public.likeCoinAPIEndpoint })
+  // Bound wedged requests (see createRetryingFetch) so a hung upstream can't
+  // stall a caller indefinitely — the For You portrait fans out ~50 of these.
+  return createRetryingFetch({ baseURL: config.public.likeCoinAPIEndpoint, timeout: API_FETCH_TIMEOUT_MS })
 }
 
 export function fetchLikerProfileInfo(

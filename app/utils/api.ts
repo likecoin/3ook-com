@@ -76,6 +76,11 @@ export function fetchBookstoreForYouProducts({
       seed,
       library: isLibrary ? '1' : undefined,
     },
+    // Opted out of the shared retry policy: the endpoint is uncached and its
+    // recompute is expensive, and aborting the client doesn't stop the handler —
+    // so a retry stacks a second full compute on a server already struggling.
+    // The listing surfaces a retry button instead, which the reader controls.
+    retry: 0,
   })
 }
 
