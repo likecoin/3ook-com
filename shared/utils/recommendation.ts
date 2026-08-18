@@ -164,6 +164,21 @@ function applyRecencyDecay(
   return strength * Math.exp(-ageDays / RECENCY_DECAY_DAYS)
 }
 
+/**
+ * Whether a book clears the bar that counts toward the cold-start gate. Exported
+ * so the portrait build can settle the gate from the Firestore docs alone,
+ * before paying for the per-book metadata that only affinity needs.
+ */
+export function getIsSignalBook(entry: PortraitBookEntry): boolean {
+  return getIsSignalStrength(computeBookEngagementStrength(entry))
+}
+
+// Takes the strength rather than the entry so a caller that already computed one
+// doesn't pay for it twice; both forms share this single threshold.
+export function getIsSignalStrength(strength: number): boolean {
+  return strength >= SIGNAL_WEIGHT_THRESHOLD
+}
+
 export function computeBookEngagementWeight(
   entry: PortraitBookEntry,
   nowMs: number,
@@ -230,7 +245,7 @@ export function derivePortraitFromDocs(
     // thresholds, putting even a finished book under the signal bar at ~107 days.
     // Wishlist entries below already count without decay.
     const strength = computeBookEngagementStrength(entry)
-    if (strength >= SIGNAL_WEIGHT_THRESHOLD) signalBookCount += 1
+    if (getIsSignalStrength(strength)) signalBookCount += 1
     const metadata = metadataByClassId[entry.nftClassId.toLowerCase()]
     if (metadata) addBookAffinity(metadata, applyRecencyDecay(strength, entry, nowMs))
   }

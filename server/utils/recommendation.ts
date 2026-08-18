@@ -15,6 +15,7 @@ import {
   derivePortraitFromDocs,
   filterMeaningfulKeywords,
   getCandidateClassId,
+  getIsSignalBook,
   getTopAffinityKeys,
   scoreCandidates,
 } from '~~/shared/utils/recommendation'
@@ -150,10 +151,25 @@ async function buildUserPortrait(wallet: string): Promise<UserAffinityPortrait> 
   // appear more than once — dedupe or its affinity gets counted twice.
   const wishlistClassIds = [...new Set(bookListItems.map(item => item.nftClassId.toLowerCase()))]
 
-  const metadataClassIds = [...new Set([
-    ...bookEntries.map(entry => entry.nftClassId.toLowerCase()),
-    ...wishlistClassIds,
-  ])]
+  // The gate is settled by the docs alone — the metadata fan-out below feeds
+  // affinity, which a cold-start feed never reads. Fetching it first would buy
+  // ~50 upstream calls to answer a question already answered.
+  const engagedClassIds = bookEntries.map(entry => entry.nftClassId.toLowerCase())
+  const signalBookCount = bookEntries.filter(getIsSignalBook).length + wishlistClassIds.length
+  if (signalBookCount < FOR_YOU_MIN_SIGNAL_BOOKS) {
+    return {
+      genres: {},
+      authors: {},
+      keywords: {},
+      languages: {},
+      engagedClassIds,
+      wishlistClassIds,
+      recommendedClassIds: [],
+      signalBookCount,
+    }
+  }
+
+  const metadataClassIds = [...new Set([...engagedClassIds, ...wishlistClassIds])]
   const metadataByClassId = await fetchPortraitMetadataByClassIds(metadataClassIds)
 
   return derivePortraitFromDocs(bookEntries, wishlistClassIds, metadataByClassId, Date.now())

@@ -5,6 +5,7 @@ import {
   computeBookEngagementWeight,
   derivePortraitFromDocs,
   filterMeaningfulKeywords,
+  getIsSignalBook,
   getTopAffinityKeys,
   scoreCandidates,
 } from '~~/shared/utils/recommendation'
@@ -97,6 +98,44 @@ describe('computeBookEngagementWeight', () => {
     )
     expect(stale).toBeLessThan(fresh)
     expect(stale).toBeGreaterThan(0)
+  })
+})
+
+describe('getIsSignalBook', () => {
+  // The gate the cold-start feed turns on, settled from Firestore docs alone —
+  // so it must agree with what derivePortraitFromDocs counts.
+  it('clears the bar at roughly 40 seconds of reading', () => {
+    expect(getIsSignalBook(makeEntry({ totalReadingTimeMs: 20_000 }))).toBe(false)
+    expect(getIsSignalBook(makeEntry({ totalReadingTimeMs: 60_000 }))).toBe(true)
+  })
+
+  it('counts an abandoned book as no signal however long it was read', () => {
+    expect(getIsSignalBook(
+      makeEntry({ totalReadingTimeMs: 600 * 60_000, didNotFinishAtMs: NOW }),
+    )).toBe(false)
+  })
+
+  it('counts a barely-read book that was completed or borrowed', () => {
+    expect(getIsSignalBook(makeEntry({ totalReadingTimeMs: 0, completedAtMs: NOW }))).toBe(true)
+    expect(getIsSignalBook(makeEntry({ totalReadingTimeMs: 0, plusBorrowedAtMs: NOW }))).toBe(true)
+  })
+
+  it('does not decay, so an old book still counts toward the gate', () => {
+    expect(getIsSignalBook(
+      makeEntry({ totalReadingTimeMs: 60 * 60_000, lastOpenedTimeMs: NOW - 400 * DAY_MS }),
+    )).toBe(true)
+  })
+
+  it('agrees with the count derivePortraitFromDocs reports', () => {
+    const entries = [
+      makeEntry({ nftClassId: '0xaaa', totalReadingTimeMs: 60_000 }),
+      makeEntry({ nftClassId: '0xbbb', totalReadingTimeMs: 20_000 }),
+      makeEntry({ nftClassId: '0xccc', totalReadingTimeMs: 600 * 60_000, didNotFinishAtMs: NOW }),
+    ]
+    const wishlist = ['0xddd']
+    const portrait = derivePortraitFromDocs(entries, wishlist, {}, NOW)
+    expect(entries.filter(getIsSignalBook).length + wishlist.length)
+      .toBe(portrait.signalBookCount)
   })
 })
 
