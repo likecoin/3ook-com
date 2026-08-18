@@ -108,3 +108,23 @@ export function getIsInternalLLSource(source?: string) {
   if (!value) return false
   return checkIsEVMAddress(value) || INTERNAL_LL_SOURCE_SET.has(value)
 }
+
+// Store-supplied install sources that name no channel. Play pairs these with
+// `utm_medium=organic`, but also sends them with the medium absent or empty —
+// and the bridge drops empty strings, so a medium check alone can't catch them.
+const NON_CHANNEL_INSTALL_SOURCES = [
+  '(direct)',
+  '(not set)',
+  'google-play',
+] as const
+
+// Lowercased at build for the same reason as the internal set above.
+const NON_CHANNEL_INSTALL_SOURCE_SET = new Set<string>(
+  NON_CHANNEL_INSTALL_SOURCES.map(source => source.toLowerCase()),
+)
+
+export function getIsNonChannelInstallSource(source?: string) {
+  const value = source?.toLowerCase()
+  if (!value) return false
+  return NON_CHANNEL_INSTALL_SOURCE_SET.has(value)
+}

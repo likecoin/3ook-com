@@ -1,4 +1,4 @@
-import { getIsInternalLLSource } from '~~/shared/constants/analytics'
+import { getIsInternalLLSource, getIsNonChannelInstallSource } from '~~/shared/constants/analytics'
 import { getInstallAttribution } from '~/utils/native-bridge'
 
 // Meta's click-attribution window; install click ids older than this are dropped
@@ -37,6 +37,7 @@ function getAcquisitionChannel({
   const installAttribution = install?.attribution
   if (installAttribution?.utm_source
     && !getIsInternalLLSource(installAttribution.utm_source)
+    && !getIsNonChannelInstallSource(installAttribution.utm_source)
     && installAttribution.utm_medium?.toLowerCase() !== 'organic') {
     return {
       mediaSource: installAttribution.utm_source,

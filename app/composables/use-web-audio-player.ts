@@ -273,6 +273,7 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
         const segment = index <= end ? segments[index] : undefined
         if (!segment) return // Window already warm.
 
+        const base = currentIndex
         try {
           // Timeout because a cold segment blocks on full synthesis server-side,
           // which would otherwise stall the whole runway behind it.
@@ -290,7 +291,11 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
           // Bad network; the next track change re-arms us.
           return
         }
-        warmedThrough = index
+        // load() and stop() clear warmBase, so a mark can't outlive the book it
+        // was fetched for. A backward seek leaves the playhead behind the mark;
+        // a forward one keeps it true, the index it counts being absolute.
+        if (warmBase !== base) return
+        if (currentIndex >= base) warmedThrough = index
       }
     }
     finally {

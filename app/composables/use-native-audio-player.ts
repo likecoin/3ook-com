@@ -8,6 +8,9 @@ export function useNativeAudioPlayer(isActive: Ref<boolean | undefined>): TTSAud
   // downloaded. The shell reports no depth back, so this is a request, not a fact.
   let prefetchCount = 1
   let hasCrossedSegment = false
+  // The bridge carries no error state, so latch the shell's last error to keep
+  // resume() honest; cleared wherever playback demonstrably recovered.
+  let errored = false
 
   function on<K extends keyof TTSAudioPlayerEvents>(event: K, handler: TTSAudioPlayerEvents[K]) {
     handlers[event] = handler
@@ -22,6 +25,7 @@ export function useNativeAudioPlayer(isActive: Ref<boolean | undefined>): TTSAud
     switch (detail.type) {
       case 'playbackState':
         if (detail.state === 'playing') {
+          errored = false
           handlers.play?.()
         }
         else if (detail.state === 'buffering') {
@@ -37,6 +41,7 @@ export function useNativeAudioPlayer(isActive: Ref<boolean | undefined>): TTSAud
       case 'trackChanged':
         if (typeof detail.index === 'number') {
           hasCrossedSegment = true
+          errored = false
           handlers.trackChanged?.(detail.index, detail.isResync ? { isResync: true } : undefined)
         }
         break
@@ -50,6 +55,7 @@ export function useNativeAudioPlayer(isActive: Ref<boolean | undefined>): TTSAud
         }
         break
       case 'error':
+        errored = true
         handlers.error?.(detail.message || 'Native audio error')
         break
     }
@@ -73,15 +79,18 @@ export function useNativeAudioPlayer(isActive: Ref<boolean | undefined>): TTSAud
     })
     prefetchCount = options.prefetchCount ?? 1
     hasCrossedSegment = false
+    errored = false
     loaded = true
   }
 
+  // For an entitled listener this clears the offline gate on the first boundary,
+  // leaving the network_error backstop to raise the modal.
   function getWarmRunway(): number {
     return hasCrossedSegment ? prefetchCount : 0
   }
 
   function resume(): boolean {
-    if (!loaded) return false
+    if (!loaded || errored) return false
     postToNative({ type: 'resume' })
     return true
   }

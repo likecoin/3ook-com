@@ -179,6 +179,18 @@ describe('getAnalyticsParameters acquisition channel', () => {
     expect(params.campaign).toBe('120210000000000000')
   })
 
+  // The bridge drops empty strings, so a referrer carrying `utm_medium=` arrives
+  // with the key absent and the organic medium check never fires.
+  it.each(['(direct)', '(not set)', 'google-play'])(
+    'names no channel for a %s install with no medium at all',
+    (source) => {
+      setInstallAttribution({ utm_source: source })
+      const params = useAnalytics().getAnalyticsParameters()
+      expect(params.mediaSource).toBeUndefined()
+      expect(params.campaign).toBeUndefined()
+    },
+  )
+
   it('does not pair a campaign with a source from another rung', () => {
     mockQuery.value = { utm_campaign: 'live-campaign' }
     setInstallAttribution({ utm_source: 'apple_ads', utm_medium: 'cpc' })

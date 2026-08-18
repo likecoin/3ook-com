@@ -25,6 +25,8 @@ declare interface TTSAudioPlayer {
     // no lookahead beyond the idle player's next segment.
     prefetchCount?: number
   }): void
+  // False when the player cannot resume in place — never loaded, or errored —
+  // so the caller falls back to a full load rather than a silent no-op.
   resume(): boolean
   pause(): void
   stop(): void
