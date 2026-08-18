@@ -79,6 +79,16 @@ function getLastSessionRefreshTs(): number {
   return Number(localStorage.getItem(SESSION_REFRESH_TIMESTAMP_KEY)) || 0
 }
 
+// Tracks its own timestamp for the same reason as the SW check below: a failed
+// refresh never advances the success one, so every mount and every refocus would
+// otherwise re-report one stuck session until its cookie expires.
+const SESSION_REFRESH_ERROR_LOG_TIMESTAMP_KEY = 'lastSessionRefreshErrorLogTs'
+
+function getLastSessionRefreshErrorLogTs(): number {
+  if (!import.meta.client) return 0
+  return Number(localStorage.getItem(SESSION_REFRESH_ERROR_LOG_TIMESTAMP_KEY)) || 0
+}
+
 async function maybeRefreshSession() {
   if (!user.value) return
   if (Date.now() - getLastSessionRefreshTs() <= SESSION_REFRESH_THRESHOLD_MS) return
@@ -87,6 +97,11 @@ async function maybeRefreshSession() {
   }
   catch (error) {
     console.warn('Failed to refresh session info:', error)
+    const now = Date.now()
+    if (now - getLastSessionRefreshErrorLogTs() <= SESSION_REFRESH_THRESHOLD_MS) return
+    if (useLogSessionPeriodicRefreshError(error, { isApp: isApp.value })) {
+      localStorage.setItem(SESSION_REFRESH_ERROR_LOG_TIMESTAMP_KEY, String(now))
+    }
   }
 }
 

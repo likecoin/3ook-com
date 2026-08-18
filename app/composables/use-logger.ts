@@ -399,6 +399,27 @@ export function useLogRecommendFetchError(error: unknown, {
   })
 }
 
+// Same guard as the feed above: a superseded fetch and an offline device aren't
+// session failures, while a timeout is. Scoped to app.vue's periodic refresh —
+// the other refreshSessionInfo callers don't report, so this is not a total.
+// Returns whether an event was sent so the caller can throttle on real reports
+// only; a dropped abort or offline error must not consume its window.
+export function useLogSessionPeriodicRefreshError(error: unknown, {
+  isApp = false,
+}: {
+  isApp?: boolean
+} = {}): boolean {
+  const isTimeout = getIsTimeoutError(error)
+  if (!isTimeout && getIsAbortError(error)) return false
+  if (import.meta.client && !navigator.onLine) return false
+  useLogEvent('session_periodic_refresh_error', {
+    is_app: isApp,
+    error_code: isTimeout ? 'timeout' : getErrorCode(error),
+    error_message: getErrorEventMessage(error),
+  })
+  return true
+}
+
 // Person-property writes outside the identify flow (e.g. settings changes).
 export function useSetLogPersonProperties(properties: Record<string, unknown>) {
   try {
