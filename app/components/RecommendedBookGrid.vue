@@ -66,7 +66,7 @@ const visibleNFTClassIds = computed(() => props.nftClassIds.filter((nftClassId) 
   return true
 }))
 
-const { gridClasses, getGridItemClassesByIndex } = usePaginatedGrid({
+const { gridClasses, getGridItemClassesByIndex, getVisibleCount } = usePaginatedGrid({
   itemsCount: computed(() => visibleNFTClassIds.value.length),
   hasMore: false,
   maxRows: computed(() => props.maxRows),
@@ -97,6 +97,7 @@ function handleBookOpen(classId: string, index: number) {
     nftClassId: classId,
     isPersonalized: getIsItemPersonalized(classId),
     llMedium: getItemLLMedium(classId),
+    llSource: props.llSource,
     // Rank within what was actually rendered: hidden books are filtered out
     // before this list, so the visible index is the rank the reader saw.
     rank: index,
@@ -107,7 +108,25 @@ function handleBookOpen(classId: string, index: number) {
 
 // Anchored on the list, not the section: its heading clears the fold well before
 // a cover does, and a heading nobody read is not an impression.
-const { hasBeenVisible: hasSeenBookGrid } = useVisibility('bookGrid')
+const { hasBeenVisible: hasSeenBookGrid, element: bookGridElement } = useVisibility('bookGrid')
+
+// Measured off the resolved grid rather than mirroring the CSS breakpoints in
+// JS, which is the duplication this exists to avoid.
+function getRenderedBookCount() {
+  const boundCount = visibleNFTClassIds.value.length
+  // A compact grid applies no hiding classes, and without a row cap nothing is
+  // hidden either — skip the forced style recalc for both.
+  if (props.isCompact || !props.maxRows) return boundCount
+  const gridElement = unrefElement(bookGridElement)
+  if (!gridElement) return boundCount
+  const columns = window.getComputedStyle(gridElement).gridTemplateColumns
+  // An unrendered grid reports the specified value (`repeat(3, ...)`) rather
+  // than used pixel tracks, which would miscount the columns.
+  if (!columns || columns.includes('(')) return boundCount
+  const columnCount = columns.split(' ').filter(Boolean).length
+  if (!columnCount) return boundCount
+  return getVisibleCount(columnCount)
+}
 
 // Keyed on the feed, never on the ids: callers bind a list that keeps churning
 // as owned-book, author and bookstore-info lookups resolve, which would bill one
@@ -124,9 +143,12 @@ const recommendationViewKey = computed(() => {
 const loggedRecommendationViewKeys = new Set<string>()
 
 if (import.meta.client) {
+  // `post`: the section unmounts whenever the id list flaps empty, so a pre-flush
+  // callback would measure a detached grid and silently report the bound count.
   watch(recommendationViewKey, (key) => {
     if (key === undefined || loggedRecommendationViewKeys.has(key)) return
     loggedRecommendationViewKeys.add(key)
+    const renderedBookCount = getRenderedBookCount()
     useLogRecommendBooksView({
       eventName: 'recommend_books_view',
       // No grid-level medium: a blended grid's items report their own, so naming
@@ -137,9 +159,11 @@ if (import.meta.client) {
       personalizedCount: personalizedClassIds.value.length,
       isLibrary: props.isLibrary,
       bookCount: visibleNFTClassIds.value.length,
+      visibleCount: renderedBookCount,
       feedId: key,
-      nftClassIds: visibleNFTClassIds.value,
+      // Hidden books sit at the end, so the visible slice is the ranked prefix.
+      nftClassIds: visibleNFTClassIds.value.slice(0, renderedBookCount),
     })
-  })
+  }, { flush: 'post' })
 }
 </script>

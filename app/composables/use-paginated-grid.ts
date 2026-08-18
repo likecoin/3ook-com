@@ -56,28 +56,44 @@ export default function usePaginatedGrid(props: {
     return remainder !== 0 && index >= itemsCount.value - remainder
   }
 
+  function getIsItemHidden(index: number, column: number) {
+    if (!hasMore.value && maxRows.value <= 0) return false
+    const isTrimmedLastRow = hasMore.value && index >= itemsCount.value - 1 - columnMax.value
+    const isHiddenIncompleteRow = isTrimmedLastRow && isInIncompleteRow(index, column)
+    // Whole rows only: under the cap, the ragged last row is trimmed too.
+    const maxVisibleCount = maxRows.value * column
+    const isBeyondMaxRows = maxRows.value > 0
+      && (index >= maxVisibleCount
+        || (itemsCount.value <= maxVisibleCount && isInIncompleteRow(index, column)))
+    return isHiddenIncompleteRow || isBeyondMaxRows
+  }
+
   function getGridItemClassesByIndex(index: number) {
     const classes: string[] = []
     if (!hasMore.value && maxRows.value <= 0) return classes
-    const isTrimmedLastRow = hasMore.value && index >= itemsCount.value - 1 - columnMax.value
     for (let column = columnMin.value; column <= columnMax.value; column++) {
-      const isHiddenIncompleteRow = isTrimmedLastRow && isInIncompleteRow(index, column)
-      // Whole rows only: under the cap, the ragged last row is trimmed too.
-      const maxVisibleCount = maxRows.value * column
-      const isBeyondMaxRows = maxRows.value > 0
-        && (index >= maxVisibleCount
-          || (itemsCount.value <= maxVisibleCount && isInIncompleteRow(index, column)))
-      if (isHiddenIncompleteRow || isBeyondMaxRows) {
-        const gridItemClass = getColumnClass(column).gridItem
-        if (gridItemClass) classes.push(gridItemClass)
-      }
+      if (!getIsItemHidden(index, column)) continue
+      const gridItemClass = getColumnClass(column).gridItem
+      if (gridItemClass) classes.push(gridItemClass)
     }
     return classes
+  }
+
+  // How many items a given column count actually renders. Overflow rows are
+  // hidden in CSS, so an impression counting bound ids bills ranks nobody saw.
+  function getVisibleCount(column: number) {
+    const clampedColumn = Math.min(Math.max(column, columnMin.value), columnMax.value)
+    let count = 0
+    for (let index = 0; index < itemsCount.value; index++) {
+      if (!getIsItemHidden(index, clampedColumn)) count++
+    }
+    return count
   }
 
   return {
     gridClasses,
     getGridItemClassesByIndex,
+    getVisibleCount,
     columnMax,
   }
 }

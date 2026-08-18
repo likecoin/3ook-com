@@ -179,7 +179,7 @@ const { getCheckoutCurrency } = usePaymentCurrency()
 const { handleError } = useErrorHandler()
 const { getAnalyticsParameters } = useAnalytics()
 // The surface that led here, snapshotted before the redirect to Stripe.
-const entryLinkTags = useEntryLinkTags()
+const entryLinkTagProperties = useEntryLinkTagProperties()
 const { getResizedNormalizedImageURL } = useImageResize()
 const { t: $t, locale } = useI18n()
 const localeString = useLocaleString()
@@ -295,8 +295,7 @@ const eventPayload = computed(() => {
       quantity: item.quantity,
       google_business_vertical: 'retail',
     })),
-    ll_medium: entryLinkTags.llMedium,
-    ll_source: entryLinkTags.llSource,
+    ...entryLinkTagProperties,
   }
   return payload
 })

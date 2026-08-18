@@ -128,7 +128,7 @@ const { getAnalyticsParameters } = useAnalytics()
 const { getCheckoutCurrency } = usePaymentCurrency()
 const { isApp } = useAppDetection()
 // The surface that led here, snapshotted before the redirect to Stripe.
-const entryLinkTags = useEntryLinkTags()
+const entryLinkTagProperties = useEntryLinkTagProperties()
 
 const pageTitle = computed(() => $t('book_list_title'))
 const pageDescription = computed(() => $t('book_list_description'))
@@ -211,8 +211,7 @@ async function handleCheckoutButtonClick() {
     )
     useLogEvent('begin_checkout', {
       transaction_id: paymentId,
-      ll_medium: entryLinkTags.llMedium,
-      ll_source: entryLinkTags.llSource,
+      ...entryLinkTagProperties,
     })
     await navigateTo(url, { external: true })
   }

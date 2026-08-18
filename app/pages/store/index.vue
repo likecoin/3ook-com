@@ -111,7 +111,7 @@
           :should-show-plus-reading-icon="!isLibraryTab"
           :is-library="isLibraryTab"
           :tag="tagId"
-          ll-source="bookstore"
+          :ll-source="GRID_LL_SOURCE"
           @open="handleBookstoreItemOpen($event, index)"
         />
       </ul>
@@ -861,6 +861,9 @@ const llMedium = computed(() => {
 // listing is what credits the tag; the default tab stays unattributed.
 const itemLLMedium = computed(() =>
   llMedium.value || (isDefaultTagId.value ? undefined : `tag-${tagId.value}`))
+// One value for the grid's links, its clicks and its impression, so the three
+// cannot drift apart.
+const GRID_LL_SOURCE = 'bookstore'
 
 const hasForYouFetchError = ref(false)
 
@@ -870,6 +873,7 @@ function handleBookstoreItemOpen(classId: string, index: number) {
     nftClassId: classId,
     isPersonalized: bookstoreStore.getIsForYouPersonalized(isLibraryTab.value),
     llMedium: llMedium.value,
+    llSource: GRID_LL_SOURCE,
     // The grid renders `products.items` in rank order, so the render index is
     // the served rank.
     rank: index,
@@ -898,6 +902,7 @@ watch(forYouFeedViewKey, (key) => {
   useLogRecommendBooksView({
     eventName: isLibraryTab.value ? 'library_for_you_view' : 'store_for_you_view',
     llMedium: llMedium.value,
+    llSource: GRID_LL_SOURCE,
     isPersonalized: bookstoreStore.getIsForYouPersonalized(isLibraryTab.value),
     isLibrary: isLibraryTab.value,
     bookCount: itemsCount.value,

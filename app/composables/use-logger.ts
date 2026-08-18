@@ -253,18 +253,23 @@ export function useLogEvent(eventName: string, eventParams: EventParams = {}) {
   }
 }
 
-// The slot rides its own properties rather than being read back off the URL:
 // Snapshotted at setup, not read at emit time: `middleware/query.global.ts`
 // keeps rewriting the live query as the reader navigates on, so only the value
 // this route was entered with names the surface that sent them here.
-export function useEntryLinkTags() {
+export function useEntryLinkTagProperties() {
   const getRouteQuery = useRouteQuery()
+  const { isLLMediumCarried, isLLSourceCarried } = useCarriedLinkTags().value
   return {
-    llMedium: getRouteQuery('ll_medium') || undefined,
-    llSource: getRouteQuery('ll_source') || undefined,
+    ll_medium: getRouteQuery('ll_medium') || undefined,
+    ll_source: getRouteQuery('ll_source') || undefined,
+    // A carried tag names the last tagged link this reader followed, not the
+    // surface that produced this event — segment on it before trusting either.
+    is_ll_medium_carried: isLLMediumCarried,
+    is_ll_source_carried: isLLSourceCarried,
   }
 }
 
+// The slot rides its own properties rather than being read back off the URL:
 // `middleware/query.global.ts` carries `ll_*` across every navigation, so a
 // tagged pageview does not mean the user clicked that slot.
 export function useLogPlusUpsell(
@@ -314,6 +319,7 @@ export function useLogRecommendBookClick({
   nftClassId,
   isPersonalized,
   llMedium,
+  llSource,
   rank,
   feedId,
   isLibrary,
@@ -321,6 +327,7 @@ export function useLogRecommendBookClick({
   nftClassId: string
   isPersonalized: boolean
   llMedium?: string
+  llSource?: string
   rank?: number
   feedId?: string
   isLibrary?: boolean
@@ -331,8 +338,13 @@ export function useLogRecommendBookClick({
     nft_class_id: normalizeNFTClassId(nftClassId),
     is_personalized: isPersonalized,
     ll_medium: llMedium,
+    // Every editorial feed shares the empty `feedId`, so the surface's own
+    // source is what keeps one page's grid apart from another's.
+    ll_source: llSource || undefined,
     rank,
-    feed_id: feedId || undefined,
+    // `??`, unlike the tags above: `''` is the editorial feed's real identity,
+    // and dropping it leaves those clicks with no impression to divide by.
+    feed_id: feedId ?? undefined,
     is_library: isLibrary,
   })
 }
@@ -348,6 +360,7 @@ export function useLogRecommendBooksView({
   personalizedCount,
   isLibrary,
   bookCount,
+  visibleCount,
   feedId,
   nftClassIds,
 }: {
@@ -358,6 +371,7 @@ export function useLogRecommendBooksView({
   personalizedCount?: number
   isLibrary?: boolean
   bookCount: number
+  visibleCount?: number
   feedId?: string
   nftClassIds: Array<string | undefined>
 }) {
@@ -368,7 +382,9 @@ export function useLogRecommendBooksView({
     personalized_count: personalizedCount,
     is_library: isLibrary,
     book_count: bookCount,
-    feed_id: feedId || undefined,
+    // `bookCount` counts every bound id; only this one was on screen.
+    visible_count: visibleCount,
+    feed_id: feedId ?? undefined,
     nft_class_ids: getLoggedImpressionIds(nftClassIds),
   })
 }

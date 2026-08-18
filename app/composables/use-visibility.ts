@@ -18,5 +18,8 @@ export default function (
   })
   // Callers that only gate a query on `isVisible` need no side effect.
   if (handler) watch(isVisible, handler)
-  return { isVisible, hasBeenVisible }
+  // A caller that also measures the element must take it from here: Vue defines
+  // the key non-configurably, so a second `useTemplateRef('<key>')` warns and
+  // hands back a ref that is never assigned.
+  return { isVisible, hasBeenVisible, element: lazyLoadTriggerElement }
 }

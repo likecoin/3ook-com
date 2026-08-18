@@ -20,6 +20,11 @@ const CARRY_ON_QUERY_KEYS = [
   'utm_term',
 ]
 
+// The `navigateTo` below re-runs this middleware with the carried tags already
+// on `to`, so that second pass must not clear the mark the first one set. A
+// superseded redirect leaves this set, so one later navigation keeps a stale mark.
+let isCarryRedirectPending = false
+
 // `userId` is only ever bound by the publisher storefront routes
 // (/store/@<likerId> and its library twin).
 const PUBLISHER_LIKER_ID_PARAM = 'userId'
@@ -35,6 +40,16 @@ export default defineNuxtRouteMiddleware((to, from) => {
       carryQuery[key] = from.query[key]
     }
   }
+
+  // `useEntryLinkTagProperties()` names the surface an event came from off the
+  // route, so it has to know which tags this navigation merely inherited.
+  const isLLMediumCarried = !!carryQuery.ll_medium
+  const isLLSourceCarried = !!carryQuery.ll_source
+  const hasCarriedLinkTags = isLLMediumCarried || isLLSourceCarried
+  if (hasCarriedLinkTags || !isCarryRedirectPending) {
+    useCarriedLinkTags().value = { isLLMediumCarried, isLLSourceCarried }
+  }
+  isCarryRedirectPending = hasCarriedLinkTags
 
   // Leaving a publisher storefront makes that publisher the referrer, so a book
   // opened, shared, or bought from it attributes to them without every link
