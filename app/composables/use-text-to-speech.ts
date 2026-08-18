@@ -74,6 +74,11 @@ export function useTextToSpeech(options: TTSOptions) {
 
   const ttsTrialUsage = useTTSTrialUsage()
 
+  const { sweepTTSAudioCache } = useOfflineTTS()
+
+  // Book+voice already swept this session, so a resume doesn't re-walk the cache.
+  let sweptPinId: string | undefined
+
   // Use the TTS voice composable
   const {
     isBookEnglish,
@@ -658,6 +663,17 @@ export function useTextToSpeech(options: TTSOptions) {
       })
 
       setupMediaSession()
+
+      // The lookahead this session is about to write has no expiry of its own, so
+      // a listener who never downloads still needs the budget enforced. Once per
+      // book+voice: startTextToSpeech also runs on every resume, media-session
+      // play and voice change, and each sweep walks the whole audio cache.
+      const firstSegment = ttsSegments.value[0]
+      const pinId = firstSegment ? getTTSPinIdFromURL(getAudioSrc(firstSegment)) : undefined
+      if (pinId && pinId !== sweptPinId) {
+        sweptPinId = pinId
+        void sweepTTSAudioCache(pinId)
+      }
     }
     catch (error) {
       isTextToSpeechOn.value = false
