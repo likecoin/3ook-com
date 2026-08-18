@@ -23,6 +23,38 @@
             v-text="bookTitle"
           />
 
+          <UTooltip
+            v-if="shouldShowOfflineTTSButton"
+            :text="offlineTTSButton.label"
+          >
+            <UButton
+              class="absolute top-4 left-4"
+              :icon="offlineTTSButton.icon"
+              :label="offlineTTSButton.progressLabel"
+              :aria-label="offlineTTSButton.label"
+              :color="offlineTTSButton.color"
+              size="md"
+              variant="ghost"
+              @click="handleOfflineTTSButtonClick"
+            />
+          </UTooltip>
+
+          <UTooltip
+            v-if="shouldShowOfflineTTSExportButton"
+            :text="$t('tts_offline_export_button')"
+          >
+            <UButton
+              class="absolute top-4 left-14"
+              icon="i-material-symbols-save-alt-rounded"
+              :aria-label="$t('tts_offline_export_button')"
+              :loading="isExportingOfflineTTS"
+              size="md"
+              variant="ghost"
+              color="neutral"
+              @click="handleOfflineTTSExportClick"
+            />
+          </UTooltip>
+
           <UButton
             class="absolute top-4 right-4"
             icon="i-material-symbols-close-rounded"
@@ -260,11 +292,14 @@ import { encodeAffiliateVoiceId } from '~~/shared/utils/tts-sig'
 import { estimateTTSMinutes } from '~~/shared/utils/tts-trial'
 
 const { user, loggedIn: hasLoggedIn, fetch: refreshSession } = useUserSession()
-const { hasDevicePlus } = useDevicePlusEntitlement()
+const { hasDevicePlus, isPlusOrDevicePlus } = useDevicePlusEntitlement()
 const accountStore = useAccountStore()
 const subscription = useSubscriptionModal()
 const { isProcessingSubscription } = subscription
-const { errorModal } = useErrorHandler()
+const { errorModal, handleError } = useErrorHandler()
+const toast = useToast()
+const baseModal = useBaseModal()
+const { public: { isTestnet } } = useRuntimeConfig()
 
 const { customVoice, hasCustomVoice, fetchCustomVoice } = useCustomVoice()
 const {
@@ -379,6 +414,14 @@ const {
   isOffline,
   forceResume,
   buildTTSEventPayload,
+  hasOfflineTTS,
+  isOfflineTTSEnabled,
+  isDownloadingOfflineTTS,
+  offlineTTSDownloadPercentage,
+  downloadOfflineTTS,
+  cancelOfflineTTSDownload,
+  removeOfflineTTS,
+  exportOfflineTTS,
 } = useTextToSpeech({
   nftClassId: props.nftClassId,
   isLibraryBook: () => !!props.isLibraryBook,
@@ -666,6 +709,134 @@ onMounted(() => {
   }
 })
 
+// Plus only, because a trial allowance is around nineteen segments — a chapter
+// download would spend all of it and fail the rest of the way. An already
+// downloaded chapter stays removable after a subscription lapses, but not after
+// the flag goes off: a kill switch has to take the whole feature with it, and
+// the budget sweep still bounds whatever audio it leaves behind.
+const shouldShowOfflineTTSButton = computed(() =>
+  isOfflineTTSEnabled.value && (isPlusOrDevicePlus.value || hasOfflineTTS.value),
+)
+
+const OFFLINE_TTS_BUTTON_PRESETS = {
+  downloading: {
+    icon: 'i-material-symbols-stop-circle-outline-rounded',
+    color: 'neutral',
+    labelKey: 'tts_offline_download_cancel_button',
+  },
+  downloaded: {
+    icon: 'i-material-symbols-offline-pin-rounded',
+    color: 'primary',
+    labelKey: 'tts_offline_remove_button',
+  },
+  idle: {
+    icon: 'i-material-symbols-download-rounded',
+    color: 'neutral',
+    labelKey: 'tts_offline_download_button',
+  },
+} as const
+
+const offlineTTSButtonState = computed(() => {
+  if (isDownloadingOfflineTTS.value) return 'downloading'
+  if (hasOfflineTTS.value) return 'downloaded'
+  return 'idle'
+})
+
+const offlineTTSButton = computed(() => {
+  const { icon, color, labelKey } = OFFLINE_TTS_BUTTON_PRESETS[offlineTTSButtonState.value]
+  return {
+    icon,
+    color,
+    label: $t(labelKey),
+    // The icon-only button grows a percentage while the loop runs.
+    progressLabel: isDownloadingOfflineTTS.value ? `${offlineTTSDownloadPercentage.value}%` : undefined,
+  }
+})
+
+function handleOfflineTTSButtonClick() {
+  if (isDownloadingOfflineTTS.value) {
+    cancelOfflineTTSDownload()
+    return
+  }
+  if (hasOfflineTTS.value) {
+    void confirmRemoveOfflineTTS()
+    return
+  }
+  void startOfflineTTSDownload()
+}
+
+// Testnet only: a file leaving the app is the rights question that the
+// cache-based offline path exists to sidestep. Needs the download first —
+// this reads the cache, it never synthesises.
+const shouldShowOfflineTTSExportButton = computed(() =>
+  isTestnet && isOfflineTTSEnabled.value && hasOfflineTTS.value,
+)
+
+const isExportingOfflineTTS = ref(false)
+
+async function handleOfflineTTSExportClick() {
+  if (isExportingOfflineTTS.value) return
+  isExportingOfflineTTS.value = true
+  try {
+    const result = await exportOfflineTTS()
+    if (!result) return
+    await saveAs(result.blob, result.filename)
+    if (result.missing) {
+      toast.add({
+        title: $t('tts_offline_export_partial_toast', { missing: result.missing }),
+        icon: 'i-material-symbols-warning-outline-rounded',
+        color: 'warning',
+      })
+    }
+  }
+  catch (error) {
+    handleError(error)
+  }
+  finally {
+    isExportingOfflineTTS.value = false
+  }
+}
+
+async function confirmRemoveOfflineTTS() {
+  const isConfirmed = await baseModal.open({
+    title: $t('tts_offline_remove_confirm_title'),
+    description: $t('tts_offline_remove_confirm_description'),
+    actions: [
+      { label: $t('common_delete'), color: 'error', result: true },
+      { label: $t('common_cancel'), variant: 'outline', result: false },
+    ],
+  }).result
+  // Re-checked after the await: a voice change while the dialog was open would
+  // otherwise delete a different download than the one the user confirmed.
+  if (!isConfirmed || !hasOfflineTTS.value) return
+  await removeOfflineTTS()
+}
+
+async function startOfflineTTSDownload() {
+  useLogEvent('tts_offline_download_start', buildTTSEventPayload({
+    segment_count: props.segments.length,
+  }))
+  try {
+    const result = await downloadOfflineTTS()
+    if (!result) return
+    toast.add({
+      title: result.failed
+        ? $t('tts_offline_download_partial_toast', { failed: result.failed })
+        : $t('tts_offline_download_complete_toast'),
+      icon: 'i-material-symbols-offline-pin-rounded',
+      color: result.failed ? 'warning' : 'success',
+    })
+    useLogEvent('tts_offline_download_complete', buildTTSEventPayload({
+      completed_count: result.completed,
+      failed_count: result.failed,
+      total_bytes: result.bytes,
+    }))
+  }
+  catch (error) {
+    handleError(error)
+  }
+}
+
 const isVoiceOptionsSlideoverOpen = ref(false)
 
 const selectedTTSLanguageVoice = computed({
@@ -682,10 +853,39 @@ const selectedTTSLanguageVoice = computed({
       isVoiceOptionsSlideoverOpen.value = false
       return
     }
-    ttsLanguageVoice.value = val
-    isVoiceOptionsSlideoverOpen.value = false
+    if (val !== ttsLanguageVoice.value && (hasOfflineTTS.value || isDownloadingOfflineTTS.value)) {
+      void confirmTTSVoiceSwitch(val)
+      return
+    }
+    applyTTSLanguageVoice(val)
   },
 })
+
+function applyTTSLanguageVoice(languageVoice: string) {
+  ttsLanguageVoice.value = languageVoice
+  isVoiceOptionsSlideoverOpen.value = false
+}
+
+/**
+ * Offline audio is keyed on voice: another voice streams from the network, and
+ * switching mid-download cancels it. Asked rather than applied silently, since
+ * listening without a connection is the reason the download exists.
+ */
+async function confirmTTSVoiceSwitch(languageVoice: string) {
+  const voice = activeTTSLanguageVoiceLabel.value
+  const isConfirmed = await baseModal.open({
+    title: $t('tts_offline_voice_switch_title'),
+    description: isDownloadingOfflineTTS.value
+      ? $t('tts_offline_voice_switch_downloading_description', { voice })
+      : $t('tts_offline_voice_switch_description', { voice }),
+    actions: [
+      { label: $t('tts_offline_voice_switch_confirm_button'), result: true },
+      { label: $t('common_cancel'), variant: 'outline', result: false },
+    ],
+  }).result
+  if (!isConfirmed) return
+  applyTTSLanguageVoice(languageVoice)
+}
 
 function setSegmentRef(
   el: Element | ComponentPublicInstance | null,

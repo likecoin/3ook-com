@@ -2,6 +2,7 @@ import type { H3Event } from 'h3'
 import { TTSSampleQuerySchema } from '~~/server/schemas/tts'
 import { decodeAffiliateVoiceId, isAffiliateVoiceId } from '~~/shared/utils/tts-sig'
 import { getAffiliateSampleScript, getTTSSampleText } from '~~/shared/utils/tts-sample'
+import { buildID3v2Tag } from '~~/shared/utils/id3'
 
 // Public endpoint with deterministic URLs, so a cold cache can produce a
 // thundering herd of identical Minimax synthesis requests. The map collapses

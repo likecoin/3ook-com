@@ -6,20 +6,32 @@ import {
   getBookFileCacheIndexKey,
   isBookFileCacheKeyOfPrefix,
 } from '~/utils/reader'
+import { getTTSPinIndexKey } from '~/utils/tts-audio-cache'
 
 // The real value from nuxt.config's runtimeConfig — the composable reads it
 // through useRuntimeConfig(), so the keys here are the ones shipped.
 const CACHE_KEY_PREFIX = '3ook'
 
-// Minimal CacheStorage: only keys()/delete() are exercised.
-function stubCacheStorage(names: string[]) {
+// Minimal CacheStorage: cache names for the book files, plus the one openable
+// cache holding TTS segments, which are keyed by request rather than by name.
+function stubCacheStorage(names: string[], ttsSegmentURLs: string[] = []) {
   const cacheNames = new Set(names)
+  const ttsSegments = new Set(ttsSegmentURLs)
+  const ttsCache = {
+    keys: vi.fn(async () => [...ttsSegments].map(url => new Request(url))),
+    delete: vi.fn(async (request: Request) => ttsSegments.delete(request.url)),
+  }
   const stub = {
     keys: vi.fn(async () => [...cacheNames]),
     delete: vi.fn(async (name: string) => cacheNames.delete(name)),
+    open: vi.fn(async () => ttsCache),
   }
   vi.stubGlobal('caches', stub)
-  return stub
+  return { ...stub, ttsSegments }
+}
+
+function buildTTSSegmentURL(nftClassId: string, voiceId: string, text: string) {
+  return `https://3ook.com/api/reader/tts?text=${text}&language=zh-HK&voice_id=${voiceId}&nft_class_id=${nftClassId}`
 }
 
 beforeEach(() => {
@@ -196,5 +208,43 @@ describe('useOfflineBooks', () => {
     await removeOfflineBook({ nftClassId: '0xabc' })
 
     expect(cacheStorage.delete).not.toHaveBeenCalled()
+  })
+
+  // Synthesised audio is the same class of local bytes as the book file: a
+  // returned borrow that left it behind would still play in full offline.
+  it('drops the TTS audio of the book in every voice, and no other book', async () => {
+    const survivor = buildTTSSegmentURL('0xdef', 'pazu', '3')
+    const { ttsSegments } = stubCacheStorage(['3ook-book-file-0xabc-7-0-1'], [
+      buildTTSSegmentURL('0xabc', 'pazu', '1'),
+      buildTTSSegmentURL('0xabc', 'phoebe', '2'),
+      survivor,
+    ])
+    const pinIndexKey = getTTSPinIndexKey(CACHE_KEY_PREFIX)
+    localStorage.setItem(pinIndexKey, JSON.stringify({
+      '0xabc:zh-HK:pazu': { size: 100, lastOpened: 1 },
+      '0xdef:zh-HK:pazu': { size: 200, lastOpened: 2 },
+    }))
+
+    const { removeOfflineBook } = useOfflineBooks()
+    await removeOfflineBook({ nftClassId: '0xABC' })
+
+    expect([...ttsSegments]).toEqual([survivor])
+    expect(JSON.parse(localStorage.getItem(pinIndexKey)!)).toEqual({
+      '0xdef:zh-HK:pazu': { size: 200, lastOpened: 2 },
+    })
+  })
+
+  // The two caches fill independently — a chapter can be downloaded for a book
+  // whose file was never cached, so the audio must not ride on the file's path.
+  it('drops the TTS audio of a book with no cached file', async () => {
+    const { ttsSegments } = stubCacheStorage(
+      [],
+      [buildTTSSegmentURL('0xabc', 'pazu', '1')],
+    )
+
+    const { removeOfflineBook } = useOfflineBooks()
+    await removeOfflineBook({ nftClassId: '0xabc' })
+
+    expect([...ttsSegments]).toEqual([])
   })
 })
