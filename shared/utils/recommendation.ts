@@ -28,8 +28,12 @@ const KEYWORD_MATCH_WEIGHT = 2
 const PORTRAIT_RECOMMENDED_SCORE = 1.5
 const TOP_LANGUAGE_MULTIPLIER = 1.2
 // Priors decay by rank; the offset keeps even rank 0 below a real affinity match.
+// Popular and bestselling weigh the same on purpose: an unequal pair sorts a
+// cold-start feed into one chart then the other rather than blending them.
 const POPULAR_PRIOR_WEIGHT = 1
-const LATEST_PRIOR_WEIGHT = 0.5
+const BESTSELLING_PRIOR_WEIGHT = 1
+// Raised alongside the third prior so a new title still seats in the merged head.
+const LATEST_PRIOR_WEIGHT = 0.6
 const PRIOR_RANK_OFFSET = 10
 
 // Bounds the per-wallet portrait cache entry; portrait books can each carry ~15
@@ -127,6 +131,7 @@ export interface RecommendationCandidate {
   product: BookstoreCMSProduct
   isWishlisted?: boolean
   popularRank?: number
+  bestsellingRank?: number
   latestRank?: number
 }
 
@@ -325,6 +330,9 @@ export function scoreCandidates(
 
       if (candidate.popularRank !== undefined) {
         score += POPULAR_PRIOR_WEIGHT / (candidate.popularRank + PRIOR_RANK_OFFSET)
+      }
+      if (candidate.bestsellingRank !== undefined) {
+        score += BESTSELLING_PRIOR_WEIGHT / (candidate.bestsellingRank + PRIOR_RANK_OFFSET)
       }
       if (candidate.latestRank !== undefined) {
         score += LATEST_PRIOR_WEIGHT / (candidate.latestRank + PRIOR_RANK_OFFSET)

@@ -324,6 +324,7 @@ const fetchCachedShelfClassIds = defineCachedFunction(fetchShelfClassIds, {
 interface CandidatePool {
   products: BookstoreCMSProduct[]
   isPopular?: boolean
+  isBestselling?: boolean
   isLatest?: boolean
 }
 
@@ -357,6 +358,7 @@ function mergeCandidatePools(pools: CandidatePool[]): RecommendationCandidate[] 
         fillProductMetadata(candidate.product, product)
       }
       if (pool.isPopular) candidate.popularRank = Math.min(candidate.popularRank ?? index, index)
+      if (pool.isBestselling) candidate.bestsellingRank = Math.min(candidate.bestsellingRank ?? index, index)
       if (pool.isLatest) candidate.latestRank = Math.min(candidate.latestRank ?? index, index)
     })
   }
@@ -383,35 +385,43 @@ async function fetchSearchTermPool(term: string, isLibrary: boolean): Promise<Bo
   return records
 }
 
-// The popular/latest priors are global (per tab), so cache them per instance —
-// otherwise every feed compute re-fetches 2 × 100 rows from the upstream API.
-const fetchCachedPopularPool = defineCachedFunction(
-  async (isLibrary: boolean) => {
-    const { records } = await fetchBookstorePopularListing(BUILT_IN_LIST_PATHS.popular, { pageSize: PRIOR_POOL_PAGE_SIZE, isLibrary })
-    return records
-  },
-  {
-    name: 'for-you-popular-pool',
-    group: 'store',
-    swr: true,
-    maxAge: 60,
-    getKey: (isLibrary: boolean) => (isLibrary ? 'library' : 'store'),
-  },
-)
+// The rank priors are global (per tab), so cache them per instance — otherwise
+// every feed compute re-fetches 100 rows per prior from the upstream API. One
+// factory so the cache policy can't drift between them.
+function definePriorPool(
+  name: string,
+  path: string,
+  fetchListing: typeof fetchBookstorePopularListing,
+) {
+  return defineCachedFunction(
+    async (isLibrary: boolean) => {
+      const { records } = await fetchListing(path, { pageSize: PRIOR_POOL_PAGE_SIZE, isLibrary })
+      return records
+    },
+    {
+      name,
+      group: 'store',
+      swr: true,
+      maxAge: 60,
+      getKey: (isLibrary: boolean) => (isLibrary ? 'library' : 'store'),
+    },
+  )
+}
 
-const fetchCachedLatestPool = defineCachedFunction(
-  async (isLibrary: boolean) => {
-    const { records } = await fetchBookstoreBookListing(BUILT_IN_LIST_PATHS.latest, { pageSize: PRIOR_POOL_PAGE_SIZE, isLibrary })
-    return records
-  },
-  {
-    name: 'for-you-latest-pool',
-    group: 'store',
-    swr: true,
-    maxAge: 60,
-    getKey: (isLibrary: boolean) => (isLibrary ? 'library' : 'store'),
-  },
-)
+const fetchCachedPopularPool = definePriorPool('for-you-popular-pool', BUILT_IN_LIST_PATHS.popular, fetchBookstorePopularListing)
+// Shares the popular fetcher: /list/bestselling paginates by class-id cursor too.
+const fetchCachedBestsellingPool = definePriorPool('for-you-bestselling-pool', BUILT_IN_LIST_PATHS.bestselling, fetchBookstorePopularListing)
+const fetchCachedLatestPool = definePriorPool('for-you-latest-pool', BUILT_IN_LIST_PATHS.latest, fetchBookstoreBookListing)
+
+// A prior only widens the candidate set, so a failed one costs ranking quality
+// rather than the compute — losing popular is what still fails it, which is
+// what lets the caller fall back to a stale feed cache.
+function catchPoolFailure(label: string) {
+  return (error: unknown) => {
+    console.warn(`[for-you] Cold-start ${label} pool failed:`, error)
+    return [] as BookstoreCMSProduct[]
+  }
+}
 
 async function fetchSeedMetadata(seed: string): Promise<PortraitBookMetadata | undefined> {
   try {
@@ -455,26 +465,23 @@ async function computeForYouRecommendations(
 
   const isColdStart = portrait.signalBookCount < FOR_YOU_MIN_SIGNAL_BOOKS && !seed
   if (isColdStart) {
-    // Latest is best-effort; losing popular still fails the compute, which is
-    // what lets the caller fall back to a stale feed cache.
-    const [popularProducts, latestProducts] = await Promise.all([
+    // Library only: the store already surfaces bestselling as its own tab, so
+    // blending it there would re-skin that tab, while the library has no such
+    // tab and so gains a signal that appears nowhere else in it.
+    const [popularProducts, bestsellingProducts, latestProducts] = await Promise.all([
       fetchCachedPopularPool(isLibrary),
-      fetchCachedLatestPool(isLibrary).catch((error) => {
-        console.warn('[for-you] Cold-start latest pool failed:', error)
-        return [] as BookstoreCMSProduct[]
-      }),
+      isLibrary ? fetchCachedBestsellingPool(isLibrary).catch(catchPoolFailure('bestselling')) : [],
+      fetchCachedLatestPool(isLibrary).catch(catchPoolFailure('latest')),
     ])
     // Run through the same ranking as the personalized path. An empty portrait
-    // scores on priors alone: a book that is both popular and recent outranks one
-    // that is merely popular, a wishlisted book rises, and the diversity guard
-    // breaks up author runs. Latest also extends the tail, so a reader who
-    // already owns much of the popular list still gets a full page. Without this
-    // the tab renders a reordering-free copy of the popular listing next to it.
+    // scores on priors alone, so a book leading two charts outranks one leading
+    // a single chart and the tab stops mirroring any one listing beside it.
     // The pools are raw upstream data, so they need the same gate as any other
     // candidate — otherwise a new reader's fallback feed is the one place adult
     // and already-read books slip through.
     const coldCandidates = mergeCandidatePools([
       { products: popularProducts, isPopular: true },
+      { products: bestsellingProducts, isBestselling: true },
       { products: latestProducts, isLatest: true },
     ])
       .filter(candidate => getIsProductEligible(candidate.product))
