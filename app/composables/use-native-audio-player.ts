@@ -3,9 +3,13 @@ import { useEventListener } from '@vueuse/core'
 export function useNativeAudioPlayer(isActive: Ref<boolean | undefined>): TTSAudioPlayer {
   const handlers: Partial<{ [K in keyof TTSAudioPlayerEvents]: TTSAudioPlayerEvents[K] }> = {}
   let loaded = false
+  // The shell's own answer to what it can play with no network, read against
+  // the playhead. Only shells advertising warmDepth send it.
+  let warmedThrough = -1
+  let currentIndex = 0
   // What the shell was asked to keep on disk, and whether it has started: it
   // arms its lookahead on the first segment boundary, so before that nothing is
-  // downloaded. The shell reports no depth back, so this is a request, not a fact.
+  // downloaded. A request, not a fact — the pre-warmDepth fallback only.
   let prefetchCount = 1
   let hasCrossedSegment = false
   // The bridge carries no error state, so latch the shell's last error to keep
@@ -38,21 +42,26 @@ export function useNativeAudioPlayer(isActive: Ref<boolean | undefined>): TTSAud
       case 'ended':
         handlers.ended?.()
         break
+      // Remote-control skips move the playhead too, so they carry the same
+      // state as an engine-driven change: getWarmRunway would otherwise measure
+      // against a playhead left behind at the last trackChanged.
       case 'trackChanged':
+      case 'remoteNext':
+      case 'remotePrevious':
         if (typeof detail.index === 'number') {
           hasCrossedSegment = true
+          currentIndex = detail.index
           errored = false
           handlers.trackChanged?.(detail.index, detail.isResync ? { isResync: true } : undefined)
         }
         break
+      case 'warmedThrough':
+        if (typeof detail.index === 'number') {
+          warmedThrough = detail.index
+        }
+        break
       case 'queueEnded':
         handlers.allEnded?.()
-        break
-      case 'remoteNext':
-      case 'remotePrevious':
-        if (typeof detail.index === 'number') {
-          handlers.trackChanged?.(detail.index)
-        }
         break
       case 'error':
         errored = true
@@ -79,14 +88,21 @@ export function useNativeAudioPlayer(isActive: Ref<boolean | undefined>): TTSAud
     })
     prefetchCount = options.prefetchCount ?? 1
     hasCrossedSegment = false
+    currentIndex = options.startIndex
+    warmedThrough = -1
     errored = false
     loaded = true
   }
 
-  // For an entitled listener this clears the offline gate on the first boundary,
-  // leaving the network_error backstop to raise the modal.
   function getWarmRunway(): number {
-    return hasCrossedSegment ? prefetchCount : 0
+    // Shells predating warmDepth report nothing back, so fall back to the depth
+    // we asked them to keep, which their own cache kill switch can make
+    // fiction. Optimistic, but the alternative halts on every dropout for
+    // exactly the listeners whose runway the prefetch filled.
+    if (!isNativeFeatureSupported('warmDepth')) {
+      return hasCrossedSegment ? prefetchCount : 0
+    }
+    return getWarmRunwayFrom(warmedThrough, currentIndex)
   }
 
   function resume(): boolean {
@@ -102,6 +118,7 @@ export function useNativeAudioPlayer(isActive: Ref<boolean | undefined>): TTSAud
   function stop() {
     postToNative({ type: 'stop' })
     loaded = false
+    warmedThrough = -1
   }
 
   function skipTo(index: number) {

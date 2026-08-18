@@ -538,9 +538,9 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
   }
 
   // The idle element's N+1 plus everything runWarm has drained into the service
-  // worker cache, which is what `warmedThrough` counts from the playhead.
+  // worker cache, which `warmedThrough` tracks as an absolute segment index.
   function getWarmRunway(): number {
-    return Math.max(warmedThrough - currentIndex, 0)
+    return getWarmRunwayFrom(warmedThrough, currentIndex)
   }
 
   return {
