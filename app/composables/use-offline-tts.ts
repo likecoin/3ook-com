@@ -12,29 +12,6 @@ export interface TTSDownloadProgress {
 }
 
 /**
- * Abort on either the caller's signal or a timeout. Hand-rolled because
- * `AbortSignal.any` needs iOS 17.4 and `AbortSignal.timeout` 16.0, above the
- * WebView floor this app supports — and because owning the timer lets us clear
- * it per segment instead of leaving 1500 of them pending.
- */
-function withDownloadTimeout<T>(
-  signal: AbortSignal | undefined,
-  run: (signal: AbortSignal) => Promise<T>,
-): Promise<T> {
-  const controller = new AbortController()
-  const abortFromCaller = () => controller.abort(signal?.reason)
-  const timer = setTimeout(
-    () => controller.abort(new DOMException('Download timed out', 'TimeoutError')),
-    DOWNLOAD_TIMEOUT_MS,
-  )
-  signal?.addEventListener('abort', abortFromCaller, { once: true })
-  return run(controller.signal).finally(() => {
-    clearTimeout(timer)
-    signal?.removeEventListener('abort', abortFromCaller)
-  })
-}
-
-/**
  * Which books can be listened to without a network, and the loop that puts them
  * there. Mirrors useOfflineBooks: the badge is derived from the live cache
  * rather than the index, so an entry the browser evicted stops promising
@@ -118,8 +95,13 @@ export function useOfflineTTS() {
           // The fetch runs inside the wrapper, not around it: the drain is part
           // of what must hit the timeout, and a cancel mid-drain must abort the
           // request rather than wait it out.
-          const byteLength = await withDownloadTimeout(signal, async fetchSignal =>
-            fetchTTSSegmentIntoCache(getAudioSrc(segment, { blocking: true }), fetchSignal),
+          const byteLength = await withAbortTimeout(
+            DOWNLOAD_TIMEOUT_MS,
+            fetchSignal => fetchTTSSegmentIntoCache(
+              getAudioSrc(segment, { blocking: true }),
+              fetchSignal,
+            ),
+            signal,
           )
           if (byteLength === undefined) {
             failed++
