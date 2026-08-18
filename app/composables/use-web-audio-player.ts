@@ -449,7 +449,9 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
 
   function resume(): boolean {
     const audio = getActiveAudio()
-    if (!audio) return false
+    // An errored element cannot resume — its source has to be reloaded — so
+    // report failure and let the caller fall back to a full load.
+    if (!audio || audio.error) return false
     active = true
     backgroundInterrupted = false
     audio.play()?.catch((e) => {
@@ -530,6 +532,12 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
     return getActiveAudio()?.currentSrc || ''
   }
 
+  // The idle element's N+1 plus everything runWarm has drained into the service
+  // worker cache, which is what `warmedThrough` counts from the playhead.
+  function getWarmRunway(): number {
+    return Math.max(warmedThrough - currentIndex, 0)
+  }
+
   return {
     load,
     resume,
@@ -541,6 +549,7 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
     getPosition,
     wasInterruptedByBackground,
     getCurrentURL,
+    getWarmRunway,
     on,
   }
 }

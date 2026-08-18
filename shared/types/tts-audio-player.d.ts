@@ -34,5 +34,9 @@ declare interface TTSAudioPlayer {
   getPosition(): { position: number, duration: number } | null
   wasInterruptedByBackground(): boolean
   getCurrentURL(): string
+  // Segments ahead of the playhead that are already local, so a dropout can be
+  // judged on what is playable rather than on connectivity. Each player answers
+  // from what it actually knows; nothing else can see inside their caches.
+  getWarmRunway(): number
   on<K extends keyof TTSAudioPlayerEvents>(event: K, handler: TTSAudioPlayerEvents[K]): void
 }

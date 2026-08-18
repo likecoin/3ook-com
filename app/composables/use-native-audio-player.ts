@@ -3,6 +3,11 @@ import { useEventListener } from '@vueuse/core'
 export function useNativeAudioPlayer(isActive: Ref<boolean | undefined>): TTSAudioPlayer {
   const handlers: Partial<{ [K in keyof TTSAudioPlayerEvents]: TTSAudioPlayerEvents[K] }> = {}
   let loaded = false
+  // What the shell was asked to keep on disk, and whether it has started: it
+  // arms its lookahead on the first segment boundary, so before that nothing is
+  // downloaded. The shell reports no depth back, so this is a request, not a fact.
+  let prefetchCount = 1
+  let hasCrossedSegment = false
 
   function on<K extends keyof TTSAudioPlayerEvents>(event: K, handler: TTSAudioPlayerEvents[K]) {
     handlers[event] = handler
@@ -31,6 +36,7 @@ export function useNativeAudioPlayer(isActive: Ref<boolean | undefined>): TTSAud
         break
       case 'trackChanged':
         if (typeof detail.index === 'number') {
+          hasCrossedSegment = true
           handlers.trackChanged?.(detail.index, detail.isResync ? { isResync: true } : undefined)
         }
         break
@@ -65,7 +71,13 @@ export function useNativeAudioPlayer(isActive: Ref<boolean | undefined>): TTSAud
       metadata: options.metadata,
       prefetchCount: options.prefetchCount,
     })
+    prefetchCount = options.prefetchCount ?? 1
+    hasCrossedSegment = false
     loaded = true
+  }
+
+  function getWarmRunway(): number {
+    return hasCrossedSegment ? prefetchCount : 0
   }
 
   function resume(): boolean {
@@ -119,6 +131,7 @@ export function useNativeAudioPlayer(isActive: Ref<boolean | undefined>): TTSAud
     getPosition,
     wasInterruptedByBackground,
     getCurrentURL,
+    getWarmRunway,
     on,
   }
 }

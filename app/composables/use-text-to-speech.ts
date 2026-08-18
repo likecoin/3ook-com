@@ -8,6 +8,11 @@ export const TTS_ERROR_NOT_ALLOWED = 'NotAllowedError'
 // seconds; a deeper window mostly buys unheard synthesis. Each player clamps it.
 const TTS_PREFETCH_COUNT = 20
 
+// Segments that must be local before a dropout is ridden out rather than
+// surfaced. Below this the runway is shorter than the stall detection that
+// follows, so playing on only buys the listener the same modal, half a minute later.
+const TTS_MIN_WARM_RUNWAY = 3
+
 const MEDIA_ERROR_NAMES: Record<number, string> = {
   1: 'MEDIA_ERR_ABORTED',
   2: 'MEDIA_ERR_NETWORK',
@@ -110,6 +115,7 @@ export function useTextToSpeech(options: TTSOptions) {
     getPosition: () => activePlayer().getPosition(),
     wasInterruptedByBackground: () => activePlayer().wasInterruptedByBackground(),
     getCurrentURL: () => activePlayer().getCurrentURL(),
+    getWarmRunway: () => activePlayer().getWarmRunway(),
     on(event, handler) {
       // Register on both — the inactive player won't fire events
       nativePlayer.on(event, handler)
@@ -324,17 +330,11 @@ export function useTextToSpeech(options: TTSOptions) {
       }))
     }
 
-    // Check if this is a network error (require both error code AND offline status to avoid misjudgment)
-    const isNetworkError = error instanceof MediaError
-      && error.code === MediaError.MEDIA_ERR_NETWORK
-      && !navigator.onLine
-
-    if (isNetworkError && hasMoreTracks()) {
-      // Network issue detected, handle similar to offline event
-      isOffline.value = true
-      shouldResumeWhenOnline.value = true
-      showOfflineModalWithLog('network_error')
-      pauseTextToSpeech()
+    // Whatever the error code, being offline is the diagnosis: a retry can't
+    // reach the network, and the skip further down would only cost the listener
+    // their place in the book. Halt and wait, as for a connectivity event.
+    if (!navigator.onLine && hasMoreTracks()) {
+      haltForOffline('network_error')
       return
     }
 
@@ -374,7 +374,7 @@ export function useTextToSpeech(options: TTSOptions) {
   // network error firing on top of an 'offline' event doesn't double-count.
   // Persist a durable breadcrumb so an abandon-while-offline (the live event is
   // then lost) can be reported on next launch — see tts-offline-modal.
-  function showOfflineModalWithLog(trigger: 'network_error' | 'offline_event') {
+  function showOfflineModalWithLog(trigger: TTSOfflineModalTrigger) {
     if (offlineModalShownAt.value !== null) return
     const shownAt = Date.now()
     offlineModalShownAt.value = shownAt
@@ -402,28 +402,43 @@ export function useTextToSpeech(options: TTSOptions) {
     }))
   }
 
+  // Stop on a dropout and wait for the network, rather than burning through
+  // segments that are all equally unreachable.
+  function haltForOffline(trigger: TTSOfflineModalTrigger) {
+    isOffline.value = true
+    shouldResumeWhenOnline.value = true
+    showOfflineModalWithLog(trigger)
+    pauseTextToSpeech()
+  }
+
   function handleOffline() {
     isOffline.value = true
-    if (isTextToSpeechPlaying.value && hasMoreTracks()) {
-      shouldResumeWhenOnline.value = true
-      showOfflineModalWithLog('offline_event')
-      pauseTextToSpeech()
-    }
+    if (!isTextToSpeechPlaying.value || !hasMoreTracks()) return
+    // Losing the network is not losing the audio: with a runway already local,
+    // play on and let a real stall raise the modal instead.
+    if (player.getWarmRunway() >= TTS_MIN_WARM_RUNWAY) return
+    haltForOffline('offline_event')
+  }
+
+  // Both resume paths come through here so a dropout never restarts the book:
+  // omitting the index resumes in place, but only while the session is still
+  // on — otherwise startTextToSpeech would begin again from segment zero.
+  function resumeAfterOffline() {
+    shouldResumeWhenOnline.value = false
+    startTextToSpeech(isTextToSpeechOn.value ? null : currentTTSSegmentIndex.value)
   }
 
   function handleOnline() {
     isOffline.value = false
     resolveOfflineModal('reconnected')
     if (shouldResumeWhenOnline.value && isTextToSpeechOn.value && !isTextToSpeechPlaying.value) {
-      shouldResumeWhenOnline.value = false
-      startTextToSpeech(currentTTSSegmentIndex.value)
+      resumeAfterOffline()
     }
   }
 
   function forceResume() {
     resolveOfflineModal('manual_resume')
-    shouldResumeWhenOnline.value = false
-    startTextToSpeech(currentTTSSegmentIndex.value)
+    resumeAfterOffline()
   }
 
   // Set up network listeners with automatic cleanup via useEventListener
@@ -550,6 +565,9 @@ export function useTextToSpeech(options: TTSOptions) {
       if (index !== null) {
         currentTTSSegmentIndex.value = Math.max(Math.min(index, ttsSegments.value.length - 1), 0)
       }
+      // No index resumes in place, keeping the position and the ttsSessionId —
+      // an index reloads the segment from zero as a fresh session, which splits
+      // one listening session in two every time a dropout recovers.
       else if (isTextToSpeechOn.value) {
         if (player.resume()) {
           useLogEvent('tts_resume', buildTTSEventPayload({

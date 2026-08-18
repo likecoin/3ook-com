@@ -11,6 +11,10 @@ const TTS_OFFLINE_MODAL_KEY = 'tts-offline-modal-pending'
 // the vocabulary can't drift between the two emitters.
 export type TTSOfflineModalOutcome = 'reconnected' | 'manual_resume' | 'stopped' | 'abandoned'
 
+// What raised the modal: a connectivity event, or a playback error that only
+// turned out to be a dropout. Both halt playback the same way.
+export type TTSOfflineModalTrigger = 'network_error' | 'offline_event'
+
 export interface PendingOfflineModal {
   shownAt: number
   // The base TTS event payload captured at show time, replayed verbatim so the
