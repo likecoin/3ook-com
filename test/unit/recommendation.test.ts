@@ -427,8 +427,9 @@ describe('applyDiversityGuard', () => {
 })
 
 describe('cold-start ranking', () => {
-  // Mirrors the cold-start branch of computeForYouRecommendations: the popular
-  // and latest pools scored against an empty portrait, then diversity-guarded.
+  // Mirrors the cold-start branch of computeForYouRecommendations: the popular,
+  // bestselling and latest pools scored against an empty portrait, then
+  // diversity-guarded.
   const coldPortrait = makePortrait({ signalBookCount: 0 })
 
   function rankCold(candidates: RecommendationCandidate[]) {
@@ -462,6 +463,29 @@ describe('cold-start ranking', () => {
     // Popular still outranks latest-only, but the feed is no longer capped at
     // whatever survives eligibility filtering in the popular pool alone.
     expect(ranked).toEqual(['0xa', '0xnew'])
+  })
+
+  it('clears the popular mid-list with a book the sales chart leads', () => {
+    const ranked = rankCold([
+      makeCandidate('0xpop', { popularRank: 0 }),
+      makeCandidate('0xmid', { popularRank: 5 }),
+      makeCandidate('0xsales', { bestsellingRank: 0 }),
+    ])
+    // Guard the position check: a missing 0xsales would score indexOf -1 and
+    // pass the comparison silently.
+    expect(ranked).toContain('0xsales')
+    expect(ranked.indexOf('0xsales')).toBeLessThan(ranked.indexOf('0xmid'))
+  })
+
+  it('interleaves the bestselling head instead of appending it to the popular order', () => {
+    const ranked = rankCold([
+      ...[0, 2, 4, 6].map((popularRank, index) => makeCandidate(`0xp${index}`, { popularRank })),
+      ...[1, 3].map((bestsellingRank, index) => makeCandidate(`0xs${index}`, { bestsellingRank })),
+    ])
+    // Books the sales chart leads appear on no other library tab, so they have
+    // to reach the head — unequal weights would sink them past the popular tail.
+    expect(ranked.slice(0, 4)).toContain('0xs0')
+    expect(ranked.slice(0, 4)).toContain('0xs1')
   })
 
   it('raises a wishlisted book above the popular head', () => {
