@@ -304,9 +304,8 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
         try {
           // Timeout because a cold segment blocks on full synthesis server-side,
           // which would otherwise stall the whole runway behind it.
-          const byteLength = await fetchTTSSegmentIntoCache(
-            warmURL,
-            AbortSignal.timeout(WARM_TIMEOUT_MS),
+          const byteLength = await withAbortTimeout(WARM_TIMEOUT_MS, fetchSignal =>
+            fetchTTSSegmentIntoCache(warmURL, fetchSignal),
           )
           // A non-200 would otherwise mark a runway the cache never received.
           if (byteLength === undefined) return
