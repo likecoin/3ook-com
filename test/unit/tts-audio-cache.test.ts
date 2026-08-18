@@ -1,11 +1,14 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { TTS_AUDIO_CACHE } from '~~/shared/constants/tts-cache'
+import { buildID3v2Tag } from '~~/shared/utils/id3'
 import {
+  getTTSCacheKeyURL,
   getTTSPinIdFromURL,
   getTTSPinIndexKey,
   markTTSPinInFlight,
   pruneTTSAudioCache,
   readTTSPinIndex,
+  readTTSSegmentAudio,
   recordTTSPin,
   removeTTSPins,
   touchTTSPin,
@@ -33,11 +36,14 @@ function buildSegmentURLs({ nftClassId, count }: { nftClassId: string, count: nu
 }
 
 /** Minimal CacheStorage stand-in: enough surface for the sweep's keys/delete. */
-function installFakeCaches(urls: string[]) {
+function installFakeCaches(urls: string[], bodyByURL?: Map<string, Uint8Array>) {
   const store = new Set<string>(urls)
   const cache = {
     keys: async () => [...store].map(url => new Request(url)),
-    match: async () => undefined,
+    match: async (key: string) => {
+      const body = bodyByURL?.get(key)
+      return body ? new Response(body) : undefined
+    },
     delete: async (request: Request) => store.delete(request.url),
   }
   ;(window as unknown as { caches: unknown }).caches = { open: async () => cache }
@@ -269,5 +275,65 @@ describe('tts-audio-cache', () => {
 
   it('names the cache Workbox actually writes to', () => {
     expect(TTS_AUDIO_CACHE).toBe('tts-audio')
+  })
+
+  describe('getTTSCacheKeyURL', () => {
+    // Workbox's cacheKeyWillBeUsed strips `blocking`, and the native shell sets
+    // it on every request — matching the URL as issued would miss everything.
+    it('drops the blocking param that the cache key never carries', () => {
+      expect(getTTSCacheKeyURL('https://3ook.com/api/reader/tts?text=a&blocking=1&voice_id=v'))
+        .toBe('https://3ook.com/api/reader/tts?text=a&voice_id=v')
+    })
+
+    it('leaves a URL without the param unchanged', () => {
+      expect(getTTSCacheKeyURL('https://3ook.com/api/reader/tts?text=a&voice_id=v'))
+        .toBe('https://3ook.com/api/reader/tts?text=a&voice_id=v')
+    })
+  })
+
+  describe('readTTSSegmentAudio', () => {
+    function buildTaggedSegment(frameByte: number) {
+      const frames = new Uint8Array([0xFF, 0xFB, frameByte])
+      const tag = buildID3v2Tag({ title: 'segment' })
+      const tagged = new Uint8Array(tag.length + frames.length)
+      tagged.set(tag)
+      tagged.set(frames, tag.length)
+      return { tagged, frames }
+    }
+
+    it('returns frames in the order asked for, with each segment tag stripped', async () => {
+      const first = buildTaggedSegment(0x01)
+      const second = buildTaggedSegment(0x02)
+      const urls = ['https://3ook.com/a', 'https://3ook.com/b']
+      installFakeCaches(urls, new Map([
+        [urls[0]!, first.tagged],
+        [urls[1]!, second.tagged],
+      ]))
+
+      // Asked for in reverse: order must follow the argument, not the cache.
+      const frames = await readTTSSegmentAudio([urls[1]!, urls[0]!])
+      expect([...frames[0]!]).toEqual([...second.frames])
+      expect([...frames[1]!]).toEqual([...first.frames])
+    })
+
+    // A partial download is still worth exporting, so a miss is a hole in the
+    // result rather than a thrown error.
+    it('reports a miss as undefined without dropping the slot', async () => {
+      const { tagged, frames } = buildTaggedSegment(0x01)
+      installFakeCaches(['https://3ook.com/a'], new Map([['https://3ook.com/a', tagged]]))
+
+      const result = await readTTSSegmentAudio(['https://3ook.com/a', 'https://3ook.com/missing'])
+      expect(result).toHaveLength(2)
+      expect([...result[0]!]).toEqual([...frames])
+      expect(result[1]).toBeUndefined()
+    })
+
+    it('matches a blocking URL against the stripped key the cache holds', async () => {
+      const { tagged, frames } = buildTaggedSegment(0x01)
+      installFakeCaches([], new Map([['https://3ook.com/api/reader/tts?text=a', tagged]]))
+
+      const result = await readTTSSegmentAudio(['https://3ook.com/api/reader/tts?text=a&blocking=1'])
+      expect([...result[0]!]).toEqual([...frames])
+    })
   })
 })
