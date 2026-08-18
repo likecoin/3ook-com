@@ -104,4 +104,29 @@ describe('useSubscriptionCheckout IAP first-touch attributes', () => {
     expect(attributes.attributionSource).toBe('')
     expect(attributes.plusGiftClassId).toBe('')
   })
+
+  it('carries the resolved acquisition channel for RevenueCat', async () => {
+    mockAnalyticsParams.value = {
+      utmSource: 'plus-modal',
+      mediaSource: 'apple_ads',
+      campaign: '1234',
+    }
+    const { startSubscription } = useSubscriptionCheckout()
+    await startSubscription({ plan: 'yearly' })
+    const attributes = getPurchasedAttributes()
+    expect(attributes.mediaSource).toBe('apple_ads')
+    expect(attributes.campaign).toBe('1234')
+    expect(attributes.utmSource).toBe('plus-modal')
+  })
+
+  it('omits the acquisition channel rather than blanking it', async () => {
+    mockAnalyticsParams.value = { utmSource: 'plus-modal' }
+    const { startSubscription } = useSubscriptionCheckout()
+    await startSubscription({ plan: 'yearly' })
+    const attributes = getPurchasedAttributes()
+    // $mediaSource is sticky, so a purchase naming no channel must leave whatever
+    // an earlier one resolved — unlike attributionSource below, it gets no tombstone.
+    expect('mediaSource' in attributes).toBe(false)
+    expect('campaign' in attributes).toBe(false)
+  })
 })

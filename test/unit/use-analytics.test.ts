@@ -7,7 +7,7 @@ const { mockQuery, mockPostHog, mockGetInstallAttribution } = vi.hoisted(() => (
   mockQuery: { value: {} as Record<string, string> },
   // `null` models PostHog being blocked or never loading: `onLoaded` never fires.
   mockPostHog: { value: null as { get_property?: (key: string) => unknown } | null },
-  mockGetInstallAttribution: vi.fn(() => null),
+  mockGetInstallAttribution: vi.fn((): InstallAttribution | null => null),
 }))
 
 vi.mock('~/utils/native-bridge', () => ({
@@ -109,6 +109,82 @@ describe('useAnalytics first-touch attribution', () => {
     // The read happens on mount, so the throw would surface from useAnalytics().
     expect(() => useAnalytics()).not.toThrow()
     expect(useAnalytics().getAnalyticsParameters().initialUtmSource).toBeUndefined()
+  })
+})
+
+describe('getAnalyticsParameters acquisition channel', () => {
+  function setInstallAttribution(attribution: Record<string, string>) {
+    mockGetInstallAttribution.mockReturnValue({ attribution, installedAt: Date.now() })
+  }
+
+  it('prefers the install referrer over an internal live surface', () => {
+    mockQuery.value = { ll_source: 'product-page', utm_campaign: 'live-campaign' }
+    setInstallAttribution({ utm_source: 'apple_ads', utm_medium: 'cpc', utm_campaign: '1234' })
+    const params = useAnalytics().getAnalyticsParameters()
+    expect(params.mediaSource).toBe('apple_ads')
+    expect(params.campaign).toBe('1234')
+  })
+
+  it('falls through an organic store install to a live campaign link', () => {
+    mockQuery.value = { utm_source: 'facebookads', utm_campaign: '120210000000000000' }
+    setInstallAttribution({ utm_source: 'google-play', utm_medium: 'organic' })
+    const params = useAnalytics().getAnalyticsParameters()
+    expect(params.mediaSource).toBe('facebookads')
+    expect(params.campaign).toBe('120210000000000000')
+  })
+
+  it('rejects an install referrer our own download links tagged', () => {
+    // useAppDownloadUrls falls back to `3ookcom`/`app_download` when the visitor
+    // carried no campaign, so the store hands back an internal surface.
+    setInstallAttribution({
+      utm_source: '3ookcom',
+      utm_medium: 'app_download',
+      utm_campaign: 'app_page_hero',
+    })
+    const params = useAnalytics().getAnalyticsParameters()
+    expect(params.mediaSource).toBeUndefined()
+    expect(params.campaign).toBeUndefined()
+  })
+
+  it('names no channel for an organic install with nothing else', () => {
+    setInstallAttribution({ utm_source: 'google-play', utm_medium: 'organic' })
+    const params = useAnalytics().getAnalyticsParameters()
+    expect(params.mediaSource).toBeUndefined()
+    expect(params.campaign).toBeUndefined()
+  })
+
+  it('never lets an internal link tag name the channel', () => {
+    mockQuery.value = { ll_source: 'product-page' }
+    const params = useAnalytics().getAnalyticsParameters()
+    // The same surface still rides `utmSource`, which the grant webhook reads.
+    expect(params.utmSource).toBe('product-page')
+    expect(params.mediaSource).toBeUndefined()
+  })
+
+  it('rejects an internal surface passed as a live utm_source', () => {
+    mockQuery.value = { utm_source: 'bookstore', utm_campaign: 'live-campaign' }
+    const params = useAnalytics().getAnalyticsParameters()
+    expect(params.mediaSource).toBeUndefined()
+    expect(params.campaign).toBeUndefined()
+  })
+
+  it('falls back to first-touch when the live source is internal', () => {
+    mockQuery.value = { utm_source: 'bookstore' }
+    setInitialProperties({
+      initial_utm_source: 'facebookads',
+      initial_utm_campaign: '120210000000000000',
+    })
+    const params = useAnalytics().getAnalyticsParameters()
+    expect(params.mediaSource).toBe('facebookads')
+    expect(params.campaign).toBe('120210000000000000')
+  })
+
+  it('does not pair a campaign with a source from another rung', () => {
+    mockQuery.value = { utm_campaign: 'live-campaign' }
+    setInstallAttribution({ utm_source: 'apple_ads', utm_medium: 'cpc' })
+    const params = useAnalytics().getAnalyticsParameters()
+    expect(params.mediaSource).toBe('apple_ads')
+    expect(params.campaign).toBeUndefined()
   })
 })
 

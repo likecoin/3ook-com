@@ -234,6 +234,10 @@ export function useSubscriptionCheckout() {
         setAttribute('initialUtmSource', analyticsParams.initialUtmSource)
         setAttribute('initialUtmMedium', analyticsParams.initialUtmMedium)
         setAttribute('initialUtmCampaign', analyticsParams.initialUtmCampaign)
+        // Mirrored by the native shell onto RevenueCat's reserved $mediaSource /
+        // $campaign.
+        setAttribute('mediaSource', analyticsParams.mediaSource)
+        setAttribute('campaign', analyticsParams.campaign)
         setAttribute('referrer', analyticsParams.referrer)
         setAttribute('posthogDistinctId', analyticsParams.posthogDistinctId)
         // Reflects THIS purchase's attribution origin. Unlike the sticky values

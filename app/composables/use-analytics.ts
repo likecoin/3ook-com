@@ -15,6 +15,43 @@ function getPostHogProperty(
   return typeof value === 'string' && value ? value : undefined
 }
 
+// RevenueCat's reserved $mediaSource / $campaign: the channel that acquired the
+// subscriber, sticky forever once written. Takes the first rung naming a real one
+// and stays blank otherwise — unlike `utmSource`, kept last-touch for the webhook.
+function getAcquisitionChannel({
+  install,
+  liveSource,
+  liveCampaign,
+  initialSource,
+  initialCampaign,
+}: {
+  install: InstallAttribution | null
+  liveSource?: string
+  liveCampaign?: string
+  initialSource?: string
+  initialCampaign?: string
+}) {
+  // Store-supplied and untamperable, but not automatically a real channel: our own
+  // download links tag the referrer `3ookcom`, and Play's organic default
+  // (`google-play`/`organic`) names no channel at all.
+  const installAttribution = install?.attribution
+  if (installAttribution?.utm_source
+    && !getIsInternalLLSource(installAttribution.utm_source)
+    && installAttribution.utm_medium?.toLowerCase() !== 'organic') {
+    return {
+      mediaSource: installAttribution.utm_source,
+      campaign: installAttribution.utm_campaign,
+    }
+  }
+  if (liveSource && !getIsInternalLLSource(liveSource)) {
+    return { mediaSource: liveSource, campaign: liveCampaign }
+  }
+  // Internal-filtered where it is read; a first touch still names a real channel
+  // when nothing more recent does.
+  if (initialSource) return { mediaSource: initialSource, campaign: initialCampaign }
+  return { mediaSource: undefined, campaign: undefined }
+}
+
 export function useAnalytics() {
   const getRouteQuery = useRouteQuery()
   const { proxy } = useScriptGoogleAnalytics()
@@ -94,7 +131,8 @@ export function useAnalytics() {
 
     // Resolve every field before the return so `usedInstall` is fully
     // accumulated, keeping `attributionSource` independent of property order.
-    const utmCampaign = withInstall(getRouteQuery('utm_campaign'), 'utm_campaign')
+    const liveCampaign = getRouteQuery('utm_campaign')
+    const utmCampaign = withInstall(liveCampaign, 'utm_campaign')
     // The install referrer outranks internal link tags (`ll_*`) and caller
     // defaults — in the app, checkout is always reached via an upsell that sets
     // `ll_source`, so folding those into `live` would never let install fill.
@@ -105,6 +143,17 @@ export function useAnalytics() {
     const gadClickId = withInstall(getRouteQuery('gclid'), 'gclid', true)
     const gadSource = withInstall(getRouteQuery('gad_source'), 'gad_source', true)
     const fbClickId = withInstall(getRouteQuery('fbclid'), 'fbclid', true)
+
+    // `resolvedUtmSource`, not `utmSourceResolved` above: an internal `ll_source`
+    // must never name the acquisition channel, and `srsltid` has already resolved
+    // to a real one here.
+    const { mediaSource, campaign } = getAcquisitionChannel({
+      install,
+      liveSource: resolvedUtmSource,
+      liveCampaign,
+      initialSource: initialUTMSource.value,
+      initialCampaign: initialUTMCampaign.value,
+    })
 
     return {
       gaClientId: gaClientId.value,
@@ -128,6 +177,8 @@ export function useAnalytics() {
       initialUtmMedium: initialUTMMedium.value,
       initialUtmCampaign: initialUTMCampaign.value,
       attributionSource: usedInstall ? 'install_referrer' : undefined,
+      mediaSource,
+      campaign,
     }
   }
 
