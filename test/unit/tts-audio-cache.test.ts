@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { TTS_AUDIO_CACHE } from '~~/shared/constants/tts-cache'
 import { buildID3v2Tag } from '~~/shared/utils/id3'
 import {
+  getCachedTTSSegmentURLs,
   getTTSCacheKeyURL,
   getTTSPinIdFromURL,
   getTTSPinIndexKey,
@@ -353,6 +354,32 @@ describe('tts-audio-cache', () => {
 
       const result = await readTTSSegmentAudio(['https://3ook.com/api/reader/tts?text=a&blocking=1'])
       expect([...result[0]!]).toEqual([...frames])
+    })
+  })
+
+  describe('getCachedTTSSegmentURLs', () => {
+    it('returns the stored subset as the caller\'s own URLs', async () => {
+      const urls = buildSegmentURLs({ nftClassId: '0xa', count: 3 })
+      installFakeCaches([urls[0]!, urls[2]!])
+
+      const cached = await getCachedTTSSegmentURLs(urls)
+      expect([...cached]).toEqual([urls[0], urls[2]])
+    })
+
+    // The download asks with `blocking=1`; the cache never stores it.
+    it('matches a blocking URL against the key stored without it', async () => {
+      const url = buildSegmentURL({ nftClassId: '0xa', language: 'zh-HK', voiceId: 'v', text: '0' })
+      installFakeCaches([url])
+
+      const cached = await getCachedTTSSegmentURLs([`${url}&blocking=1`])
+      expect(cached.has(`${url}&blocking=1`)).toBe(true)
+    })
+
+    it('reports nothing cached when the cache is empty', async () => {
+      const urls = buildSegmentURLs({ nftClassId: '0xa', count: 2 })
+      installFakeCaches([])
+
+      expect((await getCachedTTSSegmentURLs(urls)).size).toBe(0)
     })
   })
 })

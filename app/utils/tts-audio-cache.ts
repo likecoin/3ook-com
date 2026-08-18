@@ -14,7 +14,7 @@ export const TTS_AUDIO_CACHE_MAX_BYTES = 500 * 1024 * 1024
  * entries beats measuring them: the streaming playback path sets no
  * content-length, and reading bodies back to size them costs a full cache read.
  */
-const TTS_SEGMENT_ESTIMATE_BYTES = 30 * 1024
+export const TTS_SEGMENT_ESTIMATE_BYTES = 30 * 1024
 
 // Skip a recency write if the pin was already touched within this window.
 const TTS_PIN_TOUCH_INTERVAL_MS = 60 * 1000
@@ -182,6 +182,25 @@ export function getTTSCacheKeyURL(rawURL: string): string {
   const url = new URL(rawURL, origin)
   url.searchParams.delete('blocking')
   return url.href
+}
+
+/**
+ * Which of the given segment URLs are already stored, returned as the caller's
+ * own URLs so it never has to normalize twice. One `keys()` walk rather than a
+ * match per URL: a book runs to ~1200 segments and this wants membership, not
+ * bodies.
+ */
+export async function getCachedTTSSegmentURLs(rawURLs: string[]): Promise<Set<string>> {
+  if (typeof window === 'undefined' || !window.caches || !rawURLs.length) return new Set()
+  try {
+    const cache = await window.caches.open(TTS_AUDIO_CACHE)
+    const stored = new Set((await cache.keys()).map(request => request.url))
+    return new Set(rawURLs.filter(rawURL => stored.has(getTTSCacheKeyURL(rawURL))))
+  }
+  catch (error) {
+    console.error(error)
+    return new Set()
+  }
 }
 
 /**

@@ -23,40 +23,22 @@
             v-text="bookTitle"
           />
 
-          <div
-            v-if="shouldShowOfflineTTSButton || shouldShowOfflineTTSExportButton"
-            class="absolute top-4 left-4 flex items-center gap-1"
+          <UDropdownMenu
+            v-if="offlineTTSMenuItems.length"
+            class="absolute top-4 left-4"
+            :items="offlineTTSMenuItems"
+            :content="{ align: 'start' }"
           >
-            <UTooltip
-              v-if="shouldShowOfflineTTSButton"
-              :text="offlineTTSButton.label"
-            >
-              <UButton
-                :icon="offlineTTSButton.icon"
-                :label="offlineTTSButton.progressLabel"
-                :aria-label="offlineTTSButton.label"
-                :color="offlineTTSButton.color"
-                size="md"
-                variant="ghost"
-                @click="handleOfflineTTSButtonClick"
-              />
-            </UTooltip>
-
-            <UTooltip
-              v-if="shouldShowOfflineTTSExportButton"
-              :text="$t('tts_offline_export_button')"
-            >
-              <UButton
-                icon="i-material-symbols-save-alt-rounded"
-                :aria-label="$t('tts_offline_export_button')"
-                :loading="isExportingOfflineTTS"
-                size="md"
-                variant="ghost"
-                color="neutral"
-                @click="handleOfflineTTSExportClick"
-              />
-            </UTooltip>
-          </div>
+            <UButton
+              :icon="offlineTTSButton.icon"
+              :label="offlineTTSButton.progressLabel"
+              :aria-label="$t('tts_offline_menu_button')"
+              :color="offlineTTSButton.color"
+              :loading="isExportingOfflineTTS"
+              size="md"
+              variant="ghost"
+            />
+          </UDropdownMenu>
 
           <UButton
             class="absolute top-4 right-4"
@@ -289,13 +271,14 @@
 </template>
 
 <script setup lang="ts">
+import type { DropdownMenuItem } from '@nuxt/ui'
 import type { TTSPlayerModalProps } from './TTSPlayerModal.props'
 import { TTS_ERROR_NOT_ALLOWED, TTS_ERROR_NOT_SUPPORTED } from '~/composables/use-text-to-speech'
 import { encodeAffiliateVoiceId } from '~~/shared/utils/tts-sig'
 import { estimateTTSMinutes } from '~~/shared/utils/tts-trial'
 
 const { user, loggedIn: hasLoggedIn, fetch: refreshSession } = useUserSession()
-const { hasDevicePlus, isPlusOrDevicePlus } = useDevicePlusEntitlement()
+const { hasDevicePlus } = useDevicePlusEntitlement()
 const accountStore = useAccountStore()
 const subscription = useSubscriptionModal()
 const { isProcessingSubscription } = subscription
@@ -418,6 +401,11 @@ const {
   forceResume,
   buildTTSEventPayload,
   hasOfflineTTS,
+  isOfflineTTSDownloadable,
+  isOfflineTTSTooLarge,
+  offlineTTSState,
+  offlineTTSMissingCount,
+  offlineTTSPendingBytes,
   isOfflineTTSEnabled,
   isDownloadingOfflineTTS,
   offlineTTSDownloadPercentage,
@@ -712,61 +700,31 @@ onMounted(() => {
   }
 })
 
-// Plus only, because a trial allowance is around nineteen segments — a chapter
-// download would spend all of it and fail the rest of the way. An already
-// downloaded chapter stays removable after a subscription lapses, but not after
-// the flag goes off: a kill switch has to take the whole feature with it, and
-// the budget sweep still bounds whatever audio it leaves behind.
-const shouldShowOfflineTTSButton = computed(() =>
-  isOfflineTTSEnabled.value && (isPlusOrDevicePlus.value || hasOfflineTTS.value),
-)
-
 const OFFLINE_TTS_BUTTON_PRESETS = {
   downloading: {
     icon: 'i-material-symbols-stop-circle-outline-rounded',
     color: 'neutral',
-    labelKey: 'tts_offline_download_cancel_button',
+  },
+  partial: {
+    icon: 'i-material-symbols-downloading-rounded',
+    color: 'warning',
   },
   downloaded: {
     icon: 'i-material-symbols-offline-pin-rounded',
     color: 'primary',
-    labelKey: 'tts_offline_remove_button',
   },
   idle: {
     icon: 'i-material-symbols-download-rounded',
     color: 'neutral',
-    labelKey: 'tts_offline_download_button',
   },
 } as const
 
-const offlineTTSButtonState = computed(() => {
-  if (isDownloadingOfflineTTS.value) return 'downloading'
-  if (hasOfflineTTS.value) return 'downloaded'
-  return 'idle'
-})
-
-const offlineTTSButton = computed(() => {
-  const { icon, color, labelKey } = OFFLINE_TTS_BUTTON_PRESETS[offlineTTSButtonState.value]
-  return {
-    icon,
-    color,
-    label: $t(labelKey),
-    // The icon-only button grows a percentage while the loop runs.
-    progressLabel: isDownloadingOfflineTTS.value ? `${offlineTTSDownloadPercentage.value}%` : undefined,
-  }
-})
-
-function handleOfflineTTSButtonClick() {
-  if (isDownloadingOfflineTTS.value) {
-    cancelOfflineTTSDownload()
-    return
-  }
-  if (hasOfflineTTS.value) {
-    void confirmRemoveOfflineTTS()
-    return
-  }
-  void startOfflineTTSDownload()
-}
+const offlineTTSButton = computed(() => ({
+  ...OFFLINE_TTS_BUTTON_PRESETS[offlineTTSState.value],
+  // The menu trigger grows a percentage while the loop runs, so progress
+  // stays readable without opening the menu.
+  progressLabel: isDownloadingOfflineTTS.value ? `${offlineTTSDownloadPercentage.value}%` : undefined,
+}))
 
 // Testnet only: a file leaving the app is the rights question that the
 // cache-based offline path exists to sidestep. Needs the download first —
@@ -793,7 +751,7 @@ async function handleOfflineTTSExportClick() {
       })
       return
     }
-    // Base64 through the native bridge: a chapter is tens of megabytes, so this
+    // Base64 through the native bridge: a book is tens of megabytes, so this
     // is testnet-sized. Mainnet needs a URL handoff or chunking first.
     await saveAs(result.blob, result.filename)
     if (result.missing) {
@@ -812,6 +770,50 @@ async function handleOfflineTTSExportClick() {
   }
 }
 
+// A menu instead of icon-only buttons: the labels used to live in a tooltip,
+// which reads as a clickable row but does nothing when tapped. A partial
+// download offers both rows — resuming it and dropping it are both reasonable.
+const offlineTTSMenuItems = computed<DropdownMenuItem[]>(() => {
+  const items: DropdownMenuItem[] = []
+  const state = offlineTTSState.value
+  if (isOfflineTTSDownloadable.value) {
+    if (state === 'downloading') {
+      items.push({
+        label: $t('tts_offline_download_cancel_button'),
+        icon: OFFLINE_TTS_BUTTON_PRESETS.downloading.icon,
+        onSelect: cancelOfflineTTSDownload,
+      })
+    }
+    else {
+      if (state !== 'downloaded') {
+        items.push({
+          label: state === 'partial'
+            ? $t('tts_offline_resume_button', { remaining: offlineTTSMissingCount.value })
+            : $t('tts_offline_download_button'),
+          icon: OFFLINE_TTS_BUTTON_PRESETS.idle.icon,
+          onSelect: () => { void startOfflineTTSDownload() },
+        })
+      }
+      if (state !== 'idle') {
+        items.push({
+          label: $t('tts_offline_remove_button'),
+          icon: 'i-material-symbols-delete-outline-rounded',
+          onSelect: () => { void confirmRemoveOfflineTTS() },
+        })
+      }
+    }
+  }
+  if (shouldShowOfflineTTSExportButton.value) {
+    items.push({
+      label: $t('tts_offline_export_button'),
+      icon: 'i-material-symbols-save-alt-rounded',
+      loading: isExportingOfflineTTS.value,
+      onSelect: () => { void handleOfflineTTSExportClick() },
+    })
+  }
+  return items
+})
+
 async function confirmRemoveOfflineTTS() {
   const isConfirmed = await baseModal.open({
     title: $t('tts_offline_remove_confirm_title'),
@@ -828,12 +830,56 @@ async function confirmRemoveOfflineTTS() {
 }
 
 async function startOfflineTTSDownload() {
+  if (isOfflineTTSTooLarge.value) {
+    toast.add({
+      title: $t('tts_offline_download_too_large_toast'),
+      icon: 'i-material-symbols-warning-outline-rounded',
+      color: 'warning',
+    })
+    return
+  }
+  const isResume = offlineTTSState.value === 'partial'
+  const pendingCount = offlineTTSMissingCount.value
+  // A book runs to a thousand-odd segments fetched one at a time and closing the
+  // player cancels the loop, so the size is worth saying before the minutes are
+  // spent. Skipped when ordinary listening already cached everything and the run
+  // only has to register the pin: there is no wait to warn about.
+  if (pendingCount) {
+    const isConfirmed = await baseModal.open({
+      title: $t('tts_offline_download_confirm_title'),
+      description: $t('tts_offline_download_confirm_description', {
+        size: formatFileSize(offlineTTSPendingBytes.value),
+        count: pendingCount,
+      }),
+      actions: [
+        { label: $t('tts_offline_download_confirm_button'), result: true },
+        { label: $t('common_cancel'), variant: 'outline', result: false },
+      ],
+    }).result
+    if (!isConfirmed) return
+  }
+
+  const startedAt = Date.now()
   useLogEvent('tts_offline_download_start', buildTTSEventPayload({
     segment_count: props.segments.length,
+    pending_count: pendingCount,
+    is_resume: isResume,
   }))
   try {
     const result = await downloadOfflineTTS()
     if (!result) return
+    const eventPayload = buildTTSEventPayload({
+      completed_count: result.completed,
+      failed_count: result.failed,
+      total_bytes: result.bytes,
+      duration_ms: Date.now() - startedAt,
+    })
+    // Cancels used to be silent, which left no way to see how many downloads
+    // are abandoned mid-book or how long people wait before giving up.
+    if (result.isCancelled) {
+      useLogEvent('tts_offline_download_cancel', eventPayload)
+      return
+    }
     toast.add({
       title: result.failed
         ? $t('tts_offline_download_partial_toast', { failed: result.failed })
@@ -841,11 +887,7 @@ async function startOfflineTTSDownload() {
       icon: 'i-material-symbols-offline-pin-rounded',
       color: result.failed ? 'warning' : 'success',
     })
-    useLogEvent('tts_offline_download_complete', buildTTSEventPayload({
-      completed_count: result.completed,
-      failed_count: result.failed,
-      total_bytes: result.bytes,
-    }))
+    useLogEvent('tts_offline_download_complete', eventPayload)
   }
   catch (error) {
     handleError(error)
