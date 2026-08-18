@@ -455,11 +455,35 @@ async function computeForYouRecommendations(
 
   const isColdStart = portrait.signalBookCount < FOR_YOU_MIN_SIGNAL_BOOKS && !seed
   if (isColdStart) {
-    // The popular list is raw upstream data, so it needs the same gate as any
-    // other candidate — otherwise a new reader's fallback feed is the one place
-    // adult and already-read books slip through.
-    const products = (await fetchCachedPopularPool(isLibrary)).filter(getIsProductEligible)
-    return buildFeedResponse(products, false, limit)
+    // Latest is best-effort; losing popular still fails the compute, which is
+    // what lets the caller fall back to a stale feed cache.
+    const [popularProducts, latestProducts] = await Promise.all([
+      fetchCachedPopularPool(isLibrary),
+      fetchCachedLatestPool(isLibrary).catch((error) => {
+        console.warn('[for-you] Cold-start latest pool failed:', error)
+        return [] as BookstoreCMSProduct[]
+      }),
+    ])
+    // Run through the same ranking as the personalized path. An empty portrait
+    // scores on priors alone: a book that is both popular and recent outranks one
+    // that is merely popular, a wishlisted book rises, and the diversity guard
+    // breaks up author runs. Latest also extends the tail, so a reader who
+    // already owns much of the popular list still gets a full page. Without this
+    // the tab renders a reordering-free copy of the popular listing next to it.
+    // The pools are raw upstream data, so they need the same gate as any other
+    // candidate — otherwise a new reader's fallback feed is the one place adult
+    // and already-read books slip through.
+    const coldCandidates = mergeCandidatePools([
+      { products: popularProducts, isPopular: true },
+      { products: latestProducts, isLatest: true },
+    ])
+      .filter(candidate => getIsProductEligible(candidate.product))
+      .map(candidate => ({
+        ...candidate,
+        isWishlisted: wishlistClassIdSet.has(getCandidateClassId(candidate.product)),
+      }))
+    const coldRanked = applyDiversityGuard(scoreCandidates(coldCandidates, portrait))
+    return buildFeedResponse(coldRanked.map(candidate => candidate.product), false, limit)
   }
 
   const topGenres = getTopAffinityKeys(portrait.genres, CANDIDATE_GENRE_POOL_COUNT)

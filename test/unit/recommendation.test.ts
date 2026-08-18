@@ -426,6 +426,67 @@ describe('applyDiversityGuard', () => {
   })
 })
 
+describe('cold-start ranking', () => {
+  // Mirrors the cold-start branch of computeForYouRecommendations: the popular
+  // and latest pools scored against an empty portrait, then diversity-guarded.
+  const coldPortrait = makePortrait({ signalBookCount: 0 })
+
+  function rankCold(candidates: RecommendationCandidate[]) {
+    return applyDiversityGuard(scoreCandidates(candidates, coldPortrait))
+      .map(candidate => candidate.product.classId)
+  }
+
+  it('lifts a book that is both popular and recent above one that is merely popular', () => {
+    const ranked = rankCold([
+      makeCandidate('0xtop', { popularRank: 0 }),
+      makeCandidate('0xmid', { popularRank: 1 }),
+      makeCandidate('0xboth', { popularRank: 4, latestRank: 0 }),
+    ])
+    expect(ranked[0]).toBe('0xboth')
+  })
+
+  it('does not reproduce the popular listing order', () => {
+    const popularOrder = ['0xa', '0xb', '0xc', '0xd']
+    const ranked = rankCold([
+      ...popularOrder.map((classId, index) => makeCandidate(classId, { popularRank: index })),
+      makeCandidate('0xd', { popularRank: 3, latestRank: 0 }),
+    ])
+    expect(ranked).not.toEqual(popularOrder)
+  })
+
+  it('extends the tail with latest-only books so a picked-over page still fills', () => {
+    const ranked = rankCold([
+      makeCandidate('0xa', { popularRank: 0 }),
+      makeCandidate('0xnew', { latestRank: 0 }),
+    ])
+    // Popular still outranks latest-only, but the feed is no longer capped at
+    // whatever survives eligibility filtering in the popular pool alone.
+    expect(ranked).toEqual(['0xa', '0xnew'])
+  })
+
+  it('raises a wishlisted book above the popular head', () => {
+    const ranked = rankCold([
+      makeCandidate('0xa', { popularRank: 0 }),
+      makeCandidate('0xwish', { popularRank: 9, isWishlisted: true }),
+    ])
+    expect(ranked[0]).toBe('0xwish')
+  })
+
+  it('breaks up an author run the popular listing would keep together', () => {
+    const ranked = rankCold(
+      ['0xa', '0xb', '0xc', '0xd', '0xe'].map((classId, index) =>
+        makeCandidate(classId, {
+          popularRank: index,
+          product: { authorName: index < 4 ? 'Alice' : 'Bob' },
+        }),
+      ),
+    )
+    // Alice holds four of the top five in the popular order; the guard defers
+    // her fourth past Bob.
+    expect(ranked.slice(0, 4)).toContain('0xe')
+  })
+})
+
 describe('filterMeaningfulKeywords', () => {
   it('drops boilerplate case-insensitively and dedupes, preserving order', () => {
     expect(filterMeaningfulKeywords(['武俠', 'EBook', '香港', '武俠', '檔案下載', '  ', '電子書']))
