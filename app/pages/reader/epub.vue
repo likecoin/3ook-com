@@ -1013,8 +1013,9 @@ async function loadEPub() {
   if (!hasDisplayed) {
     const fallbackItem = findNextNavItemAfterTOC(navItems.value)
     if (fallbackItem) {
-      await setActiveNavItem(fallbackItem, { isSilentError: true })
-      hasDisplayed = true
+      // A preview keeps the full nav document, so this first chapter may have
+      // been truncated away — fall through to the spine below when it has.
+      hasDisplayed = await setActiveNavItem(fallbackItem, { isSilentError: true })
     }
   }
   if (!hasDisplayed) {
@@ -1489,6 +1490,9 @@ async function extractTTSSegments(book: Book) {
   return { segments: mergeShortTTSSegments(segments), chapterTitles }
 }
 
+// Resolves to whether the nav item was actually displayed, so a caller that
+// has a fallback (the cold-open jump below) can take it instead of assuming
+// the jump landed.
 async function setActiveNavItem(item: NavItem, { isSilentError = false } = {}) {
   activeTTSElementIndex.value = undefined
   activeNavItemHref.value = item.href
@@ -1497,7 +1501,7 @@ async function setActiveNavItem(item: NavItem, { isSilentError = false } = {}) {
   dismissFootnoteReturn()
 
   let hasDisplayed = await displayRendition(item.href, { isSilentError: true })
-  if (hasDisplayed) return
+  if (hasDisplayed) return true
 
   // Try replacing nav item's href with spine's href if section cannot be found
   const anchor = item.href.split('#')[1]
@@ -1512,21 +1516,27 @@ async function setActiveNavItem(item: NavItem, { isSilentError = false } = {}) {
       // here to avoid stacking an error modal in front of it.
       hasDisplayed = await displayRendition(spineHref, { isSilentError: isSilentError || isPreviewMode.value })
       if (hasDisplayed) {
-        return
+        return true
       }
     }
+  }
+  // Nothing was rendered, so stop showing the page spinner before handing the
+  // failure to the CTA or the error modal. A silent caller owns the spinner
+  // itself — clearing it would blank the page until its fallback paints.
+  if (!isSilentError) {
+    isPageLoading.value = false
   }
   // In preview mode the ToC still lists chapters beyond the truncation point
   // (the server keeps the nav doc intact), so a failed jump means the chapter
   // was cut — offer the purchase/subscribe CTA instead of an error.
   if (isPreviewMode.value && !isSilentError) {
-    isPageLoading.value = false
     await openPreviewEndModal('toc')
-    return
+    return false
   }
   if (!isSilentError) {
     await errorModal.open({ description: $t('reader_epub_rendition_display_failed') }).result
   }
+  return false
 }
 
 function nextPage() {
