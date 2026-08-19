@@ -244,20 +244,9 @@ function handleWelcomeBannerDismiss() {
   )
 }
 
-// "Organic or direct" = the bare store landing with no campaign/affiliate attribution.
-// Campaign, paid, and affiliate traffic always carry one of these query params.
-const STORE_INTRO_ATTRIBUTION_KEYS = [
-  ...POSTHOG_ATTRIBUTION_KEYS,
-  ...POSTHOG_LINK_TAG_KEYS,
-  'affiliate',
-  'from',
-]
-const hasCampaignAttribution = computed(() =>
-  STORE_INTRO_ATTRIBUTION_KEYS.some(key => !!getRouteQuery(key)),
-)
-// Welcome a fresh organic/direct visitor on the bare store landing. Gate on mount
-// and the persisted dismiss so the alerts section collapses instead of leaving an
-// empty wrapper, and skip tag deep-links since those are category pages.
+// Greet a visitor on the store landing. Gate on mount and the persisted
+// dismiss, and skip tag deep-links since those are category pages. The banner
+// also self-hides until its experiment flag resolves.
 const { isDismissed: isStoreIntroBannerDismissed } = useStoreIntroBanner()
 const isMounted = useMounted()
 const isStoreIntroBannerVisible = computed(() =>
@@ -267,8 +256,8 @@ const isStoreIntroBannerVisible = computed(() =>
   && !isLibraryTab.value
   && !isSearchMode.value
   && !isWelcomeBannerVisible.value
-  && !getStoreTagIdFromRoute(route)
-  && !hasCampaignAttribution.value,
+  && !isPlusOrDevicePlus.value
+  && !getStoreTagIdFromRoute(route),
 )
 
 const isLibraryIntroBannerVisible = computed(() => isLibraryTab.value && !isSearchMode.value && !entity.value)

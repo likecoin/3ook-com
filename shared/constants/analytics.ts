@@ -16,6 +16,7 @@ export const PLUS_UPSELL_SLOTS = [
   'plus-reading-cta',
   'plus-reading-locked',
   'plus-reading-tag',
+  'store-intro',
   'tts-plus-explainer',
   'tts-plus-tag',
 ] as const
@@ -25,6 +26,7 @@ export const PLUS_UPSELL_SOURCES = [
   'library',
   'product-page',
   'shelf',
+  'store',
 ] as const
 
 export type PlusUpsellSlot = typeof PLUS_UPSELL_SLOTS[number]

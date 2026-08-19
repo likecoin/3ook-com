@@ -1,6 +1,8 @@
 <template>
   <UAlert
-    :description="$t('store_intro_banner_description')"
+    v-if="isVisible"
+    ref="storeIntroUpsell"
+    :description="isPlusVariant ? $t('store_intro_plus_banner_description') : $t('store_intro_banner_description')"
     :actions="actions"
     :close="{
       variant: 'solid',
@@ -19,7 +21,14 @@
     @update:open="handleDismiss"
   >
     <template #title>
-      <i18n-t keypath="store_intro_banner_title">
+      <span
+        v-if="isPlusVariant"
+        v-text="$t('store_intro_plus_banner_title')"
+      />
+      <i18n-t
+        v-else
+        keypath="store_intro_banner_title"
+      >
         <template #siteName>
           <AppLogo
             class="inline h-[0.9em] align-middle"
@@ -53,19 +62,49 @@
 </template>
 
 <script setup lang="ts">
+import { useTimeout, whenever } from '@vueuse/core'
+
 import mockupImageSrc from '~/assets/images/mockup.png'
 import backdropImageSrc from '~/assets/images/plus-welcome-banner-backdrop.webp'
+
+const FLAG_FALLBACK_TIMEOUT_MS = 1500
 
 const { t: $t } = useI18n()
 const localeRoute = useLocaleRoute()
 
-// Visibility (mount + persisted dismiss) is owned by the parent's v-if, so this
-// component just renders and logs its own view.
+// Mount and persisted dismiss are owned by the parent's v-if; this component
+// adds the variant gate and logs its own view.
 const { dismissStoreIntroBanner } = useStoreIntroBanner()
 
+const storeIntroCopyABTest = useABTest({ experimentKey: 'store-intro-banner-copy' })
+// `variant` stays null until PostHog resolves the flag, and forever when it
+// can't — blocked script, unset key, failed /flags.
+const hasFlagTimedOut = useTimeout(FLAG_FALLBACK_TIMEOUT_MS)
+const pendingVariant = computed(() =>
+  storeIntroCopyABTest.variant.value ?? (hasFlagTimedOut.value ? 'control' : null),
+)
+// Fall back to control and latch the first decision: the impression observer
+// only re-reads eligibility on a visibility change, so a later resolution
+// would swap the copy under a reader and lose the event.
+const resolvedVariant = ref<string | null>(null)
+whenever(pendingVariant, (next) => {
+  resolvedVariant.value = next
+}, { once: true })
+const isPlusVariant = computed(() => resolvedVariant.value === 'plus')
+const isVisible = computed(() => !!resolvedVariant.value)
+
+usePlusUpsellImpression({
+  templateRef: 'storeIntroUpsell',
+  slot: 'store-intro',
+  source: 'store',
+  isEligible: () => isPlusVariant.value,
+})
+
 const actions = computed(() => [{
-  label: $t('store_intro_banner_cta'),
-  to: localeRoute({ name: 'about', query: { ll_source: 'store-intro' } }),
+  label: isPlusVariant.value ? $t('store_intro_plus_banner_cta') : $t('store_intro_banner_cta'),
+  to: isPlusVariant.value
+    ? localeRoute({ name: 'member', query: { ll_source: 'store-intro' } })
+    : localeRoute({ name: 'about', query: { ll_source: 'store-intro' } }),
   color: 'neutral' as const,
   variant: 'outline' as const,
   trailingIcon: 'i-material-symbols-arrow-forward-rounded',
@@ -76,9 +115,9 @@ const actions = computed(() => [{
   onClick: handleCTAClick,
 }])
 
-onMounted(() => {
-  useLogEvent('store_intro_view')
-})
+// Setup runs before the flag resolves, so log on the gate rather than on mount.
+// Both arms keep reporting the legacy event, so the CTR read stays comparable.
+whenever(isVisible, () => useLogEvent('store_intro_view'), { once: true })
 
 function handleDismiss() {
   dismissStoreIntroBanner()
@@ -87,6 +126,9 @@ function handleDismiss() {
 
 function handleCTAClick() {
   useLogEvent('store_intro_cta_click')
+  // Only the arm that routes to the paywall is an upsell.
+  if (!isPlusVariant.value) return
+  useLogPlusUpsell('click', { llMedium: 'store-intro', llSource: 'store' })
 }
 </script>
 
