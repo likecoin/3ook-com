@@ -670,6 +670,8 @@ const FONT_SIZE_OPTIONS = [
 const DEFAULT_FONT_SIZE_INDEX = 8 // Default to 24px
 const COPY_CHAR_LIMIT = 500
 const SELECTION_CHANGE_DEBOUNCE_MS = 300
+// iOS settles the selection shortly after the finger lifts, so read it late.
+const SELECTION_COMMIT_DELAY_MS = 50
 const fontSize = useSyncedBookSettings({
   nftClassId: nftClassId.value,
   key: 'fontSize',
@@ -859,6 +861,9 @@ let removeCopyListener: (() => void) | undefined
 let removeMouseUpListener: (() => void) | undefined
 let removeSelectionChangeListener: (() => void) | undefined
 let removeContextMenuListener: (() => void) | undefined
+let removeTouchStartListener: (() => void) | undefined
+let removeTouchEndListener: (() => void) | undefined
+let removePagingScrollListener: (() => void) | undefined
 const { isIntercomVisible, showNewMessageWithVisibility } = useIntercomVisibility()
 useHead({
   htmlAttrs: {
@@ -867,6 +872,33 @@ useHead({
 })
 const renditionElement = useTemplateRef<HTMLDivElement>('reader')
 const renditionViewWindow = ref<Window | undefined>(undefined)
+
+let isTouchGestureActive = false
+let selectionCommitTimer: ReturnType<typeof setTimeout> | undefined
+// `overflow: hidden` still scrolls, so dragging a selection handle to the edge
+// lets the browser autoscroll the paging container mid-column and desync
+// epub.js's location bookkeeping. Pin the offset for the length of the gesture.
+let pinnedPagingScroll: { left: number, top: number } | undefined
+
+function handlePagingScroll() {
+  const container = rendition.value?.manager?.container
+  if (!container || !pinnedPagingScroll) return
+  // A tap that turns the page must still scroll, and it leaves no selection
+  // behind — so only counteract while text is actually selected. `isCollapsed`
+  // avoids serialising the whole range on every scroll event.
+  const selection = renditionViewWindow.value?.getSelection()
+  if (!selection || selection.isCollapsed) {
+    pinnedPagingScroll.left = container.scrollLeft
+    pinnedPagingScroll.top = container.scrollTop
+    return
+  }
+  if (container.scrollLeft !== pinnedPagingScroll.left) {
+    container.scrollLeft = pinnedPagingScroll.left
+  }
+  if (container.scrollTop !== pinnedPagingScroll.top) {
+    container.scrollTop = pinnedPagingScroll.top
+  }
+}
 
 // Sync epub.js's page-progression direction with the writing mode, else
 // next()/prev() and the turn arrows stay in the book's original direction after
@@ -987,6 +1019,14 @@ async function loadEPub() {
     allowScriptedContent: true,
     spread: 'none',
   })
+  // The paging container outlives every section render, so bind it once here
+  // rather than in `rendered`.
+  removePagingScrollListener?.()
+  removePagingScrollListener = undefined
+  const pagingContainer = rendition.value.manager?.container
+  if (pagingContainer) {
+    removePagingScrollListener = useEventListener(pagingContainer, 'scroll', handlePagingScroll)
+  }
   book.spine!.hooks.content.register((document: Document) => {
     applyWritingModeToDocument(document)
   })
@@ -1192,10 +1232,42 @@ async function loadEPub() {
       }, 10)
     })
 
+    if (removeTouchStartListener) {
+      removeTouchStartListener()
+    }
+    removeTouchStartListener = useEventListener(view.window, 'touchstart', () => {
+      // Drop a pending commit so a quick re-grab never reads the selection
+      // mid-drag, which would clear the range under the finger on iOS.
+      clearTimeout(selectionCommitTimer)
+      const container = rendition.value?.manager?.container
+      pinnedPagingScroll = container
+        ? { left: container.scrollLeft, top: container.scrollTop }
+        : undefined
+      isTouchGestureActive = true
+    }, { passive: true, capture: true })
+
+    if (removeTouchEndListener) {
+      removeTouchEndListener()
+    }
+    removeTouchEndListener = useEventListener(view.window, ['touchend', 'touchcancel'], () => {
+      isTouchGestureActive = false
+      pinnedPagingScroll = undefined
+      // Read the selection once the finger is up: iOS settles it after touchend,
+      // and a cancel-then-end pair would otherwise schedule two reads.
+      clearTimeout(selectionCommitTimer)
+      selectionCommitTimer = setTimeout(() => {
+        handleTextSelection(view.window)
+      }, SELECTION_COMMIT_DELAY_MS)
+    }, { passive: true, capture: true })
+
     if (removeSelectionChangeListener) {
       removeSelectionChangeListener()
     }
     const debouncedSelectionChange = useDebounceFn(() => {
+      // Debounce fires on pause, not on release. Reading mid-drag would clear the
+      // range out from under the finger on iOS (see `handleTextSelection`),
+      // so leave in-progress touch gestures to the `touchend` handler above.
+      if (isTouchGestureActive) return
       handleTextSelection(view.window)
     }, SELECTION_CHANGE_DEBOUNCE_MS)
     removeSelectionChangeListener = useEventListener(view.window.document, 'selectionchange', debouncedSelectionChange)
@@ -2375,6 +2447,10 @@ onBeforeUnmount(() => {
   removeMouseUpListener?.()
   removeSelectionChangeListener?.()
   removeContextMenuListener?.()
+  removeTouchStartListener?.()
+  removeTouchEndListener?.()
+  removePagingScrollListener?.()
+  clearTimeout(selectionCommitTimer)
   renderedHighlights.clear()
   renditionViewWindow.value = undefined
   rendition.value?.destroy()
