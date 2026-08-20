@@ -60,6 +60,7 @@
     "pinia-plugin-persistedstate": "^4.7.1",
     "posthog-js": "^1.373.2",
     "tailwindcss": "^4.3.0",
+    "ufo": "^1.6.4",
     "unstorage": "^1.17.1",
     "uuid": "^8.3.2",
     "valibot": "^1.4.2",

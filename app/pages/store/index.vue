@@ -141,7 +141,7 @@
 <script setup lang="ts">
 import { FetchError } from 'ofetch'
 
-import { MAX_BOOKSTORE_PAGE_SIZE, isBookstoreBuiltInListType } from '~~/shared/utils/bookstore'
+import { isBookstoreBuiltInListType } from '~~/shared/utils/bookstore'
 import { getStorePublisherRouteName } from '~~/shared/constants/store-routes'
 import { formatLikerIdHandle } from '~~/shared/utils/liker-id'
 
@@ -663,6 +663,16 @@ const entityStructuredData = useEntityStructuredData({
   description: () => entityDescription.value || searchModeContext.value?.description,
 })
 
+// Captured once, outside the reactive head callback: re-evaluating `ts` a minute later
+// would patch the keyed link into a fresh 100-item request nothing consumes,
+// since the store pins its own `ts` per tag (see fetchCMSProductsByTagId).
+const initialListingPreloadHref = (!isStakingTagId.value && !isForYouTagId.value)
+  ? getBookstoreCMSProductsPreloadHref(tagId.value, {
+      ts: getTimestampRoundedToMinute(),
+      isLibrary: isLibraryTab.value,
+    })
+  : undefined
+
 useHead(() => {
   const meta = []
   const script = []
@@ -719,7 +729,6 @@ useHead(() => {
     }
   }
 
-  const encodedTagId = encodeURIComponent(tagId.value)
   const listingPreloadLinks = []
   if (isStakingTagId.value) {
     // Same-origin proxy preload: the staking listing now routes through our own
@@ -738,10 +747,10 @@ useHead(() => {
   // reused by the page fetch and would only waste a request. The library scopes
   // its listing with `library=1`; preloading without it primes a different
   // response than the one the page goes on to fetch.
-  else if (!isForYouTagId.value) {
+  else if (initialListingPreloadHref) {
     listingPreloadLinks.push({
       rel: 'preload' as const,
-      href: `/api/store/products?tag=${encodedTagId}&limit=${MAX_BOOKSTORE_PAGE_SIZE}&ts=${getTimestampRoundedToMinute()}${isLibraryTab.value ? '&library=1' : ''}`,
+      href: initialListingPreloadHref,
       as: 'fetch' as const,
       crossorigin: 'anonymous' as const,
       key: 'preload-store-products',

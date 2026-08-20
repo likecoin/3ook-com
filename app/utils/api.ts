@@ -1,3 +1,5 @@
+import { withQuery } from 'ufo'
+
 import { MAX_BOOKSTORE_PAGE_SIZE } from '~~/shared/utils/bookstore'
 import type { CollectiveBookNFT, CollectiveBookNFTsQueryOptions, CollectivePaginationResponse } from '~~/shared/utils/collective-indexer'
 
@@ -9,7 +11,9 @@ import type { CollectiveBookNFT, CollectiveBookNFTsQueryOptions, CollectivePagin
  */
 // Bound wedged requests (see createRetryingFetch) so awaits that gate loading
 // state — e.g. the bookshelf spinner — can't hang forever.
-export const apiFetch = createRetryingFetch({ baseURL: '/api', timeout: API_FETCH_TIMEOUT_MS })
+const API_BASE_URL = '/api'
+
+export const apiFetch = createRetryingFetch({ baseURL: API_BASE_URL, timeout: API_FETCH_TIMEOUT_MS })
 
 /**
  * Fetches the staking book listing through our same-origin `/api/store/staking-books`
@@ -38,25 +42,42 @@ export function fetchStakingBookNFTs({
   })
 }
 
-export function fetchBookstoreCMSProductsByTagId(tagId: string, {
-  offset,
-  limit = MAX_BOOKSTORE_PAGE_SIZE,
-  ts,
-  isLibrary = false,
-}: {
+const STORE_PRODUCTS_PATH = '/store/products'
+
+export interface BookstoreCMSProductsQueryOptions {
   offset?: string
   limit?: number
   ts?: number
   isLibrary?: boolean
-} = {}) {
-  return apiFetch<FetchBookstoreCMSProductsResponseData>('/store/products', {
-    query: {
-      tag: tagId,
-      offset,
-      limit,
-      ts,
-      library: isLibrary ? '1' : undefined,
-    },
+}
+
+function getBookstoreCMSProductsQuery(tagId: string, {
+  offset,
+  limit = MAX_BOOKSTORE_PAGE_SIZE,
+  ts,
+  isLibrary = false,
+}: BookstoreCMSProductsQueryOptions = {}) {
+  return {
+    tag: tagId,
+    offset,
+    limit,
+    ts,
+    library: isLibrary ? '1' : undefined,
+  }
+}
+
+/**
+ * Href for the listing preload link. The browser only reuses a preload when its URL
+ * matches the request byte for byte, so this shares the query builder with the fetch
+ * below and serialises it with the same `withQuery` ofetch applies to `query`.
+ */
+export function getBookstoreCMSProductsPreloadHref(tagId: string, options: BookstoreCMSProductsQueryOptions = {}) {
+  return withQuery(`${API_BASE_URL}${STORE_PRODUCTS_PATH}`, getBookstoreCMSProductsQuery(tagId, options))
+}
+
+export function fetchBookstoreCMSProductsByTagId(tagId: string, options: BookstoreCMSProductsQueryOptions = {}) {
+  return apiFetch<FetchBookstoreCMSProductsResponseData>(STORE_PRODUCTS_PATH, {
+    query: getBookstoreCMSProductsQuery(tagId, options),
   })
 }
 
