@@ -7,10 +7,23 @@ export function isNativeWebView(): boolean {
   return typeof window !== 'undefined' && !!window.ReactNativeWebView
 }
 
+// Capabilities the shell injected. Untrusted like the rest of __nativeBridge,
+// so sanitize into a fresh string-only array inside try/catch: a malformed
+// injection reads as no capabilities instead of throwing into the debug panel.
+export function getNativeFeatures(): readonly string[] {
+  if (typeof window === 'undefined') return []
+  try {
+    const features = window.__nativeBridge?.features
+    if (!Array.isArray(features)) return []
+    return features.filter((feature): feature is string => typeof feature === 'string')
+  }
+  catch {
+    return []
+  }
+}
+
 export function isNativeFeatureSupported(feature: string): boolean {
-  if (typeof window === 'undefined') return false
-  const features = window.__nativeBridge?.features
-  return Array.isArray(features) && features.includes(feature)
+  return getNativeFeatures().includes(feature)
 }
 
 // Install attribution the native shell exposes (Play Install Referrer on

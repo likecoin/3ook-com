@@ -168,7 +168,11 @@
       <i18n-t
         v-if="buildVersion !== undefined"
         keypath="build_version"
-        tag="span"
+        tag="button"
+        type="button"
+        class="cursor-pointer"
+        :aria-label="$t('app_debug_info_title')"
+        @click="handleBuildVersionClick"
       >
         <template #buildVersion>
           <span
@@ -182,6 +186,8 @@
 </template>
 
 <script setup lang="ts">
+import { LazyAppDebugInfoModal } from '#components'
+
 const props = defineProps({
   isShowLogo: {
     type: Boolean,
@@ -198,7 +204,16 @@ const privacyURL = computed(() => getDocsArticleURL('privacy', locale.value))
 const termsURL = computed(() => getDocsArticleURL('terms', locale.value))
 const shippingReturnRefundURL = computed(() => getDocsArticleURL('shippingReturnRefund', locale.value))
 
+const overlay = useOverlay()
+
 function handleAppLinkClick() {
   useLogEvent('footer_app_link_click')
+}
+
+function handleBuildVersionClick() {
+  useLogEvent('app_debug_info_modal_open')
+  // Created per click, and destroyed on close: the footer remounts on every
+  // route, and the overlay registry is shared for the lifetime of the app.
+  overlay.create(LazyAppDebugInfoModal, { destroyOnClose: true }).open()
 }
 </script>
