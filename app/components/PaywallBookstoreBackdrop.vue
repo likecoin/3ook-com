@@ -34,4 +34,13 @@ import backdrop from '~/assets/images/paywall/bg-bookstore.jpg'
     transform: translateY(-50%);
   }
 }
+
+/* Clearing will-change matters as much as the animation: it would otherwise
+   keep a full-bleed blurred image on its own compositor layer while static. */
+@media (prefers-reduced-motion: reduce) {
+  .paywall-bookstore-backdrop-scroll-animation {
+    animation: none;
+    will-change: auto;
+  }
+}
 </style>
