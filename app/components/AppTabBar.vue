@@ -10,7 +10,9 @@
     ]"
   >
     <div
+      ref="rowElement"
       :class="[
+        'relative',
         'flex',
         'items-center',
         'justify-center',
@@ -28,18 +30,32 @@
         'pointer-events-auto',
       ]"
     >
+      <!-- Carries the active tab's fill so it can travel between tabs. Measured
+           rather than computed: min-w-20 is a floor that longer labels exceed. -->
+      <div
+        v-if="indicatorStyle"
+        :class="[
+          'absolute left-0 top-0',
+          'rounded-full bg-inverted',
+          'pointer-events-none',
+          'transition-[transform,width] duration-200 ease-out motion-reduce:transition-none',
+        ]"
+        :style="indicatorStyle"
+      />
+
       <template
         v-for="item in menuItems"
         :key="item.key"
       >
         <UButton
           v-if="item.key === 'account' && hasLoggedIn"
-          class="justify-center min-w-20 h-13 rounded-full"
+          :class="['relative justify-center min-w-20 h-13 rounded-full', getTabFillClass(item.isActive)]"
           :variant="item.isActive ? 'solid' : 'ghost'"
           color="neutral"
           :to="item.to"
           size="md"
           :aria-label="item.label"
+          :data-tab-active="item.isActive || undefined"
         >
           <template #leading>
             <div class="flex flex-col justify-center items-center">
@@ -61,7 +77,7 @@
         </UButton>
         <UButton
           v-else
-          class="flex-col gap-0.75 min-w-20 h-13 py-1 rounded-full text-[11px]"
+          :class="['relative flex-col gap-0.75 min-w-20 h-13 py-1 rounded-full text-[11px]', getTabFillClass(item.isActive)]"
           :label="item.label"
           :aria-label="item.labelGraphic ? item.label : undefined"
           :icon="item.icon"
@@ -70,6 +86,7 @@
           :to="item.to"
           size="md"
           :ui="{ leadingIcon: 'size-7', label: 'leading-none' }"
+          :data-tab-active="item.isActive || undefined"
         >
           <template
             v-if="item.labelGraphic"
@@ -94,6 +111,34 @@ const { getLabelGraphic } = useGraphicLabel()
 const { loggedIn: hasLoggedIn, user } = useUserSession()
 const { isApp } = useAppDetection()
 const { likerPlusTier } = useSubscription()
+
+const rowElement = useTemplateRef<HTMLElement>('rowElement')
+const indicatorStyle = ref<Record<string, string>>()
+
+// The active tab keeps its solid variant, so its foreground still comes from the
+// theme; only the fill is surrendered once the indicator is there to carry it.
+// Until then — SSR, and the frame before hydration — the tab paints its own.
+function getTabFillClass(isActive: boolean) {
+  return isActive && indicatorStyle.value ? 'bg-transparent hover:bg-transparent' : ''
+}
+
+function updateIndicator() {
+  const row = rowElement.value
+  const activeTab = row?.querySelector<HTMLElement>('[data-tab-active]')
+  if (!activeTab) {
+    indicatorStyle.value = undefined
+    return
+  }
+  indicatorStyle.value = {
+    width: `${activeTab.offsetWidth}px`,
+    height: `${activeTab.offsetHeight}px`,
+    transform: `translateX(${activeTab.offsetLeft}px) translateY(${activeTab.offsetTop}px)`,
+  }
+}
+
+onMounted(updateIndicator)
+
+useResizeObserver(rowElement, updateIndicator)
 
 const menuItems = computed(() => {
   const routeName = getRouteBaseNameString()
@@ -142,4 +187,8 @@ const menuItems = computed(() => {
     }
   })
 })
+
+// menuItems recomputes on every route change, and in app it also loses the store
+// tab, which reflows every position after it.
+watch(menuItems, updateIndicator, { flush: 'post' })
 </script>
