@@ -197,9 +197,22 @@ body {
   animation: book-enter var(--book-enter-duration) cubic-bezier(0.5, 0, 0.9, 0.5) forwards;
 }
 
+/* Store/library grid items on arrival. The delay is set per item by the page,
+   and only for the first row; everything else enters on 0. */
+@keyframes book-grid-item-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.book-grid-item-enter {
+  animation: book-grid-item-enter 320ms ease-out backwards;
+  animation-delay: var(--grid-enter-delay, 0ms);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .has-book-arrived [data-book-cover],
-  .book-open-leave-active [data-book-cover] {
+  .book-open-leave-active [data-book-cover],
+  .book-grid-item-enter {
     animation: none;
   }
 }

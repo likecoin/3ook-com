@@ -25,17 +25,6 @@
   </div>
 
   <div
-    v-else-if="status === 'loading'"
-    class="flex justify-center py-48"
-  >
-    <UIcon
-      class="animate-spin"
-      name="material-symbols-progress-activity"
-      size="48"
-    />
-  </div>
-
-  <div
     v-else-if="status === 'search-empty'"
     class="w-full mb-8"
   >
@@ -123,7 +112,7 @@
 
 <script setup lang="ts">
 const props = defineProps<{
-  status: 'profile-not-found' | 'loading' | 'search-empty' | 'no-items'
+  status: 'profile-not-found' | 'search-empty' | 'no-items'
   routeName: string
 }>()
 

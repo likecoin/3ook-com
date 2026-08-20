@@ -67,9 +67,11 @@
         </ExpandableContent>
       </section>
 
+      <BookstoreGridSkeleton v-if="storeListStatus === 'loading'" />
+
       <StoreListStatus
-        v-if="storeListStatus"
-        :status="storeListStatus"
+        v-else-if="visibleListStatus"
+        :status="visibleListStatus"
         :route-name="listingRouteName"
         @contact-click="handleContactUsClick"
       />
@@ -98,7 +100,8 @@
           v-for="(item, index) in products.items"
           :id="item.classId"
           :key="`${tagId}-${item.classId}`"
-          :class="getGridItemClassesByIndex(index)"
+          :class="[getGridItemClassesByIndex(index), getGridItemEnterClass(item.classId)]"
+          :style="getGridItemEnterStyle(index)"
           :nft-class-id="item.classId"
           :book-name="item.title"
           :book-cover-src="item.imageUrl"
@@ -613,6 +616,11 @@ const storeListStatus = computed(() => {
   return null
 })
 
+// Split out rather than narrowed in the template, which StoreListStatus's prop
+// union needs now that it no longer accepts 'loading'.
+const visibleListStatus = computed(() =>
+  storeListStatus.value === 'loading' ? null : storeListStatus.value)
+
 // For You stays the signed-in default tag during a search, so gate on what is
 // actually rendered: search results come from the search list, not the feed.
 const isForYouFeedVisible = computed(() =>
@@ -917,6 +925,32 @@ const { gridClasses, getGridItemClassesByIndex, columnMax } = usePaginatedGrid({
   itemsCount,
   hasMore: hasMoreItems,
 })
+
+// Staggers the leading items only; the rest enter together. This is a flat count,
+// not a row: columnMax is the widest breakpoint's column count, so on a narrow
+// grid the cascade runs down several short rows.
+const GRID_ENTER_STAGGER_MS = 40
+
+// Items already on screen at hydration never animate: fading in the SSR'd paint
+// would flash the grid and disturb this page's LCP. Filled in a hook registered
+// after useMounted's own, so it is ready before the render that flag triggers.
+const hydratedItemIds = new Set<string>()
+onMounted(() => {
+  products.value.items.forEach((item) => {
+    if (item.classId) hydratedItemIds.add(item.classId)
+  })
+})
+
+function getGridItemEnterClass(classId?: string) {
+  return isMounted.value && !!classId && !hydratedItemIds.has(classId)
+    ? 'book-grid-item-enter'
+    : undefined
+}
+
+function getGridItemEnterStyle(index: number) {
+  if (index >= columnMax.value) return undefined
+  return { '--grid-enter-delay': `${index * GRID_ENTER_STAGGER_MS}ms` }
+}
 
 // Offered for any listing failure, not just a 500: a dropped connection surfaces
 // as a `<no response>` with no status code, so a status-keyed retry can't reach
