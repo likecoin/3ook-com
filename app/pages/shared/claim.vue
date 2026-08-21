@@ -134,11 +134,9 @@
   >
     <!-- Success State -->
     <template v-if="isClaimed">
-      <UIcon
-        class="text-theme-black"
-        name="i-material-symbols-check-circle-rounded"
-        :size="64"
-      />
+      <!-- A seat holder never passes through /plus/success, so the membership
+           lands here instead. -->
+      <PlusMembershipTada :has-landed="isClaimed" />
       <h1
         class="mt-5 text-2xl font-bold"
         v-text="$t('civic_member_claim_success_title')"
