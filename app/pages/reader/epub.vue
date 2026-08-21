@@ -623,7 +623,6 @@ if (!isUploadedBook.value) {
   })
 }
 
-const lastSectionIndex = ref(0)
 const percentage = ref(0)
 // percentageFromCfi is null until locations.generate() resolves, and that runs
 // un-awaited, so the first relocations of a cold-cache open land here. Neither
@@ -637,12 +636,11 @@ function applyPercentageFromCfi(cfi: string) {
   }
 }
 const percentageLabel = computed(() => `${Math.round(percentage.value * 100)}%`)
-const isAtLastPage = computed(() => {
-  return currentSectionIndex.value >= lastSectionIndex.value && percentage.value >= 1
-})
-const isAtFirstPage = computed(() => {
-  return currentSectionIndex.value === 0 && percentage.value === 0
-})
+// Driven by the rendition's atStart/atEnd flags, which come from the actual
+// rendered pagination; the bucketed location percentage hits 1 a page early
+// at large font sizes and would hide the next arrow before the real end.
+const isAtLastPage = ref(false)
+const isAtFirstPage = ref(false)
 const currentPageStartCfi = ref<string>('')
 const currentPageEndCfi = ref<string>('')
 const currentPageHref = ref<string>('')
@@ -841,8 +839,11 @@ function applyTheme() {
   rendition.value.themes.fontSize(`${fontSize.value}px`)
 }
 
-watch(fontSize, () => {
+// Re-display after a font change: themes.fontSize alone reflows without a
+// guaranteed relocated report, leaving the boundary flags and CFI stale.
+watch(fontSize, async () => {
   applyTheme()
+  await rerenderRenditionAtCurrentLocation()
 })
 
 watch(lineHeight, () => {
@@ -1006,7 +1007,6 @@ async function loadEPub() {
 
   activeNavItemHref.value = book.spine!.first()!.href
   currentPageHref.value = activeNavItemHref.value ?? ''
-  lastSectionIndex.value = book.spine!.last()!.index ?? 0
 
   if (!renditionElement.value) {
     return
@@ -1290,6 +1290,8 @@ async function loadEPub() {
     currentPageEndCfi.value = location.end.cfi
     // Authoritative section of the visible page (see the `rendered` handler).
     currentSectionIndex.value = location.start.index
+    isAtFirstPage.value = !!location.atStart
+    isAtLastPage.value = !!location.atEnd
     const href = location.start.href
     currentPageHref.value = href
     activeNavItemHref.value = resolveActiveNavItemHref(href)
