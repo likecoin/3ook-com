@@ -383,11 +383,12 @@
               :class="[
                 'bg-white',
                 'dark:bg-elevated',
-                'space-y-4',
+                'flex',
+                'flex-col',
+                'gap-4',
                 'p-4',
                 'rounded-lg',
                 'shadow-[0px_10px_20px_0px_rgba(0,0,0,0.04)]',
-                { 'max-tablet:hidden': isLibrary },
               ]"
             >
               <ProductPricingSelector
@@ -404,71 +405,17 @@
                 @select="handlePricingItemClick"
               />
 
-              <!-- [購買/再次購買][閱讀/借閱] -->
-              <footer class="flex gap-3">
-                <UButton
-                  v-if="!isLibrary && !isFreeBorrowOnly && pricingItems.length && !bookInfo.isRegionRestricted.value"
-                  v-bind="checkoutButtonProps"
-                  class="flex-1 cursor-pointer justify-center"
-                  size="xl"
-                  :loading="isPurchasing"
-                  :disabled="!canBePurchased"
-                  @click="handlePurchaseButtonClick"
-                />
-                <UButton
-                  v-if="isUserBookOwner"
-                  :variant="readButtonVariant"
-                  class="flex-1 cursor-pointer justify-center"
-                  :label="$t('product_page_read_button_label')"
-                  size="xl"
-                  @click="handleReadButtonClick"
-                />
-                <UButton
-                  v-else-if="isPlusReadingCTAVisible"
-                  ref="plusReadingCTAUpsell"
-                  :variant="plusReadingCTAVariant"
-                  class="flex-1 cursor-pointer justify-center"
-                  :label="plusReadingCTALabel"
-                  size="xl"
-                  @click="handlePlusReadButtonClick"
-                />
-              </footer>
-
-              <UButton
-                v-if="isPreviewCTAVisible"
-                class="w-full cursor-pointer justify-center"
-                variant="outline"
-                color="primary"
-                size="lg"
-                :label="$t('product_page_preview_button_label')"
-                @click="handlePreviewButtonClick"
-              />
-            </div>
-
-            <div
-              v-if="pricingItems.length && !isLibrary && !isFreeBorrowOnly"
-              class="flex gap-3 px-4"
-            >
-              <UButton
-                v-if="canBePurchased"
-                class="w-1/2 cursor-pointer justify-center"
-                :label="$t('product_page_gift_button_label')"
-                variant="outline"
-                color="primary"
-                size="lg"
-                leading-icon="i-material-symbols-featured-seasonal-and-gifts-rounded"
-                @click="handleGiftButtonClick"
-              />
-              <UButton
-                class="cursor-pointer justify-center"
-                :class="canBePurchased ? 'w-1/2' : 'w-full'"
-                :label="isInBookList ? $t('product_page_remove_from_book_list_button_label') : $t('product_page_add_to_book_list_button_label')"
-                variant="outline"
-                color="primary"
-                size="lg"
-                :leading-icon="isInBookList ? 'i-material-symbols-shopping-cart-rounded' : 'i-material-symbols-add-shopping-cart-rounded'"
-                :loading="isCheckingBookList || isUpdatingBookList"
-                @click="handleBookListButtonClickDebounced"
+              <!-- The desktop card and the mobile sticky bar share one CTA layout. -->
+              <ProductActionButtons
+                ref="plusReadingCTAUpsell"
+                v-bind="productActionButtonProps"
+                size="xl"
+                @purchase="handlePurchaseButtonClick"
+                @book-list="handleBookListButtonClickDebounced"
+                @gift="handleGiftButtonClick"
+                @read="handleReadButtonClick"
+                @plus-read="handlePlusReadButtonClick"
+                @preview="handlePreviewButtonClick"
               />
             </div>
           </div>
@@ -538,22 +485,13 @@
       :is-app="isApp"
       :is-library="isLibrary"
       :is-user-book-owner="isUserBookOwner"
-      :is-plus-reading-cta-visible="isPlusReadingCTAVisible"
-      :is-preview-cta-visible="isPreviewCTAVisible"
-      :is-purchase-hidden="isFreeBorrowOnly || bookInfo.isRegionRestricted.value"
-      :plus-reading-cta-label="plusReadingCTALabel"
-      :plus-reading-cta-variant="plusReadingCTAVariant"
+      :is-price-hidden="isFreeBorrowOnly"
       :read-button-variant="readButtonVariant"
       :is-liker-plus="isLikerPlus"
       :pricing-items="pricingItems"
       :selected-pricing-item="selectedPricingItem"
       :sticky-edition-dropdown-items="stickyEditionDropdownItems"
-      :checkout-button-props="checkoutButtonProps"
-      :can-be-purchased="canBePurchased"
-      :is-purchasing="isPurchasing"
-      :is-in-book-list="isInBookList"
-      :is-checking-book-list="isCheckingBookList"
-      :is-updating-book-list="isUpdatingBookList"
+      :action-buttons="productActionButtonProps"
       @read="handleReadButtonClick"
       @plus-read="handlePlusReadButtonClick"
       @preview="handlePreviewButtonClick"
@@ -613,6 +551,7 @@
 <script setup lang="ts">
 import type { AccordionItem } from '@nuxt/ui'
 import MarkdownIt from 'markdown-it'
+import type { ProductActionButtonsProps } from '~/components/ProductActionButtons.props'
 import type { PlusUpsellSlot } from '~~/shared/constants/analytics'
 
 const bookPurchaseSessionAPI = useBookPurchaseSessionAPI()
@@ -759,11 +698,12 @@ const isPlusReadingUpsellEligible = computed(() =>
   !isLikerPlus.value && !bookInfo.isFreeBorrowEnabled.value,
 )
 
+// The ref is the whole action block, so also require the borrow button itself.
 usePlusUpsellImpression({
   templateRef: 'plusReadingCTAUpsell',
   slot: 'plus-reading-cta',
   source: 'product-page',
-  isEligible: isPlusReadingUpsellEligible,
+  isEligible: () => isPlusReadingUpsellEligible.value && isPlusReadingCTAVisible.value,
 })
 usePlusUpsellImpression({
   templateRef: 'plusReadingTagUpsell',
@@ -783,29 +723,83 @@ usePlusUpsellImpression({
   source: 'product-page',
 })
 
-// 試閱: non-owners may read the first chapters free when the listing opted in;
-// hidden for anyone who can already borrow the full book (Plus or free-book).
-const isPreviewCTAVisible = computed(() =>
-  !isUserBookOwner.value
-  && bookInfo.isPreviewEnabled.value
-  && !bookInfo.isRegionRestricted.value
-  && !(isPlusReadingEnabled.value && (isLikerPlus.value || bookInfo.hasFreeEdition.value)),
-)
-const plusReadingCTALabel = computed(() =>
-  isBookBorrowed.value
-    ? $t('product_page_read_button_label')
-    : $t('product_page_plus_reading_borrow'),
-)
-
 const isFreeBorrowOnly = computed(() =>
   bookInfo.isFreeBorrowEnabled.value
   && bookInfo.pricingItems.value.every(item => item.price === 0),
 )
 
+// Store listing with any edition: free books lead with Own for Free, paid with Buy.
+// An owned free copy has nothing left to claim, so only Read remains.
+const isCheckoutVisible = computed(() =>
+  !isLibrary.value
+  && pricingItems.value.length > 0
+  && !bookInfo.isRegionRestricted.value
+  && !(isUserBookOwner.value && isFreeBorrowOnly.value),
+)
+// Cart and gift only make sense for a priced edition that is still in stock;
+// keyed on stock and approval, not canBePurchased, so they don't blink mid-purchase.
+const isCartCTAVisible = computed(() =>
+  isCheckoutVisible.value && !isFreeBorrowOnly.value && !isSelectedPricingItemSoldOut.value,
+)
+const isGiftCTAVisible = computed(() => isCartCTAVisible.value && bookInfo.isApprovedForSale.value)
+const bookListButtonProps = computed(() => (isInBookList.value
+  ? {
+      icon: 'i-material-symbols-shopping-cart-rounded',
+      label: $t('product_page_remove_from_book_list_button_label'),
+    }
+  : {
+      icon: 'i-material-symbols-add-shopping-cart-rounded',
+      label: $t('product_page_add_to_book_list_button_label'),
+    }))
+
+// 試閱: non-owners may read the first chapters free when the listing opted in;
+// pointless once the reader already holds the whole book (owned or borrowed).
+const isPreviewCTAVisible = computed(() =>
+  !isUserBookOwner.value
+  && !isBookBorrowed.value
+  && bookInfo.isPreviewEnabled.value
+  && !bookInfo.isRegionRestricted.value
+  && !isFreeBorrowOnly.value,
+)
+// In the library "borrow" is enough; the store spells out where the book comes from.
+const plusReadingCTALabel = computed(() => {
+  if (isBookBorrowed.value) return $t('product_page_read_button_label')
+  if (isLibrary.value) {
+    return bookInfo.isFreeBorrowEnabled.value
+      ? $t('product_page_borrow_for_free_button_label')
+      : $t('product_page_plus_reading_borrow')
+  }
+  return $t('product_page_borrow_from_library_button_label')
+})
+
 // Read is a quiet secondary action for Plus members (outline); non-Plus owners get a prominent solid button instead.
 const readButtonVariant = computed(() => (isLikerPlus.value ? 'outline' : 'solid'))
-// The shared borrow/read CTA shows Read (outline) once borrowed, else Borrow (solid).
-const plusReadingCTAVariant = computed(() => (isBookBorrowed.value ? 'outline' : 'solid'))
+// Borrow demotes to outline whenever buying is the accent action; Read after borrowing is always quiet.
+const plusReadingCTAVariant = computed(() =>
+  (isBookBorrowed.value || isCheckoutVisible.value ? 'outline' : 'solid'),
+)
+const plusReadingCTAIcon = computed(() =>
+  (isBookBorrowed.value ? undefined : 'i-3ook-com-library-rounded'),
+)
+
+const productActionButtonProps = computed<ProductActionButtonsProps>(() => ({
+  isLibrary: isLibrary.value,
+  isUserBookOwner: isUserBookOwner.value,
+  isCheckoutVisible: isCheckoutVisible.value,
+  checkoutButtonProps: checkoutButtonProps.value,
+  canBePurchased: canBePurchased.value,
+  isPurchasing: isPurchasing.value,
+  isCartCtaVisible: isCartCTAVisible.value,
+  bookListButtonProps: bookListButtonProps.value,
+  isBookListLoading: isCheckingBookList.value || isUpdatingBookList.value,
+  isGiftCtaVisible: isGiftCTAVisible.value,
+  readButtonVariant: readButtonVariant.value,
+  isPlusReadingCtaVisible: isPlusReadingCTAVisible.value,
+  plusReadingCtaLabel: plusReadingCTALabel.value,
+  plusReadingCtaIcon: plusReadingCTAIcon.value,
+  plusReadingCtaVariant: plusReadingCTAVariant.value,
+  isPreviewCtaVisible: isPreviewCTAVisible.value,
+}))
 const {
   generateBookStructuredData,
   generateOGMetaTags,

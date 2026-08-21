@@ -1,27 +1,16 @@
 import type { DropdownMenuItem } from '@nuxt/ui'
+import type { ProductActionButtonsProps } from './ProductActionButtons.props'
 import type { ProductPricingSelectorItem } from './ProductPricingSelector.props'
 
 export interface ProductStickyBarProps {
   isApp: boolean
   isLibrary: boolean
   isUserBookOwner: boolean
-  isPlusReadingCtaVisible: boolean
-  isPreviewCtaVisible: boolean
-  isPurchaseHidden: boolean
-  plusReadingCtaLabel: string
-  plusReadingCtaVariant: 'outline' | 'solid'
+  isPriceHidden: boolean
   readButtonVariant: 'outline' | 'solid'
   isLikerPlus: boolean
   pricingItems: ProductPricingSelectorItem[]
   selectedPricingItem?: ProductPricingSelectorItem
   stickyEditionDropdownItems: DropdownMenuItem[]
-  checkoutButtonProps: {
-    variant: 'subtle' | 'solid' | 'outline'
-    label: string
-  }
-  canBePurchased: boolean
-  isPurchasing: boolean
-  isInBookList: boolean
-  isCheckingBookList: boolean
-  isUpdatingBookList: boolean
+  actionButtons: ProductActionButtonsProps
 }

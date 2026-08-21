@@ -1,6 +1,6 @@
 <template>
   <aside
-    v-if="isUserBookOwner || isPlusReadingCtaVisible || (!isLibrary && pricingItems.length)"
+    v-if="isUserBookOwner || actionButtons.isPlusReadingCtaVisible || (!isLibrary && pricingItems.length)"
     :class="[
       'fixed',
       'bottom-17',
@@ -25,7 +25,6 @@
       v-if="isUserBookOwner"
       :variant="readButtonVariant"
       :label="$t('product_page_read_button_label')"
-      class="cursor-pointer"
       size="xl"
       block
       @click="emit('read')"
@@ -49,86 +48,36 @@
             icon="i-material-symbols-arrow-drop-down"
             color="neutral"
             variant="outline"
-            class="cursor-pointer"
           />
         </UDropdownMenu>
       </UFieldGroup>
 
-      <div
-        v-if="!isLibrary && !isPurchaseHidden && pricingItems.length"
-        class="flex items-center justify-between flex-wrap gap-2"
+      <span
+        v-if="actionButtons.isCheckoutVisible && !isPriceHidden"
+        class="space-x-0.5 text-xl font-semibold leading-none"
       >
-        <span class="shrink-0 space-x-0.5 text-xl font-semibold leading-none">
-          <span
-            v-if="selectedPricingItem?.discountedPrice"
-            :class="{ 'text-theme-cyan': selectedPricingItem?.discountedPrice }"
-            v-text="selectedPricingItem?.discountedPrice"
-          />
-          <span
-            :class="{ 'text-xs text-dimmed line-through': selectedPricingItem?.discountedPrice }"
-            v-text="selectedPricingItem?.originalPrice"
-          />
-          <PlusBadge
-            v-if="isLikerPlus && selectedPricingItem?.discountedPrice"
-            class="inline-block"
-          />
-        </span>
-
-        <div class="flex items-center gap-1">
-          <UButton
-            v-if="canBePurchased"
-            icon="i-material-symbols-featured-seasonal-and-gifts-rounded"
-            color="neutral"
-            variant="outline"
-            size="sm"
-            :ui="{ base: 'cursor-pointer rounded-full p-1.5' }"
-            :aria-label="$t('product_page_gift_button_label')"
-            :title="$t('product_page_gift_button_label')"
-            @click="emit('gift')"
-          />
-          <UButton
-            :icon="isInBookList ? 'i-material-symbols-shopping-cart-rounded' : 'i-material-symbols-add-shopping-cart-rounded'"
-            color="neutral"
-            variant="outline"
-            size="sm"
-            :ui="{ base: 'cursor-pointer rounded-full p-1.5' }"
-            :loading="isCheckingBookList || isUpdatingBookList"
-            :aria-label="$t(isInBookList ? 'product_page_remove_from_book_list_button_label' : 'product_page_add_to_book_list_button_label')"
-            :title="$t(isInBookList ? 'product_page_remove_from_book_list_button_label' : 'product_page_add_to_book_list_button_label')"
-            @click="emit('bookList')"
-          />
-        </div>
-      </div>
-
-      <div class="flex gap-2">
-        <UButton
-          v-if="!isLibrary && !isPurchaseHidden && pricingItems.length"
-          v-bind="checkoutButtonProps"
-          class="flex-1 cursor-pointer justify-center"
-          color="primary"
-          size="xl"
-          :loading="isPurchasing"
-          :disabled="!canBePurchased"
-          @click="emit('purchase')"
+        <span
+          v-if="selectedPricingItem?.discountedPrice"
+          :class="{ 'text-theme-cyan': selectedPricingItem?.discountedPrice }"
+          v-text="selectedPricingItem?.discountedPrice"
         />
-        <UButton
-          v-if="isPlusReadingCtaVisible"
-          :variant="plusReadingCtaVariant"
-          class="flex-1 cursor-pointer justify-center"
-          :label="plusReadingCtaLabel"
-          size="xl"
-          @click="emit('plusRead')"
+        <span
+          :class="{ 'text-xs text-dimmed line-through': selectedPricingItem?.discountedPrice }"
+          v-text="selectedPricingItem?.originalPrice"
         />
-      </div>
+        <PlusBadge
+          v-if="isLikerPlus && selectedPricingItem?.discountedPrice"
+          class="inline-block"
+        />
+      </span>
 
-      <UButton
-        v-if="isPreviewCtaVisible"
-        class="cursor-pointer justify-center"
-        variant="outline"
-        color="primary"
-        :label="$t('product_page_preview_button_label')"
-        block
-        @click="emit('preview')"
+      <ProductActionButtons
+        v-bind="actionButtons"
+        @purchase="emit('purchase')"
+        @book-list="emit('bookList')"
+        @gift="emit('gift')"
+        @plus-read="emit('plusRead')"
+        @preview="emit('preview')"
       />
     </template>
   </aside>
