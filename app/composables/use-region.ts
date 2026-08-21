@@ -17,6 +17,17 @@ export function parseRegionCode(value: string | null | undefined): RegionCode | 
   return COUNTRY_CODE_SET.has(code) ? code : undefined
 }
 
+function useRegionState() {
+  return useState<RegionCode | undefined>('user-region', () => undefined)
+}
+
+// Read-only view of the resolved region. The full composable wires settings
+// sync, a watcher and lifecycle hooks per call — per-card consumers (a store
+// grid holds ~100) must not multiply that when they only need the value.
+export function useRegionValue(): Readonly<Ref<RegionCode | undefined>> {
+  return readonly(useRegionState())
+}
+
 export function useRegion() {
   const userSettingsStore = useUserSettingsStore()
   const { loggedIn: hasLoggedIn } = useUserSession()
@@ -29,7 +40,7 @@ export function useRegion() {
 
   // `undefined` until initializeRegion() resolves, so the UI can show a
   // placeholder instead of a concrete region the user may not actually be in.
-  const region = useState<RegionCode | undefined>('user-region', () => undefined)
+  const region = useRegionState()
 
   // User action: persist the concrete country. IP is no longer consulted once set.
   function setRegion(value: RegionCode) {

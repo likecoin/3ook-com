@@ -9,6 +9,8 @@ export interface BookstoreCMSProduct {
   locales?: string[]
   isDRMFree: boolean
   isAdultOnly?: boolean
+  // ISO country codes the storefront must not offer this book in (e.g. ['HK']).
+  restrictedTerritories?: string[]
   isPlusReadingEnabled?: boolean
   isMultiple?: boolean
   minPrice?: number
@@ -87,6 +89,7 @@ declare global {
     locales?: string[]
     isDRMFree?: boolean
     isAdultOnly?: boolean
+    restrictedTerritories?: string[]
     isPlusReadingEnabled?: boolean
     isMultiple?: boolean
     minPrice?: number
@@ -150,6 +153,7 @@ declare global {
     isApprovedForIndexing: boolean
     isApprovedForAds: boolean
     isAdultOnly?: boolean
+    restrictedTerritories?: string[]
     hideDownload: boolean
     hideAudio: boolean
     hideUpsell: boolean

@@ -34,6 +34,16 @@ export function getBookEntityName(entity?: BookEntity): string {
   return entity?.name || ''
 }
 
+// Compliance geo gate: a book tagged restrictedTerritories must not be offered in
+// those regions. Enforced client-side against the user's region so the shared,
+// region-less server caches stay valid; an unresolved region never restricts.
+export function getIsBookRegionRestricted(
+  restrictedTerritories: string[] | undefined,
+  region: string | undefined,
+): boolean {
+  return !!region && !!restrictedTerritories?.includes(region)
+}
+
 // A free edition is a listed (non-unlisted) price-0 edition. Kept in lockstep
 // with ebook-cors, which independently gates free library access the same way.
 export function getHasFreeEdition(prices?: BookstorePrice[]): boolean {

@@ -35,6 +35,15 @@
           }"
         />
 
+        <UAlert
+          v-if="bookInfo.isRegionRestricted.value"
+          color="warning"
+          variant="subtle"
+          icon="i-material-symbols-location-off-rounded"
+          :title="$t('product_page_region_restricted_notice')"
+          :ui="{ root: 'mb-6 rounded-2xl items-center py-2' }"
+        />
+
         <div class="flex flex-col laptop:flex-row gap-6 laptop:gap-8">
           <BookCoverCarousel
             class="w-[150px] tablet:w-[130px] laptop:w-[220px] shrink-0"
@@ -382,7 +391,7 @@
               ]"
             >
               <ProductPricingSelector
-                v-if="pricingItems.length && !isLibrary"
+                v-if="pricingItems.length && !isLibrary && !bookInfo.isRegionRestricted.value"
                 :items="pricingItems"
                 :is-price-hidden="isFreeBorrowOnly"
                 :is-liker-plus="isLikerPlus"
@@ -398,7 +407,7 @@
               <!-- [購買/再次購買][閱讀/借閱] -->
               <footer class="flex gap-3">
                 <UButton
-                  v-if="!isLibrary && !isFreeBorrowOnly && pricingItems.length"
+                  v-if="!isLibrary && !isFreeBorrowOnly && pricingItems.length && !bookInfo.isRegionRestricted.value"
                   v-bind="checkoutButtonProps"
                   class="flex-1 cursor-pointer justify-center"
                   size="xl"
@@ -531,7 +540,7 @@
       :is-user-book-owner="isUserBookOwner"
       :is-plus-reading-cta-visible="isPlusReadingCTAVisible"
       :is-preview-cta-visible="isPreviewCTAVisible"
-      :is-purchase-hidden="isFreeBorrowOnly"
+      :is-purchase-hidden="isFreeBorrowOnly || bookInfo.isRegionRestricted.value"
       :plus-reading-cta-label="plusReadingCTALabel"
       :plus-reading-cta-variant="plusReadingCTAVariant"
       :read-button-variant="readButtonVariant"
@@ -724,10 +733,24 @@ const listingRouteName = computed(() => (isLibrary.value ? 'library' : 'store'))
 
 const isPlusReadingEnabled = bookInfo.isPlusReadingEnabled
 
+// A member who already borrowed this book reads it now, so the CTA shows Read
+// instead of Borrow — for Plus members and non-Plus free-book borrowers alike.
+// Gate on the session: plusReadingBookIds is persisted, so without this a stale
+// borrowed id could flip a free-borrow book to Read after logout/session expiry.
+const isBookBorrowed = computed(() =>
+  hasLoggedIn.value
+  && (isLikerPlus.value || bookInfo.isFreeBorrowEnabled.value)
+  && bookshelfStore.plusReadingBookIds.includes(nftClassId.value.toLowerCase()),
+)
+
 // Non-owners of a Plus-reading book see a CTA: Plus members and free-edition
 // borrowers read it directly, other non-Plus users are routed to subscribe.
+// Region-restricted books take no NEW borrows, but an existing borrow (like
+// ownership) keeps its Read entry.
 const isPlusReadingCTAVisible = computed(() =>
-  !isUserBookOwner.value && isPlusReadingEnabled.value,
+  !isUserBookOwner.value
+  && isPlusReadingEnabled.value
+  && (!bookInfo.isRegionRestricted.value || isBookBorrowed.value),
 )
 // The tags link members and in-app users to a keyword search instead, so only
 // these arms are upsells. Shared with the click handlers below: an impression
@@ -761,20 +784,12 @@ usePlusUpsellImpression({
   source: 'product-page',
 })
 
-// A member who already borrowed this book reads it now, so the CTA shows Read
-// instead of Borrow — for Plus members and non-Plus free-book borrowers alike.
-// Gate on the session: plusReadingBookIds is persisted, so without this a stale
-// borrowed id could flip a free-borrow book to Read after logout/session expiry.
-const isBookBorrowed = computed(() =>
-  hasLoggedIn.value
-  && (isLikerPlus.value || bookInfo.isFreeBorrowEnabled.value)
-  && bookshelfStore.plusReadingBookIds.includes(nftClassId.value.toLowerCase()),
-)
 // 試閱: non-owners may read the first chapters free when the listing opted in;
 // hidden for anyone who can already borrow the full book (Plus or free-book).
 const isPreviewCTAVisible = computed(() =>
   !isUserBookOwner.value
   && bookInfo.isPreviewEnabled.value
+  && !bookInfo.isRegionRestricted.value
   && !(isPlusReadingEnabled.value && (isLikerPlus.value || bookInfo.hasFreeEdition.value)),
 )
 const plusReadingCTALabel = computed(() =>
@@ -1213,7 +1228,10 @@ const isSelectedPricingItemSoldOut = computed(() => {
 })
 
 const canBePurchased = computed(() => {
-  return !isSelectedPricingItemSoldOut.value && !isPurchasing.value && bookInfo.isApprovedForSale.value
+  return !isSelectedPricingItemSoldOut.value
+    && !isPurchasing.value
+    && bookInfo.isApprovedForSale.value
+    && !bookInfo.isRegionRestricted.value
 })
 
 const getContentTypeLabel = useContentTypeLabel()

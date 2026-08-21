@@ -1,6 +1,6 @@
 import type { LocationQueryRaw } from 'vue-router'
 import { getGenreI18nKey } from '~~/shared/constants/book-categories'
-import { getBookEntityName, getHasFreeEdition } from '~~/shared/utils/bookstore'
+import { getBookEntityName, getHasFreeEdition, getIsBookRegionRestricted } from '~~/shared/utils/bookstore'
 
 export default function (
   { nftClassId, isOwnerInfoEnabled = false }: {
@@ -188,6 +188,11 @@ export default function (
   const isWithheldPendingReview = computed(() => {
     return !bookstoreInfo.value
       && !!getIsBookstorePendingReviewFromCache(queryCache, toValue(nftClassId))
+  })
+
+  const region = useRegionValue()
+  const isRegionRestricted = computed(() => {
+    return getIsBookRegionRestricted(bookstoreInfo.value?.restrictedTerritories, region.value)
   })
 
   const isApprovedForSale = computed(() => {
@@ -391,6 +396,7 @@ export default function (
     isAdultOnly,
     hasBookstoreInfo,
     isWithheldPendingReview,
+    isRegionRestricted,
     isApprovedForSale,
     isApprovedForIndexing,
     isApprovedForAds,

@@ -27,6 +27,7 @@ interface NFTBookListingInfo {
   thumbnailUrl?: string
   inLanguage?: string
   isAdultOnly?: boolean
+  restrictedTerritories?: string[]
   isPlusReadingEnabled?: boolean
   hideDownload?: boolean
   timestamp?: number
@@ -107,6 +108,7 @@ function normalizeBookListingToProduct(book: NFTBookListingInfo): BookstoreCMSPr
     locales: book.inLanguage ? [book.inLanguage] : undefined,
     isDRMFree: book.hideDownload === false,
     isAdultOnly: book.isAdultOnly || undefined,
+    restrictedTerritories: book.restrictedTerritories?.length ? book.restrictedTerritories : undefined,
     isPlusReadingEnabled: book.isPlusReadingEnabled ?? undefined,
     minPrice: book.minPrice ?? cheapest?.price,
     minPriceInDecimalByCurrency: cheapest?.priceInDecimalByCurrency,

@@ -144,7 +144,7 @@
 <script setup lang="ts">
 import { FetchError } from 'ofetch'
 
-import { isBookstoreBuiltInListType } from '~~/shared/utils/bookstore'
+import { getIsBookRegionRestricted, isBookstoreBuiltInListType } from '~~/shared/utils/bookstore'
 import { getStorePublisherRouteName } from '~~/shared/constants/store-routes'
 import { formatLikerIdHandle } from '~~/shared/utils/liker-id'
 
@@ -174,6 +174,7 @@ const { handleError } = useErrorHandler()
 const storePageState = useStorePageState(listingRouteName)
 const isOnline = useOnline()
 const isAdultContentEnabled = useAdultContentSetting()
+const region = useRegionValue()
 const { isApp } = useAppDetection()
 const intercom = useIntercom()
 // Effective Plus (canonical flag OR optimistic device-store entitlement) so a
@@ -494,6 +495,13 @@ function shouldFilterAdultOnly(bookstoreInfo: BookstoreInfo | null | undefined):
   return !isAdultContentEnabled.value && !!bookstoreInfo?.isAdultOnly
 }
 
+// One spelling for the region gate: callers pass whichever territories source
+// their branch already holds (inline item flag, or an already-fetched
+// BookstoreInfo) so the gate itself never adds a query-cache dependency.
+function shouldFilterRegionRestricted(restrictedTerritories: string[] | undefined): boolean {
+  return getIsBookRegionRestricted(restrictedTerritories, region.value)
+}
+
 // Returns the source array when nothing was dropped. The For You gate below
 // reads the query cache, so it re-runs on any cache write; a fresh array would
 // then invalidate every downstream computed for an unchanged list.
@@ -516,6 +524,7 @@ const baseProducts = computed<BookstoreItemList>(() => {
     const filtered = searchResults.value.items.filter((item) => {
       const bookstoreInfo = getBookstoreInfoByNFTClassIdFromCache(queryCache, item.classId || '')
       return !shouldFilterAdultOnly(bookstoreInfo)
+        && !shouldFilterRegionRestricted(bookstoreInfo?.restrictedTerritories)
     })
     return {
       ...searchResults.value,
@@ -535,6 +544,7 @@ const baseProducts = computed<BookstoreItemList>(() => {
       if (bookInfo === null) return
       if (bookInfo?.isHidden) return
       if (shouldFilterAdultOnly(bookInfo)) return
+      if (shouldFilterRegionRestricted(bookInfo?.restrictedTerritories)) return
       items.push({
         id: item.nftClassId,
         classId: item.nftClassId,
@@ -556,17 +566,19 @@ const baseProducts = computed<BookstoreItemList>(() => {
 
   let items = cmsProducts.value.items
   // Scoped to the feed: CMS tag listings come from the bookstore API, which
-  // already excludes hidden books, while the feed's Airtable-sourced pools carry
-  // no such flag.
+  // already excludes hidden books and carries region flags inline, while the
+  // feed's Airtable-sourced pools carry neither — hence the cache fallback here.
   if (isForYouTagId.value) {
     items = filterKeepingIdentity(items, (item) => {
       const bookstoreInfo = getBookstoreInfoByNFTClassIdFromCache(queryCache, item.classId || item.id || '')
       return !bookstoreInfo?.isHidden
+        && !shouldFilterRegionRestricted(item.restrictedTerritories ?? bookstoreInfo?.restrictedTerritories)
     })
   }
   if (!isAdultContentEnabled.value) {
     items = filterKeepingIdentity(items, item => !item.isAdultOnly)
   }
+  items = filterKeepingIdentity(items, item => !shouldFilterRegionRestricted(item.restrictedTerritories))
   return items === cmsProducts.value.items ? cmsProducts.value : { ...cmsProducts.value, items }
 })
 
