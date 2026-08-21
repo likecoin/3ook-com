@@ -17,11 +17,15 @@
           v-if="uploadSuccess"
           class="flex flex-col items-center gap-3"
         >
-          <UIcon
-            name="i-material-symbols-check-circle-rounded"
-            class="text-green-500"
-            size="48"
-          />
+          <!-- The voice itself is the payoff, so it lands here wearing the same
+               wave badge the sample player uses for a voice that can speak. -->
+          <div class="voice-arrive relative">
+            <UAvatar
+              class="size-20 bg-elevated ring-1 ring-(--ui-border)"
+              :src="previewAvatarSrc"
+            />
+            <TTSVoiceWaveBadge class="voice-arrive-badge absolute -bottom-0.5 -right-0.5" />
+          </div>
           <p
             class="text-center text-base font-semibold"
             v-text="$t('tts_custom_voice_success')"
@@ -30,8 +34,9 @@
 
         <div class="flex items-center gap-3">
           <UAvatar
+            v-if="!uploadSuccess"
             size="lg"
-            :src="previewAvatarUrl || customDefaultAvatar"
+            :src="previewAvatarSrc"
           />
           <UInput
             v-model="previewVoiceNameInput"
@@ -433,6 +438,8 @@ const previewAvatarUrl = computed(() => {
   return raw ? getResizedImageURL(raw, { size: 128 }) : null
 })
 
+const previewAvatarSrc = computed(() => previewAvatarUrl.value || customDefaultAvatar)
+
 const hasMicrophone = ref(false)
 
 function setError(key: string) {
@@ -754,3 +761,35 @@ onUnmounted(() => {
   promptPreview.stop()
 })
 </script>
+
+<style scoped>
+/* A notch below the Plus stamp: a voice can be re-recorded, so this settles
+   rather than celebrates. */
+@keyframes voice-arrive {
+  from { opacity: 0; transform: scale(0.8); }
+  65% { opacity: 1; transform: scale(1.04); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.voice-arrive {
+  animation: voice-arrive 600ms cubic-bezier(0.3, 0.1, 0.3, 1) both;
+}
+
+@keyframes voice-arrive-badge {
+  from { opacity: 0; transform: scale(0.6); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* Trails the avatar so the voice lands first, then comes alive. */
+.voice-arrive-badge {
+  animation: voice-arrive-badge 320ms ease-out both;
+  animation-delay: 420ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .voice-arrive,
+  .voice-arrive-badge {
+    animation: none;
+  }
+}
+</style>

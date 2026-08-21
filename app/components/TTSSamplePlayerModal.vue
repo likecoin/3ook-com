@@ -19,18 +19,10 @@
           :alt="sample.title"
         >
 
-        <div
+        <TTSVoiceWaveBadge
           v-if="isAudible"
-          class="absolute -bottom-0.5 -right-0.5 w-6 h-6 rounded-full bg-inverted ring-2 ring-(--ui-bg) shadow-md flex items-center justify-center gap-0.5"
-          aria-hidden="true"
-        >
-          <span
-            v-for="i in 3"
-            :key="i"
-            class="wave-bar w-0.5 rounded-full bg-theme-cyan"
-            :style="{ animationDelay: `${(i - 1) * 0.15}s` }"
-          />
-        </div>
+          class="absolute -bottom-0.5 -right-0.5"
+        />
       </div>
 
       <div class="flex flex-col text-left grow min-w-0">
@@ -218,22 +210,3 @@ watch(
   { flush: 'post' },
 )
 </script>
-
-<style scoped>
-.wave-bar {
-  height: 25%;
-  animation: wave 0.9s ease-in-out infinite;
-}
-
-@keyframes wave {
-  0%, 100% { height: 25%; }
-  50% { height: 60%; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .wave-bar {
-    animation: none;
-    height: 45%;
-  }
-}
-</style>
