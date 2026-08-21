@@ -16,7 +16,7 @@ export default defineAppConfig({
       ],
     },
     button: {
-      base: 'disabled:opacity-30',
+      base: 'cursor-pointer disabled:cursor-not-allowed disabled:opacity-30',
       compoundVariants: [
         {
           color: 'primary',
