@@ -595,6 +595,10 @@ async function handleAvatarChange(e: Event) {
   const target = e.target as HTMLInputElement
   const file = target.files?.[0]
   if (!file) return
+  if (!isDecodableImageFile(file)) {
+    errorMessage.value = $t('tts_custom_voice_error_avatar_unsupported_format')
+    return
+  }
   if (file.size > 2 * 1024 * 1024) {
     errorMessage.value = $t('tts_custom_voice_error_avatar_too_large')
     return
@@ -606,8 +610,7 @@ async function handleAvatarChange(e: Event) {
     avatarPreview.value = URL.createObjectURL(avatarFile.value)
   }
   catch (error: unknown) {
-    const message = error instanceof Error ? error.message : String(error)
-    errorMessage.value = message
+    errorMessage.value = $t('tts_custom_voice_error_avatar_resize_failed')
     console.error('[CustomVoice] Avatar resize failed:', error)
   }
 }
