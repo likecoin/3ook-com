@@ -337,6 +337,10 @@ export default defineNuxtConfig({
     customCollections: [
       { prefix: '3ook-com', dir: resolve('app/assets/icons') },
     ],
+    // Inline the custom SVGs into the client bundle. Without this, Nuxt Icon
+    // fetches the collection at runtime from /api/_nuxt_icon/3ook-com.json on
+    // first paint, so a dropped connection throws and the tab bar icons vanish.
+    clientBundle: { includeCustomCollections: true },
   },
 
   pwa: {
