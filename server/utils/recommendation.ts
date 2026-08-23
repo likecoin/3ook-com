@@ -434,16 +434,37 @@ async function fetchSeedMetadata(seed: string): Promise<PortraitBookMetadata | u
   }
 }
 
+// One line per served feed, keyed by `reason` so a cache hit and a full rebuild
+// land in the same table. Stage millis are the only way to tell a slow portrait
+// from a slow pool fan-out once this runs behind a CDN.
+function logFeedTiming(payload: Record<string, unknown>) {
+  console.info('[for-you] feed', JSON.stringify(payload))
+}
+
+// Times the await rather than the whole promise: every caller wraps at the
+// creation site, so the two are the same window minus scheduling.
+async function timeStage<T>(stages: Record<string, number>, key: string, promise: Promise<T>) {
+  const startedAt = Date.now()
+  try {
+    return await promise
+  }
+  finally {
+    stages[key] = Date.now() - startedAt
+  }
+}
+
 async function computeForYouRecommendations(
   wallet: string,
   { isLibrary = false, seed, limit = FOR_YOU_DEFAULT_PAGE_SIZE }: ForYouFetchOptions,
 ): Promise<FetchBookstoreForYouResponseData> {
+  const startedAt = Date.now()
+  const stages: Record<string, number> = {}
   // Start the seed lookup early so it overlaps the Firestore reads.
-  const seedMetadataPromise = seed ? fetchSeedMetadata(seed) : undefined
+  const seedMetadataPromise = seed ? timeStage(stages, 'seedMs', fetchSeedMetadata(seed)) : undefined
   const [portrait, userSettings, shelfClassIds] = await Promise.all([
-    fetchUserPortrait(wallet),
+    timeStage(stages, 'portraitMs', fetchUserPortrait(wallet)),
     getUserSettings(wallet),
-    fetchCachedShelfClassIds(wallet),
+    timeStage(stages, 'shelfMs', fetchCachedShelfClassIds(wallet)),
   ])
   const isAdultContentEnabled = !!userSettings.isAdultContentEnabled
 
@@ -468,11 +489,11 @@ async function computeForYouRecommendations(
     // Library only: the store already surfaces bestselling as its own tab, so
     // blending it there would re-skin that tab, while the library has no such
     // tab and so gains a signal that appears nowhere else in it.
-    const [popularProducts, bestsellingProducts, latestProducts] = await Promise.all([
+    const [popularProducts, bestsellingProducts, latestProducts] = await timeStage(stages, 'poolsMs', Promise.all([
       fetchCachedPopularPool(isLibrary),
       isLibrary ? fetchCachedBestsellingPool(isLibrary).catch(catchPoolFailure('bestselling')) : [],
       fetchCachedLatestPool(isLibrary).catch(catchPoolFailure('latest')),
-    ])
+    ]))
     // Run through the same ranking as the personalized path. An empty portrait
     // scores on priors alone, so a book leading two charts outranks one leading
     // a single chart and the tab stops mirroring any one listing beside it.
@@ -489,7 +510,18 @@ async function computeForYouRecommendations(
         ...candidate,
         isWishlisted: wishlistClassIdSet.has(getCandidateClassId(candidate.product)),
       }))
+    const rankStartedAt = Date.now()
     const coldRanked = applyDiversityGuard(scoreCandidates(coldCandidates, portrait))
+    stages.rankMs = Date.now() - rankStartedAt
+    logFeedTiming({
+      reason: 'cold',
+      totalMs: Date.now() - startedAt,
+      ...stages,
+      candidateCount: coldCandidates.length,
+      recordCount: Math.min(coldRanked.length, limit),
+      signalBookCount: portrait.signalBookCount,
+      isLibrary,
+    })
     return buildFeedResponse(coldRanked.map(candidate => candidate.product), false, limit)
   }
 
@@ -506,7 +538,7 @@ async function computeForYouRecommendations(
   const genres = new Set(topGenres)
   const searchTerms = new Set([...topAuthors, ...topKeywords])
 
-  const seedMetadata = await seedMetadataPromise
+  const seedMetadata = seedMetadataPromise && await seedMetadataPromise
   if (seedMetadata?.genre) genres.add(seedMetadata.genre)
   if (seedMetadata?.authorName) searchTerms.add(seedMetadata.authorName)
   for (const keyword of filterMeaningfulKeywords(seedMetadata?.keywords).slice(0, SEED_KEYWORD_POOL_COUNT)) {
@@ -523,7 +555,7 @@ async function computeForYouRecommendations(
     poolPromises.push(fetchSearchTermPool(term, isLibrary).then(products => ({ products })))
   }
 
-  const settledPools = await Promise.allSettled(poolPromises)
+  const settledPools = await timeStage(stages, 'poolsMs', Promise.allSettled(poolPromises))
   const pools: CandidatePool[] = []
   settledPools.forEach((outcome, index) => {
     if (outcome.status === 'fulfilled') {
@@ -545,7 +577,9 @@ async function computeForYouRecommendations(
       isWishlisted: wishlistClassIdSet.has(getCandidateClassId(candidate.product)),
     }))
 
+  const rankStartedAt = Date.now()
   const ranked = applyDiversityGuard(scoreCandidates(candidates, portrait, seedMetadata))
+  stages.rankMs = Date.now() - rankStartedAt
   const records = ranked.slice(0, limit).map(candidate => candidate.product)
 
   // Backfill from popular so a sparse portrait still fills the page.
@@ -560,6 +594,17 @@ async function computeForYouRecommendations(
     }
   }
 
+  logFeedTiming({
+    reason: seed ? 'seeded-warm' : 'warm',
+    totalMs: Date.now() - startedAt,
+    ...stages,
+    poolCount: poolPromises.length,
+    failedPoolCount: poolPromises.length - pools.length,
+    candidateCount: candidates.length,
+    recordCount: records.length,
+    signalBookCount: portrait.signalBookCount,
+    isLibrary,
+  })
   return buildFeedResponse(records, true, limit)
 }
 
@@ -598,8 +643,12 @@ export async function fetchForYouRecommendations(
   wallet: string,
   { isLibrary = false, seed, limit = FOR_YOU_DEFAULT_PAGE_SIZE }: ForYouFetchOptions = {},
 ): Promise<FetchBookstoreForYouResponseData> {
+  const startedAt = Date.now()
   if (seed) {
     const result = await fetchCachedSeededRecommendations(wallet, isLibrary, seed)
+    // Always logged, so `totalMs` splits hit from miss on its own; a miss also
+    // emits the `seeded-warm` line the compute below writes.
+    logFeedTiming({ reason: 'seeded', totalMs: Date.now() - startedAt, isLibrary })
     return buildFeedResponse(result.records, result.isPersonalized, limit)
   }
 
@@ -612,7 +661,9 @@ export async function fetchForYouRecommendations(
     console.warn('[for-you] Failed to read feed cache:', error)
   }
   const usableCache = cached && cached.limit >= limit ? cached : undefined
-  if (usableCache && Date.now() - usableCache.computedAt.toMillis() < FEED_CACHE_TTL_MS) {
+  const cacheAgeMs = usableCache ? Date.now() - usableCache.computedAt.toMillis() : undefined
+  if (usableCache && cacheAgeMs !== undefined && cacheAgeMs < FEED_CACHE_TTL_MS) {
+    logFeedTiming({ reason: 'fresh', totalMs: Date.now() - startedAt, cacheAgeMs, isLibrary })
     return buildFeedResponse(usableCache.records, usableCache.isPersonalized, limit)
   }
 
@@ -623,10 +674,19 @@ export async function fetchForYouRecommendations(
   catch (error) {
     if (usableCache) {
       console.warn('[for-you] Recompute failed, serving stale feed cache:', error)
+      logFeedTiming({ reason: 'stale-on-error', totalMs: Date.now() - startedAt, cacheAgeMs, isLibrary })
       return buildFeedResponse(usableCache.records, usableCache.isPersonalized, limit)
     }
     throw error
   }
+  // Paired with the `fresh` line above so the cache decision is one family of
+  // reasons; the compute itself logs its own stage line under `cold`/`warm`.
+  logFeedTiming({
+    reason: cacheAgeMs === undefined ? 'miss' : 'stale',
+    totalMs: Date.now() - startedAt,
+    cacheAgeMs,
+    isLibrary,
+  })
 
   // Fire-and-forget; JSON round-trip strips undefined, which Firestore rejects.
   cacheDocRef.set({
