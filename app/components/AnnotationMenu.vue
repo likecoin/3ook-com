@@ -2,16 +2,30 @@
   <div
     v-if="isVisible"
     ref="menuEl"
-    class="fixed z-50 flex items-center gap-2 w-max max-w-[calc(100vw-2rem)] bg-theme-white dark:bg-theme-black border rounded-lg shadow-lg"
+    :class="[
+      'fixed',
+      'z-50',
+      'flex',
+      'items-center',
+      'w-max',
+      'max-w-[calc(100vw-2rem)]',
+      'bg-theme-white',
+      'dark:bg-theme-black',
+      'border',
+      'divide-x',
+      'divide-accented',
+      'rounded-lg',
+      'shadow-lg',
+    ]"
     :style="menuStyle"
   >
     <div
       ref="scrollerEl"
-      class="min-w-0 overflow-x-auto hide-scrollbar scroll-smooth"
+      class="min-w-0 py-1 px-2 overflow-x-auto hide-scrollbar scroll-smooth"
     >
       <div
         ref="actionsEl"
-        class="flex items-center gap-2 w-max"
+        class="flex items-center gap-1 w-max"
       >
         <button
           v-for="color in ANNOTATION_COLORS"
@@ -55,7 +69,8 @@
       color="neutral"
       variant="ghost"
       size="sm"
-      class="shrink-0 pl-2 border-l rounded-none"
+      class="shrink-0 rounded-lg"
+      :ui="{ leadingIcon: 'size-6' }"
       @click="handlePageActions"
     />
   </div>
@@ -66,8 +81,9 @@ import { ANNOTATION_COLORS, ANNOTATION_INDICATOR_COLORS_MAP } from '~~/shared/co
 
 const { isIOS } = useAppDetection()
 
-// Keep in step with the `max-w-[calc(100vw-2rem)]` cap on the menu, which is
-// the same MENU_PADDING * 2 gutter the clamp below leaves on each side.
+// Keep in step with the `max-w-[calc(100vw-2rem)]` cap on the menu and the
+// `px-2` on the scroller, which match the MENU_PADDING * 2 gutter the clamp
+// below leaves on each side.
 const MENU_PADDING = 8
 
 const props = defineProps<{
@@ -112,7 +128,6 @@ const menuStyle = computed(() => {
     ? minX > maxX ? viewportWidth.value / 2 : Math.min(Math.max(props.position.x, minX), maxX)
     : props.position.x
   return {
-    padding: `${MENU_PADDING}px`,
     left: `${clampedX}px`,
     top: `${shouldAppearFromBottom.value ? props.position.yBottom + MENU_PADDING : props.position.y - MENU_PADDING}px`,
     transform: shouldAppearFromBottom.value ? 'translateX(-50%)' : 'translate(-50%, -100%)',
