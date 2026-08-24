@@ -592,14 +592,14 @@ const products = computed<BookstoreItemList>(() => {
 const itemsCount = computed(() => products.value.items.length)
 // In library mode the staking gate hides candidates until their Plus flags are
 // revalidated, so keep the skeleton up while that's in flight to avoid an
-// empty-state flash on cold load. Search/affiliate listings fetch only client-side
-// in onMounted, so also treat the not-yet-fetched state as loading — otherwise the
-// SSR/pre-hydration paint shows a blank grid with no spinner until the fetch starts.
+// empty-state flash on cold load. A never-fetched listing counts too: a switched-to
+// tag has no bucket yet, and fetchTagItems awaits the tag lookup and staking fetch
+// before isFetchingItems flips — leaving it blank, with no skeleton, until then.
 const isLoadingInitialItems = computed(() => (
   itemsCount.value === 0
   && (
     products.value.isFetchingItems
-    || (isSearchMode.value && !products.value.hasFetchedItems)
+    || !products.value.hasFetchedItems
     || (isLibraryTab.value && isRevalidatingNFTClassMetadata.value)
   )
 ))
