@@ -22,6 +22,7 @@
         <TTSVoiceWaveBadge
           v-if="isAudible"
           class="absolute -bottom-0.5 -right-0.5"
+          is-speaking
         />
       </div>
 

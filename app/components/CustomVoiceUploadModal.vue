@@ -24,7 +24,10 @@
               class="size-20 bg-elevated ring-1 ring-(--ui-border)"
               :src="previewAvatarSrc"
             />
-            <TTSVoiceWaveBadge class="voice-arrive-badge absolute -bottom-0.5 -right-0.5" />
+            <TTSVoiceWaveBadge
+              class="voice-arrive-badge absolute -bottom-0.5 -right-0.5"
+              :is-speaking="isPreviewAudioPlaying"
+            />
           </div>
           <p
             class="text-center text-base font-semibold"
@@ -86,6 +89,9 @@
               preload="none"
               class="flex-1 w-full min-w-0 h-8"
               :src="previewAudioSrc"
+              @playing="isPreviewAudioPlaying = true"
+              @pause="isPreviewAudioPlaying = false"
+              @waiting="isPreviewAudioPlaying = false"
             />
             <UButton
               icon="i-material-symbols-download-rounded"
@@ -541,11 +547,18 @@ const voiceLanguageLabel = computed(() => {
 const PREVIEW_MAX_LENGTH = 2000
 const previewText = ref(isLegacyEnglishVoice.value ? PREVIEW_TEXT_EN : PREVIEW_TEXT)
 const isDownloadingPreview = ref(false)
+const isPreviewAudioPlaying = ref(false)
 
 const previewAudioSrc = computed(() => {
   const text = previewText.value.trim()
   if (!text) return ''
   return getTTSPreviewUrl(voiceLanguage.value, text)
+})
+
+// Editing the text swaps or unmounts the audio element without a pause event,
+// which would otherwise leave the wave badge waving over silence.
+watch(previewAudioSrc, () => {
+  isPreviewAudioPlaying.value = false
 })
 
 watch(voiceLanguage, (newLang, oldLang) => {
