@@ -378,8 +378,9 @@
               'gap-4',
             ]"
           >
-            <div
+            <section
               v-if="(!isLibrary && pricingItems.length) || isUserBookOwner || isPlusReadingCTAVisible"
+              ref="pricingSection"
               :class="[
                 'bg-white',
                 'dark:bg-elevated',
@@ -415,7 +416,7 @@
                 @plus-read="handlePlusReadButtonClick"
                 @preview="handlePreviewButtonClick"
               />
-            </div>
+            </section>
           </div>
 
           <ul class="flex justify-center items-center gap-2">
@@ -463,15 +464,20 @@
       </div>
     </section>
 
-    <RecommendedBookGrid
-      class="w-full mt-12 laptop:mt-20"
-      :title="$t('product_page_related_books_title')"
-      :nft-class-ids="filteredRecommendedClassIds"
-      :feed="feedRecommendations"
-      :ll-source="nftClassId"
-      :is-library="isLibrary"
-      :max-rows="MAX_RECOMMENDED_ROWS"
-    />
+    <div
+      ref="recommendationSection"
+      class="w-full"
+    >
+      <RecommendedBookGrid
+        class="w-full mt-12 laptop:mt-20"
+        :title="$t('product_page_related_books_title')"
+        :nft-class-ids="filteredRecommendedClassIds"
+        :feed="feedRecommendations"
+        :ll-source="nftClassId"
+        :is-library="isLibrary"
+        :max-rows="MAX_RECOMMENDED_ROWS"
+      />
+    </div>
 
     <AppFooter
       v-if="!isApp"
@@ -479,24 +485,27 @@
     />
 
     <!-- Mobile sticky bottom bar -->
-    <ProductStickyBar
-      :is-app="isApp"
-      :is-library="isLibrary"
-      :is-user-book-owner="isUserBookOwner"
-      :is-price-hidden="isFreeBorrowOnly"
-      :read-button-variant="readButtonVariant"
-      :is-liker-plus="isLikerPlus"
-      :pricing-items="pricingItems"
-      :selected-pricing-item="selectedPricingItem"
-      :sticky-edition-dropdown-items="stickyEditionDropdownItems"
-      :action-buttons="productActionButtonProps"
-      @read="handleReadButtonClick"
-      @plus-read="handlePlusReadButtonClick"
-      @preview="handlePreviewButtonClick"
-      @gift="handleGiftButtonClick"
-      @book-list="handleBookListButtonClickDebounced"
-      @purchase="handleStickyPurchaseButtonClick"
-    />
+    <Transition name="product-sticky-bar">
+      <ProductStickyBar
+        v-show="!isStickyBarHidden"
+        :is-app="isApp"
+        :is-library="isLibrary"
+        :is-user-book-owner="isUserBookOwner"
+        :is-price-hidden="isFreeBorrowOnly"
+        :read-button-variant="readButtonVariant"
+        :is-liker-plus="isLikerPlus"
+        :pricing-items="pricingItems"
+        :selected-pricing-item="selectedPricingItem"
+        :sticky-edition-dropdown-items="stickyEditionDropdownItems"
+        :action-buttons="productActionButtonProps"
+        @read="handleReadButtonClick"
+        @plus-read="handlePlusReadButtonClick"
+        @preview="handlePreviewButtonClick"
+        @gift="handleGiftButtonClick"
+        @book-list="handleBookListButtonClickDebounced"
+        @purchase="handleStickyPurchaseButtonClick"
+      />
+    </Transition>
 
     <!-- Gift Book Modal -->
     <GiftBookModal
@@ -1142,6 +1151,24 @@ const stickyEditionDropdownItems = computed(() => {
   }))
 })
 
+// Hide the sticky bar while the pricing section or the recommendation section is in view.
+// The negative bottom rootMargin ignores the sliver hidden behind the bottom tab bar,
+// so a section only counts as visible once it clearly rises above it.
+const stickyBarRootMargin = '0px 0px -100px 0px'
+const pricingSection = useTemplateRef<HTMLElement>('pricingSection')
+const isPricingSectionVisible = useElementVisibility(pricingSection, {
+  rootMargin: stickyBarRootMargin,
+})
+const recommendationSection = useTemplateRef<HTMLElement>('recommendationSection')
+const isRecommendationSectionVisible = useElementVisibility(recommendationSection, {
+  rootMargin: stickyBarRootMargin,
+})
+const isStickyBarHidden = computed(() =>
+  isPricingSectionVisible.value
+  // Guard the empty case: a zero-height wrapper can still count as intersecting
+  || (isRecommendationSectionVisible.value && filteredRecommendedClassIds.value.length > 0),
+)
+
 const bookName = computed(() => bookInfo.name.value)
 
 const bookReviewURLWithUTM = computed(() => {
@@ -1654,3 +1681,16 @@ function handleReportContentClick() {
   })
 }
 </script>
+
+<style scoped>
+.product-sticky-bar-enter-active,
+.product-sticky-bar-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.product-sticky-bar-enter-from,
+.product-sticky-bar-leave-to {
+  opacity: 0;
+  transform: translateX(-0.5rem);
+}
+</style>
