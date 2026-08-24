@@ -70,6 +70,19 @@ export const TTS_SAMPLE_ACTIONS = [
 
 export type TTSSampleAction = typeof TTS_SAMPLE_ACTIONS[number]
 
+// How a reader turned the page, counted per session and reported on
+// `reading_session_end`: per-turn events were half the reader's event volume
+// and nothing read them. Both keyboard axes and the space bar count as `key`.
+export const READER_NAVIGATION_METHODS = [
+  'arrow',
+  'key',
+  'swipe_h',
+  'swipe_v',
+  'tap',
+] as const
+
+export type ReaderNavigationMethod = typeof READER_NAVIGATION_METHODS[number]
+
 // Every internal surface ever shipped as `ll_source`. Pre-split clients still
 // hold these in PostHog's `initial_utm_source`, where a page name would outrank
 // the real channel; also the filter list for the attribution-ladder query.

@@ -1,5 +1,6 @@
 import { useDocumentVisibility, useIdle, useThrottleFn } from '@vueuse/core'
 import { ANALYTICS_FLUSH_THROTTLE_MS, HEARTBEAT_INTERVAL_MS, MAX_HEARTBEAT_DELTA_MS, MAX_SESSION_DURATION_MS } from '~~/shared/constants/analytics'
+import type { ReaderNavigationMethod } from '~~/shared/constants/analytics'
 
 const IDLE_TIMEOUT_MS = 2 * 60 * 1000
 
@@ -17,9 +18,21 @@ interface ReadingSessionOptions {
   // True when reading the server-truncated 試閱 file: progress is relative to
   // the preview, so the server must not treat it as full-book completion.
   isPreview?: Ref<boolean>
+  // Uploaded books aren't on-chain, so they have no publisher analytics
+  // pipeline to feed. Pass false for inert no-ops: no idle watcher, no
+  // heartbeat timer, no end-of-session beacon.
+  isEnabled: boolean
+}
+
+function buildNavigationCounts(): Record<ReaderNavigationMethod, number> {
+  return { arrow: 0, key: 0, swipe_h: 0, swipe_v: 0, tap: 0 }
 }
 
 export function useReadingSession(options: ReadingSessionOptions) {
+  if (!options.isEnabled) {
+    return { recordNavigation: (_method: ReaderNavigationMethod) => {} }
+  }
+
   const { bookName, readerType, progress, isTextToSpeechPlaying, chapterIndex, pageIndex, isLibraryBook, isPreview } = options
   const nftClassId = toRef(options.nftClassId)
 
@@ -28,6 +41,8 @@ export function useReadingSession(options: ReadingSessionOptions) {
   let startProgress = 0
   let pagesViewed = new Set<number | string>()
   let sessionFlushed = false
+
+  let navigationCounts = buildNavigationCounts()
 
   let activeReadingTimeMs = 0
   let ttsActiveTimeMs = 0
@@ -40,6 +55,7 @@ export function useReadingSession(options: ReadingSessionOptions) {
     sessionId = crypto.randomUUID()
     startProgress = progress.value
     pagesViewed = new Set<number | string>()
+    navigationCounts = buildNavigationCounts()
     sessionFlushed = false
     activeReadingTimeMs = 0
     ttsActiveTimeMs = seedTTSMs
@@ -112,6 +128,10 @@ export function useReadingSession(options: ReadingSessionOptions) {
     flushDeltas()
   }, { immediate: true })
 
+  function recordNavigation(method: ReaderNavigationMethod) {
+    navigationCounts[method] += 1
+  }
+
   function drainAccumulators(cap: number) {
     const now = Date.now()
     let drainedActiveTime = activeReadingTimeMs
@@ -140,6 +160,8 @@ export function useReadingSession(options: ReadingSessionOptions) {
     return capped
   }
 
+  // Deliberately without the navigation counts: the publisher pipeline this
+  // beacon feeds pays out on reading time, not on page-turn ergonomics.
   function buildSessionPayload() {
     const finalDelta = drainAccumulators(MAX_SESSION_DURATION_MS)
     const totalActiveReadingTimeMs = Math.min(sessionActiveReadingTimeMs, MAX_SESSION_DURATION_MS)
@@ -186,6 +208,11 @@ export function useReadingSession(options: ReadingSessionOptions) {
       is_paid_plus_at_event_time: !!sessionUser.value?.isLikerPlus && !sessionUser.value?.isLikerPlusTrial,
       is_library_book: !!isLibraryBook?.value,
       is_preview: !!isPreview?.value,
+      nav_arrow: navigationCounts.arrow,
+      nav_key: navigationCounts.key,
+      nav_swipe_h: navigationCounts.swipe_h,
+      nav_swipe_v: navigationCounts.swipe_v,
+      nav_tap: navigationCounts.tap,
     })
   }
 
@@ -253,5 +280,5 @@ export function useReadingSession(options: ReadingSessionOptions) {
     flushSessionBeacon()
   })
 
-  return {}
+  return { recordNavigation }
 }

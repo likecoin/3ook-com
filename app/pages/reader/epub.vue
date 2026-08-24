@@ -345,6 +345,7 @@ import ePub, {
   type Section,
 } from '@likecoin/epub-ts'
 import type { ReaderLeftSidebarTab } from '~/components/ReaderLeftSidebar.props'
+import type { ReaderNavigationMethod } from '~~/shared/constants/analytics'
 import { ANNOTATION_COLORS_MAP, ANNOTATION_TEXT_MAX_LENGTH } from '~~/shared/constants/annotations'
 import { SEARCH_MAX_RESULTS } from '~~/shared/constants/reader-search'
 
@@ -610,20 +611,17 @@ const { setTTSSegments, setChapterTitles, openPlayer } = useTTSPlayerModal({
 const currentSectionIndex = ref(0)
 
 const { isTTSPlaying } = useTTSPlayingState()
-// Uploaded books aren't on-chain, so they have no publisher analytics
-// pipeline to feed — skip per-book reading session reporting for them.
-if (!isUploadedBook.value) {
-  useReadingSession({
-    nftClassId,
-    bookName: bookInfo.name,
-    readerType: 'epub',
-    progress: computed(() => Math.min(readingProgress.value * 100, 100)),
-    isTextToSpeechPlaying: isTTSPlaying,
-    chapterIndex: currentSectionIndex,
-    isLibraryBook,
-    isPreview: isPreviewMode,
-  })
-}
+const { recordNavigation } = useReadingSession({
+  nftClassId,
+  bookName: bookInfo.name,
+  readerType: 'epub',
+  progress: computed(() => Math.min(readingProgress.value * 100, 100)),
+  isTextToSpeechPlaying: isTTSPlaying,
+  chapterIndex: currentSectionIndex,
+  isLibraryBook,
+  isPreview: isPreviewMode,
+  isEnabled: !isUploadedBook.value,
+})
 
 const percentage = ref(0)
 // percentageFromCfi is null until locations.generate() resolves, and that runs
@@ -1175,12 +1173,10 @@ async function loadEPub() {
         const range = width * 0.45
         const x = event.clientX % width // Normalize x to be within the window
         if (x < range) {
-          turnPageLeft()
-          useLogEvent('reader_navigate_button_arrow_mobile')
+          turnPageLeft('tap')
         }
         else if (width - x < range) {
-          turnPageRight()
-          useLogEvent('reader_navigate_button_arrow_mobile')
+          turnPageRight('tap')
         }
       }
     })
@@ -1199,20 +1195,16 @@ async function loadEPub() {
 
           switch (direction) {
             case 'left':
-              turnPageRight()
-              useLogEvent('reader_navigate_swipe_horizontal')
+              turnPageRight('swipe_h')
               break
             case 'right':
-              turnPageLeft()
-              useLogEvent('reader_navigate_swipe_horizontal')
+              turnPageLeft('swipe_h')
               break
             case 'up':
-              nextPage()
-              useLogEvent('reader_navigate_swipe_vertical')
+              nextPage('swipe_v')
               break
             case 'down':
-              prevPage()
-              useLogEvent('reader_navigate_swipe_vertical')
+              prevPage('swipe_v')
               break
             default:
               break
@@ -1654,35 +1646,42 @@ async function setActiveNavItem(item: NavItem, { isSilentError = false } = {}) {
   return false
 }
 
-function nextPage() {
+// Every caller is a page-turn gesture, so these report the turn themselves.
+// Clamped-away turns report nothing and skip the spinner: epub.js ignores a
+// next()/prev() past either end, so no `relocated` would arrive to clear it.
+function nextPage(method: ReaderNavigationMethod) {
+  if (isAtLastPage.value) return
   activeTTSElementIndex.value = undefined
   isPageLoading.value = true
   isAnnotationMenuVisible.value = false
   rendition.value?.next()
+  recordNavigation(method)
 }
 
-function prevPage() {
+function prevPage(method: ReaderNavigationMethod) {
+  if (isAtFirstPage.value) return
   activeTTSElementIndex.value = undefined
   isPageLoading.value = true
   isAnnotationMenuVisible.value = false
   rendition.value?.prev()
+  recordNavigation(method)
 }
 
-function turnPageLeft() {
+function turnPageLeft(method: ReaderNavigationMethod) {
   if (shouldFlipFromRightToLeft.value) {
-    nextPage()
+    nextPage(method)
   }
   else {
-    prevPage()
+    prevPage(method)
   }
 }
 
-function turnPageRight() {
+function turnPageRight(method: ReaderNavigationMethod) {
   if (shouldFlipFromRightToLeft.value) {
-    prevPage()
+    prevPage(method)
   }
   else {
-    nextPage()
+    nextPage(method)
   }
 }
 
@@ -1954,13 +1953,11 @@ async function handleFootnoteReturn() {
 }
 
 function handleLeftArrowButtonClick() {
-  turnPageLeft()
-  useLogEvent('reader_navigate_button_arrow')
+  turnPageLeft('arrow')
 }
 
 function handleRightArrowButtonClick() {
-  turnPageRight()
-  useLogEvent('reader_navigate_button_arrow')
+  turnPageRight('arrow')
 }
 
 function checkIsSelectingText() {
@@ -2488,29 +2485,24 @@ async function handleBookmarkDelete(bookmark: Annotation) {
 
 const isShiftPressed = useKeyModifier('Shift')
 onKeyStroke('ArrowRight', () => {
-  turnPageRight()
-  useLogEvent('reader_navigate_key_arrow_horizontal')
+  turnPageRight('key')
 })
 onKeyStroke('ArrowLeft', () => {
-  turnPageLeft()
-  useLogEvent('reader_navigate_key_arrow_horizontal')
+  turnPageLeft('key')
 })
 onKeyStroke('ArrowDown', () => {
-  nextPage()
-  useLogEvent('reader_navigate_key_arrow_vertical')
+  nextPage('key')
 })
 onKeyStroke('ArrowUp', () => {
-  prevPage()
-  useLogEvent('reader_navigate_key_arrow_vertical')
+  prevPage('key')
 })
 onKeyStroke('Space', () => {
   if (isShiftPressed.value) {
-    prevPage()
+    prevPage('key')
   }
   else {
-    nextPage()
+    nextPage('key')
   }
-  useLogEvent('reader_navigate_key_space')
 })
 
 onBeforeUnmount(() => {

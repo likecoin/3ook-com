@@ -14,7 +14,7 @@
               :disabled="isAtFirstPage"
               color="neutral"
               variant="outline"
-              @click="previousPage"
+              @click="() => previousPage('arrow')"
             />
             <div class="flex justify-center items-center gap-1 phone:pr-3 border-2 border-accented">
               <input
@@ -46,7 +46,7 @@
               :disabled="isAtLastPage"
               color="neutral"
               variant="outline"
-              @click="nextPage"
+              @click="() => nextPage('arrow')"
             />
           </UFieldGroup>
 
@@ -222,7 +222,7 @@
           'w-12 laptop:w-16 items-center justify-center cursor-pointer',
           { 'opacity-0 pointer-events-none': isAtFirstPage },
         ]"
-        @click="handleLeftArrowButtonClick"
+        @click="() => previousPage('arrow')"
       >
         <UIcon
           size="24"
@@ -239,7 +239,7 @@
           'w-12 laptop:w-16 items-center justify-center cursor-pointer',
           { 'opacity-0 pointer-events-none': isAtLastPage },
         ]"
-        @click="handleRightArrowButtonClick"
+        @click="() => nextPage('arrow')"
       >
         <UIcon
           size="24"
@@ -324,6 +324,7 @@ import type { RouteLocationRaw } from 'vue-router'
 import type { PDFDocumentProxy, PDFPageProxy, PageViewport } from 'pdfjs-dist'
 import type { TextItem, TextMarkedContent } from 'pdfjs-dist/types/src/display/api'
 import type { ReaderLeftSidebarTab } from './ReaderLeftSidebar.props'
+import type { ReaderNavigationMethod } from '~~/shared/constants/analytics'
 import { ANNOTATION_TEXT_MAX_LENGTH } from '~~/shared/constants/annotations'
 import { SEARCH_EXCERPT_RADIUS, SEARCH_MAX_RESULTS } from '~~/shared/constants/reader-search'
 
@@ -593,6 +594,7 @@ const emit = defineEmits<{
   pdfLoaded: [pdfDocument: PDFDocumentProxy]
   ttsPlay: []
   pageChanged: [pageNumber: number]
+  navigate: [method: ReaderNavigationMethod]
 }>()
 
 const { pixelRatio } = useDevicePixelRatio()
@@ -1045,32 +1047,31 @@ async function renderDualPages() {
   await Promise.all(renderTasks)
 }
 
-function nextPage() {
+// The header chevrons bind these directly and are the only arrow control
+// below laptop width, so the helpers report rather than their callers.
+// Clamped-away turns report nothing: held arrows at either end aren't turns.
+function nextPage(method: ReaderNavigationMethod) {
   if (!isDocumentReady.value) return
   const page = clampedCurrentPage.value
   const step = isDualPageMode.value
     ? (page === 1 ? 1 : 2)
     : 1
-  currentPage.value = Math.min(page + step, totalPages.value)
+  const next = Math.min(page + step, totalPages.value)
+  if (next === page) return
+  currentPage.value = next
+  emit('navigate', method)
 }
 
-function previousPage() {
+function previousPage(method: ReaderNavigationMethod) {
   if (!isDocumentReady.value) return
   const page = clampedCurrentPage.value
   const step = isDualPageMode.value
     ? (page <= 2 ? 1 : 2)
     : 1
-  currentPage.value = Math.max(page - step, 1)
-}
-
-function handleLeftArrowButtonClick() {
-  previousPage()
-  useLogEvent('reader_navigate_button_arrow', { nft_class_id: props.nftClassId })
-}
-
-function handleRightArrowButtonClick() {
-  nextPage()
-  useLogEvent('reader_navigate_button_arrow', { nft_class_id: props.nftClassId })
+  const previous = Math.max(page - step, 1)
+  if (previous === page) return
+  currentPage.value = previous
+  emit('navigate', method)
 }
 
 function handleContainerTap(event: MouseEvent) {
@@ -1084,15 +1085,11 @@ function handleContainerTap(event: MouseEvent) {
   const range = rect.width * TAP_ZONE_WIDTH_RATIO
   const x = event.clientX - rect.left
   if (x < range) {
-    previousPage()
+    previousPage('tap')
   }
   else if (rect.width - x < range) {
-    nextPage()
+    nextPage('tap')
   }
-  else {
-    return
-  }
-  useLogEvent('reader_navigate_button_arrow_mobile', { nft_class_id: props.nftClassId })
 }
 
 function togglePageMode(value?: 'single' | 'dual') {
@@ -1157,10 +1154,10 @@ function handleKeydown(event: KeyboardEvent) {
 
   switch (event.key) {
     case 'ArrowLeft':
-      previousPage()
+      previousPage('key')
       break
     case 'ArrowRight':
-      nextPage()
+      nextPage('key')
       break
     case '+':
     case '=':
@@ -1198,10 +1195,10 @@ function handleKeydown(event: KeyboardEvent) {
     case ' ':
       event.preventDefault()
       if (event.shiftKey) {
-        previousPage()
+        previousPage('key')
       }
       else {
-        nextPage()
+        nextPage('key')
       }
       break
     case 'g':

@@ -33,6 +33,7 @@
         @pdf-loaded="handlePDFLoaded"
         @tts-play="handleTTSPlay"
         @page-changed="handlePageChanged"
+        @navigate="recordNavigation"
       />
     </ClientOnly>
   </main>
@@ -103,20 +104,17 @@ function updatePDFProgress(page: number) {
 }
 const currentPageIndex = ref(1)
 const { isTTSPlaying } = useTTSPlayingState()
-// Uploaded books aren't on-chain, so they have no publisher analytics
-// pipeline to feed — skip per-book reading session reporting for them.
-if (!isUploadedBook.value) {
-  useReadingSession({
-    nftClassId,
-    bookName: bookInfo.name,
-    readerType: 'pdf',
-    progress: pdfProgress,
-    isTextToSpeechPlaying: isTTSPlaying,
-    pageIndex: currentPageIndex,
-    isLibraryBook,
-    isPreview: isPreviewMode,
-  })
-}
+const { recordNavigation } = useReadingSession({
+  nftClassId,
+  bookName: bookInfo.name,
+  readerType: 'pdf',
+  progress: pdfProgress,
+  isTextToSpeechPlaying: isTTSPlaying,
+  pageIndex: currentPageIndex,
+  isLibraryBook,
+  isPreview: isPreviewMode,
+  isEnabled: !isUploadedBook.value,
+})
 
 const fileBuffer = ref<ArrayBuffer | null>(null)
 const isPDFReady = ref(false)
