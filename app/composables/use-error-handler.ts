@@ -37,6 +37,7 @@ export default function () {
     // still throw — they rely on this never returning normally.
     const isChunkErrorClaimed = import.meta.client && await nuxtApp.$claimChunkError?.(error)
     if (isChunkErrorClaimed && !props.isFatal) return true
+
     let handler: ErrorHandler | undefined
     // Custom error handling
     if (props.customHandlerMap?.[rawErrorMessage]) {
@@ -89,6 +90,7 @@ export default function () {
     }
 
     let description: string | undefined
+    let isNetworkError = false
     if (typeof handler === 'string') {
       description = handler
     }
@@ -101,19 +103,31 @@ export default function () {
     else if (rawErrorMessage === 'Internal server error' || statusCode === 500) {
       description = $t('error_internal_server_error')
     }
-    else if (/no response|network error|connection failed|timeout/i.test(rawErrorMessage)) {
+    // Reaching here means the ladder declined, so keep the raw text its surrender
+    // rung means to surface — and stay ahead of the network branch, whose
+    // `failed to fetch` also matches Chromium's chunk wording.
+    else if (CHUNK_ERROR_PATTERNS.some(pattern => rawErrorMessage.includes(pattern))) {
+      description = $t('error_unknown')
+    }
+    // `Load failed` is WebKit's bare fetch rejection and `Failed to fetch` is
+    // Chromium's; Nuxt's own FetchError says `<no response>`.
+    else if (/no response|network error|connection failed|timeout|load failed|failed to fetch/i.test(rawErrorMessage)) {
       description = $t('error_network_error')
+      isNetworkError = true
     }
     else {
       description = parseErrorData<string>(error, 'description') || $t('error_unknown')
     }
 
+    // A recognised network failure has a written message; the raw text and stack
+    // add nothing for the reader.
+    const hasRawDetails = !handler && !isNetworkError
     const errorData = {
       level: handlerProps?.level || parseErrorData<ErrorLevel>(error, 'level') || 'error',
       title: props.title || handlerProps?.title || parseErrorData<string>(error, 'title') || $t('error_modal_title'),
       description,
-      rawMessage: !handler ? `${url ? `${url}\n\n` : ''}${rawErrorMessage}` : '',
-      rawStack: !handler ? getErrorStack(error) || '' : '',
+      rawMessage: hasRawDetails ? `${url ? `${url}\n\n` : ''}${rawErrorMessage}` : '',
+      rawStack: hasRawDetails ? getErrorStack(error) || '' : '',
       tags: handlerProps?.tags || parseErrorData<Array<ErrorHandlerTag>>(error, 'tags') || [],
       actions: props.actions || handlerProps?.actions || parseErrorData<Array<ErrorHandlerAction>>(error, 'actions') || [],
     }
