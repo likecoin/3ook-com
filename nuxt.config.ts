@@ -359,9 +359,25 @@ export default defineNuxtConfig({
       navigateFallback: undefined,
       runtimeCaching: [
         {
+          // The app manifest getAppManifest() fetches, keyed by build id and so
+          // immutable like the assets below — but it needs its own cache: it used
+          // to share theirs, where Nuxt's cache-busted builds/latest.json poll
+          // churns a unique entry per hour and can evict it. Losing it is a
+          // [NUXT_E5002] on the next offline boot.
+          urlPattern: ({ url }) => url.pathname.startsWith('/_nuxt/builds/meta/'),
+          handler: 'CacheFirst',
+          options: {
+            cacheName: 'nuxt-build-manifest',
+            expiration: { maxEntries: 4, maxAgeSeconds: 60 * 60 * 24 * 30 },
+            cacheableResponse: { statuses: [200] },
+          },
+        },
+        {
           // Content-hashed build assets are immutable: cache on first request so
           // the SPA's JS/CSS is available offline after a single online visit.
-          urlPattern: ({ url }) => url.pathname.startsWith('/_nuxt/'),
+          // /_nuxt/builds/ is excluded: latest.json carries a `?<timestamp>`, so
+          // caching it can never produce a hit, only evictions.
+          urlPattern: ({ url }) => url.pathname.startsWith('/_nuxt/') && !url.pathname.startsWith('/_nuxt/builds/'),
           handler: 'CacheFirst',
           options: {
             cacheName: 'nuxt-build-assets',
