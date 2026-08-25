@@ -715,6 +715,7 @@ const plusReadingTagRoute = computed(() =>
 )
 
 const { handleError } = useErrorHandler()
+const { ensureLoggedIn } = useLoginGuard()
 const { getAnalyticsParameters } = useAnalytics()
 const { fetchBookRecommendations } = useBookRecommendations()
 // Which surface sent the reader to this book; rides every conversion event below.
@@ -1538,10 +1539,7 @@ async function handlePlusReadButtonClick() {
   })
 
   // Guests are prompted to log in or register before reaching the membership page.
-  if (!hasLoggedIn.value) {
-    await accountStore.login()
-    if (!hasLoggedIn.value) return
-  }
+  if (!await ensureLoggedIn()) return
 
   // Non-Plus users are routed to the membership page to subscribe, unless the
   // book has a free edition — then they may borrow it without a subscription.
@@ -1587,10 +1585,7 @@ async function handlePreviewButtonClick() {
   useLogEvent('product_page_preview_button_click', { nft_class_id: nftClassId.value })
 
   // The preview file variant requires login server-side; prompt guests first.
-  if (!hasLoggedIn.value) {
-    await accountStore.login()
-    if (!hasLoggedIn.value) return
-  }
+  if (!await ensureLoggedIn()) return
 
   try {
     const contentURL = bookInfo.defaultContentURL.value

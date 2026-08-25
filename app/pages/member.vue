@@ -208,6 +208,7 @@ const { canStartSubscribeFlow } = useNativeIAP()
 const { isIAPSupported, getIAPOverrides } = useIAPPricingOverrides()
 const { loggedIn: hasLoggedIn } = useUserSession()
 const accountStore = useAccountStore()
+const { ensureLoggedIn } = useLoginGuard()
 const { displayCurrency } = usePaymentCurrency()
 
 const initialPlan: SubscriptionPlan = getRouteQuery('plan') === 'monthly' ? 'monthly' : 'yearly'
@@ -489,7 +490,7 @@ function handleOpen() {
 
 async function handleRegisterClick() {
   useLogEvent('pricing_page_register_click')
-  await accountStore.login()
+  await ensureLoggedIn()
 }
 
 // Writing `from` into the route query is the whole integration: the affiliate

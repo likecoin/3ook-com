@@ -160,6 +160,10 @@ export const useAccountStore = defineStore('account', () => {
     const shouldMigrate = isMigratable
     return {
       statusCode: 401,
+      // Without a message the thrown error is nameless: it reaches error
+      // tracking as an unattributable "Object captured as exception" that
+      // fragments per page, and customHandlerMap has nothing to match on.
+      message: 'EMAIL_ALREADY_USED',
       data: {
         level: 'warning' as ErrorLevel,
         title: shouldMigrate
