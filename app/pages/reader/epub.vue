@@ -595,7 +595,7 @@ const { setTTSSegments, setChapterTitles, openPlayer } = useTTSPlayerModal({
       isTTSDisplaying = true
       isPageLoading.value = true
       try {
-        await rendition.value.display(cfi)
+        await displayInRendition(cfi)
       }
       catch (error) {
         isPageLoading.value = false
@@ -921,6 +921,45 @@ function applyRenditionDirection() {
   currentRendition.manager?.direction(direction)
 }
 
+// epub-ts keeps loading a section view after display() resolves, and its content
+// hooks read `rendition.book`, which destroy() nulls. Every display() must go
+// through this so teardown can wait rather than crash mid-render.
+let activeDisplayPromise: Promise<unknown> | undefined
+let isUnmounting = false
+
+function displayInRendition(href?: string) {
+  const currentRendition = rendition.value
+  if (!currentRendition) return Promise.resolve(undefined)
+  const promise = currentRendition.display(href)
+  activeDisplayPromise = promise
+  const clearActive = () => {
+    if (activeDisplayPromise === promise) activeDisplayPromise = undefined
+  }
+  // Not .finally(): that would re-throw a failed display as an unhandled rejection.
+  promise.then(clearActive, clearActive)
+  return promise
+}
+
+// A display that never settles must not strand the book, its iframe and the
+// blob URLs destroy() revokes, so cap the wait.
+const DESTROY_SETTLE_TIMEOUT_MS = 10000
+
+// Destroying mid-render nulls the book epub-ts's content hooks are still reading,
+// so wait for any in-flight display first. Pass the Book where we have one:
+// its destroy() cascades to the rendition and revokes the blob URLs it minted.
+function destroyBookWhenSettled(target?: Book | Rendition) {
+  const pendingDisplay = activeDisplayPromise
+  if (!target) return
+  if (!pendingDisplay) {
+    target.destroy()
+    return
+  }
+  void Promise.race([
+    pendingDisplay.catch(() => { /* already failed; we only need it settled */ }),
+    new Promise(resolve => setTimeout(resolve, DESTROY_SETTLE_TIMEOUT_MS)),
+  ]).then(() => target.destroy())
+}
+
 // Overlapping renders clear and re-display on top of each other, so a request
 // arriving mid-render folds into a single trailing pass.
 let activeRerenderPromise: Promise<void> | undefined
@@ -969,11 +1008,18 @@ async function displayRenditionAtCurrentLocation() {
 async function displayRendition(href?: string, { isSilentError = false } = {}) {
   if (rendition.value) {
     try {
-      await rendition.value.display(href)
+      await displayInRendition(href)
       return true
     }
     catch (error) {
       console.error(`Error occurred when displaying${href ? ` ${href}` : ''} in rendition of ${nftClassId.value}`, error)
+      // A fallback display recovers most of these, so keep them measurable.
+      useLogEvent('reader_epub_display_failed', {
+        nft_class_id: nftClassId.value,
+        error_message: getErrorEventMessage(error),
+        is_silent_error: isSilentError,
+        has_target: !!href,
+      })
       if (!isSilentError) {
         await handleError(error, { description: $t('reader_epub_rendition_display_failed') })
       }
@@ -994,6 +1040,8 @@ async function loadEPub() {
     return
   }
 
+  const previousBook = loadedBook.value
+  const previousRendition = rendition.value
   const book = ePub(buffer)
   await book.ready
   loadedBook.value = book
@@ -1050,7 +1098,7 @@ async function loadEPub() {
     return
   }
 
-  rendition.value?.destroy()
+  destroyBookWhenSettled(previousBook ?? previousRendition)
   rendition.value = book.renderTo(renditionElement.value, {
     width: '100%',
     height: '100%',
@@ -1108,6 +1156,9 @@ async function loadEPub() {
   activeTTSElementIndex.value = undefined
 
   rendition.value.on('rendered', (_section: Section, view: EpubView) => {
+    // The deferred destroy lets the in-flight display emit this after unmount,
+    // which would re-register listeners nothing will ever clean up.
+    if (isUnmounting) return
     // `rendered` fires for sections epub.js pre-renders into its paging
     // buffer, so this can be a neighbour, not the visible page — the section
     // index comes from the authoritative `relocated` handler instead.
@@ -1314,6 +1365,7 @@ async function loadEPub() {
   })
 
   rendition.value.on('relocated', (location: Location) => {
+    if (isUnmounting) return
     isPageLoading.value = false
     currentPageStartCfi.value = location.start.cfi
     currentPageEndCfi.value = location.end.cfi
@@ -1898,7 +1950,7 @@ async function handleSearchNavigate(result: ReaderSearchResult) {
   try {
     const cfi = new EpubCFI(result.locator)
     if (cfi.range) cfi.collapse(true)
-    await rendition.value?.display(cfi.toString())
+    await displayInRendition(cfi.toString())
   }
   catch (error) {
     console.error('Failed to navigate to search result:', error)
@@ -1933,7 +1985,7 @@ async function handleFootnoteReturn() {
   if (isPageLoading.value) return
   isPageLoading.value = true
   try {
-    await rendition.value.display(target)
+    await displayInRendition(target)
     // Keep the button on failure so the user can retry; clear only on success.
     footnoteReturnCfi.value = ''
   }
@@ -2385,7 +2437,7 @@ async function handleAnnotationNavigate(annotation: Annotation) {
     if (cfi.range) {
       cfi.collapse(true)
     }
-    await rendition.value?.display(cfi.toString())
+    await displayInRendition(cfi.toString())
   }
   catch (error) {
     console.error('Failed to navigate to annotation:', error)
@@ -2454,7 +2506,7 @@ async function handleBookmarkNavigate(bookmark: Annotation) {
     if (cfi.range) {
       cfi.collapse(true)
     }
-    await rendition.value?.display(cfi.toString())
+    await displayInRendition(cfi.toString())
   }
   catch (error) {
     console.error('Failed to navigate to bookmark:', error)
@@ -2520,7 +2572,9 @@ onBeforeUnmount(() => {
   clearTimeout(selectionCommitTimer)
   renderedHighlights.clear()
   renditionViewWindow.value = undefined
-  rendition.value?.destroy()
+  isUnmounting = true
+  destroyBookWhenSettled(loadedBook.value ?? rendition.value)
+  rendition.value = undefined
   loadedBook.value = undefined
 })
 </script>
