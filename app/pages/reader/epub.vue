@@ -796,6 +796,8 @@ function applyWritingModeToLoadedSections() {
   })
 }
 
+const IMAGE_LOAD_STATE = { loading: 'loading', loaded: 'loaded', failed: 'failed' } as const
+
 // Themes reach the views that are already attached, so a change landing before
 // the pending render lays out needs no further pass.
 let themeVersion = 0
@@ -827,10 +829,30 @@ function applyTheme() {
   const anchorCSS: Record<string, string> = {
     color: isDarkMode ? '#9ecfff !important' : '#0066cc',
   }
+  // Assets only become blob URLs once epub-ts unzips them, so an unconstrained
+  // illustration paints at its intrinsic size. Cap it to the column and tint the
+  // pending/failed states so neither reads as a rendering fault.
+  const placeholderCSS = isDarkMode ? 'rgba(249, 249, 249, 0.08)' : 'rgba(51, 51, 51, 0.06)'
+  const imageCSS: Record<string, string> = {
+    'max-width': '100% !important',
+    'max-height': '90vh !important',
+    'height': 'auto !important',
+  }
   const themeRules: Record<string, Record<string, string>> = {
     'body': bodyCSS,
     'p, div, span, h1, h2, h3, h4, h5, h6, li': textCSS,
     'a': anchorCSS,
+    'img, svg': imageCSS,
+    [`img[data-load-state="${IMAGE_LOAD_STATE.loading}"]`]: {
+      'background-color': placeholderCSS,
+    },
+    // The src is stripped on failure, so nothing paints here but this box.
+    [`img[data-load-state="${IMAGE_LOAD_STATE.failed}"]`]: {
+      'background-color': placeholderCSS,
+      'min-height': '2rem',
+      'min-width': '2rem',
+      'border-radius': '4px',
+    },
   }
   // Only layer a writing-mode rule on top of the book's own CSS when enforcing;
   // otherwise it changes the initial column layout calc and can skew
@@ -843,6 +865,32 @@ function applyTheme() {
   rendition.value.themes.default(themeRules)
   rendition.value.themes.fontSize(`${fontSize.value}px`)
   themeVersion += 1
+}
+
+// Tags each image with its load state so the theme can placeholder it while the
+// blob URL resolves, and paint a neutral box instead of the browser's
+// broken-image glyph when it never arrives.
+function applyImageLoadStateToDocument(document: Document) {
+  for (const image of Array.from(document.querySelectorAll('img'))) {
+    const markFailed = () => {
+      // Removing src is what suppresses the broken-image glyph. Alt text stays in
+      // the a11y tree; only an image without one is hidden as an empty box.
+      image.removeAttribute('src')
+      if (!image.getAttribute('alt')) image.setAttribute('role', 'presentation')
+      image.dataset.loadState = IMAGE_LOAD_STATE.failed
+    }
+    if (image.complete) {
+      if (image.naturalWidth > 0) image.dataset.loadState = IMAGE_LOAD_STATE.loaded
+      else markFailed()
+      continue
+    }
+    image.dataset.loadState = IMAGE_LOAD_STATE.loading
+    const markLoaded = () => {
+      image.dataset.loadState = IMAGE_LOAD_STATE.loaded
+    }
+    image.addEventListener('load', markLoaded, { once: true })
+    image.addEventListener('error', markFailed, { once: true })
+  }
 }
 
 // A synced setting also lands when the server value hydrates mid-load, so hold
@@ -1115,6 +1163,7 @@ async function loadEPub() {
   }
   book.spine!.hooks.content.register((document: Document) => {
     applyWritingModeToDocument(document)
+    applyImageLoadStateToDocument(document)
   })
 
   // Settings load lazily (kicked off un-awaited in onMounted). Apply the theme
