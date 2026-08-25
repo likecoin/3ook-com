@@ -85,6 +85,7 @@ export default defineEventHandler(async (event) => {
     jwtId,
     intercomToken,
     likerId: userInfoRes.user,
+    handle: userInfoRes.handle,
     displayName: userInfoRes.displayName,
     avatar: userInfoRes.avatar,
     email: body.email || userInfoRes.email,

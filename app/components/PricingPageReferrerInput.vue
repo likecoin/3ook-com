@@ -48,7 +48,7 @@
 
 <script setup lang="ts">
 import { FetchError } from 'ofetch'
-import { normalizeLikerId } from '~~/shared/utils/liker-id'
+import { getCanonicalLikerId } from '~~/shared/utils/liker-id'
 import type { LikerInfo } from '~/composables/use-liker-info'
 
 const emit = defineEmits<{
@@ -58,6 +58,7 @@ const emit = defineEmits<{
 const { t: $t } = useI18n()
 const queryCache = useQueryCache()
 const { user } = useUserSession()
+const { publicLikerId } = usePublicLikerId()
 
 const isExpanded = ref(false)
 const referrerId = ref('')
@@ -83,12 +84,13 @@ function rejectAsNotFound() {
 async function handleSubmit() {
   // Liker IDs are lowercase alphanumeric; accept a pasted `@handle` or a
   // hand-typed uppercase code and normalize both to the canonical form.
-  const likerId = normalizeLikerId(referrerId.value.trim()).toLowerCase()
+  const likerId = getCanonicalLikerId(referrerId.value)
   if (!likerId) return
 
   errorMessage.value = undefined
 
-  if (likerId === user.value?.likerId?.toLowerCase()) {
+  // Both forms resolve to this account, so either one entered is self-referral.
+  if ([publicLikerId.value, user.value?.likerId].some(id => id?.toLowerCase() === likerId)) {
     errorMessage.value = $t('pricing_page_referrer_input_error_self')
     useLogEvent('referrer_code_invalid', { reason: 'self' })
     return

@@ -35,6 +35,27 @@ export function useUserAccountSessionAPI() {
     })
   }
 
+  // Advisory pre-check for the rename form. Unauthenticated upstream, and false
+  // for a malformed handle as well as a taken one — the form validates format
+  // itself so it can tell the two apart in its hint. Takes options so the caller
+  // can abort a probe the user has already typed past.
+  function checkLikerIdAvailability(likerId: string, options: { signal?: AbortSignal } = {}) {
+    return fetch.value<{ handle: string, isAvailable: boolean }>(
+      `/users/handle/${encodeURIComponent(likerId)}/available`,
+      options,
+    )
+  }
+
+  // One-time rename of the public handle. The account's internal id (and so its
+  // wallet, JWT and purchases) is untouched; the old handle stays a permanent
+  // alias so links already in circulation keep resolving.
+  function updateUserLikerId(likerId: string) {
+    return fetch.value<{ user: string, handle: string, previousHandle: string }>(`/users/handle`, {
+      method: 'POST',
+      body: { handle: likerId },
+    })
+  }
+
   // Advisory pre-check that the new login email is free in our DB, run before
   // triggering Magic's email change. Throws EMAIL_ALREADY_USED if taken.
   function checkEmailAvailability(email: string) {
@@ -75,6 +96,8 @@ export function useUserAccountSessionAPI() {
   return {
     migrateMagicEmailUser,
     updateUserProfile,
+    checkLikerIdAvailability,
+    updateUserLikerId,
     checkEmailAvailability,
     updateUserEmail,
     sendEmailVerification,

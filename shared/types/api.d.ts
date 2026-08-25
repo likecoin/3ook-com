@@ -1,5 +1,8 @@
 export interface LikerInfoResponseData {
+  // Immutable internal id (the account's document id); never changes on rename.
   user: string
+  // Current public handle. Equals `user` until the account renames itself once.
+  handle?: string
   displayName: string
   avatar: string
   cosmosWallet: string

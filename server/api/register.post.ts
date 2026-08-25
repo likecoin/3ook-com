@@ -74,6 +74,7 @@ export default defineEventHandler(async (event) => {
   const userInfo = {
     evmWallet: body.walletAddress,
     likerId: userInfoRes.user,
+    handle: userInfoRes.handle,
     displayName: userInfoRes.displayName,
     avatar: userInfoRes.avatar,
     email: body.email,

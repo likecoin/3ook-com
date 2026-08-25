@@ -6,6 +6,9 @@ declare module '#auth-utils' {
     token?: string
     intercomToken?: string
     likerId?: string
+    // Public handle shown as the referral code. Absent (or equal to `likerId`)
+    // until the account spends its one-time rename.
+    handle?: string
     displayName?: string
     avatar?: string
     email?: string

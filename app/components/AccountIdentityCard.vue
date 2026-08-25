@@ -94,26 +94,39 @@
       </AccountSettingsItem>
 
       <AccountSettingsItem
-        v-if="user?.likerId"
+        v-if="publicLikerId"
         icon="i-material-symbols-3p-outline-rounded"
         :label="$t('account_page_account_id')"
       >
         <UButton
           class="-ml-2 text-sm font-mono"
-          :label="user?.likerId"
+          :label="publicLikerId"
           trailing-icon="i-material-symbols-content-copy-outline-rounded"
           variant="ghost"
           color="neutral"
           size="xs"
           @click="handleLikerIdClick"
         />
+
+        <template
+          v-if="!hasLikerIdChanged"
+          #right
+        >
+          <UButton
+            :label="$t('account_page_liker_id_edit_button')"
+            icon="i-material-symbols-edit-outline-rounded"
+            variant="outline"
+            color="neutral"
+            @click="handleLikerIdEditButtonClick"
+          />
+        </template>
       </AccountSettingsItem>
     </UCard>
   </section>
 </template>
 
 <script setup lang="ts">
-import { AccountDisplayNameModal, AccountEmailModal } from '#components'
+import { AccountDisplayNameModal, AccountEmailModal, AccountLikerIdModal } from '#components'
 
 const { t: $t } = useI18n()
 const { loggedIn: hasLoggedIn, user } = useUserSession()
@@ -123,6 +136,9 @@ const toast = useToast()
 const overlay = useOverlay()
 const displayNameModal = overlay.create(AccountDisplayNameModal)
 const emailModal = overlay.create(AccountEmailModal)
+const likerIdModal = overlay.create(AccountLikerIdModal)
+
+const { publicLikerId, hasLikerIdChanged } = usePublicLikerId()
 
 function handleDisplayNameEditButtonClick() {
   useLogEvent('account_display_name_edit_click')
@@ -134,6 +150,11 @@ function handleEmailEditButtonClick() {
   emailModal.open()
 }
 
+function handleLikerIdEditButtonClick() {
+  useLogEvent('account_liker_id_edit_click')
+  likerIdModal.open()
+}
+
 async function handleMagicButtonClick() {
   useLogEvent('export_private_key')
   await accountStore.exportPrivateKey()
@@ -141,7 +162,7 @@ async function handleMagicButtonClick() {
 
 async function handleLikerIdClick() {
   useLogEvent('liker_id_wallet_click')
-  const isCopied = await copyTextToClipboard(user.value?.likerId || '')
+  const isCopied = await copyTextToClipboard(publicLikerId.value)
   toast.add({
     title: $t(isCopied ? 'copy_liker_id_success' : 'copy_liker_id_failed'),
     icon: isCopied ? 'i-material-symbols-3p-outline-rounded' : 'i-material-symbols-error-circle-rounded',

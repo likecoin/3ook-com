@@ -102,7 +102,7 @@ function handleRegisterButtonClick() {
     return
   }
 
-  if (!verifyAccountId(accountId.value)) {
+  if (!checkLikerIdValid(accountId.value)) {
     accountIdError.value = $t('registration_modal_error_account_id_invalid')
     return
   }

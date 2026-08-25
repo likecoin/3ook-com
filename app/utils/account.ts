@@ -21,10 +21,6 @@ export function generateAccountIdFromWalletAddress(walletAddress: string) {
   return convertBigIntToBaseString(num, ACCOUNT_ID_LENGTH)
 }
 
-export function verifyAccountId(id: string) {
-  return !!id && (/^[a-z0-9-_]+$/.test(id) && id.length >= 5 && id.length <= 20)
-}
-
 export function verifyEmail(email: string) {
   return !!email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 }

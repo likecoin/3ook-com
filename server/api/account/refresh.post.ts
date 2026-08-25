@@ -31,6 +31,7 @@ export default defineEventHandler(async (event) => {
     user: {
       ...session.user,
       likerId: userInfoRes.user,
+      handle: userInfoRes.handle,
       displayName: userInfoRes.displayName,
       avatar: userInfoRes.avatar,
       // Surface email so a self-serve email change reflects after refresh
