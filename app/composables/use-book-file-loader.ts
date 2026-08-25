@@ -147,11 +147,11 @@ export default function () {
             cachePutPromise = cache.put(req, res.clone())
               .then(() => true)
               .catch((error) => {
-                console.error(error)
-                // A foreground retry aborts this attempt mid-put; skip the
-                // cleanup delete so it can't clobber the retry's write of the
-                // same cacheKey.
+                // A foreground retry aborts this mid-put; that rejection is
+                // expected, so return before logging (console.error is captured
+                // as an exception) and skip the delete that would clobber it.
                 if (controller.signal.aborted) return false
+                console.error(error)
                 return caches.delete(cacheKey).catch(console.error).then(() => false)
               })
           }

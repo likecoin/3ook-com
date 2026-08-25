@@ -925,6 +925,10 @@ async function renderPages() {
       }
     }
     catch (error) {
+      // pdf.js cancels the in-flight render whenever the document is destroyed
+      // (unmount, or loadPDF replacing it). That is not a load failure, and the
+      // parent treats every emitted error as fatal, so swallow it here.
+      if (error instanceof Error && error.name === 'RenderingCancelledException') return
       emit('error', error as Error)
     }
   }
