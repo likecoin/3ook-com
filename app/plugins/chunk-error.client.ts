@@ -65,14 +65,8 @@ export default defineNuxtPlugin((nuxtApp) => {
   const firstErrorAt = useLocalStorage<number>(CHUNK_ERROR_FIRST_AT_KEY, 0)
   const reloadCount = useLocalStorage<number>(CHUNK_ERROR_RELOADS_KEY, 0)
   const pwa = usePWA()
-  let hasHandled = false
 
-  const handle = async (error: unknown) => {
-    const message = getErrorMessage(error)
-    if (!CHUNK_ERROR_PATTERNS.some(pattern => message.includes(pattern))) return
-    if (hasHandled) return
-    hasHandled = true
-
+  const runLadder = async (error: unknown, message: string) => {
     const now = Date.now()
     // Fresh incident if the previous chunk error was long ago — reset the ladder.
     if (now - firstErrorAt.value > INCIDENT_WINDOW_MS) {
@@ -113,7 +107,7 @@ export default defineNuxtPlugin((nuxtApp) => {
     if (effectiveAttempt >= 2) {
       logChunkError(false, true)
       console.error('[chunk-error] already escalated, surfacing error', error)
-      return
+      return false
     }
 
     // Advance the ladder for the two reload branches below (give-up returned above).
@@ -147,7 +141,7 @@ export default defineNuxtPlugin((nuxtApp) => {
         url.searchParams.set('_swrefresh', String(now))
         window.location.replace(url.toString())
       }, nativeClearRequested ? NATIVE_CLEAR_FALLBACK_MS : RELOAD_FLUSH_DELAY_MS)
-      return
+      return true
     }
 
     // First error: activate any newly deployed worker, then reload once it has
@@ -170,13 +164,45 @@ export default defineNuxtPlugin((nuxtApp) => {
       })
       setTimeout(reload, SW_UPDATE_TIMEOUT_MS)
     }, RELOAD_FLUSH_DELAY_MS)
+    return true
   }
 
-  nuxtApp.hook('app:chunkError', ({ error }) => handle(error))
-  nuxtApp.hook('vue:error', error => handle(error))
+  // One incident, one decision. Vite both dispatches vite:preloadError and
+  // rejects the import, so the same failure arrives twice; memoising the
+  // promise makes the second arrival inherit the first one's outcome instead
+  // of reporting "handled" for a rung that actually gave up.
+  let ladderDecision: Promise<boolean> | undefined
+
+  // Resolves to whether the ladder took ownership. False means the caller
+  // should surface the error: not a chunk error, or we already escalated and
+  // reloading again would only loop.
+  const handle = (error: unknown) => {
+    const message = getErrorMessage(error)
+    if (!CHUNK_ERROR_PATTERNS.some(pattern => message.includes(pattern))) return Promise.resolve(false)
+    ladderDecision ??= runLadder(error, message)
+    return ladderDecision
+  }
+
+  // useLogEvent and the purge run outside any try/catch, and Nuxt awaits the
+  // vue:error hook — so an unwatched rejection here would surface as a bare
+  // unhandled rejection instead of the ladder's own reporting.
+  const handleQuietly = (error: unknown) => {
+    handle(error).catch(e => console.warn('[chunk-error] handler failed', e))
+  }
+
+  nuxtApp.hook('app:chunkError', ({ error }) => {
+    handleQuietly(error)
+  })
+  nuxtApp.hook('vue:error', (error) => {
+    handleQuietly(error)
+  })
   // Vite emits this for failed dynamic-import preloads that don't always
   // surface through the Nuxt hooks above. Payload carries the original error.
   window.addEventListener('vite:preloadError', (event) => {
-    handle((event as Event & { payload?: unknown }).payload)
+    handleQuietly((event as Event & { payload?: unknown }).payload)
   })
+
+  // Errors caught by a local try/catch never reach the hooks above, so
+  // use-error-handler hands them here before falling back to the error modal.
+  return { provide: { claimChunkError: handle } }
 })

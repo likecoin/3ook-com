@@ -13,6 +13,7 @@ type ErrorHandler =
   }
 
 export default function () {
+  const nuxtApp = useNuxtApp()
   const localeRoute = useLocaleRoute()
   const accountStore = useAccountStore()
   const { t: $t } = useI18n()
@@ -29,6 +30,13 @@ export default function () {
     onClose?: () => void
   } = {}) {
     const { message: rawErrorMessage, statusCode, url } = parseError(error)
+
+    // A chunk error caught locally (e.g. the store page wrapping navigateTo)
+    // never reaches app:chunkError, so the recovery ladder never sees it and the
+    // user gets a dead modal instead of the reload that fixes it. Fatal callers
+    // still throw — they rely on this never returning normally.
+    const isChunkErrorClaimed = import.meta.client && await nuxtApp.$claimChunkError?.(error)
+    if (isChunkErrorClaimed && !props.isFatal) return true
     let handler: ErrorHandler | undefined
     // Custom error handling
     if (props.customHandlerMap?.[rawErrorMessage]) {
