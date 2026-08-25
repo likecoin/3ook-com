@@ -2,6 +2,9 @@ import { createSharedComposable, useEventListener } from '@vueuse/core'
 
 export type IAPPurchaseStatus = 'success' | 'cancelled' | 'error'
 
+// `code` names the RevenueCat error (PURCHASE_NOT_ALLOWED_ERROR…), forwarded by
+// the native shell so the web can tell a user-side store condition from a real
+// failure. `message` is store-localized free text and can't be branched on.
 export interface IAPPurchaseResult {
   status: IAPPurchaseStatus
   period?: string
@@ -10,6 +13,49 @@ export interface IAPPurchaseResult {
   tier?: LikerPlusTier
   productId?: string
   message?: string
+  code?: string
+}
+
+// Conditions the user (or their device/store account) owns — retrying or
+// reporting them as exceptions helps nobody, so checkout toasts and returns
+// instead of throwing. Everything else stays a real error.
+const IAP_USER_SIDE_ERROR_CODES = new Set([
+  'PURCHASE_NOT_ALLOWED_ERROR',
+  'PURCHASE_INVALID_ERROR',
+  'PRODUCT_ALREADY_PURCHASED_ERROR',
+  'RECEIPT_ALREADY_IN_USE_ERROR',
+  'INELIGIBLE_ERROR',
+])
+
+// The store accepted the purchase but hasn't cleared it (e.g. Play's slow
+// payment methods). Not a failure: the webhook grants Plus once it settles.
+const IAP_PENDING_ERROR_CODE = 'PAYMENT_PENDING_ERROR'
+
+export interface IAPUserSideOutcome {
+  titleKey: string
+  descriptionKey: string
+  color: 'info' | 'warning'
+}
+
+// Returns how to tell the user about a purchase outcome they own, or undefined
+// when the code is a genuine store/network failure the caller should throw on.
+export function getIAPUserSideOutcome(code?: string): IAPUserSideOutcome | undefined {
+  if (!code) return undefined
+  if (code === IAP_PENDING_ERROR_CODE) {
+    return {
+      titleKey: 'plus_checkout_iap_pending_title',
+      descriptionKey: 'plus_checkout_iap_pending_description',
+      color: 'info',
+    }
+  }
+  if (IAP_USER_SIDE_ERROR_CODES.has(code)) {
+    return {
+      titleKey: 'plus_checkout_iap_not_allowed_title',
+      descriptionKey: 'plus_checkout_iap_not_allowed_description',
+      color: 'warning',
+    }
+  }
+  return undefined
 }
 
 export interface IAPRestoreResult {
@@ -132,6 +178,7 @@ export const useNativeIAP = createSharedComposable(() => {
             tier: detail.tier === 'civic' ? 'civic' : 'plus',
             productId: detail.productId,
             message: detail.message,
+            code: detail.code,
           })
           pendingPurchase = null
           break

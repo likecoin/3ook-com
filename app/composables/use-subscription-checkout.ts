@@ -253,6 +253,19 @@ export function useSubscriptionCheckout() {
           tier,
         })
         if (result.status === 'cancelled') return
+        // Outcomes the user owns: a pending store payment that still settles on
+        // its own, or a restriction no retry fixes. Treat both like a cancel —
+        // toast and log, never throw. Real store and network failures fall through.
+        const userSideOutcome = getIAPUserSideOutcome(result.code)
+        if (userSideOutcome) {
+          useLogEvent('subscription_checkout_error', { error_code: result.code })
+          toast.add({
+            title: $t(userSideOutcome.titleKey),
+            description: $t(userSideOutcome.descriptionKey),
+            color: userSideOutcome.color,
+          })
+          return
+        }
         if (result.status !== 'success') {
           throw createError({
             statusCode: 502,
