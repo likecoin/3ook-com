@@ -10,6 +10,7 @@ import {
   fetchNFTClassMessagesThroughCache,
   getBookstoreInfoByNFTClassIdFromCache,
   getIsBookstorePendingReviewFromCache,
+  getNFTClassMessagesFromCache,
   getNFTClassMetadataByIdFromCache,
   revalidateNFTClassAggregatedMetadata,
   setBookstoreInfo,
@@ -219,6 +220,29 @@ describe('use-nft-book-metadata', () => {
     expect(first).toEqual(messages)
     expect(second).toEqual(messages)
     expect(mockFetchMessages).toHaveBeenCalledTimes(1)
+  })
+
+  it('caches a 404 as an empty message list instead of rejecting', async () => {
+    const nftClassId = nextClassId()
+    mockFetchMessages.mockRejectedValue(Object.assign(new Error('Not Found'), { statusCode: 404 }))
+
+    const first = await fetchNFTClassMessagesThroughCache(queryCache, nftClassId)
+    const second = await fetchNFTClassMessagesThroughCache(queryCache, nftClassId)
+
+    // 404 is this book's terminal answer, so the empty result is served from
+    // cache rather than refetched.
+    expect(first).toEqual([])
+    expect(second).toEqual([])
+    expect(mockFetchMessages).toHaveBeenCalledTimes(1)
+  })
+
+  it('rethrows a transient message failure rather than caching it as empty', async () => {
+    const nftClassId = nextClassId()
+    mockFetchMessages.mockRejectedValue(Object.assign(new Error('Bad Gateway'), { statusCode: 502 }))
+
+    await expect(fetchNFTClassMessagesThroughCache(queryCache, nftClassId)).rejects.toThrow('Bad Gateway')
+    // These options never expire, so an empty result would stick all session.
+    expect(getNFTClassMessagesFromCache(queryCache, nftClassId)).toBeUndefined()
   })
 
   it('records a listing the API withheld pending review', async () => {

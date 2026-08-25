@@ -1352,7 +1352,9 @@ onMounted(async () => {
 
   useLogEvent('view_item', formattedLogPayload.value)
   fetchNFTClassMessagesThroughCache(queryCache, nftClassId.value).catch((error) => {
-    console.error(`Failed to fetch messages for NFT class ${nftClassId.value}:`, error)
+    // Absorbed: the tab just stays empty. Warn, not error — console.error is
+    // captured as an exception and this failure needs no triage.
+    console.warn(`Failed to fetch messages for NFT class ${nftClassId.value}:`, error)
   })
   const ownerWalletAddress = bookInfo.nftClassOwnerWalletAddress.value
   if (ownerWalletAddress) {

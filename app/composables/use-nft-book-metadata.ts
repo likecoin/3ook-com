@@ -259,8 +259,17 @@ function getNFTClassMessagesQueryOptions(nftClassId: string): DefineQueryOptions
     ...cacheForeverQueryOptions,
     key: getNFTClassMessagesQueryKey(nftClassId),
     query: wrapQueryFnWithNuxtContext(async () => {
-      const data = await fetchPurchaseMessagesByNFTClassId(nftClassId)
-      return data.messages
+      try {
+        const data = await fetchPurchaseMessagesByNFTClassId(nftClassId)
+        return data.messages
+      }
+      catch (error) {
+        // A 404 is this book's terminal answer: it has no buyer messages. Cache
+        // that as empty rather than rejecting. Transient failures still throw —
+        // these options never expire, so an empty result would stick all session.
+        if (getErrorStatusCode(error) === 404) return []
+        throw error
+      }
     }),
   }
 }
