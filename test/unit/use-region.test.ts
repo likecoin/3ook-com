@@ -4,17 +4,20 @@ import { nextTick, ref, type Ref } from 'vue'
 import type { RegionCode, UserSettingsData } from '~~/shared/types/user-settings'
 
 type UseRegion = typeof import('~/composables/use-region').useRegion
+type UseBookRegionGate = typeof import('~/composables/use-region').useBookRegionGate
 
 const {
   mockAccountSettings,
   mockDetectedCountry,
   mockHasLoggedIn,
+  mockIPCountry,
   mockStates,
   mockSyncedRegion,
 } = vi.hoisted(() => ({
   mockAccountSettings: { value: {} as UserSettingsData },
   mockDetectedCountry: { value: null as string | null },
   mockHasLoggedIn: { value: false },
+  mockIPCountry: { value: null as string | null },
   mockStates: new Map<string, Ref<RegionCode | undefined>>(),
   mockSyncedRegion: { value: 'HK' as RegionCode },
 }))
@@ -35,8 +38,10 @@ mockNuxtImport('useUserSettingsStore', () => () => ({
 mockNuxtImport('useSyncedUserSettings', () => () => mockSyncedRegion)
 mockNuxtImport('useDetectedGeolocation', () => () => ({
   detectedCountry: mockDetectedCountry,
+  ipCountry: mockIPCountry,
   initializeClientGeolocation: vi.fn(),
 }))
+mockNuxtImport('useIPCountryState', () => () => mockIPCountry)
 mockNuxtImport('useLogEvent', () => vi.fn())
 mockNuxtImport('useSetLogPersonProperties', () => vi.fn())
 
@@ -48,6 +53,7 @@ describe('useRegion', () => {
     mockAccountSettings.value = {}
     mockDetectedCountry.value = 'US'
     mockHasLoggedIn.value = false
+    mockIPCountry.value = null
     mockStates.clear()
     mockSyncedRegion.value = 'HK'
     // The localStorage ref is module-scoped and shared, so re-evaluate the module
@@ -107,5 +113,51 @@ describe('useRegion', () => {
 
     await initializeRegion()
     expect(region.value).toBe('US')
+  })
+})
+
+describe('useBookRegionGate', () => {
+  let useRegion: UseRegion
+  let useBookRegionGate: UseBookRegionGate
+
+  beforeEach(async () => {
+    localStorage.clear()
+    mockAccountSettings.value = {}
+    mockDetectedCountry.value = 'US'
+    mockHasLoggedIn.value = false
+    mockIPCountry.value = null
+    mockStates.clear()
+    mockSyncedRegion.value = 'HK'
+    vi.resetModules()
+    ;({ useRegion, useBookRegionGate } = await import('~/composables/use-region'))
+  })
+
+  it('restricts on the IP country even when the setting says elsewhere', async () => {
+    mockIPCountry.value = 'HK'
+    useRegion().setRegion('TW')
+    await nextTick()
+
+    const { getIsRegionRestricted } = useBookRegionGate()
+
+    expect(getIsRegionRestricted(['HK'])).toBe(true)
+    expect(getIsRegionRestricted(['JP'])).toBe(false)
+  })
+
+  it('restricts on the chosen region with no IP country resolved', async () => {
+    useRegion().setRegion('TW')
+    await nextTick()
+
+    const { getIsRegionRestricted } = useBookRegionGate()
+
+    expect(getIsRegionRestricted(['TW'])).toBe(true)
+    expect(getIsRegionRestricted(['HK'])).toBe(false)
+  })
+
+  it('ignores an IP country that is not a real region code', async () => {
+    // 'HANT' from a zh-Hant-HK style value, 'T1' from cf-ipcountry's Tor code
+    mockIPCountry.value = 'HANT'
+    const { getIsRegionRestricted } = useBookRegionGate()
+
+    expect(getIsRegionRestricted(['HANT'])).toBe(false)
   })
 })

@@ -734,9 +734,8 @@ const listingRouteName = computed(() => (isLibrary.value ? 'library' : 'store'))
 const isPlusReadingEnabled = bookInfo.isPlusReadingEnabled
 
 // A member who already borrowed this book reads it now, so the CTA shows Read
-// instead of Borrow — for Plus members and non-Plus free-book borrowers alike.
-// Gate on the session: plusReadingBookIds is persisted, so without this a stale
-// borrowed id could flip a free-borrow book to Read after logout/session expiry.
+// instead of Borrow. Gate on the session: plusReadingBookIds is persisted, so a
+// stale borrowed id could otherwise flip the CTA after logout or expiry.
 const isBookBorrowed = computed(() =>
   hasLoggedIn.value
   && (isLikerPlus.value || bookInfo.isFreeBorrowEnabled.value)
@@ -745,8 +744,7 @@ const isBookBorrowed = computed(() =>
 
 // Non-owners of a Plus-reading book see a CTA: Plus members and free-edition
 // borrowers read it directly, other non-Plus users are routed to subscribe.
-// Region-restricted books take no NEW borrows, but an existing borrow (like
-// ownership) keeps its Read entry.
+// Region-restricted books take no new borrows; an existing one keeps its Read.
 const isPlusReadingCTAVisible = computed(() =>
   !isUserBookOwner.value
   && isPlusReadingEnabled.value

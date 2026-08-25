@@ -1,3 +1,5 @@
+import type { RegionCode } from '~~/shared/types/user-settings'
+
 export const MAX_BOOKSTORE_PAGE_SIZE = 100
 
 // Built-in list types — backed by upstream `/list*`, not editor-managed CMS tags.
@@ -35,13 +37,20 @@ export function getBookEntityName(entity?: BookEntity): string {
 }
 
 // Compliance geo gate: a book tagged restrictedTerritories must not be offered in
-// those regions. Enforced client-side against the user's region so the shared,
-// region-less server caches stay valid; an unresolved region never restricts.
+// those regions. Checked client-side against both the chosen region and the IP
+// country, so the shared, region-less server caches stay valid.
 export function getIsBookRegionRestricted(
   restrictedTerritories: string[] | undefined,
-  region: string | undefined,
+  region: RegionCode | undefined,
+  ipCountry: RegionCode | undefined,
 ): boolean {
-  return !!region && !!restrictedTerritories?.includes(region)
+  if (!restrictedTerritories?.length) return false
+  // Upstream sends the territories unnormalized, so a lowercase 'hk' would open
+  // the gate; region and ipCountry are already uppercased by parseRegionCode.
+  return restrictedTerritories.some((territory) => {
+    const code = territory.toUpperCase()
+    return (!!region && code === region) || (!!ipCountry && code === ipCountry)
+  })
 }
 
 // A free edition is a listed (non-unlisted) price-0 edition. Kept in lockstep

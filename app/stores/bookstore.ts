@@ -265,6 +265,7 @@ export const useBookstoreStore = defineStore('bookstore', () => {
         imageUrl: item.imageUrl!,
         minPrice: item.minPrice,
         minPriceInDecimalByCurrency: item.minPriceInDecimalByCurrency,
+        restrictedTerritories: item.restrictedTerritories,
         isPlusReadingEnabled: item.isPlusReadingEnabled,
       }))
 
@@ -286,6 +287,7 @@ export const useBookstoreStore = defineStore('bookstore', () => {
         imageUrl: item.imageUrl!,
         minPrice: item.minPrice,
         minPriceInDecimalByCurrency: item.minPriceInDecimalByCurrency,
+        restrictedTerritories: item.restrictedTerritories,
         isPlusReadingEnabled: item.isPlusReadingEnabled,
       }))
 

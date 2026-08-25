@@ -24,24 +24,33 @@ function getDetectedCountryFromBrowserLocale(): string {
   return 'US'
 }
 
+// Exposed on its own so the per-card region gate can read the header country
+// without also building the derived detectedCountry it never looks at.
+export function useIPCountryState() {
+  return useState<string | null>('ip-country', () => null)
+}
+
 export function useDetectedGeolocation() {
-  const detectedCountry = useState<string | null>('detected-country', () => null)
+  // Split by trust, and derived rather than hand-synced: the header is where the
+  // reader is, the locale is a language preference that reads as 'US' when it
+  // carries no region. Compliance gates take ipCountry, never the guess.
+  const ipCountry = useIPCountryState()
+  const localeCountry = useState<string | null>('locale-country', () => null)
+  const detectedCountry = computed(() => ipCountry.value || localeCountry.value)
 
   function initializeServerGeolocation() {
-    const countryFromHeaders = getDetectedCountryFromHeaders()
-    if (countryFromHeaders) {
-      detectedCountry.value = countryFromHeaders
-    }
+    ipCountry.value = getDetectedCountryFromHeaders()
   }
 
   function initializeClientGeolocation() {
     if (!detectedCountry.value) {
-      detectedCountry.value = getDetectedCountryFromBrowserLocale()
+      localeCountry.value = getDetectedCountryFromBrowserLocale()
     }
   }
 
   return {
-    detectedCountry: readonly(detectedCountry),
+    detectedCountry,
+    ipCountry: readonly(ipCountry),
     initializeServerGeolocation,
     initializeClientGeolocation,
   }

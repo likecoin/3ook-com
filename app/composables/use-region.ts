@@ -21,11 +21,23 @@ function useRegionState() {
   return useState<RegionCode | undefined>('user-region', () => undefined)
 }
 
-// Read-only view of the resolved region. The full composable wires settings
-// sync, a watcher and lifecycle hooks per call — per-card consumers (a store
-// grid holds ~100) must not multiply that when they only need the value.
-export function useRegionValue(): Readonly<Ref<RegionCode | undefined>> {
-  return readonly(useRegionState())
+// Gate on both the chosen region and the IP country, so switching the setting
+// cannot open a market a book is withheld from. ipCountry, not detectedCountry:
+// the latter falls back to browser locale, a language preference.
+export function useBookRegionGate() {
+  const region = useRegionState()
+  const ipCountry = useIPCountryState()
+  // Hoisted: the parse depends on the header alone, so keeping it out of the
+  // getter spares a grid one uppercase allocation per book it walks.
+  const ipRegion = computed(() => parseRegionCode(ipCountry.value))
+
+  // A plain getter, not useRegion(): a store grid holds ~100 cards, each of which
+  // would otherwise wire its own settings sync, watcher and lifecycle hooks.
+  function getIsRegionRestricted(restrictedTerritories: string[] | undefined): boolean {
+    return getIsBookRegionRestricted(restrictedTerritories, region.value, ipRegion.value)
+  }
+
+  return { getIsRegionRestricted }
 }
 
 export function useRegion() {

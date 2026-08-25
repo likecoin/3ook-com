@@ -55,7 +55,7 @@ const props = withDefaults(defineProps<{
 
 const queryCache = useQueryCache()
 const isAdultContentEnabled = useAdultContentSetting()
-const region = useRegionValue()
+const { getIsRegionRestricted } = useBookRegionGate()
 
 // The feed's candidate pools carry no `isHidden` flag, so live bookstore info is
 // the only place hidden books can be dropped. Unresolved info keeps the book —
@@ -66,7 +66,7 @@ const visibleNFTClassIds = computed(() => props.nftClassIds.filter((nftClassId) 
   if (bookstoreInfo === null) return false
   if (bookstoreInfo?.isHidden) return false
   if (!isAdultContentEnabled.value && bookstoreInfo?.isAdultOnly) return false
-  if (getIsBookRegionRestricted(bookstoreInfo?.restrictedTerritories, region.value)) return false
+  if (getIsRegionRestricted(bookstoreInfo?.restrictedTerritories)) return false
   return true
 }))
 
