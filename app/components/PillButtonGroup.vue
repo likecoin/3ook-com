@@ -70,9 +70,12 @@
       class="absolute inset-x-0 top-0 flex flex-wrap items-center max-phone:gap-1 gap-2 invisible pointer-events-none"
       aria-hidden="true"
     >
+      <!-- Keyed by index on purpose: this row is invisible and aria-hidden, so
+           node identity buys nothing, while a value key makes recompute()'s
+           reorder move existing nodes and can crash the patch mid-measure. -->
       <PillButton
-        v-for="item in measurementOrder"
-        :key="`m-${item.value}`"
+        v-for="(item, i) in measurementOrder"
+        :key="`m-${i}`"
         :label="item.label"
         :is-active="item.value === modelValue"
       />
