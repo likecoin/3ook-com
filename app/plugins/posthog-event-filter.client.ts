@@ -1,6 +1,6 @@
 // Drops localhost traffic and the third-party console.error noise that
 // `capture_exceptions: { capture_console_errors: true }` (nuxt.config) promotes
-// into $exception events. Predicates live in app/utils/error-capture-filter.ts.
+// into $exception events. Helpers live in app/utils/error-capture-filter.ts.
 
 export default defineNuxtPlugin(() => {
   const { onLoaded } = useScriptPostHog()
@@ -20,6 +20,10 @@ export default defineNuxtPlugin(() => {
 
         const exceptions = (event.properties?.$exception_list ?? []) as CapturedException[]
         if (exceptions.length && exceptions.every(getIsIgnoredCapturedException)) return null
+
+        // Match before the loop below rewrites the values it reads.
+        const fingerprint = getStableExceptionFingerprint(exceptions)
+        if (fingerprint) event.properties.$exception_fingerprint = fingerprint
 
         for (const exception of exceptions) {
           if (!exception.value) continue

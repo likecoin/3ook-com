@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   getIsIgnoredCapturedException,
   getIsLocalhostHostname,
+  getStableExceptionFingerprint,
   normalizeCapturedExceptionMessage,
 } from '~/utils/error-capture-filter'
 
@@ -65,6 +66,34 @@ describe('normalizeCapturedExceptionMessage', () => {
   it('leaves unrelated messages untouched', () => {
     const message = 'TypeError: Failed to fetch'
     expect(normalizeCapturedExceptionMessage(message)).toBe(message)
+  })
+})
+
+describe('getStableExceptionFingerprint', () => {
+  // Production reported the same stall both bare and Error-prefixed; the stacks
+  // differed, so only the value can group them.
+  it('gives both reported shapes of the native stall one fingerprint', () => {
+    const bare = getStableExceptionFingerprint([{ value: 'Playback stuck' }])
+    expect(bare).toBeTruthy()
+    expect(getStableExceptionFingerprint([{ value: 'Error: Playback stuck' }])).toBe(bare)
+  })
+
+  it('reads past a leading exception in the list', () => {
+    expect(getStableExceptionFingerprint([
+      { value: 'TypeError: Failed to fetch' },
+      { value: 'Playback stuck' },
+    ])).toBeTruthy()
+  })
+
+  it.each([
+    { value: 'TypeError: Cannot read properties of undefined' },
+    {},
+  ])('leaves unrelated exceptions on PostHog\'s own fingerprint: %s', (exception) => {
+    expect(getStableExceptionFingerprint([exception])).toBeUndefined()
+  })
+
+  it('handles an empty exception list', () => {
+    expect(getStableExceptionFingerprint([])).toBeUndefined()
   })
 })
 

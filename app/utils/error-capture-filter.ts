@@ -15,6 +15,13 @@ export const OBJECT_CAPTURED_MARKER = 'captured as exception with keys'
 export const EPUB_RANGE_LOG_PREFIX = 'setting end offset to start container length failed'
 const EPUB_RANGE_OFFSET_PATTERN = /(There is no child at offset )\d+/
 
+// The native shell pushes this to the WebView when its stall watchdog gives up.
+const PLAYBACK_STUCK_MESSAGE = 'Playback stuck'
+
+// A grouping identity, deliberately not the matched text: rewording the native
+// message must not also move the key that holds the issue together.
+const PLAYBACK_STUCK_FINGERPRINT = 'native_playback_stuck'
+
 export interface CapturedException {
   value?: string
   mechanism?: { synthetic?: boolean }
@@ -36,6 +43,16 @@ export function getIsIgnoredCapturedException(exception: CapturedException) {
 export function normalizeCapturedExceptionMessage(message: string) {
   if (!message.includes(EPUB_RANGE_LOG_PREFIX)) return message
   return message.replace(EPUB_RANGE_OFFSET_PATTERN, '$1<offset>')
+}
+
+// PostHog fingerprints on the stack when there is one, so an error whose frames
+// depend on where it escaped forks a new issue per deploy. Undefined leaves
+// PostHog's own fingerprint in place.
+export function getStableExceptionFingerprint(exceptions: Array<CapturedException>) {
+  if (exceptions.some(exception => exception.value?.includes(PLAYBACK_STUCK_MESSAGE))) {
+    return PLAYBACK_STUCK_FINGERPRINT
+  }
+  return undefined
 }
 
 export function getIsLocalhostHostname(hostname: string) {
