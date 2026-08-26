@@ -121,14 +121,6 @@
               :color="ttsTagColor"
               size="sm"
             />
-
-            <UBadge
-              v-if="isPlusReadingEnabled"
-              :label="$t('product_page_plus_reading_label')"
-              variant="subtle"
-              :color="plusReadingTagColor"
-              size="sm"
-            />
           </div>
         </div>
       </button>

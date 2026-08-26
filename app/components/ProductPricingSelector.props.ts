@@ -16,6 +16,4 @@ export interface ProductPricingSelectorProps {
   isDownloadable: boolean
   isTtsSupported: boolean
   ttsTagColor: 'primary' | 'secondary'
-  isPlusReadingEnabled: boolean
-  plusReadingTagColor: 'primary' | 'secondary'
 }

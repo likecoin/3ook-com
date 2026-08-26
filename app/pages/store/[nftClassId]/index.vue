@@ -400,8 +400,6 @@
                 :is-downloadable="bookInfo.isDownloadable.value"
                 :is-tts-supported="!bookInfo.isAudioHidden.value"
                 :tts-tag-color="ttsTagColor"
-                :is-plus-reading-enabled="isPlusReadingEnabled"
-                :plus-reading-tag-color="plusReadingTagColor"
                 @select="handlePricingItemClick"
               />
 
