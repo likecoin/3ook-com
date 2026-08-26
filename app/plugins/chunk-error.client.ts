@@ -172,6 +172,7 @@ export default defineNuxtPlugin((nuxtApp) => {
   // promise makes the second arrival inherit the first one's outcome instead
   // of reporting "handled" for a rung that actually gave up.
   let ladderDecision: Promise<boolean> | undefined
+  let ladderDecidedAt = 0
 
   // Resolves to whether the ladder took ownership. False means the caller
   // should surface the error: not a chunk error, or we already escalated and
@@ -179,7 +180,15 @@ export default defineNuxtPlugin((nuxtApp) => {
   const handle = (error: unknown) => {
     const message = getErrorMessage(error)
     if (!CHUNK_ERROR_PATTERNS.some(pattern => message.includes(pattern))) return Promise.resolve(false)
-    ladderDecision ??= runLadder(error, message)
+    // Expire the memo on the same window the ladder resets on: a page that
+    // survived the give-up rung (the only decision a reload doesn't tear down)
+    // then fails again much later is a new incident, so let it start over from
+    // a soft reload instead of inheriting the old "already escalated".
+    if (ladderDecision && Date.now() - ladderDecidedAt > INCIDENT_WINDOW_MS) ladderDecision = undefined
+    if (!ladderDecision) {
+      ladderDecidedAt = Date.now()
+      ladderDecision = runLadder(error, message)
+    }
     return ladderDecision
   }
 
