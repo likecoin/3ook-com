@@ -27,6 +27,9 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
   let warmedThrough = -1
   // Playhead the mark was computed against, so a backward move is detectable.
   let warmBase = -1
+  // Bumped whenever the warmed registry is cleared, so an in-flight warm can
+  // tell whether the book it was fetched for is still the one loaded.
+  let warmGeneration = 0
   let warming = false
   // Held until a segment boundary is crossed, matching the native shell: a book
   // opened and abandoned would otherwise pull a whole window of audio nobody
@@ -231,6 +234,9 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
 
     const src = getAudioSrc(nextElement)
 
+    // The idle element is never marked warmed: Safari opens it with a Range
+    // request, and the route refuses to store the 206 that comes back, so a
+    // mark here would claim a segment that only Chrome actually caches.
     const idle = getIdleAudio()
     if (idle) {
       if (idle.getAttribute('data-src') !== src) {
@@ -242,11 +248,31 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
       }
     }
     else {
-      // Single mode — warm the HTTP cache so the next segment loads faster
-      fetch(src).catch(() => {})
+      // Single mode — warm the HTTP cache so the next segment loads faster.
+      // Drained for the same reason runWarm drains: an abandoned body can leave
+      // the worker's cache write unfinished, and an unstored segment marked.
+      const generation = warmGeneration
+      fetch(src)
+        .then(async (response) => {
+          if (!response.ok) return
+          await response.arrayBuffer()
+          // load() and stop() bump the generation, so a mark can't outlive the
+          // book it was fetched for. Not `active`: pause() keeps the registry.
+          if (warmGeneration !== generation) return
+          markTTSSegmentWarmed(src)
+        })
+        .catch(() => {})
     }
 
     void runWarm()
+  }
+
+  function resetWarmState() {
+    warmedThrough = -1
+    warmBase = -1
+    warmArmed = false
+    warmGeneration += 1
+    clearTTSWarmedSegments()
   }
 
   // Pull segments beyond the idle element's N+1 into the service worker cache.
@@ -274,10 +300,11 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
         if (!segment) return // Window already warm.
 
         const base = currentIndex
+        const warmURL = getAudioSrc(segment, { blocking: true })
         try {
           // Timeout because a cold segment blocks on full synthesis server-side,
           // which would otherwise stall the whole runway behind it.
-          const response = await fetch(getAudioSrc(segment, { blocking: true }), {
+          const response = await fetch(warmURL, {
             signal: AbortSignal.timeout(WARM_TIMEOUT_MS),
           })
           // fetch only rejects on network errors, so an expired signature or a
@@ -295,6 +322,8 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
         // was fetched for. A backward seek leaves the playhead behind the mark;
         // a forward one keeps it true, the index it counts being absolute.
         if (warmBase !== base) return
+        // Only now are the bytes the worker's, and this session's to claim.
+        markTTSSegmentWarmed(warmURL)
         if (currentIndex >= base) warmedThrough = index
       }
     }
@@ -442,9 +471,7 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
     // Clamped here for the same reason the native shell clamps what web sends:
     // this side owns the connections it spends.
     prefetchCount = Math.min(Math.max(options.prefetchCount ?? 1, 1), MAX_PREFETCH_COUNT)
-    warmedThrough = -1
-    warmBase = -1
-    warmArmed = false
+    resetWarmState()
 
     dualMode = true
     ensureAudioPool()
@@ -488,9 +515,7 @@ export function useWebAudioPlayer(): TTSAudioPlayer {
     active = false
     backgroundInterrupted = false
     rateWasForced = false
-    warmedThrough = -1
-    warmBase = -1
-    warmArmed = false
+    resetWarmState()
     clearStuckTimer()
     clearAutoResumeTimer()
     resetAudio()

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   buildTTSAudioURL,
+  getTTSCacheKeyURL,
   parseLanguageVoice,
   resolvePrivateVoiceLanguage,
 } from '~/utils/tts-audio-url'
@@ -159,5 +160,30 @@ describe('buildTTSAudioURL (affiliate voice)', () => {
       affiliateVoices,
     })
     expect(parseTTSURL(url).params.get('language')).toBe('zh-HK')
+  })
+})
+
+describe('getTTSCacheKeyURL', () => {
+  it('strips blocking so a warm fetch matches what playback requests', () => {
+    const played = buildTTSAudioURL(TEXT, { nftClassId: NFT_CLASS_ID, languageVoice: 'zh-HK_male-1' })
+    const warmed = buildTTSAudioURL(TEXT, {
+      nftClassId: NFT_CLASS_ID,
+      languageVoice: 'zh-HK_male-1',
+      isBlocking: true,
+    })
+    expect(warmed).not.toBe(played)
+    expect(getTTSCacheKeyURL(warmed)).toBe(getTTSCacheKeyURL(played))
+  })
+
+  it('leaves every other param alone', () => {
+    const key = getTTSCacheKeyURL('/api/reader/tts?text=hi&voice_id=male-1&blocking=1')
+    const { searchParams } = new URL(key)
+    expect(searchParams.get('blocking')).toBeNull()
+    expect(searchParams.get('text')).toBe('hi')
+    expect(searchParams.get('voice_id')).toBe('male-1')
+  })
+
+  it('resolves a relative URL against the page origin', () => {
+    expect(getTTSCacheKeyURL('/api/reader/tts?text=hi')).toBe(`${window.location.origin}/api/reader/tts?text=hi`)
   })
 })

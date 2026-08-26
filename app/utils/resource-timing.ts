@@ -1,6 +1,7 @@
 import { TTS_SERVER_SOURCE, TTS_SERVER_TIMING_METRIC } from '~~/shared/utils/tts-server-timing'
+import { getTTSCacheKeyURL } from '~/utils/tts-audio-url'
 
-export type TTSCacheStatus = 'hit' | 'miss' | 'unknown'
+export type TTSCacheStatus = 'hit' | 'miss' | 'warm_hit' | 'unknown'
 
 // Where the audio bytes came from, in ascending cost order:
 // browser_cache (free) < cdn_or_storage (cheap) < generated (Minimax, $$$).
@@ -8,16 +9,49 @@ export type TTSCacheStatus = 'hit' | 'miss' | 'unknown'
 // both serve a previously-stored file with Server-Timing desc="store", and a
 // media-element load cannot read cf-cache-status to tell them apart.
 // "native" is reported by the WebView shell, whose audio pipeline is opaque.
-export type TTSAudioSource = 'browser_cache' | 'cdn_or_storage' | 'generated' | 'native' | 'unknown'
+// "service_worker" is a segment the prefetch runway drained into the Workbox
+// cache: local bytes, but a worker-served reply carries no usable timing.
+export type TTSAudioSource = 'browser_cache' | 'cdn_or_storage' | 'generated' | 'native' | 'service_worker' | 'unknown'
 
 const TTS_URL_PATTERN = /\/api\/reader\/tts(?:\?|$)/
 // Prefetch warms carry blocking=1 and are never played back, so tracking them
 // would spend half the window below on entries nothing ever looks up.
 const TTS_BLOCKING_URL_PATTERN = /[?&]blocking=1(?:&|$)/
 const MAX_TRACKED_URLS = 200
+// Kept far below the TTS route's own `maxEntries` in nuxt.config: a key only
+// tells the truth while Workbox still holds the entry, so the registry must be
+// the first of the two to forget a segment.
+const MAX_WARMED_KEYS = 200
 
 const latestByURL = new Map<string, PerformanceResourceTiming>()
 let observer: PerformanceObserver | null = null
+
+// Both stores below are insertion-ordered, so the oldest key is the first one.
+function evictOldest(store: { size: number, keys: () => IterableIterator<string>, delete: (key: string) => unknown }, max: number) {
+  if (store.size <= max) return
+  const oldest = store.keys().next().value
+  if (oldest) store.delete(oldest)
+}
+
+// Cache keys the warm runway has confirmed stored, so playback can tell a
+// worker-served segment from one that simply reported no timing.
+const warmedCacheKeys = new Set<string>()
+
+export function markTTSSegmentWarmed(rawURL: string) {
+  const key = getTTSCacheKeyURL(rawURL)
+  // delete+add so a re-warm refreshes its insertion order (LRU eviction)
+  warmedCacheKeys.delete(key)
+  warmedCacheKeys.add(key)
+  evictOldest(warmedCacheKeys, MAX_WARMED_KEYS)
+}
+
+export function clearTTSWarmedSegments() {
+  warmedCacheKeys.clear()
+}
+
+function isTTSSegmentWarmed(rawURL: string): boolean {
+  return !!rawURL && warmedCacheKeys.has(getTTSCacheKeyURL(rawURL))
+}
 
 function ensureObserver() {
   if (observer || typeof PerformanceObserver === 'undefined') return
@@ -29,10 +63,7 @@ function ensureObserver() {
       // delete+set so repeat URLs refresh their insertion order (LRU eviction)
       latestByURL.delete(entry.name)
       latestByURL.set(entry.name, entry as PerformanceResourceTiming)
-      if (latestByURL.size > MAX_TRACKED_URLS) {
-        const oldest = latestByURL.keys().next().value
-        if (oldest) latestByURL.delete(oldest)
-      }
+      evictOldest(latestByURL, MAX_TRACKED_URLS)
     }
   })
   try {
@@ -55,8 +86,10 @@ function getTTSResourceEntry(audioURL: string): PerformanceResourceTiming | unde
 
 export function classifyTTSCacheStatus(audioURL: string): TTSCacheStatus {
   const entry = getTTSResourceEntry(audioURL)
-  // decodedBodySize === 0 means cross-origin without Timing-Allow-Origin
-  if (!entry || entry.decodedBodySize === 0) return 'unknown'
+  // decodedBodySize === 0 means no Timing-Allow-Origin, or a service worker reply.
+  if (!entry || entry.decodedBodySize === 0) {
+    return isTTSSegmentWarmed(audioURL) ? 'warm_hit' : 'unknown'
+  }
   return entry.transferSize === 0 ? 'hit' : 'miss'
 }
 
@@ -68,7 +101,9 @@ export function classifyTTSCacheStatus(audioURL: string): TTSCacheStatus {
 // Cloudflare edge HIT replaying the stored header) — see TTSAudioSource.
 export function classifyTTSAudioSource(audioURL: string): TTSAudioSource {
   const entry = getTTSResourceEntry(audioURL)
-  if (!entry || entry.decodedBodySize === 0) return 'unknown'
+  if (!entry || entry.decodedBodySize === 0) {
+    return isTTSSegmentWarmed(audioURL) ? 'service_worker' : 'unknown'
+  }
   if (entry.transferSize === 0) return 'browser_cache'
   const desc = entry.serverTiming?.find(metric => metric.name === TTS_SERVER_TIMING_METRIC)?.description
   if (desc === TTS_SERVER_SOURCE.GENERATED) return 'generated'

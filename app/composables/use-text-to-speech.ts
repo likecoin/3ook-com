@@ -252,6 +252,10 @@ export function useTextToSpeech(options: TTSOptions) {
         load_time_ms: timing.loadMs,
         had_buffering: timing.hadBuffering,
         is_first_segment: timing.index === 0,
+        // Segments playable with no network at the moment this one started.
+        // Separates a worker-served stall from a real starve, and is the only
+        // read on whether TTS_PREFETCH_COUNT is sized right.
+        warm_runway: player.getWarmRunway(),
         cache_status: resolveCacheStatus(),
         audio_source: resolveAudioSource(),
       }))
@@ -338,6 +342,7 @@ export function useTextToSpeech(options: TTSOptions) {
         load_time_ms: timing.loadMs,
         had_buffering: timing.hadBuffering,
         is_first_segment: timing.index === 0,
+        warm_runway: player.getWarmRunway(),
         error: formatTTSError(error),
         cache_status: resolveCacheStatus(),
         audio_source: resolveAudioSource(),

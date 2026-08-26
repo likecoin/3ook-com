@@ -100,3 +100,13 @@ export function buildTTSAudioURL(sanitizedText: string, context: TTSAudioURLCont
   appendCommonParams(params, { text: sanitizedText, voiceId, language, isPrivateVoice: false }, context)
   return `/api/reader/tts?${params.toString()}`
 }
+
+// The key Workbox stored a segment under: its `cacheKeyWillBeUsed` strips
+// `blocking`. Deliberately duplicated rather than shared with that handler,
+// which generateSW serialises via toString(): imports are out of scope there.
+export function getTTSCacheKeyURL(rawURL: string): string {
+  const origin = import.meta.client ? window.location.origin : 'http://localhost'
+  const url = new URL(rawURL, origin)
+  url.searchParams.delete('blocking')
+  return url.href
+}
