@@ -1050,16 +1050,28 @@ async function displayRenditionAtCurrentLocation() {
   if (!hasDisplayedInitialLocation) return
 
   renderedThemeVersion = themeVersion
-  const hasDisplayed = await displayRendition(target, { isSilentError: true })
-  if (!hasDisplayed) {
-    await displayRendition(undefined)
+  // A target the loaded spine no longer resolves drops the reader on page one,
+  // so step through the nearest known sections before that last resort.
+  // `currentPageHref` is epub.js's own spine href, so it resolves where the
+  // nav hrefs below may not.
+  const fallbackTargets = [
+    target,
+    currentPageHref.value,
+    activeNavItemHref.value,
+    findNextNavItemAfterTOC(navItems.value)?.href,
+  ]
+  const candidates = [...new Set(fallbackTargets.filter(Boolean))]
+  for (const [attempt, candidate] of candidates.entries()) {
+    if (await displayRendition(candidate, { isSilentError: true, attempt })) return
   }
+  await displayRendition(undefined, { attempt: candidates.length })
 }
 
 async function handleDisplayFailure(error: unknown, target: string | undefined, {
   isSilentError,
   isTargetMissing = false,
-}: { isSilentError: boolean, isTargetMissing?: boolean }) {
+  attempt,
+}: { isSilentError: boolean, isTargetMissing?: boolean, attempt: number }) {
   console.error(`Error occurred when displaying${target ? ` ${target}` : ''} in rendition of ${nftClassId.value}`, error)
   // A fallback display recovers most of these, so keep them measurable.
   useLogEvent('reader_epub_display_failed', {
@@ -1068,18 +1080,21 @@ async function handleDisplayFailure(error: unknown, target: string | undefined, 
     is_silent_error: isSilentError,
     has_target: !!target,
     is_target_missing: isTargetMissing,
+    // Rung of the caller's fallback ladder, so a retry that recovers stays
+    // countable apart from the failure that started it.
+    attempt,
   })
   if (!isSilentError) {
     await handleError(error, { description: $t('reader_epub_rendition_display_failed') })
   }
 }
 
-async function displayRendition(target?: string, { isSilentError = false } = {}) {
+async function displayRendition(target?: string, { isSilentError = false, attempt = 0 } = {}) {
   if (!rendition.value) return false
   // epub.js rejects the whole display for a section this file no longer has,
   // so drop the target here and let the caller's fallback repaint instead.
   if (!isEPUBTargetInSpine(rendition.value.book?.spine, target)) {
-    await handleDisplayFailure(new Error('No spine section for display target'), target, { isSilentError, isTargetMissing: true })
+    await handleDisplayFailure(new Error('No spine section for display target'), target, { isSilentError, isTargetMissing: true, attempt })
     return false
   }
   try {
@@ -1087,7 +1102,7 @@ async function displayRendition(target?: string, { isSilentError = false } = {})
     return true
   }
   catch (error) {
-    await handleDisplayFailure(error, target, { isSilentError })
+    await handleDisplayFailure(error, target, { isSilentError, attempt })
   }
   return false
 }
