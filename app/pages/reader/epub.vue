@@ -1056,25 +1056,38 @@ async function displayRenditionAtCurrentLocation() {
   }
 }
 
-async function displayRendition(href?: string, { isSilentError = false } = {}) {
-  if (rendition.value) {
-    try {
-      await displayInRendition(href)
-      return true
-    }
-    catch (error) {
-      console.error(`Error occurred when displaying${href ? ` ${href}` : ''} in rendition of ${nftClassId.value}`, error)
-      // A fallback display recovers most of these, so keep them measurable.
-      useLogEvent('reader_epub_display_failed', {
-        nft_class_id: nftClassId.value,
-        error_message: getErrorEventMessage(error),
-        is_silent_error: isSilentError,
-        has_target: !!href,
-      })
-      if (!isSilentError) {
-        await handleError(error, { description: $t('reader_epub_rendition_display_failed') })
-      }
-    }
+async function handleDisplayFailure(error: unknown, target: string | undefined, {
+  isSilentError,
+  isTargetMissing = false,
+}: { isSilentError: boolean, isTargetMissing?: boolean }) {
+  console.error(`Error occurred when displaying${target ? ` ${target}` : ''} in rendition of ${nftClassId.value}`, error)
+  // A fallback display recovers most of these, so keep them measurable.
+  useLogEvent('reader_epub_display_failed', {
+    nft_class_id: nftClassId.value,
+    error_message: getErrorEventMessage(error),
+    is_silent_error: isSilentError,
+    has_target: !!target,
+    is_target_missing: isTargetMissing,
+  })
+  if (!isSilentError) {
+    await handleError(error, { description: $t('reader_epub_rendition_display_failed') })
+  }
+}
+
+async function displayRendition(target?: string, { isSilentError = false } = {}) {
+  if (!rendition.value) return false
+  // epub.js rejects the whole display for a section this file no longer has,
+  // so drop the target here and let the caller's fallback repaint instead.
+  if (!isEPUBTargetInSpine(rendition.value.book?.spine, target)) {
+    await handleDisplayFailure(new Error('No spine section for display target'), target, { isSilentError, isTargetMissing: true })
+    return false
+  }
+  try {
+    await displayInRendition(target)
+    return true
+  }
+  catch (error) {
+    await handleDisplayFailure(error, target, { isSilentError })
   }
   return false
 }
@@ -1150,17 +1163,18 @@ async function loadEPub() {
   }
 
   destroyBookWhenSettled(previousBook ?? previousRendition)
-  rendition.value = book.renderTo(renditionElement.value, {
+  const currentRendition = book.renderTo(renditionElement.value, {
     width: '100%',
     height: '100%',
     allowScriptedContent: true,
     spread: 'none',
   })
+  rendition.value = currentRendition
   // The paging container outlives every section render, so bind it once here
   // rather than in `rendered`.
   removePagingScrollListener?.()
   removePagingScrollListener = undefined
-  const pagingContainer = rendition.value.manager?.container
+  const pagingContainer = currentRendition.manager?.container
   if (pagingContainer) {
     removePagingScrollListener = useEventListener(pagingContainer, 'scroll', handlePagingScroll)
   }
@@ -1171,54 +1185,22 @@ async function loadEPub() {
     applyImageLoadStateToDocument(contents.document)
   })
 
-  // Settings load lazily (kicked off un-awaited in onMounted). Apply the theme
-  // and resolve the saved CFI only once font-size/line-height/cfi have arrived:
-  // injecting font-size/line-height *after* anchoring reflows the chapter and
-  // strands the restore on an earlier page than the one that was saved.
-  await bookSettingsStore.ensureInitialized(nftClassId.value)
-  await nextTick()
-  applyTheme()
-  // A saved (or forced) writing mode overrides the DOM but not epub.js's
-  // page-progression direction, so sync it before the first paint — otherwise
-  // next()/prev() and the turn arrows stay reversed until the first re-render.
-  if (shouldEnforceWritingMode.value) {
-    applyRenditionDirection()
-  }
-  isPageLoading.value = true
-
-  let hasDisplayed = false
-  if (currentCfi.value) {
-    hasDisplayed = await displayRendition(currentCfi.value, { isSilentError: true })
-  }
-  if (!hasDisplayed) {
-    const fallbackItem = findNextNavItemAfterTOC(navItems.value)
-    if (fallbackItem) {
-      // A preview keeps the full nav document, so this first chapter may have
-      // been truncated away — fall through to the spine below when it has.
-      hasDisplayed = await setActiveNavItem(fallbackItem, { isSilentError: true })
-    }
-  }
-  if (!hasDisplayed) {
-    hasDisplayed = await displayRendition()
-    if (!hasDisplayed) {
-      return
-    }
-  }
-  hasDisplayedInitialLocation = true
-
-  // Clear stale TTS index from previous session so it doesn't override current page position
-  activeTTSElementIndex.value = undefined
-
-  rendition.value.on('rendered', (_section: Section, view: EpubView) => {
+  // `rendered` is emitted from the display's own promise chain, so registering
+  // after the awaited chain below misses the first page entirely: its window
+  // stays unbound, its listeners unwired and the spinner up over a painted page.
+  currentRendition.on('rendered', (_section: Section, view: EpubView) => {
     // The deferred destroy lets the in-flight display emit this after unmount,
-    // which would re-register listeners nothing will ever clean up.
-    if (isUnmounting) return
+    // which would re-register listeners nothing will ever clean up. A reload
+    // swaps the rendition mid-flight, so ignore the superseded one's events too.
+    if (isUnmounting || rendition.value !== currentRendition) return
     // `rendered` fires for sections epub.js pre-renders into its paging
     // buffer, so this can be a neighbour, not the visible page — the section
     // index comes from the authoritative `relocated` handler instead.
     renditionViewWindow.value = view.window
     isPageLoading.value = false
-    if (!hasSavedWritingMode.value && detectedNaturalWritingMode.value === undefined && !hasEnforcedDefaultVerticalMode && view.window?.document) {
+    // Detection can force a re-render, and that clears the rendition — leave it
+    // to a later `rendered` rather than wiping the display chain's own page.
+    if (hasDisplayedInitialLocation && !hasSavedWritingMode.value && detectedNaturalWritingMode.value === undefined && !hasEnforcedDefaultVerticalMode && view.window?.document) {
       const renderedDoc = view.window.document
       // epub.js sizes columns from <html>, and `writing-mode` doesn't inherit
       // from <body> up to <html>, so read <html> first and only fall back to
@@ -1418,8 +1400,8 @@ async function loadEPub() {
     renderAnnotations()
   })
 
-  rendition.value.on('relocated', (location: Location) => {
-    if (isUnmounting) return
+  currentRendition.on('relocated', (location: Location) => {
+    if (isUnmounting || rendition.value !== currentRendition) return
     isPageLoading.value = false
     currentPageStartCfi.value = location.start.cfi
     currentPageEndCfi.value = location.end.cfi
@@ -1456,6 +1438,48 @@ async function loadEPub() {
     currentCfi.value = location.start.cfi
     applyPercentageFromCfi(location.start.cfi)
   })
+
+  // Settings load lazily (kicked off un-awaited in onMounted). Apply the theme
+  // and resolve the saved CFI only once font-size/line-height/cfi have arrived:
+  // injecting font-size/line-height *after* anchoring reflows the chapter and
+  // strands the restore on an earlier page than the one that was saved.
+  await bookSettingsStore.ensureInitialized(nftClassId.value)
+  await nextTick()
+  applyTheme()
+  // A saved (or forced) writing mode overrides the DOM but not epub.js's
+  // page-progression direction, so sync it before the first paint — otherwise
+  // next()/prev() and the turn arrows stay reversed until the first re-render.
+  if (shouldEnforceWritingMode.value) {
+    applyRenditionDirection()
+  }
+  isPageLoading.value = true
+
+  let hasDisplayed = false
+  if (currentCfi.value) {
+    hasDisplayed = await displayRendition(currentCfi.value, { isSilentError: true })
+  }
+  if (!hasDisplayed) {
+    const fallbackItem = findNextNavItemAfterTOC(navItems.value)
+    if (fallbackItem) {
+      // A preview keeps the full nav document, so this first chapter may have
+      // been truncated away — fall through to the spine below when it has.
+      hasDisplayed = await setActiveNavItem(fallbackItem, { isSilentError: true })
+    }
+  }
+  if (!hasDisplayed) {
+    hasDisplayed = await displayRendition()
+    if (!hasDisplayed) {
+      return
+    }
+  }
+  // The deferred destroy lets a display that started before unmount still
+  // resolve, so a truthy `hasDisplayed` can belong to a page that is already
+  // gone — stop before arming TTS and playback on it.
+  if (isUnmounting) return
+  hasDisplayedInitialLocation = true
+
+  // Clear stale TTS index from previous session so it doesn't override current page position
+  activeTTSElementIndex.value = undefined
 
   if (isTTSQueryParam.value) {
     if (bookInfo.isAudioHidden.value) {

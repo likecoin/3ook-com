@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { clampPDFPageNumber, findOfflineBookCopy, getBookFileCacheKey, isLikelyGarbledPDFText, isPDFCorpusUnreadable, isValidPDFPageNumber } from '~/utils/reader'
+import { clampPDFPageNumber, findOfflineBookCopy, getBookFileCacheKey, isEPUBTargetInSpine, isLikelyGarbledPDFText, isPDFCorpusUnreadable, isValidPDFPageNumber } from '~/utils/reader'
 
 describe('isLikelyGarbledPDFText', () => {
   it('returns false for short strings', () => {
@@ -160,5 +160,41 @@ describe('clampPDFPageNumber', () => {
     expect(clampPDFPageNumber(-2, 5)).toBe(1)
     expect(clampPDFPageNumber(Number.NaN, 5)).toBe(1)
     expect(clampPDFPageNumber(undefined, 5)).toBe(1)
+  })
+})
+
+describe('isEPUBTargetInSpine', () => {
+  // The helper only asks whether spine.get() resolves, so a stub keyed on the
+  // targets this file still has stands in for both href and CFI lookups.
+  function createSpine(hrefs: string[]) {
+    return { get: (target?: string) => hrefs.includes(target ?? '') ? { href: target } : null }
+  }
+
+  it('allows an untargeted display, which anchors on the first section', () => {
+    expect(isEPUBTargetInSpine(createSpine([]), undefined)).toBe(true)
+    expect(isEPUBTargetInSpine(createSpine(['ch1.xhtml']), '')).toBe(true)
+  })
+
+  it('allows a target the loaded spine still resolves', () => {
+    expect(isEPUBTargetInSpine(createSpine(['ch1.xhtml', 'ch2.xhtml']), 'ch2.xhtml')).toBe(true)
+  })
+
+  it('drops a position that outlived its document', () => {
+    // A synced CFI, or a preview whose later chapters were truncated away.
+    expect(isEPUBTargetInSpine(createSpine(['ch1.xhtml']), 'ch9.xhtml')).toBe(false)
+    expect(isEPUBTargetInSpine(createSpine(['ch1.xhtml']), 'epubcfi(/6/20!/4/2/2[p3]/1:0)')).toBe(false)
+  })
+
+  it('drops a target whose lookup throws, since the display would fail too', () => {
+    const spine = {
+      get: () => {
+        throw new Error('EPUBCFI parse error')
+      },
+    }
+    expect(isEPUBTargetInSpine(spine, 'epubcfi(bogus)')).toBe(false)
+  })
+
+  it('lets the display attempt decide when there is no spine to check', () => {
+    expect(isEPUBTargetInSpine(undefined, 'ch1.xhtml')).toBe(true)
   })
 })

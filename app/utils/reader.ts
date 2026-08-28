@@ -428,3 +428,28 @@ export function clampPDFPageNumber(page: unknown, totalPages: number): number {
   if (!isValidPDFPageNumber(page) || !isValidPDFPageNumber(totalPages)) return 1
   return Math.min(page, totalPages)
 }
+
+/**
+ * Whether a display target still names a section of the loaded EPUB spine.
+ * A saved position outlives the file it was recorded against (republished
+ * edition, a preview whose later chapters are truncated away), and epub.js
+ * rejects the whole display with "No Section Found" instead of anchoring
+ * elsewhere. Covers the CFI and href targets we display; a percentage target
+ * would need `locations.cfiFromPercentage()` first, as `_display()` does.
+ */
+export function isEPUBTargetInSpine(
+  spine: { get: (target?: string) => unknown } | undefined,
+  target?: string,
+): boolean {
+  // An untargeted display anchors on the first section, which always exists.
+  if (!target) return true
+  // Nothing to check against, so let the display attempt decide.
+  if (!spine) return true
+  try {
+    return !!spine.get(target)
+  }
+  catch {
+    // A malformed CFI throws inside the lookup; the display would fail too.
+    return false
+  }
+}
