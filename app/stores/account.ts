@@ -639,6 +639,13 @@ export const useAccountStore = defineStore('account', () => {
       if (getErrorMessage(error).includes('User canceled action.')) {
         return
       }
+      // Walking away from the WalletConnect QR modal expires the session
+      // proposal after its ~5 minute TTL. That is an abandoned login, so
+      // classify it beside the explicit rejections rather than as a failure.
+      if (error instanceof Error && error.message.includes(WALLET_CONNECT_PROPOSAL_EXPIRED)) {
+        useLogEvent('login_wallet_rejected', { method: connectorId })
+        return
+      }
       if (error instanceof FetchError && error.data?.message === 'EMAIL_ALREADY_USED') {
         useLogEvent('login_email_already_used', { method: connectorId })
         return
