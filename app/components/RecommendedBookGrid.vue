@@ -22,6 +22,7 @@
         :ll-medium="getItemLLMedium(classId)"
         :ll-source="llSource"
         :is-library="isLibrary"
+        :rank="index"
         @open="handleBookOpen($event, index)"
       />
     </ul>
@@ -106,6 +107,7 @@ function handleBookOpen(classId: string, index: number) {
     // before this list, so the visible index is the rank the reader saw.
     rank: index,
     feedId: props.feed?.feedId,
+    feedServeId: loggedFeedServeId.value,
     isLibrary: props.isLibrary,
   })
 }
@@ -146,12 +148,18 @@ const recommendationViewKey = computed(() => {
 // as lookups resolve — so `watch` alone would double-count.
 const loggedRecommendationViewKeys = new Set<string>()
 
+// The serve id as it was impressed. The key stays the content hash, so a
+// recompute that kept the ranking logs no new view — and a click reading the
+// store's newer serve id would join to an impression that was never sent.
+const loggedFeedServeId = ref<string>()
+
 if (import.meta.client) {
   // `post`: the section unmounts whenever the id list flaps empty, so a pre-flush
   // callback would measure a detached grid and silently report the bound count.
   watch(recommendationViewKey, (key) => {
     if (key === undefined || loggedRecommendationViewKeys.has(key)) return
     loggedRecommendationViewKeys.add(key)
+    loggedFeedServeId.value = props.feed?.feedServeId
     const renderedBookCount = getRenderedBookCount()
     useLogRecommendBooksView({
       eventName: 'recommend_books_view',
@@ -165,6 +173,7 @@ if (import.meta.client) {
       bookCount: visibleNFTClassIds.value.length,
       visibleCount: renderedBookCount,
       feedId: key,
+      feedServeId: loggedFeedServeId.value,
       // Hidden books sit at the end, so the visible slice is the ranked prefix.
       nftClassIds: visibleNFTClassIds.value.slice(0, renderedBookCount),
     })

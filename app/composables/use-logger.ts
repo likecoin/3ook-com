@@ -322,6 +322,7 @@ export function useLogRecommendBookClick({
   llSource,
   rank,
   feedId,
+  feedServeId,
   isLibrary,
 }: {
   nftClassId: string
@@ -330,6 +331,7 @@ export function useLogRecommendBookClick({
   llSource?: string
   rank?: number
   feedId?: string
+  feedServeId?: string
   isLibrary?: boolean
 }) {
   useLogEvent('recommend_book_click', {
@@ -345,9 +347,17 @@ export function useLogRecommendBookClick({
     // `??`, unlike the tags above: `''` is the editorial feed's real identity,
     // and dropping it leaves those clicks with no impression to divide by.
     feed_id: feedId ?? undefined,
+    // `feedId` is shared by everyone served the same fallback ranking, so a
+    // click joined on it alone over-joins; this narrows the join to one serving.
+    feed_serve_id: feedServeId || undefined,
     is_library: isLibrary,
   })
 }
+
+// Named rather than left open, so an event that no dashboard reads cannot be
+// introduced by a typo.
+type RecommendBooksViewEventName
+  = 'recommend_books_view' | 'store_for_you_view' | 'library_for_you_view'
 
 // The impression half of that join. Both feeds report the ids they showed, so a
 // click has a denominator; `personalizedCount` is separate from `isPersonalized`
@@ -362,9 +372,10 @@ export function useLogRecommendBooksView({
   bookCount,
   visibleCount,
   feedId,
+  feedServeId,
   nftClassIds,
 }: {
-  eventName: string
+  eventName: RecommendBooksViewEventName
   llMedium?: string
   llSource?: string
   isPersonalized: boolean
@@ -373,6 +384,7 @@ export function useLogRecommendBooksView({
   bookCount: number
   visibleCount?: number
   feedId?: string
+  feedServeId?: string
   nftClassIds: Array<string | undefined>
 }) {
   useLogEvent(eventName, {
@@ -385,7 +397,65 @@ export function useLogRecommendBooksView({
     // `bookCount` counts every bound id; only this one was on screen.
     visible_count: visibleCount,
     feed_id: feedId ?? undefined,
+    feed_serve_id: feedServeId || undefined,
     nft_class_ids: getLoggedImpressionIds(nftClassIds),
+  })
+}
+
+// The browse grid's own impression, kept apart from the feed's rather than
+// folded into it: an infinite list reports one event per batch, and it must not
+// borrow `is_personalized`, which is the flag the feed's fallback is read by.
+export function useLogBrowseBooksView({
+  isLibrary,
+  llMedium,
+  llSource,
+  tag,
+  isSearch,
+  batchIndex,
+  nftClassIds,
+}: {
+  isLibrary: boolean
+  llMedium?: string
+  llSource?: string
+  tag?: string
+  isSearch?: boolean
+  batchIndex: number
+  nftClassIds: string[]
+}) {
+  useLogEvent(isLibrary ? 'library_books_view' : 'store_books_view', {
+    ll_medium: llMedium,
+    ll_source: llSource || undefined,
+    is_library: isLibrary,
+    tag: tag || undefined,
+    is_search: isSearch,
+    // Scroll depth within one list, so a deep batch is not read as a fresh view.
+    batch_index: batchIndex,
+    book_count: nftClassIds.length,
+    nft_class_ids: getLoggedImpressionIds(nftClassIds),
+  })
+}
+
+// The click half of `*_books_view`. `library_book_click` keeps its name, which
+// predates the rank fields and is already read by dashboards.
+export function useLogBrowseBookClick({
+  isLibrary,
+  nftClassId,
+  rank,
+  tag,
+  llSource,
+}: {
+  isLibrary: boolean
+  nftClassId: string
+  rank?: number
+  tag?: string
+  llSource?: string
+}) {
+  useLogEvent(isLibrary ? 'library_book_click' : 'store_book_click', {
+    // Normalized because the impression list is: the join is an exact match.
+    nft_class_id: normalizeNFTClassId(nftClassId),
+    rank,
+    tag: tag || undefined,
+    ll_source: llSource || undefined,
   })
 }
 

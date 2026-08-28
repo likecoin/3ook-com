@@ -65,7 +65,9 @@ export function getRecommendationLLMedium(isPersonalized: boolean) {
   return isPersonalized ? 'recommendation-personalized' : 'recommendation'
 }
 
-const LOGGED_IMPRESSION_COUNT = 20
+// Also the browse grid's impression batch size, so a batch is never truncated
+// by the cap it is measured against.
+export const LOGGED_IMPRESSION_COUNT = 20
 
 // The ids an impression event reports, so a later click joins back to it. One
 // spelling across every surface or the join silently misses, and capped because

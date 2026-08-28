@@ -116,6 +116,12 @@ const props = defineProps({
     type: Number,
     default: 0,
   },
+  // Render index within the grid. The list is rendered in served order, so this
+  // is the rank the reader saw — the denominator side needs it to debias.
+  rank: {
+    type: Number,
+    default: undefined,
+  },
   shouldShowPlusReadingIcon: {
     type: Boolean,
     default: false,
@@ -177,20 +183,18 @@ const formattedDiscountPrice = computed(() => {
   return null
 })
 
-if (!props.lazy) {
-  callOnce(`BookstoreItem_${props.nftClassId}`, () => {
-    emit('visible', props.nftClassId)
-    fetchBookInfo()
-  })
-}
-else {
-  useVisibility('lazyLoadTrigger', (visible) => {
-    if (visible) {
-      emit('visible', props.nftClassId)
-      fetchBookInfo()
-    }
-  })
-}
+// An impression is what the reader saw, so it waits for the observer on every
+// cover: `lazy` is set from the widest breakpoint's column count, which on a
+// phone leaves the last eager items several rows below the fold.
+useVisibility('lazyLoadTrigger', (isVisible) => {
+  if (!isVisible) return
+  emit('visible', props.nftClassId)
+  if (props.lazy) fetchBookInfo()
+})
+
+// An eager cover still prefetches without waiting to be seen. Keyed for the app
+// lifetime, which suits a metadata fetch and would not suit an impression.
+if (!props.lazy) callOnce(`BookstoreItem_${props.nftClassId}`, fetchBookInfo)
 
 function fetchBookInfo() {
   ensureNFTClassAggregatedMetadataThroughCache(queryCache, props.nftClassId).catch(() => {
@@ -207,14 +211,18 @@ function fetchBookInfo() {
 }
 
 function onBookCoverClick() {
+  // The numerator for `*_books_view`: both tabs, or the store grid's impressions
+  // would have no click to divide them by.
+  useLogBrowseBookClick({
+    isLibrary: props.isLibrary,
+    nftClassId: props.nftClassId,
+    rank: props.rank,
+    tag: props.tag,
+    llSource: props.llSource,
+  })
   // In the library the book is already owned, so opening it to read isn't an
   // ecommerce action — keep the GA4 `select_item` for the store path only.
-  if (props.isLibrary) {
-    useLogEvent('library_book_click', {
-      nft_class_id: props.nftClassId,
-    })
-  }
-  else {
+  if (!props.isLibrary) {
     useLogEvent('select_item', {
       items: [{
         item_id: props.nftClassId,

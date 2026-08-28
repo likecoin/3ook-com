@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
 
 import { Timestamp } from 'firebase-admin/firestore'
 import { FetchError } from 'ofetch'
@@ -87,6 +87,10 @@ function buildFeedResponse(
     hasMore: false,
     isPersonalized,
     feedId: getFeedId(servedRecords),
+    // Minted here rather than beside `getFeedId` so every serve path — including
+    // the two cache hits — gets a fresh one, which is the whole point: `feedId`
+    // is shared by everyone served the same fallback ranking.
+    feedServeId: randomUUID().replaceAll('-', '').slice(0, 12),
   }
 }
 

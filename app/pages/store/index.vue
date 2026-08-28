@@ -99,7 +99,7 @@
         <BookstoreItem
           v-for="(item, index) in products.items"
           :id="item.classId"
-          :key="`${tagId}-${item.classId}`"
+          :key="`${tagId}-${isSearchMode ? searchQuery : ''}-${item.classId}`"
           :class="[getGridItemClassesByIndex(index), getGridItemEnterClass(item.classId)]"
           :style="getGridItemEnterStyle(index)"
           :nft-class-id="item.classId"
@@ -115,7 +115,9 @@
           :is-library="isLibraryTab"
           :tag="tagId"
           :ll-source="GRID_LL_SOURCE"
+          :rank="index"
           @open="handleBookstoreItemOpen($event, index)"
+          @visible="handleBookstoreItemVisible"
         />
       </ul>
       <div
@@ -144,7 +146,7 @@
 <script setup lang="ts">
 import { FetchError } from 'ofetch'
 
-import { isBookstoreBuiltInListType } from '~~/shared/utils/bookstore'
+import { LOGGED_IMPRESSION_COUNT, isBookstoreBuiltInListType } from '~~/shared/utils/bookstore'
 import { getStorePublisherRouteName } from '~~/shared/constants/store-routes'
 import { formatLikerIdHandle } from '~~/shared/utils/liker-id'
 
@@ -894,6 +896,7 @@ function handleBookstoreItemOpen(classId: string, index: number) {
     // the served rank.
     rank: index,
     feedId: bookstoreStore.getForYouFeedId(isLibraryTab.value),
+    feedServeId: loggedForYouFeedServeId.value,
     isLibrary: isLibraryTab.value,
   })
 }
@@ -913,8 +916,14 @@ const forYouFeedViewKey = computed(() => {
   return `${isLibraryTab.value ? 'library' : 'store'}:${llMedium.value}:${walletAddress.value}`
 })
 
+// The serve id as it was impressed, not as the store currently holds it: a
+// refetch that keeps the ranking mints a new one without logging a new view, and
+// a click carrying that one would join to an impression that was never sent.
+const loggedForYouFeedServeId = ref<string>()
+
 watch(forYouFeedViewKey, (key) => {
   if (!key) return
+  loggedForYouFeedServeId.value = bookstoreStore.getForYouFeedServeId(isLibraryTab.value)
   useLogRecommendBooksView({
     eventName: isLibraryTab.value ? 'library_for_you_view' : 'store_for_you_view',
     llMedium: llMedium.value,
@@ -923,10 +932,66 @@ watch(forYouFeedViewKey, (key) => {
     isLibrary: isLibraryTab.value,
     bookCount: itemsCount.value,
     feedId: bookstoreStore.getForYouFeedId(isLibraryTab.value),
+    feedServeId: loggedForYouFeedServeId.value,
     // Ranked ids, so a click joins back to the list it came from.
     nftClassIds: products.value.items.map(item => item.classId || item.id),
   })
 }, { immediate: true })
+
+// The browse grid's own denominator. The For You feed reports its whole ranked
+// list in one `*_for_you_view`, so the two never both describe the same grid.
+interface BookstoreGridImpressionContext {
+  isLibrary: boolean
+  tag: string
+  searchQuery: string
+  // Captured with the batch: a flush can land after the surface has changed,
+  // and a medium read at flush time would relabel the list it described.
+  llMedium: string | undefined
+}
+
+const bookstoreGridImpressions = createImpressionBuffer<BookstoreGridImpressionContext>({
+  batchSize: LOGGED_IMPRESSION_COUNT,
+  // Search results and each tag are separate lists, so a book seen in one is
+  // still unseen in the next.
+  getContextKey: context => `${context.isLibrary}:${context.tag}:${context.searchQuery}:${context.llMedium}`,
+  onFlush: ({ nftClassIds, context, batchIndex }) => {
+    useLogBrowseBooksView({
+      isLibrary: context.isLibrary,
+      llMedium: context.llMedium,
+      llSource: GRID_LL_SOURCE,
+      tag: context.tag,
+      isSearch: !!context.searchQuery,
+      batchIndex,
+      nftClassIds,
+    })
+  },
+})
+
+function handleBookstoreItemVisible(classId: string) {
+  if (isForYouFeedVisible.value) return
+  bookstoreGridImpressions.add(classId, {
+    isLibrary: isLibraryTab.value,
+    tag: tagId.value,
+    searchQuery: isSearchMode.value ? searchQuery.value : '',
+    llMedium: llMedium.value,
+  })
+}
+
+// A partial batch is still reach. onBeforeUnmount misses the ways a browse
+// session usually ends, so pair it with the unload signals debounced-storage
+// already relies on: pagehide for reload/close, visibilitychange for mobile.
+onBeforeUnmount(() => bookstoreGridImpressions.flush())
+if (import.meta.client) {
+  useEventListener(window, 'pagehide', () => bookstoreGridImpressions.flush())
+  useEventListener(document, 'visibilitychange', () => {
+    if (document.visibilityState === 'hidden') bookstoreGridImpressions.flush()
+  })
+}
+
+watch(walletAddress, () => {
+  bookstoreGridImpressions.flush()
+  bookstoreGridImpressions.reset()
+})
 
 const { gridClasses, getGridItemClassesByIndex, columnMax } = usePaginatedGrid({
   itemsCount,

@@ -38,13 +38,18 @@ export interface FetchBookstoreForYouResponseData extends FetchBookstoreCMSProdu
   // Identifies the exact ranked list, so an impression and a click on the same
   // feed join to one row rather than being compared across recomputes.
   feedId: string
+  // Identifies this one serving. `feedId` answers "same ranking?" and collapses
+  // every reader of the shared fallback into one row; this answers "same
+  // showing?", which is what makes CTR@rank computable. Both, never one.
+  feedServeId: string
 }
 
-// Keeps `isPersonalized` and `feedId` paired with the ids they describe.
+// Keeps `isPersonalized`, `feedId` and `feedServeId` paired with the ids they describe.
 export interface BookRecommendations {
   nftClassIds: string[]
   isPersonalized: boolean
   feedId: string
+  feedServeId: string
 }
 
 export interface BookstoreCMSTag {
