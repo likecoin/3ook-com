@@ -7,7 +7,7 @@
 - `composables/use-tts-playing-state.ts` — Shared global TTS playing state
 - Integration in `pages/reader/epub.vue` and `pages/reader/pdf.vue`
 - Per-book TTS character tracking via `nft_class_id` param on TTS endpoint
-- Client-side events: `reading_session_end`
+- Client-side events: `reading_session_end` (includes `start_progress` / `end_progress`)
 
 ### Server-Side
 - `POST /api/analytics/session` — Full session flush with Firestore writes and PubSub events

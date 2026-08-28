@@ -203,6 +203,10 @@ export function useReadingSession(options: ReadingSessionOptions) {
       active_reading_time_ms: payload.activeReadingTimeMs,
       tts_active_time_ms: payload.ttsActiveTimeMs,
       pages_viewed: payload.pagesViewed,
+      // Completion mirrors the server: end_progress >= COMPLETION_THRESHOLD in
+      // server/api/analytics/session.post.ts, and only where is_preview is false.
+      start_progress: payload.startProgress,
+      end_progress: payload.endProgress,
       is_liker_plus_at_event_time: !!sessionUser.value?.isLikerPlus,
       // Mirrors isPaidPlus in server/utils/api-user.ts — the rev-share eligible population.
       is_paid_plus_at_event_time: !!sessionUser.value?.isLikerPlus && !sessionUser.value?.isLikerPlusTrial,
