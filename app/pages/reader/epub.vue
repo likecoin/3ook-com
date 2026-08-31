@@ -1487,10 +1487,11 @@ async function loadEPub() {
       return
     }
   }
-  // The deferred destroy lets a display that started before unmount still
-  // resolve, so a truthy `hasDisplayed` can belong to a page that is already
-  // gone — stop before arming TTS and playback on it.
-  if (isUnmounting) return
+  // The deferred destroy lets a display that started before unmount, or before
+  // a retry swapped in a new rendition, still resolve — so a truthy
+  // `hasDisplayed` can belong to a page that is already gone. Stop before
+  // arming TTS and playback on it.
+  if (isUnmounting || rendition.value !== currentRendition) return
   hasDisplayedInitialLocation = true
 
   // Clear stale TTS index from previous session so it doesn't override current page position
