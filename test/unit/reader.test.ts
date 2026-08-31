@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { clampPDFPageNumber, findOfflineBookCopy, getBookFileCacheKey, isEPUBTargetInSpine, isLikelyGarbledPDFText, isPDFCorpusUnreadable, isValidPDFPageNumber } from '~/utils/reader'
+// ?raw, not node:fs: the nuxt test environment stubs fs via unenv.
+import epubPageSource from '~~/app/pages/reader/epub.vue?raw'
 
 describe('isLikelyGarbledPDFText', () => {
   it('returns false for short strings', () => {
@@ -196,5 +198,14 @@ describe('isEPUBTargetInSpine', () => {
 
   it('lets the display attempt decide when there is no spine to check', () => {
     expect(isEPUBTargetInSpine(undefined, 'ch1.xhtml')).toBe(true)
+  })
+})
+
+describe('epub rendition identity guards', () => {
+  // The reader pins its `rendered`/`relocated` handlers to the rendition they
+  // were created for by identity. A deep `ref` hands back a reactive Proxy, so
+  // every guard would miss and silently stop clearing the spinner.
+  it('holds the rendition in a shallowRef', () => {
+    expect(epubPageSource).toMatch(/const rendition = shallowRef</)
   })
 })

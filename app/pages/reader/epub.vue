@@ -520,7 +520,9 @@ onMounted(() => {
   startReaderLoad()
 })
 
-const rendition = ref<Rendition>()
+// shallowRef, not ref: a deep ref hands back a reactive Proxy, so the identity
+// checks that pin the event handlers to their own rendition would never match.
+const rendition = shallowRef<Rendition>()
 const loadedBook = shallowRef<Book>()
 const isTTSExtracting = ref(false)
 const sectionHrefByFilename = ref<Record<string, string>>({})
@@ -1196,7 +1198,7 @@ async function loadEPub() {
   book.spine!.hooks.content.register((document: Document) => {
     applyWritingModeToDocument(document)
   })
-  rendition.value.hooks.content.register((contents: Contents) => {
+  currentRendition.hooks.content.register((contents: Contents) => {
     applyImageLoadStateToDocument(contents.document)
   })
 
