@@ -116,12 +116,6 @@ const props = defineProps({
     type: Number,
     default: 0,
   },
-  // Render index within the grid. The list is rendered in served order, so this
-  // is the rank the reader saw — the denominator side needs it to debias.
-  rank: {
-    type: Number,
-    default: undefined,
-  },
   shouldShowPlusReadingIcon: {
     type: Boolean,
     default: false,
@@ -211,15 +205,6 @@ function fetchBookInfo() {
 }
 
 function onBookCoverClick() {
-  // The numerator for `*_books_view`: both tabs, or the store grid's impressions
-  // would have no click to divide them by.
-  useLogBrowseBookClick({
-    isLibrary: props.isLibrary,
-    nftClassId: props.nftClassId,
-    rank: props.rank,
-    tag: props.tag,
-    llSource: props.llSource,
-  })
   // In the library the book is already owned, so opening it to read isn't an
   // ecommerce action — keep the GA4 `select_item` for the store path only.
   if (!props.isLibrary) {

@@ -22,7 +22,6 @@
         :ll-medium="getItemLLMedium(classId)"
         :ll-source="llSource"
         :is-library="isLibrary"
-        :rank="index"
         @open="handleBookOpen($event, index)"
       />
     </ul>

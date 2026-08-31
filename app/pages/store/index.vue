@@ -115,7 +115,6 @@
           :is-library="isLibraryTab"
           :tag="tagId"
           :ll-source="GRID_LL_SOURCE"
-          :rank="index"
           @open="handleBookstoreItemOpen($event, index)"
           @visible="handleBookstoreItemVisible"
         />
@@ -886,19 +885,31 @@ const GRID_LL_SOURCE = 'bookstore'
 const hasForYouFetchError = ref(false)
 
 function handleBookstoreItemOpen(classId: string, index: number) {
-  if (!isForYouFeedVisible.value) return
-  useLogRecommendBookClick({
-    nftClassId: classId,
-    isPersonalized: bookstoreStore.getIsForYouPersonalized(isLibraryTab.value),
-    llMedium: llMedium.value,
-    llSource: GRID_LL_SOURCE,
-    // The grid renders `products.items` in rank order, so the render index is
-    // the served rank.
-    rank: index,
-    feedId: bookstoreStore.getForYouFeedId(isLibraryTab.value),
-    feedServeId: loggedForYouFeedServeId.value,
-    isLibrary: isLibraryTab.value,
-  })
+  // The click sits behind the same gate as the impression: a For You click has
+  // no `*_books_view` to divide it by.
+  if (isForYouFeedVisible.value) {
+    useLogRecommendBookClick({
+      nftClassId: classId,
+      isPersonalized: bookstoreStore.getIsForYouPersonalized(isLibraryTab.value),
+      llMedium: llMedium.value,
+      llSource: GRID_LL_SOURCE,
+      // The grid renders `products.items` in rank order, so the render index is
+      // the served rank.
+      rank: index,
+      feedId: bookstoreStore.getForYouFeedId(isLibraryTab.value),
+      feedServeId: loggedForYouFeedServeId.value,
+      isLibrary: isLibraryTab.value,
+    })
+  }
+  else {
+    useLogBrowseBookClick({
+      isLibrary: isLibraryTab.value,
+      nftClassId: classId,
+      rank: index,
+      tag: tagId.value,
+      llSource: GRID_LL_SOURCE,
+    })
+  }
 }
 
 // A view is the feed rendered with its data resolved, which a call to fetch it
@@ -952,8 +963,9 @@ interface BookstoreGridImpressionContext {
 const bookstoreGridImpressions = createImpressionBuffer<BookstoreGridImpressionContext>({
   batchSize: LOGGED_IMPRESSION_COUNT,
   // Search results and each tag are separate lists, so a book seen in one is
-  // still unseen in the next.
-  getContextKey: context => `${context.isLibrary}:${context.tag}:${context.searchQuery}:${context.llMedium}`,
+  // still unseen in the next. JSON-encoded because a `:` in the reader's own
+  // search text would otherwise merge two of those lists into one key.
+  getContextKey: context => JSON.stringify([context.isLibrary, context.tag, context.searchQuery, context.llMedium]),
   onFlush: ({ nftClassIds, context, batchIndex }) => {
     useLogBrowseBooksView({
       isLibrary: context.isLibrary,
