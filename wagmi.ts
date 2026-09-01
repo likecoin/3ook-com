@@ -74,6 +74,8 @@ export function createWagmiConfig({
     chains: [chain],
     connectors,
     ssr: true,
+    // Aggregate same-tick eth_calls through multicall3 to cut RPC round trips.
+    batch: { multicall: true },
     transports: {
       [base.id]: http(customRpcUrl),
       [baseSepolia.id]: http(customRpcUrl),
