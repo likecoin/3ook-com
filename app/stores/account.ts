@@ -718,6 +718,9 @@ export const useAccountStore = defineStore('account', () => {
       // them for the next login.
       usePlusCheckoutStore().clear()
       clearCaches()
+      // The minted Stripe session and its replay payload belong to the account
+      // that left; the next login must not mount or replay them.
+      usePlusCheckoutStore().clear()
       savePlusRedirectRoute(null)
       await refreshSession()
       blockingModal.patch({ title: $t('account_logged_out') })
