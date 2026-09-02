@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 import publisherSubdomainMiddleware from '~/middleware/publisher-subdomain.global'
+import { STORE_PUBLISHER_ROOT_ROUTE_NAME } from '~~/shared/constants/store-routes'
 import {
   getLocalePathPrefixes,
   getPublisherSubdomainAction,
@@ -15,13 +16,25 @@ const { mockNavigateTo, mockHost } = vi.hoisted(() => ({
 mockNuxtImport('navigateTo', () => mockNavigateTo)
 mockNuxtImport('useRequestURL', () => () => new URL(`https://${mockHost.value}/`))
 // The real one needs an i18n-aware router; the locale suffix is all that matters here.
-mockNuxtImport('useRouteBaseNameString', () => () => (route: { name?: string }) =>
+mockNuxtImport('useRouteBaseName', () => () => (route: { name?: string }) =>
   String(route?.name ?? '').split('___')[0] ?? '')
+// The real one resolves against the router. The marker is what proves the
+// redirect went through it rather than handing navigateTo a raw route.
+mockNuxtImport('useLocaleRoute', () => () => (route: object) => ({ ...route, isLocalized: true }))
 
 const LOCALE_PREFIXES = ['/en', '']
 
-function createRoute(name: string, params: Record<string, string> = {}, fullPath = '/') {
-  return { name, params, fullPath } as unknown as Parameters<typeof publisherSubdomainMiddleware>[0]
+function createRoute(
+  name: string,
+  params: Record<string, string> = {},
+  fullPath = '/',
+  query: Record<string, string> = {},
+) {
+  return { name, params, fullPath, query } as unknown as Parameters<typeof publisherSubdomainMiddleware>[0]
+}
+
+function brandedRoot(query: Record<string, string> = {}) {
+  return [{ name: STORE_PUBLISHER_ROOT_ROUTE_NAME, query, isLocalized: true }, { replace: true }]
 }
 
 function runMiddleware(host: string, route = createRoute('store-userId___zh-Hant', { userId: 'ckxpress' })) {
@@ -78,20 +91,20 @@ describe('getPublisherSubdomainAction', () => {
     expect(getAction('/manifest.webmanifest')).toEqual({ type: 'notFound' })
   })
 
-  it('serves the storefront in both locales', () => {
-    expect(getAction('/store/@ckxpress')).toEqual({ type: 'pass' })
-    expect(getAction('/en/store/@ckxpress')).toEqual({ type: 'pass' })
+  it('serves the storefront at the localized roots', () => {
+    expect(getAction('/')).toEqual({ type: 'pass' })
+    expect(getAction('/en')).toEqual({ type: 'pass' })
   })
 
-  it('sends the localized roots into the storefront', () => {
-    expect(getAction('/')).toEqual({ type: 'self', path: '/store/@ckxpress' })
-    expect(getAction('/en')).toEqual({ type: 'self', path: '/en/store/@ckxpress' })
-    expect(getAction('/en/')).toEqual({ type: 'self', path: '/en/store/@ckxpress' })
+  it('sends the long storefront path onto the root it belongs to', () => {
+    expect(getAction('/store/@ckxpress')).toEqual({ type: 'self', path: '/' })
+    expect(getAction('/en/store/@ckxpress')).toEqual({ type: 'self', path: '/en' })
   })
 
   it('normalizes a trailing slash or upper-case handle instead of bouncing', () => {
-    expect(getAction('/store/@ckxpress/')).toEqual({ type: 'self', path: '/store/@ckxpress' })
-    expect(getAction('/store/@CKXPRESS')).toEqual({ type: 'self', path: '/store/@ckxpress' })
+    expect(getAction('/en/')).toEqual({ type: 'self', path: '/en' })
+    expect(getAction('/store/@ckxpress/')).toEqual({ type: 'self', path: '/' })
+    expect(getAction('/store/@CKXPRESS')).toEqual({ type: 'self', path: '/' })
   })
 
   it('sends every other path to the apex, the library twin included', () => {
@@ -116,9 +129,29 @@ describe('publisher-subdomain.global', () => {
     expect(mockNavigateTo).toHaveBeenNthCalledWith(2, 'https://3ook.com/store/@ckxpress', { external: true })
   })
 
-  it('stays put on the subdomain owner storefront, in either locale or casing', () => {
+  it('normalizes the owner storefront onto the branded root, in either locale or casing', () => {
     runMiddleware('ckxpress.3ook.com')
     runMiddleware('ckxpress.3ook.com', createRoute('store-userId___en', { userId: 'CKXPRESS' }))
+    expect(mockNavigateTo).toHaveBeenNthCalledWith(1, ...brandedRoot())
+    expect(mockNavigateTo).toHaveBeenNthCalledWith(2, ...brandedRoot())
+  })
+
+  it('carries the query onto the branded root', () => {
+    runMiddleware(
+      'ckxpress.3ook.com',
+      createRoute('store-userId___zh-Hant', { userId: 'ckxpress' }, '/store/@ckxpress?tag=fiction', { tag: 'fiction' }),
+    )
+    expect(mockNavigateTo).toHaveBeenCalledWith(...brandedRoot({ tag: 'fiction' }))
+  })
+
+  it('stays put on the branded root, which carries no userId to match', () => {
+    runMiddleware('ckxpress.3ook.com', createRoute('store-root___zh-Hant'))
+    runMiddleware('ckxpress.3ook.com', createRoute('store-root___en', {}, '/en'))
+    expect(mockNavigateTo).not.toHaveBeenCalled()
+  })
+
+  it('sends the branded root on the apex to the apex, not the storefront', () => {
+    runMiddleware('3ook.com', createRoute('store-root___zh-Hant'))
     expect(mockNavigateTo).not.toHaveBeenCalled()
   })
 

@@ -9,6 +9,7 @@ import { CUSTOMER_SERVICE_EMAIL } from './app/utils/business-info'
 import { SERVER_CACHE_STORAGE } from './shared/constants/server-cache'
 import {
   NFT_CLASS_ID_ROUTE_REGEX,
+  STORE_PUBLISHER_ROOT_ROUTE_NAME,
   STORE_PUBLISHER_ROUTE_PATH,
   getStorePublisherRouteName,
 } from './shared/constants/store-routes'
@@ -290,6 +291,21 @@ export default defineNuxtConfig({
         // The scanner formats dynamic params as ':nftClassId()'; tolerate both forms.
         child.path = child.path.replace(/:nftClassId(\(\))?/, `:nftClassId(${NFT_CLASS_ID_ROUTE_REGEX})`)
       }
+
+      // The branded root a publisher subdomain serves, reusing the store shell so
+      // it keeps the storefront header. On the apex the root middleware
+      // redirects away before it renders; the likerId comes from the host.
+      pages.push({
+        path: '/',
+        file: resolve('app/pages/store.vue'),
+        children: [
+          {
+            name: STORE_PUBLISHER_ROOT_ROUTE_NAME,
+            path: '',
+            file: resolve('app/pages/store/index.vue'),
+          },
+        ],
+      })
 
       pages.push({
         path: '/library',

@@ -2,12 +2,22 @@
 // or appended after the system WebView UA, so the real Chromium version survives.
 const APP_USER_AGENT_REGEX = /3ook-com-app\/[\d.]+ ?(?:\((iOS|Android) [\d.]+\))? ?(?:Build\/(\d+))?/
 
+function getAppUserAgent() {
+  return import.meta.server
+    ? useRequestHeaders(['user-agent'])['user-agent'] || ''
+    : navigator.userAgent || ''
+}
+
+// The UA half of the check, for callers that run before a route settles: reading
+// ?app=1 needs useRoute(), which in middleware is the route being left.
+export function getIsAppUserAgent() {
+  return APP_USER_AGENT_REGEX.test(getAppUserAgent())
+}
+
 export function useAppDetection() {
   const getRouteQuery = useRouteQuery()
 
-  const userAgent = import.meta.server
-    ? useRequestHeaders(['user-agent'])['user-agent'] || ''
-    : navigator.userAgent || ''
+  const userAgent = getAppUserAgent()
 
   const appUAMatches = userAgent.match(APP_USER_AGENT_REGEX)
   const appOSName = appUAMatches?.[1]
