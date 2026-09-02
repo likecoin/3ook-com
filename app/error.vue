@@ -60,6 +60,6 @@ const backButtonRoute = computed(() => {
   if (routeBaseName.value.startsWith('shelf')) {
     return localeRoute({ name: 'shelf' })
   }
-  return localeRoute({ name: 'index' })
+  return localeRoute({ name: 'store' })
 })
 </script>

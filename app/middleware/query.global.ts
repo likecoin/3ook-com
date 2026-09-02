@@ -1,5 +1,6 @@
-import type { LocationQueryRaw } from 'vue-router'
+import type { LocationQueryRaw, RouteLocationNormalized } from 'vue-router'
 
+import { STORE_PUBLISHER_ROOT_ROUTE_NAME } from '~~/shared/constants/store-routes'
 import { formatLikerIdHandle } from '~~/shared/utils/liker-id'
 
 const CARRY_ON_QUERY_KEYS = [
@@ -63,8 +64,18 @@ export default defineNuxtRouteMiddleware((to, from) => {
   // Leaving a publisher storefront makes that publisher the referrer, so a book
   // opened, shared, or bought from it attributes to them without every link
   // spelling out `?from=`. An explicit referrer still wins.
-  const publisherLikerId = getRouteParamString(from, PUBLISHER_LIKER_ID_PARAM)
-  const isEnteringPublisher = !!getRouteParamString(to, PUBLISHER_LIKER_ID_PARAM)
+
+  // The branded root names its publisher through the host, not the path.
+  const getRouteBaseName = useRouteBaseName()
+  const getPublisherLikerId = (route: RouteLocationNormalized) => {
+    const paramLikerId = getRouteParamString(route, PUBLISHER_LIKER_ID_PARAM)
+    if (paramLikerId) return paramLikerId
+    if (getRouteBaseName(route) !== STORE_PUBLISHER_ROOT_ROUTE_NAME) return ''
+    return usePublisherSubdomainLikerId()
+  }
+
+  const publisherLikerId = getPublisherLikerId(from)
+  const isEnteringPublisher = !!getPublisherLikerId(to)
   if (publisherLikerId && !isEnteringPublisher && !to.query.from && !carryQuery.from) {
     carryQuery.from = formatLikerIdHandle(publisherLikerId)
   }

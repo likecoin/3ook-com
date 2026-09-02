@@ -87,9 +87,9 @@ export type PublisherSubdomainAction =
   | { type: 'self', path: string }
   | { type: 'apex', path: string }
 
-// One page per subdomain: the storefront is served, its localized roots redirect
-// into it, and everything else belongs to the apex, which owns checkout, the
-// session, and every indexed URL.
+// One page per subdomain, served at its localized roots. Everything else belongs
+// to the apex, which owns checkout, the session, and every indexed URL — the
+// storefront canonicals back to /store/@<likerId> there.
 export function getPublisherSubdomainAction(
   pathname: string,
   likerId: string,
@@ -100,12 +100,13 @@ export function getPublisherSubdomainAction(
 
   // Lowercased so a shared /store/@CKXPRESS link normalizes instead of bouncing.
   const path = (pathname.length > 1 ? pathname.replace(/\/$/, '') : pathname).toLowerCase()
-  if (localePrefixes.some(prefix => path === getStorePublisherPath(likerId, prefix))) {
-    return path === pathname ? { type: 'pass' } : { type: 'self', path }
-  }
+  // The branded root is where this host serves the storefront,
+  // so the apex's own path for it redirects onto the root.
+  const publisherPrefix = localePrefixes.find(prefix => path === getStorePublisherPath(likerId, prefix))
+  if (publisherPrefix !== undefined) return { type: 'self', path: publisherPrefix || '/' }
 
   const rootPrefix = localePrefixes.find(prefix => path === (prefix || '/'))
-  if (rootPrefix !== undefined) return { type: 'self', path: getStorePublisherPath(likerId, rootPrefix) }
+  if (rootPrefix !== undefined) return path === pathname ? { type: 'pass' } : { type: 'self', path }
 
   return { type: 'apex', path: pathname }
 }
