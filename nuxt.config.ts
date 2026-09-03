@@ -416,7 +416,10 @@ export default defineNuxtConfig({
             // Edge copies minted before this deploy still carry `vary: Range`
             // under a week-long max-age, and would never match again.
             matchOptions: { ignoreVary: true },
-            expiration: { maxEntries: 1500, maxAgeSeconds: 60 * 60 * 24 * 7 },
+            // No `expiration`: its LRU would evict a downloaded book as soon as
+            // ordinary listening filled the entry cap, and 1500 entries is about
+            // one book. pruneTTSAudioCache keeps this cache under budget instead,
+            // dropping lookahead before it ever touches a download.
             // Never store a 206 — RangeRequestsPlugin needs a complete body to
             // slice, and a partial one would be served as if it were whole.
             cacheableResponse: { statuses: [200] },

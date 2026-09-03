@@ -684,6 +684,9 @@ export const useAccountStore = defineStore('account', () => {
       })
 
       window.localStorage.removeItem(getBookFileCacheIndexKey(config.public.cacheKeyPrefix))
+      // The pin index is the audio cache's sidecar, exactly as the line above is
+      // the book caches'. Left behind, it lists downloads whose audio just went.
+      window.localStorage.removeItem(getTTSPinIndexKey(config.public.cacheKeyPrefix))
 
       // Must use the same cacheKeyPrefix-scoped key the values are written under
       // (getTTSConfigCacheKey); the unprefixed key would clear nothing.
