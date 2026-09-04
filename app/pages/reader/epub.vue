@@ -1074,7 +1074,10 @@ async function handleDisplayFailure(error: unknown, target: string | undefined, 
   isTargetMissing = false,
   attempt,
 }: { isSilentError: boolean, isTargetMissing?: boolean, attempt: number }) {
-  console.error(`Error occurred when displaying${target ? ` ${target}` : ''} in rendition of ${nftClassId.value}`, error)
+  // A silent failure means the caller has a fallback, so warn: Sentry and
+  // PostHog both promote console.error into an exception, and a recovered
+  // rung would report as a user-facing break.
+  console[isSilentError ? 'warn' : 'error'](`Error occurred when displaying${target ? ` ${target}` : ''} in rendition of ${nftClassId.value}`, error)
   // A fallback display recovers most of these, so keep them measurable.
   useLogEvent('reader_epub_display_failed', {
     nft_class_id: nftClassId.value,
@@ -1755,24 +1758,31 @@ async function setActiveNavItem(item: NavItem, { isSilentError = false } = {}) {
   // Explicit TOC navigation isn't a footnote jump; drop any pending return.
   dismissFootnoteReturn()
 
-  let hasDisplayed = await displayRendition(item.href, { isSilentError: true })
-  if (hasDisplayed) return true
-
-  // Try replacing nav item's href with spine's href if section cannot be found
+  // The nav item's href and the spine's can name one file by different paths.
   const anchor = item.href.split('#')[1]
   const filename = getHrefBaseFilename(item.href)
-  if (filename) {
-    let spineHref = sectionHrefByFilename.value[filename]
-    if (spineHref) {
-      if (anchor) {
-        spineHref = `${spineHref}#${anchor}`
-      }
-      // Preview mode handles the failure below with its own CTA, so stay silent
-      // here to avoid stacking an error modal in front of it.
-      hasDisplayed = await displayRendition(spineHref, { isSilentError: isSilentError || isPreviewMode.value })
-      if (hasDisplayed) {
-        return true
-      }
+  let spineHref = filename ? sectionHrefByFilename.value[filename] : undefined
+  if (spineHref && anchor) {
+    spineHref = `${spineHref}#${anchor}`
+  }
+
+  // epub.js fails the whole display on a target the spine can't resolve, so
+  // start from the spine's own href when the nav one misses: the jump then
+  // lands on the first attempt instead of recovering from a logged failure.
+  const isNavHrefInSpine = isEPUBTargetInSpine(rendition.value?.book?.spine, item.href)
+  const primaryHref = isNavHrefInSpine || !spineHref ? item.href : spineHref
+
+  let hasDisplayed = await displayRendition(primaryHref, { isSilentError: true, attempt: 0 })
+  if (hasDisplayed) return true
+
+  // Skipped when the spine href already went first: retrying it would only
+  // repeat the same failure.
+  if (spineHref && spineHref !== primaryHref) {
+    // Preview mode handles the failure below with its own CTA, so stay silent
+    // here to avoid stacking an error modal in front of it.
+    hasDisplayed = await displayRendition(spineHref, { isSilentError: isSilentError || isPreviewMode.value, attempt: 1 })
+    if (hasDisplayed) {
+      return true
     }
   }
   // Nothing was rendered, so stop showing the page spinner before handing the
