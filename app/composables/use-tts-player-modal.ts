@@ -66,6 +66,10 @@ export function useTTSPlayerModal(options: TTSPlayerOptions) {
     modal = null
   }
 
+  function closePlayer() {
+    modal.close()
+  }
+
   // `overlay.create` snapshots props once, but the reader confirms
   // `isLibraryBook` asynchronously — sync it so an open player doesn't tag TTS
   // analytics with the stale initial value. Harmless when the modal is closed.
