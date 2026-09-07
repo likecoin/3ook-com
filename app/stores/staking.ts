@@ -23,6 +23,11 @@ interface NFTClassTotalStake {
   isFetching: boolean
 }
 
+// The collective indexer rejects `pagination.limit` above 100, so the shelf has
+// to walk the cursor. The page cap only guards against a cursor that never ends.
+const STAKINGS_PAGE_LIMIT = 100
+const STAKINGS_MAX_PAGES = 50
+
 export const useStakingStore = defineStore('staking', () => {
   const { likeCoinTokenDecimals } = useRuntimeConfig().public
   const { loggedIn: hasLoggedIn } = useUserSession()
@@ -86,34 +91,46 @@ export const useStakingStore = defineStore('staking', () => {
 
       // Get books user has staked on from collective indexer
       try {
-        const stakingsResponse = await fetchCollectiveAccountStakings(walletAddress, {
-          'pagination.limit': 100,
-        })
-
         const stakingData = new Map<string, StakingItem>()
+        let paginationKey: number | undefined
 
-        for (const staking of stakingsResponse.data) {
-          const nftClassId = normalizeNFTClassId(staking.book_nft)
+        for (let page = 0; page < STAKINGS_MAX_PAGES; page += 1) {
+          const stakingsResponse = await fetchCollectiveAccountStakings(walletAddress, {
+            'pagination.limit': STAKINGS_PAGE_LIMIT,
+            'pagination.key': paginationKey,
+          })
 
-          if (stakingData.has(nftClassId)) {
-            continue
+          for (const staking of stakingsResponse.data) {
+            const nftClassId = normalizeNFTClassId(staking.book_nft)
+
+            if (stakingData.has(nftClassId)) {
+              continue
+            }
+
+            // Use data from indexer
+            const stakedAmount = BigInt(staking.staked_amount)
+            const pendingRewards = BigInt(staking.pending_reward_amount)
+
+            // Only add if there's still an active stake or pending rewards
+            if (stakedAmount > 0n || pendingRewards > 0n) {
+              stakingData.set(nftClassId, {
+                nftClassId,
+                stakedAmount,
+                pendingRewards,
+                isOwned: false, // This will be updated in UI layer for owned books
+              })
+            }
           }
 
-          // Use data from indexer
-          const stakedAmount = BigInt(staking.staked_amount)
-          const pendingRewards = BigInt(staking.pending_reward_amount)
-
-          // Only add if there's still an active stake or pending rewards
-          if (stakedAmount > 0n || pendingRewards > 0n) {
-            stakingData.set(nftClassId, {
-              nftClassId,
-              stakedAmount,
-              pendingRewards,
-              isOwned: false, // This will be updated in UI layer for owned books
-            })
-          }
+          paginationKey = getIndexerNextKey(stakingsResponse, STAKINGS_PAGE_LIMIT)
+          if (!paginationKey) break
         }
 
+        if (paginationKey) {
+          console.warn(`Stopped paging staking positions after ${STAKINGS_MAX_PAGES} pages:`, walletAddress)
+        }
+
+        // Assigned only after the last page, so a mid-loop failure commits nothing.
         // Sorted by staked amount descending
         stakingDataByWalletMap.value[walletAddress].items = Array.from(stakingData.values())
           .sort((a, b) => Number(b.stakedAmount - a.stakedAmount))
