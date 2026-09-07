@@ -32,6 +32,15 @@ interface RecordPacedReadingUsageInput {
 }
 
 /**
+ * Reader's country, off the browser's own request. Deliberately without
+ * useDetectedGeolocation's browser-locale fallback: that reads a language preference as a
+ * location, which is fine for a UI placeholder and wrong for a usage statistic.
+ */
+function getRequestIPCountry(event: H3Event): string | undefined {
+  return getRequestHeader(event, 'cf-ipcountry')?.toUpperCase() || undefined
+}
+
+/**
  * Single sink for paced reading/TTS usage, called from both the heartbeat and the
  * session handlers so the two never drift in cadence: it forwards the paced delta to
  * the rev-share ledger and publishes the 3ook_ReadingSession analytics event.
@@ -96,5 +105,6 @@ export async function recordPacedReadingUsage(input: RecordPacedReadingUsageInpu
     classId: nftClassId,
     readingTimeMs: paced.activeReadingTimeMsDelta,
     ttsTimeMs: paced.ttsActiveTimeMsDelta,
+    ipCountry: getRequestIPCountry(event),
   })
 }

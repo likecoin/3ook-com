@@ -8,6 +8,9 @@ interface ReadingUsageInput {
   classId: string
   readingTimeMs: number
   ttsTimeMs: number
+  // Reader's country, for the ledger's per-region usage totals. Omitted when the
+  // request carried no country header — an unattributed read, not a guessed one.
+  ipCountry?: string
 }
 
 /**
@@ -26,7 +29,7 @@ interface ReadingUsageInput {
  * stay paired with the API-side dedup (deploy the API before this).
  */
 export async function forwardReadingUsage(input: ReadingUsageInput): Promise<void> {
-  const { readerWallet, classId } = input
+  const { readerWallet, classId, ipCountry } = input
   // Rev-share funds only borrowed (Plus-library) reads by paid (non-trial) Plus; the
   // rest is non-library engagement, reported to publishers but never funding the pool.
   const isRevShareEligible = input.isPaidPlus && input.isBorrowed
@@ -54,6 +57,7 @@ export async function forwardReadingUsage(input: ReadingUsageInput): Promise<voi
         ttsTimeMs,
         nonLibraryReadingTimeMs,
         nonLibraryTtsTimeMs,
+        ipCountry,
       },
       // Opt this POST into retry (the wrapper leaves payload methods at 0 by default);
       // safe now that the API dedups on `id`. Must equal API_MAX_RETRIES — the backoff
