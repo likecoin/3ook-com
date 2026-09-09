@@ -123,7 +123,7 @@
             :model-value="tagId"
             :items="allTagItems"
             :aria-label="$t('store_tag_more_categories_label')"
-            :is-loading="!hasFetchedCMSTags && isDefaultTagId"
+            :is-loading="!hasFetchedCMSTags"
             class="grow min-w-0"
             @click="(item) => handleTagClick(item.value)"
           />
