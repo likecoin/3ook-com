@@ -73,7 +73,7 @@
           'justify-center',
           'items-center',
           'inset-0',
-          'bg-theme-black/10 dark:bg-theme-white/10',
+          'bg-skeleton',
           'pointer-events-none',
           isShowPlaceholder ? 'opacity-100' : 'opacity-0',
           { 'animate-pulse': !hasLoaded },

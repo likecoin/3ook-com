@@ -64,6 +64,10 @@ body {
   @apply w-full max-w-[1440px] mx-auto px-4 laptop:px-12;
 }
 
+@utility bg-skeleton {
+  @apply bg-theme-black/10 dark:bg-theme-white/10;
+}
+
 @layer utilities {
   .bottom-safe {
     bottom: env(safe-area-inset-bottom);
