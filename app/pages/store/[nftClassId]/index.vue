@@ -419,27 +419,11 @@
             </section>
           </div>
 
-          <ul class="flex justify-center items-center gap-2">
-            <li
-              v-for="button in socialButtons"
-              :key="button.icon"
-            >
-              <UTooltip
-                :delay-duration="0"
-                :text="button.label"
-              >
-                <UButton
-                  color="neutral"
-                  variant="outline"
-                  size="xs"
-                  :icon="button.icon"
-                  :aria-label="button.label"
-                  :ui="{ base: 'p-2 rounded-full' }"
-                  @click="handleSocialButtonClick(button.key)"
-                />
-              </UTooltip>
-            </li>
-          </ul>
+          <SocialShareButtons
+            class="justify-center"
+            :buttons="socialButtons"
+            @select="handleSocialButtonClick"
+          />
 
           <p
             v-if="!isLibrary && selectedPricingItem && !isSelectedPricingItemFree"
