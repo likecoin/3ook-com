@@ -731,6 +731,13 @@ const writingMode = computed(() => {
 const shouldEnforceWritingMode = computed(() =>
   hasSavedWritingMode.value || originalWritingMode.value === EPUB_WRITING_MODES.vertical,
 )
+
+const isFixedLayoutBook = computed(() => {
+  const book = rendition.value?.book ?? loadedBook.value
+  return book?.packaging?.metadata?.layout === 'pre-paginated'
+    || book?.displayOptions?.fixedLayout === 'true'
+})
+
 // The book's own `page-progression-direction`, from metadata. A vertical book's
 // implicit RTL must be told apart from a genuine horizontal-RTL script (Arabic,
 // Hebrew) so forcing horizontal layout doesn't wrongly keep RTL turns.
@@ -832,20 +839,13 @@ function applyTheme() {
   const anchorCSS: Record<string, string> = {
     color: isDarkMode ? '#9ecfff !important' : '#0066cc',
   }
-  // Assets only become blob URLs once epub-ts unzips them, so an unconstrained
-  // illustration paints at its intrinsic size. Cap it to the column and tint the
-  // pending/failed states so neither reads as a rendering fault.
+  // Assets only become blob URLs once epub-ts unzips them,
+  // so tint the pending and failed states to read as intentional.
   const placeholderCSS = isDarkMode ? 'rgba(249, 249, 249, 0.08)' : 'rgba(51, 51, 51, 0.06)'
-  const imageCSS: Record<string, string> = {
-    'max-width': '100% !important',
-    'max-height': '90vh !important',
-    'height': 'auto !important',
-  }
   const themeRules: Record<string, Record<string, string>> = {
     'body': bodyCSS,
     'p, div, span, h1, h2, h3, h4, h5, h6, li': textCSS,
     'a': anchorCSS,
-    'img, svg': imageCSS,
     [`img[data-load-state="${IMAGE_LOAD_STATE.loading}"]`]: {
       'background-color': placeholderCSS,
     },
@@ -856,6 +856,16 @@ function applyTheme() {
       'min-width': '2rem',
       'border-radius': '4px',
     },
+  }
+  // Cap oversized illustrations to the page.
+  // Reflowable only: a fixed-layout page scales its own box to fit the frame,
+  // so a `vh` cap measures the frame instead and letterboxes the page.
+  if (!isFixedLayoutBook.value) {
+    themeRules['img, svg'] = {
+      'max-width': '100% !important',
+      'max-height': '90vh !important',
+      'height': 'auto !important',
+    }
   }
   // Only layer a writing-mode rule on top of the book's own CSS when enforcing;
   // otherwise it changes the initial column layout calc and can skew
