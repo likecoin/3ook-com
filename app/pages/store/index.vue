@@ -52,6 +52,73 @@
 
     <main class="section-container flex flex-col items-center grow pt-6 pb-16">
       <section
+        v-if="isLibraryChartTag"
+        class="w-full mb-6 self-start text-left"
+      >
+        <div class="flex flex-wrap max-phone:flex-col justify-between items-end max-phone:items-center gap-3">
+          <div>
+            <h1 class="text-5xl laptop:text-6xl max-phone:text-center font-bold leading-none tracking-tight">
+              <span
+                aria-hidden="true"
+                class="text-highlighted"
+                v-text="'TOP'"
+              />
+              <span
+                aria-hidden="true"
+                class="text-theme-cyan"
+                v-text="LIBRARY_CHART_SIZE"
+              />
+              <span
+                class="sr-only"
+                v-text="tagName"
+              />
+            </h1>
+            <p class="flex items-center gap-2 mt-2 text-toned font-medium">
+              <AppLogo
+                role="img"
+                aria-label="3ook.com"
+                :is-icon="false"
+                :is-padded="false"
+                :height="14"
+              />
+              <i18n-t
+                keypath="library_chart_caption"
+                tag="span"
+                class="flex items-center gap-0.5 leading-none"
+              >
+                <template #libraryGraphic>
+                  <component
+                    :is="libraryLabelGraphic"
+                    v-if="libraryLabelGraphic"
+                    role="img"
+                    aria-label="圖書館"
+                    class="inline-block align-[-0.1em]"
+                    style="width: auto; height: 1em; margin: 0;"
+                  />
+                </template>
+              </i18n-t>
+            </p>
+          </div>
+          <span
+            class="shrink-0 px-3 py-1.5 rounded-full bg-theme-cyan/15 text-theme-cyan text-xs laptop:text-sm font-medium"
+            v-text="$t('library_chart_card_subtitle', { month: chartMonthLabel })"
+          />
+        </div>
+
+        <div
+          v-if="chartDescription"
+          class="mt-3"
+        >
+          <ExpandableContent>
+            <p
+              class="text-muted whitespace-pre-line"
+              v-text="chartDescription"
+            />
+          </ExpandableContent>
+        </div>
+      </section>
+
+      <section
         v-if="entity && entityDescription"
         class="w-full mb-8 self-start text-left"
       >
@@ -67,7 +134,8 @@
         </ExpandableContent>
       </section>
 
-      <BookstoreGridSkeleton v-if="storeListStatus === 'loading'" />
+      <BookstoreChartSkeleton v-if="storeListStatus === 'loading' && isLibraryChartTag" />
+      <BookstoreGridSkeleton v-else-if="storeListStatus === 'loading'" />
 
       <StoreListStatus
         v-else-if="visibleListStatus"
@@ -88,8 +156,32 @@
         v-text="$t('store_affiliate_books_label')"
       />
 
+      <ol
+        v-if="isLibraryChartTag && itemsCount > 0"
+        :class="LIBRARY_CHART_LIST_CLASS"
+      >
+        <BookstoreItem
+          v-for="(item, index) in chartItems"
+          :id="item.classId"
+          :key="`${tagId}-${item.classId}`"
+          variant="chart"
+          :rank="index + 1"
+          :nft-class-id="item.classId"
+          :book-name="item.title"
+          :book-cover-src="item.imageUrl"
+          :lazy="index >= CHART_EAGER_ITEM_COUNT"
+          :priority="index < CHART_EAGER_ITEM_COUNT"
+          :ll-medium="itemLLMedium"
+          :is-library="isLibraryTab"
+          :tag="tagId"
+          :ll-source="GRID_LL_SOURCE"
+          @open="handleBookstoreItemOpen($event, index)"
+          @visible="handleBookstoreItemVisible"
+        />
+      </ol>
+
       <ul
-        v-if="itemsCount > 0"
+        v-else-if="itemsCount > 0"
         :class="[
           ...gridClasses,
 
@@ -119,6 +211,17 @@
           @visible="handleBookstoreItemVisible"
         />
       </ul>
+
+      <footer
+        v-if="isLibraryChartTag && itemsCount > 0"
+        class="flex items-center gap-2 mt-8"
+      >
+        <SocialShareButtons
+          :buttons="chartShareButtons"
+          @select="handleChartShareClick"
+        />
+      </footer>
+
       <div
         v-if="hasMoreItems && itemsCount > 0"
         ref="infiniteScrollDetector"
@@ -148,9 +251,20 @@ import { FetchError } from 'ofetch'
 import { LOGGED_IMPRESSION_COUNT, isBookstoreBuiltInListType } from '~~/shared/utils/bookstore'
 import { getStorePublisherRouteName } from '~~/shared/constants/store-routes'
 import { formatLikerIdHandle } from '~~/shared/utils/liker-id'
+import { getStoreTagIdFromRoute } from '~/composables/use-store-tags'
+import { getIsLibraryChartTagId } from '~/utils/library-chart'
+
+// Per-tag, so not a static `colorMode`: this page also serves /store.
+definePageMeta({
+  middleware: [
+    (to) => {
+      if (getIsLibraryChartTagId(getStoreTagIdFromRoute(to))) to.meta.colorMode = 'dark'
+    },
+  ],
+})
 
 const nuxtApp = useNuxtApp()
-const { t: $t } = useI18n()
+const { t: $t, locale } = useI18n()
 const localeRoute = useLocaleRoute()
 const route = useRoute()
 const getRouteBaseNameString = useRouteBaseNameString()
@@ -265,7 +379,9 @@ const isStoreIntroBannerVisible = computed(() =>
   && !getStoreTagIdFromRoute(route),
 )
 
-const isLibraryIntroBannerVisible = computed(() => isLibraryTab.value && !isSearchMode.value && !entity.value)
+// The chart is its own landing page with its own heading,
+// so the library's standing intro banner would just push it below the fold.
+const isLibraryIntroBannerVisible = computed(() => isLibraryTab.value && !isSearchMode.value && !entity.value && !isLibraryChartTag.value)
 
 const {
   STAKING_TAG_DEFAULT,
@@ -280,6 +396,50 @@ const {
   mapTagIdToAPIStakingSortValue,
   tagName,
 } = useStoreTags({ routeName: listingRouteName, isLibraryTab })
+
+// The monthly chart is an ordinary CMS tag,
+// whose Airtable book order is the rank — the layout switch is all the id buys.
+const isLibraryChartTag = computed(() => isLibraryTab.value && getIsLibraryChartTagId(tagId.value))
+// The header shows the editor's copy verbatim;
+// `tagDescription` falls back to boilerplate
+// that reads fine in meta and badly on the page.
+const chartDescription = computed(() => activeCMSTag.value?.description[normalizedLocale.value] || '')
+
+const chartMonthLabel = computed(() => formatLibraryChartMonthLabel(tagId.value, locale.value))
+
+// The tab bar's drawn label, reused so the two spell 圖書館 the same way.
+const { getLabelGraphic } = useGraphicLabel()
+const libraryLabelGraphic = computed(() => getLabelGraphic('library'))
+
+// The podium: on a phone that is roughly what sits above the fold,
+// and on a tablet up it is the row that leads the page.
+// The rest wait for the impression observer like any grid item.
+const CHART_EAGER_ITEM_COUNT = LIBRARY_CHART_PODIUM_SIZE
+
+const {
+  socialButtons: chartShareButtons,
+  handleSocialButtonClick: handleChartShareClick,
+} = useSocialShare({
+  getShareURL: (utmSource) => {
+    const url = new URL(canonicalURL.value)
+    url.searchParams.set('utm_source', utmSource)
+    url.searchParams.set('utm_medium', 'social')
+    // One campaign per month, so a share of August's chart is countable
+    // apart from September's, not pooled under a single evergreen name.
+    const month = getLibraryChartMonthFromTagId(tagId.value)
+    url.searchParams.set('utm_campaign', month ? `library_chart_${month}` : 'library_chart')
+    return url.toString()
+  },
+  shareText: computed(() => $t('library_chart_share_text', { title: tagName.value })),
+  logEventItemId: tagId,
+})
+
+// The gradient lives on <body> so it sits behind the header too,
+// not just the page content.
+// See the `body.library-chart` rule in this file's <style> block.
+useHead(() => ({
+  bodyAttrs: { class: isLibraryChartTag.value ? 'library-chart' : '' },
+}))
 
 // Shared deep-link classification: the built-in guard list,
 // the CMS tag fetch (which also fills the cache so tag meta can server-render),
@@ -597,6 +757,7 @@ const products = computed<BookstoreItemList>(() => {
 })
 
 const itemsCount = computed(() => products.value.items.length)
+const chartItems = computed(() => products.value.items.slice(0, LIBRARY_CHART_SIZE))
 // In library mode the staking gate hides candidates until their Plus flags are
 // revalidated, so keep the skeleton up while that's in flight to avoid an
 // empty-state flash on cold load. A never-fetched listing counts too: a switched-to
@@ -1315,3 +1476,20 @@ function handleContactUsClick() {
   intercom.showNewMessage(prefilledMessage)
 }
 </script>
+
+<!--
+  Unscoped on purpose: the target is <body>, which useHead marks `library-chart`,
+  so the rule lives beside the code that sets it, not in the global stylesheet.
+  Pinned to the top, so a long chart doesn't smear the wash down the page.
+-->
+<style>
+body.library-chart {
+  background-image: linear-gradient(
+    to bottom,
+    color-mix(in oklab, var(--color-theme-cyan) 18%, transparent),
+    transparent
+  );
+  background-repeat: no-repeat;
+  background-size: 100% 30rem;
+}
+</style>

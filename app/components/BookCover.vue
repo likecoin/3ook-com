@@ -34,7 +34,7 @@
           'w-full',
           'h-full',
           'object-cover',
-          borderRadiusClass,
+          props.roundedClass,
           hasLoaded ? 'opacity-20' : 'opacity-0',
           'brightness-50',
           'blur-xl',
@@ -96,7 +96,7 @@
           'absolute',
           'inset-0',
           'pointer-events-none',
-          borderRadiusClass,
+          props.roundedClass,
           ...(isClickable ? [...coverTransitionClass, ...coverHoverScaleClass] : []),
         ]"
       >
@@ -140,6 +140,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  roundedClass: {
+    type: String,
+    default: 'rounded-lg',
+  },
 })
 const emit = defineEmits(['click'])
 
@@ -147,8 +151,6 @@ const hasLoaded = ref(false)
 const hasError = ref(false)
 
 const imgElement = useTemplateRef<HTMLImageElement>('imgElement')
-
-const borderRadiusClass = 'rounded-lg'
 
 const isClickable = computed(() => !!props.to || !!getCurrentInstance()?.vnode.props?.onClick)
 
@@ -182,7 +184,7 @@ const coverClass = computed(() => {
     'border-l',
     'border-t',
     'border-muted',
-    borderRadiusClass,
+    props.roundedClass,
     ...coverTransitionClass,
     { 'shadow-[0_2px_4px_0_rgba(0,0,0,0.10)]': props.hasShadow },
   ]
