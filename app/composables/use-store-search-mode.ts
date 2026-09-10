@@ -20,7 +20,11 @@ export async function useStoreSearchMode() {
   const queryAffiliate = computed(() => normalizeLikerId(getRouteQuery('affiliate', '')))
   // `/store/@<likerId>`: the `@` is literal in the route path, so the param
   // arrives bare — normalize anyway for a hand-typed `/store/@@id`.
-  const routeUserId = computed(() => normalizeLikerId(getRouteParam('userId', '')))
+  const paramUserId = computed(() => normalizeLikerId(getRouteParam('userId', '')))
+  // A publisher subdomain serves the same storefront at its root, where the host
+  // names the publisher and the path carries no param.
+  const subdomainLikerId = usePublisherSubdomainLikerId()
+  const routeUserId = computed(() => paramUserId.value || subdomainLikerId)
 
   // The publisher route and `?affiliate=` name the same profile, so one lookup
   // serves both; the route form is the canonical URL for that profile.
@@ -248,7 +252,10 @@ export async function useStoreSearchMode() {
   // The Liker ID whose /store/@<id> page this listing should canonicalize to.
   // Empty on the route form (already canonical) and when nothing resolves.
   const canonicalProfileLikerId = computed(() => {
-    if (routeUserId.value) return ''
+    // Not routeUserId: that is truthy on the branded root too, and the root is a
+    // second address for the storefront rather than the canonical one.
+    if (paramUserId.value) return ''
+    if (subdomainLikerId) return isProfileNotFound.value ? '' : subdomainLikerId
     if (queryAffiliate.value) return isProfileNotFound.value ? '' : queryAffiliate.value
     if (queryOwnerWallet.value) return profileLookup.value?.resolvedLikerId || ownerWalletInfo.value?.likerId || ''
     return ''

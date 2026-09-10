@@ -13,5 +13,11 @@ export function getStorePublisherRouteName(listingRouteName: StoreListingRouteNa
   return `${listingRouteName}-userId`
 }
 
-export const STORE_PUBLISHER_ROUTE_NAMES
-  = STORE_LISTING_ROUTE_NAMES.map(getStorePublisherRouteName)
+// The store storefront once more, served at the root of a publisher subdomain,
+// where the likerId comes from the host instead of the path.
+export const STORE_PUBLISHER_ROOT_ROUTE_NAME = 'store-root'
+
+export const STORE_PUBLISHER_ROUTE_NAMES: string[] = [
+  ...STORE_LISTING_ROUTE_NAMES.map(getStorePublisherRouteName),
+  STORE_PUBLISHER_ROOT_ROUTE_NAME,
+]
