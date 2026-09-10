@@ -438,3 +438,21 @@ export function getClampedCanvasPixelRatio(
 
   return Math.min(ratio, areaRatio, widthRatio, heightRatio)
 }
+
+/**
+ * Whether a pointer event on a rendered highlight is a tap to edit the annotation,
+ * rather than part of selecting the text under it.
+ * epub-ts re-dispatches both a long-press start and a drag-ending click to the highlight.
+ */
+export function checkIsAnnotationEditGesture({
+  eventType,
+  isSelectingText,
+}: {
+  eventType: string
+  isSelectingText: boolean
+}): boolean {
+  // A long press begins with touchstart and only becomes a selection later,
+  // so nothing tells the two apart yet; a tap still arrives as the click that follows.
+  if (eventType === 'touchstart') return false
+  return !isSelectingText
+}
