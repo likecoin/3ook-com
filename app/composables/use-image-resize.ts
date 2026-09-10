@@ -3,12 +3,10 @@ export function useImageResize() {
   const { normalizeURIToHTTP } = useURIParser()
 
   function getResizedImageURL(imageURL: string, { size }: { size?: number } = {}) {
-    if (!imageURL) return ''
-
-    const params = new URLSearchParams()
-    params.set('url', imageURL)
-    if (size) params.set('width', size.toString())
-    return `${config.public.likeCoinStaticEndpoint}/thumbnail/?${params.toString()}`
+    return getThumbnailURL(imageURL, {
+      likeCoinStaticEndpoint: config.public.likeCoinStaticEndpoint,
+      size,
+    })
   }
 
   function getResizedNormalizedImageURL(imageURL: string, { size }: { size?: number } = {}) {
