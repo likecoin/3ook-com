@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { clampPDFPageNumber, findOfflineBookCopy, getBookFileCacheKey, getClampedCanvasPixelRatio, isEPUBTargetInSpine, isLikelyGarbledPDFText, isPDFCorpusUnreadable, isValidPDFPageNumber } from '~/utils/reader'
+import { checkIsAnnotationEditGesture, clampPDFPageNumber, findOfflineBookCopy, getBookFileCacheKey, getClampedCanvasPixelRatio, isEPUBTargetInSpine, isLikelyGarbledPDFText, isPDFCorpusUnreadable, isValidPDFPageNumber } from '~/utils/reader'
 // ?raw, not node:fs: the nuxt test environment stubs fs via unenv.
 import epubPageSource from '~~/app/pages/reader/epub.vue?raw'
 
@@ -237,5 +237,23 @@ describe('getClampedCanvasPixelRatio', () => {
   it('falls back to a sane ratio for degenerate input', () => {
     expect(getClampedCanvasPixelRatio(0, 792, 2)).toBe(2)
     expect(getClampedCanvasPixelRatio(612, 792, Number.NaN)).toBe(1)
+  })
+})
+
+describe('checkIsAnnotationEditGesture', () => {
+  it('opens the annotation on a tap or click with nothing selected', () => {
+    expect(checkIsAnnotationEditGesture({ eventType: 'click', isSelectingText: false })).toBe(true)
+  })
+
+  // A long-press start is proxied to the highlight before any selection exists,
+  // so touchstart can never be the edit gesture.
+  it('ignores the touchstart that may still turn into a selection', () => {
+    expect(checkIsAnnotationEditGesture({ eventType: 'touchstart', isSelectingText: false })).toBe(false)
+  })
+
+  // Re-selecting highlighted text to copy it ends with a click inside the highlight;
+  // the edit modal would bury the selection menu that owns copy.
+  it('ignores the click that ends a drag selection', () => {
+    expect(checkIsAnnotationEditGesture({ eventType: 'click', isSelectingText: true })).toBe(false)
   })
 })

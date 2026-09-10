@@ -2182,6 +2182,13 @@ function addAnnotationHighlight(annotation: Annotation) {
       cfi,
       { id: annotation.id },
       (e: Event) => {
+        // Opening the edit modal over a selection buries the selection menu,
+        // which is the only way left to copy text sitting under a highlight.
+        if (!checkIsAnnotationEditGesture({
+          eventType: e.type,
+          isSelectingText: checkIsSelectingText(),
+        })) return
+
         e.stopPropagation()
         e.preventDefault()
         isAnnotationClickInProgress.value = true
