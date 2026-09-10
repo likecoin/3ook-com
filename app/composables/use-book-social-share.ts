@@ -24,16 +24,7 @@ export function useBookSocialShare(options: BookSocialShareOptions) {
 
   const config = useRuntimeConfig()
   const { t: $t } = useI18n()
-  const toast = useToast()
   const { user } = useUserSession()
-
-  const socialButtons = computed(() => [
-    { key: 'copy-links', label: $t('share_button_hint_copy_link'), icon: 'i-material-symbols-link-rounded' },
-    { key: 'threads', label: $t('share_button_hint_threads'), icon: 'i-simple-icons-threads' },
-    { key: 'facebook', label: $t('share_button_hint_facebook'), icon: 'i-simple-icons-facebook' },
-    { key: 'whatsapp', label: $t('share_button_hint_whatsapp'), icon: 'i-simple-icons-whatsapp' },
-    { key: 'x', label: $t('share_button_hint_x'), icon: 'i-simple-icons-x' },
-  ])
 
   function getShortLink(utmSource: string) {
     // The logged-in sharer takes the affiliate credit over the original `?from=@likerId`
@@ -68,74 +59,13 @@ export function useBookSocialShare(options: BookSocialShareOptions) {
     return url.toString()
   }
 
-  async function handleSocialButtonClick(key: string) {
-    const shareText = authorName.value
-      ? $t('product_page_share_text_with_author', { title: bookName.value, author: authorName.value })
-      : $t('product_page_share_text', { title: bookName.value })
+  const shareText = computed(() => (authorName.value
+    ? $t('product_page_share_text_with_author', { title: bookName.value, author: authorName.value })
+    : $t('product_page_share_text', { title: bookName.value })))
 
-    useLogEvent('share', {
-      method: key,
-      item_id: `${nftClassId.value}-${selectedPricingItemIndex.value}`,
-    })
-
-    switch (key) {
-      case 'copy-links':
-        {
-          const isCopied = await copyTextToClipboard(getShareURL('copy-link'))
-          toast.add({
-            title: $t(isCopied ? 'copy_link_success' : 'copy_link_failed'),
-            duration: 3000,
-            icon: isCopied ? 'i-material-symbols-link-rounded' : 'i-material-symbols-error-circle-rounded',
-            color: isCopied ? 'success' : 'error',
-          })
-        }
-        break
-      case 'threads':
-        {
-          const shareUrl = getShareURL('threads')
-          window.open(
-            `https://threads.net/intent/post?text=${encodeURIComponent(`${shareText} ${shareUrl}`)}`,
-            '_blank',
-            'noopener,noreferrer',
-          )
-        }
-        break
-      case 'facebook':
-        {
-          const shareUrl = getShareURL('facebook')
-          window.open(
-            `https://m.facebook.com/sharer/sharer.php?display=page&u=${encodeURIComponent(shareUrl)}`,
-            '_blank',
-            'noopener,noreferrer',
-          )
-        }
-        break
-      case 'whatsapp':
-        {
-          const shareUrl = getShareURL('whatsapp')
-          window.open(
-            `https://wa.me/?text=${encodeURIComponent(`${shareText} ${shareUrl}`)}`,
-            '_blank',
-            'noopener,noreferrer',
-          )
-        }
-        break
-      case 'x':
-        {
-          const shareUrl = getShareURL('x')
-          window.open(
-            `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`,
-            '_blank',
-            'noopener,noreferrer',
-          )
-        }
-        break
-      default:
-    }
-  }
-
-  return {
-    socialButtons,
-    handleSocialButtonClick,
-  }
+  return useSocialShare({
+    getShareURL,
+    shareText,
+    logEventItemId: computed(() => `${nftClassId.value}-${selectedPricingItemIndex.value}`),
+  })
 }

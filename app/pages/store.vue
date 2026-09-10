@@ -5,143 +5,148 @@
       :class="[
         ...(isListingRoute ? ['sticky', 'top-0'] : []),
         'z-1',
-
-        ...(isSearchHeaderVisible ? [] : gridClasses),
-        'gap-4',
-
-        'section-container',
-        'py-4',
+        'w-full',
 
         'bg-linear-to-b from-(--app-bg)/90 to-(--app-bg)/0',
       ]"
     >
-      <!-- Search mode header -->
       <div
-        v-if="isSearchHeaderVisible"
-        class="flex items-center gap-1 phone:gap-2 w-full"
-      >
-        <PillButton
-          :to="defaultListingRoute"
-          icon="i-material-symbols-close-rounded"
-        />
+        :class="[
+          ...(isSearchHeaderVisible ? [] : gridClasses),
+          'gap-4',
 
-        <!--
-        One chip for every publisher identity: the /store/@<id> route, ?affiliate=
-        and ?owner_wallet= all resolve to the same shape in useStoreSearchMode.
-        -->
+          'section-container',
+          'py-4',
+        ]"
+      >
+        <!-- Search mode header -->
         <div
-          v-if="storeEntity"
-          class="flex items-center min-w-0 ring-inset ring-2 ring-theme-black dark:ring-muted bg-(--app-bg) rounded-full"
-        >
-          <UAvatar
-            :src="storeEntity.avatarSrc"
-            :alt="storeEntity.displayName"
-            icon="i-material-symbols-person-2-rounded"
-            :ui="{ root: 'size-8 tablet:size-9 border border-2 border-theme-black dark:border-muted' }"
-          />
-          <div class="flex flex-col justify-center min-w-0 pt-0.5 pl-2 pr-4">
-            <span
-              class="text-[0.625rem] tablet:text-xs text-muted uppercase tracking-wide leading-none"
-              v-text="storeEntity.titlePrefix"
-            />
-            <h1
-              class="-mt-1 font-bold text-sm tablet:text-default truncate"
-              v-text="storeEntity.displayName"
-            />
-          </div>
-        </div>
-        <h1 v-else-if="searchModeContext">
-          <PillButton
-            is-active
-            is-static
-            :label="`${searchModeContext.titlePrefix}${searchModeContext.label}`"
-          />
-        </h1>
-      </div>
-
-      <!-- Tag selector -->
-      <div
-        v-else
-        class="flex items-center gap-1 phone:gap-2 w-full col-span-full"
-      >
-        <Transition
-          :name="isProductRoute ? 'store-header-logo-forward' : 'store-header-logo-back'"
-          mode="out-in"
+          v-if="isSearchHeaderVisible"
+          class="flex items-center gap-1 phone:gap-2 w-full"
         >
           <PillButton
-            v-if="isProductRoute"
-            key="back"
-            icon="i-material-symbols-arrow-back-rounded"
-            :aria-label="isLibraryTab ? $t('product_page_back_to_library_label') : $t('product_page_back_to_store_label')"
-            @click="handleBackButtonClick"
+            :to="defaultListingRoute"
+            icon="i-material-symbols-close-rounded"
           />
 
-          <UButton
-            v-else-if="isListingRoute && !isApp && !isLibraryTab"
-            key="logo"
-            :to="isDefaultTagId
-              ? localeRoute({ name: 'about', query: { ll_medium: 'about-logo' } })
-              : defaultListingRoute"
-            variant="link"
-            :ui="{
-              base: ['shrink-0', 'p-0 sm:p-0'],
-            }"
-            :title="'3ook.com'"
-            @click="handleLogoClick"
+          <!--
+          One chip for every publisher identity: the /store/@<id> route, ?affiliate=
+          and ?owner_wallet= all resolve to the same shape in useStoreSearchMode.
+          -->
+          <div
+            v-if="storeEntity"
+            class="flex items-center min-w-0 ring-inset ring-2 ring-theme-black dark:ring-muted bg-(--app-bg) rounded-full"
           >
-            <img
-              src="/logo.svg"
-              alt="3ook.com"
-              class="size-8 laptop:size-9 block"
-            >
-          </UButton>
+            <UAvatar
+              :src="storeEntity.avatarSrc"
+              :alt="storeEntity.displayName"
+              icon="i-material-symbols-person-2-rounded"
+              :ui="{ root: 'size-8 tablet:size-9 border border-2 border-theme-black dark:border-muted' }"
+            />
+            <div class="flex flex-col justify-center min-w-0 pt-0.5 pl-2 pr-4">
+              <span
+                class="text-[0.625rem] tablet:text-xs text-muted uppercase tracking-wide leading-none"
+                v-text="storeEntity.titlePrefix"
+              />
+              <h1
+                class="-mt-1 font-bold text-sm tablet:text-default truncate"
+                v-text="storeEntity.displayName"
+              />
+            </div>
+          </div>
+          <h1 v-else-if="searchModeContext">
+            <PillButton
+              is-active
+              is-static
+              :label="`${searchModeContext.titlePrefix}${searchModeContext.label}`"
+            />
+          </h1>
+        </div>
 
-          <UButton
-            v-else-if="isListingRoute && !isApp && isLibraryTab"
-            key="library-logo"
-            :to="isDefaultTagId
-              ? localeRoute({ name: 'about', hash: '#library', query: { ll_medium: 'about-logo' } })
-              : defaultListingRoute"
-            variant="link"
-            icon="i-3ook-com-library-rounded"
-            color="neutral"
-            :ui="{
-              base: ['shrink-0', 'p-0 sm:p-0'],
-              leadingIcon: ['size-8', 'text-highlighted'],
-            }"
-            :title="$t('library_tab_title')"
-            :aria-label="$t('library_tab_title')"
-            @click="handleLibraryLogoClick"
-          />
-        </Transition>
-
-        <PillButtonGroup
-          :model-value="tagId"
-          :items="allTagItems"
-          :aria-label="$t('store_tag_more_categories_label')"
-          :is-loading="!hasFetchedCMSTags && isDefaultTagId"
-          class="grow min-w-0"
-          @click="(item) => handleTagClick(item.value)"
-        />
-
-        <StoreSearchModal :is-library-tab="isLibraryTab" />
-
-        <UTooltip
-          v-if="!isLibraryTab"
-          :text="$t('book_list_title')"
+        <!-- Tag selector -->
+        <div
+          v-else
+          class="flex items-center gap-1 phone:gap-2 w-full col-span-full"
         >
-          <UButton
-            class="rounded-full p-1"
-            icon="i-material-symbols-shopping-cart-outline-rounded"
-            :aria-label="$t('book_list_title')"
-            :to="localeRoute({ name: 'cart' })"
-            color="neutral"
-            size="lg"
-            variant="ghost"
-            :ui="{ leadingIcon: 'size-6 sm:size-7' }"
-            @click="handleBookListTagClick"
+          <Transition
+            :name="isProductRoute ? 'store-header-logo-forward' : 'store-header-logo-back'"
+            mode="out-in"
+          >
+            <PillButton
+              v-if="isProductRoute"
+              key="back"
+              icon="i-material-symbols-arrow-back-rounded"
+              :aria-label="isLibraryTab ? $t('product_page_back_to_library_label') : $t('product_page_back_to_store_label')"
+              @click="handleBackButtonClick"
+            />
+
+            <UButton
+              v-else-if="isListingRoute && !isApp && !isLibraryTab"
+              key="logo"
+              :to="isDefaultTagId
+                ? localeRoute({ name: 'about', query: { ll_medium: 'about-logo' } })
+                : defaultListingRoute"
+              variant="link"
+              :ui="{
+                base: ['shrink-0', 'p-0 sm:p-0'],
+              }"
+              :title="'3ook.com'"
+              @click="handleLogoClick"
+            >
+              <img
+                src="/logo.svg"
+                alt="3ook.com"
+                class="size-8 laptop:size-9 block"
+              >
+            </UButton>
+
+            <UButton
+              v-else-if="isListingRoute && !isApp && isLibraryTab"
+              key="library-logo"
+              :to="isDefaultTagId
+                ? localeRoute({ name: 'about', hash: '#library', query: { ll_medium: 'about-logo' } })
+                : defaultListingRoute"
+              variant="link"
+              icon="i-3ook-com-library-rounded"
+              color="neutral"
+              :ui="{
+                base: ['shrink-0', 'p-0 sm:p-0'],
+                leadingIcon: ['size-8', 'text-highlighted'],
+              }"
+              :title="$t('library_tab_title')"
+              :aria-label="$t('library_tab_title')"
+              @click="handleLibraryLogoClick"
+            />
+          </Transition>
+
+          <PillButtonGroup
+            :model-value="tagId"
+            :items="allTagItems"
+            :aria-label="$t('store_tag_more_categories_label')"
+            :is-loading="!hasFetchedCMSTags"
+            class="grow min-w-0"
+            @click="(item) => handleTagClick(item.value)"
           />
-        </UTooltip>
+
+          <StoreSearchModal :is-library-tab="isLibraryTab" />
+
+          <UTooltip
+            v-if="!isLibraryTab"
+            :text="$t('book_list_title')"
+          >
+            <UButton
+              class="rounded-full p-1"
+              icon="i-material-symbols-shopping-cart-outline-rounded"
+              :aria-label="$t('book_list_title')"
+              :to="localeRoute({ name: 'cart' })"
+              color="neutral"
+              size="lg"
+              variant="ghost"
+              :ui="{ leadingIcon: 'size-6 sm:size-7' }"
+              @click="handleBookListTagClick"
+            />
+          </UTooltip>
+        </div>
       </div>
     </header>
 
