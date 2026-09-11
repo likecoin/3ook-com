@@ -109,6 +109,12 @@ const { handlePreviewEndBoundary } = usePreviewEndModal({
   isEnabled: isPreviewMode.value,
 })
 
+const { handleBookEndBoundary } = useBookEndModal({
+  nftClassId,
+  isLibraryBook,
+  isEnabled: !isPreviewMode.value && !isUploadedBook.value,
+})
+
 const { fetchCustomVoice } = useCustomVoice()
 const { fetchConfig: fetchPlusAffiliateConfig } = usePlusAffiliate()
 onMounted(() => {
@@ -319,11 +325,15 @@ function handlePageChanged(pageNumber: number) {
   currentPageIndex.value = pageNumber
   activeTTSElementIndex.value = undefined
   updatePDFProgress(pageNumber)
+  const totalPages = loadedPDFDocument.value?.numPages || 0
+  const isAtLastPage = totalPages > 0 && pageNumber >= totalPages
   if (isPreviewMode.value) {
     // A truncated preview PDF has no appended end page, so its last page is
     // the end-of-preview boundary.
-    const totalPages = loadedPDFDocument.value?.numPages || 0
-    handlePreviewEndBoundary(totalPages > 0 && pageNumber >= totalPages)
+    handlePreviewEndBoundary(isAtLastPage)
+  }
+  else {
+    handleBookEndBoundary(isAtLastPage)
   }
 }
 
