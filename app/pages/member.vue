@@ -188,7 +188,11 @@ import type { AffiliatePublicConfig } from '~~/shared/types/affiliate'
 import { getAffiliatePricingPageContent, getPricingPageCampaign } from '~/composables/use-pricing-page-campaign'
 import { formatLikerIdHandle, normalizeLikerId } from '~~/shared/utils/liker-id'
 
-import { DEFAULT_TRIAL_PERIOD_DAYS } from '~~/shared/constants/pricing'
+import {
+  getPlusTrialPeriod,
+  PLUS_TRIAL_EXPERIMENT_KEY,
+  type PlusTrialPeriodInput,
+} from '~/utils/plus-trial'
 
 import backdrop from '~/assets/images/paywall/bg-bookstore.jpg'
 
@@ -407,30 +411,31 @@ useHead({
   ],
 })
 
-// On IAP the store is the source of truth for the trial — the web's route-
-// query overrides and Stripe defaults don't apply because no Stripe trial
-// will ensue regardless.
 const iapOverrides = computed(() => getIAPOverrides(selectedPlan.value))
-const trialPeriodDays = computed(() => {
-  if (isIAPSupported.value) return iapOverrides.value.trialPeriodDays
-  // A returning member (previously subscribed) isn't eligible for a fresh free
-  // trial, so never promise one in the CTA — they'd be charged immediately.
-  if (isExpiredLikerPlus.value) return 0
-  switch (getRouteQuery('trial')) {
-    case '0':
-    case '0d': return 0
-    case '1d': return 1
-    case '3d': return 3
-    case '5d': return 5
-    case '7d': return 7
-    case '14d': return 14
-    case '30d': return 30
-    default:
-      if (activeAffiliate.value?.giftOnTrial === false) return 0
-      if (coupon.value) return 0
-      return DEFAULT_TRIAL_PERIOD_DAYS
-  }
+const trialPeriodInput = computed<PlusTrialPeriodInput>(() => ({
+  trialQuery: getRouteQuery('trial'),
+  isIAPSupported: isIAPSupported.value,
+  iapTrialPeriodDays: iapOverrides.value.trialPeriodDays,
+  isExpiredLikerPlus: isExpiredLikerPlus.value,
+  hasCoupon: !!coupon.value,
+  isAffiliateGiftOnTrialDisabled:
+    activeAffiliate.value?.giftOnTrial === false && !!giftBooks.value.length,
+}))
+// Ineligible visitors never read the flag, so they record no exposure.
+const isTrialExperimentEligible = computed(() =>
+  getPlusTrialPeriod(trialPeriodInput.value).isExperimentEligible,
+)
+const trialExperiment = useABTest({
+  experimentKey: PLUS_TRIAL_EXPERIMENT_KEY,
+  enabled: isTrialExperimentEligible,
 })
+const trialExperimentVariant = computed(() =>
+  isTrialExperimentEligible.value ? trialExperiment.variant.value : null,
+)
+const trialPeriodDays = computed(() => getPlusTrialPeriod({
+  ...trialPeriodInput.value,
+  experimentVariant: trialExperimentVariant.value,
+}).trialPeriodDays)
 
 const isAffiliateGiftRedeemable = computed(() => {
   // Store IAP can't carry the gift book through to the backend, so the gift
