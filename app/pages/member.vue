@@ -426,7 +426,10 @@ const trialPeriodDays = computed(() => {
     case '14d': return 14
     case '30d': return 30
     default:
-      if (activeAffiliate.value?.giftOnTrial === false) return 0
+      // Only an affiliate with a book to gift can turn the trial off:
+      // the backend reads giftOnTrial only alongside a non-empty giftBooks,
+      // so an affiliate with nothing to gift keeps the standard trial.
+      if (activeAffiliate.value?.giftOnTrial === false && giftBooks.value.length) return 0
       if (coupon.value) return 0
       return DEFAULT_TRIAL_PERIOD_DAYS
   }
