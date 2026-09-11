@@ -7,16 +7,23 @@ export interface ABTestConfig {
   // (and $feature_flag_called sent) only when captureExposure is called. Use for
   // experiments whose treatment happens at a later decision point (e.g. checkout).
   manualExposure?: boolean
+  // Gate for experiments whose population is only known at runtime.
+  // While false the flag is never read, so an ineligible visitor
+  // records no exposure and gets no variant.
+  enabled?: MaybeRefOrGetter<boolean>
 }
 
 export function useABTest(config: ABTestConfig) {
   const experimentKey = computed(() => toValue(config.experimentKey))
+  const isEnabled = computed(() => toValue(config.enabled ?? true))
   const manualExposure = config.manualExposure ?? false
   const variant = ref<string | null>(null)
   let posthogInstance: PostHog | undefined
 
+  // Reading the flag is what records the exposure,
+  // hence the gate here rather than at the call sites.
   const readVariant = (posthog: PostHog): string | null => {
-    const flag = posthog.getFeatureFlag(experimentKey.value)
+    const flag = isEnabled.value ? posthog.getFeatureFlag(experimentKey.value) : null
     const next = typeof flag === 'string' ? flag : null
     if (variant.value !== next) variant.value = next
     return next
@@ -37,7 +44,7 @@ export function useABTest(config: ABTestConfig) {
       if (manualExposure) return
       unsubscribe = posthog.onFeatureFlags(() => readVariant(posthog))
       readVariant(posthog)
-      stopWatch = watch(experimentKey, () => readVariant(posthog))
+      stopWatch = watch([experimentKey, isEnabled], () => readVariant(posthog))
     })
   })
   onScopeDispose(() => {
