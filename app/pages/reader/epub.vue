@@ -2722,7 +2722,7 @@ onKeyStroke('ArrowDown', () => {
 onKeyStroke('ArrowUp', () => {
   prevPage('key')
 })
-onKeyStroke('Space', () => {
+onKeyStroke(' ', () => {
   if (isShiftPressed.value) {
     prevPage('key')
   }
