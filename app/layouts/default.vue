@@ -54,6 +54,39 @@ defineProps({
 
 const { isApp, isAndroid } = useAppDetection()
 
+const localeRoute = useLocaleRoute()
+const getRouteBaseNameString = useRouteBaseNameString()
+
+function navigateToTab(name: string) {
+  navigateTo(localeRoute({ name }))
+}
+
+// The app hides the store tab, so the shortcut stays hidden there too.
+function handleStoreShortcut() {
+  if (isApp.value) return
+  navigateToTab('store')
+}
+
+// The shelf filters its own books on `/`;
+// anywhere else lands on the store search box, opened via `?search=1`.
+function handleSearchShortcut(event: KeyboardEvent) {
+  if (getRouteBaseNameString().startsWith('shelf')) return
+  event.preventDefault()
+  navigateTo(localeRoute({ name: 'store', query: { search: '1' } }))
+}
+
+useKeyboardShortcuts({
+  's': handleStoreShortcut,
+  'S': handleStoreShortcut,
+  'l': () => navigateToTab('library'),
+  'L': () => navigateToTab('library'),
+  'f': () => navigateToTab('shelf'),
+  'F': () => navigateToTab('shelf'),
+  'c': () => navigateToTab('cart'),
+  'C': () => navigateToTab('cart'),
+  '/': handleSearchShortcut,
+})
+
 // iOS app handles pull-to-refresh natively in RN WebView
 const isPullToRefreshEnabled = computed(() => isApp.value && isAndroid.value)
 

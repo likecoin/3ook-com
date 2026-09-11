@@ -357,6 +357,7 @@ const props = defineProps<Props>()
 
 const toast = useToast()
 const { t: $t } = useI18n()
+const localeRoute = useLocaleRoute()
 const bookSettingsStore = useBookSettingsStore()
 
 const ttsButtonSizeABTest = useABTest({
@@ -1196,6 +1197,9 @@ function handleKeydown(event: KeyboardEvent) {
   }
 
   const ctrl = event.ctrlKey || event.metaKey
+  // The zoom cases need Ctrl/Cmd themselves,
+  // so the bare-key guard is applied per case rather than up here.
+  const isBareKeyBlocked = getIsKeyboardShortcutBlocked(event)
 
   switch (event.key) {
     case 'ArrowLeft':
@@ -1203,6 +1207,31 @@ function handleKeydown(event: KeyboardEvent) {
       break
     case 'ArrowRight':
       nextPage('key')
+      break
+    case 'j':
+      if (isBareKeyBlocked) break
+      previousPage('key')
+      break
+    case 'k':
+      if (isBareKeyBlocked) break
+      nextPage('key')
+      break
+    case '/':
+      if (isBareKeyBlocked) break
+      // Firefox opens its own quick-find bar on `/`.
+      event.preventDefault()
+      isSearchOpen.value = true
+      break
+    case '*':
+      if (isBareKeyBlocked || !isDocumentReady.value) break
+      handleBookmarkToggle()
+      break
+    case 'Escape':
+    case 'f':
+    case 'F':
+      if (isBareKeyBlocked) break
+      // Mirrors the header's back button: a previewer leaves to the product page.
+      navigateTo(props.backTo ?? localeRoute({ name: 'shelf' }))
       break
     case '+':
     case '=':
