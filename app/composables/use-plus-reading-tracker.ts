@@ -4,6 +4,7 @@
  * `isPlusReadingEnabled`, the user not owning it, no `nft_id` in the route
  * (an owned read always carries one), and either active Plus or a free edition
  * (which any logged-in user may borrow). Used by both the EPUB and PDF readers.
+ * An owned read instead returns any borrow left over from before the purchase.
  */
 export function usePlusReadingTracker(params: {
   nftClassId: MaybeRef<string>
@@ -18,7 +19,7 @@ export function usePlusReadingTracker(params: {
   const bookshelfStore = useBookshelfStore()
 
   const nftClassIdRef = computed(() => toValue(params.nftClassId))
-  const { checkOwnership } = useUserBookOwnership(nftClassIdRef)
+  const { isOwner, checkOwnership } = useUserBookOwnership(nftClassIdRef)
   // The surface that led to this read, snapshotted before any in-reader navigation.
   const entryLinkTagProperties = useEntryLinkTagProperties()
 
@@ -46,6 +47,19 @@ export function usePlusReadingTracker(params: {
     return isLikerPlus.value || params.hasFreeEdition.value
   }
 
+  // A purchase supersedes the borrow: drop the stale library record
+  // rather than asking the user to return a book they already own.
+  async function returnBorrowIfOwned() {
+    if (params.isUploadedBook.value || !hasLoggedIn.value) return
+    // `getIsBorrowed` has already resolved ownership unless the route's nft_id proved it.
+    if (!params.nftId.value && !isOwner.value) return
+    await bookshelfStore.lazyFetchPlusReadingBooks()
+    const normalizedNFTClassId = normalizeNFTClassId(nftClassIdRef.value)
+    if (!bookshelfStore.plusReadingBookIds.includes(normalizedNFTClassId)) return
+    useLogEvent('plus_reading_auto_return', { nft_class_id: nftClassIdRef.value })
+    await bookshelfStore.removePlusReadingBook(normalizedNFTClassId)
+  }
+
   async function registerIfBorrowed() {
     if (!import.meta.client) return
     try {
@@ -54,7 +68,10 @@ export function usePlusReadingTracker(params: {
     finally {
       settleLibraryBookCheck(isLibraryBook.value)
     }
-    if (!isLibraryBook.value) return
+    if (!isLibraryBook.value) {
+      await returnBorrowIfOwned()
+      return
+    }
 
     // Read borrow state before registration mutates it to tell first borrows from re-opens.
     useLogEvent('plus_reading_borrow', {
