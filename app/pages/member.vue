@@ -188,7 +188,11 @@ import type { AffiliatePublicConfig } from '~~/shared/types/affiliate'
 import { getAffiliatePricingPageContent, getPricingPageCampaign } from '~/composables/use-pricing-page-campaign'
 import { formatLikerIdHandle, normalizeLikerId } from '~~/shared/utils/liker-id'
 
-import { getPlusTrialPeriod, type PlusTrialPeriodInput } from '~/utils/plus-trial'
+import {
+  getPlusTrialPeriod,
+  PLUS_TRIAL_EXPERIMENT_KEY,
+  type PlusTrialPeriodInput,
+} from '~/utils/plus-trial'
 
 import backdrop from '~/assets/images/paywall/bg-bookstore.jpg'
 
@@ -417,7 +421,21 @@ const trialPeriodInput = computed<PlusTrialPeriodInput>(() => ({
   isAffiliateGiftOnTrialDisabled:
     activeAffiliate.value?.giftOnTrial === false && !!giftBooks.value.length,
 }))
-const trialPeriodDays = computed(() => getPlusTrialPeriod(trialPeriodInput.value).trialPeriodDays)
+// Ineligible visitors never read the flag, so they record no exposure.
+const isTrialExperimentEligible = computed(() =>
+  getPlusTrialPeriod(trialPeriodInput.value).isExperimentEligible,
+)
+const trialExperiment = useABTest({
+  experimentKey: PLUS_TRIAL_EXPERIMENT_KEY,
+  enabled: isTrialExperimentEligible,
+})
+const trialExperimentVariant = computed(() =>
+  isTrialExperimentEligible.value ? trialExperiment.variant.value : null,
+)
+const trialPeriodDays = computed(() => getPlusTrialPeriod({
+  ...trialPeriodInput.value,
+  experimentVariant: trialExperimentVariant.value,
+}).trialPeriodDays)
 
 const isAffiliateGiftRedeemable = computed(() => {
   // Store IAP can't carry the gift book through to the backend, so the gift

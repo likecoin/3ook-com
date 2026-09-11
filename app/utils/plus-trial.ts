@@ -1,5 +1,8 @@
 import { DEFAULT_TRIAL_PERIOD_DAYS } from '~~/shared/constants/pricing'
 
+export const PLUS_TRIAL_EXPERIMENT_KEY = 'plus-affiliate-trial'
+export const PLUS_TRIAL_OFF_VARIANT = 'off'
+
 // `?trial=` overrides, for campaign links that need a non-default trial.
 const TRIAL_QUERY_PERIOD_DAYS: Record<string, number> = {
   '0': 0,
@@ -22,10 +25,14 @@ export interface PlusTrialPeriodInput {
   // An affiliate with nothing to gift keeps the standard trial,
   // mirroring the backend, which reads giftOnTrial only alongside giftBooks.
   isAffiliateGiftOnTrialDisabled?: boolean
+  experimentVariant?: string | null
 }
 
 export interface PlusTrialPeriod {
   trialPeriodDays: number
+  // True only when the length came from the site-wide default,
+  // the one population the experiment is allowed to move.
+  isExperimentEligible: boolean
 }
 
 export function getPlusTrialPeriod({
@@ -35,8 +42,12 @@ export function getPlusTrialPeriod({
   isExpiredLikerPlus = false,
   hasCoupon = false,
   isAffiliateGiftOnTrialDisabled = false,
+  experimentVariant = null,
 }: PlusTrialPeriodInput = {}): PlusTrialPeriod {
-  const decided = (trialPeriodDays: number): PlusTrialPeriod => ({ trialPeriodDays })
+  const decided = (trialPeriodDays: number): PlusTrialPeriod => ({
+    trialPeriodDays,
+    isExperimentEligible: false,
+  })
   // On IAP the store is the source of truth for the trial:
   // the web's route-query overrides and Stripe defaults don't apply,
   // because no Stripe trial will ensue regardless.
@@ -48,5 +59,8 @@ export function getPlusTrialPeriod({
   if (queriedPeriodDays !== undefined) return decided(queriedPeriodDays)
   if (isAffiliateGiftOnTrialDisabled) return decided(0)
   if (hasCoupon) return decided(0)
-  return decided(DEFAULT_TRIAL_PERIOD_DAYS)
+  return {
+    trialPeriodDays: experimentVariant === PLUS_TRIAL_OFF_VARIANT ? 0 : DEFAULT_TRIAL_PERIOD_DAYS,
+    isExperimentEligible: true,
+  }
 }

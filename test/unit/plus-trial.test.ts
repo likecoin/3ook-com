@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { getPlusTrialPeriod } from '~/utils/plus-trial'
+import { getPlusTrialPeriod, PLUS_TRIAL_OFF_VARIANT } from '~/utils/plus-trial'
 import { DEFAULT_TRIAL_PERIOD_DAYS } from '~~/shared/constants/pricing'
 
 describe('getPlusTrialPeriod', () => {
-  it('gives a plain visitor the default trial', () => {
+  it('gives a plain visitor the default trial and puts them in the experiment', () => {
     expect(getPlusTrialPeriod()).toEqual({
       trialPeriodDays: DEFAULT_TRIAL_PERIOD_DAYS,
+      isExperimentEligible: true,
     })
   })
 
@@ -14,24 +15,29 @@ describe('getPlusTrialPeriod', () => {
   it('keeps the default trial for an affiliate with nothing to gift', () => {
     expect(getPlusTrialPeriod({ isAffiliateGiftOnTrialDisabled: false })).toEqual({
       trialPeriodDays: DEFAULT_TRIAL_PERIOD_DAYS,
+      isExperimentEligible: true,
     })
   })
 
   it('drops the trial for an affiliate that gifts a book off-trial only', () => {
     expect(getPlusTrialPeriod({ isAffiliateGiftOnTrialDisabled: true })).toEqual({
       trialPeriodDays: 0,
+      isExperimentEligible: false,
     })
   })
 
   it('drops the trial for a coupon, a returning member, and in-app purchases', () => {
     expect(getPlusTrialPeriod({ hasCoupon: true })).toEqual({
       trialPeriodDays: 0,
+      isExperimentEligible: false,
     })
     expect(getPlusTrialPeriod({ isExpiredLikerPlus: true })).toEqual({
       trialPeriodDays: 0,
+      isExperimentEligible: false,
     })
     expect(getPlusTrialPeriod({ isIAPSupported: true, iapTrialPeriodDays: 14 })).toEqual({
       trialPeriodDays: 14,
+      isExperimentEligible: false,
     })
   })
 
@@ -45,9 +51,29 @@ describe('getPlusTrialPeriod', () => {
     expect(days('7d')).toBe(7)
     expect(days('14d')).toBe(14)
     expect(days('30d')).toBe(30)
+    expect(getPlusTrialPeriod({ trialQuery: '7d' }).isExperimentEligible).toBe(false)
     // An unrecognised value falls through to the default.
     expect(getPlusTrialPeriod({ trialQuery: '2d' })).toEqual({
       trialPeriodDays: DEFAULT_TRIAL_PERIOD_DAYS,
+      isExperimentEligible: true,
     })
+  })
+
+  it('takes the trial away in the off variant but keeps the control on it', () => {
+    expect(getPlusTrialPeriod({ experimentVariant: PLUS_TRIAL_OFF_VARIANT })).toEqual({
+      trialPeriodDays: 0,
+      isExperimentEligible: true,
+    })
+    expect(getPlusTrialPeriod({ experimentVariant: 'control' }).trialPeriodDays)
+      .toBe(DEFAULT_TRIAL_PERIOD_DAYS)
+  })
+
+  // The variant only ever reaches an eligible visitor,
+  // but a stale one must not override a trial that was already decided elsewhere.
+  it('ignores the variant once something else has decided the trial', () => {
+    expect(getPlusTrialPeriod({
+      trialQuery: '14d',
+      experimentVariant: PLUS_TRIAL_OFF_VARIANT,
+    })).toEqual({ trialPeriodDays: 14, isExperimentEligible: false })
   })
 })
