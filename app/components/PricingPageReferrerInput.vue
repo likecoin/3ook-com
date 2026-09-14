@@ -4,7 +4,7 @@
       v-if="!isExpanded"
       class="cursor-pointer"
       :label="$t('pricing_page_referrer_input_toggle')"
-      icon="i-material-symbols-loyalty-rounded"
+      icon="i-material-symbols-3p-outline-rounded"
       color="neutral"
       variant="link"
       size="sm"
