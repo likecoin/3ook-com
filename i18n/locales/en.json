@@ -553,6 +553,7 @@
   "error_network_error": "Network error, please try again.",
   "error_page_not_found": "Page not found",
   "error_reader_book_not_available_offline": "This book isn't available offline. Please reconnect and try again.",
+  "error_reader_book_temporarily_unavailable": "We can't open this book right now. Please try again later, or contact support if the problem persists.",
   "error_reader_fetch_metadata_failed": "Failed to fetch the book metadata",
   "error_reader_load_epub_failed": "Loading EPUB failed",
   "error_reader_load_pdf_failed": "Loading PDF failed",

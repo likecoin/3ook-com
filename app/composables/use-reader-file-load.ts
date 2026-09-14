@@ -27,6 +27,7 @@ export default function useReaderFileLoad({
   handleError,
   abortLoad,
 }: UseReaderFileLoadOptions) {
+  const { t: $t } = useI18n()
   const localeRoute = useLocaleRoute()
 
   // Bumped on every attempt so a superseded attempt (e.g. one aborted by a
@@ -73,6 +74,14 @@ export default function useReaderFileLoad({
       await handleError(error, {
         title: getErrorTitle(),
         actions: getErrorActions?.(error),
+        customHandlerMap: {
+          // ebook-cors' chain RPC is down (e.g. quota exhausted); retryable,
+          // so show a try-later message instead of the raw code.
+          EVM_RPC_UNAVAILABLE: {
+            description: $t('error_reader_book_temporarily_unavailable'),
+            isLogError: true,
+          },
+        },
         onClose: () => {
           navigateTo(localeRoute({ name: 'shelf' }))
         },
