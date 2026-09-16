@@ -56,6 +56,31 @@
       </AccountSettingsItem>
 
       <AccountSettingsItem
+        v-if="canDowngradeToPlus"
+        icon="i-material-symbols-arrow-downward-rounded"
+        :label="$t('account_page_plus_downgrade')"
+      >
+        <div
+          class="text-sm/5"
+          v-text="hasPendingPlusDowngrade
+            ? $t('account_page_plus_downgrade_pending')
+            : $t('account_page_plus_downgrade_description')"
+        />
+
+        <template
+          v-if="!hasPendingPlusDowngrade"
+          #right
+        >
+          <UButton
+            :label="$t('account_page_plus_downgrade_button')"
+            variant="outline"
+            color="neutral"
+            @click="handleOpenDowngradeModal"
+          />
+        </template>
+      </AccountSettingsItem>
+
+      <AccountSettingsItem
         v-if="hasLoggedIn"
         icon="i-material-symbols-record-voice-over-outline"
         :label="$t('tts_custom_voice_section_title')"
@@ -91,7 +116,7 @@
 </template>
 
 <script setup lang="ts">
-import { CustomVoiceUploadModal } from '#components'
+import { CustomVoiceUploadModal, PlusDowngradeModal } from '#components'
 
 const { t: $t } = useI18n()
 const { loggedIn: hasLoggedIn, user } = useUserSession()
@@ -104,12 +129,13 @@ const {
   likerPlusButtonLabel,
   likerPlusManageMode,
   isCivicOfferable,
+  canDowngradeToPlus,
   isOpeningBillingPortal,
   isManagingSubscription,
   handleLikerPlusButtonClick,
 } = usePlusManagement()
 
-const { likerPlusPeriod } = useSubscription()
+const { likerPlusPeriod, hasPendingPlusDowngrade } = useSubscription()
 
 // Send the upgrade to the pricing page — the surface that shows Civic's
 // benefits and price with an explicit CTA. Preselect the billing period
@@ -126,6 +152,14 @@ function handleUpgradeToCivicButtonClick() {
   useLogEvent('account_civic_upgrade_button_click')
 }
 
+const overlay = useOverlay()
+const downgradeModal = overlay.create(PlusDowngradeModal)
+
+function handleOpenDowngradeModal() {
+  useLogEvent('account_plus_downgrade_button_click')
+  downgradeModal.open()
+}
+
 const { handlePlusUpsellClick: handleCustomVoiceUpsellClick } = usePlusUpsellSlot({
   templateRef: 'customVoiceUpsell',
   slot: 'custom-voice',
@@ -133,7 +167,6 @@ const { handlePlusUpsellClick: handleCustomVoiceUpsellClick } = usePlusUpsellSlo
 })
 
 const { customVoice, hasCustomVoice } = useCustomVoice()
-const overlay = useOverlay()
 const customVoiceModal = overlay.create(CustomVoiceUploadModal)
 
 function handleOpenCustomVoiceModal() {

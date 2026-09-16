@@ -18,6 +18,9 @@ declare module '#auth-utils' {
     isExpiredLikerPlus?: boolean
     likerPlusPeriod?: LikerPlusStatus
     likerPlusTier?: LikerPlusTier
+    // Always written, never omitted: setUserSession merges with defu, which skips
+    // undefined, so an omitted field would stick at its previous value forever.
+    hasPendingPlusDowngrade: boolean
     likerPlusProvider?: LikerPlusProvider
     likerPlusStore?: LikerPlusStore
     plusAffiliateFrom?: string

@@ -82,6 +82,8 @@ export default defineEventHandler(async (event) => {
     isLikerPlus: userInfoRes.isLikerPlus || false,
     isLikerPlusTrial: userInfoRes.isLikerPlusTrial || false,
     isExpiredLikerPlus: userInfoRes.isExpiredLikerPlus || false,
+    // A newly registered account has no subscription, so nothing can be pending.
+    hasPendingPlusDowngrade: false,
     likerPlusSubscriptionStatus: userInfoRes.likerPlusSubscriptionStatus,
     ttsKey: generateTTSKey(),
   }

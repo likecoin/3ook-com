@@ -19,6 +19,8 @@ export interface LikerProfileResponseData extends LikerInfoResponseData {
   email?: string
   likerPlusPeriod?: LikerPlusStatus
   likerPlusTier?: LikerPlusTier
+  // Set while a requested downgrade waits for the renewal invoice to apply it.
+  likerPlusPendingTier?: LikerPlusTier
   // Owning billing system; drives manage-subscription routing on the client.
   likerPlusProvider?: LikerPlusProvider
   likerPlusStore?: LikerPlusStore

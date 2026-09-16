@@ -38,6 +38,11 @@ export function useSubscription() {
 
   const isCivicMember = computed(() => likerPlusTier.value === 'civic')
 
+  // Set from the moment a downgrade is requested until the renewal invoice
+  // applies it, so the account page stops offering the switch twice.
+  const hasPendingPlusDowngrade = computed(() =>
+    isLikerPlus.value && !!user.value?.hasPendingPlusDowngrade)
+
   // A monthly subscriber moving to yearly — the one in-place period change. Bridges
   // likerPlusPeriod (LikerPlusStatus) and the target SubscriptionPlan so callers
   // don't compare the two vocabularies by raw string.
@@ -72,6 +77,7 @@ export function useSubscription() {
     isExpiredLikerPlus,
     likerPlusPeriod,
     likerPlusTier,
+    hasPendingPlusDowngrade,
     isCivicMember,
     isPlanPeriodUpgrade,
     hasLoggedIn,

@@ -42,6 +42,7 @@
 import type { RouteLocationRaw } from 'vue-router'
 
 import { PLUS_TADA_TOTAL_MS } from '~/components/PlusMembershipTada.vue'
+import { getSubscriptionPlanFromStatus } from '~~/shared/utils/subscription'
 
 const { t: $t } = useI18n()
 const localeRoute = useLocaleRoute()
@@ -75,17 +76,12 @@ const isLikerPlus = computed(() => user.value?.isLikerPlus)
 const isCivicExpected = computed(() => getRouteQuery('tier') === 'civic')
 const isCivic = computed(() => isCivicExpected.value || isCivicMember.value)
 const affiliateFrom = computed(() => user.value?.plusAffiliateFrom)
-// The route `period` query is in SubscriptionPlan form ('yearly'/'monthly')
-// while the session stores LikerPlusStatus ('year'/'month'). Map between them,
-// otherwise the comparison below never matches and the onMounted retry loop
-// burns its full timeout on the loading state for already-subscribed users.
-const PLAN_TO_STATUS: Record<SubscriptionPlan, LikerPlusStatus> = {
-  yearly: 'year',
-  monthly: 'month',
-}
+// The route `period` query is in SubscriptionPlan form ('yearly'/'monthly') while
+// the session stores LikerPlusStatus ('year'/'month'). Without the mapping the
+// comparison never matches and the onMounted retry loop burns its full timeout.
 const isPeriodMatch = computed(() => {
   if (!targetPeriod.value) return true
-  return user.value?.likerPlusPeriod === PLAN_TO_STATUS[targetPeriod.value as SubscriptionPlan]
+  return getSubscriptionPlanFromStatus(user.value?.likerPlusPeriod) === targetPeriod.value
 })
 // A Plus→Civic upgrade leaves `isLikerPlus` already true, so the refresh loop
 // would exit before the tier flips. When the checkout signalled Civic, hold the

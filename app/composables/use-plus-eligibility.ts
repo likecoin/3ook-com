@@ -45,6 +45,14 @@ export function usePlusEligibility() {
     return likerPlusManageMode.value === 'stripe-portal'
   })
 
+  // Store-billed plans change tier through the store sheet, and a seat-granted member
+  // has no billing at all, so only a Stripe-billed Civic member can switch down here.
+  // No trial guard is needed on the way down: Civic has no trial.
+  const canDowngradeToPlus = computed(() => {
+    if (!isCivicMember.value) return false
+    return likerPlusManageMode.value === 'stripe-portal'
+  })
+
   // Whether Civic is worth pitching to this viewer at all.
   const isCivicOfferable = computed(() => {
     if (isCivicMember.value) return false
@@ -52,5 +60,10 @@ export function usePlusEligibility() {
     return canStartCivicSubscribeFlow.value
   })
 
-  return { likerPlusManageMode, canUpgradeToCivic, isCivicOfferable }
+  return {
+    likerPlusManageMode,
+    canUpgradeToCivic,
+    canDowngradeToPlus,
+    isCivicOfferable,
+  }
 }

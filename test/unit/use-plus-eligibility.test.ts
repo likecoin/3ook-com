@@ -240,3 +240,51 @@ describe('canUpgradeToCivic — subscriber state', () => {
     expect(usePlusEligibility().canUpgradeToCivic.value).toBe(false)
   })
 })
+
+describe('canDowngradeToPlus', () => {
+  // A Stripe-billed Civic member on the web — the only place the switch is offered.
+  function setupStripeCivicMember(overrides: Partial<User> = {}) {
+    mockUser.value = {
+      isLikerPlus: true,
+      likerPlusProvider: 'stripe',
+      likerPlusTier: 'civic',
+      ...overrides,
+    }
+    mockIsLikerPlus.value = true
+    mockIsCivicMember.value = true
+  }
+
+  it('allows a Stripe-billed Civic member on the web', () => {
+    setupStripeCivicMember()
+    expect(usePlusEligibility().canDowngradeToPlus.value).toBe(true)
+  })
+
+  it('blocks a Plus member who has no Civic tier to leave', () => {
+    mockUser.value = { isLikerPlus: true, likerPlusProvider: 'stripe' }
+    mockIsLikerPlus.value = true
+    expect(usePlusEligibility().canDowngradeToPlus.value).toBe(false)
+  })
+
+  it('blocks a store-billed Civic member, who switches in the store sheet', () => {
+    setupStripeCivicMember({ likerPlusProvider: 'revenuecat', likerPlusStore: 'app_store' })
+    mockIsIOS.value = true
+    mockIsIAPSupported.value = true
+    expect(usePlusEligibility().canDowngradeToPlus.value).toBe(false)
+  })
+
+  it('blocks a seat-granted member, who has no billing of their own', () => {
+    setupStripeCivicMember({ likerPlusProvider: 'shared' })
+    expect(usePlusEligibility().canDowngradeToPlus.value).toBe(false)
+  })
+
+  it('blocks inside the app shell, where Stripe has no portal', () => {
+    setupStripeCivicMember()
+    mockIsApp.value = true
+    expect(usePlusEligibility().canDowngradeToPlus.value).toBe(false)
+  })
+
+  it('blocks a non-subscriber', () => {
+    mockUser.value = { isLikerPlus: false }
+    expect(usePlusEligibility().canDowngradeToPlus.value).toBe(false)
+  })
+})

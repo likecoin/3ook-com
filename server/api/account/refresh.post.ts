@@ -42,6 +42,7 @@ export default defineEventHandler(async (event) => {
       isExpiredLikerPlus: userInfoRes.isExpiredLikerPlus || false,
       likerPlusPeriod: userInfoRes.likerPlusPeriod,
       likerPlusTier: userInfoRes.likerPlusTier,
+      hasPendingPlusDowngrade: userInfoRes.likerPlusPendingTier === 'plus',
       likerPlusProvider: userInfoRes.likerPlusProvider,
       likerPlusStore: userInfoRes.likerPlusStore,
       likerPlusSubscriptionStatus: userInfoRes.likerPlusSubscriptionStatus,
