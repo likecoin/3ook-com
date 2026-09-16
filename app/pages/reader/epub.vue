@@ -971,7 +971,8 @@ let isTouchGestureActive = false
 let selectionCommitTimer: ReturnType<typeof setTimeout> | undefined
 // `overflow: hidden` still scrolls, so dragging a selection handle to the edge
 // lets the browser autoscroll the paging container mid-column and desync
-// epub.js's location bookkeeping. Pin the offset for the length of the gesture.
+// epub.js's location bookkeeping. Pin the offset while a selection is dragged,
+// and drop the pin before we move the page ourselves.
 let pinnedPagingScroll: { left: number, top: number } | undefined
 
 function handlePagingScroll() {
@@ -1015,6 +1016,7 @@ let isUnmounting = false
 function displayInRendition(href?: string) {
   const currentRendition = rendition.value
   if (!currentRendition) return Promise.resolve(undefined)
+  pinnedPagingScroll = undefined
   const promise = currentRendition.display(href)
   activeDisplayPromise = promise
   const clearActive = () => {
@@ -1433,7 +1435,9 @@ async function loadEPub() {
     }
     removeTouchEndListener = useEventListener(view.window, ['touchend', 'touchcancel'], () => {
       isTouchGestureActive = false
-      pinnedPagingScroll = undefined
+      // Android leaves the selection handles up after the finger lifts,
+      // and dragging them fires no touch events, so keep the pin past touchend.
+      if (!isAndroid.value) pinnedPagingScroll = undefined
       // Read the selection once the finger is up: iOS settles it after touchend,
       // and a cancel-then-end pair would otherwise schedule two reads.
       clearTimeout(selectionCommitTimer)
@@ -1885,6 +1889,7 @@ function nextPage(method: ReaderNavigationMethod) {
   activeTTSElementIndex.value = undefined
   isPageLoading.value = true
   isAnnotationMenuVisible.value = false
+  pinnedPagingScroll = undefined
   rendition.value?.next()
   recordNavigation(method)
 }
@@ -1894,6 +1899,7 @@ function prevPage(method: ReaderNavigationMethod) {
   activeTTSElementIndex.value = undefined
   isPageLoading.value = true
   isAnnotationMenuVisible.value = false
+  pinnedPagingScroll = undefined
   rendition.value?.prev()
   recordNavigation(method)
 }
