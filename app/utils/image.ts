@@ -1,3 +1,22 @@
+// Raster formats every current browser decodes in an <img> element and
+// re-encodes through a canvas. HEIC/HEIF is absent on purpose: an Android
+// gallery hands it back through an `image/*` picker, yet Chrome cannot decode
+// it, so `drawAndExport` would reject with "Invalid image".
+export const DECODABLE_IMAGE_TYPES: string[] = [
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+]
+
+// `accept` value that keeps a file picker to the decodable formats.
+export const DECODABLE_IMAGE_ACCEPT = DECODABLE_IMAGE_TYPES.join(',')
+
+// `accept` only hints the picker, so callers must still guard the chosen file.
+export function isDecodableImageFile(file: File): boolean {
+  return DECODABLE_IMAGE_TYPES.includes(file.type)
+}
+
 // Decode an object URL via <img> + canvas. When `skipIfSmall` is set and
 // the source already fits within `maxSize`, short-circuits with a `skipped`
 // flag so the caller can keep the original bytes untouched. Otherwise
