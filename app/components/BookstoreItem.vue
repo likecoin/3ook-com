@@ -1,5 +1,60 @@
 <template>
+  <!--
+    The chart item is one link wrapping the whole card, so the surface that logs
+    the impression is the surface that takes the click. BookCover gets no `to`
+    here — a nested NuxtLink would be invalid markup.
+  -->
   <li
+    v-if="variant === 'chart'"
+    ref="lazyLoadTrigger"
+    :class="[chart.grid, chart.height]"
+  >
+    <NuxtLink
+      :to="productPageRoute"
+      :class="[
+        'group flex items-center w-full h-full transition-colors',
+        chart.card,
+        chart.row,
+      ]"
+      @click="onBookCoverClick"
+    >
+      <span
+        :class="[
+          'shrink-0 text-center font-mono font-bold tabular-nums',
+          chart.rank,
+        ]"
+        v-text="rank"
+      />
+
+      <BookCover
+        :class="['shrink-0', chart.cover]"
+        :rounded-class="chart.coverRounded"
+        :src="bookCoverSrc"
+        :alt="bookName || $t('book_cover_link_label')"
+        :lazy="props.lazy"
+        :priority="props.priority"
+        :has-shadow="chart.tier === 'hero'"
+      />
+
+      <span class="min-w-0 flex flex-col gap-0.5 tablet:w-full">
+        <span
+          :class="[
+            'text-highlighted font-semibold line-clamp-2',
+            chart.title,
+          ]"
+          v-text="bookName"
+        />
+        <span
+          v-if="authorName"
+          class="text-xs text-toned truncate"
+          v-text="authorName"
+        />
+      </span>
+    </NuxtLink>
+  </li>
+
+  <li
+    v-else
     ref="lazyLoadTrigger"
     class="flex flex-col justify-end text-sm text-muted"
   >
@@ -124,6 +179,14 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  variant: {
+    type: String as PropType<'grid' | 'chart'>,
+    default: 'grid',
+  },
+  rank: {
+    type: Number,
+    default: 0,
+  },
 })
 
 const emit = defineEmits(['visible', 'open'])
@@ -157,6 +220,8 @@ const stakingRoute = computed(() => {
 
 const bookName = computed(() => bookInfo.name.value || props.bookName)
 const authorName = computed(() => bookInfo.authorName.value)
+
+const chart = computed(() => getLibraryChartItemClasses(props.rank))
 
 const price = computed(() => props.price || bookInfo.minPrice.value)
 // A prop price carries its own per-currency override (the catalog's Airtable min);
