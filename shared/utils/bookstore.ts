@@ -12,7 +12,9 @@ export const BOOKSTORE_BUILT_IN_LIST_TYPES = [
 ] as const
 export type BookstoreBuiltInListType = typeof BOOKSTORE_BUILT_IN_LIST_TYPES[number]
 
-export const BOOKSTORE_DEFAULT_LIST_TYPE: BookstoreBuiltInListType = 'latest'
+// Retired from the tag bar, but still reachable by direct link and still the
+// listing /api/store/products falls back to, so its behaviour is unchanged.
+export const BOOKSTORE_LATEST_LIST_TYPE = 'latest' satisfies BookstoreBuiltInListType
 
 // Ranked upstream by lifetime reading + TTS time. Backs the library's default tab.
 export const BOOKSTORE_POPULAR_LIST_TYPE: BookstoreBuiltInListType = 'popular'

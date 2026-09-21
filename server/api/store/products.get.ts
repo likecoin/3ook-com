@@ -10,8 +10,8 @@ import { StoreProductsQuerySchema } from '~~/server/schemas/store'
 import { checkIsEVMAddress } from '~~/shared/utils'
 import {
   BOOKSTORE_BESTSELLING_LIST_TYPE,
-  BOOKSTORE_DEFAULT_LIST_TYPE,
   BOOKSTORE_FREE_LIST_TYPE,
+  BOOKSTORE_LATEST_LIST_TYPE,
   BOOKSTORE_POPULAR_LIST_TYPE,
   isBookstoreBuiltInListType,
 } from '~~/shared/utils/bookstore'
@@ -26,7 +26,7 @@ const RANKED_LIST_RESPOND_OPTIONS = {
 
 export default defineEventHandler(async (event) => {
   const query = await getValidatedQuery(event, createValidator(StoreProductsQuerySchema))
-  const tag = query.tag || BOOKSTORE_DEFAULT_LIST_TYPE
+  const tag = query.tag || BOOKSTORE_LATEST_LIST_TYPE
   // Checked first: `popular` and `bestselling` are built-in list types, but need the class-id cursor fetcher.
   if (tag === BOOKSTORE_POPULAR_LIST_TYPE || tag === BOOKSTORE_BESTSELLING_LIST_TYPE) {
     return respondWithBookstoreAPI(

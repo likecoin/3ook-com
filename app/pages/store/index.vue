@@ -1152,7 +1152,7 @@ async function fetchTagItems({ isRefresh = false } = {}) {
 
   // Sort only the new batch by staking amount (skip 'latest' which preserves Airtable
   // order, the pre-ranked lists, and conditional tags)
-  if (currentTagId !== 'latest' && !isPreRankedTag && !isConditionalTag) {
+  if (currentTagId !== BOOKSTORE_LATEST_LIST_TYPE && !isPreRankedTag && !isConditionalTag) {
     const items = bookstoreStore.bookstoreCMSProductsByTagKeyMap[currentTagKey]?.items
     if (items === itemsBefore && items?.length === countBefore) return
     // If the array was replaced (refresh or offset-refresh), sort from 0

@@ -161,12 +161,15 @@ export function useStoreTags({
           }))
           .filter(option => tagId.value === option.value || option.isPublic)
 
-    // Built-in list types (latest/free/drm-free) are mirrored as CMS tags so editors
+    // Built-in list types (free/drm-free) are mirrored as CMS tags so editors
     // control their ordering here, hence they surface through cmsTags like any other tag.
     const cmsTags = getBookstoreCMSTagsFromCache(queryCache)
       .filter((tag) => {
         // Always surface the active tag, even if it isn't flagged for this tab.
         if (tag.id === tagId.value) return true
+        // 'latest' is retired from the tag bar: it stays published in the CMS so
+        // /store/latest keeps working, but no longer earns a pill of its own.
+        if (tag.id === BOOKSTORE_LATEST_LIST_TYPE) return false
         // Each tab only lists tags flagged for it (isForLibrary / isForStore).
         if (!(isLibraryTab.value ? tag.isForLibrary : tag.isForStore)) return false
         return !!tag.isPublic
