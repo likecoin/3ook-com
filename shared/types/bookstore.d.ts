@@ -11,6 +11,11 @@ export interface BookstoreCMSProduct {
   isAdultOnly?: boolean
   // ISO country codes the storefront must not offer this book in (e.g. ['HK']).
   restrictedTerritories?: string[]
+  // The inverse of restrictedTerritories: the only regions this may be offered in.
+  // Absent means everywhere. Set on goods that ship to one market only.
+  availableTerritories?: string[]
+  // Absent means 'book' — only non-book goods carry the discriminator.
+  productType?: BookProductType
   isPlusReadingEnabled?: boolean
   isMultiple?: boolean
   minPrice?: number
@@ -95,6 +100,8 @@ declare global {
     isDRMFree?: boolean
     isAdultOnly?: boolean
     restrictedTerritories?: string[]
+    availableTerritories?: string[]
+    productType?: BookProductType
     isPlusReadingEnabled?: boolean
     isMultiple?: boolean
     minPrice?: number
@@ -159,6 +166,12 @@ declare global {
     isApprovedForAds: boolean
     isAdultOnly?: boolean
     restrictedTerritories?: string[]
+    availableTerritories?: string[]
+    // Absent means 'book'. Goods reuse the listing pipeline but opt out of every
+    // book-only surface: reader, library, DRM, recommendations, chain metadata.
+    productType?: BookProductType
+    fulfilment?: BookFulfilmentType
+    maxQuantityPerOrder?: number
     hideDownload: boolean
     hideAudio: boolean
     hideUpsell: boolean

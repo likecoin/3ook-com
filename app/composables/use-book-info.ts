@@ -40,6 +40,18 @@ export default function (
     return bookstoreInfo.value?.descriptionSummary || ''
   })
 
+  const isGoods = computed(() => getIsGoodsProduct(bookstoreInfo.value?.productType))
+
+  // Goods have no on-chain class, so their title and cover live on the listing.
+  // Books keep reading chain metadata, which is the published record of the work.
+  const goodsAwareName = computed(() => (isGoods.value
+    ? bookstoreInfo.value?.name || ''
+    : bookInfo.name.value))
+
+  const goodsAwareCoverSrc = computed(() => (isGoods.value
+    ? normalizeURIToHTTP(bookstoreInfo.value?.thumbnailUrl)
+    : bookInfo.coverSrc.value))
+
   const bookReviewInfo = computed(() => {
     if (!bookstoreInfo.value?.reviewURL) {
       return null
@@ -190,9 +202,17 @@ export default function (
       && !!getIsBookstorePendingReviewFromCache(queryCache, toValue(nftClassId))
   })
 
-  const { getIsRegionRestricted } = useBookRegionGate()
+  const { getIsRegionRestricted, getIsRegionUnsupported } = useBookRegionGate()
   const isRegionRestricted = computed(() => {
     return getIsRegionRestricted(bookstoreInfo.value?.restrictedTerritories)
+  })
+
+  // What the buy CTA gates on: compliance blocks plus the shipping allow-list.
+  const isRegionUnsupported = computed(() => {
+    return getIsRegionUnsupported({
+      restrictedTerritories: bookstoreInfo.value?.restrictedTerritories,
+      availableTerritories: bookstoreInfo.value?.availableTerritories,
+    })
   })
 
   const isApprovedForSale = computed(() => {
@@ -371,7 +391,11 @@ export default function (
 
   return {
     ...bookInfo,
+    // Must follow the spread: these shadow `bookInfo`'s chain-sourced versions.
+    name: goodsAwareName,
+    coverSrc: goodsAwareCoverSrc,
 
+    isGoods,
     nftClassOwnerWalletAddress,
     nftClassOwnerName,
     authorName,
@@ -399,6 +423,7 @@ export default function (
     hasBookstoreInfo,
     isWithheldPendingReview,
     isRegionRestricted,
+    isRegionUnsupported,
     isApprovedForSale,
     isApprovedForIndexing,
     isApprovedForAds,
