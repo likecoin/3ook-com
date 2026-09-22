@@ -36,11 +36,11 @@
         />
 
         <UAlert
-          v-if="bookInfo.isRegionRestricted.value"
+          v-if="bookInfo.isRegionUnsupported.value"
           color="warning"
           variant="subtle"
           icon="i-material-symbols-location-off-rounded"
-          :title="$t('product_page_region_restricted_notice')"
+          :title="regionUnsupportedNotice"
           :ui="{ root: 'mb-6 rounded-2xl items-center py-2' }"
         />
 
@@ -207,7 +207,7 @@
                 @click="handleKeywordClick(tag)"
               />
             </li>
-            <li v-if="!bookInfo.isAudioHidden.value">
+            <li v-if="!isGoods && !bookInfo.isAudioHidden.value">
               <UButton
                 ref="ttsPlusTagUpsell"
                 :label="ttsTagLabel"
@@ -218,7 +218,7 @@
                 @click="handleTTSTagClick"
               />
             </li>
-            <li v-if="!isLibrary && isPlusReadingEnabled">
+            <li v-if="!isGoods && !isLibrary && isPlusReadingEnabled">
               <UButton
                 ref="plusReadingTagUpsell"
                 :label="plusReadingTagLabel"
@@ -393,7 +393,7 @@
               ]"
             >
               <ProductPricingSelector
-                v-if="pricingItems.length && !isLibrary && !bookInfo.isRegionRestricted.value"
+                v-if="pricingItems.length && !isLibrary && !bookInfo.isRegionUnsupported.value"
                 :items="pricingItems"
                 :is-price-hidden="isFreeBorrowOnly"
                 :is-liker-plus="isLikerPlus"
@@ -682,6 +682,20 @@ const listingRouteName = computed(() => (isLibrary.value ? 'library' : 'store'))
 
 const isPlusReadingEnabled = bookInfo.isPlusReadingEnabled
 
+// Goods reuse this page but are not books: no chain class to stake against, no
+// reader, no TTS. Each book-only surface below is gated on this rather than the
+// page being forked, so the two stay in step.
+const isGoods = bookInfo.isGoods
+
+// Two gates, two reasons: a restricted title is withheld, a good simply does not
+// ship here. Saying "not available" for the latter reads like a licensing block.
+const regionUnsupportedNotice = computed(() => {
+  if (!bookInfo.isRegionRestricted.value && isGoods.value) {
+    return $t('product_page_region_unavailable_notice')
+  }
+  return $t('product_page_region_restricted_notice')
+})
+
 // A member who already borrowed this book reads it now, so the CTA shows Read
 // instead of Borrow. Gate on the session: plusReadingBookIds is persisted, so a
 // stale borrowed id could otherwise flip the CTA after logout or expiry.
@@ -742,7 +756,7 @@ const isFreeBorrowOnly = computed(() =>
 const isCheckoutVisible = computed(() =>
   !isLibrary.value
   && pricingItems.value.length > 0
-  && !bookInfo.isRegionRestricted.value
+  && !bookInfo.isRegionUnsupported.value
   && !(isUserBookOwner.value && isFreeBorrowOnly.value),
 )
 // Cart and gift only make sense for a priced edition that is still in stock;
@@ -750,7 +764,11 @@ const isCheckoutVisible = computed(() =>
 const isCartCTAVisible = computed(() =>
   isCheckoutVisible.value && !isFreeBorrowOnly.value && !isSelectedPricingItemSoldOut.value,
 )
-const isGiftCTAVisible = computed(() => isCartCTAVisible.value && bookInfo.isApprovedForSale.value)
+// Gifting mails the recipient a claim link, which a shipped item cannot honour —
+// the buyer's own address is collected at checkout, not the recipient's.
+const isGiftCTAVisible = computed(() =>
+  isCartCTAVisible.value && bookInfo.isApprovedForSale.value && !isGoods.value,
+)
 const bookListButtonProps = computed(() => (isInBookList.value
   ? {
       icon: 'i-material-symbols-shopping-cart-rounded',
@@ -1078,7 +1096,9 @@ const infoTabItems = computed(() => {
     })
   }
 
-  if (!bookInfo.isHidden.value || userStake.value > 0n) {
+  // Every other tab is data-driven and so drops out for goods on its own; this
+  // one is not, and a goods SKU has no class to stake against.
+  if (!isGoods.value && (!bookInfo.isHidden.value || userStake.value > 0n)) {
     items.push({
       label: $t('staking_info_tab_staking_info'),
       slot: 'staking-info',
@@ -1253,7 +1273,7 @@ const canBePurchased = computed(() => {
   return !isSelectedPricingItemSoldOut.value
     && !isPurchasing.value
     && bookInfo.isApprovedForSale.value
-    && !bookInfo.isRegionRestricted.value
+    && !bookInfo.isRegionUnsupported.value
 })
 
 const getContentTypeLabel = useContentTypeLabel()
@@ -1402,7 +1422,8 @@ onMounted(async () => {
   }
 
   checkBookListStatus()
-  await loadStakingData()
+  // A goods SKU has no deployed contract, so this would read an empty address.
+  if (!isGoods.value) await loadStakingData()
   initializeTabFromHash()
   await nextTick()
   isTabInitialized.value = true
