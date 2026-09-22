@@ -143,6 +143,11 @@ declare global {
     autoMemo: string
     isAllowCustomPrice: boolean
     isTippingEnabled: boolean
+    // An explicit member price for this edition, overriding the flat Plus book
+    // discount. Set per edition because it is a price, not a percentage — the
+    // two must never both apply. Eligibility is resolved server-side.
+    plusPrice?: number
+    plusPriceInDecimalByCurrency?: BookPriceInDecimalByCurrency
     order: number
   }
 

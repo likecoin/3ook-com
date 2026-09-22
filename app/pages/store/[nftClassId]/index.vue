@@ -588,7 +588,7 @@ const getRouteBaseName = useRouteBaseName()
 const getRouteParam = useRouteParam()
 const getRouteQuery = useRouteQuery()
 const { t: $t, locale } = useI18n()
-const { formatPrice, formatDiscountedPrice } = useCurrency()
+const { formatPrice, formatMemberPrice } = useCurrency()
 const { getCheckoutCurrency } = usePaymentCurrency()
 const { loggedIn: hasLoggedIn, user } = useUserSession()
 const accountStore = useAccountStore()
@@ -1149,12 +1149,12 @@ const pricingItems = computed(() => {
   return bookInfo.pricingItems.value
     .filter(item => !isApp.value || item.price === 0)
     .map((item, index) => {
-      const shouldShowDiscount = willPlusDiscountApply.value && item.price > 0
+      const isMemberPriceShown = willPlusDiscountApply.value && item.price > 0
       return {
         ...item,
         label: item.isAutoDeliver ? item.name : $t('product_page_edition_title', { name: item.name }),
         originalPrice: formatPrice(item.price, item.priceInDecimalByCurrency),
-        discountedPrice: shouldShowDiscount ? formatDiscountedPrice(item.price, PLUS_BOOK_PURCHASE_DISCOUNT, item.priceInDecimalByCurrency) : null,
+        discountedPrice: isMemberPriceShown ? formatMemberPrice(item, PLUS_BOOK_PURCHASE_DISCOUNT) : null,
         isSelected: index === selectedPricingItemIndex.value,
         renderedDescription: renderDescription(item.description || ''),
       }

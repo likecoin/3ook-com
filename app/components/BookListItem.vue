@@ -118,17 +118,20 @@ useVisibility('lazyLoadTrigger', (isVisible) => {
   }
 })
 
-const { formatPrice, formatDiscountedPrice } = useCurrency()
+const { formatPrice, formatMemberPrice } = useCurrency()
 
 const pricingItem = computed(() => bookInfo.pricingItems.value[props.priceIndex])
 const originalPrice = computed(() => pricingItem.value?.price || 0)
 const priceCurrencyOverride = computed(() => pricingItem.value?.priceInDecimalByCurrency)
 const formattedOriginalPrice = computed(() => formatPrice(originalPrice.value, priceCurrencyOverride.value))
 const formattedDiscountedPrice = computed(() => {
-  if (isLikerPlus.value && originalPrice.value > 0) {
-    return formatDiscountedPrice(originalPrice.value, PLUS_BOOK_PURCHASE_DISCOUNT, priceCurrencyOverride.value)
-  }
-  return null
+  if (!isLikerPlus.value || originalPrice.value <= 0) return null
+  return formatMemberPrice({
+    price: originalPrice.value,
+    priceInDecimalByCurrency: priceCurrencyOverride.value,
+    plusPrice: pricingItem.value?.plusPrice,
+    plusPriceInDecimalByCurrency: pricingItem.value?.plusPriceInDecimalByCurrency,
+  }, PLUS_BOOK_PURCHASE_DISCOUNT)
 })
 const isSoldOut = computed(() => pricingItem.value?.isSoldOut || false)
 

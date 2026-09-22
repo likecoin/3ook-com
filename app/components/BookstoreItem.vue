@@ -128,7 +128,7 @@ const props = defineProps({
 
 const emit = defineEmits(['visible', 'open'])
 
-const { formatPrice, formatDiscountedPrice } = useCurrency()
+const { formatPrice, formatMemberPrice } = useCurrency()
 const queryCache = useQueryCache()
 const bookInfo = useBookInfo({ nftClassId: props.nftClassId })
 const { getResizedImageURL } = useImageResize()
@@ -171,10 +171,14 @@ const isPlusReadingIconVisible = computed(() =>
 )
 
 const formattedDiscountPrice = computed(() => {
-  if (isLikerPlus.value && price.value > 0) {
-    return formatDiscountedPrice(price.value, PLUS_BOOK_PURCHASE_DISCOUNT, priceCurrencyOverride.value)
-  }
-  return null
+  if (!isLikerPlus.value || price.value <= 0) return null
+  const { plusPrice, plusPriceInDecimalByCurrency } = bookInfo.minPricingItem.value ?? {}
+  return formatMemberPrice({
+    price: price.value,
+    priceInDecimalByCurrency: priceCurrencyOverride.value,
+    plusPrice,
+    plusPriceInDecimalByCurrency,
+  }, PLUS_BOOK_PURCHASE_DISCOUNT)
 })
 
 // An impression is what the reader saw, so it waits for the observer on every

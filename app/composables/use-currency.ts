@@ -1,5 +1,14 @@
 import { convertUSDPriceToCurrency, type PricingCurrency } from '~/utils/pricing'
 
+// The price fields formatMemberPrice needs, in the shape both a pricing item and
+// a grid card's resolved price already have.
+interface MemberPricedItem {
+  price: number
+  priceInDecimalByCurrency?: BookPriceInDecimalByCurrency
+  plusPrice?: number
+  plusPriceInDecimalByCurrency?: BookPriceInDecimalByCurrency
+}
+
 const CURRENCY_PREFIXES: Record<PricingCurrency, string> = {
   hkd: 'HK$',
   twd: 'NT$',
@@ -61,6 +70,19 @@ export default function () {
     return formatCurrencyAmount(discountedPrice, displayCurrency.value)
   }
 
+  // An explicit member price wins over the percentage: the two must never both
+  // apply, or we advertise less than checkout will charge. Callers apply their
+  // own eligibility gate first — this only decides which number to show.
+  function formatMemberPrice(
+    { price, priceInDecimalByCurrency, plusPrice, plusPriceInDecimalByCurrency }: MemberPricedItem,
+    discountRate: number,
+  ): string {
+    if (plusPrice !== undefined) {
+      return formatCurrencyAmount(resolvePrice(plusPrice, plusPriceInDecimalByCurrency), displayCurrency.value)
+    }
+    return formatDiscountedPrice(price, discountRate, priceInDecimalByCurrency)
+  }
+
   function convertPrice(
     usdPrice: number,
     priceInDecimalByCurrency?: BookPriceInDecimalByCurrency,
@@ -77,6 +99,7 @@ export default function () {
   return {
     formatPrice,
     formatDiscountedPrice,
+    formatMemberPrice,
     convertPrice,
     formatConvertedPrice,
   }
