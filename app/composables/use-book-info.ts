@@ -295,7 +295,7 @@ export default function (
   })
 
   const keywords = computed(() => {
-    return bookstoreInfo.value?.keywords.filter(keyword => !!keyword) || []
+    return bookstoreInfo.value?.keywords?.filter(keyword => !!keyword) || []
   })
 
   const promotionalImages = computed(() => {

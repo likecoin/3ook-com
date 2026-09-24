@@ -671,9 +671,12 @@ const isDesktopScreen = useDesktopScreen()
 const { isApp } = useAppDetection()
 
 const nftClassId = computed(() => getRouteParam('nftClassId'))
-const { isOwner: isUserBookOwner } = useUserBookOwnership(nftClassId)
 // The product page renders the owner, so it opts into fetching their profile.
 const bookInfo = useBookInfo({ nftClassId, isOwnerInfoEnabled: true })
+// A non-NFT product mints no token, so an on-chain ownership read would only fail.
+const { isOwner: isUserBookOwner } = useUserBookOwnership(
+  computed(() => (bookInfo.isNonNFT.value ? '' : nftClassId.value)),
+)
 
 const { catchPlusReadingRemovedRedirect } = usePlusReadingRemovedNotice()
 
@@ -871,7 +874,9 @@ await callOnce(async () => {
     const data = await ensureNFTClassAggregatedMetadataThroughCache(queryCache, nftClassId.value, {
       nocache: isCacheDisabled.value,
     })
-    if (!data.classData && !getNFTClassMetadataByIdFromCache(queryCache, nftClassId.value)) {
+    // A non-NFT product has no chain class; its listing is what makes the page exist.
+    // Read the cache: `data` omits bookstore info that was already cached.
+    if (!isNonNFT.value && !data.classData && !getNFTClassMetadataByIdFromCache(queryCache, nftClassId.value)) {
       throw createError({ statusCode: 404 })
     }
   }
@@ -1398,11 +1403,14 @@ onMounted(async () => {
   })
 
   useLogEvent('view_item', formattedLogPayload.value)
-  fetchNFTClassMessagesThroughCache(queryCache, nftClassId.value).catch((error) => {
-    // Absorbed: the tab just stays empty. Warn, not error — console.error is
-    // captured as an exception and this failure needs no triage.
-    console.warn(`Failed to fetch messages for NFT class ${nftClassId.value}:`, error)
-  })
+  // The buyer-messages tab is book-only; with nothing fetched it never shows.
+  if (!isNonNFT.value) {
+    fetchNFTClassMessagesThroughCache(queryCache, nftClassId.value).catch((error) => {
+      // Absorbed: the tab just stays empty. Warn, not error — console.error is
+      // captured as an exception and this failure needs no triage.
+      console.warn(`Failed to fetch messages for NFT class ${nftClassId.value}:`, error)
+    })
+  }
   const ownerWalletAddress = bookInfo.nftClassOwnerWalletAddress.value
   if (ownerWalletAddress) {
     authorStore.lazyFetchBookClassByOwnerWallet(ownerWalletAddress).catch((error) => {
