@@ -143,6 +143,11 @@ declare global {
     autoMemo: string
     isAllowCustomPrice: boolean
     isTippingEnabled: boolean
+    // Non-NFT products only: an explicit member price (USD cents) that replaces
+    // the flat Plus book discount, so the two never stack. Eligibility is
+    // getIsEligibleForPlusPrice; the API re-checks it at checkout.
+    plusPriceInDecimal?: number
+    plusPriceInDecimalByCurrency?: BookPriceInDecimalByCurrency
     order: number
   }
 

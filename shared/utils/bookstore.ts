@@ -80,6 +80,18 @@ export function getIsShippedProduct(productType: BookProductType | undefined): b
   return productType === 'merch'
 }
 
+// Mirrors the API's getIsEligibleForPlusPrice: yearly Plus or any paid Civic,
+// never a trialist, since a HK$1 trial would otherwise buy the member price.
+export function getIsEligibleForPlusPrice(user?: {
+  isLikerPlus?: boolean
+  isLikerPlusTrial?: boolean
+  likerPlusPeriod?: string
+  likerPlusTier?: string
+} | null): boolean {
+  if (!user?.isLikerPlus || user.isLikerPlusTrial) return false
+  return user.likerPlusPeriod === 'year' || user.likerPlusTier === 'civic'
+}
+
 // A free edition is a listed (non-unlisted) price-0 edition. Kept in lockstep
 // with ebook-cors, which independently gates free library access the same way.
 export function getHasFreeEdition(prices?: BookstorePrice[]): boolean {

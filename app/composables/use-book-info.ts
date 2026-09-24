@@ -324,6 +324,9 @@ export default function (
           description: localeString(item.description),
           price: item.price,
           priceInDecimalByCurrency: item.priceInDecimalByCurrency,
+          // USD, like `price`: the API sends only the cents value.
+          plusPrice: item.plusPriceInDecimal !== undefined ? item.plusPriceInDecimal / 100 : undefined,
+          plusPriceInDecimalByCurrency: item.plusPriceInDecimalByCurrency,
           currency: item.price > 0 ? 'USD' : '',
           isSoldOut: item.isSoldOut,
           canTip: item.isAllowCustomPrice && item.isTippingEnabled,
