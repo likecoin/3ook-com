@@ -73,7 +73,7 @@
         >
           <span
             class="px-6 text-xs text-muted"
-            v-text="$t('claim_page_description_await_for_delivery')"
+            v-text="$t(bookInfo.isNonNFT.value ? 'claim_page_description_await_for_shipping' : 'claim_page_description_await_for_delivery')"
           />
           <UButton
             class="max-w-[348px] mt-2"
@@ -556,7 +556,8 @@ const isClaimSettledWithoutDelivery = computed(() =>
   isClaimed.value && !isAutoDeliver.value && !isLoading.value && !isClaiming.value)
 
 watch([hasLoggedIn, canStartReading, isClaimSettledWithoutDelivery], async () => {
-  if (!hasLoggedIn.value || isOpenCollectorMessageModal.value) return
+  // Messages go to the author, which makes no sense for merch.
+  if (!hasLoggedIn.value || isOpenCollectorMessageModal.value || bookInfo.isNonNFT.value) return
 
   if (canStartReading.value) {
     if (preferredMotion.value !== 'reduce') await sleep(COLLECTOR_MODAL_DELAY_MS)

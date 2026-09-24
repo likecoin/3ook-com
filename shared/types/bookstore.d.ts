@@ -187,7 +187,7 @@ declare global {
     reviewURL?: string
     author: BookEntity
     genre?: string
-    keywords: string[]
+    keywords?: string[]
     thumbnailUrl: string
     usageInfo: string
     tableOfContents?: string
