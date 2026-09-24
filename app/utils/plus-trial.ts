@@ -21,6 +21,10 @@ export interface PlusTrialPeriodInput {
   iapTrialPeriodDays?: number
   isExpiredLikerPlus?: boolean
   hasCoupon?: boolean
+  // The visitor came in through an affiliate link (`?from=`).
+  // Affiliate traffic stays out of the experiment:
+  // the affiliate is promising their audience the standard offer.
+  hasAffiliate?: boolean
   // The affiliate opted out of gifting on a trial *and* has a book to gift.
   // An affiliate with nothing to gift keeps the standard trial,
   // mirroring the backend, which reads giftOnTrial only alongside giftBooks.
@@ -30,7 +34,7 @@ export interface PlusTrialPeriodInput {
 
 export interface PlusTrialPeriod {
   trialPeriodDays: number
-  // True only when the length came from the site-wide default,
+  // True only for a plain visitor on the site-wide default length,
   // the one population the experiment is allowed to move.
   isExperimentEligible: boolean
 }
@@ -41,6 +45,7 @@ export function getPlusTrialPeriod({
   iapTrialPeriodDays = 0,
   isExpiredLikerPlus = false,
   hasCoupon = false,
+  hasAffiliate = false,
   isAffiliateGiftOnTrialDisabled = false,
   experimentVariant = null,
 }: PlusTrialPeriodInput = {}): PlusTrialPeriod {
@@ -59,6 +64,7 @@ export function getPlusTrialPeriod({
   if (queriedPeriodDays !== undefined) return decided(queriedPeriodDays)
   if (isAffiliateGiftOnTrialDisabled) return decided(0)
   if (hasCoupon) return decided(0)
+  if (hasAffiliate) return decided(DEFAULT_TRIAL_PERIOD_DAYS)
   return {
     trialPeriodDays: experimentVariant === PLUS_TRIAL_OFF_VARIANT ? 0 : DEFAULT_TRIAL_PERIOD_DAYS,
     isExperimentEligible: true,

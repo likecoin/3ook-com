@@ -418,6 +418,10 @@ const trialPeriodInput = computed<PlusTrialPeriodInput>(() => ({
   iapTrialPeriodDays: iapOverrides.value.trialPeriodDays,
   isExpiredLikerPlus: isExpiredLikerPlus.value,
   hasCoupon: !!coupon.value,
+  // Keyed on the `?from=` query rather than the loaded config,
+  // so an affiliate visit never enters the experiment while the config
+  // is still in flight.
+  hasAffiliate: !!affiliateLikerId.value,
   isAffiliateGiftOnTrialDisabled:
     activeAffiliate.value?.giftOnTrial === false && !!giftBooks.value.length,
 }))

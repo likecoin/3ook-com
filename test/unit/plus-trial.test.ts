@@ -10,17 +10,42 @@ describe('getPlusTrialPeriod', () => {
     })
   })
 
+  it('keeps an affiliate visitor on the default trial and out of the experiment', () => {
+    expect(getPlusTrialPeriod({ hasAffiliate: true })).toEqual({
+      trialPeriodDays: DEFAULT_TRIAL_PERIOD_DAYS,
+      isExperimentEligible: false,
+    })
+  })
+
+  // With an affiliate the flag is never read,
+  // so a stray off variant must not take the trial away either.
+  it('keeps the default trial for an affiliate visitor even in the off variant', () => {
+    expect(getPlusTrialPeriod({
+      hasAffiliate: true,
+      experimentVariant: PLUS_TRIAL_OFF_VARIANT,
+    })).toEqual({
+      trialPeriodDays: DEFAULT_TRIAL_PERIOD_DAYS,
+      isExperimentEligible: false,
+    })
+  })
+
   // The bug this replaces: an affiliate with only custom voices and no gift book
   // lost the trial, so their link charged the full price immediately.
   it('keeps the default trial for an affiliate with nothing to gift', () => {
-    expect(getPlusTrialPeriod({ isAffiliateGiftOnTrialDisabled: false })).toEqual({
+    expect(getPlusTrialPeriod({
+      hasAffiliate: true,
+      isAffiliateGiftOnTrialDisabled: false,
+    })).toEqual({
       trialPeriodDays: DEFAULT_TRIAL_PERIOD_DAYS,
-      isExperimentEligible: true,
+      isExperimentEligible: false,
     })
   })
 
   it('drops the trial for an affiliate that gifts a book off-trial only', () => {
-    expect(getPlusTrialPeriod({ isAffiliateGiftOnTrialDisabled: true })).toEqual({
+    expect(getPlusTrialPeriod({
+      hasAffiliate: true,
+      isAffiliateGiftOnTrialDisabled: true,
+    })).toEqual({
       trialPeriodDays: 0,
       isExperimentEligible: false,
     })
