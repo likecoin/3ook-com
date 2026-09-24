@@ -55,6 +55,31 @@ export function getIsBookRegionRestricted(
   return restrictedTerritories.some(territory => territory.toUpperCase() === region)
 }
 
+// The inverse gate: a good sold in one market only lists the regions it may be
+// offered in, where restrictedTerritories lists the ones it may not. An absent or
+// empty list means everywhere, so books are unaffected. A region that has not
+// resolved yet is not treated as unavailable — the caller shows a placeholder
+// rather than hiding a product the reader can actually buy.
+export function getIsRegionUnavailable(
+  availableTerritories: string[] | undefined,
+  region: RegionCode | undefined,
+): boolean {
+  if (!availableTerritories?.length || !region) return false
+  // Same unnormalized upstream values as restrictedTerritories, so uppercase both.
+  return !availableTerritories.some(territory => territory.toUpperCase() === region)
+}
+
+// A non-NFT product has no chain class, so it opts out of every book-only surface.
+// Absent means 'book', so the existing catalogue reads as books without a backfill.
+export function getIsNonNFTProduct(productType: BookProductType | undefined): boolean {
+  return !!productType && productType !== 'book'
+}
+
+// Physical merch: ships to an address, so it is gated on availableTerritories.
+export function getIsShippedProduct(productType: BookProductType | undefined): boolean {
+  return productType === 'merch'
+}
+
 // A free edition is a listed (non-unlisted) price-0 edition. Kept in lockstep
 // with ebook-cors, which independently gates free library access the same way.
 export function getHasFreeEdition(prices?: BookstorePrice[]): boolean {

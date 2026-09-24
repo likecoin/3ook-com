@@ -32,13 +32,33 @@ export default function (
 
   const authorName = computed(() => getBookEntityName(bookInfo.author.value))
 
+  // Per-locale listing copy wins; the plain string is the fallback for either.
+  function getLocalizedCopy(copy: BookLocalizedCopy | undefined, fallback?: string): string {
+    return (copy && localeString(copy as Record<string, string>)) || fallback || ''
+  }
+
   const description = computed(() => {
-    return bookstoreInfo.value?.descriptionFull || bookstoreInfo.value?.description || ''
+    const info = bookstoreInfo.value
+    return getLocalizedCopy(info?.descriptionFullByLocale, info?.descriptionFull)
+      || getLocalizedCopy(info?.descriptionByLocale, info?.description)
   })
 
   const descriptionSummary = computed(() => {
     return bookstoreInfo.value?.descriptionSummary || ''
   })
+
+  const isNonNFT = computed(() => getIsNonNFTProduct(bookstoreInfo.value?.productType))
+  const isShipped = computed(() => getIsShippedProduct(bookstoreInfo.value?.productType))
+
+  // Non-NFT products have no chain class, so their title and cover live on the listing.
+  // Books keep reading chain metadata, which is the published record of the work.
+  const listingAwareName = computed(() => (isNonNFT.value
+    ? getLocalizedCopy(bookstoreInfo.value?.nameByLocale, bookstoreInfo.value?.name)
+    : bookInfo.name.value))
+
+  const listingAwareCoverSrc = computed(() => (isNonNFT.value
+    ? normalizeURIToHTTP(bookstoreInfo.value?.thumbnailUrl)
+    : bookInfo.coverSrc.value))
 
   const bookReviewInfo = computed(() => {
     if (!bookstoreInfo.value?.reviewURL) {
@@ -190,9 +210,17 @@ export default function (
       && !!getIsBookstorePendingReviewFromCache(queryCache, toValue(nftClassId))
   })
 
-  const { getIsRegionRestricted } = useBookRegionGate()
+  const { getIsRegionRestricted, getIsRegionUnsupported } = useBookRegionGate()
   const isRegionRestricted = computed(() => {
     return getIsRegionRestricted(bookstoreInfo.value?.restrictedTerritories)
+  })
+
+  // What the buy CTA gates on: compliance blocks plus the shipping allow-list.
+  const isRegionUnsupported = computed(() => {
+    return getIsRegionUnsupported({
+      restrictedTerritories: bookstoreInfo.value?.restrictedTerritories,
+      availableTerritories: bookstoreInfo.value?.availableTerritories,
+    })
   })
 
   const isApprovedForSale = computed(() => {
@@ -371,7 +399,12 @@ export default function (
 
   return {
     ...bookInfo,
+    // Must follow the spread: these shadow `bookInfo`'s chain-sourced versions.
+    name: listingAwareName,
+    coverSrc: listingAwareCoverSrc,
 
+    isNonNFT,
+    isShipped,
     nftClassOwnerWalletAddress,
     nftClassOwnerName,
     authorName,
@@ -399,6 +432,7 @@ export default function (
     hasBookstoreInfo,
     isWithheldPendingReview,
     isRegionRestricted,
+    isRegionUnsupported,
     isApprovedForSale,
     isApprovedForIndexing,
     isApprovedForAds,

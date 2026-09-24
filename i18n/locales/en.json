@@ -291,6 +291,7 @@
   "book_list_item_removed_toast_description": "Removed from cart",
   "book_list_item_sold_out": "Sold out",
   "book_list_loading_description": "Loading cart",
+  "book_list_mixed_product_type_hint": "Books and other products are checked out separately. Selecting one clears the other.",
   "book_list_please_login": "Please login to view your cart",
   "book_list_title": "Cart",
   "bookshelf_export_annotations_empty": "No annotations to export",

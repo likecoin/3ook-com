@@ -291,6 +291,7 @@
   "book_list_item_removed_toast_description": "已從購物車移除",
   "book_list_item_sold_out": "已售罄",
   "book_list_loading_description": "購物車載入中",
+  "book_list_mixed_product_type_hint": "書籍與其他商品須分開結帳，選擇其一會清除另一項。",
   "book_list_please_login": "請登入以查看購物車",
   "book_list_title": "購物車",
   "bookshelf_export_annotations_empty": "沒有標註可匯出",

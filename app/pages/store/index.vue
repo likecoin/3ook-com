@@ -289,7 +289,7 @@ const { handleError } = useErrorHandler()
 const storePageState = useStorePageState(listingRouteName)
 const isOnline = useOnline()
 const isAdultContentEnabled = useAdultContentSetting()
-const { getIsRegionRestricted } = useBookRegionGate()
+const { getIsRegionUnsupported } = useBookRegionGate()
 const { isApp } = useAppDetection()
 const intercom = useIntercom()
 // Effective Plus (canonical flag OR optimistic device-store entitlement) so a
@@ -688,7 +688,10 @@ const baseProducts = computed<BookstoreItemList>(() => {
     const filtered = searchResults.value.items.filter((item) => {
       const bookstoreInfo = getBookstoreInfoByNFTClassIdFromCache(queryCache, item.classId || '')
       return !shouldFilterAdultOnly(bookstoreInfo)
-        && !getIsRegionRestricted(item.restrictedTerritories ?? bookstoreInfo?.restrictedTerritories)
+        && !getIsRegionUnsupported({
+          restrictedTerritories: item.restrictedTerritories ?? bookstoreInfo?.restrictedTerritories,
+          availableTerritories: item.availableTerritories ?? bookstoreInfo?.availableTerritories,
+        })
     })
     return {
       ...searchResults.value,
@@ -708,7 +711,7 @@ const baseProducts = computed<BookstoreItemList>(() => {
       if (bookInfo === null) return
       if (bookInfo?.isHidden) return
       if (shouldFilterAdultOnly(bookInfo)) return
-      if (getIsRegionRestricted(bookInfo?.restrictedTerritories)) return
+      if (getIsRegionUnsupported(bookInfo ?? {})) return
       items.push({
         id: item.nftClassId,
         classId: item.nftClassId,
@@ -736,14 +739,20 @@ const baseProducts = computed<BookstoreItemList>(() => {
     items = filterKeepingIdentity(items, (item) => {
       const bookstoreInfo = getBookstoreInfoByNFTClassIdFromCache(queryCache, item.classId || item.id || '')
       return !bookstoreInfo?.isHidden
-        && !getIsRegionRestricted(bookstoreInfo?.restrictedTerritories)
+        && !getIsRegionUnsupported({
+          restrictedTerritories: bookstoreInfo?.restrictedTerritories,
+          availableTerritories: bookstoreInfo?.availableTerritories,
+        })
     })
   }
   // One pass: each extra filterKeepingIdentity still walks the list and allocates
   // a result before deciding nothing was dropped.
   items = filterKeepingIdentity(items, item => (
     (isAdultContentEnabled.value || !item.isAdultOnly)
-    && !getIsRegionRestricted(item.restrictedTerritories)
+    && !getIsRegionUnsupported({
+      restrictedTerritories: item.restrictedTerritories,
+      availableTerritories: item.availableTerritories,
+    })
   ))
   return items === cmsProducts.value.items ? cmsProducts.value : { ...cmsProducts.value, items }
 })
