@@ -226,6 +226,8 @@ export default function (
   // Hidden for everyone; a 'plus-reading' book is decided per read instead.
   const isAudioHidden = computed(() => audioAccess.value === 'none')
 
+  const isAudioPlusReadingOnly = computed(() => audioAccess.value === 'plus-reading')
+
   // Reactive when called inside a computed; `isLibraryBook` is only known in the reader.
   function getIsAudioHiddenForRead(context: { isLibraryBook: boolean, isLikerPlus: boolean }) {
     return getIsBookAudioHiddenForRead(bookstoreInfo.value, context)
@@ -416,6 +418,7 @@ export default function (
     isApprovedForAds,
     isDownloadable,
     isAudioHidden,
+    isAudioPlusReadingOnly,
     getIsAudioHiddenForRead,
     isUpsellDisabled,
     isPlusPromoEnabled,
