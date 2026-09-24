@@ -277,6 +277,13 @@ const canRead = computed(() =>
   props.isOwned || (props.isPlusReading && props.isPlusReadingAccessible),
 )
 
+const { isLikerPlus } = useSubscription()
+// The reader opens an owned copy by nft_id, so only a non-owner reads it as a borrow.
+const isAudioHidden = computed(() => bookInfo.getIsAudioHiddenForRead({
+  isLibraryBook: !props.isOwned,
+  isLikerPlus: isLikerPlus.value,
+}))
+
 // Borrowed books qualify too: the reader's gate reads the borrow from the
 // persisted shelf and Plus status from the session, both of which survive an
 // offline reload, so canRead is the whole condition on this side as well.
@@ -321,7 +328,7 @@ const menuItems = computed<DropdownMenuItem[]>(() => {
 
   // TTS
   if (canRead.value) {
-    if (bookInfo.isAudioHidden.value) {
+    if (isAudioHidden.value) {
       items.push({
         label: $t('bookshelf_item_menu_tts_disabled'),
         icon: 'i-material-symbols-graphic-eq-rounded',
