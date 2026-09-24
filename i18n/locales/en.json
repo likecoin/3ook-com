@@ -888,6 +888,7 @@
   "product_page_claim_button_label": "Own for Free",
   "product_page_delivery_refund_note_instant": "Ebooks are delivered to your account instantly after purchase. All sales are final; refunds are considered for duplicate or faulty purchases.",
   "product_page_delivery_refund_note_link": "Learn more",
+  "product_page_delivery_refund_note_shipped": "Shipped to the address you enter at checkout.",
   "product_page_delivery_refund_note_signed": "This edition is signed by the author and delivered to your account within 1–7 days of purchase. All sales are final; refunds are considered for duplicate or faulty purchases.",
   "product_page_description_summary_label": "Companion's Note",
   "product_page_edition_title": "{name}* Signed by the author, shipping will be slightly delayed.",

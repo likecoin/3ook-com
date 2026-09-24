@@ -604,11 +604,13 @@ const {
 } = useSubscriptionModal()
 
 const shippingReturnRefundURL = computed(() => getDocsArticleURL('shippingReturnRefund', locale.value))
-const deliveryRefundNote = computed(() =>
-  selectedPricingItem.value?.isAutoDeliver
+// A non-NFT edition is never auto-delivered, but it is shipped, not author-signed.
+const deliveryRefundNote = computed(() => {
+  if (isNonNFT.value) return $t('product_page_delivery_refund_note_shipped')
+  return selectedPricingItem.value?.isAutoDeliver
     ? $t('product_page_delivery_refund_note_instant')
-    : $t('product_page_delivery_refund_note_signed'),
-)
+    : $t('product_page_delivery_refund_note_signed')
+})
 
 const colorMode = useColorMode()
 const ttsTagColor = computed(() => colorMode.value === 'dark' ? 'primary' : 'secondary')
@@ -1163,7 +1165,7 @@ const pricingItems = computed(() => {
       const isMemberPriceShown = (isNonNFT.value || willPlusDiscountApply.value) && item.price > 0
       return {
         ...item,
-        label: item.isAutoDeliver ? item.name : $t('product_page_edition_title', { name: item.name }),
+        label: item.isAutoDeliver || isNonNFT.value ? item.name : $t('product_page_edition_title', { name: item.name }),
         originalPrice: formatPrice(item.price, item.priceInDecimalByCurrency),
         discountedPrice: isMemberPriceShown ? formatMemberPrice({ ...item, isNonNFT: isNonNFT.value }, PLUS_BOOK_PURCHASE_DISCOUNT) : null,
         isSelected: index === selectedPricingItemIndex.value,
