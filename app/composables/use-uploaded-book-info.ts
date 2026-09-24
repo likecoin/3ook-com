@@ -41,6 +41,7 @@ export default function (
 
   // Properties that don't apply to uploaded books
   const isAudioHidden = computed(() => false)
+  const getIsAudioHiddenForRead = () => false
   const isCustomMessageEnabled = computed(() => false)
   const isDownloadable = computed(() => false)
   const isPlusReadingEnabled = computed(() => false)
@@ -61,6 +62,7 @@ export default function (
     defaultContentURL,
     getReaderRoute,
     isAudioHidden,
+    getIsAudioHiddenForRead,
     isCustomMessageEnabled,
     isDownloadable,
     isPlusReadingEnabled,

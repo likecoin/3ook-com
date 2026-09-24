@@ -23,7 +23,7 @@
         :book-name="bookInfo.name.value"
         :nft-class-id="nftClassId"
         :pdf-buffer="fileBuffer"
-        :is-audio-hidden="bookInfo.isAudioHidden.value"
+        :is-audio-hidden="isAudioHidden"
         :is-tts-extracting="isTTSExtracting"
         :is-preview="isPreviewMode"
         :back-to="backRoute"
@@ -75,13 +75,18 @@ const {
   bookProgressKeyPrefix,
 } = useReader()
 
-const { isLibraryBook } = usePlusReadingTracker({
+const { isLibraryBook, libraryBookCheck } = usePlusReadingTracker({
   nftClassId,
   isUploadedBook,
   isPlusReadingEnabled: bookInfo.isPlusReadingEnabled,
   hasFreeEdition: bookInfo.hasFreeEdition,
   nftId,
 })
+const { isLikerPlus } = useSubscription()
+const isAudioHidden = computed(() => bookInfo.getIsAudioHiddenForRead({
+  isLibraryBook: isLibraryBook.value,
+  isLikerPlus: isLikerPlus.value,
+}))
 
 const { handlePreviewEndBoundary } = usePreviewEndModal({
   nftClassId,
@@ -197,7 +202,7 @@ async function loadPDF() {
   fileBuffer.value = buffer
 }
 
-function handlePDFLoaded(pdfDocument: PDFDocumentProxy) {
+async function handlePDFLoaded(pdfDocument: PDFDocumentProxy) {
   isPDFReady.value = true
   loadedPDFDocument.value = pdfDocument
   currentPageIndex.value = pdfReaderRef.value?.currentPage || 1
@@ -206,7 +211,9 @@ function handlePDFLoaded(pdfDocument: PDFDocumentProxy) {
   fileBuffer.value = null
 
   if (isTTSQueryParam.value) {
-    if (bookInfo.isAudioHidden.value) {
+    // A free borrow, confirmed only after mount, can unlock TTS on a Plus-reading-only book.
+    if (isAudioHidden.value) await libraryBookCheck
+    if (isAudioHidden.value) {
       setTTSQueryParam(false)
     }
     else {

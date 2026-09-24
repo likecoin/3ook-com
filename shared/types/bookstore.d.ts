@@ -161,6 +161,7 @@ declare global {
     restrictedTerritories?: string[]
     hideDownload: boolean
     hideAudio: boolean
+    isAudioPlusReadingOnly?: boolean
     hideUpsell: boolean
     enableCustomMessagePage: boolean
     name: string

@@ -1,6 +1,12 @@
 import type { LocationQueryRaw } from 'vue-router'
 import { getGenreI18nKey } from '~~/shared/constants/book-categories'
-import { getBookEntityName, getHasFreeEdition, getIsPlusReadingRemoved } from '~~/shared/utils/bookstore'
+import {
+  getBookAudioAccess,
+  getBookEntityName,
+  getHasFreeEdition,
+  getIsBookAudioHiddenForRead,
+  getIsPlusReadingRemoved,
+} from '~~/shared/utils/bookstore'
 
 export default function (
   { nftClassId, isOwnerInfoEnabled = false }: {
@@ -215,9 +221,15 @@ export default function (
     return !bookstoreInfo.value?.hideDownload || false
   })
 
-  const isAudioHidden = computed(() => {
-    return bookstoreInfo.value?.hideAudio || false
-  })
+  const audioAccess = computed(() => getBookAudioAccess(bookstoreInfo.value))
+
+  // Hidden for everyone; a 'plus-reading' book is decided per read instead.
+  const isAudioHidden = computed(() => audioAccess.value === 'none')
+
+  // Reactive when called inside a computed; `isLibraryBook` is only known in the reader.
+  function getIsAudioHiddenForRead(context: { isLibraryBook: boolean, isLikerPlus: boolean }) {
+    return getIsBookAudioHiddenForRead(bookstoreInfo.value, context)
+  }
 
   const isUpsellDisabled = computed(() => {
     return bookstoreInfo.value?.hideUpsell || false
@@ -404,6 +416,7 @@ export default function (
     isApprovedForAds,
     isDownloadable,
     isAudioHidden,
+    getIsAudioHiddenForRead,
     isUpsellDisabled,
     isPlusPromoEnabled,
     isPlusReadingEnabled,

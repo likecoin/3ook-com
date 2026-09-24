@@ -191,7 +191,7 @@
             <UButton
               :class="[
                 'laptop:hidden',
-                { 'opacity-50 cursor-not-allowed': isReaderLoading || bookInfo.isAudioHidden.value },
+                { 'opacity-50 cursor-not-allowed': isReaderLoading || isAudioHidden },
               ]"
               icon="i-material-symbols-play-arrow-rounded"
               variant="solid"
@@ -201,7 +201,7 @@
               @click="handleMobileTTSClick"
             />
             <UTooltip
-              :disabled="!bookInfo.isAudioHidden.value"
+              :disabled="!isAudioHidden"
               :text="$t('reader_text_to_speech_button_disabled_tooltip')"
             >
               <UButton
@@ -211,7 +211,7 @@
                 variant="solid"
                 color="primary"
                 :loading="isTTSExtracting"
-                :disabled="isReaderLoading || bookInfo.isAudioHidden.value"
+                :disabled="isReaderLoading || isAudioHidden"
                 :ui="ttsButtonUI"
                 @click="onClickTTSPlay"
               />
@@ -391,13 +391,18 @@ const {
   bookProgressKeyPrefix,
 } = useReader()
 
-const { isLibraryBook } = usePlusReadingTracker({
+const { isLibraryBook, libraryBookCheck } = usePlusReadingTracker({
   nftClassId,
   isUploadedBook,
   isPlusReadingEnabled: bookInfo.isPlusReadingEnabled,
   hasFreeEdition: bookInfo.hasFreeEdition,
   nftId,
 })
+const { isLikerPlus } = useSubscription()
+const isAudioHidden = computed(() => bookInfo.getIsAudioHiddenForRead({
+  isLibraryBook: isLibraryBook.value,
+  isLikerPlus: isLikerPlus.value,
+}))
 
 const { openPreviewEndModal, handlePreviewEndBoundary } = usePreviewEndModal({
   nftClassId,
@@ -1518,8 +1523,14 @@ async function loadEPub() {
   // Clear stale TTS index from previous session so it doesn't override current page position
   activeTTSElementIndex.value = undefined
 
+  // A free borrow, confirmed only after mount, can unlock TTS on a Plus-reading-only book.
+  if (isAudioHidden.value) {
+    await libraryBookCheck
+    if (isUnmounting || rendition.value !== currentRendition) return
+  }
+
   if (isTTSQueryParam.value) {
-    if (bookInfo.isAudioHidden.value) {
+    if (isAudioHidden.value) {
       setTTSQueryParam(false)
       afterLoadingScreen(() => toast.add({
         title: $t('reader_text_to_speech_button_disabled_tooltip'),
@@ -1537,7 +1548,7 @@ async function loadEPub() {
       afterLoadingScreen(onClickTTSPlay)
     }
   }
-  else if (shouldShowTTSTryModal.value && !bookInfo.isAudioHidden.value) {
+  else if (shouldShowTTSTryModal.value && !isAudioHidden.value) {
     afterLoadingScreen(openTTSTryModal)
   }
 }
@@ -2104,7 +2115,7 @@ async function handleSearchNavigate(result: ReaderSearchResult) {
 }
 
 function handleMobileTTSClick() {
-  if (bookInfo.isAudioHidden.value) {
+  if (isAudioHidden.value) {
     toast.add({
       title: $t('reader_text_to_speech_button_disabled_tooltip'),
       duration: 3000,
