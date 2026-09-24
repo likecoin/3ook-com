@@ -57,7 +57,7 @@
       </header>
 
       <p
-        v-if="hasMixedProductTypes"
+        v-if="hasMixedCheckoutGroups"
         class="py-2 text-sm text-muted"
         v-text="$t('book_list_mixed_product_type_hint')"
       />
@@ -163,28 +163,30 @@ async function handleBackButtonClick() {
 const selectedItemIds = ref<Set<string>>(new Set())
 const hasSelectedItems = computed(() => selectedItemIds.value.size > 0)
 
-// A goods item narrows the checkout session's shippable countries, which would
-// geo-block any books alongside it — the API rejects a mixed cart, so selection
-// is kept homogeneous here instead of letting the user reach that error.
+// A merch item narrows the checkout session's shippable countries, which would
+// geo-block any books alongside it — the API rejects a cart mixing product types
+// or merch territory lists, so selection is kept to one checkout group here.
 // Undefined until the listing loads: an unread row must not pass as a book.
-function getItemProductType({ nftClassId }: Pick<BookListItem, 'nftClassId'>): BookProductType | undefined {
+function getItemCheckoutGroup({ nftClassId }: Pick<BookListItem, 'nftClassId'>): string | undefined {
   const info = getBookstoreInfoByNFTClassIdFromCache(queryCache, nftClassId)
   if (!info) return undefined
-  return getIsGoodsProduct(info.productType) ? 'goods' : 'book'
+  const productType = info.productType || 'book'
+  if (!getIsShippedProduct(info.productType)) return productType
+  return `${productType}:${[...(info.availableTerritories || [])].sort().join(',')}`
 }
 
-const selectedProductType = computed<BookProductType | undefined>(() => {
+const selectedCheckoutGroup = computed(() => {
   const selected = bookListStore.items.find(
     item => selectedItemIds.value.has(getBookListItemId(item.nftClassId, item.priceIndex)),
   )
-  return selected && getItemProductType(selected)
+  return selected && getItemCheckoutGroup(selected)
 })
 
-const hasMixedProductTypes = computed(() => {
+const hasMixedCheckoutGroups = computed(() => {
   const [first] = bookListStore.items
   if (!first) return false
-  const firstType = getItemProductType(first)
-  return bookListStore.items.some(item => getItemProductType(item) !== firstType)
+  const firstGroup = getItemCheckoutGroup(first)
+  return bookListStore.items.some(item => getItemCheckoutGroup(item) !== firstGroup)
 })
 
 function handleSelectAllUpdate(isSelected: 'indeterminate' | boolean) {
@@ -192,11 +194,11 @@ function handleSelectAllUpdate(isSelected: 'indeterminate' | boolean) {
     // Extends whatever is already selected, else takes the list's first type —
     // "select all" then reads top-down rather than silently favouring books.
     const [firstItem] = bookListStore.items
-    const targetType = selectedProductType.value
-      ?? (firstItem && getItemProductType(firstItem))
+    const targetGroup = selectedCheckoutGroup.value
+      ?? (firstItem && getItemCheckoutGroup(firstItem))
     const selected = new Set<string>()
     for (const item of bookListStore.items) {
-      if (getItemProductType(item) !== targetType) continue
+      if (getItemCheckoutGroup(item) !== targetGroup) continue
       selected.add(getBookListItemId(item.nftClassId, item.priceIndex))
     }
     selectedItemIds.value = selected
@@ -268,7 +270,7 @@ async function handleCheckoutButtonClick() {
 function handleItemSelect({ nftClassId, priceIndex }: BookListItem) {
   // Switching type replaces the selection rather than refusing the click: the
   // user's latest tap is the clearer statement of what they want to buy.
-  if (selectedProductType.value && selectedProductType.value !== getItemProductType({ nftClassId })) {
+  if (selectedCheckoutGroup.value && selectedCheckoutGroup.value !== getItemCheckoutGroup({ nftClassId })) {
     selectedItemIds.value.clear()
   }
   selectedItemIds.value.add(getBookListItemId(nftClassId, priceIndex))
@@ -284,7 +286,7 @@ async function fetchBookList() {
   try {
     await bookListStore.loadItems()
     // Select-all never scrolls, so the per-row lazy fetch would leave unread rows
-    // unclassified and let a goods item be selected alongside a book.
+    // unclassified and let a merch item be selected alongside a book.
     await Promise.allSettled(bookListStore.items.map(
       item => ensureNFTClassAggregatedMetadataThroughCache(queryCache, item.nftClassId),
     ))

@@ -28,7 +28,7 @@ export function useBookRegionGate() {
     return getIsBookRegionRestricted(restrictedTerritories, region.value)
   }
 
-  // Merchandising/logistics gate, not compliance: goods list the regions they ship
+  // Merchandising/logistics gate, not compliance: merch lists the regions it ships
   // to. Denial outranks availability, so a territory on both lists stays blocked.
   function getIsRegionUnsupported(
     { restrictedTerritories, availableTerritories }: {

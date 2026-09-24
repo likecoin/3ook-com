@@ -207,7 +207,7 @@
                 @click="handleKeywordClick(tag)"
               />
             </li>
-            <li v-if="!isGoods && !bookInfo.isAudioHidden.value">
+            <li v-if="!isNonNFT && !bookInfo.isAudioHidden.value">
               <UButton
                 ref="ttsPlusTagUpsell"
                 :label="ttsTagLabel"
@@ -218,7 +218,7 @@
                 @click="handleTTSTagClick"
               />
             </li>
-            <li v-if="!isGoods && !isLibrary && isPlusReadingEnabled">
+            <li v-if="!isNonNFT && !isLibrary && isPlusReadingEnabled">
               <UButton
                 ref="plusReadingTagUpsell"
                 :label="plusReadingTagLabel"
@@ -685,15 +685,15 @@ const listingRouteName = computed(() => (isLibrary.value ? 'library' : 'store'))
 
 const isPlusReadingEnabled = bookInfo.isPlusReadingEnabled
 
-// Goods reuse this page but are not books: no chain class to stake against, no
-// reader, no TTS. Each book-only surface below is gated on this rather than the
-// page being forked, so the two stay in step.
-const isGoods = bookInfo.isGoods
+// Non-NFT products reuse this page but are not books: no chain class to stake
+// against, no reader, no TTS. Each book-only surface below is gated on this
+// rather than the page being forked, so the two stay in step.
+const isNonNFT = bookInfo.isNonNFT
 
-// Two gates, two reasons: a restricted title is withheld, a good simply does not
+// Two gates, two reasons: a restricted title is withheld, merch simply does not
 // ship here. Saying "not available" for the latter reads like a licensing block.
 const regionUnsupportedNotice = computed(() => {
-  if (!bookInfo.isRegionRestricted.value && isGoods.value) {
+  if (!bookInfo.isRegionRestricted.value && bookInfo.isShipped.value) {
     return $t('product_page_region_unavailable_notice')
   }
   return $t('product_page_region_restricted_notice')
@@ -767,10 +767,10 @@ const isCheckoutVisible = computed(() =>
 const isCartCTAVisible = computed(() =>
   isCheckoutVisible.value && !isFreeBorrowOnly.value && !isSelectedPricingItemSoldOut.value,
 )
-// Gifting mails the recipient a claim link, which a shipped item cannot honour —
-// the buyer's own address is collected at checkout, not the recipient's.
+// Gifting mails the recipient a claim link, which a non-NFT order never has —
+// merch ships to the buyer's own address, collected at checkout.
 const isGiftCTAVisible = computed(() =>
-  isCartCTAVisible.value && bookInfo.isApprovedForSale.value && !isGoods.value,
+  isCartCTAVisible.value && bookInfo.isApprovedForSale.value && !isNonNFT.value,
 )
 const bookListButtonProps = computed(() => (isInBookList.value
   ? {
@@ -1101,9 +1101,9 @@ const infoTabItems = computed(() => {
     })
   }
 
-  // Every other tab is data-driven and so drops out for goods on its own; this
-  // one is not, and a goods SKU has no class to stake against.
-  if (!isGoods.value && (!bookInfo.isHidden.value || userStake.value > 0n)) {
+  // Every other tab is data-driven and so drops out for non-NFT products on its
+  // own; this one is not, and a non-NFT SKU has no class to stake against.
+  if (!isNonNFT.value && (!bookInfo.isHidden.value || userStake.value > 0n)) {
     items.push({
       label: $t('staking_info_tab_staking_info'),
       slot: 'staking-info',
@@ -1154,12 +1154,14 @@ const pricingItems = computed(() => {
   return bookInfo.pricingItems.value
     .filter(item => !isApp.value || item.price === 0)
     .map((item, index) => {
-      const isMemberPriceShown = willPlusDiscountApply.value && item.price > 0
+      // The flat discount honours the affiliate opt-out; a non-NFT member price
+      // applies on any channel, gated on eligibility inside formatMemberPrice.
+      const isMemberPriceShown = (isNonNFT.value || willPlusDiscountApply.value) && item.price > 0
       return {
         ...item,
         label: item.isAutoDeliver ? item.name : $t('product_page_edition_title', { name: item.name }),
         originalPrice: formatPrice(item.price, item.priceInDecimalByCurrency),
-        discountedPrice: isMemberPriceShown ? formatMemberPrice(item, PLUS_BOOK_PURCHASE_DISCOUNT) : null,
+        discountedPrice: isMemberPriceShown ? formatMemberPrice({ ...item, isNonNFT: isNonNFT.value }, PLUS_BOOK_PURCHASE_DISCOUNT) : null,
         isSelected: index === selectedPricingItemIndex.value,
         renderedDescription: renderDescription(item.description || ''),
       }
@@ -1430,8 +1432,8 @@ onMounted(async () => {
   }
 
   checkBookListStatus()
-  // A goods SKU has no deployed contract, so this would read an empty address.
-  if (!isGoods.value) await loadStakingData()
+  // A non-NFT SKU has no deployed contract, so this would read an empty address.
+  if (!isNonNFT.value) await loadStakingData()
   initializeTabFromHash()
   await nextTick()
   isTabInitialized.value = true

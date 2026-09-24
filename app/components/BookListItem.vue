@@ -131,6 +131,7 @@ const formattedDiscountedPrice = computed(() => {
     priceInDecimalByCurrency: priceCurrencyOverride.value,
     plusPrice: pricingItem.value?.plusPrice,
     plusPriceInDecimalByCurrency: pricingItem.value?.plusPriceInDecimalByCurrency,
+    isNonNFT: bookInfo.isNonNFT.value,
   }, PLUS_BOOK_PURCHASE_DISCOUNT)
 })
 const isSoldOut = computed(() => pricingItem.value?.isSoldOut || false)

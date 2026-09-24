@@ -32,23 +32,31 @@ export default function (
 
   const authorName = computed(() => getBookEntityName(bookInfo.author.value))
 
+  // Per-locale listing copy wins; the plain string is the fallback for either.
+  function getLocalizedCopy(copy: BookLocalizedCopy | undefined, fallback?: string): string {
+    return (copy && localeString(copy as Record<string, string>)) || fallback || ''
+  }
+
   const description = computed(() => {
-    return bookstoreInfo.value?.descriptionFull || bookstoreInfo.value?.description || ''
+    const info = bookstoreInfo.value
+    return getLocalizedCopy(info?.descriptionFullByLocale, info?.descriptionFull)
+      || getLocalizedCopy(info?.descriptionByLocale, info?.description)
   })
 
   const descriptionSummary = computed(() => {
     return bookstoreInfo.value?.descriptionSummary || ''
   })
 
-  const isGoods = computed(() => getIsGoodsProduct(bookstoreInfo.value?.productType))
+  const isNonNFT = computed(() => getIsNonNFTProduct(bookstoreInfo.value?.productType))
+  const isShipped = computed(() => getIsShippedProduct(bookstoreInfo.value?.productType))
 
-  // Goods have no on-chain class, so their title and cover live on the listing.
+  // Non-NFT products have no chain class, so their title and cover live on the listing.
   // Books keep reading chain metadata, which is the published record of the work.
-  const goodsAwareName = computed(() => (isGoods.value
-    ? bookstoreInfo.value?.name || ''
+  const listingAwareName = computed(() => (isNonNFT.value
+    ? getLocalizedCopy(bookstoreInfo.value?.nameByLocale, bookstoreInfo.value?.name)
     : bookInfo.name.value))
 
-  const goodsAwareCoverSrc = computed(() => (isGoods.value
+  const listingAwareCoverSrc = computed(() => (isNonNFT.value
     ? normalizeURIToHTTP(bookstoreInfo.value?.thumbnailUrl)
     : bookInfo.coverSrc.value))
 
@@ -316,7 +324,8 @@ export default function (
           description: localeString(item.description),
           price: item.price,
           priceInDecimalByCurrency: item.priceInDecimalByCurrency,
-          plusPrice: item.plusPrice,
+          // USD, like `price`: the API sends only the cents value.
+          plusPrice: item.plusPriceInDecimal !== undefined ? item.plusPriceInDecimal / 100 : undefined,
           plusPriceInDecimalByCurrency: item.plusPriceInDecimalByCurrency,
           currency: item.price > 0 ? 'USD' : '',
           isSoldOut: item.isSoldOut,
@@ -394,10 +403,11 @@ export default function (
   return {
     ...bookInfo,
     // Must follow the spread: these shadow `bookInfo`'s chain-sourced versions.
-    name: goodsAwareName,
-    coverSrc: goodsAwareCoverSrc,
+    name: listingAwareName,
+    coverSrc: listingAwareCoverSrc,
 
-    isGoods,
+    isNonNFT,
+    isShipped,
     nftClassOwnerWalletAddress,
     nftClassOwnerName,
     authorName,

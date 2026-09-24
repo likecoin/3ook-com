@@ -12,9 +12,9 @@ export interface BookstoreCMSProduct {
   // ISO country codes the storefront must not offer this book in (e.g. ['HK']).
   restrictedTerritories?: string[]
   // The inverse of restrictedTerritories: the only regions this may be offered in.
-  // Absent means everywhere. Set on goods that ship to one market only.
+  // Absent means everywhere. Set on merch that ships to one market only.
   availableTerritories?: string[]
-  // Absent means 'book' — only non-book goods carry the discriminator.
+  // Absent means 'book' — only non-book products carry the discriminator.
   productType?: BookProductType
   isPlusReadingEnabled?: boolean
   isMultiple?: boolean
@@ -143,10 +143,10 @@ declare global {
     autoMemo: string
     isAllowCustomPrice: boolean
     isTippingEnabled: boolean
-    // An explicit member price for this edition, overriding the flat Plus book
-    // discount. Set per edition because it is a price, not a percentage — the
-    // two must never both apply. Eligibility is resolved server-side.
-    plusPrice?: number
+    // Non-NFT products only: an explicit member price (USD cents) that replaces
+    // the flat Plus book discount, so the two never stack. Eligibility is
+    // getIsEligibleForPlusPrice; the API re-checks it at checkout.
+    plusPriceInDecimal?: number
     plusPriceInDecimalByCurrency?: BookPriceInDecimalByCurrency
     order: number
   }
@@ -172,10 +172,9 @@ declare global {
     isAdultOnly?: boolean
     restrictedTerritories?: string[]
     availableTerritories?: string[]
-    // Absent means 'book'. Goods reuse the listing pipeline but opt out of every
-    // book-only surface: reader, library, DRM, recommendations, chain metadata.
+    // Absent means 'book'. Non-NFT products reuse the listing pipeline but opt out
+    // of every book-only surface: reader, library, DRM, recommendations, chain metadata.
     productType?: BookProductType
-    fulfilment?: BookFulfilmentType
     maxQuantityPerOrder?: number
     hideDownload: boolean
     hideAudio: boolean
@@ -184,6 +183,10 @@ declare global {
     name: string
     description: string
     descriptionFull?: string
+    // Optional per-locale copy; the plain strings above stay the fallback.
+    nameByLocale?: BookLocalizedCopy
+    descriptionByLocale?: BookLocalizedCopy
+    descriptionFullByLocale?: BookLocalizedCopy
     descriptionSummary?: string
     reviewTitle?: string
     reviewURL?: string

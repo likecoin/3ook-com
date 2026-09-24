@@ -7,6 +7,7 @@ interface MemberPricedItem {
   priceInDecimalByCurrency?: BookPriceInDecimalByCurrency
   plusPrice?: number
   plusPriceInDecimalByCurrency?: BookPriceInDecimalByCurrency
+  isNonNFT?: boolean
 }
 
 const CURRENCY_PREFIXES: Record<PricingCurrency, string> = {
@@ -18,6 +19,8 @@ const CURRENCY_PREFIXES: Record<PricingCurrency, string> = {
 export default function () {
   const { t: $t } = useI18n()
   const { displayCurrency } = usePaymentCurrency()
+  const { user, loggedIn: hasLoggedIn } = useUserSession()
+  const isPlusPriceEligible = computed(() => hasLoggedIn.value && getIsEligibleForPlusPrice(user.value))
 
   function getCurrencyPrefix(currency: PricingCurrency) {
     return CURRENCY_PREFIXES[currency] ?? 'US$'
@@ -70,14 +73,15 @@ export default function () {
     return formatCurrencyAmount(discountedPrice, displayCurrency.value)
   }
 
-  // An explicit member price wins over the percentage: the two must never both
-  // apply, or we advertise less than checkout will charge. Callers apply their
-  // own eligibility gate first — this only decides which number to show.
+  // Mirrors checkout: books take the flat Plus discount, non-NFT products only
+  // their explicit member price and only for eligible members, so the two never
+  // stack. Callers gate books on Plus themselves; null means show list price.
   function formatMemberPrice(
-    { price, priceInDecimalByCurrency, plusPrice, plusPriceInDecimalByCurrency }: MemberPricedItem,
+    { price, priceInDecimalByCurrency, plusPrice, plusPriceInDecimalByCurrency, isNonNFT }: MemberPricedItem,
     discountRate: number,
-  ): string {
-    if (plusPrice !== undefined) {
+  ): string | null {
+    if (isNonNFT) {
+      if (plusPrice === undefined || !isPlusPriceEligible.value) return null
       return formatCurrencyAmount(resolvePrice(plusPrice, plusPriceInDecimalByCurrency), displayCurrency.value)
     }
     return formatDiscountedPrice(price, discountRate, priceInDecimalByCurrency)

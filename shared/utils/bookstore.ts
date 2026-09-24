@@ -71,10 +71,27 @@ export function getIsRegionUnavailable(
   return !availableTerritories.some(territory => territory.toUpperCase() === region)
 }
 
-// Non-book goods opt out of every book-only surface. Absent means 'book', so the
-// whole existing catalogue reads as books without a backfill.
-export function getIsGoodsProduct(productType: BookProductType | undefined): boolean {
-  return productType === 'goods'
+// A non-NFT product has no chain class, so it opts out of every book-only surface.
+// Absent means 'book', so the existing catalogue reads as books without a backfill.
+export function getIsNonNFTProduct(productType: BookProductType | undefined): boolean {
+  return !!productType && productType !== 'book'
+}
+
+// Physical merch: ships to an address, so it is gated on availableTerritories.
+export function getIsShippedProduct(productType: BookProductType | undefined): boolean {
+  return productType === 'merch'
+}
+
+// Mirrors the API's getIsEligibleForPlusPrice: yearly Plus or any paid Civic,
+// never a trialist, since a HK$1 trial would otherwise buy the member price.
+export function getIsEligibleForPlusPrice(user?: {
+  isLikerPlus?: boolean
+  isLikerPlusTrial?: boolean
+  likerPlusPeriod?: string
+  likerPlusTier?: string
+} | null): boolean {
+  if (!user?.isLikerPlus || user.isLikerPlusTrial) return false
+  return user.likerPlusPeriod === 'year' || user.likerPlusTier === 'civic'
 }
 
 // A free edition is a listed (non-unlisted) price-0 edition. Kept in lockstep
