@@ -776,10 +776,14 @@ const bookListButtonProps = computed(() => (isInBookList.value
   ? {
       icon: 'i-material-symbols-shopping-cart-rounded',
       label: $t('product_page_remove_from_book_list_button_label'),
+      isDisabled: false,
     }
   : {
       icon: 'i-material-symbols-add-shopping-cart-rounded',
       label: $t('product_page_add_to_book_list_button_label'),
+      // Checkout rejects an unapproved listing, so don't let it into the cart;
+      // one already there stays removable.
+      isDisabled: !bookInfo.isApprovedForSale.value,
     }))
 
 // 試閱: non-owners may read the first chapters free when the listing opted in;

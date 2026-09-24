@@ -12,6 +12,7 @@ export interface ProductActionButtonsProps {
   bookListButtonProps: {
     icon: string
     label: string
+    isDisabled: boolean
   }
   isBookListLoading: boolean
   isGiftCtaVisible: boolean
