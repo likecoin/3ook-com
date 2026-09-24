@@ -1430,6 +1430,7 @@ async function handlePurchaseButtonClick() {
         utmCampaign: `upsell_plus_${nftClassId.value}`,
         utmMedium: 'product_page',
         from: from.value || undefined,
+        isAudioHidden: bookInfo.isAudioHidden.value,
       })
       if (isStartSubscription) return
     }
