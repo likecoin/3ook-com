@@ -255,6 +255,8 @@ export default function (
     return bookstoreInfo.value?.plusPromoEnabled || false
   })
 
+  const isPlusPromoYearly = computed(() => bookstoreInfo.value?.plusPromoPeriod === 'year')
+
   const isPlusReadingEnabled = computed(() => {
     return bookstoreInfo.value?.isPlusReadingEnabled || false
   })
@@ -443,6 +445,7 @@ export default function (
     isAudioHidden,
     isUpsellDisabled,
     isPlusPromoEnabled,
+    isPlusPromoYearly,
     isPlusReadingEnabled,
     isPlusReadingRemoved,
     isPreviewEnabled,
