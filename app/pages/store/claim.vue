@@ -34,8 +34,8 @@
       <BookPlusPromoAlert
         v-if="isPlusPromoBannerVisible"
         class="w-full max-w-[348px] mb-6"
-        :title="$t(bookInfo.isPlusPromoYearly.value ? 'claim_page_plus_promo_title_yearly' : 'claim_page_plus_promo_title')"
-        :description="$t(bookInfo.isPlusPromoYearly.value ? 'claim_page_plus_promo_description_yearly' : 'claim_page_plus_promo_description')"
+        :title="plusPromoTitle"
+        :description="plusPromoDescription"
       />
 
       <BookLoadingScreen
@@ -227,6 +227,9 @@ const receivedNFTId = computed(() => bookInfo.firstUserOwnedNFTId.value)
 const canStartReading = computed(() => !!receivedNFTId.value)
 const isCheckingItemsDelivery = ref(false)
 const hasBypassedIndexer = ref(false)
+
+const plusPromoTitle = computed(() => $t(bookInfo.isPlusPromoYearly.value ? 'claim_page_plus_promo_title_yearly' : 'claim_page_plus_promo_title'))
+const plusPromoDescription = computed(() => $t(bookInfo.isPlusPromoYearly.value ? 'claim_page_plus_promo_description_yearly' : 'claim_page_plus_promo_description'))
 
 const isPlusPromoBannerVisible = computed(() => {
   return bookInfo.isPlusPromoEnabled.value && !user.value?.isLikerPlus && !isApp.value
