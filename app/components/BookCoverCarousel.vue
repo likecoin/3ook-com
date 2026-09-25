@@ -1,133 +1,137 @@
 <template>
-  <div
-    v-if="carouselItems.length > 1"
-    class="relative"
-  >
-    <UCarousel
-      v-slot="{ item }"
-      :items="carouselItems"
-      dots
-      loop
-      fade
-      auto-height
-      :autoplay="{ delay: 5000, stopOnInteraction: true }"
-      :ui="{
-        item: 'basis-full aspect-2/3 cursor-pointer',
-        dots: 'relative bottom-0 gap-2 mt-2',
-        dot: 'size-2 bg-accented data-[active]:bg-(--ui-text-muted)',
-      }"
+  <!-- Single root so the parent's classes fall through despite the modal sibling;
+       grid keeps the lone cover stretched so its vertical centering still works. -->
+  <div class="grid">
+    <div
+      v-if="carouselItems.length > 1"
+      class="relative"
     >
-      <div
-        class="relative flex items-center justify-center w-full h-full"
-        @click="openModal(item)"
+      <UCarousel
+        v-slot="{ item }"
+        :items="carouselItems"
+        dots
+        loop
+        fade
+        auto-height
+        :autoplay="{ delay: 5000, stopOnInteraction: true }"
+        :ui="{
+          item: 'basis-full aspect-2/3 cursor-pointer',
+          dots: 'relative bottom-0 gap-2 mt-2',
+          dot: 'size-2 bg-accented data-[active]:bg-(--ui-text-muted)',
+        }"
       >
-        <BookCover
-          v-if="item.type === 'cover'"
-          class="w-full h-full"
-          :src="item.src"
-          :alt="props.alt"
-          :is-vertical-center="true"
-          :priority="true"
-        />
-
-        <img
-          v-else-if="item.type === 'image'"
-          :src="item.src"
-          :alt="props.alt"
-          :class="[
-            'max-w-full',
-            'max-h-full',
-            'object-contain',
-            'rounded-lg',
-            { 'shadow-[0_2px_4px_0_rgba(0,0,0,0.10)]': props.hasShadow },
-          ]"
-        >
-
-        <BookCoverCarouselVideoThumbnail
-          v-else-if="item.type === 'youtube' && item.videoId"
-          :src="getYouTubeThumbnailUrl(item.videoId)"
-          :alt="props.alt"
-        />
-
-        <BookCoverCarouselVideoThumbnail
-          v-else-if="item.type === 'video'"
-          :src="props.coverSrc"
-          :alt="props.alt"
-        />
-      </div>
-    </UCarousel>
-  </div>
-
-  <BookCover
-    v-else
-    :src="props.coverSrc"
-    :alt="props.alt"
-    :is-vertical-center="true"
-    :has-shadow="props.hasShadow"
-    :priority="true"
-    @click="handleSingleCoverClick"
-  />
-
-  <UModal
-    v-if="props.isZoomEnabled || carouselItems.length > 1"
-    v-model:open="isModalOpen"
-    :ui="{
-      content: 'max-w-4xl bg-black',
-    }"
-    :close="{ color: 'neutral', variant: 'ghost', class: 'text-white' }"
-  >
-    <template #content>
-      <div class="relative">
-        <img
-          v-if="modalItem?.type === 'cover' || modalItem?.type === 'image'"
-          :src="modalItem?.fullSrc || modalItem?.src"
-          :alt="props.alt"
-          class="w-full h-auto max-h-[80vh] object-contain"
-        >
-
         <div
-          v-else-if="modalItem?.type === 'youtube' && modalItem?.videoId"
-          class="aspect-video"
+          class="relative flex items-center justify-center w-full h-full"
+          @click="openModal(item)"
         >
-          <ScriptYouTubePlayer
-            :video-id="modalItem.videoId"
-            :player-vars="{ autoplay: 1, rel: 0, playsinline: 1 }"
-            :cookies="true"
-            trigger="visible"
+          <BookCover
+            v-if="item.type === 'cover'"
             class="w-full h-full"
+            :src="item.src"
+            :alt="props.alt"
+            :is-vertical-center="true"
+            :priority="true"
+          />
+
+          <img
+            v-else-if="item.type === 'image'"
+            :src="item.src"
+            :alt="props.alt"
+            :class="[
+              'max-w-full',
+              'max-h-full',
+              'object-contain',
+              'rounded-lg',
+              { 'shadow-[0_2px_4px_0_rgba(0,0,0,0.10)]': props.hasShadow },
+            ]"
+          >
+
+          <BookCoverCarouselVideoThumbnail
+            v-else-if="item.type === 'youtube' && item.videoId"
+            :src="getYouTubeThumbnailUrl(item.videoId)"
+            :alt="props.alt"
+          />
+
+          <BookCoverCarouselVideoThumbnail
+            v-else-if="item.type === 'video'"
+            :src="props.coverSrc"
+            :alt="props.alt"
           />
         </div>
+      </UCarousel>
+    </div>
 
-        <video
-          v-else-if="modalItem?.type === 'video'"
-          :src="modalItem?.src"
-          controls
-          autoplay
-          playsinline
-          class="w-full max-h-[80vh]"
-        />
+    <BookCover
+      v-else
+      :src="props.coverSrc"
+      :alt="props.alt"
+      :is-vertical-center="true"
+      :has-shadow="props.hasShadow"
+      :priority="true"
+      @click="handleSingleCoverClick"
+    />
 
-        <template v-if="carouselItems.length > 1">
-          <UButton
-            icon="i-material-symbols-chevron-left"
-            color="neutral"
-            variant="ghost"
-            aria-label="Previous"
-            class="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-black/50 text-white hover:bg-black/70 cursor-pointer"
-            @click="navigateModal(-1)"
+    <UModal
+      v-if="props.isZoomEnabled || carouselItems.length > 1"
+      v-model:open="isModalOpen"
+      :ui="{
+        content: 'max-w-4xl bg-black',
+      }"
+      :close="{ color: 'neutral', variant: 'ghost', class: 'text-white' }"
+    >
+      <template #content>
+        <div class="relative">
+          <img
+            v-if="modalItem?.type === 'cover' || modalItem?.type === 'image'"
+            :src="modalItem?.fullSrc || modalItem?.src"
+            :alt="props.alt"
+            class="w-full h-auto max-h-[80vh] object-contain"
+          >
+
+          <div
+            v-else-if="modalItem?.type === 'youtube' && modalItem?.videoId"
+            class="aspect-video"
+          >
+            <ScriptYouTubePlayer
+              :video-id="modalItem.videoId"
+              :player-vars="{ autoplay: 1, rel: 0, playsinline: 1 }"
+              :cookies="true"
+              trigger="visible"
+              class="w-full h-full"
+            />
+          </div>
+
+          <video
+            v-else-if="modalItem?.type === 'video'"
+            :src="modalItem?.src"
+            controls
+            autoplay
+            playsinline
+            class="w-full max-h-[80vh]"
           />
-          <UButton
-            icon="i-material-symbols-chevron-right"
-            color="neutral"
-            variant="ghost"
-            aria-label="Next"
-            class="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-black/50 text-white hover:bg-black/70 cursor-pointer"
-            @click="navigateModal(1)"
-          />
-        </template>
-      </div>
-    </template>
-  </UModal>
+
+          <template v-if="carouselItems.length > 1">
+            <UButton
+              icon="i-material-symbols-chevron-left"
+              color="neutral"
+              variant="ghost"
+              aria-label="Previous"
+              class="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-black/50 text-white hover:bg-black/70 cursor-pointer"
+              @click="navigateModal(-1)"
+            />
+            <UButton
+              icon="i-material-symbols-chevron-right"
+              color="neutral"
+              variant="ghost"
+              aria-label="Next"
+              class="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-black/50 text-white hover:bg-black/70 cursor-pointer"
+              @click="navigateModal(1)"
+            />
+          </template>
+        </div>
+      </template>
+    </UModal>
+  </div>
 </template>
 
 <script setup lang="ts">
