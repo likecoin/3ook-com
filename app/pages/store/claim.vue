@@ -34,8 +34,8 @@
       <BookPlusPromoAlert
         v-if="isPlusPromoBannerVisible"
         class="w-full max-w-[348px] mb-6"
-        :title="$t('claim_page_plus_promo_title')"
-        :description="$t('claim_page_plus_promo_description')"
+        :title="$t(bookInfo.isPlusPromoYearly.value ? 'claim_page_plus_promo_title_yearly' : 'claim_page_plus_promo_title')"
+        :description="$t(bookInfo.isPlusPromoYearly.value ? 'claim_page_plus_promo_description_yearly' : 'claim_page_plus_promo_description')"
       />
 
       <BookLoadingScreen

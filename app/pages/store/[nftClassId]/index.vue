@@ -18,8 +18,8 @@
           class="tablet:hidden z-20 w-full max-w-[1280px] bg-(--app-bg) shadow-lg rounded-2xl mb-4"
         >
           <BookPlusPromoAlert
-            :title="$t('product_page_plus_promo_title')"
-            :description="$t('product_page_plus_promo_description')"
+            :title="plusPromoTitle"
+            :description="plusPromoDescription"
             theme="cyan"
           />
         </aside>
@@ -360,8 +360,8 @@
             v-if="isPlusPromoBannerVisible"
             class="max-tablet:hidden"
             theme="cyan"
-            :title="$t('product_page_plus_promo_title')"
-            :description="$t('product_page_plus_promo_description')"
+            :title="plusPromoTitle"
+            :description="plusPromoDescription"
           />
 
           <StakingControl
@@ -958,6 +958,9 @@ const utmCampaignMessage = computed(() => {
 const coupon = computed(() => getRouteQuery('coupon') || undefined)
 const quantity = computed(() => Math.max(parseInt(getRouteQuery('quantity'), 10) || 1, 1))
 const isRedirectedFromUpsell = computed(() => getRouteQuery('upsell') === '1')
+
+const plusPromoTitle = computed(() => $t(bookInfo.isPlusPromoYearly.value ? 'product_page_plus_promo_title_yearly' : 'product_page_plus_promo_title'))
+const plusPromoDescription = computed(() => $t(bookInfo.isPlusPromoYearly.value ? 'product_page_plus_promo_description_yearly' : 'product_page_plus_promo_description'))
 
 const isPlusPromoBannerVisible = computed(() => {
   return bookInfo.isPlusPromoEnabled.value && !isLikerPlus.value && !isApp.value && !isUserBookOwner.value

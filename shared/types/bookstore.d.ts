@@ -201,6 +201,7 @@ declare global {
     promotionalImages?: string[]
     promotionalVideos?: string[]
     plusPromoEnabled?: boolean
+    plusPromoPeriod?: 'month' | 'year'
     isPlusReadingEnabled?: boolean
     isPreviewEnabled?: boolean
     previewPercentage?: number
