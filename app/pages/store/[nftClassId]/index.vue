@@ -53,6 +53,7 @@
             :promotional-videos="bookInfo.promotionalVideos.value"
             :has-shadow="true"
             :nft-class-id="nftClassId"
+            :is-zoom-enabled="isNonNFT"
           />
 
           <div class="flex flex-col justify-center">
@@ -470,7 +471,7 @@
     >
       <RecommendedBookGrid
         class="w-full mt-12 laptop:mt-20"
-        :title="$t('product_page_related_books_title')"
+        :title="isNonNFT ? $t('product_page_related_products_title') : $t('product_page_related_books_title')"
         :nft-class-ids="filteredRecommendedClassIds"
         :feed="feedRecommendations"
         :ll-source="nftClassId"
@@ -1069,7 +1070,7 @@ const infoTabItems = computed(() => {
 
   if (bookInfo.description.value) {
     items.push({
-      label: $t('product_page_info_tab_description'),
+      label: isNonNFT.value ? $t('product_page_info_tab_product_description') : $t('product_page_info_tab_description'),
       slot: 'description',
       value: 'description',
     })
