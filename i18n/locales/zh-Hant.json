@@ -479,6 +479,7 @@
   "claim_page_collector_message_title": "想對作者說點什麼嗎？",
   "claim_page_content_url_not_found_error": "無法取得內容地址",
   "claim_page_description_await_for_delivery": "作者將親自簽署及留言，請稍等，發貨後我們將以電子郵件通知，感謝支持。",
+  "claim_page_description_await_for_shipping": "訂單已確認，發貨後我們將以電子郵件通知，感謝支持。",
   "claim_page_gift_anonymous": "一位朋友",
   "claim_page_gift_from": "來自 {name} 的禮物",
   "claim_page_loading_label": "驗證中",
