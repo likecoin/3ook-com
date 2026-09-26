@@ -191,18 +191,20 @@
             <UButton
               :class="[
                 'laptop:hidden',
-                { 'opacity-50 cursor-not-allowed': isReaderLoading || bookInfo.isAudioHidden.value },
+                { 'opacity-50 cursor-not-allowed': isReaderLoading || isAudioUnlicensed },
               ]"
               icon="i-material-symbols-play-arrow-rounded"
               variant="solid"
               color="primary"
               :loading="isTTSExtracting"
               :ui="ttsButtonUI"
-              @click="handleMobileTTSClick"
+              @click="handleTTSButtonClick"
             />
             <UTooltip
-              :disabled="!bookInfo.isAudioHidden.value"
-              :text="$t('reader_text_to_speech_button_disabled_tooltip')"
+              :disabled="!isAudioHidden || isAudioPending"
+              :text="isAudioPlusRequired
+                ? $t('reader_text_to_speech_plus_reading_only')
+                : $t('reader_text_to_speech_button_disabled_tooltip')"
             >
               <UButton
                 class="max-laptop:hidden"
@@ -211,9 +213,9 @@
                 variant="solid"
                 color="primary"
                 :loading="isTTSExtracting"
-                :disabled="isReaderLoading || bookInfo.isAudioHidden.value"
+                :disabled="isReaderLoading || isAudioUnlicensed"
                 :ui="ttsButtonUI"
-                @click="onClickTTSPlay"
+                @click="handleTTSButtonClick"
               />
             </UTooltip>
           </div>
@@ -331,6 +333,11 @@
       @save="handleAnnotationModalSave"
       @delete="handleAnnotationModalDelete"
     />
+
+    <TTSPlusPaywallHost
+      v-if="isAudioPlusRequired"
+      ref="ttsPlusPaywallHost"
+    />
   </main>
 </template>
 
@@ -391,13 +398,29 @@ const {
   bookProgressKeyPrefix,
 } = useReader()
 
-const { isLibraryBook } = usePlusReadingTracker({
+const { isLibraryBook, libraryBookCheck } = usePlusReadingTracker({
   nftClassId,
   isUploadedBook,
   isPlusReadingEnabled: bookInfo.isPlusReadingEnabled,
   hasFreeEdition: bookInfo.hasFreeEdition,
   nftId,
 })
+const { isLikerPlus } = useSubscription()
+const isAudioHidden = computed(() => bookInfo.getIsAudioHiddenForRead({
+  isLibraryBook: isLibraryBook.value,
+  isLikerPlus: isLikerPlus.value,
+}))
+const isLibraryBookChecked = ref(false)
+libraryBookCheck.then(() => isLibraryBookChecked.value = true)
+const isAudioPlusRequiredForRead = computed(() => bookInfo.getIsAudioPlusRequiredForRead({
+  isLibraryBook: isLibraryBook.value,
+  isLikerPlus: isLikerPlus.value,
+}))
+// A free borrow looks like a non-Plus owner until the borrow check settles.
+const isAudioPending = computed(() => !isLibraryBookChecked.value && isAudioPlusRequiredForRead.value)
+const isAudioPlusRequired = computed(() => isLibraryBookChecked.value && isAudioPlusRequiredForRead.value)
+const isAudioUnlicensed = computed(() => isAudioHidden.value && !isAudioPlusRequired.value)
+const ttsPlusPaywallHost = useTemplateRef('ttsPlusPaywallHost')
 
 const { openPreviewEndModal, handlePreviewEndBoundary } = usePreviewEndModal({
   nftClassId,
@@ -1518,8 +1541,21 @@ async function loadEPub() {
   // Clear stale TTS index from previous session so it doesn't override current page position
   activeTTSElementIndex.value = undefined
 
+  // A free borrow, confirmed only after mount, can unlock TTS on a Plus-reading-only book.
+  if (isAudioHidden.value) {
+    await libraryBookCheck
+    if (isUnmounting || rendition.value !== currentRendition) return
+  }
+
   if (isTTSQueryParam.value) {
-    if (bookInfo.isAudioHidden.value) {
+    if (isAudioPlusRequired.value) {
+      setTTSQueryParam(false)
+      afterLoadingScreen(async () => {
+        await nextTick()
+        ttsPlusPaywallHost.value?.showNoticeWithPlusAction(getTTSPlusPaywallOptions())
+      })
+    }
+    else if (isAudioHidden.value) {
       setTTSQueryParam(false)
       afterLoadingScreen(() => toast.add({
         title: $t('reader_text_to_speech_button_disabled_tooltip'),
@@ -1537,7 +1573,7 @@ async function loadEPub() {
       afterLoadingScreen(onClickTTSPlay)
     }
   }
-  else if (shouldShowTTSTryModal.value && !bookInfo.isAudioHidden.value) {
+  else if (shouldShowTTSTryModal.value && !isAudioHidden.value) {
     afterLoadingScreen(openTTSTryModal)
   }
 }
@@ -2103,8 +2139,24 @@ async function handleSearchNavigate(result: ReaderSearchResult) {
   useLogEvent('reader_search_navigate', { nft_class_id: nftClassId.value })
 }
 
-function handleMobileTTSClick() {
-  if (bookInfo.isAudioHidden.value) {
+function getTTSPlusPaywallOptions() {
+  return {
+    nftClassId: nftClassId.value,
+    utmSource: 'epub_reader',
+  }
+}
+
+function handleTTSButtonClick() {
+  if (isAudioPending.value) return
+  if (isAudioPlusRequired.value) {
+    useLogEvent('reader_tts_plus_reading_only_click', {
+      nft_class_id: nftClassId.value,
+      trigger: 'tts_button',
+    })
+    ttsPlusPaywallHost.value?.openPlusPaywall(getTTSPlusPaywallOptions())
+    return
+  }
+  if (isAudioHidden.value) {
     toast.add({
       title: $t('reader_text_to_speech_button_disabled_tooltip'),
       duration: 3000,

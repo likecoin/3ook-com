@@ -178,6 +178,7 @@ declare global {
     maxQuantityPerOrder?: number
     hideDownload: boolean
     hideAudio: boolean
+    isAudioPlusReadingOnly?: boolean
     hideUpsell: boolean
     enableCustomMessagePage: boolean
     name: string
