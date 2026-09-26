@@ -242,6 +242,7 @@ const emit = defineEmits([
   'mark-as-finished',
   'mark-as-did-not-finish',
   'return-plus-reading',
+  'tts-plus-required',
   'archive',
   'unarchive',
 ])
@@ -280,6 +281,10 @@ const canRead = computed(() =>
 const { isLikerPlus } = useSubscription()
 // The reader opens an owned copy by nft_id, so only a non-owner reads it as a borrow.
 const isAudioHidden = computed(() => bookInfo.getIsAudioHiddenForRead({
+  isLibraryBook: !props.isOwned,
+  isLikerPlus: isLikerPlus.value,
+}))
+const isAudioPlusRequired = computed(() => bookInfo.getIsAudioPlusRequiredForRead({
   isLibraryBook: !props.isOwned,
   isLikerPlus: isLikerPlus.value,
 }))
@@ -328,7 +333,14 @@ const menuItems = computed<DropdownMenuItem[]>(() => {
 
   // TTS
   if (canRead.value) {
-    if (isAudioHidden.value) {
+    if (isAudioPlusRequired.value) {
+      items.push({
+        label: $t('bookshelf_item_menu_tts'),
+        icon: 'i-material-symbols-graphic-eq-rounded',
+        onSelect: requestTTSPlus,
+      })
+    }
+    else if (isAudioHidden.value) {
       items.push({
         label: $t('bookshelf_item_menu_tts_disabled'),
         icon: 'i-material-symbols-graphic-eq-rounded',
@@ -539,6 +551,16 @@ function openTTSPlayer() {
   const contentURL = bookInfo.defaultContentURL.value
   if (!contentURL) return
   openContentURL(contentURL, { isTTS: true })
+}
+
+// The paywall lives on the shelf page, as one per item would pile up overlays.
+function requestTTSPlus() {
+  const readerRoute = bookInfo.getReaderRoute.value({ nftId: props.nftIds?.[0] })
+  if (!readerRoute) return
+  emit('tts-plus-required', {
+    nftClassId: props.nftClassId,
+    redirectRoute: { name: readerRoute.name, query: { ...readerRoute.query, tts: '1' } },
+  })
 }
 
 async function downloadURL({ name, type, fileIndex }: { name: string, type: string, fileIndex?: number }) {

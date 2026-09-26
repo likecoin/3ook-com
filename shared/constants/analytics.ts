@@ -43,6 +43,7 @@ export const PLUS_CHECKOUT_PLACEMENTS = [
   'member-page',
   'preview-end',
   'tts-custom-voice',
+  'tts-plus-reading-only',
   'tts-trial-chip',
   'tts-trial-limit',
 ] as const
