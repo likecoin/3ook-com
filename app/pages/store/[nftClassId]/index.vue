@@ -207,7 +207,7 @@
                 @click="handleKeywordClick(tag)"
               />
             </li>
-            <li v-if="!bookInfo.isAudioHidden.value">
+            <li v-if="!bookInfo.isAudioHidden.value && !isStoreTTSPlusReadingOnly">
               <UButton
                 ref="ttsPlusTagUpsell"
                 :label="ttsTagLabel"
@@ -312,7 +312,7 @@
       </UAccordion>
 
       <UAlert
-        v-if="!bookInfo.isAudioHidden.value && !isLikerPlus && !isApp"
+        v-if="!bookInfo.isAudioHidden.value && !isStoreTTSPlusReadingOnly && !isLikerPlus && !isApp"
         :description="$t('product_page_tts_plus_explainer')"
         color="neutral"
         variant="outline"
@@ -399,7 +399,7 @@
                 :is-liker-plus="isLikerPlus"
                 :content-types="bookInfo.contentTypes.value"
                 :is-downloadable="bookInfo.isDownloadable.value"
-                :is-tts-supported="!bookInfo.isAudioHidden.value"
+                :is-tts-supported="!bookInfo.isAudioHidden.value && !isStoreTTSPlusReadingOnly"
                 :tts-tag-color="ttsTagColor"
                 @select="handlePricingItemClick"
               />
@@ -613,6 +613,8 @@ const deliveryRefundNote = computed(() =>
 const colorMode = useColorMode()
 const ttsTagColor = computed(() => colorMode.value === 'dark' ? 'primary' : 'secondary')
 const ttsTagLabel = computed(() => $t('product_page_support_tts_label'))
+// A purchase alone never unlocks TTS on these books, so the store must not advertise it.
+const isStoreTTSPlusReadingOnly = computed(() => !isLibrary.value && bookInfo.isAudioPlusReadingOnly.value)
 const ttsTagRoute = computed(() =>
   !isTagUpsellEligible.value
     ? localeRoute({
@@ -1430,6 +1432,7 @@ async function handlePurchaseButtonClick() {
         utmCampaign: `upsell_plus_${nftClassId.value}`,
         utmMedium: 'product_page',
         from: from.value || undefined,
+        isAudioHidden: bookInfo.isAudioHidden.value,
       })
       if (isStartSubscription) return
     }
