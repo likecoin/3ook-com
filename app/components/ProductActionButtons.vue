@@ -24,6 +24,7 @@
           :icon="bookListButtonProps.icon"
           :aria-label="bookListButtonProps.label"
           :loading="isBookListLoading"
+          :disabled="bookListButtonProps.isDisabled"
           @click="emit('bookList')"
         />
       </UTooltip>

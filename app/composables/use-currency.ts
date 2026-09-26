@@ -1,5 +1,15 @@
 import { convertUSDPriceToCurrency, type PricingCurrency } from '~/utils/pricing'
 
+// The price fields formatMemberPrice needs, in the shape both a pricing item and
+// a grid card's resolved price already have.
+interface MemberPricedItem {
+  price: number
+  priceInDecimalByCurrency?: BookPriceInDecimalByCurrency
+  plusPrice?: number
+  plusPriceInDecimalByCurrency?: BookPriceInDecimalByCurrency
+  isNonNFT?: boolean
+}
+
 const CURRENCY_PREFIXES: Record<PricingCurrency, string> = {
   hkd: 'HK$',
   twd: 'NT$',
@@ -9,6 +19,8 @@ const CURRENCY_PREFIXES: Record<PricingCurrency, string> = {
 export default function () {
   const { t: $t } = useI18n()
   const { displayCurrency } = usePaymentCurrency()
+  const { user, loggedIn: hasLoggedIn } = useUserSession()
+  const isPlusPriceEligible = computed(() => hasLoggedIn.value && getIsEligibleForPlusPrice(user.value))
 
   function getCurrencyPrefix(currency: PricingCurrency) {
     return CURRENCY_PREFIXES[currency] ?? 'US$'
@@ -61,6 +73,20 @@ export default function () {
     return formatCurrencyAmount(discountedPrice, displayCurrency.value)
   }
 
+  // Mirrors checkout: books take the flat Plus discount, non-NFT products only
+  // their explicit member price and only for eligible members, so the two never
+  // stack. Callers gate books on Plus themselves; null means show list price.
+  function formatMemberPrice(
+    { price, priceInDecimalByCurrency, plusPrice, plusPriceInDecimalByCurrency, isNonNFT }: MemberPricedItem,
+    discountRate: number,
+  ): string | null {
+    if (isNonNFT) {
+      if (plusPrice === undefined || !isPlusPriceEligible.value) return null
+      return formatCurrencyAmount(resolvePrice(plusPrice, plusPriceInDecimalByCurrency), displayCurrency.value)
+    }
+    return formatDiscountedPrice(price, discountRate, priceInDecimalByCurrency)
+  }
+
   function convertPrice(
     usdPrice: number,
     priceInDecimalByCurrency?: BookPriceInDecimalByCurrency,
@@ -77,6 +103,7 @@ export default function () {
   return {
     formatPrice,
     formatDiscountedPrice,
+    formatMemberPrice,
     convertPrice,
     formatConvertedPrice,
   }

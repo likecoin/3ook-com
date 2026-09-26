@@ -34,8 +34,8 @@
       <BookPlusPromoAlert
         v-if="isPlusPromoBannerVisible"
         class="w-full max-w-[348px] mb-6"
-        :title="$t('claim_page_plus_promo_title')"
-        :description="$t('claim_page_plus_promo_description')"
+        :title="plusPromoTitle"
+        :description="plusPromoDescription"
       />
 
       <BookLoadingScreen
@@ -73,7 +73,7 @@
         >
           <span
             class="px-6 text-xs text-muted"
-            v-text="$t('claim_page_description_await_for_delivery')"
+            v-text="$t(bookInfo.isNonNFT.value ? 'claim_page_description_await_for_shipping' : 'claim_page_description_await_for_delivery')"
           />
           <UButton
             class="max-w-[348px] mt-2"
@@ -227,6 +227,9 @@ const receivedNFTId = computed(() => bookInfo.firstUserOwnedNFTId.value)
 const canStartReading = computed(() => !!receivedNFTId.value)
 const isCheckingItemsDelivery = ref(false)
 const hasBypassedIndexer = ref(false)
+
+const plusPromoTitle = computed(() => $t(bookInfo.isPlusPromoYearly.value ? 'claim_page_plus_promo_title_yearly' : 'claim_page_plus_promo_title'))
+const plusPromoDescription = computed(() => $t(bookInfo.isPlusPromoYearly.value ? 'claim_page_plus_promo_description_yearly' : 'claim_page_plus_promo_description'))
 
 const isPlusPromoBannerVisible = computed(() => {
   return bookInfo.isPlusPromoEnabled.value && !user.value?.isLikerPlus && !isApp.value
@@ -556,7 +559,8 @@ const isClaimSettledWithoutDelivery = computed(() =>
   isClaimed.value && !isAutoDeliver.value && !isLoading.value && !isClaiming.value)
 
 watch([hasLoggedIn, canStartReading, isClaimSettledWithoutDelivery], async () => {
-  if (!hasLoggedIn.value || isOpenCollectorMessageModal.value) return
+  // Messages go to the author, which makes no sense for merch.
+  if (!hasLoggedIn.value || isOpenCollectorMessageModal.value || bookInfo.isNonNFT.value) return
 
   if (canStartReading.value) {
     if (preferredMotion.value !== 'reduce') await sleep(COLLECTOR_MODAL_DELAY_MS)

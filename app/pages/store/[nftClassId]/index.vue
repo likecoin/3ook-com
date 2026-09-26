@@ -18,8 +18,8 @@
           class="tablet:hidden z-20 w-full max-w-[1280px] bg-(--app-bg) shadow-lg rounded-2xl mb-4"
         >
           <BookPlusPromoAlert
-            :title="$t('product_page_plus_promo_title')"
-            :description="$t('product_page_plus_promo_description')"
+            :title="plusPromoTitle"
+            :description="plusPromoDescription"
             theme="cyan"
           />
         </aside>
@@ -36,11 +36,11 @@
         />
 
         <UAlert
-          v-if="bookInfo.isRegionRestricted.value"
+          v-if="bookInfo.isRegionUnsupported.value"
           color="warning"
           variant="subtle"
           icon="i-material-symbols-location-off-rounded"
-          :title="$t('product_page_region_restricted_notice')"
+          :title="regionUnsupportedNotice"
           :ui="{ root: 'mb-6 rounded-2xl items-center py-2' }"
         />
 
@@ -53,6 +53,7 @@
             :promotional-videos="bookInfo.promotionalVideos.value"
             :has-shadow="true"
             :nft-class-id="nftClassId"
+            :is-zoom-enabled="isNonNFT"
           />
 
           <div class="flex flex-col justify-center">
@@ -207,7 +208,7 @@
                 @click="handleKeywordClick(tag)"
               />
             </li>
-            <li v-if="!bookInfo.isAudioHidden.value">
+            <li v-if="!isNonNFT && !bookInfo.isAudioHidden.value">
               <UButton
                 ref="ttsPlusTagUpsell"
                 :label="ttsTagLabel"
@@ -218,7 +219,7 @@
                 @click="handleTTSTagClick"
               />
             </li>
-            <li v-if="!isLibrary && isPlusReadingEnabled">
+            <li v-if="!isNonNFT && !isLibrary && isPlusReadingEnabled">
               <UButton
                 ref="plusReadingTagUpsell"
                 :label="plusReadingTagLabel"
@@ -359,8 +360,8 @@
             v-if="isPlusPromoBannerVisible"
             class="max-tablet:hidden"
             theme="cyan"
-            :title="$t('product_page_plus_promo_title')"
-            :description="$t('product_page_plus_promo_description')"
+            :title="plusPromoTitle"
+            :description="plusPromoDescription"
           />
 
           <StakingControl
@@ -393,7 +394,7 @@
               ]"
             >
               <ProductPricingSelector
-                v-if="pricingItems.length && !isLibrary && !bookInfo.isRegionRestricted.value"
+                v-if="pricingItems.length && !isLibrary && !bookInfo.isRegionUnsupported.value"
                 :items="pricingItems"
                 :is-price-hidden="isFreeBorrowOnly"
                 :is-liker-plus="isLikerPlus"
@@ -470,7 +471,7 @@
     >
       <RecommendedBookGrid
         class="w-full mt-12 laptop:mt-20"
-        :title="$t('product_page_related_books_title')"
+        :title="isNonNFT ? $t('product_page_related_products_title') : $t('product_page_related_books_title')"
         :nft-class-ids="filteredRecommendedClassIds"
         :feed="feedRecommendations"
         :ll-source="nftClassId"
@@ -588,7 +589,7 @@ const getRouteBaseName = useRouteBaseName()
 const getRouteParam = useRouteParam()
 const getRouteQuery = useRouteQuery()
 const { t: $t, locale } = useI18n()
-const { formatPrice, formatDiscountedPrice } = useCurrency()
+const { formatPrice, formatMemberPrice } = useCurrency()
 const { getCheckoutCurrency } = usePaymentCurrency()
 const { loggedIn: hasLoggedIn, user } = useUserSession()
 const accountStore = useAccountStore()
@@ -604,11 +605,13 @@ const {
 } = useSubscriptionModal()
 
 const shippingReturnRefundURL = computed(() => getDocsArticleURL('shippingReturnRefund', locale.value))
-const deliveryRefundNote = computed(() =>
-  selectedPricingItem.value?.isAutoDeliver
+// A non-NFT edition is never auto-delivered, but it is shipped, not author-signed.
+const deliveryRefundNote = computed(() => {
+  if (isNonNFT.value) return $t('product_page_delivery_refund_note_shipped')
+  return selectedPricingItem.value?.isAutoDeliver
     ? $t('product_page_delivery_refund_note_instant')
-    : $t('product_page_delivery_refund_note_signed'),
-)
+    : $t('product_page_delivery_refund_note_signed')
+})
 
 const colorMode = useColorMode()
 const ttsTagColor = computed(() => colorMode.value === 'dark' ? 'primary' : 'secondary')
@@ -671,9 +674,12 @@ const isDesktopScreen = useDesktopScreen()
 const { isApp } = useAppDetection()
 
 const nftClassId = computed(() => getRouteParam('nftClassId'))
-const { isOwner: isUserBookOwner } = useUserBookOwnership(nftClassId)
 // The product page renders the owner, so it opts into fetching their profile.
 const bookInfo = useBookInfo({ nftClassId, isOwnerInfoEnabled: true })
+// A non-NFT product mints no token, so an on-chain ownership read would only fail.
+const { isOwner: isUserBookOwner } = useUserBookOwnership(
+  computed(() => (bookInfo.isNonNFT.value ? '' : nftClassId.value)),
+)
 
 const { catchPlusReadingRemovedRedirect } = usePlusReadingRemovedNotice()
 
@@ -681,6 +687,20 @@ const isLibrary = computed(() => getRouteBaseName(route) === 'library-nftClassId
 const listingRouteName = computed(() => (isLibrary.value ? 'library' : 'store'))
 
 const isPlusReadingEnabled = bookInfo.isPlusReadingEnabled
+
+// Non-NFT products reuse this page but are not books: no chain class to stake
+// against, no reader, no TTS. Each book-only surface below is gated on this
+// rather than the page being forked, so the two stay in step.
+const isNonNFT = bookInfo.isNonNFT
+
+// Two gates, two reasons: a restricted title is withheld, merch simply does not
+// ship here. Saying "not available" for the latter reads like a licensing block.
+const regionUnsupportedNotice = computed(() => {
+  if (!bookInfo.isRegionRestricted.value && bookInfo.isShipped.value) {
+    return $t('product_page_region_unavailable_notice')
+  }
+  return $t('product_page_region_restricted_notice')
+})
 
 // A member who already borrowed this book reads it now, so the CTA shows Read
 // instead of Borrow. Gate on the session: plusReadingBookIds is persisted, so a
@@ -742,7 +762,7 @@ const isFreeBorrowOnly = computed(() =>
 const isCheckoutVisible = computed(() =>
   !isLibrary.value
   && pricingItems.value.length > 0
-  && !bookInfo.isRegionRestricted.value
+  && !bookInfo.isRegionUnsupported.value
   && !(isUserBookOwner.value && isFreeBorrowOnly.value),
 )
 // Cart and gift only make sense for a priced edition that is still in stock;
@@ -750,15 +770,23 @@ const isCheckoutVisible = computed(() =>
 const isCartCTAVisible = computed(() =>
   isCheckoutVisible.value && !isFreeBorrowOnly.value && !isSelectedPricingItemSoldOut.value,
 )
-const isGiftCTAVisible = computed(() => isCartCTAVisible.value && bookInfo.isApprovedForSale.value)
+// Gifting mails the recipient a claim link, which a non-NFT order never has —
+// merch ships to the buyer's own address, collected at checkout.
+const isGiftCTAVisible = computed(() =>
+  isCartCTAVisible.value && bookInfo.isApprovedForSale.value && !isNonNFT.value,
+)
 const bookListButtonProps = computed(() => (isInBookList.value
   ? {
       icon: 'i-material-symbols-shopping-cart-rounded',
       label: $t('product_page_remove_from_book_list_button_label'),
+      isDisabled: false,
     }
   : {
       icon: 'i-material-symbols-add-shopping-cart-rounded',
       label: $t('product_page_add_to_book_list_button_label'),
+      // Checkout rejects an unapproved listing, so don't let it into the cart;
+      // one already there stays removable.
+      isDisabled: !bookInfo.isApprovedForSale.value,
     }))
 
 // 試閱: non-owners may read the first chapters free when the listing opted in;
@@ -853,7 +881,9 @@ await callOnce(async () => {
     const data = await ensureNFTClassAggregatedMetadataThroughCache(queryCache, nftClassId.value, {
       nocache: isCacheDisabled.value,
     })
-    if (!data.classData && !getNFTClassMetadataByIdFromCache(queryCache, nftClassId.value)) {
+    // A non-NFT product has no chain class; its listing is what makes the page exist.
+    // Read the cache: `data` omits bookstore info that was already cached.
+    if (!isNonNFT.value && !data.classData && !getNFTClassMetadataByIdFromCache(queryCache, nftClassId.value)) {
       throw createError({ statusCode: 404 })
     }
   }
@@ -928,6 +958,9 @@ const utmCampaignMessage = computed(() => {
 const coupon = computed(() => getRouteQuery('coupon') || undefined)
 const quantity = computed(() => Math.max(parseInt(getRouteQuery('quantity'), 10) || 1, 1))
 const isRedirectedFromUpsell = computed(() => getRouteQuery('upsell') === '1')
+
+const plusPromoTitle = computed(() => $t(bookInfo.isPlusPromoYearly.value ? 'product_page_plus_promo_title_yearly' : 'product_page_plus_promo_title'))
+const plusPromoDescription = computed(() => $t(bookInfo.isPlusPromoYearly.value ? 'product_page_plus_promo_description_yearly' : 'product_page_plus_promo_description'))
 
 const isPlusPromoBannerVisible = computed(() => {
   return bookInfo.isPlusPromoEnabled.value && !isLikerPlus.value && !isApp.value && !isUserBookOwner.value
@@ -1040,7 +1073,7 @@ const infoTabItems = computed(() => {
 
   if (bookInfo.description.value) {
     items.push({
-      label: $t('product_page_info_tab_description'),
+      label: isNonNFT.value ? $t('product_page_info_tab_product_description') : $t('product_page_info_tab_description'),
       slot: 'description',
       value: 'description',
     })
@@ -1078,7 +1111,9 @@ const infoTabItems = computed(() => {
     })
   }
 
-  if (!bookInfo.isHidden.value || userStake.value > 0n) {
+  // Every other tab is data-driven and so drops out for non-NFT products on its
+  // own; this one is not, and a non-NFT SKU has no class to stake against.
+  if (!isNonNFT.value && (!bookInfo.isHidden.value || userStake.value > 0n)) {
     items.push({
       label: $t('staking_info_tab_staking_info'),
       slot: 'staking-info',
@@ -1129,12 +1164,14 @@ const pricingItems = computed(() => {
   return bookInfo.pricingItems.value
     .filter(item => !isApp.value || item.price === 0)
     .map((item, index) => {
-      const shouldShowDiscount = willPlusDiscountApply.value && item.price > 0
+      // The flat discount honours the affiliate opt-out; a non-NFT member price
+      // applies on any channel, gated on eligibility inside formatMemberPrice.
+      const isMemberPriceShown = (isNonNFT.value || willPlusDiscountApply.value) && item.price > 0
       return {
         ...item,
-        label: item.isAutoDeliver ? item.name : $t('product_page_edition_title', { name: item.name }),
+        label: item.isAutoDeliver || isNonNFT.value ? item.name : $t('product_page_edition_title', { name: item.name }),
         originalPrice: formatPrice(item.price, item.priceInDecimalByCurrency),
-        discountedPrice: shouldShowDiscount ? formatDiscountedPrice(item.price, PLUS_BOOK_PURCHASE_DISCOUNT, item.priceInDecimalByCurrency) : null,
+        discountedPrice: isMemberPriceShown ? formatMemberPrice({ ...item, isNonNFT: isNonNFT.value }, PLUS_BOOK_PURCHASE_DISCOUNT) : null,
         isSelected: index === selectedPricingItemIndex.value,
         renderedDescription: renderDescription(item.description || ''),
       }
@@ -1253,7 +1290,7 @@ const canBePurchased = computed(() => {
   return !isSelectedPricingItemSoldOut.value
     && !isPurchasing.value
     && bookInfo.isApprovedForSale.value
-    && !bookInfo.isRegionRestricted.value
+    && !bookInfo.isRegionUnsupported.value
 })
 
 const getContentTypeLabel = useContentTypeLabel()
@@ -1378,11 +1415,14 @@ onMounted(async () => {
   })
 
   useLogEvent('view_item', formattedLogPayload.value)
-  fetchNFTClassMessagesThroughCache(queryCache, nftClassId.value).catch((error) => {
-    // Absorbed: the tab just stays empty. Warn, not error — console.error is
-    // captured as an exception and this failure needs no triage.
-    console.warn(`Failed to fetch messages for NFT class ${nftClassId.value}:`, error)
-  })
+  // The buyer-messages tab is book-only; with nothing fetched it never shows.
+  if (!isNonNFT.value) {
+    fetchNFTClassMessagesThroughCache(queryCache, nftClassId.value).catch((error) => {
+      // Absorbed: the tab just stays empty. Warn, not error — console.error is
+      // captured as an exception and this failure needs no triage.
+      console.warn(`Failed to fetch messages for NFT class ${nftClassId.value}:`, error)
+    })
+  }
   const ownerWalletAddress = bookInfo.nftClassOwnerWalletAddress.value
   if (ownerWalletAddress) {
     authorStore.lazyFetchBookClassByOwnerWallet(ownerWalletAddress).catch((error) => {
@@ -1402,7 +1442,8 @@ onMounted(async () => {
   }
 
   checkBookListStatus()
-  await loadStakingData()
+  // A non-NFT SKU has no deployed contract, so this would read an empty address.
+  if (!isNonNFT.value) await loadStakingData()
   initializeTabFromHash()
   await nextTick()
   isTabInitialized.value = true

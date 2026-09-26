@@ -56,6 +56,12 @@
         </div>
       </header>
 
+      <p
+        v-if="hasMixedCheckoutGroups"
+        class="py-2 text-sm text-muted"
+        v-text="$t('book_list_mixed_product_type_hint')"
+      />
+
       <ul class="divide-y divide-black/10">
         <BookListItem
           v-for="item in bookListStore.items"
@@ -122,6 +128,7 @@ const runtimeConfig = useRuntimeConfig()
 const { loggedIn: hasLoggedIn, user } = useUserSession()
 const accountStore = useAccountStore()
 const bookListStore = useBookListStore()
+const queryCache = useQueryCache()
 const { handleError } = useErrorHandler()
 const bookPurchaseSessionAPI = useBookPurchaseSessionAPI()
 const { getAnalyticsParameters } = useAnalytics()
@@ -156,9 +163,45 @@ async function handleBackButtonClick() {
 const selectedItemIds = ref<Set<string>>(new Set())
 const hasSelectedItems = computed(() => selectedItemIds.value.size > 0)
 
+// A merch item narrows the checkout session's shippable countries, which would
+// geo-block any books alongside it — the API rejects a cart mixing product types
+// or merch territory lists, so selection is kept to one checkout group here.
+// Undefined until the listing loads: an unread row must not pass as a book.
+function getItemCheckoutGroup({ nftClassId }: Pick<BookListItem, 'nftClassId'>): string | undefined {
+  const info = getBookstoreInfoByNFTClassIdFromCache(queryCache, nftClassId)
+  if (!info) return undefined
+  const productType = info.productType || 'book'
+  if (!getIsShippedProduct(info.productType)) return productType
+  return `${productType}:${[...(info.availableTerritories || [])].sort().join(',')}`
+}
+
+const selectedCheckoutGroup = computed(() => {
+  const selected = bookListStore.items.find(
+    item => selectedItemIds.value.has(getBookListItemId(item.nftClassId, item.priceIndex)),
+  )
+  return selected && getItemCheckoutGroup(selected)
+})
+
+const hasMixedCheckoutGroups = computed(() => {
+  const [first] = bookListStore.items
+  if (!first) return false
+  const firstGroup = getItemCheckoutGroup(first)
+  return bookListStore.items.some(item => getItemCheckoutGroup(item) !== firstGroup)
+})
+
 function handleSelectAllUpdate(isSelected: 'indeterminate' | boolean) {
   if (isSelected) {
-    selectedItemIds.value = new Set(bookListStore.items.map(item => getBookListItemId(item.nftClassId, item.priceIndex)))
+    // Extends whatever is already selected, else takes the list's first type —
+    // "select all" then reads top-down rather than silently favouring books.
+    const [firstItem] = bookListStore.items
+    const targetGroup = selectedCheckoutGroup.value
+      ?? (firstItem && getItemCheckoutGroup(firstItem))
+    const selected = new Set<string>()
+    for (const item of bookListStore.items) {
+      if (getItemCheckoutGroup(item) !== targetGroup) continue
+      selected.add(getBookListItemId(item.nftClassId, item.priceIndex))
+    }
+    selectedItemIds.value = selected
   }
   else {
     selectedItemIds.value.clear()
@@ -225,6 +268,11 @@ async function handleCheckoutButtonClick() {
 }
 
 function handleItemSelect({ nftClassId, priceIndex }: BookListItem) {
+  // Switching type replaces the selection rather than refusing the click: the
+  // user's latest tap is the clearer statement of what they want to buy.
+  if (selectedCheckoutGroup.value && selectedCheckoutGroup.value !== getItemCheckoutGroup({ nftClassId })) {
+    selectedItemIds.value.clear()
+  }
   selectedItemIds.value.add(getBookListItemId(nftClassId, priceIndex))
   useLogEvent('book_list_item_select', { nftClassId, priceIndex })
 }
@@ -237,6 +285,11 @@ function handleItemDeselect({ nftClassId, priceIndex }: BookListItem) {
 async function fetchBookList() {
   try {
     await bookListStore.loadItems()
+    // Select-all never scrolls, so the per-row lazy fetch would leave unread rows
+    // unclassified and let a merch item be selected alongside a book.
+    await Promise.allSettled(bookListStore.items.map(
+      item => ensureNFTClassAggregatedMetadataThroughCache(queryCache, item.nftClassId),
+    ))
   }
   catch (error) {
     await handleError(error, {

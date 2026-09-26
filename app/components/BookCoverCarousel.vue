@@ -1,63 +1,78 @@
 <template>
-  <div
-    v-if="carouselItems.length > 1"
-    class="relative"
-  >
-    <UCarousel
-      v-slot="{ item }"
-      :items="carouselItems"
-      dots
-      loop
-      fade
-      auto-height
-      :autoplay="{ delay: 5000, stopOnInteraction: true }"
-      :ui="{
-        item: 'basis-full aspect-2/3 cursor-pointer',
-        dots: 'relative bottom-0 gap-2 mt-2',
-        dot: 'size-2 bg-accented data-[active]:bg-(--ui-text-muted)',
-      }"
+  <!-- Single root so the parent's classes fall through despite the modal sibling;
+       grid keeps the lone cover stretched so its vertical centering still works. -->
+  <div class="grid">
+    <div
+      v-if="carouselItems.length > 1"
+      class="relative"
     >
-      <div
-        class="relative flex items-center justify-center w-full h-full"
-        @click="openModal(item)"
+      <UCarousel
+        v-slot="{ item }"
+        :items="carouselItems"
+        dots
+        loop
+        fade
+        auto-height
+        :autoplay="{ delay: 5000, stopOnInteraction: true }"
+        :ui="{
+          item: 'basis-full aspect-2/3 cursor-pointer',
+          dots: 'relative bottom-0 gap-2 mt-2',
+          dot: 'size-2 bg-accented data-[active]:bg-(--ui-text-muted)',
+        }"
       >
-        <BookCover
-          v-if="item.type === 'cover'"
-          class="w-full h-full"
-          :src="item.src"
-          :alt="props.alt"
-          :is-vertical-center="true"
-          :priority="true"
-        />
-
-        <img
-          v-else-if="item.type === 'image'"
-          :src="item.src"
-          :alt="props.alt"
-          :class="[
-            'max-w-full',
-            'max-h-full',
-            'object-contain',
-            'rounded-lg',
-            { 'shadow-[0_2px_4px_0_rgba(0,0,0,0.10)]': props.hasShadow },
-          ]"
+        <div
+          class="relative flex items-center justify-center w-full h-full"
+          @click="openModal(item)"
         >
+          <BookCover
+            v-if="item.type === 'cover'"
+            class="w-full h-full"
+            :src="item.src"
+            :alt="props.alt"
+            :is-vertical-center="true"
+            :priority="true"
+          />
 
-        <BookCoverCarouselVideoThumbnail
-          v-else-if="item.type === 'youtube' && item.videoId"
-          :src="getYouTubeThumbnailUrl(item.videoId)"
-          :alt="props.alt"
-        />
+          <img
+            v-else-if="item.type === 'image'"
+            :src="item.src"
+            :alt="props.alt"
+            :class="[
+              'max-w-full',
+              'max-h-full',
+              'object-contain',
+              'rounded-lg',
+              { 'shadow-[0_2px_4px_0_rgba(0,0,0,0.10)]': props.hasShadow },
+            ]"
+          >
 
-        <BookCoverCarouselVideoThumbnail
-          v-else-if="item.type === 'video'"
-          :src="props.coverSrc"
-          :alt="props.alt"
-        />
-      </div>
-    </UCarousel>
+          <BookCoverCarouselVideoThumbnail
+            v-else-if="item.type === 'youtube' && item.videoId"
+            :src="getYouTubeThumbnailUrl(item.videoId)"
+            :alt="props.alt"
+          />
+
+          <BookCoverCarouselVideoThumbnail
+            v-else-if="item.type === 'video'"
+            :src="props.coverSrc"
+            :alt="props.alt"
+          />
+        </div>
+      </UCarousel>
+    </div>
+
+    <BookCover
+      v-else
+      :src="props.coverSrc"
+      :alt="props.alt"
+      :is-vertical-center="true"
+      :has-shadow="props.hasShadow"
+      :priority="true"
+      @click="handleSingleCoverClick"
+    />
 
     <UModal
+      v-if="props.isZoomEnabled || carouselItems.length > 1"
       v-model:open="isModalOpen"
       :ui="{
         content: 'max-w-4xl bg-black',
@@ -117,15 +132,6 @@
       </template>
     </UModal>
   </div>
-
-  <BookCover
-    v-else
-    :src="props.coverSrc"
-    :alt="props.alt"
-    :is-vertical-center="true"
-    :has-shadow="props.hasShadow"
-    :priority="true"
-  />
 </template>
 
 <script setup lang="ts">
@@ -166,6 +172,11 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  // Lets a lone cover open the zoom modal; books keep it off on purpose.
+  isZoomEnabled: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 const isModalOpen = ref(false)
@@ -182,6 +193,14 @@ function openModal(item: CarouselItem) {
     item_index: modalItemIndex.value,
   })
 }
+
+// Bound as a plain identifier so BookCover sees no onClick (and no pointer
+// cursor) when zoom is off; an inline ternary would always compile to a handler.
+const handleSingleCoverClick = computed(() =>
+  props.isZoomEnabled && carouselItems.value[0]
+    ? () => openModal(carouselItems.value[0]!)
+    : undefined,
+)
 
 function navigateModal(direction: number) {
   const len = carouselItems.value.length
