@@ -87,6 +87,14 @@ export function getIsBookAudioHiddenForRead(
   return access === 'none'
 }
 
+// Plus would unlock TTS for this read, so the reader gets an upsell instead of a refusal.
+export function getIsBookAudioPlusRequiredForRead(
+  info: BookstoreInfo | null | undefined,
+  context: { isLibraryBook: boolean, isLikerPlus: boolean },
+): boolean {
+  return getBookAudioAccess(info) === 'plus-reading' && getIsBookAudioHiddenForRead(info, context)
+}
+
 // The For You feed falls back to the popular list below the cold-start signal
 // threshold, so personalization is a property of the response, not the surface.
 export function getRecommendationLLMedium(isPersonalized: boolean) {
