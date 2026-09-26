@@ -50,7 +50,6 @@
         :label="$t('account_page_color_mode')"
       >
         <div
-          v-if="user?.isLikerPlus"
           class="text-sm text-muted"
           v-text="colorModeLabel"
         />
@@ -114,9 +113,12 @@ const localeLabel = computed(() => {
 const currencyLabel = computed(
   () => currencyOptions.value.find(o => o.value === currency.value)?.label ?? '',
 )
-const colorModeLabel = computed(
-  () => colorModeOptions.value.find(o => o.value === colorModePreference.value)?.label ?? '',
-)
+const colorModeLabel = computed(() => {
+  const getLabel = (mode: string) => colorModeOptions.value.find(o => o.value === mode)?.label ?? ''
+  if (user.value?.isLikerPlus) return getLabel(colorModePreference.value)
+  // Non-Plus users are forced to light mode, whatever preference is stored.
+  return $t('account_page_color_mode_upgrade_to_change', { mode: getLabel('light') })
+})
 
 const isPlusFeatureVisible = usePlusFeatureVisibility()
 
