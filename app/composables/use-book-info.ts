@@ -5,6 +5,7 @@ import {
   getBookEntityName,
   getHasFreeEdition,
   getIsBookAudioHiddenForRead,
+  getIsBookAudioPlusRequiredForRead,
   getIsPlusReadingRemoved,
 } from '~~/shared/utils/bookstore'
 
@@ -261,6 +262,10 @@ export default function (
     return getIsBookAudioHiddenForRead(bookstoreInfo.value, context)
   }
 
+  function getIsAudioPlusRequiredForRead(context: { isLibraryBook: boolean, isLikerPlus: boolean }) {
+    return getIsBookAudioPlusRequiredForRead(bookstoreInfo.value, context)
+  }
+
   // Plus has nothing to add to a merch order, so non-NFT goods never upsell it.
   const isUpsellDisabled = computed(() => {
     return isNonNFT.value || bookstoreInfo.value?.hideUpsell || false
@@ -460,6 +465,7 @@ export default function (
     isAudioHidden,
     isAudioPlusReadingOnly,
     getIsAudioHiddenForRead,
+    getIsAudioPlusRequiredForRead,
     isUpsellDisabled,
     isPlusPromoEnabled,
     isPlusPromoYearly,

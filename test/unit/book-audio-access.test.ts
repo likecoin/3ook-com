@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 
-import { getBookAudioAccess, getIsBookAudioHiddenForRead } from '~~/shared/utils/bookstore'
+import {
+  getBookAudioAccess,
+  getIsBookAudioHiddenForRead,
+  getIsBookAudioPlusRequiredForRead,
+} from '~~/shared/utils/bookstore'
 
 function createBookstoreInfo(fields: Partial<BookstoreInfo>) {
   return { hideAudio: false, ...fields } as BookstoreInfo
@@ -57,5 +61,26 @@ describe('getIsBookAudioHiddenForRead', () => {
   it('shows TTS to a non-Plus owner of an unrestricted book', () => {
     const info = createBookstoreInfo({ isPlusReadingEnabled: true })
     expect(getIsBookAudioHiddenForRead(info, { isLibraryBook: false, isLikerPlus: false })).toBe(false)
+  })
+})
+
+describe('getIsBookAudioPlusRequiredForRead', () => {
+  it('requires Plus from a non-Plus owner', () => {
+    expect(getIsBookAudioPlusRequiredForRead(plusReadingOnlyInfo, { isLibraryBook: false, isLikerPlus: false })).toBe(true)
+  })
+
+  it('does not require Plus when hideAudio is set', () => {
+    const info = { ...plusReadingOnlyInfo, hideAudio: true }
+    expect(getIsBookAudioPlusRequiredForRead(info, { isLibraryBook: false, isLikerPlus: false })).toBe(false)
+  })
+
+  it('does not require Plus once the book leaves the library', () => {
+    const info = createBookstoreInfo({ isAudioPlusReadingOnly: true, isPlusReadingEnabled: false })
+    expect(getIsBookAudioPlusRequiredForRead(info, { isLibraryBook: false, isLikerPlus: false })).toBe(false)
+  })
+
+  it('does not require Plus when TTS is already shown', () => {
+    expect(getIsBookAudioPlusRequiredForRead(plusReadingOnlyInfo, { isLibraryBook: false, isLikerPlus: true })).toBe(false)
+    expect(getIsBookAudioPlusRequiredForRead(plusReadingOnlyInfo, { isLibraryBook: true, isLikerPlus: false })).toBe(false)
   })
 })
