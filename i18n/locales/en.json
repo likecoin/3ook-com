@@ -1000,6 +1000,7 @@
   "reader_text_to_speech_no_segments_description": "The text of this book didn't load, so there is nothing to read aloud. Close the player and open it again to retry.",
   "reader_text_to_speech_pdf_unreadable": "Can't read this PDF aloud",
   "reader_text_to_speech_pdf_unreadable_description": "This PDF's text is embedded as glyph shapes without a readable text layer, so it can't be narrated.",
+  "reader_text_to_speech_plus_reading_only": "Text-to-speech for this book is for Plus members only",
   "reader_title": "Read \"{name}\" - {author}",
   "reader_toc_empty": "No table of contents available",
   "reader_toc_title": "Table of contents",
