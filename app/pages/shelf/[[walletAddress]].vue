@@ -213,6 +213,7 @@
               :offline-cache-keys="offlineCacheKeys"
               :is-offline="!isOnline"
               @open="handleBookshelfItemOpen"
+              @tts-plus-required="handleBookshelfItemTTSPlusRequired"
               @download="handleBookshelfItemDownload"
               @mark-as-reading="handleMarkBookAsReading"
               @mark-as-finished="handleMarkBookAsFinished"
@@ -250,6 +251,7 @@
               :offline-cache-keys="offlineCacheKeys"
               :is-offline="!isOnline"
               @open="handleBookshelfItemOpen"
+              @tts-plus-required="handleBookshelfItemTTSPlusRequired"
               @download="handleBookshelfItemDownload"
               @mark-as-reading="handleMarkBookAsReading"
               @mark-as-did-not-finish="handleMarkBookAsDidNotFinish"
@@ -285,6 +287,7 @@
               :offline-cache-keys="offlineCacheKeys"
               :is-offline="!isOnline"
               @open="handleBookshelfItemOpen"
+              @tts-plus-required="handleBookshelfItemTTSPlusRequired"
               @download="handleBookshelfItemDownload"
               @mark-as-reading="handleMarkBookAsReading"
               @mark-as-finished="handleMarkBookAsFinished"
@@ -344,6 +347,7 @@
               :offline-cache-keys="offlineCacheKeys"
               :is-offline="!isOnline"
               @open="handleBookshelfItemOpen"
+              @tts-plus-required="handleBookshelfItemTTSPlusRequired"
               @download="handleBookshelfItemDownload"
               @archive="handleArchiveBook"
               @unarchive="handleUnarchiveBook"
@@ -380,6 +384,7 @@
               :offline-cache-keys="offlineCacheKeys"
               :is-offline="!isOnline"
               @open="handleBookshelfItemOpen"
+              @tts-plus-required="handleBookshelfItemTTSPlusRequired"
               @download="handleBookshelfItemDownload"
               @mark-as-reading="handleMarkBookAsReading"
               @mark-as-finished="handleMarkBookAsFinished"
@@ -444,11 +449,17 @@
         />
       </template>
     </UModal>
+
+    <TTSPlusPaywallHost
+      v-if="isTTSPlusPaywallHostMounted"
+      ref="ttsPlusPaywallHost"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { formatUnits } from 'viem'
+import type { RouteLocationAsRelativeGeneric } from 'vue-router'
 import { DeleteUploadedBookModal } from '#components'
 import { getBookEntityName, getHasFreeEdition, getIsPlusReadingRemoved } from '~~/shared/utils/bookstore'
 
@@ -1116,6 +1127,23 @@ function handleBookshelfItemOpen({
     shelf_item_type: getShelfItemType(nftClassId),
     ...(isTTS && { tts: '1' }),
   })
+}
+
+// Mounted on first request, so a shelf visit without one creates no paywall overlays.
+const isTTSPlusPaywallHostMounted = ref(false)
+const ttsPlusPaywallHost = useTemplateRef('ttsPlusPaywallHost')
+
+async function handleBookshelfItemTTSPlusRequired({
+  nftClassId,
+  redirectRoute,
+}: {
+  nftClassId: string
+  redirectRoute: RouteLocationAsRelativeGeneric
+}) {
+  useLogEvent('bookshelf_tts_plus_reading_only_click', { nft_class_id: nftClassId })
+  isTTSPlusPaywallHostMounted.value = true
+  await nextTick()
+  ttsPlusPaywallHost.value?.openPlusPaywall({ nftClassId, utmSource: 'bookshelf', redirectRoute })
 }
 
 function handleBookshelfItemDownload({

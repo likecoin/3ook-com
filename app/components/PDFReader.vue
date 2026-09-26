@@ -182,18 +182,20 @@
           <UButton
             :class="[
               'laptop:hidden',
-              { 'opacity-50 cursor-not-allowed': isAudioHidden },
+              { 'opacity-50 cursor-not-allowed': isAudioUnlicensed },
             ]"
             icon="i-material-symbols-play-arrow-rounded"
             variant="solid"
             color="primary"
             :loading="isTtsExtracting"
             :ui="ttsButtonUI"
-            @click="handleMobileTTSClick"
+            @click="handleTTSButtonClick"
           />
           <UTooltip
-            :disabled="!isAudioHidden"
-            :text="$t('reader_text_to_speech_button_disabled_tooltip')"
+            :disabled="!isAudioHidden || isAudioPending"
+            :text="isAudioPlusRequired
+              ? $t('reader_text_to_speech_plus_reading_only')
+              : $t('reader_text_to_speech_button_disabled_tooltip')"
           >
             <UButton
               class="max-laptop:hidden"
@@ -202,9 +204,9 @@
               variant="solid"
               color="primary"
               :loading="isTtsExtracting"
-              :disabled="isAudioHidden"
+              :disabled="isAudioUnlicensed"
               :ui="ttsButtonUI"
-              @click="onClickTTSPlay"
+              @click="handleTTSButtonClick"
             />
           </UTooltip>
         </div>
@@ -334,6 +336,8 @@ interface Props {
   bookName?: string
   pdfBuffer?: ArrayBuffer | null
   isAudioHidden?: boolean
+  isAudioPending?: boolean
+  isAudioPlusRequired?: boolean
   isTtsExtracting?: boolean
   isPreview?: boolean
   backTo?: RouteLocationRaw
@@ -595,6 +599,7 @@ const emit = defineEmits<{
   error: [error: Error, context: PDFDisplayContext]
   pdfLoaded: [pdfDocument: PDFDocumentProxy]
   ttsPlay: []
+  ttsPlusRequired: []
   pageChanged: [pageNumber: number]
   navigate: [method: ReaderNavigationMethod]
 }>()
@@ -1331,7 +1336,14 @@ function handleWheel(event: WheelEvent) {
   }
 }
 
-function handleMobileTTSClick() {
+const isAudioUnlicensed = computed(() => props.isAudioHidden && !props.isAudioPlusRequired)
+
+function handleTTSButtonClick() {
+  if (props.isAudioPending) return
+  if (props.isAudioPlusRequired) {
+    emit('ttsPlusRequired')
+    return
+  }
   if (props.isAudioHidden) {
     toast.add({
       title: $t('reader_text_to_speech_button_disabled_tooltip'),
