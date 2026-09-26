@@ -24,6 +24,8 @@
         :nft-class-id="nftClassId"
         :pdf-buffer="fileBuffer"
         :is-audio-hidden="isAudioHidden"
+        :is-audio-pending="isAudioPending"
+        :is-audio-plus-required="isAudioPlusRequired"
         :is-tts-extracting="isTTSExtracting"
         :is-preview="isPreviewMode"
         :back-to="backRoute"
@@ -32,10 +34,15 @@
         @error="handlePDFError"
         @pdf-loaded="handlePDFLoaded"
         @tts-play="handleTTSPlay"
+        @tts-plus-required="handleTTSPlusRequired"
         @page-changed="handlePageChanged"
         @navigate="recordNavigation"
       />
     </ClientOnly>
+    <TTSPlusPaywallHost
+      v-if="isAudioPlusRequired"
+      ref="ttsPlusPaywallHost"
+    />
   </main>
 </template>
 
@@ -87,6 +94,16 @@ const isAudioHidden = computed(() => bookInfo.getIsAudioHiddenForRead({
   isLibraryBook: isLibraryBook.value,
   isLikerPlus: isLikerPlus.value,
 }))
+const isLibraryBookChecked = ref(false)
+libraryBookCheck.then(() => isLibraryBookChecked.value = true)
+const isAudioPlusRequiredForRead = computed(() => bookInfo.getIsAudioPlusRequiredForRead({
+  isLibraryBook: isLibraryBook.value,
+  isLikerPlus: isLikerPlus.value,
+}))
+// A free borrow looks like a non-Plus owner until the borrow check settles.
+const isAudioPending = computed(() => !isLibraryBookChecked.value && isAudioPlusRequiredForRead.value)
+const isAudioPlusRequired = computed(() => isLibraryBookChecked.value && isAudioPlusRequiredForRead.value)
+const ttsPlusPaywallHost = useTemplateRef('ttsPlusPaywallHost')
 
 const { handlePreviewEndBoundary } = usePreviewEndModal({
   nftClassId,
@@ -215,6 +232,12 @@ async function handlePDFLoaded(pdfDocument: PDFDocumentProxy) {
     if (isAudioHidden.value) await libraryBookCheck
     if (isAudioHidden.value) {
       setTTSQueryParam(false)
+      if (isAudioPlusRequired.value) {
+        afterLoadingScreen(async () => {
+          await nextTick()
+          ttsPlusPaywallHost.value?.showNoticeWithPlusAction(getTTSPlusPaywallOptions())
+        })
+      }
     }
     else {
       // Extraction is the slow part, so start it against the animation instead
@@ -328,6 +351,21 @@ async function ensureTTSExtracted(): Promise<{ isUnreadable: boolean }> {
       })
   }
   return ttsExtractionPromise
+}
+
+function getTTSPlusPaywallOptions() {
+  return {
+    nftClassId: nftClassId.value,
+    utmSource: 'pdf_reader',
+  }
+}
+
+function handleTTSPlusRequired() {
+  useLogEvent('reader_tts_plus_reading_only_click', {
+    nft_class_id: nftClassId.value,
+    trigger: 'tts_button',
+  })
+  ttsPlusPaywallHost.value?.openPlusPaywall(getTTSPlusPaywallOptions())
 }
 
 async function handleTTSPlay() {
