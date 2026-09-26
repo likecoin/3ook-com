@@ -148,6 +148,9 @@ export function useSubscriptionModal() {
           if (reason === 'skip') {
             useLogEvent('subscription_button_click_skip', upsellEventPayload)
           }
+          else if (reason === 'dismiss') {
+            useLogEvent('upsell_plus_modal_dismiss', upsellEventPayload)
+          }
           props.onClose?.(reason)
         },
       }
