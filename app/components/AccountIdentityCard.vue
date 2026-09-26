@@ -5,6 +5,35 @@
   >
     <UCard :ui="{ body: '!p-0 divide-y-1 divide-(--ui-border)' }">
       <AccountSettingsItem
+        v-if="publicLikerId"
+        icon="i-material-symbols-3p-outline-rounded"
+        :label="$t('account_page_account_id')"
+      >
+        <UButton
+          class="-ml-2 text-sm font-mono"
+          :label="publicLikerId"
+          trailing-icon="i-material-symbols-content-copy-outline-rounded"
+          variant="ghost"
+          color="neutral"
+          size="xs"
+          @click="handleLikerIdClick"
+        />
+
+        <template
+          v-if="!hasLikerIdChanged"
+          #right
+        >
+          <UButton
+            :label="$t('account_page_liker_id_edit_button')"
+            icon="i-material-symbols-edit-outline-rounded"
+            variant="outline"
+            color="neutral"
+            @click="handleLikerIdEditButtonClick"
+          />
+        </template>
+      </AccountSettingsItem>
+
+      <AccountSettingsItem
         icon="i-material-symbols-account-circle-outline"
         :label="$t('account_page_account_display_name')"
       >
@@ -89,35 +118,6 @@
             color="error"
             size="xs"
             @click="handleMagicButtonClick"
-          />
-        </template>
-      </AccountSettingsItem>
-
-      <AccountSettingsItem
-        v-if="publicLikerId"
-        icon="i-material-symbols-3p-outline-rounded"
-        :label="$t('account_page_account_id')"
-      >
-        <UButton
-          class="-ml-2 text-sm font-mono"
-          :label="publicLikerId"
-          trailing-icon="i-material-symbols-content-copy-outline-rounded"
-          variant="ghost"
-          color="neutral"
-          size="xs"
-          @click="handleLikerIdClick"
-        />
-
-        <template
-          v-if="!hasLikerIdChanged"
-          #right
-        >
-          <UButton
-            :label="$t('account_page_liker_id_edit_button')"
-            icon="i-material-symbols-edit-outline-rounded"
-            variant="outline"
-            color="neutral"
-            @click="handleLikerIdEditButtonClick"
           />
         </template>
       </AccountSettingsItem>
