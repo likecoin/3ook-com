@@ -119,19 +119,18 @@ export default defineEventHandler(async (event) => {
 
   text ??= getTTSSampleText(language)
 
-  const provider = new MinimaxTTSProvider()
-  const ttsModel = getMinimaxModel({ voiceId, customVoiceId: customMiniMaxVoiceId, language })
+  const provider = getTTSProviderForVoice(voiceId)
+  const ttsModel = getTTSModel({ voiceId, customVoiceId: customMiniMaxVoiceId, language })
   // Stamp + check the pronunciation dictionary version so a dict edit
   // auto-bursts affected sample audio, mirroring the reader endpoint. The
   // signature is computed lazily (only on cache miss or version mismatch) from
   // the synthesized text the provider sends.
-  const dictVersion = TTS_PRONUNCIATION_VERSION[language] ?? 'none'
-  const getExpectedSig = createTTSPronunciationSigGetter(language, text)
+  const { dictVersion, getExpectedSig } = getTTSPronunciationStamp(voiceId, language, text)
   const bucket = getTTSCacheBucket()
   const isCacheEnabled = !!bucket
-  const minimaxVoiceId = customMiniMaxVoiceId ?? getMinimaxVoiceId(voiceId)
-  const cacheKey = isCacheEnabled && minimaxVoiceId
-    ? generateTTSCacheKey(minimaxVoiceId, language, text, ttsModel)
+  const providerVoiceId = customMiniMaxVoiceId ?? getProviderVoiceId(voiceId)
+  const cacheKey = isCacheEnabled && providerVoiceId
+    ? generateTTSCacheKey(providerVoiceId, language, text, ttsModel)
     : null
 
   if (isCacheEnabled && cacheKey) {
