@@ -234,11 +234,20 @@ async function handleConnectWallet() {
 }
 
 async function handleStakeButtonClick() {
-  await restoreConnection()
+  isStaking.value = true
+  try {
+    await Promise.all([restoreConnection(), refetchLikeBalance()])
+  }
+  finally {
+    isStaking.value = false
+  }
 
+  // Gas is paid in ETH, so the full balance is stakable, but the quick-fill
+  // stops at 99% to nudge users into staying LIKE holders
   stakeAmount.value = await amountInputModal.open({
     title: $t('staking_stake_please_enter_amount'),
-    max: getPercentageAmount(likeBalance.value, 0.99),
+    max: likeBalance.value,
+    maxButtonAmount: getPercentageAmount(likeBalance.value, 0.99),
     maxButtonLabel: '99%',
     helpText: $t('amount_available', { amount: `${formattedLikeBalance.value} ${likeCoinTokenSymbol}` }),
   }).result

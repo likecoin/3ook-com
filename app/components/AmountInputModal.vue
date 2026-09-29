@@ -9,6 +9,7 @@
         class="mb-2"
         :label="label"
         :help="helpText"
+        :error="isAmountExceeded"
         :ui="{ help: 'text-xs text-right' }"
       >
         <UInput
@@ -74,6 +75,7 @@ const props = withDefaults(defineProps<{
   title?: string
   label?: string
   max: bigint
+  maxButtonAmount?: bigint
   maxButtonLabel?: string
   ticker?: string
   confirmButtonTitle?: string
@@ -89,10 +91,11 @@ const emit = defineEmits(['close'])
 const amountInput = ref(0)
 
 const amountInputInWei = computed(() => parseUnits(amountInput.value.toString(), likeCoinTokenDecimals))
-const isConfirmButtonDisabled = computed(() => amountInput.value <= 0 || amountInputInWei.value > props.max)
+const isAmountExceeded = computed(() => amountInputInWei.value > props.max)
+const isConfirmButtonDisabled = computed(() => amountInput.value <= 0 || isAmountExceeded.value)
 
 const maxAmount = computed(() => {
-  return Math.floor(Number(formatUnits(props.max, likeCoinTokenDecimals)) * 100) / 100
+  return Math.floor(Number(formatUnits(props.maxButtonAmount ?? props.max, likeCoinTokenDecimals)) * 100) / 100
 })
 
 const formattedMaxAmount = computed(() => {
