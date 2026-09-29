@@ -127,6 +127,7 @@ export default defineNuxtConfig({
     // at runtime from the matching NUXT_-prefixed env var (NUXT_AIRTABLE_API_SECRET,
     // etc.), which is what lets apphosting.*.yaml scope them to RUNTIME only.
     airtableAPISecret: '',
+    elevenlabsAPIKey: '',
     plusReadingServiceToken: '',
     minimaxGroupId: '',
     minimaxAPIKey: '',

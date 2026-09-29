@@ -17,14 +17,14 @@ function setTTSSourceHeader(event: H3Event, source: TTSServerSource) {
   setHeader(event, 'server-timing', buildTTSServerTiming(source))
 }
 
-function getTTSProvider(voiceId: string): MinimaxTTSProvider {
+function getTTSProvider(voiceId: string): BaseTTSProvider {
   if (!isKnownVoiceId(voiceId)) {
     throw createError({
       status: 400,
       message: 'INVALID_VOICE_ID',
     })
   }
-  return new MinimaxTTSProvider()
+  return getTTSProviderForVoice(voiceId)
 }
 
 async function serveCachedTTS(
@@ -233,22 +233,21 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const ttsModel = getMinimaxModel({ voiceId, customVoiceId: customMiniMaxVoiceId, language })
+  const ttsModel = getTTSModel({ voiceId, customVoiceId: customMiniMaxVoiceId, language })
   // Dictionary version + per-text applicable-rules signature drive cache
   // invalidation, stamped on write and compared on read so a pronunciation edit
   // auto-bursts exactly the affected segments. The version is a cheap stamp; the
   // signature (a ~6k-entry scan for zh-TW) is computed lazily — only on a cache
   // miss or the version-mismatch check after an edit — so steady-state hits
   // never pay for it. Built from the synthesized text the provider sends.
-  const dictVersion = TTS_PRONUNCIATION_VERSION[language] ?? 'none'
-  const getExpectedSig = createTTSPronunciationSigGetter(language, text)
+  const { dictVersion, getExpectedSig } = getTTSPronunciationStamp(voiceId, language, text)
   const bucket = getTTSCacheBucket()
   const isCacheEnabled = !!bucket
   // Custom and affiliate voices carry their Minimax id directly; system voices
   // resolve theirs from the internal alias.
-  const minimaxVoiceId = customMiniMaxVoiceId ?? getMinimaxVoiceId(voiceId)
-  const cacheKey = isCacheEnabled && minimaxVoiceId
-    ? generateTTSCacheKey(minimaxVoiceId, language, text, ttsModel)
+  const providerVoiceId = customMiniMaxVoiceId ?? getProviderVoiceId(voiceId)
+  const cacheKey = isCacheEnabled && providerVoiceId
+    ? generateTTSCacheKey(providerVoiceId, language, text, ttsModel)
     : null
 
   if (isCacheEnabled && cacheKey) {
