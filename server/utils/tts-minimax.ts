@@ -47,6 +47,8 @@ const VOICE_CONFIG: Record<string, VoiceConfig> = {
   el_sukyee: { provider: 'elevenlabs', providerVoiceId: '7rrBp44bogxpbQBDkenR', model: 'eleven_v4', displayName: 'Suk Yee' },
   el_kevintu: { provider: 'elevenlabs', providerVoiceId: 'BrbEfHMQu0fyclQR7lfh', model: 'eleven_v4', displayName: 'Kevin Tu' },
   el_liang: { provider: 'elevenlabs', providerVoiceId: 'FjfxJryh105iTLL4ktHB', model: 'eleven_v4', displayName: 'Liang' },
+  // Instant clone of Phoebe from the same source audio as the Minimax voice.
+  el_phoebe: { provider: 'elevenlabs', providerVoiceId: 'LyOUauWyNHous5KRW8nD', model: 'eleven_v4', displayName: 'Phoebe' },
 }
 
 // base -> configured key with the highest `_v<digits>` version (an unversioned
