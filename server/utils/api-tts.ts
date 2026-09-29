@@ -49,6 +49,11 @@ export interface BaseTTSProvider {
   processRequestStream(params: TTSRequestParams): Promise<TTSProviderStreamResult>
 }
 
+// Custom and affiliate voices are Minimax clones; system voices pick by config.
+export function getTTSProviderForVoice(voiceId: string): BaseTTSProvider {
+  return isElevenLabsVoiceId(voiceId) ? new ElevenLabsTTSProvider() : new MinimaxTTSProvider()
+}
+
 // Flattens generation metadata into analytics event props. audioLength is in
 // milliseconds; pairing it with textLength yields the speech-rate ratio used
 // (Phase 2) to flag noise-blast / truncation failures.
