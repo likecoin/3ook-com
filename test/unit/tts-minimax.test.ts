@@ -3,7 +3,7 @@
 // environment stubs out node:crypto, which tts-minimax.ts touches at import
 // time (TTS_PRONUNCIATION_VERSION), so import fails there. Run under real Node.
 import { describe, expect, it } from 'vitest'
-import { applyInlinePronunciation, getMinimaxModel, getMinimaxVoiceId, getTTSPronunciationDictionary, injectTTSPauseMarkers, isKnownVoiceId, resolveVoiceId } from '~~/server/utils/tts-minimax'
+import { applyInlinePronunciation, getTTSModel, getProviderVoiceId, getTTSPronunciationDictionary, injectTTSPauseMarkers, isElevenLabsVoiceId, isKnownVoiceId, resolveVoiceId } from '~~/server/utils/tts-minimax'
 import { parseTTSVoiceVersion } from '~~/shared/utils/tts-voice-version'
 
 const MARKER = '<#0.01#>'
@@ -110,9 +110,25 @@ describe('resolveVoiceId', () => {
   })
 
   it('resolves config lookups through the fallback', () => {
-    expect(getMinimaxVoiceId('phoebe')).toBe('three_book_phoebe_v3')
-    expect(getMinimaxModel({ voiceId: 'phoebe', language: 'zh-HK' })).toBe('speech-2.8-hd')
-    expect(getMinimaxModel({ voiceId: 'phoebe_v26', language: 'zh-HK' })).toBe('speech-2.6-hd')
+    expect(getProviderVoiceId('phoebe')).toBe('three_book_phoebe_v3')
+    expect(getTTSModel({ voiceId: 'phoebe', language: 'zh-HK' })).toBe('speech-2.8-hd')
+    expect(getTTSModel({ voiceId: 'phoebe_v26', language: 'zh-HK' })).toBe('speech-2.6-hd')
+  })
+})
+
+describe('ElevenLabs voices', () => {
+  it('resolves as exact, unversioned ids pinned to eleven_v4', () => {
+    for (const voiceId of ['el_chunwai', 'el_sukyee', 'el_kevintu', 'el_liang']) {
+      expect(resolveVoiceId(voiceId)).toBe(voiceId)
+      expect(isElevenLabsVoiceId(voiceId)).toBe(true)
+      expect(getTTSModel({ voiceId, language: 'zh-HK' })).toBe('eleven_v4')
+    }
+    expect(getProviderVoiceId('el_chunwai')).toBe('2HZgeWhEm3MJfPZ0MsrV')
+  })
+
+  it('leaves Minimax voices on the Minimax provider', () => {
+    expect(isElevenLabsVoiceId('phoebe_v28')).toBe(false)
+    expect(isElevenLabsVoiceId('unknown_voice')).toBe(false)
   })
 })
 
