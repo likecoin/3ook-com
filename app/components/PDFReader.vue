@@ -316,6 +316,13 @@
           </div>
         </div>
       </div>
+
+      <!-- Sits in the next-arrow column, so clicks pass through to it. PDFs
+           have no chapters to complete, hence no chapter key. -->
+      <ReaderProgressRing
+        class="absolute bottom-6 right-4 laptop:right-6 z-10 pointer-events-none"
+        :progress="readingProgress"
+      />
     </div>
   </div>
 </template>
