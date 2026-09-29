@@ -11,25 +11,34 @@ export const LANG_MAPPING = {
 }
 
 interface VoiceConfig {
-  minimaxVoiceId: string
+  providerVoiceId: string
   displayName: string
+  // Defaults to Minimax; ElevenLabs voices skip the Minimax-only pause markers
+  // and pronunciation dictionary.
+  provider?: 'elevenlabs'
   model?: string
 }
 
 const VOICE_CONFIG: Record<string, VoiceConfig> = {
-  0: { minimaxVoiceId: 'Chinese (Mandarin)_Warm_Bestie', displayName: 'Female Narrator' },
-  1: { minimaxVoiceId: 'Chinese (Mandarin)_Southern_Young_Man', displayName: 'Male Narrator' },
-  astro: { minimaxVoiceId: 'three_book_astro_v1', displayName: 'Astro' },
-  aurora: { minimaxVoiceId: 'three_book_aurora_v1', displayName: 'Aurora' },
-  karenly: { minimaxVoiceId: 'three_book_karenly_v0', displayName: 'Karenly' },
-  pazu: { minimaxVoiceId: 'three_book_pazu_v3', displayName: 'Pazu' },
+  0: { providerVoiceId: 'Chinese (Mandarin)_Warm_Bestie', displayName: 'Female Narrator' },
+  1: { providerVoiceId: 'Chinese (Mandarin)_Southern_Young_Man', displayName: 'Male Narrator' },
+  astro: { providerVoiceId: 'three_book_astro_v1', displayName: 'Astro' },
+  aurora: { providerVoiceId: 'three_book_aurora_v1', displayName: 'Aurora' },
+  karenly: { providerVoiceId: 'three_book_karenly_v0', displayName: 'Karenly' },
+  pazu: { providerVoiceId: 'three_book_pazu_v3', displayName: 'Pazu' },
   // Version encodes the Minimax model (v26 = speech-2.6-hd, v28 = speech-2.8-hd).
   // Bumped from unversioned `phoebe` so request URLs change and CDN/browser
   // caches keyed on `voice_id` stop serving 2.6 audio.
-  [PHOEBE_VOICE_ID]: { minimaxVoiceId: 'three_book_phoebe_v3', displayName: 'Phoebe' },
+  [PHOEBE_VOICE_ID]: { providerVoiceId: 'three_book_phoebe_v3', displayName: 'Phoebe' },
   // Pinned to the older model so QA can compare it against the default Phoebe.
   // Exposed only in the testnet voice list (client-gated).
-  [PHOEBE_V26_VOICE_ID]: { minimaxVoiceId: 'three_book_phoebe_v3', model: 'speech-2.6-hd', displayName: 'Phoebe 2.6' },
+  [PHOEBE_V26_VOICE_ID]: { providerVoiceId: 'three_book_phoebe_v3', model: 'speech-2.6-hd', displayName: 'Phoebe 2.6' },
+  // ElevenLabs v4 library voices under testnet evaluation (client-gated). Keys
+  // must not end in `_v<digits>`, which would parse as a voice version.
+  el_chunwai: { provider: 'elevenlabs', providerVoiceId: '2HZgeWhEm3MJfPZ0MsrV', model: 'eleven_v4', displayName: 'Chun Wai' },
+  el_sukyee: { provider: 'elevenlabs', providerVoiceId: '7rrBp44bogxpbQBDkenR', model: 'eleven_v4', displayName: 'Suk Yee' },
+  el_kevintu: { provider: 'elevenlabs', providerVoiceId: 'BrbEfHMQu0fyclQR7lfh', model: 'eleven_v4', displayName: 'Kevin Tu' },
+  el_liang: { provider: 'elevenlabs', providerVoiceId: 'FjfxJryh105iTLL4ktHB', model: 'eleven_v4', displayName: 'Liang' },
 }
 
 // base -> configured key with the highest `_v<digits>` version (an unversioned
@@ -64,8 +73,12 @@ export function getVoiceDisplayName(voiceId: string): string | undefined {
   return getVoiceConfig(voiceId)?.displayName
 }
 
-export function getMinimaxVoiceId(voiceId: string): string | undefined {
-  return getVoiceConfig(voiceId)?.minimaxVoiceId
+export function getProviderVoiceId(voiceId: string): string | undefined {
+  return getVoiceConfig(voiceId)?.providerVoiceId
+}
+
+export function isElevenLabsVoiceId(voiceId: string): boolean {
+  return getVoiceConfig(voiceId)?.provider === 'elevenlabs'
 }
 
 // Pronunciation overrides keyed by Minimax synthesis language. Each maps a
@@ -151,6 +164,21 @@ export function createTTSPronunciationSigGetter(language: string, text: string):
   return () => (sig ??= getTTSPronunciationSignature(language, injectTTSPauseMarkers(text)))
 }
 
+// Cache stamp for a system voice's audio. ElevenLabs voices never receive the
+// dictionary, so its edits must not burst their cached audio.
+export function getTTSPronunciationStamp(voiceId: string, language: string, text: string): {
+  dictVersion: string
+  getExpectedSig: () => string
+} {
+  if (isElevenLabsVoiceId(voiceId)) {
+    return { dictVersion: 'none', getExpectedSig: () => NO_PRONUNCIATION_SIG }
+  }
+  return {
+    dictVersion: TTS_PRONUNCIATION_VERSION[language] ?? 'none',
+    getExpectedSig: createTTSPronunciationSigGetter(language, text),
+  }
+}
+
 // Mirrors Google Cloud Storage's custom-metadata value type (`getMetadata()[0]
 // .metadata`), whose values are coerced to these primitives.
 type CloudStorageMetadata = Record<string, string | number | boolean | null>
@@ -203,7 +231,7 @@ export function applyInlinePronunciation(language: string, text: string): string
   )
 }
 
-export function getMinimaxModel(options: {
+export function getTTSModel(options: {
   voiceId?: string
   customVoiceId?: string
   language?: string
@@ -246,7 +274,7 @@ export class MinimaxTTSProvider implements BaseTTSProvider {
   private buildSynthesisRequest(params: TTSRequestParams) {
     const { text, language, voiceId, customMiniMaxVoiceId } = params
 
-    const resolvedVoiceId = customMiniMaxVoiceId || getMinimaxVoiceId(voiceId)
+    const resolvedVoiceId = customMiniMaxVoiceId || getProviderVoiceId(voiceId)
     if (!resolvedVoiceId) {
       throw createError({
         status: 400,
@@ -257,7 +285,7 @@ export class MinimaxTTSProvider implements BaseTTSProvider {
     const synthesizedText = injectTTSPauseMarkers(text)
     return {
       text: synthesizedText,
-      model: getMinimaxModel({ voiceId, customVoiceId: customMiniMaxVoiceId, language }),
+      model: getTTSModel({ voiceId, customVoiceId: customMiniMaxVoiceId, language }),
       voiceSetting: {
         voiceId: resolvedVoiceId,
         speed: 1,
