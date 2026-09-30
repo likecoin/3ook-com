@@ -974,7 +974,8 @@ const ogTitle = computed(() => {
   const title = bookInfo.name.value
   const subtitle = bookInfo.alternativeHeadline.value
   const author = bookInfo.authorName.value
-  const ebookSuffix = ` - ${$t('product_page_book_format_value')}`
+  // Only books are ebooks; merch would otherwise be titled as one.
+  const ebookSuffix = isNonNFT.value ? '' : ` - ${$t('product_page_book_format_value')}`
   const titleWithSubtitle = subtitle ? `${title}${$t('text_separator_colon')}${subtitle}` : title
   return author ? `${titleWithSubtitle} - ${author}${ebookSuffix}` : `${titleWithSubtitle}${ebookSuffix}`
 })
