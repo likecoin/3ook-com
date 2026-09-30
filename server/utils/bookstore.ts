@@ -117,7 +117,6 @@ function normalizeBookListingToProduct(book: NFTBookListingInfo): BookstoreCMSPr
     isDRMFree: book.hideDownload === false,
     isAdultOnly: book.isAdultOnly || undefined,
     restrictedTerritories: book.restrictedTerritories?.length ? book.restrictedTerritories : undefined,
-    availableTerritories: book.availableTerritories?.length ? book.availableTerritories : undefined,
     // Read by the For You scorer to drop non-NFT products; the grid resolves its own listing.
     productType: getIsNonNFTProduct(book.productType) ? book.productType : undefined,
     isPlusReadingEnabled: book.isPlusReadingEnabled ?? undefined,

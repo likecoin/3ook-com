@@ -27,7 +27,7 @@ export function useStoreSearchSuggestions(
   const isLoading = ref(false)
   const { getResizedNormalizedImageURL } = useImageResize()
   const queryCache = useQueryCache()
-  const { getIsRegionUnsupported } = useBookRegionGate()
+  const { getIsRegionRestricted } = useBookRegionGate()
 
   const debouncedTerm = refDebounced(
     computed(() => toValue(searchTerm).trim()),
@@ -124,10 +124,7 @@ export function useStoreSearchSuggestions(
   // re-gate an already-resolved term instead of serving its earlier verdict.
   const visibleSuggestions = computed(() => suggestions.value.filter((suggestion) => {
     const bookstoreInfo = getBookstoreInfoByNFTClassIdFromCache(queryCache, suggestion.classId)
-    return !getIsRegionUnsupported({
-      restrictedTerritories: bookstoreInfo?.restrictedTerritories,
-      availableTerritories: bookstoreInfo?.availableTerritories,
-    })
+    return !getIsRegionRestricted(bookstoreInfo?.restrictedTerritories)
   }))
 
   return {

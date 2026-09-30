@@ -100,7 +100,6 @@ declare global {
     isDRMFree?: boolean
     isAdultOnly?: boolean
     restrictedTerritories?: string[]
-    availableTerritories?: string[]
     productType?: BookProductType
     isPlusReadingEnabled?: boolean
     isMultiple?: boolean
