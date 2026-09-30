@@ -380,7 +380,7 @@
             ]"
           >
             <section
-              v-if="(!isLibrary && pricingItems.length) || isUserBookOwner || isPlusReadingCTAVisible"
+              v-if="(!isLibrary && pricingItems.length && !bookInfo.isRegionUnsupported.value) || isUserBookOwner || isPlusReadingCTAVisible"
               ref="pricingSection"
               :class="[
                 'bg-white',
@@ -427,7 +427,7 @@
           />
 
           <p
-            v-if="!isLibrary && selectedPricingItem && !isSelectedPricingItemFree"
+            v-if="!isLibrary && selectedPricingItem && !isSelectedPricingItemFree && !bookInfo.isRegionUnsupported.value"
             class="px-4 text-xs text-muted text-center leading-4"
           >
             <span v-text="deliveryRefundNote" />
