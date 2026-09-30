@@ -266,8 +266,9 @@ export default function (
     return getIsBookAudioPlusRequiredForRead(bookstoreInfo.value, context)
   }
 
+  // Plus has nothing to add to a merch order, so non-NFT goods never upsell it.
   const isUpsellDisabled = computed(() => {
-    return bookstoreInfo.value?.hideUpsell || false
+    return isNonNFT.value || bookstoreInfo.value?.hideUpsell || false
   })
 
   const isPlusPromoEnabled = computed(() => {
