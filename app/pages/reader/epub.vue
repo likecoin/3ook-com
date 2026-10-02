@@ -291,10 +291,11 @@
           </div>
         </div>
 
-        <span
+        <ReaderProgressRing
           v-if="!isReaderLoading"
-          class="absolute bottom-6 right-12 text-xs text-muted"
-          v-text="percentageLabel"
+          class="absolute bottom-6 right-12 pointer-events-none"
+          :progress="percentage"
+          :chapter-key="currentPageHref"
         />
 
         <Transition name="reader-load">
@@ -638,7 +639,6 @@ function applyPercentageFromCfi(cfi: string) {
     readingProgress.value = resolved
   }
 }
-const percentageLabel = computed(() => `${Math.round(percentage.value * 100)}%`)
 // Driven by the rendition's atStart/atEnd flags, which come from the actual
 // rendered pagination; the bucketed location percentage hits 1 a page early
 // at large font sizes and would hide the next arrow before the real end.
