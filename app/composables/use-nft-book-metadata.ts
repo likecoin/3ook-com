@@ -286,7 +286,10 @@ export async function ensureNFTClassAggregatedMetadataThroughCache(
   if (cachedBookstore) {
     excludedOptions.push('bookstore')
   }
-  if (cachedClassChain && cachedBookstore) {
+  // A non-NFT listing has no chain class to wait for, so its bookstore info alone is complete.
+  const isCacheComplete = !!cachedBookstore
+    && (!!cachedClassChain || getIsNonNFTProduct(cachedBookstore.productType))
+  if (isCacheComplete) {
     // Stale-while-revalidate: serve the cached value now, but if it hasn't
     // been confirmed live this session (e.g. hydrated from localStorage),
     // refresh it once in the background so the persisted cache self-heals.
@@ -294,7 +297,7 @@ export async function ensureNFTClassAggregatedMetadataThroughCache(
       revalidateNFTClassAggregatedMetadataById(queryCache, nftClassId)
     }
     return {
-      classData: cachedClassChain,
+      classData: cachedClassChain ?? null,
       bookstoreInfo: cachedBookstore,
       ownerInfo: null,
     }
