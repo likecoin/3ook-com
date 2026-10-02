@@ -1077,6 +1077,8 @@
   "store_fetch_tags_error": "Unable to load tags",
   "store_for_you_fallback_hint": "Read a few more books to unlock personalized picks — showing popular books for now.",
   "store_genre_prefix": "Genre: ",
+  "store_gift_plus_card_cta": "Gift Plus",
+  "store_gift_plus_card_description": "Share AI-powered reading and listening with someone special.",
   "store_intro_banner_cta": "Learn more",
   "store_intro_banner_description": "Your next-generation bookstore to read and listen.",
   "store_intro_banner_title": "Welcome to {siteName}",
