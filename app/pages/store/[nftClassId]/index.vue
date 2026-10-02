@@ -1450,7 +1450,7 @@ async function handlePurchaseButtonClick() {
     }
     // Free books skip the Plus upsell and proceed to the tipping/donation flow when eligible.
     if (!isSelectedPricingItemFree.value && !isApp.value && !isRedirectedFromUpsell.value && !bookInfo.isUpsellDisabled.value && !bookInfo.isPlusPromoEnabled.value) {
-      const isStartSubscription = await openUpsellPlusModalIfEligible({
+      const upsellCloseReason = await openUpsellPlusModalIfEligible({
         nftClassId: nftClassId.value,
         bookPrice: selectedPricingItem.value.price,
         selectedPricingItemIndex: selectedPricingItemIndex.value,
@@ -1460,7 +1460,7 @@ async function handlePurchaseButtonClick() {
         from: from.value || undefined,
         isAudioHidden: bookInfo.isAudioHidden.value,
       })
-      if (isStartSubscription) return
+      if (upsellCloseReason === 'subscribe' || upsellCloseReason === 'dismiss') return
     }
 
     let customPrice: number | undefined = undefined

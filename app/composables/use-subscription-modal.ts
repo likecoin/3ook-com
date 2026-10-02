@@ -144,11 +144,14 @@ export function useSubscriptionModal() {
         ...props,
         ...getUpsellPlusModalProps(),
         nftClassId,
-        onClose: (isSuccess: boolean) => {
-          if (!isSuccess) {
+        onClose: (reason) => {
+          if (reason === 'skip') {
             useLogEvent('subscription_button_click_skip', upsellEventPayload)
           }
-          props.onClose?.(isSuccess)
+          else if (reason === 'dismiss') {
+            useLogEvent('upsell_plus_modal_dismiss', upsellEventPayload)
+          }
+          props.onClose?.(reason)
         },
       }
       if (props.nftClassId) {

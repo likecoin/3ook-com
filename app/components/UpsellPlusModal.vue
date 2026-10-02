@@ -17,7 +17,7 @@
         class="cursor-pointer ml-auto -mr-2"
         variant="link"
         size="xl"
-        @click="handleClose"
+        @click="handleDismiss"
       />
     </template>
     <template #body>
@@ -51,7 +51,7 @@
         size="xl"
         block
         :ui="{ base: 'cursor-pointer' }"
-        @click="handleClose"
+        @click="handleSkip"
       />
       <UButton
         :label="subscribeButtonLabel"
@@ -65,7 +65,7 @@
 </template>
 
 <script setup lang="ts">
-import type { UpsellPlusModalProps, UpsellPlusModalSubscribeEventPayload } from './UpsellPlusModal.props'
+import type { UpsellPlusModalCloseReason, UpsellPlusModalProps, UpsellPlusModalSubscribeEventPayload } from './UpsellPlusModal.props'
 import { DEFAULT_TRIAL_PERIOD_DAYS, PAID_TRIAL_PRICE } from '~~/shared/constants/pricing'
 import { resolveIsPaidTrial } from '~~/shared/utils/pricing'
 
@@ -91,7 +91,7 @@ const props = withDefaults(defineProps<UpsellPlusModalProps>(), {
 
 const emit = defineEmits<{
   open: []
-  close: [isSuccess: boolean]
+  close: [reason: UpsellPlusModalCloseReason]
   subscribe: [payload: UpsellPlusModalSubscribeEventPayload]
 }>()
 
@@ -184,11 +184,15 @@ function handleSubscribe() {
       hash: route.hash,
     },
   })
-  emit('close', true)
+  emit('close', 'subscribe')
 }
 
-function handleClose() {
-  emit('close', false)
+function handleSkip() {
+  emit('close', 'skip')
+}
+
+function handleDismiss() {
+  emit('close', 'dismiss')
 }
 
 onMounted(() => {
@@ -200,7 +204,7 @@ const onOpenUpdate = (open: boolean) => {
     emit('open')
   }
   else {
-    emit('close', false)
+    handleDismiss()
   }
 }
 </script>
