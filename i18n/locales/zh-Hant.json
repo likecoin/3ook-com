@@ -1077,6 +1077,8 @@
   "store_fetch_tags_error": "無法載入分類",
   "store_for_you_fallback_hint": "多閱讀幾本書即可解鎖個人化推薦，以下先顯示熱門書籍。",
   "store_genre_prefix": "分類：",
+  "store_gift_plus_card_cta": "送贈 Plus",
+  "store_gift_plus_card_description": "與好友分享 AI 伴讀與聽書的喜悅。",
   "store_intro_banner_cta": "了解更多",
   "store_intro_banner_description": "你的新一代可讀可聽書店",
   "store_intro_banner_title": "歡迎來到 {siteName}",
