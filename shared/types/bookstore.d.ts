@@ -11,6 +11,11 @@ export interface BookstoreCMSProduct {
   isAdultOnly?: boolean
   // ISO country codes the storefront must not offer this book in (e.g. ['HK']).
   restrictedTerritories?: string[]
+  // The inverse of restrictedTerritories: the only regions this may be offered in.
+  // Absent means everywhere. Set on merch that ships to one market only.
+  availableTerritories?: string[]
+  // Absent means 'book' — only non-book products carry the discriminator.
+  productType?: BookProductType
   isPlusReadingEnabled?: boolean
   isMultiple?: boolean
   minPrice?: number
@@ -95,6 +100,8 @@ declare global {
     isDRMFree?: boolean
     isAdultOnly?: boolean
     restrictedTerritories?: string[]
+    availableTerritories?: string[]
+    productType?: BookProductType
     isPlusReadingEnabled?: boolean
     isMultiple?: boolean
     minPrice?: number
@@ -136,6 +143,11 @@ declare global {
     autoMemo: string
     isAllowCustomPrice: boolean
     isTippingEnabled: boolean
+    // Non-NFT products only: an explicit member price (USD cents) that replaces
+    // the flat Plus book discount, so the two never stack. Eligibility is
+    // getIsEligibleForPlusPrice; the API re-checks it at checkout.
+    plusPriceInDecimal?: number
+    plusPriceInDecimalByCurrency?: BookPriceInDecimalByCurrency
     order: number
   }
 
@@ -159,6 +171,11 @@ declare global {
     isApprovedForAds: boolean
     isAdultOnly?: boolean
     restrictedTerritories?: string[]
+    availableTerritories?: string[]
+    // Absent means 'book'. Non-NFT products reuse the listing pipeline but opt out
+    // of every book-only surface: reader, library, DRM, recommendations, chain metadata.
+    productType?: BookProductType
+    maxQuantityPerOrder?: number
     hideDownload: boolean
     hideAudio: boolean
     hideUpsell: boolean
@@ -166,12 +183,16 @@ declare global {
     name: string
     description: string
     descriptionFull?: string
+    // Optional per-locale copy; the plain strings above stay the fallback.
+    nameByLocale?: BookLocalizedCopy
+    descriptionByLocale?: BookLocalizedCopy
+    descriptionFullByLocale?: BookLocalizedCopy
     descriptionSummary?: string
     reviewTitle?: string
     reviewURL?: string
     author: BookEntity
     genre?: string
-    keywords: string[]
+    keywords?: string[]
     thumbnailUrl: string
     usageInfo: string
     tableOfContents?: string
@@ -180,6 +201,7 @@ declare global {
     promotionalImages?: string[]
     promotionalVideos?: string[]
     plusPromoEnabled?: boolean
+    plusPromoPeriod?: LikerPlusStatus
     isPlusReadingEnabled?: boolean
     isPreviewEnabled?: boolean
     previewPercentage?: number

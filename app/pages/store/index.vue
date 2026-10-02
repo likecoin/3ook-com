@@ -210,6 +210,10 @@
           @open="handleBookstoreItemOpen($event, index)"
           @visible="handleBookstoreItemVisible"
         />
+        <GiftPlusStoreCard
+          v-if="isGiftPlusCardVisible"
+          :ll-medium="itemLLMedium"
+        />
       </ul>
 
       <footer
@@ -252,6 +256,7 @@ import { LOGGED_IMPRESSION_COUNT, isBookstoreBuiltInListType } from '~~/shared/u
 import { getStorePublisherRouteName } from '~~/shared/constants/store-routes'
 import { formatLikerIdHandle } from '~~/shared/utils/liker-id'
 import { getStoreTagIdFromRoute } from '~/composables/use-store-tags'
+import { getIsEinkReaderTagId } from '~/utils/eink-reader-tag'
 import { getIsLibraryChartTagId } from '~/utils/library-chart'
 
 // Per-tag, so not a static `colorMode`: this page also serves /store.
@@ -289,7 +294,7 @@ const { handleError } = useErrorHandler()
 const storePageState = useStorePageState(listingRouteName)
 const isOnline = useOnline()
 const isAdultContentEnabled = useAdultContentSetting()
-const { getIsRegionRestricted } = useBookRegionGate()
+const { getIsRegionUnsupported } = useBookRegionGate()
 const { isApp } = useAppDetection()
 const intercom = useIntercom()
 // Effective Plus (canonical flag OR optimistic device-store entitlement) so a
@@ -401,6 +406,13 @@ const {
 // The monthly chart is an ordinary CMS tag,
 // whose Airtable book order is the rank — the layout switch is all the id buys.
 const isLibraryChartTag = computed(() => isLibraryTab.value && getIsLibraryChartTagId(tagId.value))
+// Plus gifting checks out through its own Stripe flow, not the cart, so it rides
+// on the e-reader tag as a card. Web only: /gift/plus bounces app users to the store.
+const isGiftPlusCardVisible = computed(() => !isApp.value
+  && !isLibraryTab.value
+  && !isSearchMode.value
+  && getIsEinkReaderTagId(tagId.value)
+  && !hasMoreItems.value)
 // The header shows the editor's copy verbatim;
 // `tagDescription` falls back to boilerplate
 // that reads fine in meta and badly on the page.
@@ -688,7 +700,10 @@ const baseProducts = computed<BookstoreItemList>(() => {
     const filtered = searchResults.value.items.filter((item) => {
       const bookstoreInfo = getBookstoreInfoByNFTClassIdFromCache(queryCache, item.classId || '')
       return !shouldFilterAdultOnly(bookstoreInfo)
-        && !getIsRegionRestricted(item.restrictedTerritories ?? bookstoreInfo?.restrictedTerritories)
+        && !getIsRegionUnsupported({
+          restrictedTerritories: item.restrictedTerritories ?? bookstoreInfo?.restrictedTerritories,
+          availableTerritories: item.availableTerritories ?? bookstoreInfo?.availableTerritories,
+        })
     })
     return {
       ...searchResults.value,
@@ -708,7 +723,7 @@ const baseProducts = computed<BookstoreItemList>(() => {
       if (bookInfo === null) return
       if (bookInfo?.isHidden) return
       if (shouldFilterAdultOnly(bookInfo)) return
-      if (getIsRegionRestricted(bookInfo?.restrictedTerritories)) return
+      if (getIsRegionUnsupported(bookInfo ?? {})) return
       items.push({
         id: item.nftClassId,
         classId: item.nftClassId,
@@ -736,14 +751,20 @@ const baseProducts = computed<BookstoreItemList>(() => {
     items = filterKeepingIdentity(items, (item) => {
       const bookstoreInfo = getBookstoreInfoByNFTClassIdFromCache(queryCache, item.classId || item.id || '')
       return !bookstoreInfo?.isHidden
-        && !getIsRegionRestricted(bookstoreInfo?.restrictedTerritories)
+        && !getIsRegionUnsupported({
+          restrictedTerritories: bookstoreInfo?.restrictedTerritories,
+          availableTerritories: bookstoreInfo?.availableTerritories,
+        })
     })
   }
   // One pass: each extra filterKeepingIdentity still walks the list and allocates
   // a result before deciding nothing was dropped.
   items = filterKeepingIdentity(items, item => (
     (isAdultContentEnabled.value || !item.isAdultOnly)
-    && !getIsRegionRestricted(item.restrictedTerritories)
+    && !getIsRegionUnsupported({
+      restrictedTerritories: item.restrictedTerritories,
+      availableTerritories: item.availableTerritories,
+    })
   ))
   return items === cmsProducts.value.items ? cmsProducts.value : { ...cmsProducts.value, items }
 })

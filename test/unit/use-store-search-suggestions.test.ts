@@ -6,11 +6,11 @@ import { useStoreSearchSuggestions } from '~/composables/use-store-search-sugges
 // Mirrors SUGGESTION_DEBOUNCE_MS in the composable (not exported).
 const DEBOUNCE_MS = 300
 
-const { mockFetch, mockGetBookstoreInfo, mockPrefetch, mockIsRegionRestricted } = vi.hoisted(() => ({
+const { mockFetch, mockGetBookstoreInfo, mockPrefetch, mockIsRegionUnsupported } = vi.hoisted(() => ({
   mockFetch: vi.fn(),
   mockGetBookstoreInfo: vi.fn(),
   mockPrefetch: vi.fn(),
-  mockIsRegionRestricted: vi.fn(),
+  mockIsRegionUnsupported: vi.fn(),
 }))
 
 mockNuxtImport('fetchBookstoreCMSPublicationsBySearchTerm', () => mockFetch)
@@ -23,7 +23,7 @@ mockNuxtImport('getTimestampRoundedToMinute', () => () => 0)
 mockNuxtImport('useQueryCache', () => () => ({}))
 mockNuxtImport('prefetchBookstoreInfo', () => mockPrefetch)
 mockNuxtImport('getBookstoreInfoByNFTClassIdFromCache', () => mockGetBookstoreInfo)
-mockNuxtImport('useBookRegionGate', () => () => ({ getIsRegionRestricted: mockIsRegionRestricted }))
+mockNuxtImport('useBookRegionGate', () => () => ({ getIsRegionUnsupported: mockIsRegionUnsupported }))
 
 // Let awaited fetch continuations and the Vue watcher scheduler settle.
 async function flush() {
@@ -39,8 +39,8 @@ describe('useStoreSearchSuggestions', () => {
     mockGetBookstoreInfo.mockReturnValue(undefined)
     mockPrefetch.mockReset()
     mockPrefetch.mockResolvedValue(undefined)
-    mockIsRegionRestricted.mockReset()
-    mockIsRegionRestricted.mockReturnValue(false)
+    mockIsRegionUnsupported.mockReset()
+    mockIsRegionUnsupported.mockReturnValue(false)
   })
 
   afterEach(() => {
@@ -83,7 +83,7 @@ describe('useStoreSearchSuggestions', () => {
     mockPrefetch.mockImplementation(() => new Promise<void>((resolve) => {
       resolvePrefetch = resolve
     }))
-    mockIsRegionRestricted.mockImplementation((territories?: string[]) => !!territories?.includes('HK'))
+    mockIsRegionUnsupported.mockImplementation(({ restrictedTerritories }: { restrictedTerritories?: string[] }) => !!restrictedTerritories?.includes('HK'))
     const term = ref('')
     const { suggestions } = useStoreSearchSuggestions(term)
 
@@ -108,7 +108,7 @@ describe('useStoreSearchSuggestions', () => {
     })
     mockGetBookstoreInfo.mockReturnValue({ restrictedTerritories: ['HK'] })
     const isRestricted = ref(false)
-    mockIsRegionRestricted.mockImplementation(() => isRestricted.value)
+    mockIsRegionUnsupported.mockImplementation(() => isRestricted.value)
     const term = ref('')
     const { suggestions } = useStoreSearchSuggestions(term)
 
