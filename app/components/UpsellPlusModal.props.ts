@@ -13,6 +13,10 @@ export interface UpsellPlusModalSubscribeEventPayload {
   redirectRoute?: RouteLocationAsRelativeGeneric
 }
 
+// Dismissing (Esc, backdrop, close button) must not be read as skipping the upsell,
+// which proceeds to the full-price checkout.
+export type UpsellPlusModalCloseReason = 'subscribe' | 'skip' | 'dismiss'
+
 export interface UpsellPlusModalProps {
   isLikerPlus?: boolean
   likerPlusPeriod?: LikerPlusStatus
@@ -39,5 +43,5 @@ export interface UpsellPlusModalProps {
   from?: string
   onSubscribe?: (payload: UpsellPlusModalSubscribeEventPayload) => void
   onOpen?: () => void
-  onClose?: (isSuccess: boolean) => void
+  onClose?: (reason: UpsellPlusModalCloseReason) => void
 }
