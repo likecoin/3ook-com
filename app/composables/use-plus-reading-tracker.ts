@@ -25,25 +25,37 @@ export function usePlusReadingTracker(params: {
   // True once the open is confirmed a borrowed Plus-library read (vs an owned or
   // free read). Resolved asynchronously, so read it at emit time, not on mount.
   const isLibraryBook = ref(false)
+  // Resolves to the final `isLibraryBook` ahead of the registration round-trip,
+  // for callers that must decide on it right after the book opens.
+  const { promise: libraryBookCheck, resolve: settleLibraryBookCheck } = Promise.withResolvers<boolean>()
 
-  async function registerIfBorrowed() {
-    if (!import.meta.client) return
-    if (params.isUploadedBook.value) return
-    if (!hasLoggedIn.value) return
+  async function getIsBorrowed() {
+    if (params.isUploadedBook.value) return false
+    if (!hasLoggedIn.value) return false
     // An owned read carries an nft_id in the route; a borrow never does.
-    if (params.nftId.value) return
+    if (params.nftId.value) return false
 
     // Resolve ownership and the plus-reading flag before deciding.
     const [isOwner] = await Promise.all([
       checkOwnership(),
       ensureNFTClassAggregatedMetadataThroughCache(queryCache, nftClassIdRef.value).catch(() => {}),
     ])
-    if (isOwner) return
-    if (!params.isPlusReadingEnabled.value) return
+    if (isOwner) return false
+    if (!params.isPlusReadingEnabled.value) return false
     // Plus members borrow any Plus-reading book; non-Plus users only free ones.
-    if (!isLikerPlus.value && !params.hasFreeEdition.value) return
+    return isLikerPlus.value || params.hasFreeEdition.value
+  }
 
-    isLibraryBook.value = true
+  async function registerIfBorrowed() {
+    if (!import.meta.client) return
+    try {
+      isLibraryBook.value = await getIsBorrowed()
+    }
+    finally {
+      settleLibraryBookCheck(isLibraryBook.value)
+    }
+    if (!isLibraryBook.value) return
+
     // Read borrow state before registration mutates it to tell first borrows from re-opens.
     useLogEvent('plus_reading_borrow', {
       nft_class_id: nftClassIdRef.value,
@@ -56,5 +68,5 @@ export function usePlusReadingTracker(params: {
 
   onMounted(registerIfBorrowed)
 
-  return { isLibraryBook: readonly(isLibraryBook) }
+  return { isLibraryBook: readonly(isLibraryBook), libraryBookCheck }
 }
