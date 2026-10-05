@@ -276,7 +276,8 @@ export function useStructuredData(
 
     const pricingItems = bookInfo.pricingItems.value
     const pricingItem = pricingItems[selectedPricingItemIndex]
-    if (!pricingItem || bookInfo.isHidden.value || !bookInfo.isApprovedForAds.value) {
+    // The tags below describe an e-book (category, catalog id); merch has no schema here yet.
+    if (!pricingItem || bookInfo.isHidden.value || !bookInfo.isApprovedForAds.value || bookInfo.isNonNFT.value) {
       return []
     }
     const meta = [{
@@ -381,7 +382,9 @@ export function useStructuredData(
     const nftClassIdValue = toValue(nftClassId)
     // No listing means no product to describe — emitting Book/Offer markup for a
     // class that isn't on sale is exactly the mismatch merchant reviews flag.
-    if (bookInfo.isHidden.value || !bookInfo.hasBookstoreInfo.value) {
+    // Merch is skipped too: this markup says Book/EBook and links a checkout
+    // page that only resolves chain-backed classes.
+    if (bookInfo.isHidden.value || !bookInfo.hasBookstoreInfo.value || bookInfo.isNonNFT.value) {
       return []
     }
 

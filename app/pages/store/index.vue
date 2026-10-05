@@ -289,6 +289,8 @@ const { handleError } = useErrorHandler()
 const storePageState = useStorePageState(listingRouteName)
 const isOnline = useOnline()
 const isAdultContentEnabled = useAdultContentSetting()
+// Only the compliance gate hides a listing; merch that does not ship here stays
+// browsable, and its product page explains why it cannot be bought.
 const { getIsRegionRestricted } = useBookRegionGate()
 const { isApp } = useAppDetection()
 const intercom = useIntercom()

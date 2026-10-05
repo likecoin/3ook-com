@@ -483,6 +483,9 @@ async function computeForYouRecommendations(
     const classId = getCandidateClassId(product)
     if (!classId || classId === seedClassId) return false
     if (shelfClassIdSet.has(classId)) return false
+    // The /list feeds already default to books; this guards any other source.
+    // Non-NFT products carry no genre, author or keywords to score on.
+    if (getIsNonNFTProduct(product.productType)) return false
     if (product.isAdultOnly && !isAdultContentEnabled) return false
     if (isLibrary && !product.isPlusReadingEnabled) return false
     return true

@@ -196,17 +196,26 @@ const cartItems = computed<CheckoutItem[]>(() => {
     const nftClass = getNFTClassMetadataByIdFromCache(queryCache, product.classId)
     const bookstoreInfo = getBookstoreInfoByNFTClassIdFromCache(queryCache, product.classId)
 
-    if (!nftClass || !bookstoreInfo) {
+    // A non-NFT product has no chain class; its listing alone describes it.
+    const isNonNFT = getIsNonNFTProduct(bookstoreInfo?.productType)
+    if (!bookstoreInfo || (!nftClass && !isNonNFT)) {
       return null
     }
 
-    const authorName = getBookEntityName(bookstoreInfo.author) || getBookEntityName(nftClass.author)
+    const authorName = getBookEntityName(bookstoreInfo.author) || getBookEntityName(nftClass?.author)
 
-    const bookInfo = {
-      name: localeString(bookstoreInfo.name || nftClass.name) || '',
-      authorName,
-      coverSrc: getResizedNormalizedImageURL(nftClass.image, { size: 600 }),
-    }
+    // Mirrors listingAwareName/listingAwareCoverSrc in useBookInfo, which is per-class and can't map a list.
+    const bookInfo = isNonNFT
+      ? {
+          name: (bookstoreInfo.nameByLocale && localeString(bookstoreInfo.nameByLocale as Record<string, string>)) || bookstoreInfo.name || '',
+          authorName,
+          coverSrc: getResizedNormalizedImageURL(bookstoreInfo.thumbnailUrl, { size: 600 }),
+        }
+      : {
+          name: localeString(bookstoreInfo.name || nftClass!.name) || '',
+          authorName,
+          coverSrc: getResizedNormalizedImageURL(nftClass!.image, { size: 600 }),
+        }
 
     const pricingItem = bookstoreInfo.prices.find(p => p.index === product.priceIndex)
 

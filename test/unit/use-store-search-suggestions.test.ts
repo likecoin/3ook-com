@@ -83,7 +83,7 @@ describe('useStoreSearchSuggestions', () => {
     mockPrefetch.mockImplementation(() => new Promise<void>((resolve) => {
       resolvePrefetch = resolve
     }))
-    mockIsRegionRestricted.mockImplementation((territories?: string[]) => !!territories?.includes('HK'))
+    mockIsRegionRestricted.mockImplementation((restrictedTerritories?: string[]) => !!restrictedTerritories?.includes('HK'))
     const term = ref('')
     const { suggestions } = useStoreSearchSuggestions(term)
 
