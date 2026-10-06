@@ -4,6 +4,9 @@ export default defineVitestConfig({
   test: {
     include: ['test/unit/**/*.{test,spec}.ts'],
     environment: 'nuxt',
+    // setupNuxt runs in a beforeAll per file and can exceed the 10s default
+    // when the full suite saturates the workers; files pass alone in ~5s.
+    hookTimeout: 30000,
     environmentOptions: {
       // BASE_URL is unset under test, so pin it: middleware that derives the apex
       // host from it would otherwise no-op and let its assertions pass vacuously.

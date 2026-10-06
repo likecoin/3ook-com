@@ -42,6 +42,11 @@ export function useTTSVoice(options: TTSVoiceOptions = {}) {
       { label: '粵語女聲', value: 'zh-HK_0' },
       { label: '國語男聲', value: 'zh-TW_1' },
       { label: '國語女聲', value: 'zh-TW_0' },
+      { label: 'Chun Wai (ElevenLabs v4) - 粵語', value: 'zh-HK_el_chunwai' },
+      { label: 'Suk Yee (ElevenLabs v4) - 粵語', value: 'zh-HK_el_sukyee' },
+      { label: 'Phoebe (ElevenLabs v4) - 粵語', value: 'zh-HK_el_phoebe' },
+      { label: 'Kevin Tu (ElevenLabs v4) - 國語', value: 'zh-TW_el_kevintu' },
+      { label: 'Liang (ElevenLabs v4) - 國語', value: 'zh-TW_el_liang' },
     )
   }
 
@@ -178,6 +183,7 @@ export function useTTSVoice(options: TTSVoiceOptions = {}) {
     // Match on the version-stripped id so avatars survive `_v<n>` bumps.
     switch (stripTTSVoiceVersion(languageVoice)) {
       case 'zh-HK_phoebe':
+      case 'zh-HK_el_phoebe':
         return phoebeAvatar
 
       case 'zh-HK_pazu':

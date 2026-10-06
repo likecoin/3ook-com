@@ -78,6 +78,10 @@ env:
     secret: V3_AIRTABLE_API_SECRET
     availability:
       - RUNTIME
+  - variable: NUXT_ELEVENLABS_API_KEY
+    secret: ELEVENLABS_API_KEY
+    availability:
+      - RUNTIME
   - variable: NUXT_MINIMAX_API_KEY
     secret: MINIMAX_API_KEY
     availability:
