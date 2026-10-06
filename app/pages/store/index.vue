@@ -295,7 +295,7 @@ import { LOGGED_IMPRESSION_COUNT, isBookstoreBuiltInListType } from '~~/shared/u
 import { getStorePublisherRouteName } from '~~/shared/constants/store-routes'
 import { formatLikerIdHandle } from '~~/shared/utils/liker-id'
 import { getStoreTagIdFromRoute } from '~/composables/use-store-tags'
-import { getIsEinkReaderTagId } from '~/utils/eink-reader-tag'
+import { getIsGiftTagId } from '~/utils/gift-tag'
 import { getIsLibraryChartTagId } from '~/utils/library-chart'
 
 // Per-tag, so not a static `colorMode`: this page also serves /store.
@@ -449,11 +449,11 @@ const {
 // whose Airtable book order is the rank — the layout switch is all the id buys.
 const isLibraryChartTag = computed(() => isLibraryTab.value && getIsLibraryChartTagId(tagId.value))
 // Plus gifting checks out through its own Stripe flow, not the cart, so it rides
-// on the e-reader tag as a card. Web only: /gift/plus bounces app users to the store.
+// on the gift tag as a card. Web only: /gift/plus bounces app users to the store.
 const isGiftPlusCardVisible = computed(() => !isApp.value
   && !isLibraryTab.value
   && !isSearchMode.value
-  && getIsEinkReaderTagId(tagId.value)
+  && getIsGiftTagId(tagId.value)
   && !hasMoreItems.value)
 // The header shows the editor's copy verbatim;
 // `tagDescription` falls back to boilerplate
