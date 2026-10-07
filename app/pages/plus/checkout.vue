@@ -250,7 +250,7 @@ async function mountCheckout() {
 
 function handleComplete() {
   settle()
-  const { paymentId, period, tier, coupon, isTrial } = plusCheckoutStore
+  const { paymentId, priceId, period, tier, coupon, isTrial } = plusCheckoutStore
   plusCheckoutStore.clear()
   navigateTo(localeRoute({
     name: 'plus-success',
@@ -260,6 +260,7 @@ function handleComplete() {
       // with Civic copy, rather than treating it as a plain Plus subscription.
       ...(tier === 'civic' ? { tier } : {}),
       payment_id: paymentId || undefined,
+      price_id: priceId || undefined,
       coupon: coupon || undefined,
       redirect: '1',
       trial: isTrial ? '1' : '0',

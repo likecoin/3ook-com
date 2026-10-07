@@ -371,10 +371,11 @@ export function useSubscriptionCheckout() {
           coupon,
           uiMode,
         }
-        const { url, clientSecret, paymentId } = await plusSessionAPI.fetchLikerPlusCheckoutLink(checkoutPayload)
+        const { url, clientSecret, paymentId, priceId } = await plusSessionAPI.fetchLikerPlusCheckoutLink(checkoutPayload)
         useLogEvent('begin_checkout', {
           ...eventPayloadWithCoupon,
           transaction_id: paymentId,
+          price_id: priceId,
           checkout_mode: uiMode,
         })
         // begin_checkout is server-mirrored and deduped by transaction_id, so the
@@ -392,6 +393,7 @@ export function useSubscriptionCheckout() {
           plusCheckoutStore.setSession({
             clientSecret,
             paymentId,
+            priceId,
             period: plan,
             tier,
             coupon,

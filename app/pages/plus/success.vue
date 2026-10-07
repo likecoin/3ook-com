@@ -66,6 +66,7 @@ const isRedirected = computed(() => !!getRouteQuery('redirect'))
 const targetPeriod = computed(() => getRouteQuery('period'))
 const isYearly = computed(() => targetPeriod.value === 'yearly')
 const paymentId = computed(() => getRouteQuery('payment_id') || getRouteQuery('session_id'))
+const priceId = computed(() => getRouteQuery('price_id') || undefined)
 const coupon = computed(() => getRouteQuery('coupon'))
 
 const isRefreshing = ref(true)
@@ -223,6 +224,7 @@ onMounted(async () => {
         value: conversionValue,
         predicted_ltv: conversionPredictedLTV,
         period: getLikerPlusStatusFromPlan(targetPeriod.value),
+        price_id: priceId.value,
         promotion_id: coupon.value,
         promotion_name: coupon.value,
       }
