@@ -28,3 +28,26 @@ export function checkLikerIdValid(likerId: string): boolean {
     && likerId.length >= LIKER_ID_MIN_LENGTH
     && likerId.length <= LIKER_ID_MAX_LENGTH
 }
+
+// A link rewriter appending `?fbclid=` to a URL that already has a query
+// leaves `@likerId?fbclid=…` in `from`. Splits that tail back into its own params.
+export function splitGluedFromQuery(rawFrom: string): { from: string, gluedQuery: Record<string, string> } {
+  const tailIndex = rawFrom.search(/[?&#]/)
+  if (tailIndex < 0) return { from: rawFrom, gluedQuery: {} }
+  const gluedQuery: Record<string, string> = {}
+  for (const [key, value] of new URLSearchParams(rawFrom.slice(tailIndex + 1))) {
+    if (key && !(key in gluedQuery)) gluedQuery[key] = value
+  }
+  return { from: rawFrom.slice(0, tailIndex), gluedQuery }
+}
+
+// `from` as a referrer can trust: glued-on query stripped, `@` handle canonical,
+// and undefined for an `@` handle that is not a valid Liker ID.
+export function sanitizeFrom(rawFrom?: string): string | undefined {
+  if (!rawFrom) return undefined
+  const from = splitGluedFromQuery(rawFrom).from.trim()
+  if (!from) return undefined
+  if (!from.startsWith('@')) return from
+  const likerId = getCanonicalLikerId(from)
+  return checkLikerIdValid(likerId) ? formatLikerIdHandle(likerId) : undefined
+}

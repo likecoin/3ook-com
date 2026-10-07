@@ -36,7 +36,7 @@ export function useAppDownloadUrls(placement: AppDownloadPlacement) {
   }
   // Affiliate/channel id rides the referrer as its own `from` key (never folded
   // into utm) so the native shell can credit an affiliate-driven install.
-  const affiliateFrom = getRouteQuery('from')
+  const affiliateFrom = sanitizeFrom(getRouteQuery('from'))
   if (affiliateFrom) params.from = affiliateFrom
 
   // Play wants the whole UTM string as one URL-encoded `referrer` value.

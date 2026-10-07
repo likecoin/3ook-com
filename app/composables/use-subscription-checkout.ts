@@ -203,7 +203,7 @@ export function useSubscriptionCheckout() {
         // shell sets them before purchase and the grant webhook reads them back — the
         // IAP equivalent of Stripe checkout metadata. Drop empty attribution values so
         // we never overwrite an attribute with a blank.
-        const from = getRouteQuery('from')
+        const from = sanitizeFrom(getRouteQuery('from'))
         const analyticsParams = getAnalyticsParameters()
         const attributes: Record<string, string> = {}
         const setAttribute = (key: string, value?: string | null) => {
@@ -357,7 +357,7 @@ export function useSubscriptionCheckout() {
         const checkoutPayload = {
           period: plan,
           tier,
-          from: getRouteQuery('from'),
+          from: sanitizeFrom(getRouteQuery('from')),
           currency: getCheckoutCurrency(),
           trialPeriodDays,
           mustCollectPaymentMethod,
