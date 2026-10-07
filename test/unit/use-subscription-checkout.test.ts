@@ -11,6 +11,7 @@ const {
   mockIsApp,
   mockIsIAPSupported,
   mockIsLikerPlus,
+  mockLogEvent,
   mockPurchase,
   mockRefreshSessionInfo,
   mockSetSession,
@@ -25,6 +26,7 @@ const {
   mockIsApp: { value: true },
   mockIsIAPSupported: { value: true },
   mockIsLikerPlus: { value: false },
+  mockLogEvent: vi.fn(),
   mockPurchase: vi.fn(async (_options: { attributes: Record<string, string> }) => (
     { status: 'success' as const, message: '' }
   )),
@@ -71,7 +73,7 @@ mockNuxtImport('useNativeIAP', () => () => ({
 mockNuxtImport('usePlusEligibility', () => () => ({ isCivicOfferable: { value: true } }))
 mockNuxtImport('useABTest', () => () => ({ captureExposure: () => mockEmbeddedVariant.value }))
 mockNuxtImport('useErrorHandler', () => () => ({ handleError: vi.fn() }))
-mockNuxtImport('useLogEvent', () => () => {})
+mockNuxtImport('useLogEvent', () => mockLogEvent)
 mockNuxtImport('requestNativeStoreReview', () => () => {})
 mockNuxtImport('navigateTo', () => async () => {})
 
@@ -83,9 +85,14 @@ function getCheckoutRequest() {
   return mockFetchCheckoutLink.mock.calls[0]![0]
 }
 
+function getLoggedEvent(eventName: string) {
+  return mockLogEvent.mock.calls.find(([name]) => name === eventName)?.[1]
+}
+
 beforeEach(() => {
   mockAnalyticsParams.value = {}
   mockIsLikerPlus.value = false
+  mockLogEvent.mockClear()
   mockIsApp.value = true
   mockIsIAPSupported.value = true
   mockEmbeddedVariant.value = null
@@ -233,5 +240,17 @@ describe('useSubscriptionCheckout embedded checkout replay payload', () => {
     await startSubscription({ plan: 'yearly' })
     expect(getCheckoutRequest().uiMode).toBe('hosted')
     expect(mockSetSession).not.toHaveBeenCalled()
+  })
+})
+
+describe('useSubscriptionCheckout checkout event period', () => {
+  it.each([
+    ['monthly', 'month'],
+    ['yearly', 'year'],
+  ] as const)('reports a %s plan as period %s', async (plan, period) => {
+    const { startSubscription } = useSubscriptionCheckout()
+    await startSubscription({ plan })
+    expect(getLoggedEvent('add_to_cart')).toMatchObject({ period })
+    expect(getLoggedEvent('begin_checkout')).toMatchObject({ period })
   })
 })

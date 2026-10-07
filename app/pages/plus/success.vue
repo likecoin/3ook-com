@@ -42,7 +42,7 @@
 import type { RouteLocationRaw } from 'vue-router'
 
 import { PLUS_TADA_TOTAL_MS } from '~/components/PlusMembershipTada.vue'
-import { getSubscriptionPlanFromStatus } from '~~/shared/utils/subscription'
+import { getLikerPlusStatusFromPlan, getSubscriptionPlanFromStatus } from '~~/shared/utils/subscription'
 
 const { t: $t } = useI18n()
 const localeRoute = useLocaleRoute()
@@ -222,6 +222,7 @@ onMounted(async () => {
         currency: currency.value,
         value: conversionValue,
         predicted_ltv: conversionPredictedLTV,
+        period: getLikerPlusStatusFromPlan(targetPeriod.value),
         promotion_id: coupon.value,
         promotion_name: coupon.value,
       }

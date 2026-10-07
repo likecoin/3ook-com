@@ -2,6 +2,7 @@ import type { UpsellPlusModalSubscribeEventPayload } from '~/components/UpsellPl
 import type { CheckoutUIMode } from '~/composables/use-plus-session-api'
 import type { PlusCheckoutPlacement } from '~~/shared/constants/analytics'
 import { usePlusCheckoutStore } from '~/stores/plus-checkout'
+import { getLikerPlusStatusFromPlan } from '~~/shared/utils/subscription'
 
 // The modal emits the payload; the opener adds the placement, which is
 // analytics-only and never reaches checkout metadata.
@@ -117,6 +118,7 @@ export function useSubscriptionCheckout() {
       currency: currency.value,
       value: price,
       product_type: tier,
+      period: getLikerPlusStatusFromPlan(plan),
       items: [{
         id: `${tier}-${plan}`,
         name: `${tierName} (${plan})`,
