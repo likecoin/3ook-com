@@ -229,7 +229,7 @@ const activeAffiliate = computed(() =>
   affiliateInfo.value?.active ? affiliateInfo.value : null,
 )
 const affiliateLikerId = computed(() => {
-  const from = sanitizeFrom(getRouteQuery('from'))
+  const from = getRouteQuery('from')
   return from ? normalizeLikerId(from) : undefined
 })
 const affiliateVoiceNames = computed(() => {

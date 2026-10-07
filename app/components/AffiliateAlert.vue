@@ -22,7 +22,7 @@ const { t: $t } = useI18n()
 const getRouteQuery = useRouteQuery()
 const isCacheDisabled = useNoCache()
 
-const from = computed(() => sanitizeFrom(getRouteQuery('from')))
+const from = computed(() => getRouteQuery('from'))
 
 const affiliateId = computed(() => parseLikerIdHandle(from.value))
 

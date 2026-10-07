@@ -923,7 +923,7 @@ const bookCoverSrc = computed(() => getResizedImageURL(bookInfo.coverSrc.value, 
 
 const selectedPricingItemIndex = ref(Number(getRouteQuery('price_index') || 0))
 
-const from = computed(() => sanitizeFrom(getRouteQuery('from')))
+const from = computed(() => getRouteQuery('from') || undefined)
 
 // When the link affiliate (`?from=@likerId`) has opted in, Plus members keep
 // their 20% discount and the affiliate absorbs the cost from their channel share.

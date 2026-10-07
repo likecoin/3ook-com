@@ -30,24 +30,18 @@ export function checkLikerIdValid(likerId: string): boolean {
 }
 
 // A link rewriter appending `?fbclid=` to a URL that already has a query
-// leaves `@likerId?fbclid=…` in `from`. Splits that tail back into its own params.
-export function splitGluedFromQuery(rawFrom: string): { from: string, gluedQuery: Record<string, string> } {
+// leaves `@likerId?fbclid=…` in `from`. Returns the clean `from`, canonical
+// or undefined for an invalid handle, plus the glued-on params as their own keys.
+export function parseFromQuery(rawFrom: string): { from?: string, gluedQuery: Record<string, string> } {
   const tailIndex = rawFrom.search(/[?&#]/)
-  if (tailIndex < 0) return { from: rawFrom, gluedQuery: {} }
   const gluedQuery: Record<string, string> = {}
-  for (const [key, value] of new URLSearchParams(rawFrom.slice(tailIndex + 1))) {
-    if (key && !(key in gluedQuery)) gluedQuery[key] = value
+  if (tailIndex >= 0) {
+    for (const [key, value] of new URLSearchParams(rawFrom.slice(tailIndex + 1))) {
+      if (key && !(key in gluedQuery)) gluedQuery[key] = value
+    }
   }
-  return { from: rawFrom.slice(0, tailIndex), gluedQuery }
-}
-
-// `from` as a referrer can trust: glued-on query stripped, `@` handle canonical,
-// and undefined for an `@` handle that is not a valid Liker ID.
-export function sanitizeFrom(rawFrom?: string): string | undefined {
-  if (!rawFrom) return undefined
-  const from = splitGluedFromQuery(rawFrom).from.trim()
-  if (!from) return undefined
-  if (!from.startsWith('@')) return from
+  const from = (tailIndex < 0 ? rawFrom : rawFrom.slice(0, tailIndex)).trim()
+  if (!from.startsWith('@')) return { from: from || undefined, gluedQuery }
   const likerId = getCanonicalLikerId(from)
-  return checkLikerIdValid(likerId) ? formatLikerIdHandle(likerId) : undefined
+  return { from: checkLikerIdValid(likerId) ? formatLikerIdHandle(likerId) : undefined, gluedQuery }
 }

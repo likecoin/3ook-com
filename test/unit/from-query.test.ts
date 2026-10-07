@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 import fromQueryMiddleware from '~/middleware/from-query.global'
-import { sanitizeFrom, splitGluedFromQuery } from '~~/shared/utils/liker-id'
+import { parseFromQuery } from '~~/shared/utils/liker-id'
 
 const { mockNavigateTo } = vi.hoisted(() => ({ mockNavigateTo: vi.fn() }))
 
@@ -12,48 +12,35 @@ function runMiddleware(query: Record<string, string>) {
   return fromQueryMiddleware(route, route)
 }
 
-describe('splitGluedFromQuery', () => {
-  it('splits a `?`-glued tail into its own params', () => {
-    expect(splitGluedFromQuery('@poonworks?fbclid=abc&utm_source=fb')).toEqual({
+describe('parseFromQuery', () => {
+  const getFrom = (rawFrom: string) => parseFromQuery(rawFrom).from
+
+  it('keeps a valid handle', () => {
+    expect(parseFromQuery('@poonworks')).toEqual({ from: '@poonworks', gluedQuery: {} })
+  })
+
+  it('splits a glued-on query into its own params', () => {
+    expect(parseFromQuery('@poonworks?fbclid=abc&utm_source=fb')).toEqual({
       from: '@poonworks',
       gluedQuery: { fbclid: 'abc', utm_source: 'fb' },
     })
-  })
-
-  it('leaves a clean value alone', () => {
-    expect(splitGluedFromQuery('@poonworks')).toEqual({ from: '@poonworks', gluedQuery: {} })
-  })
-})
-
-describe('sanitizeFrom', () => {
-  it('keeps a valid handle', () => {
-    expect(sanitizeFrom('@poonworks')).toBe('@poonworks')
-  })
-
-  it('strips a glued-on query', () => {
-    expect(sanitizeFrom('@poonworks?fbclid=IwVERDUAU')).toBe('@poonworks')
-    expect(sanitizeFrom('@poonworks&utm_source=fb')).toBe('@poonworks')
+    expect(getFrom('@poonworks&utm_source=fb')).toBe('@poonworks')
   })
 
   it('canonicalizes the handle', () => {
-    expect(sanitizeFrom('@PoonWorks')).toBe('@poonworks')
+    expect(getFrom('@PoonWorks')).toBe('@poonworks')
   })
 
   it('drops an invalid handle', () => {
-    expect(sanitizeFrom('@ab')).toBeUndefined()
-    expect(sanitizeFrom('@poon works')).toBeUndefined()
-    expect(sanitizeFrom('@')).toBeUndefined()
+    expect(getFrom('@ab')).toBeUndefined()
+    expect(getFrom('@poon works')).toBeUndefined()
+    expect(getFrom('@')).toBeUndefined()
+    expect(getFrom('?fbclid=abc')).toBeUndefined()
   })
 
   it('keeps a legacy channel string', () => {
-    expect(sanitizeFrom('liker_land')).toBe('liker_land')
-    expect(sanitizeFrom('liker_land?fbclid=abc')).toBe('liker_land')
-  })
-
-  it('returns undefined for empty input', () => {
-    expect(sanitizeFrom(undefined)).toBeUndefined()
-    expect(sanitizeFrom('')).toBeUndefined()
-    expect(sanitizeFrom('?fbclid=abc')).toBeUndefined()
+    expect(getFrom('liker_land')).toBe('liker_land')
+    expect(getFrom('liker_land?fbclid=abc')).toBe('liker_land')
   })
 })
 
