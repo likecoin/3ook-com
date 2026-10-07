@@ -3,6 +3,7 @@ import type { FetchLikerPlusCheckoutLinkPayload } from '~/composables/use-plus-s
 export const usePlusCheckoutStore = defineStore('plus-checkout', () => {
   const clientSecret = ref<string | null>(null)
   const paymentId = ref<string | null>(null)
+  const priceId = ref<string | null>(null)
   const period = ref<SubscriptionPlan | null>(null)
   const tier = ref<LikerPlusTier | null>(null)
   const coupon = ref<string | null>(null)
@@ -15,6 +16,7 @@ export const usePlusCheckoutStore = defineStore('plus-checkout', () => {
   function setSession(payload: {
     clientSecret: string
     paymentId: string
+    priceId?: string
     period: SubscriptionPlan
     tier?: LikerPlusTier
     coupon?: string | null
@@ -23,6 +25,7 @@ export const usePlusCheckoutStore = defineStore('plus-checkout', () => {
   }) {
     clientSecret.value = payload.clientSecret
     paymentId.value = payload.paymentId
+    priceId.value = payload.priceId ?? null
     period.value = payload.period
     tier.value = payload.tier ?? null
     coupon.value = payload.coupon ?? null
@@ -33,6 +36,7 @@ export const usePlusCheckoutStore = defineStore('plus-checkout', () => {
   function clear() {
     clientSecret.value = null
     paymentId.value = null
+    priceId.value = null
     period.value = null
     tier.value = null
     coupon.value = null
@@ -43,6 +47,7 @@ export const usePlusCheckoutStore = defineStore('plus-checkout', () => {
   return {
     clientSecret,
     paymentId,
+    priceId,
     period,
     tier,
     coupon,

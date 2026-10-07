@@ -22,6 +22,7 @@ const {
     url?: string
     clientSecret?: string
     paymentId: string
+    priceId?: string
   }> => ({ paymentId: '' })),
   mockIsApp: { value: true },
   mockIsIAPSupported: { value: true },
@@ -240,6 +241,23 @@ describe('useSubscriptionCheckout embedded checkout replay payload', () => {
     await startSubscription({ plan: 'yearly' })
     expect(getCheckoutRequest().uiMode).toBe('hosted')
     expect(mockSetSession).not.toHaveBeenCalled()
+  })
+
+  it('carries the Stripe price from /plus/new to begin_checkout and the success page', async () => {
+    mockFetchCheckoutLink.mockResolvedValue({
+      clientSecret: 'cs_test_1',
+      paymentId: 'pay_1',
+      priceId: 'price_yearly',
+    })
+    const { startSubscription } = useSubscriptionCheckout()
+    await startSubscription({ plan: 'yearly' })
+    expect(getLoggedEvent('begin_checkout')).toMatchObject({
+      period: 'year',
+      price_id: 'price_yearly',
+    })
+    expect(mockSetSession).toHaveBeenCalledWith(expect.objectContaining({
+      priceId: 'price_yearly',
+    }))
   })
 })
 

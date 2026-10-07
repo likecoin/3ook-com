@@ -32,6 +32,7 @@ export interface FetchLikerPlusCheckoutLinkPayload {
 export interface FetchLikerPlusCheckoutLinkResponseData {
   sessionId: string
   paymentId: string
+  priceId?: string
   url?: string
   clientSecret?: string
 }
