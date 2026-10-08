@@ -28,3 +28,20 @@ export function checkLikerIdValid(likerId: string): boolean {
     && likerId.length >= LIKER_ID_MIN_LENGTH
     && likerId.length <= LIKER_ID_MAX_LENGTH
 }
+
+// A link rewriter appending `?fbclid=` to a URL that already has a query
+// leaves `@likerId?fbclid=…` in `from`. Returns the clean `from`, canonical
+// or undefined for an invalid handle, plus the glued-on params as their own keys.
+export function parseFromQuery(rawFrom: string): { from?: string, gluedQuery: Record<string, string> } {
+  const tailIndex = rawFrom.search(/[?&#]/)
+  const gluedQuery: Record<string, string> = {}
+  if (tailIndex >= 0) {
+    for (const [key, value] of new URLSearchParams(rawFrom.slice(tailIndex + 1))) {
+      if (key && !(key in gluedQuery)) gluedQuery[key] = value
+    }
+  }
+  const from = (tailIndex < 0 ? rawFrom : rawFrom.slice(0, tailIndex)).trim()
+  if (!from.startsWith('@')) return { from: from || undefined, gluedQuery }
+  const likerId = getCanonicalLikerId(from)
+  return { from: checkLikerIdValid(likerId) ? formatLikerIdHandle(likerId) : undefined, gluedQuery }
+}
