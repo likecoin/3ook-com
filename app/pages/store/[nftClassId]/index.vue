@@ -947,7 +947,14 @@ const plusPromoTitle = computed(() => $t(bookInfo.isPlusPromoYearly.value ? 'pro
 const plusPromoDescription = computed(() => $t(bookInfo.isPlusPromoYearly.value ? 'product_page_plus_promo_description_yearly' : 'product_page_plus_promo_description'))
 
 const isPlusPromoBannerVisible = computed(() => {
-  return bookInfo.isPlusPromoEnabled.value && !isLikerPlus.value && !isApp.value && !isUserBookOwner.value
+  return (
+    bookInfo.isPlusPromoEnabled.value
+    && !isLikerPlus.value
+    && !isApp.value
+    && !isUserBookOwner.value
+    // The bundled Plus comes with the purchase, which this region cannot make.
+    && !bookInfo.isRegionUnsupported.value
+  )
 })
 
 const descriptionTags = computed(() => {
