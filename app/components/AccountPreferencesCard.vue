@@ -5,10 +5,14 @@
         icon="i-material-symbols-public"
         :label="$t('account_page_region')"
       >
-        <div
-          class="text-sm text-muted"
-          v-text="regionLabel"
-        />
+        <div class="text-sm text-muted">
+          <span v-text="regionLabel" />
+          <span
+            v-if="detectedIP"
+            class="ml-2 text-dimmed"
+            v-text="`(${detectedIP})`"
+          />
+        </div>
       </AccountSettingsItem>
 
       <AccountSettingsItem
@@ -97,6 +101,8 @@ const { isApp } = useAppDetection()
 
 const { locales } = useAutoLocale()
 const { regionLabel } = useRegionLabel()
+const { data: requestIPData } = useLazyFetch('/api/geo/ip', { server: false })
+const detectedIP = computed(() => requestIPData.value?.ip)
 const { currency, options: currencyOptions } = usePaymentCurrency()
 const { preference: colorModePreference, options: colorModeOptions } = useColorModeSync()
 
