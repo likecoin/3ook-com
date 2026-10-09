@@ -755,12 +755,6 @@ const shouldEnforceWritingMode = computed(() =>
   hasSavedWritingMode.value || originalWritingMode.value === EPUB_WRITING_MODES.vertical,
 )
 
-const isFixedLayoutBook = computed(() => {
-  const book = rendition.value?.book ?? loadedBook.value
-  return book?.packaging?.metadata?.layout === 'pre-paginated'
-    || book?.displayOptions?.fixedLayout === 'true'
-})
-
 // The book's own `page-progression-direction`, from metadata. A vertical book's
 // implicit RTL must be told apart from a genuine horizontal-RTL script (Arabic,
 // Hebrew) so forcing horizontal layout doesn't wrongly keep RTL turns.
@@ -879,16 +873,7 @@ function applyTheme() {
       'min-width': '2rem',
       'border-radius': '4px',
     },
-  }
-  // Cap oversized illustrations to the page.
-  // Reflowable only: a fixed-layout page scales its own box to fit the frame,
-  // so a `vh` cap measures the frame instead and letterboxes the page.
-  if (!isFixedLayoutBook.value) {
-    themeRules['img, svg'] = {
-      'max-width': '100% !important',
-      'max-height': '90vh !important',
-      'height': 'auto !important',
-    }
+    ...IMAGE_CAP_THEME_RULES,
   }
   // Only layer a writing-mode rule on top of the book's own CSS when enforcing;
   // otherwise it changes the initial column layout calc and can skew
@@ -1237,8 +1222,10 @@ async function loadEPub() {
   if (pagingContainer) {
     removePagingScrollListener = useEventListener(pagingContainer, 'scroll', handlePagingScroll)
   }
-  book.spine!.hooks.content.register((document: Document) => {
+  book.spine!.hooks.content.register((document: Document, section: Section) => {
     applyWritingModeToDocument(document)
+    // Resolves both a fixed-layout book and a per-itemref override in a reflowable one.
+    if (book.locations.isPrePaginated(section)) markPrePaginatedPage(document)
   })
   currentRendition.hooks.content.register((contents: Contents) => {
     applyImageLoadStateToDocument(contents.document)
