@@ -87,3 +87,21 @@ export function getExcerptForCFI(
     return ''
   }
 }
+
+const PRE_PAGINATED_PAGE_ATTRIBUTE = 'data-pre-paginated'
+const REFLOWABLE_HTML = `html:not([${PRE_PAGINATED_PAGE_ATTRIBUTE}])`
+
+export function markPrePaginatedPage(document: Document) {
+  document.documentElement.setAttribute(PRE_PAGINATED_PAGE_ATTRIBUTE, '')
+}
+
+// Cap oversized illustrations to the page.
+// Reflowable pages only: a pre-paginated page scales its own box to fit the frame,
+// so a `vh` cap measures the frame instead and letterboxes the page.
+export const IMAGE_CAP_THEME_RULES = {
+  [`${REFLOWABLE_HTML} img, ${REFLOWABLE_HTML} svg`]: {
+    'max-width': '100% !important',
+    'max-height': '90vh !important',
+    'height': 'auto !important',
+  },
+}
