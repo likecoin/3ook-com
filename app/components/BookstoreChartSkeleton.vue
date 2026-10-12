@@ -6,12 +6,12 @@
     <li
       v-for="(chart, index) in rows"
       :key="index"
-      :class="[chart.grid, chart.height]"
+      :class="chart.grid"
     >
       <div
         :class="[
           'flex items-center w-full h-full',
-          getLibraryChartSurfaceClass(chart.tier),
+          chart.surface,
           chart.row,
         ]"
       >
@@ -32,7 +32,6 @@
           :class="[
             'min-w-0 grow flex flex-col gap-1.5 tablet:w-full',
             chart.title,
-            { 'tablet:grow-0 tablet:items-center': chart.isPodium },
           ]"
         >
           <USkeleton class="bg-skeleton w-full h-[0.8lh] rounded" />

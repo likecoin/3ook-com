@@ -7,7 +7,7 @@
   <li
     v-if="variant === 'chart'"
     ref="lazyLoadTrigger"
-    :class="[chart.grid, chart.height]"
+    :class="chart.grid"
   >
     <NuxtLink
       :to="productPageRoute"

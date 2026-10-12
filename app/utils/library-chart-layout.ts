@@ -2,41 +2,36 @@
 // share it, so the list can't shift when the data lands.
 // Class strings stay literal for Tailwind.
 
-// The shape. chart-card-layout.ts reads these, so a top twenty is one edit.
+// The shape, so a top twenty is one edit.
 export const LIBRARY_CHART_SIZE = 10
-export const LIBRARY_CHART_PODIUM_SIZE = 3
+// Second and third place: the ranks highlighted after first.
+export const LIBRARY_CHART_HIGHLIGHT_SIZE = 3
 export const LIBRARY_CHART_PAIR_SIZE = 2
-// Left to right: second, first, third.
-export const LIBRARY_CHART_PODIUM_ORDER = [2, 1, 3]
-// Shares of the podium's height.
-// LIBRARY_CHART_PODIUM_HEIGHT below spells the same numbers out for Tailwind,
-// so the two must match.
-export const LIBRARY_CHART_PODIUM_HEIGHT_STEP = [1, 0.9, 0.84]
 
 export const LIBRARY_CHART_LIST_CLASS = 'w-full grid grid-cols-1 tablet:grid-cols-6 gap-3'
 
-export type LibraryChartRankTier = 'hero' | 'podium' | 'pair' | 'compact'
+export type LibraryChartRankTier = 'hero' | 'highlight' | 'pair' | 'compact'
 
 export function getLibraryChartRankTier(rank: number): LibraryChartRankTier {
   if (rank === 1) return 'hero'
-  if (rank <= LIBRARY_CHART_PODIUM_SIZE) return 'podium'
-  return rank <= LIBRARY_CHART_PODIUM_SIZE + LIBRARY_CHART_PAIR_SIZE ? 'pair' : 'compact'
+  if (rank <= LIBRARY_CHART_HIGHLIGHT_SIZE) return 'highlight'
+  return rank <= LIBRARY_CHART_HIGHLIGHT_SIZE + LIBRARY_CHART_PAIR_SIZE ? 'pair' : 'compact'
 }
 
-// The top three stack cover over title; the rest stay horizontal.
-export function getIsLibraryChartPodium(tier: LibraryChartRankTier): boolean {
-  return tier === 'hero' || tier === 'podium'
+// First place and the two after it take the accent, a step lighter for the latter;
+// the rest are neutral and stripe.
+export function getIsLibraryChartHighlighted(tier: LibraryChartRankTier): boolean {
+  return tier === 'hero' || tier === 'highlight'
 }
 
-// [2][1][3], then [4][5], then one row each, over six columns.
-// The DOM stays in rank order — only the placement moves —
-// so it still reads correctly aloud.
+// First place a full-width banner, then [2][3] and [4][5] across, then one row each.
+// Every rank reads as a horizontal row, so the DOM order is also the visual order.
 const LIBRARY_CHART_GRID_PLACEMENT: Record<number, string> = {
-  1: 'tablet:col-start-3 tablet:col-span-2 tablet:row-start-1',
-  2: 'tablet:col-start-1 tablet:col-span-2 tablet:row-start-1',
-  3: 'tablet:col-start-5 tablet:col-span-2 tablet:row-start-1',
-  4: 'tablet:col-start-1 tablet:col-span-3 tablet:row-start-2',
-  5: 'tablet:col-start-4 tablet:col-span-3 tablet:row-start-2',
+  1: 'tablet:col-span-6',
+  2: 'tablet:col-span-3',
+  3: 'tablet:col-span-3',
+  4: 'tablet:col-span-3',
+  5: 'tablet:col-span-3',
 }
 
 export function getLibraryChartGridClass(rank: number): string {
@@ -44,41 +39,31 @@ export function getLibraryChartGridClass(rank: number): string {
 }
 
 export function getLibraryChartRowClass(tier: LibraryChartRankTier): string {
-  return getIsLibraryChartPodium(tier)
-    ? 'gap-4 p-3 tablet:flex-col tablet:items-center tablet:justify-end tablet:text-center tablet:gap-3 tablet:p-5'
-    : 'gap-3 p-3'
+  return tier === 'hero' ? 'gap-4 p-3 tablet:gap-5 tablet:p-5' : 'gap-3 p-3'
 }
 
-// Only the first stretches to the row, so it sets the height;
-// the other two take a share of it and share its floor.
-// Keep in step with LIBRARY_CHART_PODIUM_HEIGHT_STEP.
-const LIBRARY_CHART_PODIUM_HEIGHT: Record<number, string> = {
-  2: 'tablet:self-end tablet:h-[90%]',
-  3: 'tablet:self-end tablet:h-[84%]',
-}
-
-export function getLibraryChartHeightClass(rank: number): string {
-  return LIBRARY_CHART_PODIUM_HEIGHT[rank] || 'tablet:h-full'
-}
-
-// Translucent so the page's cyan wash shows through,
-// at the alphas the exported card paints.
+// Translucent so the page's cyan wash shows through.
+// First place takes the accent, second and third a step lighter of it,
+// and the rest stripe: by rank on the phone's single column,
+// by row of cards from the tablet up, where [4][5] share a row and so stay plain together.
 // Hover is the link's, so the skeleton takes this without it.
-export function getLibraryChartSurfaceClass(tier: LibraryChartRankTier): string {
+export function getLibraryChartSurfaceClass(tier: LibraryChartRankTier, rank: number): string {
   switch (tier) {
     case 'hero':
-      return 'bg-theme-cyan/15 rounded-xl tablet:rounded-2xl'
-    case 'podium':
-      return 'bg-theme-white/8 rounded-lg tablet:rounded-xl'
-    case 'pair':
-      return 'bg-theme-white/8 rounded-lg'
-    default:
-      return 'bg-theme-white/5 rounded-lg'
+      return 'bg-theme-cyan/15 rounded-xl'
+    case 'highlight':
+      return 'bg-theme-cyan/8 rounded-lg'
+    default: {
+      const isPhoneShaded = rank % 2 === 1
+      const isTabletShaded = tier === 'compact' && rank % 2 === 0
+      if (isPhoneShaded) return 'bg-theme-white/5 tablet:bg-transparent rounded-lg'
+      return isTabletShaded ? 'tablet:bg-theme-white/5 rounded-lg' : 'rounded-lg'
+    }
   }
 }
 
 export function getLibraryChartHoverClass(tier: LibraryChartRankTier): string {
-  return tier === 'hero' ? 'hover:bg-theme-cyan/25' : 'hover:bg-theme-white/12'
+  return getIsLibraryChartHighlighted(tier) ? 'hover:bg-theme-cyan/25' : 'hover:bg-theme-white/12'
 }
 
 // The radius tracks the artwork: a bigger cover carries a rounder corner.
@@ -86,52 +71,48 @@ export function getLibraryChartCoverRoundedClass(tier: LibraryChartRankTier): st
   switch (tier) {
     case 'hero':
       return 'rounded-lg tablet:rounded-xl'
-    case 'podium':
+    case 'highlight':
       return 'rounded-md tablet:rounded-lg'
     default:
       return 'rounded-md'
   }
 }
 
-export function getLibraryChartCoverClass(rank: number, tier: LibraryChartRankTier): string {
+export function getLibraryChartCoverClass(tier: LibraryChartRankTier): string {
   switch (tier) {
     case 'hero':
-      return 'w-20 tablet:w-full tablet:max-w-40'
-    case 'podium':
-      // Second place reads bigger than third.
-      return rank === 2
-        ? 'w-14 tablet:w-full tablet:max-w-28'
-        : 'w-14 tablet:w-full tablet:max-w-24'
+      return 'w-20 tablet:w-28'
+    case 'highlight':
     case 'pair':
-      return 'w-14 tablet:w-20'
+      return 'w-14 tablet:w-16'
     default:
       return 'w-11'
   }
 }
 
+// The numeral is the chart's one typographic device:
+// weight and size step down the ranks, and only first place takes the accent.
 export function getLibraryChartRankClass(tier: LibraryChartRankTier): string {
   switch (tier) {
     case 'hero':
-      return 'w-10 text-3xl text-highlighted'
-    case 'podium':
-      return 'w-8 text-2xl text-highlighted'
+      return 'w-12 text-4xl tablet:text-5xl leading-none text-theme-cyan'
+    case 'highlight':
     case 'pair':
-      return 'w-8 text-xl text-highlighted'
+      return 'w-10 text-2xl tablet:text-3xl leading-none text-highlighted'
     default:
-      return 'w-8 text-lg text-muted'
+      return 'w-10 text-2xl leading-none text-muted'
   }
 }
 
 export function getLibraryChartTitleClass(tier: LibraryChartRankTier): string {
-  return tier === 'hero' ? 'text-lg tablet:text-xl' : 'text-sm tablet:text-base'
+  return tier === 'hero' ? 'text-lg tablet:text-3xl' : 'text-sm tablet:text-base'
 }
 
 export interface LibraryChartItemClasses {
   tier: LibraryChartRankTier
-  isPodium: boolean
   grid: string
-  height: string
   row: string
+  surface: string
   card: string
   cover: string
   coverRounded: string
@@ -144,14 +125,14 @@ export interface LibraryChartItemClasses {
 // and the other listings never render this layout.
 export function getLibraryChartItemClasses(rank: number): LibraryChartItemClasses {
   const tier = getLibraryChartRankTier(rank)
+  const surface = getLibraryChartSurfaceClass(tier, rank)
   return {
     tier,
-    isPodium: getIsLibraryChartPodium(tier),
     grid: getLibraryChartGridClass(rank),
-    height: getLibraryChartHeightClass(rank),
     row: getLibraryChartRowClass(tier),
-    card: `${getLibraryChartSurfaceClass(tier)} ${getLibraryChartHoverClass(tier)}`,
-    cover: getLibraryChartCoverClass(rank, tier),
+    surface,
+    card: `${surface} ${getLibraryChartHoverClass(tier)}`,
+    cover: getLibraryChartCoverClass(tier),
     coverRounded: getLibraryChartCoverRoundedClass(tier),
     rank: getLibraryChartRankClass(tier),
     title: getLibraryChartTitleClass(tier),

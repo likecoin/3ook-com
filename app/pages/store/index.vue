@@ -414,10 +414,10 @@ const chartMonthLabel = computed(() => formatLibraryChartMonthLabel(tagId.value,
 const { getLabelGraphic } = useGraphicLabel()
 const libraryLabelGraphic = computed(() => getLabelGraphic('library'))
 
-// The podium: on a phone that is roughly what sits above the fold,
-// and on a tablet up it is the row that leads the page.
+// The banner and the two rows of cards: on a tablet up that is what sits above the fold,
+// and on a phone roughly its first screen.
 // The rest wait for the impression observer like any grid item.
-const CHART_EAGER_ITEM_COUNT = LIBRARY_CHART_PODIUM_SIZE
+const CHART_EAGER_ITEM_COUNT = LIBRARY_CHART_HIGHLIGHT_SIZE + LIBRARY_CHART_PAIR_SIZE
 
 const {
   socialButtons: chartShareButtons,
