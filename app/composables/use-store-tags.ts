@@ -2,6 +2,8 @@ import { useMediaQuery } from '@vueuse/core'
 import type { RouteLocationNormalizedLoaded } from 'vue-router'
 
 export const STAKING_SORT_TAG_PREFIX = 'staking-'
+// New-book tags keep their Airtable order instead of being ranked by staking.
+export const NEW_BOOKS_TAG_PREFIX = 'new-books-'
 
 type StoreTagRoute = Pick<RouteLocationNormalizedLoaded, 'params' | 'query'>
 
