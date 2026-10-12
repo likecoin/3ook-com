@@ -531,7 +531,7 @@ const tagDescription = computed(() => {
     if (cmsDescription) return cmsDescription
   }
   if (tagName.value) {
-    return $t('store_page_tag_description', { tag: tagName.value })
+    return $t(isLibraryTab.value ? 'library_page_tag_description' : 'store_page_tag_description', { tag: tagName.value })
   }
   return pageDescription.value
 })

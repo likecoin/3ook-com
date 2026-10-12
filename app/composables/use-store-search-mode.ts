@@ -10,6 +10,9 @@ export async function useStoreSearchMode() {
   const getRouteQuery = useRouteQuery()
   const getRouteParam = useRouteParam()
   const queryCache = useQueryCache()
+  const getRouteBaseNameString = useRouteBaseNameString()
+  // /library shares the store pages, so its descriptions name the Li3rary.
+  const isLibraryTab = computed(() => (getRouteBaseNameString() || '').startsWith('library'))
 
   const querySearchTerm = computed(() => getRouteQuery('q', ''))
   const queryAuthorName = computed(() => getRouteQuery('author', ''))
@@ -210,7 +213,7 @@ export async function useStoreSearchMode() {
     if (!isSearchMode.value) return null
     if (storeEntity.value) {
       const { displayName, titlePrefix, isCurated } = storeEntity.value
-      let description = $t('store_page_owner_description', { owner: displayName })
+      let description = $t(isLibraryTab.value ? 'library_page_owner_description' : 'store_page_owner_description', { owner: displayName })
       if (isCurated) {
         description = affiliateHasVoices.value
           ? $t('store_page_affiliate_description', { name: displayName })
@@ -222,28 +225,28 @@ export async function useStoreSearchMode() {
       return {
         label: querySearchTerm.value,
         titlePrefix: $t('store_search_prefix'),
-        description: $t('store_page_search_description', { term: querySearchTerm.value }),
+        description: $t(isLibraryTab.value ? 'library_page_search_description' : 'store_page_search_description', { term: querySearchTerm.value }),
       }
     }
     if (queryAuthorName.value) {
       return {
         label: queryAuthorName.value,
         titlePrefix: $t('store_author_prefix'),
-        description: $t('store_page_author_description', { author: queryAuthorName.value }),
+        description: $t(isLibraryTab.value ? 'library_page_author_description' : 'store_page_author_description', { author: queryAuthorName.value }),
       }
     }
     if (queryPublisherName.value) {
       return {
         label: queryPublisherName.value,
         titlePrefix: $t('store_publisher_prefix'),
-        description: $t('store_page_publisher_description', { publisher: queryPublisherName.value }),
+        description: $t(isLibraryTab.value ? 'library_page_publisher_description' : 'store_page_publisher_description', { publisher: queryPublisherName.value }),
       }
     }
     if (queryGenre.value) {
       return {
         label: localizedGenreName.value,
         titlePrefix: $t('store_genre_prefix'),
-        description: $t('store_page_genre_description', { genre: localizedGenreName.value }),
+        description: $t(isLibraryTab.value ? 'library_page_genre_description' : 'store_page_genre_description', { genre: localizedGenreName.value }),
       }
     }
     return null
