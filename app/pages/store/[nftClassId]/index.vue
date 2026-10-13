@@ -1334,6 +1334,7 @@ function getAuthorNameFromCache(classId: string): string {
 const MAX_RECOMMENDED_ROWS = 2
 const MAX_RECOMMENDED_BOOKS = MAX_RECOMMENDED_ROWS * GRID_COLUMN_MAX
 const MAX_SAME_AUTHOR_LEAD_BOOKS = 4
+const MAX_PICKED_LEAD_BOOKS = 4
 
 const recommendedClassIds = computed(() => {
   const ownedClassIds = authorStore.getOwnedBookClassIds(bookInfo.nftClassOwnerWalletAddress.value)
@@ -1350,12 +1351,14 @@ const recommendedClassIds = computed(() => {
     ;(isSameAuthor ? sameAuthorClassIds : otherClassIds).push(id)
   }
 
-  // Deterministic slots: same-author editorial leads first (capped), then
+  // Deterministic slots: same-author editorial leads first (capped), then the
+  // hand-picked ones (capped, so the feed can't push them out), then
   // personalized candidates in server order, then the remaining editorial picks.
   const seenClassIds = new Set([normalizeNFTClassId(nftClassId.value)])
   const blendedClassIds: string[] = []
   for (const id of [
     ...sameAuthorClassIds.slice(0, MAX_SAME_AUTHOR_LEAD_BOOKS),
+    ...bookstoreRecommendedClassIds.slice(0, MAX_PICKED_LEAD_BOOKS),
     ...(feedRecommendations.value?.nftClassIds ?? []),
     ...sameAuthorClassIds,
     ...otherClassIds,
