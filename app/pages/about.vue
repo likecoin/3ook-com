@@ -84,7 +84,7 @@
         >
           <div class="text-center">
             <p class="text-3xl font-bold text-primary">
-              1,000+
+              1,500+
             </p>
             <p
               class="text-sm text-muted"
@@ -110,6 +110,10 @@
             />
           </div>
         </div>
+        <p
+          class="mt-4 px-4 text-xs text-muted text-center"
+          v-text="$t('about_page_stat_author_revenue_note')"
+        />
       </section>
 
       <div class="w-full max-w-4xl mx-auto px-4 pt-12 py-16 space-y-20">
