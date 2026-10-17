@@ -32,7 +32,7 @@
         ref="avatarFileInput"
         class="hidden"
         type="file"
-        accept="image/*"
+        :accept="DECODABLE_IMAGE_ACCEPT"
         @change="handleAvatarFileChange"
       >
     </div>
@@ -67,6 +67,13 @@ async function handleAvatarFileChange(event: Event) {
   if (!file.type.startsWith('image/')) {
     toast.add({
       title: $t('account_page_avatar_invalid_file'),
+      color: 'error',
+    })
+    return
+  }
+  if (!isDecodableImageFile(file)) {
+    toast.add({
+      title: $t('account_page_avatar_unsupported_format'),
       color: 'error',
     })
     return
