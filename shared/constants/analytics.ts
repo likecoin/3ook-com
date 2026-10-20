@@ -50,10 +50,11 @@ export const PLUS_CHECKOUT_PLACEMENTS = [
 
 export type PlusCheckoutPlacement = typeof PLUS_CHECKOUT_PLACEMENTS[number]
 
-// Which /member entry point a `tts_sample_*` event came from. Both surfaces can
+// Which entry point a `tts_sample_*` event came from. The /member surfaces can
 // render on the same page and an affiliate link makes them offer the same voice,
 // so the `sample` id alone cannot tell them apart.
 export const TTS_SAMPLE_PLACEMENTS = [
+  'app-page',
   'benefit-link',
   'samples-card',
 ] as const
