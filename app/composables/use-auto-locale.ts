@@ -21,6 +21,7 @@ function getDefaultLocaleFromCountry(country: string | null): LocaleCode {
     case 'MO':
     case 'SG':
     case 'MY':
+    case 'GB':
       return 'zh-Hant'
     default:
       return 'en'
