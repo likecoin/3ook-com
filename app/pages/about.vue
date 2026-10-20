@@ -758,7 +758,7 @@
             <img
               v-gsap.entrance.fade="{ delay: 0.5, duration: 1, ease: 'power1.out' }"
               class="-my-40 max-md:scale-200 origin-center object-contain"
-              src="~assets/images/about/app-mockup.png"
+              src="~assets/images/about/app-mockup.webp"
               :alt="$t('app_name')"
             >
           </aside>
