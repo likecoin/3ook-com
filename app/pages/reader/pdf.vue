@@ -51,12 +51,11 @@ import type { PDFDocumentProxy } from 'pdfjs-dist'
 import type { TextItem, TextMarkedContent } from 'pdfjs-dist/types/src/display/api'
 import type { PDFDisplayContext } from '~/components/PDFReader.props'
 
-// Force a fresh page instance when switching between NFT and uploaded books:
-// useReader() branches on the `source` query at setup, so a within-route
-// navigation that flips source would otherwise leave `bookInfo` pointing at
-// the wrong composable.
+// Remount when `source` or `preview` changes in place, since both are read once:
+// useReader() picks its composable from `source` at setup,
+// and the book file (preview or full) loads only on mount.
 definePageMeta({
-  key: route => `reader-pdf-${route.query.source === 'upload' ? 'upload' : 'nft'}`,
+  key: route => `reader-pdf-${route.query.source === 'upload' ? 'upload' : 'nft'}${route.query.preview === '1' ? '-preview' : ''}`,
 })
 
 const { loggedIn: hasLoggedIn } = useUserSession()
