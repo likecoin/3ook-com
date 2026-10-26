@@ -77,7 +77,7 @@
 
       <div
         v-if="hasRightContent"
-        class="flex phone:justify-end items-center"
+        class="flex phone:justify-end items-center ml-auto"
       >
         <slot name="right" />
       </div>
