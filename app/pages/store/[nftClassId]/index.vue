@@ -777,15 +777,14 @@ const bookListButtonProps = computed(() => (isInBookList.value
 
 // 試閱: non-owners may read the first chapters free when the listing opted in;
 // pointless once the reader already holds the whole book (owned or borrowed),
-// or is a Plus member in the library, where borrowing reads it outright.
-const isPreviewCTAVisible = computed(() =>
+// or when Borrow opens it outright instead of routing to subscribe.
+const isPreviewCTAVisible = computed(() => (
   !isUserBookOwner.value
   && !isBookBorrowed.value
-  && !(isLibrary.value && isLikerPlus.value)
   && bookInfo.isPreviewEnabled.value
   && !bookInfo.isRegionRestricted.value
-  && !isFreeBorrowOnly.value,
-)
+  && (!isPlusReadingCTAVisible.value || isPlusReadingUpsellEligible.value)
+))
 // In the library "borrow" is enough; the store spells out where the book comes from.
 const plusReadingCTALabel = computed(() => {
   if (isBookBorrowed.value) return $t('product_page_read_button_label')
