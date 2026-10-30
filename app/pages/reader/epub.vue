@@ -1627,8 +1627,6 @@ async function extractTTSSegments(book: Book) {
   const segments: TTSSegment[] = []
   const chapterTitles: Record<number, string> = {}
 
-  const FOOTNOTE_CLASS_RE = /\b(footnote|endnote|fn\w*)\b/i
-  const FOOTNOTE_SUP_RE = /^\(?\d+\)?$/
   // Long enough to be unique within a paragraph in practice, short enough
   // that any whitespace-normalization mismatch from mergeParts stays inside
   // the anchor window.
@@ -1652,63 +1650,9 @@ async function extractTTSSegments(book: Book) {
         : chapter.querySelector('h1, h2, h3')?.textContent?.trim() || ''
       chapterTitles[section.index ?? 0] = chapterTitle
 
-      const elements = Array.from(
-        chapter.querySelectorAll('h1, h2, h3, h4, h5, h6, p, li'),
-      ).filter((el) => {
-        if (!el.textContent?.trim()) return false
-        // Skip footnote/endnote sections (EPUB3 semantic roles or class-based)
-        if (el.closest('[role="doc-endnotes"], [role="doc-footnote"]')) return false
-        const ancestor = el.closest('section, aside')
-        if (ancestor?.getAttribute('epub:type')?.match(/footnote|endnote/i)) return false
-        if (FOOTNOTE_CLASS_RE.test(el.className || '')) return false
-        return true
-      })
-
-      // Inline footnote subtrees are stripped from TTS playback. A walker
-      // operating on the original DOM skips the same elements that the
-      // previous clone-and-remove pass deleted; we walk the original (not a
-      // clone) so cfiFromRange below can resolve text-node positions back to
-      // CFIs in the section document.
-      const isInlineFootnote = (node: Element): boolean => {
-        // book.load() parses sections as XHTML, so tagName keeps the authored
-        // case ('a', not 'A') — an uppercase compare here silently matched
-        // nothing and let footnote markers be read aloud mid-sentence.
-        const tagName = node.tagName?.toLowerCase()
-        if (FOOTNOTE_CLASS_RE.test(node.className || '')) return true
-        if (node.matches?.('a[role="doc-noteref"]')) return true
-        if (node.classList?.contains('footnote-number')) return true
-        if ((tagName === 'a' || tagName === 'span')
-          && node.getAttribute('epub:type') === 'noteref') return true
-        if (tagName === 'a') {
-          const sup = node.querySelector(':scope > sup')
-          if (sup && FOOTNOTE_SUP_RE.test(sup.textContent?.trim() || '')) return true
-        }
-        return false
-      }
-
-      elements.forEach((el, elIndex) => {
-        const elementCFI = section.cfiFromElement(el)
-
-        const textNodes: Array<{ node: Text, startInConcat: number }> = []
-        let concatText = ''
-        const walk = (node: Node): void => {
-          if (node.nodeType === Node.TEXT_NODE) {
-            const data = (node as Text).data
-            if (data) {
-              textNodes.push({ node: node as Text, startInConcat: concatText.length })
-              concatText += data
-            }
-            return
-          }
-          if (node.nodeType !== Node.ELEMENT_NODE) return
-          const child = node as Element
-          if (isInlineFootnote(child)) return
-          for (const c of Array.from(child.childNodes)) walk(c)
-        }
-        walk(el)
-
+      getTTSTextBlocks(chapter).forEach(({ element, text: concatText, textNodes }, elIndex) => {
+        const elementCFI = section.cfiFromElement(element)
         const text = concatText.trim()
-        if (!text) return
 
         const cfiAtConcatOffset = (offset: number): string => {
           let lo = 0
