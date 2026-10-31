@@ -34,7 +34,9 @@ describe('useAppDownloadUrls', () => {
     expect(params).toEqual(LINK_PARAMS)
     const referrer = new URLSearchParams(new URL(googlePlayUrl).searchParams.get('referrer')!)
     expect(Object.fromEntries(referrer)).toEqual(LINK_PARAMS)
-    expect(new URL(appStoreUrl).searchParams.get('ct')).toBe('event_ukhkbookfair_2026')
+    const appStoreParams = new URL(appStoreUrl).searchParams
+    expect(appStoreParams.get('ct')).toBe('event_ukhkbookfair_2026')
+    expect(appStoreParams.get('pt')).toBe('128517088')
   })
 
   it('falls back to the placement when the session has no UTM', () => {
