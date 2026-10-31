@@ -13,6 +13,7 @@ export const PLUS_UPSELL_SLOTS = [
   'color-mode',
   'custom-voice',
   'library-intro',
+  'owner-wallet-cta',
   'plus-reading-cta',
   'plus-reading-locked',
   'plus-reading-tag',
