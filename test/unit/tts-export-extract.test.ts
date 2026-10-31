@@ -54,6 +54,58 @@ describe('tts-export extract', () => {
     expect(segments.map(s => s.text)).toEqual(['正文內容。'])
   })
 
+  it('reads body text written in divs and other non-p blocks', async () => {
+    const epub = await buildEpub([buildChapter('章', `
+      <h2>Case 1 祭品</h2>
+      <div>第一段正文。</div>
+      <div><span>第二段</span>正文。<br/>同段第二行。</div>
+      <blockquote>引文內容。</blockquote>
+      <table><tr><td>表格內容。</td></tr></table>
+    `)])
+    const { segments } = await extractTTSSegments(epub)
+
+    expect(segments.map(s => s.text)).toEqual([
+      'Case 1 祭品',
+      '第一段正文。',
+      '第二段正文。同段第二行。',
+      '引文內容。',
+      '表格內容。',
+    ])
+  })
+
+  it('reads text in nested blocks only once', async () => {
+    const epub = await buildEpub([buildChapter('章', `
+      <div class="chapter"><p>第一段。</p><p>第二段。</p></div>
+      <div>外層文字。<div>內層文字。</div></div>
+      <ul><li><p>列表段落。</p></li></ul>
+      <div>引文前。<blockquote>引文。</blockquote>引文後。</div>
+    `)])
+    const { segments } = await extractTTSSegments(epub)
+
+    expect(segments.map(s => s.text)).toEqual([
+      '第一段。',
+      '第二段。',
+      '外層文字。',
+      '內層文字。',
+      '列表段落。',
+      '引文前。',
+      '引文。',
+      '引文後。',
+    ])
+  })
+
+  it('excludes div footnotes', async () => {
+    const epub = await buildEpub([buildChapter('章', `
+      <div>正文內容。</div>
+      <div class="footnote">類別註腳。</div>
+      <div class="footnote"><div>巢狀註腳。</div><p>巢狀段落註腳。</p></div>
+      <aside epub:type="footnote"><div>區塊註腳。</div></aside>
+    `)])
+    const { segments } = await extractTTSSegments(epub)
+
+    expect(segments.map(s => s.text)).toEqual(['正文內容。'])
+  })
+
   it('strips inline noteref markers so footnote numbers are not spoken', async () => {
     const epub = await buildEpub([buildChapter('章', `
       <p>買啲餸<a epub:type="noteref" href="#n1"><sup>1</sup></a>返屋企。</p>
