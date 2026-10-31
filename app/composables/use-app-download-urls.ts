@@ -22,10 +22,11 @@ export function useAppDownloadUrls(placement: AppDownloadPlacement) {
   const { lastTouch: attribution } = usePostHogAttribution()
   const getRouteQuery = useRouteQuery()
 
+  const utmCampaign = attribution.utm_campaign || placement
   const params: Record<string, string> = {
     utm_source: attribution.utm_source || STATIC_SOURCE,
     utm_medium: attribution.utm_medium || STATIC_MEDIUM,
-    utm_campaign: attribution.utm_campaign || placement,
+    utm_campaign: utmCampaign,
   }
   // Carry through finer-grained attribution when the session has it.
   for (const key of ['utm_content', 'utm_term', 'gclid', 'gad_source', 'fbclid'] as const) {
@@ -40,11 +41,11 @@ export function useAppDownloadUrls(placement: AppDownloadPlacement) {
   const referrer = encodeURIComponent(new URLSearchParams(params).toString())
   const googlePlayUrl = `${GOOGLE_PLAY_URL}&referrer=${referrer}`
 
-  // Apple `ct` is free campaign text, <=40 chars; `pt` is the provider token,
+  // Apple `ct` is free campaign text, <=40 chars, kept equal to utm_campaign
+  // so App Store Connect and PostHog report the same campaign name;
+  // per-source splits live on app_download_click. `pt` is the provider token,
   // `mt=8` marks it an app link.
-  const ct = `${params.utm_source}_${params.utm_campaign}`
-    .replace(/[^a-zA-Z0-9_]/g, '_')
-    .slice(0, 40)
+  const ct = utmCampaign.replace(/[^\w-]/g, '_').slice(0, 40)
   const appStoreParams = new URLSearchParams({ pt: APP_STORE_PROVIDER_TOKEN, ct, mt: '8' })
   const appStoreUrl = `${APP_STORE_URL}?${appStoreParams.toString()}`
 

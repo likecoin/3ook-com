@@ -35,7 +35,7 @@ describe('useAppDownloadUrls', () => {
     const referrer = new URLSearchParams(new URL(googlePlayUrl).searchParams.get('referrer')!)
     expect(Object.fromEntries(referrer)).toEqual(LINK_PARAMS)
     const appStoreParams = new URL(appStoreUrl).searchParams
-    expect(appStoreParams.get('ct')).toBe('event_ukhkbookfair_2026')
+    expect(appStoreParams.get('ct')).toBe('ukhkbookfair-2026')
     expect(appStoreParams.get('pt')).toBe('128517088')
   })
 
