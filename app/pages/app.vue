@@ -356,11 +356,11 @@ definePageMeta({
 const { t: $t } = useI18n()
 const localeRoute = useLocaleRoute()
 const { handleError } = useErrorHandler()
-const route = useRoute()
+const getRouteQuery = useRouteQuery()
 
 // 粵語 is the default wording; the UK/HK book fair campaign uses the colloquial 廣東話.
-const BOOKFAIR_CAMPAIGN = 'ukhkbookfair2026'
-const isCanto = computed(() => route.query.utm_campaign === BOOKFAIR_CAMPAIGN)
+const BOOKFAIR_CAMPAIGN = 'ukhkbookfair-2026'
+const isCanto = computed(() => getRouteQuery('utm_campaign') === BOOKFAIR_CAMPAIGN)
 function localizeCanto(text: string) {
   return isCanto.value ? text.replaceAll('粵語', '廣東話') : text
 }
