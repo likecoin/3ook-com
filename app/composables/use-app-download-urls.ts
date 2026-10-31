@@ -1,4 +1,4 @@
-import { APP_STORE_URL, GOOGLE_PLAY_URL } from '~/utils/app-store'
+import { APP_STORE_PROVIDER_TOKEN, APP_STORE_URL, GOOGLE_PLAY_URL } from '~/utils/app-store'
 
 // Builds App Store / Google Play download links that carry install attribution.
 // Live UTM (from usePostHogAttribution) wins; a static per-CTA `placement` tag
@@ -17,10 +17,6 @@ export type AppDownloadStore = 'app_store' | 'google_play'
 
 const STATIC_SOURCE = '3ookcom'
 const STATIC_MEDIUM = 'app_download'
-
-// Apple App Store Connect provider token (pt); fill in when available,
-// otherwise the campaign link omits it and relies on ct alone.
-const APP_STORE_PROVIDER_TOKEN = ''
 
 export function useAppDownloadUrls(placement: AppDownloadPlacement) {
   const { lastTouch: attribution } = usePostHogAttribution()
@@ -49,8 +45,7 @@ export function useAppDownloadUrls(placement: AppDownloadPlacement) {
   const ct = `${params.utm_source}_${params.utm_campaign}`
     .replace(/[^a-zA-Z0-9_]/g, '_')
     .slice(0, 40)
-  const appStoreParams = new URLSearchParams({ ct, mt: '8' })
-  if (APP_STORE_PROVIDER_TOKEN) appStoreParams.set('pt', APP_STORE_PROVIDER_TOKEN)
+  const appStoreParams = new URLSearchParams({ pt: APP_STORE_PROVIDER_TOKEN, ct, mt: '8' })
   const appStoreUrl = `${APP_STORE_URL}?${appStoreParams.toString()}`
 
   // `params` is also reported on app_download_click,
