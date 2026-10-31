@@ -28,7 +28,7 @@
 </template>
 
 <script setup lang="ts">
-import type { AppDownloadPlacement } from '~/composables/use-app-download-urls'
+import type { AppDownloadPlacement, AppDownloadStore } from '~/composables/use-app-download-urls'
 
 const props = withDefaults(
   defineProps<{
@@ -44,13 +44,21 @@ const emit = defineEmits<{
   clickGooglePlay: []
 }>()
 
-const { appStoreUrl, googlePlayUrl } = useAppDownloadUrls(props.placement)
+const { appStoreUrl, googlePlayUrl, params } = useAppDownloadUrls(props.placement)
+
+// One event for every download CTA so placements and stores compare side by
+// side; the per-page events the parents log on emit stay until reports move.
+function logDownloadClick(store: AppDownloadStore) {
+  useLogEvent('app_download_click', { store, placement: props.placement, ...params })
+}
 
 function onClickAppStore() {
+  logDownloadClick('app_store')
   emit('clickAppStore')
 }
 
 function onClickGooglePlay() {
+  logDownloadClick('google_play')
   emit('clickGooglePlay')
 }
 </script>

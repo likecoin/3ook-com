@@ -13,6 +13,7 @@ export const APP_DOWNLOAD_PLACEMENTS = [
   'app_download',
 ] as const
 export type AppDownloadPlacement = (typeof APP_DOWNLOAD_PLACEMENTS)[number]
+export type AppDownloadStore = 'app_store' | 'google_play'
 
 const STATIC_SOURCE = '3ookcom'
 const STATIC_MEDIUM = 'app_download'
@@ -52,5 +53,7 @@ export function useAppDownloadUrls(placement: AppDownloadPlacement) {
   if (APP_STORE_PROVIDER_TOKEN) appStoreParams.set('pt', APP_STORE_PROVIDER_TOKEN)
   const appStoreUrl = `${APP_STORE_URL}?${appStoreParams.toString()}`
 
-  return { appStoreUrl, googlePlayUrl }
+  // `params` is also reported on app_download_click,
+  // so clicks and installs can be matched on the same values.
+  return { appStoreUrl, googlePlayUrl, params }
 }
