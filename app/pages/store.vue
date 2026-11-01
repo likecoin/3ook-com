@@ -35,21 +35,21 @@
           -->
           <div
             v-if="storeEntity"
-            class="flex items-center min-w-0 ring-inset ring-2 ring-theme-black dark:ring-muted bg-(--app-bg) rounded-full"
+            class="flex items-center min-w-0 gap-2 p-1 pr-4 bg-theme-cyan text-theme-black rounded-full shadow-md"
           >
             <UAvatar
               :src="storeEntity.avatarSrc"
               :alt="storeEntity.displayName"
               icon="i-material-symbols-person-2-rounded"
-              :ui="{ root: 'size-8 tablet:size-9 border border-2 border-theme-black dark:border-muted' }"
+              :ui="{ root: 'size-9 tablet:size-10 shrink-0 bg-white ring-2 ring-theme-black/80' }"
             />
-            <div class="flex flex-col justify-center min-w-0 pt-0.5 pl-2 pr-4">
+            <div class="flex flex-col justify-center min-w-0">
               <span
-                class="text-[0.625rem] tablet:text-xs text-muted uppercase tracking-wide leading-none"
+                class="text-xs text-theme-black/70 leading-tight"
                 v-text="storeEntity.titlePrefix"
               />
               <h1
-                class="-mt-1 font-bold text-sm tablet:text-default truncate"
+                class="font-bold text-base tablet:text-lg leading-tight truncate"
                 v-text="storeEntity.displayName"
               />
             </div>
