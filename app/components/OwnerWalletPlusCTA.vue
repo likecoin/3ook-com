@@ -19,7 +19,7 @@
       ui: { base: 'rounded-full text-gray-700 hover:bg-black/10' },
     }"
     :ui="{
-      root: 'sticky bottom-[calc(var(--intercom-launcher-offset)+0.5rem)] z-30 w-full max-w-xl mt-6 items-center gap-3 rounded-xl shadow-lg bg-theme-cyan text-gray-700 ring-0',
+      root: 'sticky bottom-[calc(var(--intercom-launcher-offset)+1rem)] z-30 w-full max-w-xl mt-6 items-center gap-3 rounded-xl shadow-lg bg-theme-cyan text-gray-700 ring-0',
       title: 'text-sm font-bold text-theme-black',
       description: 'text-xs text-gray-700',
       icon: 'size-6 text-gray-700',
