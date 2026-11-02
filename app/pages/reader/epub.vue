@@ -1227,6 +1227,7 @@ async function loadEPub() {
     if (book.locations.isPrePaginated(section)) markPrePaginatedPage(document)
   })
   currentRendition.hooks.content.register((contents: Contents) => {
+    markVerticalWritingPage(contents.document)
     applyImageLoadStateToDocument(contents.document)
   })
 

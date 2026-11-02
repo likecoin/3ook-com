@@ -1,19 +1,27 @@
 import { describe, expect, it } from 'vitest'
-import { IMAGE_CAP_THEME_RULES, markPrePaginatedPage } from '~/utils/epub'
+import { IMAGE_CAP_THEME_RULES, markPrePaginatedPage, markVerticalWritingPage } from '~/utils/epub'
 
-function getCappedImages(isPrePaginated: boolean) {
+function getMatchedImageRules({ isPrePaginated = false, writingMode = 'horizontal-tb' } = {}) {
   const document = new DOMParser().parseFromString('<html><body><img><svg></svg></body></html>', 'text/html')
+  document.documentElement.style.setProperty('writing-mode', writingMode)
   if (isPrePaginated) markPrePaginatedPage(document)
-  const [selector] = Object.keys(IMAGE_CAP_THEME_RULES)
-  return document.querySelectorAll(selector!)
+  markVerticalWritingPage(document)
+  return Object.entries(IMAGE_CAP_THEME_RULES)
+    .filter(([selector]) => document.querySelectorAll(selector).length === 2)
+    .flatMap(([, rule]) => Object.keys(rule))
 }
 
 describe('IMAGE_CAP_THEME_RULES', () => {
-  it('caps images on reflowable pages', () => {
-    expect(getCappedImages(false)).toHaveLength(2)
+  it('caps images on horizontal reflowable pages', () => {
+    expect(getMatchedImageRules()).toEqual(['height', 'max-width', 'max-height'])
+  })
+
+  it('leaves vertical reflowable pages to epub.js pixel caps', () => {
+    expect(getMatchedImageRules({ writingMode: 'vertical-rl' })).toEqual(['height'])
   })
 
   it('skips pre-paginated pages', () => {
-    expect(getCappedImages(true)).toHaveLength(0)
+    expect(getMatchedImageRules({ isPrePaginated: true })).toEqual([])
+    expect(getMatchedImageRules({ isPrePaginated: true, writingMode: 'vertical-rl' })).toEqual([])
   })
 })
