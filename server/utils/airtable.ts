@@ -167,8 +167,10 @@ function getFormulaForSearchTerm(searchTerm: string) {
   return formula
 }
 
-function getScopedSearchFormula(formula: string, isLibrary = false) {
-  return isLibrary ? `AND({In Library}, ${formula})` : formula
+function getScopedSearchFormula(formula: string, { isLibrary = false, isLibraryExcluded = false } = {}) {
+  if (isLibrary) return `AND({In Library}, ${formula})`
+  if (isLibraryExcluded) return `AND(NOT({In Library}), ${formula})`
+  return formula
 }
 
 // Airtable stores per-currency "Min Price <CODE>" columns in major units
@@ -228,11 +230,12 @@ export async function fetchAirtableCMSPublicationsBySearchTerm(
     pageSize = 100,
     offset,
     isLibrary = false,
-  }: FetchAirtableCMSPublicationsOptions = {},
+    isLibraryExcluded = false,
+  }: FetchAirtableCMSPublicationsOptions & { isLibraryExcluded?: boolean } = {},
 ): Promise<FetchBookstoreCMSProductsResponseData> {
   const config = useRuntimeConfig()
   const fetch = getAirtableCMSFetch()
-  const filterByFormula = getScopedSearchFormula(getFormulaForSearchTerm(searchTerm), isLibrary)
+  const filterByFormula = getScopedSearchFormula(getFormulaForSearchTerm(searchTerm), { isLibrary, isLibraryExcluded })
   const results = await fetch<FetchAirtableCMSProductsByTagIdResponseData>(
     `/${config.public.airtableCMSPublicationsTableId}`,
     {
@@ -250,6 +253,38 @@ export async function fetchAirtableCMSPublicationsBySearchTerm(
   return {
     records: normalizedRecords,
     offset: results.offset,
+  }
+}
+
+// Marks an offset as belonging to the store pass, so one opaque cursor
+// walks the library matches first and then the rest of the store.
+const STORE_PASS_OFFSET_PREFIX = 'store:'
+
+// Library search lists Plus-reading matches first, then the other store books.
+export async function fetchAirtableCMSPublicationsBySearchTermLibraryFirst(
+  searchTerm: string,
+  { pageSize = 100, offset }: Omit<FetchAirtableCMSPublicationsOptions, 'isLibrary'> = {},
+): Promise<FetchBookstoreCMSProductsResponseData> {
+  const storeOffset = offset?.startsWith(STORE_PASS_OFFSET_PREFIX)
+    ? offset.slice(STORE_PASS_OFFSET_PREFIX.length)
+    : undefined
+  let libraryRecords: BookstoreCMSProduct[] = []
+  if (!storeOffset) {
+    const libraryResult = await fetchAirtableCMSPublicationsBySearchTerm(searchTerm, { pageSize, offset, isLibrary: true })
+    if (libraryResult.offset) return libraryResult
+    libraryRecords = libraryResult.records
+  }
+
+  // Start the store pass on the page the library pass runs dry,
+  // since an empty first page would read as no results.
+  const storeResult = await fetchAirtableCMSPublicationsBySearchTerm(searchTerm, {
+    pageSize,
+    offset: storeOffset,
+    isLibraryExcluded: true,
+  })
+  return {
+    records: [...libraryRecords, ...storeResult.records],
+    offset: storeResult.offset ? `${STORE_PASS_OFFSET_PREFIX}${storeResult.offset}` : undefined,
   }
 }
 
@@ -274,7 +309,7 @@ export async function fetchAirtableCMSPublicationsByGenre(
 ): Promise<FetchBookstoreCMSProductsResponseData> {
   const config = useRuntimeConfig()
   const fetch = getAirtableCMSFetch()
-  const filterByFormula = getScopedSearchFormula(`{Genre}="${sanitizeAirtableGenre(genre)}"`, isLibrary)
+  const filterByFormula = getScopedSearchFormula(`{Genre}="${sanitizeAirtableGenre(genre)}"`, { isLibrary })
   const results = await fetch<FetchAirtableCMSProductsByTagIdResponseData>(
     `/${config.public.airtableCMSPublicationsTableId}`,
     {
