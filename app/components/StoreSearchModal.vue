@@ -126,6 +126,8 @@ const props = defineProps<{
 
 const { t: $t } = useI18n()
 const localeRoute = useLocaleRoute()
+const { isApp } = useAppDetection()
+const openStoreBookAppNotice = useStoreBookAppNotice()
 
 const isSearchInputOpen = ref(false)
 const searchInputValue = ref('')
@@ -166,6 +168,10 @@ async function handleSearchSuggestionSelect(suggestion: StoreSearchSuggestion) {
     item_name: suggestion.title,
   })
   isSearchInputOpen.value = false
+  if (isApp.value && props.isLibraryTab && !suggestion.isPlusReadingEnabled) {
+    openStoreBookAppNotice()
+    return
+  }
   await navigateTo(localeRoute({
     name: props.isLibraryTab && suggestion.isPlusReadingEnabled ? 'library-nftClassId' : 'store-nftClassId',
     params: { nftClassId: suggestion.classId },
