@@ -21,9 +21,9 @@ export function useBookEndModal(params: {
   const modal = overlay.create(BookEndModal)
   // Once per read: re-reading the last pages must not re-prompt.
   let hasShown = false
-  // The first boundary report is the restore of the saved position,
-  // so reopening a book left on its last page only arms the trigger.
-  let hasRestoredPosition = false
+  // Arm only once the reader has been somewhere before the end, so restoring
+  // a saved last-page position (or clamping onto it) never prompts.
+  let isArmed = false
 
   async function openBookEndModal() {
     if (hasShown) return
@@ -48,11 +48,11 @@ export function useBookEndModal(params: {
   }
 
   function handleBookEndBoundary(isAtEnd: boolean) {
-    if (!hasRestoredPosition) {
-      hasRestoredPosition = true
+    if (!isAtEnd) {
+      isArmed = true
       return
     }
-    if (isAtEnd) void openBookEndModal()
+    if (isArmed) void openBookEndModal()
   }
 
   return { handleBookEndBoundary }

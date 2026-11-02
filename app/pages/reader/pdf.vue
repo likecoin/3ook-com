@@ -229,6 +229,8 @@ async function handlePDFLoaded(pdfDocument: PDFDocumentProxy) {
   loadedPDFDocument.value = pdfDocument
   currentPageIndex.value = pdfReaderRef.value?.currentPage || 1
   updatePDFProgress(currentPageIndex.value)
+  // PDFReader emits no page change for a restored position it doesn't clamp.
+  handleBookEndBoundary(currentPageIndex.value >= pdfDocument.numPages)
   // Release the ArrayBuffer — PDF.js has its own internal copy
   fileBuffer.value = null
 
