@@ -7,8 +7,8 @@
       target="_blank"
       rel="noopener noreferrer"
       color="neutral"
-      variant="outline"
-      size="lg"
+      :variant="variant"
+      :size="size"
       block
       @click="onClickAppStore"
     />
@@ -19,8 +19,8 @@
       target="_blank"
       rel="noopener noreferrer"
       color="neutral"
-      variant="outline"
-      size="lg"
+      :variant="variant"
+      :size="size"
       block
       @click="onClickGooglePlay"
     />
@@ -28,6 +28,7 @@
 </template>
 
 <script setup lang="ts">
+import type { ButtonProps } from '@nuxt/ui'
 import type { AppDownloadPlacement, AppDownloadStore } from '~/composables/use-app-download-urls'
 
 const props = withDefaults(
@@ -35,8 +36,14 @@ const props = withDefaults(
     // Static fallback campaign tag identifying where this CTA lives, used when
     // the session carries no UTM. See useAppDownloadUrls.
     placement?: AppDownloadPlacement
+    variant?: ButtonProps['variant']
+    size?: ButtonProps['size']
   }>(),
-  { placement: 'app_download' },
+  {
+    placement: 'app_download',
+    variant: 'outline',
+    size: 'lg',
+  },
 )
 
 const emit = defineEmits<{
