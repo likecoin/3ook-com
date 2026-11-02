@@ -1,8 +1,10 @@
-import { useStorage } from '@vueuse/core'
+import { createSharedComposable, useStorage } from '@vueuse/core'
 
 const TTS_VOICE_PROMPT_DISMISSED_KEY = '3ook_tts_voice_prompt_dismissed'
 
-export function useTTSVoicePrompt() {
+// Shared so the try modal's dismissal reaches the player in the same tab
+// without waiting for useStorage to flush to localStorage.
+export const useTTSVoicePrompt = createSharedComposable(() => {
   const isDismissed = useStorage(TTS_VOICE_PROMPT_DISMISSED_KEY, false)
 
   const shouldShowTTSVoicePrompt = computed(() => !isDismissed.value)
@@ -17,4 +19,4 @@ export function useTTSVoicePrompt() {
     shouldShowTTSVoicePrompt,
     dismissTTSVoicePrompt,
   }
-}
+})
