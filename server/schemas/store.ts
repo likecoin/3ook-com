@@ -7,7 +7,8 @@ const PaginationFields = {
   offset: v.optional(v.union([v.string(), v.array(v.string())])),
 }
 
-// Library tab passes `library=1` to restrict listings/search/genre to Plus-reading titles.
+// Library tab passes `library=1` to restrict listings/genre to Plus-reading titles;
+// search lists them first instead.
 const LibraryFilterField = {
   library: v.optional(v.union([v.string(), v.array(v.string())])),
 }

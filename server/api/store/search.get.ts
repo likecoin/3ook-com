@@ -10,11 +10,9 @@ export default defineEventHandler(async (event) => {
     const offset = (Array.isArray(query.offset) ? query.offset[0] : query.offset) || undefined
     const isLibrary = (Array.isArray(query.library) ? query.library[0] : query.library) === '1'
 
-    const result = await fetchAirtableCMSPublicationsBySearchTerm(searchTerm, {
-      pageSize,
-      offset,
-      isLibrary,
-    })
+    const result = isLibrary
+      ? await fetchAirtableCMSPublicationsBySearchTermLibraryFirst(searchTerm, { pageSize, offset })
+      : await fetchAirtableCMSPublicationsBySearchTerm(searchTerm, { pageSize, offset })
     setHeader(event, 'cache-control', 'public, max-age=60, stale-while-revalidate=600')
     return stripRecommendationMetadata(result)
   }
