@@ -181,6 +181,7 @@
             </template>
           </ReaderLeftSidebar>
           <ReaderSearch
+            ref="readerSearch"
             v-model:open="isSearchOpen"
             :search-handler="handleSearchPDF"
             @navigate="handleSearchNavigate"
@@ -395,6 +396,7 @@ const leftTextLayer = useTemplateRef<HTMLDivElement>('leftTextLayer')
 const rightTextLayer = useTemplateRef<HTMLDivElement>('rightTextLayer')
 const scrollableContainer = useTemplateRef<HTMLDivElement>('scrollableContainer')
 const pageInput = useTemplateRef<HTMLInputElement>('pageInput')
+const readerSearch = useTemplateRef<{ open: () => void } | null>('readerSearch')
 const pagePaddingClasses = ['p-4', 'laptop:px-12', 'laptop:pt-6', 'pb-[64px]']
 
 const {
@@ -1242,7 +1244,7 @@ function handleKeydown(event: KeyboardEvent) {
       if (isBareKeyBlocked) break
       // Firefox opens its own quick-find bar on `/`.
       event.preventDefault()
-      isSearchOpen.value = true
+      readerSearch.value?.open()
       break
     case '*':
       if (isBareKeyBlocked || !isDocumentReady.value) break
