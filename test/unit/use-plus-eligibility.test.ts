@@ -13,6 +13,7 @@ const {
   mockIsCivicMember,
   mockIsLikerPlus,
   mockCanStartCivicSubscribeFlow,
+  mockCanOpenNativeExternalURL,
 } = vi.hoisted(() => ({
   // Typed against the session user so a renamed or misspelled Plus field fails
   // the build instead of silently reading undefined.
@@ -25,6 +26,7 @@ const {
   mockIsCivicMember: { value: false },
   mockIsLikerPlus: { value: false },
   mockCanStartCivicSubscribeFlow: { value: false },
+  mockCanOpenNativeExternalURL: { value: false },
 }))
 
 mockNuxtImport('useUserSession', () => () => ({ user: mockUser }))
@@ -36,6 +38,7 @@ mockNuxtImport('useNativeIAP', () => () => ({
   isCivicIAPSupported: mockIsCivicIAPSupported,
   canStartCivicSubscribeFlow: mockCanStartCivicSubscribeFlow,
 }))
+mockNuxtImport('canOpenNativeExternalURL', () => () => mockCanOpenNativeExternalURL.value)
 mockNuxtImport('useSubscription', () => () => ({
   isCivicMember: mockIsCivicMember,
   isLikerPlus: mockIsLikerPlus,
@@ -65,6 +68,7 @@ beforeEach(() => {
   mockIsCivicMember.value = false
   mockIsLikerPlus.value = false
   mockCanStartCivicSubscribeFlow.value = false
+  mockCanOpenNativeExternalURL.value = false
 })
 
 describe('canUpgradeToCivic — app version support', () => {
@@ -191,6 +195,44 @@ describe('likerPlusManageMode — cross-store', () => {
     mockIsIOS.value = true
     mockIsIAPSupported.value = true
     expect(usePlusEligibility().likerPlusManageMode.value).toBe('store-info')
+  })
+})
+
+describe('likerPlusManageMode — Stripe subscriber in the app', () => {
+  beforeEach(() => {
+    mockUser.value = { isLikerPlus: true, likerPlusProvider: 'stripe' }
+    mockIsLikerPlus.value = true
+    mockIsApp.value = true
+    mockCanOpenNativeExternalURL.value = true
+  })
+
+  it('hands an active plan to the system browser', () => {
+    expect(usePlusEligibility().likerPlusManageMode.value).toBe('browser')
+  })
+
+  it('offers nothing on an app shell that cannot open the browser', () => {
+    mockCanOpenNativeExternalURL.value = false
+    expect(usePlusEligibility().likerPlusManageMode.value).toBe('none')
+  })
+
+  it('offers nothing for an expired or past_due plan', () => {
+    mockUser.value = {
+      isLikerPlus: false,
+      isExpiredLikerPlus: true,
+      likerPlusProvider: 'stripe',
+      likerPlusSubscriptionStatus: 'past_due',
+    }
+    mockIsLikerPlus.value = false
+    expect(usePlusEligibility().likerPlusManageMode.value).toBe('none')
+  })
+
+  it('keeps tier changes off the browser hand-off', () => {
+    mockUser.value = { isLikerPlus: true, likerPlusProvider: 'stripe', likerPlusTier: 'civic' }
+    mockIsCivicMember.value = true
+    expect(usePlusEligibility().canDowngradeToPlus.value).toBe(false)
+
+    mockIsCivicMember.value = false
+    expect(usePlusEligibility().canUpgradeToCivic.value).toBe(false)
   })
 })
 
