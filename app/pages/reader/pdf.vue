@@ -109,6 +109,12 @@ const { handlePreviewEndBoundary } = usePreviewEndModal({
   isEnabled: isPreviewMode.value,
 })
 
+const { handleBookEndBoundary } = useBookEndModal({
+  nftClassId,
+  isLibraryBook,
+  isEnabled: !isPreviewMode.value && !isUploadedBook.value,
+})
+
 const { fetchCustomVoice } = useCustomVoice()
 const { fetchConfig: fetchPlusAffiliateConfig } = usePlusAffiliate()
 onMounted(() => {
@@ -223,6 +229,8 @@ async function handlePDFLoaded(pdfDocument: PDFDocumentProxy) {
   loadedPDFDocument.value = pdfDocument
   currentPageIndex.value = pdfReaderRef.value?.currentPage || 1
   updatePDFProgress(currentPageIndex.value)
+  // PDFReader emits no page change for a restored position it doesn't clamp.
+  handleBookEndBoundary(getIsAtLastPage())
   // Release the ArrayBuffer — PDF.js has its own internal copy
   fileBuffer.value = null
 
@@ -315,15 +323,23 @@ async function extractTTSSegmentsFromPDF(pdfDocument: PDFDocumentProxy) {
   return { segments: mergeShortTTSSegments(segments), chapterTitles, isUnreadable }
 }
 
+// In dual-page mode the last spread's left page sits one before the end.
+function getIsAtLastPage() {
+  return !!loadedPDFDocument.value && !!pdfReaderRef.value?.isAtLastPage
+}
+
 function handlePageChanged(pageNumber: number) {
   currentPageIndex.value = pageNumber
   activeTTSElementIndex.value = undefined
   updatePDFProgress(pageNumber)
+  const isAtLastPage = getIsAtLastPage()
   if (isPreviewMode.value) {
     // A truncated preview PDF has no appended end page, so its last page is
     // the end-of-preview boundary.
-    const totalPages = loadedPDFDocument.value?.numPages || 0
-    handlePreviewEndBoundary(totalPages > 0 && pageNumber >= totalPages)
+    handlePreviewEndBoundary(isAtLastPage)
+  }
+  else {
+    handleBookEndBoundary(isAtLastPage)
   }
 }
 
