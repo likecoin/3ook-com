@@ -693,6 +693,8 @@ watch(documentVisibility, (state) => {
 })
 
 const hasStartedPlaying = ref(false)
+const isVoiceOptionsSlideoverOpen = ref(false)
+const { shouldShowTTSVoicePrompt, dismissTTSVoicePrompt } = useTTSVoicePrompt()
 
 watch(
   () => props.segments,
@@ -705,6 +707,18 @@ watch(
   },
   { immediate: true },
 )
+
+// First playback on this device opens the same voice picker as the avatar button.
+// Keying it on audio actually playing keeps it off starts that never sound,
+// and lets playback carry on behind it.
+watch(isTextToSpeechPlaying, (isPlaying) => {
+  if (!isPlaying || !shouldShowTTSVoicePrompt.value) return
+  // A book locked to one voice has nothing to pick from,
+  // so leave the offer unspent for a book that does.
+  if (props.specificLanguageVoice) return
+  dismissTTSVoicePrompt()
+  isVoiceOptionsSlideoverOpen.value = true
+})
 
 onMounted(() => {
   setTTSLanguageVoice(props.specificLanguageVoice)
@@ -929,8 +943,6 @@ async function startOfflineTTSDownload() {
     handleError(error)
   }
 }
-
-const isVoiceOptionsSlideoverOpen = ref(false)
 
 const selectedTTSLanguageVoice = computed({
   get: () => ttsLanguageVoice.value,
