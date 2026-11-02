@@ -54,27 +54,6 @@
       </AccountSettingsItem>
 
       <AccountSettingsItem
-        v-if="hasLoggedIn && isCivicOfferable"
-        icon="i-material-symbols-group-outline-rounded"
-        :label="$t('account_page_civic_upgrade')"
-      >
-        <div
-          class="text-sm/5"
-          v-text="$t('account_page_civic_upgrade_description')"
-        />
-
-        <template #right>
-          <UButton
-            :label="$t('account_page_civic_upgrade_button')"
-            icon="i-material-symbols-lock-outline"
-            color="primary"
-            :to="civicUpgradeRoute"
-            @click="handleUpgradeToCivicButtonClick"
-          />
-        </template>
-      </AccountSettingsItem>
-
-      <AccountSettingsItem
         v-if="hasLoggedIn"
         icon="i-material-symbols-record-voice-over-outline"
         :label="$t('tts_custom_voice_section_title')"
@@ -102,6 +81,27 @@
             color="primary"
             :to="localeRoute({ name: 'member', query: { ll_medium: 'custom-voice' } })"
             @click="handleCustomVoiceUpsellClick"
+          />
+        </template>
+      </AccountSettingsItem>
+
+      <AccountSettingsItem
+        v-if="hasLoggedIn && isCivicOfferable"
+        icon="i-material-symbols-group-outline-rounded"
+        :label="$t('account_page_civic_upgrade')"
+      >
+        <div
+          class="text-sm/5"
+          v-text="$t('account_page_civic_upgrade_description')"
+        />
+
+        <template #right>
+          <UButton
+            :label="$t('account_page_civic_upgrade_button')"
+            variant="outline"
+            color="neutral"
+            :to="civicUpgradeRoute"
+            @click="handleUpgradeToCivicButtonClick"
           />
         </template>
       </AccountSettingsItem>
