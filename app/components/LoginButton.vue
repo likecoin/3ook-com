@@ -1,7 +1,7 @@
 <template>
   <UButton
     leading-icon="i-material-symbols-login-rounded"
-    :label="isApp ? $t('login_button_app') : $t('login_button')"
+    :label="$t('login_button')"
     variant="outline"
     size="lg"
     :loading="accountStore.isLoggingIn"
@@ -15,7 +15,6 @@
 const { t: $t } = useI18n()
 const accountStore = useAccountStore()
 const { loggedIn: hasLoggedIn } = useUserSession()
-const { isApp } = useAppDetection()
 
 defineProps<{
   block?: boolean
