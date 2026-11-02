@@ -21,8 +21,8 @@
       @click="emit('click', $event)"
     >
       <img
-        v-if="hasShadow && props.src && !hasError"
-        :src="props.src"
+        v-if="hasShadow && imageSrc && !hasError"
+        :src="imageSrc"
         alt=""
         aria-hidden="true"
         decoding="async"
@@ -55,7 +55,7 @@
           { 'blur-xl': !hasLoaded },
           { 'pointer-events-none': isShowPlaceholder },
         ]"
-        :src="props.src"
+        :src="imageSrc"
         :alt="props.alt"
         width="200"
         height="300"
@@ -106,11 +106,16 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script lang="ts">
 import type { RouteLocationRaw } from 'vue-router'
 
 import { NuxtLink } from '#components'
 
+export const BOOK_COVER_MAX_RETRY_COUNT = 2
+export const BOOK_COVER_RETRY_DELAY_MS = 1500
+</script>
+
+<script setup lang="ts">
 const props = defineProps({
   src: {
     type: String,
@@ -149,6 +154,8 @@ const emit = defineEmits(['click'])
 
 const hasLoaded = ref(false)
 const hasError = ref(false)
+const retryCount = ref(0)
+let retryTimer: ReturnType<typeof setTimeout> | undefined
 
 const imgElement = useTemplateRef<HTMLImageElement>('imgElement')
 
@@ -197,6 +204,24 @@ const coverClass = computed(() => {
   return classes
 })
 
+// Cache-busting query makes the browser refetch instead of reusing the failed response.
+function getRetryImageURL(src: string, attempt: number) {
+  try {
+    const url = new URL(src, window.location.href)
+    if (!['http:', 'https:'].includes(url.protocol)) return undefined
+    url.searchParams.set('retry', String(attempt))
+    return url.toString()
+  }
+  catch {
+    return undefined
+  }
+}
+
+const imageSrc = computed(() => {
+  if (!props.src || !retryCount.value) return props.src
+  return getRetryImageURL(props.src, retryCount.value) ?? props.src
+})
+
 const isShowPlaceholder = computed(() => !props.src || !hasLoaded.value || hasError.value)
 
 onMounted(() => {
@@ -205,9 +230,15 @@ onMounted(() => {
   }
 })
 
+onBeforeUnmount(() => {
+  clearTimeout(retryTimer)
+})
+
 watch(
   () => props.src,
   (newSrc) => {
+    clearTimeout(retryTimer)
+    retryCount.value = 0
     if (newSrc) {
       hasLoaded.value = false
       hasError.value = false
@@ -220,6 +251,17 @@ function handleImageLoad() {
 }
 
 function handleImageError() {
+  const nextAttempt = retryCount.value + 1
+  if (
+    props.src
+    && nextAttempt <= BOOK_COVER_MAX_RETRY_COUNT
+    && getRetryImageURL(props.src, nextAttempt)
+  ) {
+    retryTimer = setTimeout(() => {
+      retryCount.value = nextAttempt
+    }, BOOK_COVER_RETRY_DELAY_MS)
+    return
+  }
   hasLoaded.value = true
   hasError.value = true
 }
