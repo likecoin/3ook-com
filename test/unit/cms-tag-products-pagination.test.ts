@@ -44,4 +44,37 @@ describe('fetchCMSProductsByTagId pagination', () => {
 
     expect(getClassIds(store)).toEqual(['0xa', '0xb', '0xc', '0xd', '0xe'])
   })
+
+  it('does not refetch page 1 once the last page has loaded', async () => {
+    mockFetchBookstoreCMSProductsByTagId.mockResolvedValue(makePage(['0xa', '0xb', '0xc']))
+
+    await store.fetchCMSProductsByTagId(TAG_ID)
+    // A stray load-more, e.g. from a remount after a locale redirect.
+    await store.fetchCMSProductsByTagId(TAG_ID)
+
+    expect(mockFetchBookstoreCMSProductsByTagId).toHaveBeenCalledTimes(1)
+    expect(getClassIds(store)).toEqual(['0xa', '0xb', '0xc'])
+  })
+
+  it('retries page 1 after it failed', async () => {
+    mockFetchBookstoreCMSProductsByTagId
+      .mockRejectedValueOnce(new Error('network'))
+      .mockResolvedValueOnce(makePage(['0xa', '0xb', '0xc']))
+
+    await expect(store.fetchCMSProductsByTagId(TAG_ID)).rejects.toThrow('network')
+    await store.fetchCMSProductsByTagId(TAG_ID)
+
+    expect(getClassIds(store)).toEqual(['0xa', '0xb', '0xc'])
+  })
+
+  it('refetches page 1 on refresh after the last page has loaded', async () => {
+    mockFetchBookstoreCMSProductsByTagId
+      .mockResolvedValueOnce(makePage(['0xa', '0xb', '0xc']))
+      .mockResolvedValueOnce(makePage(['0xb', '0xa']))
+
+    await store.fetchCMSProductsByTagId(TAG_ID)
+    await store.fetchCMSProductsByTagId(TAG_ID, { isRefresh: true })
+
+    expect(getClassIds(store)).toEqual(['0xb', '0xa'])
+  })
 })

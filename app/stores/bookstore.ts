@@ -75,6 +75,10 @@ export const useBookstoreStore = defineStore('bookstore', () => {
     if (bookstoreCMSProductsByTagKeyMap.value[tagKey]?.isFetching) {
       return
     }
+    // Only a successful fetch sets `mayHaveMore`, so a failed page 1 can still be retried.
+    if (!isRefresh && bookstoreCMSProductsByTagKeyMap.value[tagKey]?.mayHaveMore === false) {
+      return
+    }
 
     if (!bookstoreCMSProductsByTagKeyMap.value[tagKey] || isRefresh) {
       bookstoreCMSProductsByTagKeyMap.value[tagKey] = {
