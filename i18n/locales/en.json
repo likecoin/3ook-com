@@ -132,6 +132,7 @@
   "account_page_locale_button": "Choose language",
   "account_page_login": "Sign in / Sign up",
   "account_page_logout": "Logout",
+  "account_page_manage_in_browser": "Manage in Browser",
   "account_page_manage_on_device": "Manage on your device",
   "account_page_manage_subscription": "Manage Subscription",
   "account_page_migrate_legacy_book": "Upgrade legacy books",

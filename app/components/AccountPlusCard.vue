@@ -46,6 +46,7 @@
             :label="likerPlusButtonLabel"
             :variant="user?.isLikerPlus ? 'outline' : 'solid'"
             :color="user?.isLikerPlus ? 'neutral' : 'primary'"
+            :trailing-icon="likerPlusManageMode === 'browser' ? 'i-material-symbols-open-in-new-rounded' : undefined"
             :loading="isOpeningBillingPortal || isManagingSubscription"
             @click="handleLikerPlusButtonClick"
           />

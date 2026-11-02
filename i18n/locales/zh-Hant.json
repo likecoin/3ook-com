@@ -132,6 +132,7 @@
   "account_page_locale_button": "選擇語言",
   "account_page_login": "登入 / 註冊",
   "account_page_logout": "登出",
+  "account_page_manage_in_browser": "在瀏覽器管理訂閱",
   "account_page_manage_on_device": "在你的裝置上管理訂閱",
   "account_page_manage_subscription": "管理訂閱",
   "account_page_migrate_legacy_book": "升級舊版書籍",
