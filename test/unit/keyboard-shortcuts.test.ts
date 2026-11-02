@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   getIsKeyboardShortcutBlocked,
   getIsKeyboardShortcutTargetBlocked,
+  getIsKeyReservedByFocusedControl,
 } from '~/utils/keyboard-shortcuts'
 
 function createKeyboardEvent(key: string, init: KeyboardEventInit = {}) {
@@ -86,5 +87,27 @@ describe('getIsKeyboardShortcutTargetBlocked', () => {
     const event = createKeyboardEvent('ArrowRight')
     dispatchOn(document.createElement('button'), event)
     expect(getIsKeyboardShortcutTargetBlocked(event)).toBe(false)
+  })
+})
+
+describe('getIsKeyReservedByFocusedControl', () => {
+  it.each(['button', 'a'])('reserves Space and Enter for a focused %s', (tagName) => {
+    for (const key of [' ', 'Enter']) {
+      const event = createKeyboardEvent(key)
+      dispatchOn(document.createElement(tagName), event)
+      expect(getIsKeyReservedByFocusedControl(event)).toBe(true)
+    }
+  })
+
+  it.each(['ArrowLeft', 'j', '/', '+', 'd', 'Escape'])('leaves %s to the shortcuts on a focused button', (key) => {
+    const event = createKeyboardEvent(key)
+    dispatchOn(document.createElement('button'), event)
+    expect(getIsKeyReservedByFocusedControl(event)).toBe(false)
+  })
+
+  it('leaves Space to the shortcuts on the page itself', () => {
+    const event = createKeyboardEvent(' ')
+    dispatchOn(document.createElement('div'), event)
+    expect(getIsKeyReservedByFocusedControl(event)).toBe(false)
   })
 })
