@@ -2,6 +2,7 @@ export interface StoreSearchSuggestion {
   classId: string
   title: string
   thumbnailUrl?: string
+  isPlusReadingEnabled?: boolean
 }
 
 export const SUGGESTION_MIN_TERM_LENGTH = 2
@@ -96,6 +97,7 @@ export function useStoreSearchSuggestions(
             // Route the raw (possibly ipfs://) thumbnailUrl through the resize proxy
             // once here so the CSP-safe URL isn't rebuilt on every keystroke re-render.
             thumbnailUrl: record.imageUrl ? getResizedNormalizedImageURL(record.imageUrl, { size: 100 }) : undefined,
+            isPlusReadingEnabled: record.isPlusReadingEnabled,
           }))
         // Search records carry no restrictedTerritories, so resolve the bookstore
         // info the region gate reads before publishing — otherwise a geoblocked

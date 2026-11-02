@@ -204,7 +204,7 @@
           :priority="index < columnMax"
           :ll-medium="itemLLMedium"
           :should-show-plus-reading-icon="!isLibraryTab"
-          :is-library="isLibraryTab"
+          :is-library="isLibraryTab && !getIsStoreBookInLibrary(item)"
           :tag="tagId"
           :ll-source="GRID_LL_SOURCE"
           @open="handleBookstoreItemOpen($event, index)"
@@ -760,9 +760,16 @@ const EMPTY_PRODUCTS: BookstoreItemList = {
   nextItemsKey: undefined,
 }
 
+// Library text search lists store books too, after the Plus-reading ones.
+const isLibraryTextSearch = computed(() => isLibraryTab.value && searchQuery.value.startsWith('q:'))
+
+function getIsStoreBookInLibrary(item: BookstoreItem): boolean {
+  return isLibraryTextSearch.value && !getIsPlusReading(item)
+}
+
 const products = computed<BookstoreItemList>(() => {
   const base = baseProducts.value ?? EMPTY_PRODUCTS
-  if (!isLibraryTab.value) return base
+  if (!isLibraryTab.value || isLibraryTextSearch.value) return base
   return {
     ...base,
     items: base.items.filter(getIsPlusReading),

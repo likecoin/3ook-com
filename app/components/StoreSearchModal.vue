@@ -167,7 +167,7 @@ async function handleSearchSuggestionSelect(suggestion: StoreSearchSuggestion) {
   })
   isSearchInputOpen.value = false
   await navigateTo(localeRoute({
-    name: props.isLibraryTab ? 'library-nftClassId' : 'store-nftClassId',
+    name: props.isLibraryTab && suggestion.isPlusReadingEnabled ? 'library-nftClassId' : 'store-nftClassId',
     params: { nftClassId: suggestion.classId },
   }))
 }
