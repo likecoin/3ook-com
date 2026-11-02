@@ -1,4 +1,5 @@
 const TYPING_TAG_NAMES = ['INPUT', 'TEXTAREA', 'SELECT']
+const ACTIVATABLE_TAG_NAMES = ['BUTTON', 'A']
 
 // While an overlay is up it owns the keyboard: Reka traps focus inside it,
 // so a key pressed there is meant for the overlay, not the page behind it.
@@ -31,3 +32,10 @@ export function getIsKeyboardShortcutBlocked(event: KeyboardEvent) {
   return getIsKeyboardShortcutTargetBlocked(event)
 }
 
+// Space and Enter activate a focused button or link, so they stay with it;
+// every other key still reaches the shortcuts.
+export function getIsKeyReservedByFocusedControl(event: KeyboardEvent) {
+  if (event.key !== ' ' && event.key !== 'Enter') return false
+  const target = event.target as KeyboardShortcutTarget | null
+  return !!target?.tagName && ACTIVATABLE_TAG_NAMES.includes(target.tagName)
+}

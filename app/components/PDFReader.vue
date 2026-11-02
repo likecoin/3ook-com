@@ -231,7 +231,6 @@
     <div class="relative grow">
       <button
         type="button"
-        data-reader-nav
         :aria-label="$t('reader_page_previous_button')"
         :disabled="isAtFirstPage"
         :class="[
@@ -248,7 +247,6 @@
       </button>
       <button
         type="button"
-        data-reader-nav
         :aria-label="$t('reader_page_next_button')"
         :disabled="isAtLastPage"
         :class="[
@@ -1200,25 +1198,8 @@ function onPageInputChange(event: Event) {
   input.value = String(clampedCurrentPage.value)
 }
 
-function isInteractiveElement(el: EventTarget | null): boolean {
-  if (!el || !(el instanceof HTMLElement)) return false
-  const tag = el.tagName
-  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || tag === 'BUTTON' || tag === 'A' || el.isContentEditable
-}
-
-function isPageNavButton(el: EventTarget | null): boolean {
-  return el instanceof HTMLElement && el.hasAttribute('data-reader-nav')
-}
-
 function handleKeydown(event: KeyboardEvent) {
-  // The side arrows keep focus after a click, so shortcuts must keep working
-  // while one is focused — except the keys that natively activate it.
-  if (isPageNavButton(event.target)) {
-    if (event.key === ' ' || event.key === 'Enter') return
-  }
-  else if (isInteractiveElement(event.target)) {
-    return
-  }
+  if (getIsKeyboardShortcutTargetBlocked(event) || getIsKeyReservedByFocusedControl(event)) return
 
   const ctrl = event.ctrlKey || event.metaKey
   // The zoom cases need Ctrl/Cmd themselves,
