@@ -35,6 +35,11 @@
       size="xl"
       :loading="true"
     />
+
+    <PlusTermsNotice
+      class="mt-6"
+      keypath="plus_terms_notice_subscribed"
+    />
   </main>
 </template>
 

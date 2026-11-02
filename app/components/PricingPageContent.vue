@@ -267,6 +267,11 @@
                   ]"
                   v-text="$t('pricing_page_cancel_anytime')"
                 />
+                <PlusTermsNotice
+                  v-if="!isPlusCurrentPlan"
+                  :class="['mt-1', { 'max-laptop:mt-3': $slots['cta-mobile'] }]"
+                  keypath="plus_terms_notice_subscribe"
+                />
               </div>
             </Transition>
 
