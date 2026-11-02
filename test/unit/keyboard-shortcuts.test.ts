@@ -1,6 +1,9 @@
 // @vitest-environment happy-dom
 import { describe, expect, it } from 'vitest'
-import { getIsKeyboardShortcutBlocked } from '~/utils/keyboard-shortcuts'
+import {
+  getIsKeyboardShortcutBlocked,
+  getIsKeyboardShortcutTargetBlocked,
+} from '~/utils/keyboard-shortcuts'
 
 function createKeyboardEvent(key: string, init: KeyboardEventInit = {}) {
   return new KeyboardEvent('keydown', { key, cancelable: true, ...init })
@@ -65,5 +68,23 @@ describe('getIsKeyboardShortcutBlocked', () => {
     const event = createKeyboardEvent('k')
     dispatchOn(document.createElement('button'), event)
     expect(getIsKeyboardShortcutBlocked(event)).toBe(false)
+  })
+})
+
+describe('getIsKeyboardShortcutTargetBlocked', () => {
+  it('lets a modifier combo through on the page', () => {
+    expect(getIsKeyboardShortcutTargetBlocked(createKeyboardEvent('=', { ctrlKey: true }))).toBe(false)
+  })
+
+  it('blocks a modifier combo typed into an input', () => {
+    const event = createKeyboardEvent('=', { ctrlKey: true })
+    dispatchOn(document.createElement('input'), event)
+    expect(getIsKeyboardShortcutTargetBlocked(event)).toBe(true)
+  })
+
+  it('lets a key pressed on a plain button through', () => {
+    const event = createKeyboardEvent('ArrowRight')
+    dispatchOn(document.createElement('button'), event)
+    expect(getIsKeyboardShortcutTargetBlocked(event)).toBe(false)
   })
 })

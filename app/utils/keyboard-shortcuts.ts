@@ -12,6 +12,15 @@ interface KeyboardShortcutTarget {
   closest?: (selector: string) => unknown
 }
 
+// A key pressed in a text field or an overlay belongs to it, whatever the modifiers.
+export function getIsKeyboardShortcutTargetBlocked(event: KeyboardEvent) {
+  const target = event.target as KeyboardShortcutTarget | null
+  if (!target?.tagName) return false
+  if (target.isContentEditable) return true
+  if (TYPING_TAG_NAMES.includes(target.tagName)) return true
+  return !!target.closest?.(OVERLAY_SELECTOR)
+}
+
 // A single-key shortcut must never swallow a keystroke meant for a text field,
 // an input method, an overlay or the browser.
 // Shift stays allowed — `*`, `S` and `F` need it.
@@ -19,9 +28,6 @@ export function getIsKeyboardShortcutBlocked(event: KeyboardEvent) {
   if (event.metaKey || event.ctrlKey || event.altKey) return true
   if (event.isComposing) return true
   if (event.defaultPrevented) return true
-  const target = event.target as KeyboardShortcutTarget | null
-  if (!target?.tagName) return false
-  if (target.isContentEditable) return true
-  if (TYPING_TAG_NAMES.includes(target.tagName)) return true
-  return !!target.closest?.(OVERLAY_SELECTOR)
+  return getIsKeyboardShortcutTargetBlocked(event)
 }
+
