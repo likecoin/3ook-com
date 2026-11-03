@@ -30,11 +30,11 @@ mockNuxtImport('useEntryLinkTagProperties', () => () => ({}))
 mockNuxtImport('useLogEvent', () => vi.fn())
 
 // An owned read: the route's nft_id proves ownership, so the tracker goes straight to auto-return.
-function mountTracker() {
+function mountTracker(nftClassId = ref(NFT_CLASS_ID)) {
   return mountSuspended(defineComponent({
     setup() {
       usePlusReadingTracker({
-        nftClassId: NFT_CLASS_ID,
+        nftClassId,
         isUploadedBook: ref(false),
         isPlusReadingEnabled: ref(true),
         hasFreeEdition: ref(false),
@@ -80,6 +80,16 @@ describe('usePlusReadingTracker auto-return', () => {
   it('skips the return when the account switches during the shelf fetch', async () => {
     await mountTracker()
     mockUser.value = { likerId: 'bob' }
+    await finishShelfFetch()
+    expect(mockBookshelfStore.removePlusReadingBook).not.toHaveBeenCalled()
+  })
+
+  // The reader page keeps its instance when only `nft_class_id` changes.
+  it('skips the return when the reader switches book during the shelf fetch', async () => {
+    const nftClassId = ref(NFT_CLASS_ID)
+    await mountTracker(nftClassId)
+    nftClassId.value = '0xdef'
+    mockBookshelfStore.plusReadingBookIds = [NFT_CLASS_ID, '0xdef']
     await finishShelfFetch()
     expect(mockBookshelfStore.removePlusReadingBook).not.toHaveBeenCalled()
   })

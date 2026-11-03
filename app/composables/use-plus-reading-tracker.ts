@@ -49,22 +49,27 @@ export function usePlusReadingTracker(params: {
 
   // A purchase supersedes the borrow: drop the stale library record
   // rather than asking the user to return a book they already own.
-  async function returnBorrowIfOwned(likerId: string | undefined) {
+  async function returnBorrowIfOwned(snapshot: { likerId?: string, nftClassId: string }) {
     if (params.isUploadedBook.value || !hasLoggedIn.value) return
     // `getIsBorrowed` has already resolved ownership unless the route's nft_id proved it.
     if (!params.nftId.value && !isOwner.value) return
     await bookshelfStore.lazyFetchPlusReadingBooks()
-    // A logout or account switch meanwhile would send the DELETE under the new session.
-    if (!hasLoggedIn.value || user.value?.likerId !== likerId) return
-    const normalizedNFTClassId = normalizeNFTClassId(nftClassIdRef.value)
+    // A logout, account switch or in-place switch to another book meanwhile
+    // would return the wrong borrow, or send the DELETE under the new session.
+    if (
+      !hasLoggedIn.value
+      || user.value?.likerId !== snapshot.likerId
+      || nftClassIdRef.value !== snapshot.nftClassId
+    ) return
+    const normalizedNFTClassId = normalizeNFTClassId(snapshot.nftClassId)
     if (!bookshelfStore.plusReadingBookIds.includes(normalizedNFTClassId)) return
-    useLogEvent('plus_reading_auto_return', { nft_class_id: nftClassIdRef.value })
+    useLogEvent('plus_reading_auto_return', { nft_class_id: snapshot.nftClassId })
     await bookshelfStore.removePlusReadingBook(normalizedNFTClassId)
   }
 
   async function registerIfBorrowed() {
     if (!import.meta.client) return
-    const likerId = user.value?.likerId
+    const snapshot = { likerId: user.value?.likerId, nftClassId: nftClassIdRef.value }
     try {
       isLibraryBook.value = await getIsBorrowed()
     }
@@ -72,7 +77,7 @@ export function usePlusReadingTracker(params: {
       settleLibraryBookCheck(isLibraryBook.value)
     }
     if (!isLibraryBook.value) {
-      await returnBorrowIfOwned(likerId)
+      await returnBorrowIfOwned(snapshot)
       return
     }
 
