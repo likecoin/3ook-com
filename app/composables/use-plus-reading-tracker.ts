@@ -13,7 +13,7 @@ export function usePlusReadingTracker(params: {
   hasFreeEdition: Ref<boolean>
   nftId: Ref<string | undefined>
 }) {
-  const { loggedIn: hasLoggedIn } = useUserSession()
+  const { loggedIn: hasLoggedIn, user } = useUserSession()
   const { isLikerPlus } = useSubscription()
   const queryCache = useQueryCache()
   const bookshelfStore = useBookshelfStore()
@@ -49,11 +49,13 @@ export function usePlusReadingTracker(params: {
 
   // A purchase supersedes the borrow: drop the stale library record
   // rather than asking the user to return a book they already own.
-  async function returnBorrowIfOwned() {
+  async function returnBorrowIfOwned(likerId: string | undefined) {
     if (params.isUploadedBook.value || !hasLoggedIn.value) return
     // `getIsBorrowed` has already resolved ownership unless the route's nft_id proved it.
     if (!params.nftId.value && !isOwner.value) return
     await bookshelfStore.lazyFetchPlusReadingBooks()
+    // A logout or account switch meanwhile would send the DELETE under the new session.
+    if (!hasLoggedIn.value || user.value?.likerId !== likerId) return
     const normalizedNFTClassId = normalizeNFTClassId(nftClassIdRef.value)
     if (!bookshelfStore.plusReadingBookIds.includes(normalizedNFTClassId)) return
     useLogEvent('plus_reading_auto_return', { nft_class_id: nftClassIdRef.value })
@@ -62,6 +64,7 @@ export function usePlusReadingTracker(params: {
 
   async function registerIfBorrowed() {
     if (!import.meta.client) return
+    const likerId = user.value?.likerId
     try {
       isLibraryBook.value = await getIsBorrowed()
     }
@@ -69,7 +72,7 @@ export function usePlusReadingTracker(params: {
       settleLibraryBookCheck(isLibraryBook.value)
     }
     if (!isLibraryBook.value) {
-      await returnBorrowIfOwned()
+      await returnBorrowIfOwned(likerId)
       return
     }
 
