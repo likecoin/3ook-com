@@ -43,6 +43,9 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
   // Bumped on reset() so in-flight fetches can detect they've been superseded
   // (e.g. by a wallet switch) and skip repopulating just-cleared state.
   let resetGeneration = 0
+  // Classes whose token IDs were rebuilt since the last refresh: the first row
+  // replaces the persisted list, so copies given away since don't linger.
+  let refreshedNFTClassIds = new Set<string>()
 
   const getTokenIdsByNFTClassId = computed(() => (nftClassId: string) => {
     const normalizedId = nftClassId.toLowerCase()
@@ -262,6 +265,8 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
       })
       if (isStale()) return
 
+      if (isRefresh) refreshedNFTClassIds = new Set()
+
       // O(1) dedup across the page — otherwise paginated loads hit O(n²).
       const seenNFTClassIds = new Set(nftClassIds.value)
       // Defensive dedup for the chunked settings request below. The listing
@@ -276,12 +281,16 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
           nftClassIds.value.push(nftClassId)
         }
         if (nftClass.token_id) {
-          const existing = tokenIdsByNFTClassId.value[nftClassId] ?? []
+          const existing = refreshedNFTClassIds.has(nftClassId)
+            ? tokenIdsByNFTClassId.value[nftClassId] ?? []
+            : []
+          refreshedNFTClassIds.add(nftClassId)
           if (!existing.includes(nftClass.token_id)) {
             tokenIdsByNFTClassId.value[nftClassId] = [...existing, nftClass.token_id]
           }
         }
         else {
+          // A row without a token ID says nothing about which copies are held.
           tokenIdsByNFTClassId.value[nftClassId] ??= []
         }
 
@@ -429,6 +438,7 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
 
   function reset() {
     resetGeneration += 1
+    refreshedNFTClassIds = new Set()
     isFetching.value = false
     hasFetched.value = false
     nftClassIds.value = []
