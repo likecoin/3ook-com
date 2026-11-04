@@ -503,10 +503,13 @@ export function useLogSessionPeriodicRefreshError(error: unknown, {
 }
 
 // Person-property writes outside the identify flow (e.g. settings changes).
-export function useSetLogPersonProperties(properties: Record<string, unknown>) {
+export function useSetLogPersonProperties(
+  properties: Record<string, unknown>,
+  propertiesSetOnce?: Record<string, unknown>,
+) {
   try {
     const { proxy } = useScriptPostHog()
-    proxy.posthog.setPersonProperties(properties)
+    proxy.posthog.setPersonProperties(properties, propertiesSetOnce)
   }
   catch (error) {
     console.error('Failed to set person properties in PostHog', error)
