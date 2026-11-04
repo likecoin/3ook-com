@@ -13,6 +13,9 @@ interface UseReaderFileLoadOptions {
   getErrorActions?: (error: unknown) => ErrorHandlerAction[]
   // The page's own useErrorHandler instance, whose modal the page renders.
   handleError: ReturnType<typeof useErrorHandler>['handleError']
+  // Repairs what the failed load asked for and resolves whether to retry it.
+  // Honoured once per reader, so a repeated failure still reaches the modal.
+  recoverLoadError?: (error: unknown) => Promise<boolean>
   // Aborts the wedged in-flight book fetch so the retry doesn't wait out the
   // stall timeout. From the page's own useBookFileLoader instance.
   abortLoad: () => void
@@ -25,6 +28,7 @@ export default function useReaderFileLoad({
   getErrorTitle,
   getErrorActions,
   handleError,
+  recoverLoadError,
   abortLoad,
 }: UseReaderFileLoadOptions) {
   const { t: $t } = useI18n()
@@ -35,6 +39,7 @@ export default function useReaderFileLoad({
   // showing an error modal.
   let loadAttempt = 0
   let wasHiddenWhileLoading = false
+  let hasRecoveredLoadError = false
 
   // The loading screen plays a cover animation on its way out, and the pages
   // surface their prompts before it finishes: loadEPub resolves ahead of the
@@ -70,6 +75,12 @@ export default function useReaderFileLoad({
       isReaderLoading.value = false
     }
     catch (error) {
+      if (attempt !== loadAttempt) return
+      if (!hasRecoveredLoadError && await recoverLoadError?.(error)) {
+        hasRecoveredLoadError = true
+        if (attempt === loadAttempt) startReaderLoad()
+        return
+      }
       if (attempt !== loadAttempt) return
       await handleError(error, {
         title: getErrorTitle(),

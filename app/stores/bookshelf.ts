@@ -402,6 +402,19 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
     }
   }
 
+  // Drops a copy the book file was refused for, e.g. one given away since the
+  // last refresh, and returns another held copy, asking the contract if none is left.
+  async function replaceStaleTokenId(nftClassId: string, staleTokenId: string, ownerWalletAddress: string) {
+    const normalizedNFTClassId = nftClassId.toLowerCase()
+    const remainingTokenIds = getTokenIdsByNFTClassId.value(normalizedNFTClassId)
+      .filter(id => id !== staleTokenId)
+    tokenIdsByNFTClassId.value[normalizedNFTClassId] = remainingTokenIds
+    if (!remainingTokenIds.length) {
+      await fetchNFTByNFTClassIdAndOwnerWalletAddressThroughContract(normalizedNFTClassId, ownerWalletAddress)
+    }
+    return getFirstTokenIdByNFTClassId.value(normalizedNFTClassId)
+  }
+
   function updateProgress(nftClassId: string, progress: number, lastOpenedTime: number) {
     const normalizedNFTClassId = nftClassId.toLowerCase()
     bookSettingsStore.queueUpdate(normalizedNFTClassId, 'progress', progress)
@@ -493,6 +506,7 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
     getTokenIdsByNFTClassId,
     getFirstTokenIdByNFTClassId,
     fetchNFTByNFTClassIdAndOwnerWalletAddressThroughContract,
+    replaceStaleTokenId,
     updateProgress,
     markBookAsFinished,
     markBookAsDidNotFinish,

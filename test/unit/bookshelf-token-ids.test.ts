@@ -82,4 +82,37 @@ describe('bookshelf token IDs', () => {
     expect(store.getTokenIdsByNFTClassId(BOOK)).toEqual(['54'])
     expect(store.tokenIdsByNFTClassId[OTHER_BOOK]).toEqual([])
   })
+
+  it('replaces a refused token ID with the next known one', async () => {
+    store.tokenIdsByNFTClassId = { [BOOK]: ['22', '54'] }
+
+    const nextTokenId = await store.replaceStaleTokenId(BOOK, '22', WALLET)
+
+    expect(nextTokenId).toBe('54')
+    expect(store.getTokenIdsByNFTClassId(BOOK)).toEqual(['54'])
+    expect(mockFetchNFTBalanceOf).not.toHaveBeenCalled()
+  })
+
+  it('asks the contract when no known token ID is left', async () => {
+    store.nftClassIds = [BOOK]
+    store.tokenIdsByNFTClassId = { [BOOK]: ['22'] }
+    mockFetchNFTBalanceOf.mockResolvedValueOnce(3)
+    mockFetchNFTIdByIndex.mockResolvedValueOnce('0')
+    mockFetchNFTClassMetadataById.mockResolvedValueOnce({ '@type': 'Book' })
+
+    const nextTokenId = await store.replaceStaleTokenId(BOOK, '22', WALLET)
+
+    expect(nextTokenId).toBe('0')
+    expect(store.getTokenIdsByNFTClassId(BOOK)).toEqual(['0'])
+  })
+
+  it('returns nothing when the wallet holds no copy any more', async () => {
+    store.tokenIdsByNFTClassId = { [BOOK]: ['22'] }
+    mockFetchNFTBalanceOf.mockResolvedValueOnce(0)
+
+    const nextTokenId = await store.replaceStaleTokenId(BOOK, '22', WALLET)
+
+    expect(nextTokenId).toBeUndefined()
+    expect(store.getTokenIdsByNFTClassId(BOOK)).toEqual([])
+  })
 })
