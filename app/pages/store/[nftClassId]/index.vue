@@ -1156,11 +1156,10 @@ function initializeTabFromHash() {
   }
 }
 
-// A hidden or unapproved book with nothing listed shows its unlisted editions,
-// so a catalogue-only title still has a price; none of them can be bought.
+// A delisted book (every edition unlisted) still shows its prices, but none can be bought;
+// it may remain approved for sale, so purchase gates must check this flag rather than approval.
 const isDisplayOnly = computed(() => (
-  (bookInfo.isHidden.value || !bookInfo.isApprovedForSale.value)
-  && !bookInfo.pricingItems.value.length
+  !bookInfo.pricingItems.value.length
   && bookInfo.unlistedPricingItems.value.length > 0
 ))
 // The app shows no paid price; a display-only book keeps its editions but hides the amount.
