@@ -359,6 +359,13 @@ export default function (
       .map(formatPricingItem)
   })
 
+  // Not for sale: only the product page shows these, for a book with nothing listed.
+  const unlistedPricingItems = computed(() => {
+    return (bookstoreInfo.value?.prices || [])
+      .filter(item => item.isUnlisted)
+      .map(formatPricingItem)
+  })
+
   const minPricingItem = computed(() => {
     if (!pricingItems.value.length) return undefined
     return pricingItems.value.reduce((min, item) => (item.price < min.price ? item : min))
@@ -487,6 +494,7 @@ export default function (
     promotionalVideos,
 
     pricingItems,
+    unlistedPricingItems,
     minPricingItem,
     minPrice,
 
