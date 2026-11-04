@@ -578,6 +578,8 @@ export const useAccountStore = defineStore('account', () => {
           // Meta collapses the browser + server pair into one conversion.
           transaction_id: walletAddress?.toLowerCase(),
         })
+        // PostHog workflow filters cannot read person.created_at, so keep sign-up time on the person.
+        useSetLogPersonProperties({}, { signed_up_at: new Date().toISOString() })
       }
 
       // Prepare message for login
