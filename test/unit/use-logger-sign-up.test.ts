@@ -26,6 +26,7 @@ function getIdentifySetOnce() {
 
 beforeEach(() => {
   mockIdentify.mockClear()
+  localStorage.clear()
 })
 
 describe('signed_up_at person property', () => {
@@ -39,10 +40,28 @@ describe('signed_up_at person property', () => {
     expect(getIdentifySetOnce().signed_up_at).toBeUndefined()
   })
 
-  // A signup abandoned at the signature step must not stamp another wallet.
-  it('skips it when a different wallet is identified', () => {
+  // A signup abandoned at the signature step must not stamp another wallet,
+  // nor lose its own timestamp when another wallet signs up meanwhile.
+  it('keeps each wallet\'s timestamp until that wallet is identified', () => {
     useSetLogSignUp('0xaaa')
+    useSetLogSignUp('0xbbb')
     useSetLogUser(makeUser('0xbbb'), 'en')
+    expect(getIdentifySetOnce().signed_up_at).toBeDefined()
+
+    mockIdentify.mockClear()
+    useSetLogUser(makeUser('0xccc'), 'en')
     expect(getIdentifySetOnce().signed_up_at).toBeUndefined()
+
+    mockIdentify.mockClear()
+    useSetLogUser(makeUser('0xaaa'), 'en')
+    expect(getIdentifySetOnce().signed_up_at).toBeDefined()
+  })
+
+  it('survives a reload before identify', async () => {
+    useSetLogSignUp('0xabc')
+    vi.resetModules()
+    const reloaded = await import('~/composables/use-logger')
+    reloaded.useSetLogUser(makeUser('0xabc'), 'en')
+    expect(getIdentifySetOnce().signed_up_at).toBeDefined()
   })
 })

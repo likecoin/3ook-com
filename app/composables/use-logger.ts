@@ -513,12 +513,39 @@ export function useSetLogPersonProperties(properties: Record<string, unknown>) {
   }
 }
 
-// Held until that wallet's identify: written earlier, it would land on the
-// anonymous person and follow whichever wallet that person is later merged into.
-let pendingSignUp: { evmWallet: string, signedUpAt: string } | undefined
+// Held per wallet until that wallet's identify: written earlier, it would land on
+// the anonymous person and follow whichever wallet that person is later merged into.
+// Persisted so a reload or abandoned login before identify does not lose it.
+const PENDING_SIGN_UPS_KEY = 'posthog_pending_sign_ups'
+
+function getPendingSignUps(): Record<string, string> {
+  try {
+    return JSON.parse(localStorage.getItem(PENDING_SIGN_UPS_KEY) || '{}')
+  }
+  catch {
+    return {}
+  }
+}
+
+function setPendingSignUps(pendingSignUps: Record<string, string>) {
+  try {
+    if (Object.keys(pendingSignUps).length) {
+      localStorage.setItem(PENDING_SIGN_UPS_KEY, JSON.stringify(pendingSignUps))
+    }
+    else {
+      localStorage.removeItem(PENDING_SIGN_UPS_KEY)
+    }
+  }
+  catch (error) {
+    console.error('Failed to store pending sign-ups', error)
+  }
+}
 
 export function useSetLogSignUp(evmWallet: string) {
-  pendingSignUp = { evmWallet: evmWallet.toLowerCase(), signedUpAt: new Date().toISOString() }
+  setPendingSignUps({
+    ...getPendingSignUps(),
+    [evmWallet.toLowerCase()]: new Date().toISOString(),
+  })
 }
 
 // Guards against `reset()` on the initial null user — stores/account.ts
@@ -632,10 +659,14 @@ export function useSetLogUser(user: User | null, locale: string, region?: Region
           const first = posthog.get_property(`initial_${key}`)
           if (typeof first === 'string' && first) firstTouch[`initial_${key}`] = first
         }
-        if (pendingSignUp?.evmWallet === user.evmWallet.toLowerCase()) {
+        const {
+          [user.evmWallet.toLowerCase()]: signedUpAt,
+          ...otherPendingSignUps
+        } = getPendingSignUps()
+        if (signedUpAt) {
           // PostHog workflow filters cannot read person.created_at.
-          firstTouch.signed_up_at = pendingSignUp.signedUpAt
-          pendingSignUp = undefined
+          firstTouch.signed_up_at = signedUpAt
+          setPendingSignUps(otherPendingSignUps)
         }
         posthog.identify(
           user.evmWallet,
