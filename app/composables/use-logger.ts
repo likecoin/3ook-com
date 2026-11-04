@@ -503,17 +503,22 @@ export function useLogSessionPeriodicRefreshError(error: unknown, {
 }
 
 // Person-property writes outside the identify flow (e.g. settings changes).
-export function useSetLogPersonProperties(
-  properties: Record<string, unknown>,
-  propertiesSetOnce?: Record<string, unknown>,
-) {
+export function useSetLogPersonProperties(properties: Record<string, unknown>) {
   try {
     const { proxy } = useScriptPostHog()
-    proxy.posthog.setPersonProperties(properties, propertiesSetOnce)
+    proxy.posthog.setPersonProperties(properties)
   }
   catch (error) {
     console.error('Failed to set person properties in PostHog', error)
   }
+}
+
+// Held until that wallet's identify: written earlier, it would land on the
+// anonymous person and follow whichever wallet that person is later merged into.
+let pendingSignUp: { evmWallet: string, signedUpAt: string } | undefined
+
+export function useSetLogSignUp(evmWallet: string) {
+  pendingSignUp = { evmWallet: evmWallet.toLowerCase(), signedUpAt: new Date().toISOString() }
 }
 
 // Guards against `reset()` on the initial null user — stores/account.ts
@@ -626,6 +631,11 @@ export function useSetLogUser(user: User | null, locale: string, region?: Region
           if (typeof last === 'string' && last) lastTouch[key] = last
           const first = posthog.get_property(`initial_${key}`)
           if (typeof first === 'string' && first) firstTouch[`initial_${key}`] = first
+        }
+        if (pendingSignUp?.evmWallet === user.evmWallet.toLowerCase()) {
+          // PostHog workflow filters cannot read person.created_at.
+          firstTouch.signed_up_at = pendingSignUp.signedUpAt
+          pendingSignUp = undefined
         }
         posthog.identify(
           user.evmWallet,
