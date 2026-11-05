@@ -5,7 +5,8 @@ import { getStorePublisherRouteName } from './store-routes'
 // Publishers with a branded storefront subdomain at <likerId>.<apex>. Hand-approved
 // rather than derived from checkLikerIdValid(): that charset allows `_` and a
 // leading/trailing `-`, none of which are legal DNS labels.
-export const PUBLISHER_SUBDOMAIN_LIKER_IDS: readonly string[] = ['ckxpress']
+// A renamed handle works as well, since the API resolves handles like Liker IDs.
+export const PUBLISHER_SUBDOMAIN_LIKER_IDS: readonly string[] = ['ckxpress', 'bookmatter']
 
 // The subdomain serves the store storefront only. Its library twin is the
 // Plus-reading tab, which needs the session the apex owns.
