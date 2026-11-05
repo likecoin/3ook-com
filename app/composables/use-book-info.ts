@@ -336,25 +336,34 @@ export default function (
     return bookstoreInfo.value?.promotionalVideos || []
   })
 
+  function formatPricingItem(item: BookstorePrice) {
+    return {
+      index: item.index,
+      name: localeString(item.name),
+      description: localeString(item.description),
+      price: item.price,
+      priceInDecimalByCurrency: item.priceInDecimalByCurrency,
+      // USD, like `price`: the API sends only the cents value.
+      plusPrice: item.plusPriceInDecimal !== undefined ? item.plusPriceInDecimal / 100 : undefined,
+      plusPriceInDecimalByCurrency: item.plusPriceInDecimalByCurrency,
+      currency: item.price > 0 ? 'USD' : '',
+      isSoldOut: item.isSoldOut,
+      canTip: item.isAllowCustomPrice && item.isTippingEnabled,
+      isAutoDeliver: item.isAutoDeliver,
+    }
+  }
+
   const pricingItems = computed(() => {
     return (bookstoreInfo.value?.prices || [])
       .filter(item => !item.isUnlisted)
-      .map((item) => {
-        return {
-          index: item.index,
-          name: localeString(item.name),
-          description: localeString(item.description),
-          price: item.price,
-          priceInDecimalByCurrency: item.priceInDecimalByCurrency,
-          // USD, like `price`: the API sends only the cents value.
-          plusPrice: item.plusPriceInDecimal !== undefined ? item.plusPriceInDecimal / 100 : undefined,
-          plusPriceInDecimalByCurrency: item.plusPriceInDecimalByCurrency,
-          currency: item.price > 0 ? 'USD' : '',
-          isSoldOut: item.isSoldOut,
-          canTip: item.isAllowCustomPrice && item.isTippingEnabled,
-          isAutoDeliver: item.isAutoDeliver,
-        }
-      })
+      .map(formatPricingItem)
+  })
+
+  // Not for sale: only the product page shows these, for a book with nothing listed.
+  const unlistedPricingItems = computed(() => {
+    return (bookstoreInfo.value?.prices || [])
+      .filter(item => item.isUnlisted)
+      .map(formatPricingItem)
   })
 
   const minPricingItem = computed(() => {
@@ -485,6 +494,7 @@ export default function (
     promotionalVideos,
 
     pricingItems,
+    unlistedPricingItems,
     minPricingItem,
     minPrice,
 

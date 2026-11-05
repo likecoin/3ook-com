@@ -396,7 +396,7 @@
               <ProductPricingSelector
                 v-if="pricingItems.length && !isLibrary && !bookInfo.isRegionUnsupported.value"
                 :items="pricingItems"
-                :is-price-hidden="isFreeBorrowOnly"
+                :is-price-hidden="isPriceHidden"
                 :is-liker-plus="isLikerPlus"
                 :content-types="bookInfo.contentTypes.value"
                 :is-downloadable="!isNonNFT && bookInfo.isDownloadable.value"
@@ -427,7 +427,7 @@
           />
 
           <p
-            v-if="!isLibrary && selectedPricingItem && !isSelectedPricingItemFree && !bookInfo.isRegionUnsupported.value"
+            v-if="!isLibrary && selectedPricingItem && !isSelectedPricingItemFree && !isDisplayOnly && !bookInfo.isRegionUnsupported.value"
             class="px-4 text-xs text-muted text-center leading-4"
           >
             <span v-text="deliveryRefundNote" />
@@ -476,7 +476,7 @@
         :is-app="isApp"
         :is-library="isLibrary"
         :is-user-book-owner="isUserBookOwner"
-        :is-price-hidden="isFreeBorrowOnly"
+        :is-price-hidden="isPriceHidden"
         :read-button-variant="readButtonVariant"
         :is-liker-plus="isLikerPlus"
         :pricing-items="pricingItems"
@@ -754,7 +754,10 @@ const isCheckoutVisible = computed(() =>
 // Cart and gift only make sense for a priced edition that is still in stock;
 // keyed on stock and approval, not canBePurchased, so they don't blink mid-purchase.
 const isCartCTAVisible = computed(() =>
-  isCheckoutVisible.value && !isFreeBorrowOnly.value && !isSelectedPricingItemSoldOut.value,
+  isCheckoutVisible.value
+  && !isFreeBorrowOnly.value
+  && !isDisplayOnly.value
+  && !isSelectedPricingItemSoldOut.value,
 )
 // Gifting mails the recipient a claim link, which a non-NFT order never has —
 // merch ships to the buyer's own address, collected at checkout.
@@ -1153,13 +1156,29 @@ function initializeTabFromHash() {
   }
 }
 
+// A delisted book (every edition unlisted) still shows its prices, but none can be bought;
+// it may remain approved for sale, so purchase gates must check this flag rather than approval.
+const isDisplayOnly = computed(() => (
+  !bookInfo.pricingItems.value.length
+  && bookInfo.unlistedPricingItems.value.length > 0
+))
+// The app shows no paid price; a display-only book keeps its editions but hides the amount.
+const isPriceHidden = computed(() => isFreeBorrowOnly.value || (isDisplayOnly.value && isApp.value))
+
 const pricingItems = computed(() => {
-  return bookInfo.pricingItems.value
-    .filter(item => !isApp.value || item.price === 0)
+  const items = isDisplayOnly.value
+    // Not for sale outranks sold out, which would otherwise replace the price.
+    ? bookInfo.unlistedPricingItems.value.map(item => ({ ...item, isSoldOut: false }))
+    : bookInfo.pricingItems.value.filter(item => !isApp.value || item.price === 0)
+  return items
     .map((item, index) => {
       // The flat discount honours the affiliate opt-out; a non-NFT member price
       // applies on any channel, gated on eligibility inside formatMemberPrice.
-      const isMemberPriceShown = (isNonNFT.value || willPlusDiscountApply.value) && item.price > 0
+      const isMemberPriceShown = (
+        !isDisplayOnly.value
+        && (isNonNFT.value || willPlusDiscountApply.value)
+        && item.price > 0
+      )
       return {
         ...item,
         label: item.isAutoDeliver || isNonNFT.value ? item.name : $t('product_page_edition_title', { name: item.name }),
@@ -1281,6 +1300,7 @@ const isSelectedPricingItemSoldOut = computed(() => {
 
 const canBePurchased = computed(() => {
   return !isSelectedPricingItemSoldOut.value
+    && !isDisplayOnly.value
     && !isPurchasing.value
     && bookInfo.isApprovedForSale.value
     && !bookInfo.isRegionUnsupported.value
@@ -1305,6 +1325,9 @@ const checkoutButtonProps = computed<{
   variant: 'subtle' | 'solid' | 'outline'
   label: string
 }>(() => {
+  if (isDisplayOnly.value) {
+    return { variant: 'subtle', label: $t('product_page_not_for_sale_button_label') }
+  }
   const isFree = isSelectedPricingItemFree.value
   const label = isSelectedPricingItemSoldOut.value
     ? $t('product_page_sold_out_button_label')
@@ -1449,8 +1472,9 @@ const isPurchasing = ref(false)
 const isReadBookDrawerOpen = ref(false)
 
 async function handlePurchaseButtonClick() {
+  // `?edition=` calls this directly, bypassing the disabled button.
+  if (!selectedPricingItem.value || isDisplayOnly.value) return
   useLogEvent('add_to_cart', formattedLogPayload.value)
-  if (!selectedPricingItem.value) return
   try {
     isPurchasing.value = true
     if (!hasLoggedIn.value) {
