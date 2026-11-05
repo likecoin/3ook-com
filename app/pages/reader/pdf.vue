@@ -79,6 +79,7 @@ const {
   bookFileURLWithCORS,
   bookFileCacheKey,
   bookProgressKeyPrefix,
+  replaceStaleNFTId,
 } = useReader()
 
 const { isLibraryBook, libraryBookCheck } = usePlusReadingTracker({
@@ -196,6 +197,7 @@ const { startReaderLoad, afterLoadingScreen, handleLoadingScreenAfterLeave } = u
     : $t('error_reader_book_not_available_offline'),
   getErrorActions: getBookLoadErrorActions,
   handleError,
+  recoverLoadError: replaceStaleNFTId,
   abortLoad,
 })
 
