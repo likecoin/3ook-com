@@ -501,7 +501,7 @@ const isAnnotationClickInProgress = ref(false)
 const pendingSavePromise = ref<Promise<Annotation | null> | null>(null)
 const renderedHighlights = new Set<string>()
 
-const { loadingLabel, loadingPercentage, loadFileAsBuffer, abortLoad } = useBookFileLoader()
+const { loadingLabel, loadingPercentage, isLoadedFromCache, loadFileAsBuffer, abortLoad } = useBookFileLoader()
 
 const isOnline = useOnline()
 
@@ -1166,7 +1166,9 @@ async function loadEPub() {
   try {
     let isLocationLoaded = false
     const locationCacheKey = getCacheKeyWithSuffix('locations')
-    if (window.localStorage) {
+    // Locations from an earlier download may not match a freshly fetched file,
+    // e.g. one that now carries the custom message page.
+    if (window.localStorage && isLoadedFromCache.value) {
       const locationCache = window.localStorage.getItem(locationCacheKey)
       if (locationCache) {
         book.locations!.load(locationCache)
