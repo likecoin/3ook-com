@@ -395,6 +395,7 @@ const {
   bookCoverSrc,
   bookFileURLWithCORS,
   bookFileCacheKey,
+  isCustomMessageEnabled,
   bookProgressKeyPrefix,
   replaceStaleNFTId,
 } = useReader()
@@ -1144,7 +1145,10 @@ async function loadEPub() {
   // if this page instance is reused across books.
   detectedNaturalWritingMode.value = undefined
   hasEnforcedDefaultVerticalMode = false
-  const buffer = await loadFileAsBuffer(bookFileURLWithCORS.value, bookFileCacheKey.value)
+  const buffer = await loadFileAsBuffer(bookFileURLWithCORS.value, {
+    cacheKey: bookFileCacheKey.value,
+    isCustomMessageEnabled: isCustomMessageEnabled.value,
+  })
   if (!buffer) {
     return
   }

@@ -1,9 +1,22 @@
-import { ORIGINAL_CONTENT_LENGTH_HEADER } from '~~/shared/utils/book-file'
+import {
+  CUSTOM_MESSAGE_PENDING_HEADER,
+  ORIGINAL_CONTENT_LENGTH_HEADER,
+} from '~~/shared/utils/book-file'
 
 // Abort a book-file load when no progress is made within this window. iOS
 // WebKit wedges in-flight cross-origin fetches after the app is backgrounded,
 // which would otherwise strand the reader on the loading bar forever.
 const BOOK_FILE_STALL_TIMEOUT_MS = 30_000
+
+// Stamped on a cached copy that carries its custom message page; a copy without
+// it was served pending, or was cached before this stamp existed.
+const CUSTOM_MESSAGE_READY_HEADER = 'x-3ook-custom-message-ready'
+
+function stampCustomMessageReady(res: Response) {
+  const headers = new Headers(res.headers)
+  headers.set(CUSTOM_MESSAGE_READY_HEADER, '1')
+  return new Response(res.body, { status: res.status, statusText: res.statusText, headers })
+}
 
 // Strip query params before a book-file URL reaches analytics or error data: it
 // carries a short-lived access token we must not ship to those destinations.
@@ -58,7 +71,13 @@ export default function () {
     return `${loadedFilesizeInMB.value} / ${loadingFilesizeInMB.value} MB (${loadingPercentage.value}%)`
   })
 
-  async function loadFileAsBuffer(url: string, cacheKey?: string) {
+  async function loadFileAsBuffer(url: string, {
+    cacheKey,
+    isCustomMessageEnabled = false,
+  }: {
+    cacheKey?: string
+    isCustomMessageEnabled?: boolean
+  } = {}) {
     loadingFilesize.value = 0
     loadedFilesize.value = 0
     isLoadedFromCache.value = false
@@ -103,8 +122,15 @@ export default function () {
       if (cacheKey && window.caches) {
         try {
           const cache = await raceAbort(caches.open(cacheKey))
-          res = await raceAbort(cache.match(req))
-          if (res) {
+          const cachedRes = await raceAbort(cache.match(req))
+          // A copy lacking its custom message page is still read offline, but
+          // online it is refetched below and overwritten by that cache.put.
+          const isMissingCustomMessage = (
+            isCustomMessageEnabled
+            && cachedRes?.headers.get(CUSTOM_MESSAGE_READY_HEADER) !== '1'
+          )
+          if (cachedRes && !(isMissingCustomMessage && navigator.onLine)) {
+            res = cachedRes
             isFromCache = true
             isLoadedFromCache.value = true
             touchBookFileCacheEntry({
@@ -142,12 +168,16 @@ export default function () {
         if (cacheKey && window.caches) {
           try {
             const cache = await raceAbort(caches.open(cacheKey))
+            const isCustomMessagePending = res.headers.get(CUSTOM_MESSAGE_PENDING_HEADER) === '1'
+            const resToCache = isCustomMessageEnabled && !isCustomMessagePending
+              ? stampCustomMessageReady(res.clone())
+              : res.clone()
             // Fire-and-forget: awaiting would drain the clone before our own
             // stream loop starts, forcing the tee to buffer the whole response.
             // On failure we delete the now-empty cache that caches.open() just
             // created; otherwise pruneBookFileCaches would treat it as live and
             // keep the index entry, inflating the LRU total.
-            cachePutPromise = cache.put(req, res.clone())
+            cachePutPromise = cache.put(req, resToCache)
               .then(() => true)
               .catch((error) => {
                 // A foreground retry aborts this mid-put; that rejection is

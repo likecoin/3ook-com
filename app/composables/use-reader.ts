@@ -113,6 +113,7 @@ export default function (params: {
     bookInfo,
     bookCoverSrc,
 
+    isCustomMessageEnabled,
     bookFileCacheKey,
     bookProgressKeyPrefix,
     bookFileURLWithCORS,
