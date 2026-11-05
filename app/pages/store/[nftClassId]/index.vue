@@ -1156,12 +1156,7 @@ function initializeTabFromHash() {
   }
 }
 
-// A delisted book (every edition unlisted) still shows its prices, but none can be bought;
-// it may remain approved for sale, so purchase gates must check this flag rather than approval.
-const isDisplayOnly = computed(() => (
-  !bookInfo.pricingItems.value.length
-  && bookInfo.unlistedPricingItems.value.length > 0
-))
+const isDisplayOnly = bookInfo.isDisplayOnly
 // The app shows no paid price; a display-only book keeps its editions but hides the amount.
 const isPriceHidden = computed(() => isFreeBorrowOnly.value || (isDisplayOnly.value && isApp.value))
 

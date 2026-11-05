@@ -359,16 +359,25 @@ export default function (
       .map(formatPricingItem)
   })
 
-  // Not for sale: only the product page shows these, for a book with nothing listed.
+  // Not for sale: shown only for a book with nothing listed.
   const unlistedPricingItems = computed(() => {
     return (bookstoreInfo.value?.prices || [])
       .filter(item => item.isUnlisted)
       .map(formatPricingItem)
   })
 
+  // A delisted book (every edition unlisted) still shows its prices, but none can be bought;
+  // it may remain approved for sale, so purchase gates must check this flag rather than approval.
+  const isDisplayOnly = computed(() => (
+    !pricingItems.value.length
+    && unlistedPricingItems.value.length > 0
+  ))
+
+  // Feeds the price on book cards; a delisted book falls back to its unlisted editions.
   const minPricingItem = computed(() => {
-    if (!pricingItems.value.length) return undefined
-    return pricingItems.value.reduce((min, item) => (item.price < min.price ? item : min))
+    const items = isDisplayOnly.value ? unlistedPricingItems.value : pricingItems.value
+    if (!items.length) return undefined
+    return items.reduce((min, item) => (item.price < min.price ? item : min))
   })
 
   const minPrice = computed(() => minPricingItem.value?.price ?? 0)
@@ -495,6 +504,7 @@ export default function (
 
     pricingItems,
     unlistedPricingItems,
+    isDisplayOnly,
     minPricingItem,
     minPrice,
 
