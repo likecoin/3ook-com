@@ -378,6 +378,7 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
       return
     }
 
+    const generation = resetGeneration
     const nftBalance = await likeNFTClassContract.fetchNFTBalanceOf(nftClassId, ownerWalletAddress)
     if (!nftBalance) return
 
@@ -390,6 +391,8 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
         setNFTClassData(queryCache, normalizedNFTClassId, { metadata: nftClassMetadata })
       }
     }
+    // A reset (logout or wallet switch) mid-query means the copy belongs to the previous wallet.
+    if (generation !== resetGeneration) return
 
     if (nftClassMetadata) {
       if (!nftClassIds.value.includes(normalizedNFTClassId)) {
@@ -406,11 +409,13 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
   // last refresh, and returns another held copy, asking the contract if none is left.
   async function replaceStaleTokenId(nftClassId: string, staleTokenId: string, ownerWalletAddress: string) {
     const normalizedNFTClassId = nftClassId.toLowerCase()
+    const generation = resetGeneration
     const remainingTokenIds = getTokenIdsByNFTClassId.value(normalizedNFTClassId)
       .filter(id => id !== staleTokenId)
     tokenIdsByNFTClassId.value[normalizedNFTClassId] = remainingTokenIds
     if (!remainingTokenIds.length) {
       await fetchNFTByNFTClassIdAndOwnerWalletAddressThroughContract(normalizedNFTClassId, ownerWalletAddress)
+      if (generation !== resetGeneration) return undefined
     }
     return getFirstTokenIdByNFTClassId.value(normalizedNFTClassId)
   }

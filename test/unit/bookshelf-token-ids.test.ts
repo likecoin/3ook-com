@@ -115,4 +115,21 @@ describe('bookshelf token IDs', () => {
     expect(nextTokenId).toBeUndefined()
     expect(store.getTokenIdsByNFTClassId(BOOK)).toEqual([])
   })
+
+  it('skips writing back a copy found after a reset', async () => {
+    store.nftClassIds = [BOOK]
+    store.tokenIdsByNFTClassId = { [BOOK]: ['22'] }
+    mockFetchNFTBalanceOf.mockImplementationOnce(async () => {
+      store.reset()
+      return 3
+    })
+    mockFetchNFTIdByIndex.mockResolvedValueOnce('0')
+    mockFetchNFTClassMetadataById.mockResolvedValueOnce({ '@type': 'Book' })
+
+    const nextTokenId = await store.replaceStaleTokenId(BOOK, '22', WALLET)
+
+    expect(nextTokenId).toBeUndefined()
+    expect(store.tokenIdsByNFTClassId).toEqual({})
+    expect(store.nftClassIds).toEqual([])
+  })
 })
