@@ -25,6 +25,7 @@ export default function () {
 
   const loadingFilesize = ref(0)
   const loadedFilesize = ref(0)
+  const isLoadedFromCache = ref(false)
 
   let activeController: AbortController | undefined
 
@@ -60,6 +61,7 @@ export default function () {
   async function loadFileAsBuffer(url: string, cacheKey?: string) {
     loadingFilesize.value = 0
     loadedFilesize.value = 0
+    isLoadedFromCache.value = false
 
     // Guard the whole load with an AbortController + stall watchdog. The
     // watchdog re-arms on every chunk, so a slow-but-progressing download is
@@ -104,6 +106,7 @@ export default function () {
           res = await raceAbort(cache.match(req))
           if (res) {
             isFromCache = true
+            isLoadedFromCache.value = true
             touchBookFileCacheEntry({
               cacheKeyPrefix: config.public.cacheKeyPrefix,
               cacheKey,
@@ -300,6 +303,7 @@ export default function () {
     loadingFilesizeInMB,
     loadedFilesizeInMB,
     loadingLabel,
+    isLoadedFromCache,
 
     loadFileAsBuffer,
     abortLoad,
