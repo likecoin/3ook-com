@@ -240,7 +240,7 @@ const isPlusReadingIconVisible = computed(() =>
 )
 
 const formattedDiscountPrice = computed(() => {
-  if (!isLikerPlus.value || price.value <= 0) return null
+  if (!isLikerPlus.value || price.value <= 0 || bookInfo.isDisplayOnly.value) return null
   const { plusPrice, plusPriceInDecimalByCurrency } = bookInfo.minPricingItem.value ?? {}
   return formatMemberPrice({
     price: price.value,
