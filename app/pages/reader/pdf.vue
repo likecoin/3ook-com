@@ -78,6 +78,7 @@ const {
   bookCoverSrc,
   bookFileURLWithCORS,
   bookFileCacheKey,
+  isCustomMessageEnabled,
   bookProgressKeyPrefix,
   replaceStaleNFTId,
 } = useReader()
@@ -213,7 +214,10 @@ onMounted(() => {
 })
 
 async function loadPDF() {
-  const buffer = await loadFileAsBuffer(bookFileURLWithCORS.value, bookFileCacheKey.value)
+  const buffer = await loadFileAsBuffer(bookFileURLWithCORS.value, {
+    cacheKey: bookFileCacheKey.value,
+    isCustomMessageEnabled: isCustomMessageEnabled.value,
+  })
   if (!buffer) {
     return
   }
