@@ -126,6 +126,9 @@
 </template>
 
 <script setup lang="ts">
+import type { LocationQueryRaw } from 'vue-router'
+import { formatLikerIdHandle } from '~~/shared/utils/liker-id'
+
 const props = defineProps({
   nftClassId: {
     type: String,
@@ -199,12 +202,22 @@ const bookCoverSrc = computed(() => getResizedImageURL(bookInfo.coverSrc.value |
 const { isLikerPlus, PLUS_BOOK_PURCHASE_DISCOUNT } = useSubscription()
 const { isApp } = useAppDetection()
 
+const getRouteQuery = useRouteQuery()
+const publisherSubdomainLikerId = usePublisherSubdomainLikerId()
+
 const productPageRoute = computed(() => {
+  const query: LocationQueryRaw = {}
+  if (props.tag) query.tag = props.tag
+  // The subdomain hands book links to the apex as an external navigation, skipping
+  // the query middleware that tags the publisher as `from`. An explicit referrer still wins.
+  if (publisherSubdomainLikerId) {
+    query.from = getRouteQuery('from') || formatLikerIdHandle(publisherSubdomainLikerId)
+  }
   return bookInfo.getProductPageRoute({
     llMedium: props.llMedium || undefined,
     llSource: props.llSource || undefined,
     isLibrary: props.isLibrary,
-    query: props.tag ? { tag: props.tag } : undefined,
+    query,
   })
 })
 const stakingRoute = computed(() => {
