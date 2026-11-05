@@ -43,6 +43,9 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
   // Bumped on reset() so in-flight fetches can detect they've been superseded
   // (e.g. by a wallet switch) and skip repopulating just-cleared state.
   let resetGeneration = 0
+  // Classes whose token IDs were rebuilt since the last refresh: the first row
+  // replaces the persisted list, so copies given away since don't linger.
+  let refreshedNFTClassIds = new Set<string>()
 
   const getTokenIdsByNFTClassId = computed(() => (nftClassId: string) => {
     const normalizedId = nftClassId.toLowerCase()
@@ -262,6 +265,8 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
       })
       if (isStale()) return
 
+      if (isRefresh) refreshedNFTClassIds = new Set()
+
       // O(1) dedup across the page — otherwise paginated loads hit O(n²).
       const seenNFTClassIds = new Set(nftClassIds.value)
       // Defensive dedup for the chunked settings request below. The listing
@@ -276,12 +281,16 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
           nftClassIds.value.push(nftClassId)
         }
         if (nftClass.token_id) {
-          const existing = tokenIdsByNFTClassId.value[nftClassId] ?? []
+          const existing = refreshedNFTClassIds.has(nftClassId)
+            ? tokenIdsByNFTClassId.value[nftClassId] ?? []
+            : []
+          refreshedNFTClassIds.add(nftClassId)
           if (!existing.includes(nftClass.token_id)) {
             tokenIdsByNFTClassId.value[nftClassId] = [...existing, nftClass.token_id]
           }
         }
         else {
+          // A row without a token ID says nothing about which copies are held.
           tokenIdsByNFTClassId.value[nftClassId] ??= []
         }
 
@@ -369,6 +378,7 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
       return
     }
 
+    const generation = resetGeneration
     const nftBalance = await likeNFTClassContract.fetchNFTBalanceOf(nftClassId, ownerWalletAddress)
     if (!nftBalance) return
 
@@ -381,6 +391,8 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
         setNFTClassData(queryCache, normalizedNFTClassId, { metadata: nftClassMetadata })
       }
     }
+    // A reset (logout or wallet switch) mid-query means the copy belongs to the previous wallet.
+    if (generation !== resetGeneration) return
 
     if (nftClassMetadata) {
       if (!nftClassIds.value.includes(normalizedNFTClassId)) {
@@ -391,6 +403,21 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
         tokenIdsByNFTClassId.value[normalizedNFTClassId] = [tokenId]
       }
     }
+  }
+
+  // Drops a copy the book file was refused for, e.g. one given away since the
+  // last refresh, and returns another held copy, asking the contract if none is left.
+  async function replaceStaleTokenId(nftClassId: string, staleTokenId: string, ownerWalletAddress: string) {
+    const normalizedNFTClassId = nftClassId.toLowerCase()
+    const generation = resetGeneration
+    const remainingTokenIds = getTokenIdsByNFTClassId.value(normalizedNFTClassId)
+      .filter(id => id !== staleTokenId)
+    tokenIdsByNFTClassId.value[normalizedNFTClassId] = remainingTokenIds
+    if (!remainingTokenIds.length) {
+      await fetchNFTByNFTClassIdAndOwnerWalletAddressThroughContract(normalizedNFTClassId, ownerWalletAddress)
+      if (generation !== resetGeneration) return undefined
+    }
+    return getFirstTokenIdByNFTClassId.value(normalizedNFTClassId)
   }
 
   function updateProgress(nftClassId: string, progress: number, lastOpenedTime: number) {
@@ -429,6 +456,7 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
 
   function reset() {
     resetGeneration += 1
+    refreshedNFTClassIds = new Set()
     isFetching.value = false
     hasFetched.value = false
     nftClassIds.value = []
@@ -483,6 +511,7 @@ export const useBookshelfStore = defineStore('bookshelf', () => {
     getTokenIdsByNFTClassId,
     getFirstTokenIdByNFTClassId,
     fetchNFTByNFTClassIdAndOwnerWalletAddressThroughContract,
+    replaceStaleTokenId,
     updateProgress,
     markBookAsFinished,
     markBookAsDidNotFinish,

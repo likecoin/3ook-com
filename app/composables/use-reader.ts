@@ -2,7 +2,11 @@ export default function (params: {
   nftClassId?: Ref<string> | string
 } = {}) {
   const config = useRuntimeConfig()
+  const route = useRoute()
+  const router = useRouter()
   const getRouteQuery = useRouteQuery()
+  const { user } = useUserSession()
+  const bookshelfStore = useBookshelfStore()
   const { getResizedImageURL } = useImageResize()
   const getBookFileURLWithCORS = useBookFileURLWithCORS()
 
@@ -39,6 +43,21 @@ export default function (params: {
     const id = getRouteQuery('nft_id')
     return id || ('firstUserOwnedNFTId' in bookInfo ? bookInfo.firstUserOwnedNFTId.value : undefined)
   })
+  // Resolves whether the load is worth retrying: ebook-cors refuses a copy the
+  // user has since given away, so switch the route to another copy they hold.
+  async function replaceStaleNFTId(error: unknown) {
+    const staleNFTId = nftId.value
+    const walletAddress = user.value?.evmWallet
+    const { message, statusCode } = parseError(error)
+    if (!staleNFTId || !walletAddress || statusCode !== 403 || message !== 'NOT_NFT_OWNER') {
+      return false
+    }
+    const nextNFTId = await bookshelfStore.replaceStaleTokenId(nftClassId.value, staleNFTId, walletAddress)
+    if (!nextNFTId) return false
+    await router.replace({ query: { ...route.query, nft_id: nextNFTId } })
+    return true
+  }
+
   const fileIndex = computed(() => getRouteQuery('index', '0'))
   const shouldCustomMessageDisabled = computed(() => getRouteQuery('custom_message') === '0')
 
@@ -97,5 +116,6 @@ export default function (params: {
     bookFileCacheKey,
     bookProgressKeyPrefix,
     bookFileURLWithCORS,
+    replaceStaleNFTId,
   }
 }
