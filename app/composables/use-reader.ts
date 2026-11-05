@@ -52,16 +52,10 @@ export default function (params: {
     if (!staleNFTId || !walletAddress || statusCode !== 403 || message !== 'NOT_NFT_OWNER') {
       return false
     }
-    try {
-      const nextNFTId = await bookshelfStore.replaceStaleTokenId(nftClassId.value, staleNFTId, walletAddress)
-      if (!nextNFTId) return false
-      await router.replace({ query: { ...route.query, nft_id: nextNFTId } })
-      return true
-    }
-    catch (replaceError) {
-      console.warn('Failed to replace stale NFT ID:', replaceError)
-      return false
-    }
+    const nextNFTId = await bookshelfStore.replaceStaleTokenId(nftClassId.value, staleNFTId, walletAddress)
+    if (!nextNFTId) return false
+    await router.replace({ query: { ...route.query, nft_id: nextNFTId } })
+    return true
   }
 
   const fileIndex = computed(() => getRouteQuery('index', '0'))

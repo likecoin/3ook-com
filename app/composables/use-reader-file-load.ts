@@ -65,6 +65,17 @@ export default function useReaderFileLoad({
     pendingUntilLoadingScreenLeft.push(show)
   }
 
+  async function tryRecoverLoadError(error: unknown) {
+    if (hasRecoveredLoadError || !recoverLoadError) return false
+    try {
+      return await recoverLoadError(error)
+    }
+    catch (recoverError) {
+      console.warn('Failed to recover reader load error:', recoverError)
+      return false
+    }
+  }
+
   async function startReaderLoad() {
     const attempt = ++loadAttempt
     hasLoadingScreenLeft = false
@@ -76,7 +87,7 @@ export default function useReaderFileLoad({
     }
     catch (error) {
       if (attempt !== loadAttempt) return
-      if (!hasRecoveredLoadError && await recoverLoadError?.(error)) {
+      if (await tryRecoverLoadError(error)) {
         hasRecoveredLoadError = true
         if (attempt === loadAttempt) startReaderLoad()
         return

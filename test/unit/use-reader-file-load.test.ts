@@ -65,4 +65,16 @@ describe('useReaderFileLoad recovery', () => {
     expect(load).toHaveBeenCalledTimes(1)
     expect(handleError).toHaveBeenCalledTimes(1)
   })
+
+  it('shows the error when the recovery itself fails', async () => {
+    const load = vi.fn().mockRejectedValue(notOwnerError)
+    const recoverLoadError = vi.fn().mockRejectedValue(new Error('router failed'))
+    const { isReaderLoading, handleError, startReaderLoad } = setup({ load, recoverLoadError })
+
+    await startReaderLoad()
+
+    expect(load).toHaveBeenCalledTimes(1)
+    expect(handleError).toHaveBeenCalledWith(notOwnerError, expect.anything())
+    expect(isReaderLoading.value).toBe(false)
+  })
 })
