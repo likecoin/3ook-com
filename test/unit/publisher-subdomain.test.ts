@@ -3,6 +3,7 @@ import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 import publisherSubdomainMiddleware from '~/middleware/publisher-subdomain.global'
 import { STORE_PUBLISHER_ROOT_ROUTE_NAME } from '~~/shared/constants/store-routes'
 import {
+  PUBLISHER_SUBDOMAIN_LIKER_IDS,
   getLocalePathPrefixes,
   getPublisherSubdomainAction,
   getPublisherSubdomainHost,
@@ -45,8 +46,9 @@ function runMiddleware(host: string, route = createRoute('store-userId___zh-Hant
 describe('getPublisherSubdomainHost', () => {
   const PUBLISHER = { type: 'publisher', likerId: 'ckxpress' }
 
-  it('resolves an approved label', () => {
-    expect(getPublisherSubdomainHost('ckxpress.3ook.com', 'https://3ook.com')).toEqual(PUBLISHER)
+  it.each(PUBLISHER_SUBDOMAIN_LIKER_IDS)('resolves the approved label %s', (likerId) => {
+    expect(getPublisherSubdomainHost(`${likerId}.3ook.com`, 'https://3ook.com'))
+      .toEqual({ type: 'publisher', likerId })
   })
 
   it('ignores ports and casing, so local dev matches production', () => {
