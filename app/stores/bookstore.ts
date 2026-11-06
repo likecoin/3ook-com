@@ -75,6 +75,10 @@ export const useBookstoreStore = defineStore('bookstore', () => {
     if (bookstoreCMSProductsByTagKeyMap.value[tagKey]?.isFetching) {
       return
     }
+    // Only a successful fetch sets `mayHaveMore`, so a failed page 1 can still be retried.
+    if (!isRefresh && bookstoreCMSProductsByTagKeyMap.value[tagKey]?.mayHaveMore === false) {
+      return
+    }
 
     if (!bookstoreCMSProductsByTagKeyMap.value[tagKey] || isRefresh) {
       bookstoreCMSProductsByTagKeyMap.value[tagKey] = {
@@ -98,7 +102,12 @@ export const useBookstoreStore = defineStore('bookstore', () => {
         bookstoreCMSProductsByTagKeyMap.value[tagKey].items = result.records
       }
       else {
-        bookstoreCMSProductsByTagKeyMap.value[tagKey].items.push(...result.records)
+        // Pages are cached independently upstream, so after a tag reorder
+        // one page can reflect the new order and another the old one.
+        const seenClassIds = new Set(bookstoreCMSProductsByTagKeyMap.value[tagKey].items.map(item => item.classId))
+        bookstoreCMSProductsByTagKeyMap.value[tagKey].items.push(
+          ...result.records.filter(item => !item.classId || !seenClassIds.has(item.classId)),
+        )
       }
       bookstoreCMSProductsByTagKeyMap.value[tagKey].offset = result.offset
       bookstoreCMSProductsByTagKeyMap.value[tagKey].mayHaveMore = result.hasMore
