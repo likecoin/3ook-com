@@ -241,11 +241,18 @@
         class="w-full text-center text-sm text-muted py-8"
         v-text="$t('store_list_end_more_books_text')"
       />
+
+      <OwnerWalletPlusCTA
+        v-if="isOwnerWalletPlusCTAVisible"
+        :is-library="isLibraryTab"
+        @dismiss="isOwnerWalletPlusCTADismissed = true"
+      />
     </main>
   </div>
 </template>
 
 <script setup lang="ts">
+import { useSessionStorage } from '@vueuse/core'
 import { FetchError } from 'ofetch'
 
 import { LOGGED_IMPRESSION_COUNT, isBookstoreBuiltInListType } from '~~/shared/utils/bookstore'
@@ -379,6 +386,19 @@ const isStoreIntroBannerVisible = computed(() =>
   && !isWelcomeBannerVisible.value
   && !isPlusOrDevicePlus.value
   && !getStoreTagIdFromRoute(route),
+)
+
+// A publisher's owner_wallet listing is often a first landing, e.g. from a shared link or ad,
+// so keep the Plus upsell in reach while scrolling.
+// Dismissal lasts for the tab session, so a later visit through another link still sees it.
+const isOwnerWalletPlusCTADismissed = useSessionStorage('3ook_owner_wallet_plus_cta_dismissed', false)
+const isOwnerWalletPlusCTAVisible = computed(() =>
+  isMounted.value
+  && !isOwnerWalletPlusCTADismissed.value
+  && !!queryOwnerWallet.value
+  && !isApp.value
+  && !isPlusOrDevicePlus.value
+  && !isWelcomeBannerVisible.value,
 )
 
 // The chart is its own landing page with its own heading,
