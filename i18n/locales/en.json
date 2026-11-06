@@ -78,6 +78,7 @@
   "account_page_civic_upgrade_description": "Share Plus membership with family and friends.",
   "account_page_color_mode": "Appearance",
   "account_page_color_mode_button": "Change appearance",
+  "account_page_color_mode_upgrade_to_change": "{mode} (upgrade to change)",
   "account_page_contact_support": "Customer service",
   "account_page_cosmos_wallet": "Legacy Wallet",
   "account_page_create_custom_voice_button": "Create voice",
