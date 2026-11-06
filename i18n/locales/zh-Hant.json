@@ -740,6 +740,8 @@
   "library_page_publisher_description": "瀏覽出版社「{publisher}」在 3ook.com 圖書館發行的電子書與刊物，配備粵語、國語及英語 AI 朗讀。",
   "library_page_search_description": "在 3ook.com 圖書館搜尋「{term}」相關的中、英文電子書與刊物，配備粵語、國語及英語 AI 朗讀。",
   "library_page_tag_description": "在 3ook.com 圖書館瀏覽「{tag}」相關中、英文電子書與刊物，配備粵語、國語及英語 AI 朗讀。",
+  "library_store_book_app_notice_description": "這本書不在圖書館內，請前往 3ook.com 網頁版的書店查看。",
+  "library_store_book_app_notice_title": "此書在書店發售",
   "library_tab_description": "3ook.com 圖書館是 Plus 會員專屬福利，大量精選書目供你無限借閱，暢讀暢聽，就像書籍版的串流服務。",
   "library_tab_title": "圖書館",
   "local_histories_about_kicker": "關於計畫｜鏈結在地：以區塊鏈驅動在地故事的媒體新路徑",

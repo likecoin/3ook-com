@@ -60,7 +60,7 @@
   >
     <BookCover
       :src="bookCoverSrc"
-      :to="productPageRoute"
+      :to="isLinkDisabled ? undefined : productPageRoute"
       :alt="bookName || $t('book_cover_link_label')"
       :lazy="props.lazy"
       :priority="props.priority"
@@ -179,6 +179,10 @@ const props = defineProps({
     default: false,
   },
   isLibrary: {
+    type: Boolean,
+    default: false,
+  },
+  isLinkDisabled: {
     type: Boolean,
     default: false,
   },
