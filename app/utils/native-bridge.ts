@@ -80,6 +80,17 @@ export function requestNativeClearCaches(): void {
   postToNative({ type: 'clearNativeCaches' })
 }
 
+// False on web or an app build without the capability, so callers hide the entry
+// point: the WebView keeps 3ook.com in-app and cannot reach the browser itself.
+export function canOpenNativeExternalURL(): boolean {
+  return isNativeWebView() && isNativeFeatureSupported('openExternalURL')
+}
+
+export function openNativeExternalURL(url: string): void {
+  if (!canOpenNativeExternalURL()) return
+  postToNative({ type: 'openExternalURL', url })
+}
+
 export function isNativeIntercomAvailable(): boolean {
   return isNativeWebView() && isNativeFeatureSupported('intercom')
 }

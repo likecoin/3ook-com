@@ -5,6 +5,8 @@ export function usePlusManagement() {
   const { manageSubscription: manageViaIAP } = useNativeIAP()
   const accountStore = useAccountStore()
   const localeRoute = useLocaleRoute()
+  const localePath = useLocalePath()
+  const config = useRuntimeConfig()
   const { handleError } = useErrorHandler()
   const plusSessionAPI = usePlusSessionAPI()
   const { isCivicMember } = useSubscription()
@@ -38,6 +40,7 @@ export function usePlusManagement() {
   })
 
   const likerPlusButtonLabel = computed(() => {
+    if (likerPlusManageMode.value === 'browser') return $t('account_page_manage_in_browser')
     if (user.value?.isLikerPlus) return $t('account_page_manage_subscription')
     if (isPaymentPastDue.value) return $t('account_page_update_payment')
     return $t('account_page_renew_subscription')
@@ -89,6 +92,11 @@ export function usePlusManagement() {
       finally {
         isManagingSubscription.value = false
       }
+      return
+    }
+
+    if (likerPlusManageMode.value === 'browser') {
+      openNativeExternalURL(`${config.public.baseURL}${localePath({ name: 'account' })}`)
       return
     }
 

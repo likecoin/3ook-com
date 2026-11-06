@@ -1,6 +1,7 @@
 // Plus plan billability + what can be done on this surface.
-// Modes: native-store (actionable here), store-info (manage on device), stripe-portal (web), none.
-export type LikerPlusManageMode = 'native-store' | 'store-info' | 'stripe-portal' | 'none'
+// Modes: native-store (actionable here), store-info (manage on device), stripe-portal (web),
+// browser (app hands the account page to the system browser), none.
+export type LikerPlusManageMode = 'native-store' | 'store-info' | 'stripe-portal' | 'browser' | 'none'
 
 // Read-only eligibility, split from usePlusManagement so pricing and checkout
 // surfaces can ask "can they buy this here?" without constructing the account
@@ -31,7 +32,10 @@ export function usePlusEligibility() {
         ? 'native-store'
         : 'store-info'
     }
-    return isApp.value ? 'none' : 'stripe-portal'
+    if (!isApp.value) return 'stripe-portal'
+    // Only an active plan is sent out of the app; offering renewal or payment fixes
+    // on the web from inside the app would read as steering away from the store.
+    return user.value.isLikerPlus && canOpenNativeExternalURL() ? 'browser' : 'none'
   })
 
   // An in-place tier upgrade bills through whatever already owns the plan, so it
