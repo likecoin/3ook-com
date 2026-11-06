@@ -89,10 +89,19 @@ export function getExcerptForCFI(
 }
 
 const PRE_PAGINATED_PAGE_ATTRIBUTE = 'data-pre-paginated'
+const VERTICAL_PAGE_ATTRIBUTE = 'data-vertical-writing'
 const REFLOWABLE_HTML = `html:not([${PRE_PAGINATED_PAGE_ATTRIBUTE}])`
+const HORIZONTAL_REFLOWABLE_HTML = `${REFLOWABLE_HTML}:not([${VERTICAL_PAGE_ATTRIBUTE}])`
 
 export function markPrePaginatedPage(document: Document) {
   document.documentElement.setAttribute(PRE_PAGINATED_PAGE_ATTRIBUTE, '')
+}
+
+// A vertical page's frame spans the whole column flow, so `vh` and `%` resolve to several pages;
+// read from <html>, as epub.js does when laying the page out.
+export function markVerticalWritingPage(document: Document) {
+  const writingMode = document.defaultView?.getComputedStyle(document.documentElement).writingMode
+  document.documentElement.toggleAttribute(VERTICAL_PAGE_ATTRIBUTE, !!writingMode?.startsWith('vertical-'))
 }
 
 // Cap oversized illustrations to the page.
@@ -100,8 +109,10 @@ export function markPrePaginatedPage(document: Document) {
 // so a `vh` cap measures the frame instead and letterboxes the page.
 export const IMAGE_CAP_THEME_RULES = {
   [`${REFLOWABLE_HTML} img, ${REFLOWABLE_HTML} svg`]: {
+    height: 'auto !important',
+  },
+  [`${HORIZONTAL_REFLOWABLE_HTML} img, ${HORIZONTAL_REFLOWABLE_HTML} svg`]: {
     'max-width': '100% !important',
     'max-height': '90vh !important',
-    'height': 'auto !important',
   },
 }
