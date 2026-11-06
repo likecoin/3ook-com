@@ -65,11 +65,11 @@
         </div>
       </header>
 
-      <!-- Hero Section -->
+      <!-- Hero Section; `dark` so the solid download buttons render light on the black background -->
       <section
         id="hero"
         v-gsap.entrance.slide-bottom.stagger
-        class="relative w-full overflow-hidden bg-theme-black"
+        class="dark relative w-full overflow-hidden bg-theme-black"
       >
         <div class="relative max-w-5xl mx-auto px-6 md:px-12 pt-24 pb-20 md:pt-32 md:pb-28 grid md:grid-cols-2 items-center">
           <div class="relative max-md:order-2 flex flex-col items-center md:items-start space-y-6 text-center md:text-left">
@@ -99,8 +99,10 @@
             />
 
             <AppDownloadButtons
-              class="*:text-theme-white *:ring-theme-white *:hover:bg-theme-white/20"
+              class="w-full max-w-md grid-cols-2"
               placement="app_page_hero"
+              variant="solid"
+              size="xl"
               @click-app-store="onClickAppStore"
               @click-google-play="onClickGooglePlay"
             />
