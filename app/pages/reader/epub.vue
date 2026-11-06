@@ -2717,27 +2717,47 @@ async function handleBookmarkDelete(bookmark: Annotation) {
   }
 }
 
-const isShiftPressed = useKeyModifier('Shift')
-onKeyStroke('ArrowRight', () => {
-  turnPageRight('key')
-})
-onKeyStroke('ArrowLeft', () => {
-  turnPageLeft('key')
-})
-onKeyStroke('ArrowDown', () => {
-  nextPage('key')
-})
-onKeyStroke('ArrowUp', () => {
-  prevPage('key')
-})
-onKeyStroke('Space', () => {
-  if (isShiftPressed.value) {
-    prevPage('key')
-  }
-  else {
-    nextPage('key')
-  }
-})
+// Mirrors the header's back button: a previewer leaves to the product page.
+function exitReader() {
+  navigateTo(backRoute.value ?? localeRoute({ name: 'shelf' }))
+}
+
+// j/k follow the arrows rather than vim, so both pairs respect the writing direction.
+const readerShortcuts: KeyboardShortcutMap = {
+  'j': () => turnPageLeft('key'),
+  'ArrowLeft': () => turnPageLeft('key'),
+  'k': () => turnPageRight('key'),
+  'ArrowRight': () => turnPageRight('key'),
+  'ArrowUp': () => prevPage('key'),
+  'ArrowDown': () => nextPage('key'),
+  ' ': (event) => {
+    event.preventDefault()
+    if (event.shiftKey) {
+      prevPage('key')
+    }
+    else {
+      nextPage('key')
+    }
+  },
+  '/': (event) => {
+    // Firefox opens its own quick-find bar on `/`.
+    event.preventDefault()
+    readerSearch.value?.open()
+  },
+  '*': () => {
+    if (isReaderLoading.value || !currentBookmarkCfi.value) return
+    handleBookmarkToggle()
+  },
+  'Escape': exitReader,
+  'f': exitReader,
+  'F': exitReader,
+}
+
+// The annotation menu has no focus trap, so the shortcut guard can't see it;
+// overlays that do trap focus are already covered there.
+const readerShortcutOptions = { isEnabled: () => !isAnnotationMenuVisible.value }
+useKeyboardShortcuts(readerShortcuts, readerShortcutOptions)
+useKeyboardShortcuts(readerShortcuts, { ...readerShortcutOptions, target: renditionViewWindow })
 
 onBeforeUnmount(() => {
   cleanUpClickListener?.()
