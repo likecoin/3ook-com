@@ -429,6 +429,12 @@ const { openPreviewEndModal, handlePreviewEndBoundary } = usePreviewEndModal({
   isEnabled: isPreviewMode.value,
 })
 
+const { handleBookEndBoundary } = useBookEndModal({
+  nftClassId,
+  isLibraryBook,
+  isEnabled: !isPreviewMode.value && !isUploadedBook.value,
+})
+
 const { fetchCustomVoice } = useCustomVoice()
 const { fetchConfig: fetchPlusAffiliateConfig } = usePlusAffiliate()
 
@@ -1467,6 +1473,9 @@ async function loadEPub() {
     activeNavItemHref.value = resolveActiveNavItemHref(href)
     if (isPreviewMode.value) {
       handlePreviewEndBoundary(href.endsWith(PREVIEW_END_PAGE_HREF_SUFFIX))
+    }
+    else {
+      handleBookEndBoundary(isAtLastPage.value)
     }
     // Footnote return: a just-clicked in-book link drove this relocation; offer
     // a way back only if we actually landed on a different page. Otherwise drop

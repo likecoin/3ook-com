@@ -1447,6 +1447,7 @@ defineExpose({
   goToPage,
   currentPage: clampedCurrentPage,
   totalPages: readonly(totalPages),
+  isAtLastPage,
 })
 </script>
 
