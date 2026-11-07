@@ -25,7 +25,7 @@ interface ReadingSessionOptions {
 }
 
 function buildNavigationCounts(): Record<ReaderNavigationMethod, number> {
-  return { arrow: 0, key: 0, swipe_h: 0, swipe_v: 0, tap: 0 }
+  return { arrow: 0, key: 0, swipe_h: 0, swipe_v: 0, tap: 0, volume_key: 0 }
 }
 
 export function useReadingSession(options: ReadingSessionOptions) {
@@ -217,6 +217,7 @@ export function useReadingSession(options: ReadingSessionOptions) {
       nav_swipe_h: navigationCounts.swipe_h,
       nav_swipe_v: navigationCounts.swipe_v,
       nav_tap: navigationCounts.tap,
+      nav_volume_key: navigationCounts.volume_key,
     })
   }
 

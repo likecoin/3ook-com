@@ -108,6 +108,16 @@
                     </div>
                   </div>
                 </div>
+                <div
+                  v-if="isVolumeKeyPagingSupported"
+                  class="flex items-center justify-between gap-4 px-6 pb-4"
+                >
+                  <span
+                    class="text-sm font-medium"
+                    v-text="$t('reader_volume_key_paging_label')"
+                  />
+                  <USwitch v-model="isVolumeKeyPagingEnabled" />
+                </div>
                 <div class="px-6 pb-6">
                   <UButton
                     class="w-full justify-center"
@@ -1902,6 +1912,15 @@ function turnPageRight(method: ReaderNavigationMethod) {
     nextPage(method)
   }
 }
+
+const {
+  isEnabled: isVolumeKeyPagingEnabled,
+  isSupported: isVolumeKeyPagingSupported,
+} = useVolumeKeyPaging({
+  isActive: () => !isReaderLoading.value,
+  onNextPage: () => nextPage('volume_key'),
+  onPreviousPage: () => prevPage('volume_key'),
+})
 
 function adjustFontSize(size: number) {
   const index = fontSize.value ? FONT_SIZE_OPTIONS.indexOf(fontSize.value) : DEFAULT_FONT_SIZE_INDEX
