@@ -82,6 +82,7 @@ export const READER_NAVIGATION_METHODS = [
   'swipe_h',
   'swipe_v',
   'tap',
+  'volume_key',
 ] as const
 
 export type ReaderNavigationMethod = typeof READER_NAVIGATION_METHODS[number]

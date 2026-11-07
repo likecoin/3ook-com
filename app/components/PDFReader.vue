@@ -118,6 +118,16 @@
                 <span class="text-sm">{{ $t('reader_right_to_left') }}</span>
                 <USwitch v-model="isRightToLeft" />
               </div>
+              <div
+                v-if="isVolumeKeyPagingSupported"
+                class="flex items-center justify-between gap-4 py-3"
+              >
+                <span
+                  class="text-sm"
+                  v-text="$t('reader_volume_key_paging_label')"
+                />
+                <USwitch v-model="isVolumeKeyPagingEnabled" />
+              </div>
             </template>
           </USlideover>
           <ReaderLeftSidebar
@@ -1119,6 +1129,14 @@ function previousPage(method: ReaderNavigationMethod) {
   currentPage.value = previous
   emit('navigate', method)
 }
+
+const {
+  isEnabled: isVolumeKeyPagingEnabled,
+  isSupported: isVolumeKeyPagingSupported,
+} = useVolumeKeyPaging({
+  onNextPage: () => nextPage('volume_key'),
+  onPreviousPage: () => previousPage('volume_key'),
+})
 
 function handleContainerTap(event: MouseEvent) {
   // Desktop uses the side arrows; only tap-to-turn on small/touch screens.

@@ -1032,6 +1032,7 @@
   "reader_tts_progress_label": "朗讀進度：{percentage}%",
   "reader_tts_time_remaining_label": "估計剩餘時間：{time}",
   "reader_voice_options_button": "請選擇聲優",
+  "reader_volume_key_paging_label": "以音量鍵翻頁",
   "reader_zoom_fit_page": "符合頁面",
   "reader_zoom_fit_width": "符合寬度",
   "reading_method_download_file": "檔案下載",
