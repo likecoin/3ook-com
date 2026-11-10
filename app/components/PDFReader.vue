@@ -126,7 +126,10 @@
                   class="text-sm"
                   v-text="$t('reader_volume_key_paging_label')"
                 />
-                <USwitch v-model="isVolumeKeyPagingEnabled" />
+                <USwitch
+                  v-model="isVolumeKeyPagingEnabled"
+                  :aria-label="$t('reader_volume_key_paging_label')"
+                />
               </div>
             </template>
           </USlideover>

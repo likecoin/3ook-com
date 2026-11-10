@@ -116,7 +116,10 @@
                     class="text-sm font-medium"
                     v-text="$t('reader_volume_key_paging_label')"
                   />
-                  <USwitch v-model="isVolumeKeyPagingEnabled" />
+                  <USwitch
+                    v-model="isVolumeKeyPagingEnabled"
+                    :aria-label="$t('reader_volume_key_paging_label')"
+                  />
                 </div>
                 <div class="px-6 pb-6">
                   <UButton
