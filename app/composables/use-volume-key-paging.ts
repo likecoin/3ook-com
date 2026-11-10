@@ -37,8 +37,10 @@ export function useVolumeKeyPaging({
     isSupported.value = isNativeWebView() && isNativeFeatureSupported('volumeKeyPaging')
   })
 
+  // Not gated on shouldCaptureVolumeKeys: a guard that flips in the same tick
+  // as unmount never reaches the watcher, which would leave the keys captured.
   onBeforeUnmount(() => {
-    if (shouldCaptureVolumeKeys.value) {
+    if (isSupported.value) {
       postToNative({ type: 'setVolumeKeyPaging', enabled: false })
     }
   })

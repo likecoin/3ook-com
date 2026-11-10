@@ -96,6 +96,14 @@ describe('useVolumeKeyPaging', () => {
     expect(onNextPage).not.toHaveBeenCalled()
   })
 
+  it('releases the keys when the reader deactivates and unmounts in the same tick', async () => {
+    const { wrapper } = await mountReader()
+    isActive.value = false
+    wrapper.unmount()
+
+    expect(getSentStates().at(-1)).toBe(false)
+  })
+
   it('stays silent on an app build without the capability', async () => {
     window.__nativeBridge = { features: [] }
     const { wrapper, isSupported } = await mountReader()
