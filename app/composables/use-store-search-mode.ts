@@ -195,6 +195,7 @@ export async function useStoreSearchMode() {
         titlePrefix: isProfileCurated.value
           ? $t('store_affiliate_prefix')
           : $t('store_owner_wallet_prefix'),
+        description: profileInfo.value?.description?.trim() || '',
         isCurated: isProfileCurated.value,
       }
     }
@@ -203,6 +204,7 @@ export async function useStoreSearchMode() {
         displayName: ownerWalletDisplayName.value || ownerWallet.value,
         avatarSrc: ownerWalletAvatarSrc.value,
         titlePrefix: $t('store_owner_wallet_prefix'),
+        description: ownerWalletInfo.value?.description?.trim() || '',
         isCurated: false,
       }
     }
