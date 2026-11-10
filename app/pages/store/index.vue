@@ -119,17 +119,17 @@
       </section>
 
       <section
-        v-if="entity && entityDescription"
+        v-if="storeDescription"
         class="w-full mb-8 self-start text-left"
       >
         <h2
           class="text-2xl font-bold text-highlighted mb-2"
-          v-text="entity.name"
+          v-text="storeDescriptionTitle"
         />
         <ExpandableContent>
           <p
             class="text-muted whitespace-pre-line"
-            v-text="entityDescription"
+            v-text="storeDescription"
           />
         </ExpandableContent>
       </section>
@@ -524,7 +524,7 @@ const pageTitle = computed(() => isLibraryTab.value ? $t('library_tab_title') : 
 const pageDescription = computed(() => isLibraryTab.value ? $t('library_tab_description') : $t('store_page_description'))
 
 const tagDescription = computed(() => {
-  if (entityDescription.value) return entityDescription.value
+  if (storeDescription.value) return storeDescription.value
   if (searchModeContext.value) return searchModeContext.value.description
   if (!isStakingTagId.value) {
     const cmsDescription = activeCMSTag.value?.description[normalizedLocale.value]
@@ -849,10 +849,22 @@ const entityDescription = computed(() => {
   return ''
 })
 
+// The account's own description introduces its storefront; an `?author=` or
+// `?publisher=` filter describes that entity from book metadata instead.
+const accountDescription = computed(() => (entity.value ? '' : storeEntity.value?.description || ''))
+const storeDescription = computed(() => entityDescription.value || accountDescription.value)
+const storeDescriptionTitle = computed(() => entity.value?.name || storeEntity.value?.displayName || '')
+
+const structuredDataEntity = computed(() => {
+  if (entity.value) return entity.value
+  if (accountDescription.value) return { type: 'Organization' as const, name: storeDescriptionTitle.value }
+  return null
+})
+
 const entityStructuredData = useEntityStructuredData({
-  entity,
+  entity: structuredDataEntity,
   url: canonicalURL,
-  description: () => entityDescription.value || searchModeContext.value?.description,
+  description: () => storeDescription.value || searchModeContext.value?.description,
 })
 
 // Captured once, outside the reactive head callback: re-evaluating `ts` a minute later
