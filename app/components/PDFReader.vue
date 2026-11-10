@@ -101,7 +101,7 @@
             }"
           >
             <UButton
-              icon="i-material-symbols-settings-rounded"
+              icon="i-material-symbols-settings-outline-rounded"
               :aria-label="$t('reader_settings_button')"
               variant="ghost"
               color="neutral"
