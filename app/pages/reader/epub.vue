@@ -30,11 +30,12 @@
         <template #trailing>
           <div class="relative flex justify-end items-center gap-2">
             <BottomSlideover
-              :title="$t('reader_display_options_button')"
+              :title="$t('reader_settings_button')"
               body-class="max-h-[40vh] select-none"
             >
               <UButton
-                icon="i-material-symbols-text-fields-rounded"
+                icon="i-material-symbols-settings-rounded"
+                :aria-label="$t('reader_settings_button')"
                 variant="ghost"
                 color="neutral"
               />

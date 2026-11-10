@@ -87,7 +87,7 @@
       <template #trailing>
         <div class="flex items-center gap-2">
           <USlideover
-            :title="$t('reader_display_options_button')"
+            :title="$t('reader_settings_button')"
             :close="{
               color: 'neutral',
               variant: 'outline',
@@ -101,7 +101,8 @@
             }"
           >
             <UButton
-              icon="i-material-symbols-page-info-outline-rounded"
+              icon="i-material-symbols-settings-rounded"
+              :aria-label="$t('reader_settings_button')"
               variant="ghost"
               color="neutral"
             />
