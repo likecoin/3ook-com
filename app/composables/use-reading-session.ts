@@ -66,7 +66,7 @@ export function useReadingSession(options: ReadingSessionOptions) {
   }
 
   resetSession()
-  const { idle } = useIdle(IDLE_TIMEOUT_MS, {
+  const { idle, reset: resetIdleTimer } = useIdle(IDLE_TIMEOUT_MS, {
     events: ['scroll', 'touchstart', 'keydown', 'pointermove'],
   })
   const visibility = useDocumentVisibility()
@@ -130,6 +130,9 @@ export function useReadingSession(options: ReadingSessionOptions) {
 
   function recordNavigation(method: ReaderNavigationMethod) {
     navigationCounts[method] += 1
+    // Volume-key turns arrive over the native bridge without any DOM event,
+    // so the turn itself has to count as activity.
+    resetIdleTimer()
   }
 
   function drainAccumulators(cap: number) {
