@@ -97,6 +97,16 @@ export function markPrePaginatedPage(document: Document) {
   document.documentElement.setAttribute(PRE_PAGINATED_PAGE_ATTRIBUTE, '')
 }
 
+export function isPrePaginatedPage(document: Document) {
+  return document.documentElement.hasAttribute(PRE_PAGINATED_PAGE_ATTRIBUTE)
+}
+
+// Pre-paginated pages keep their own writing mode, as forcing vertical-rl pushes their fixed-size box out of view;
+// `:where()` keeps the specificity of a bare `html` / `body`, so the cascade against the book's own CSS is unchanged.
+export function getWritingModeThemeRules(styles: Record<string, string>) {
+  return { [`html:where(:not([${PRE_PAGINATED_PAGE_ATTRIBUTE}])), :where(${REFLOWABLE_HTML}) body`]: styles }
+}
+
 // A vertical page's frame spans the whole column flow, so `vh` and `%` resolve to several pages;
 // read from <html>, as epub.js does when laying the page out.
 export function markVerticalWritingPage(document: Document) {
