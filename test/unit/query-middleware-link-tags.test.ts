@@ -8,7 +8,9 @@ const { mockNavigateTo } = vi.hoisted(() => ({ mockNavigateTo: vi.fn() }))
 mockNuxtImport('navigateTo', () => mockNavigateTo)
 
 function createRoute(query: Record<string, string> = {}, path = '/store') {
-  return { path, query, params: {} } as unknown as Parameters<typeof queryMiddleware>[0]
+  const search = new URLSearchParams(query).toString()
+  const fullPath = search ? `${path}?${search}` : path
+  return { path, fullPath, query, params: {} } as unknown as Parameters<typeof queryMiddleware>[0]
 }
 
 function runMiddleware(
@@ -100,6 +102,18 @@ describe('query.global carried link tags', () => {
       isLLMediumCarried: false,
       isLLSourceCarried: false,
     })
+  })
+
+  it('leaves a back or forward landing on its own query', () => {
+    window.history.replaceState({ current: '/store/@publisher' }, '')
+    try {
+      runMiddleware({}, { ll_medium: 'search-result', from: '@publisher' }, { toPath: '/store/@publisher' })
+    }
+    finally {
+      window.history.replaceState(null, '')
+    }
+    expect(mockNavigateTo).not.toHaveBeenCalled()
+    expect(useCarriedLinkTags().value.isLLMediumCarried).toBe(false)
   })
 
   it('clears the mark once a later navigation carries nothing', () => {

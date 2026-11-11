@@ -41,6 +41,16 @@ export default defineNuxtRouteMiddleware((to, from) => {
   // In server-side, to and from are always the same, so we don't need to carry on query parameters.
   if (import.meta.server) return
 
+  // Back and forward land on an entry that already holds its own query;
+  // carrying onto it would push a duplicate and lose the restored scroll.
+  // vue-router has already moved history to that entry when a traversal reaches the guards.
+  const historyEntryPath = window.history.state?.current
+  if (historyEntryPath && historyEntryPath === to.fullPath) {
+    pendingCarryRedirectKey = undefined
+    useCarriedLinkTags().value = { isLLMediumCarried: false, isLLSourceCarried: false }
+    return
+  }
+
   const carryQuery: LocationQueryRaw = {}
   for (const key of CARRY_ON_QUERY_KEYS) {
     if (from.query[key] && !to.query[key]) {
