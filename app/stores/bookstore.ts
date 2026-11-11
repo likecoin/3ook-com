@@ -331,18 +331,29 @@ export const useBookstoreStore = defineStore('bookstore', () => {
     }
   }
 
-  // Loads the whole catalogue in one go so it can be ordered by publication
-  // date rather than chain listing order; there is no next page to load.
-  async function fetchOwnerWalletSearch(walletAddress: string, queryKey: string) {
-    const nftClasses = await fetchAllNFTClassesByOwnerWalletAddress(walletAddress, { isBooksOnly: true })
-    const mappedItems = sortNFTClassesByDatePublished(nftClasses)
-      .map(nftClass => ({
-        classId: normalizeNFTClassId(nftClass.address),
-        title: nftClass.name || '',
-        imageUrl: nftClass.metadata?.image || '',
-        minPrice: undefined,
-      }))
-    await updateSearchResults(queryKey, mappedItems, undefined, true)
+  // The whole catalogue, sorted, is held here and paged out locally, so each
+  // page only waits on its own rows' bookstore info, not the full catalogue's.
+  const sortedOwnerWalletItemsByQueryKey = new Map<string, BookstoreSearchResults['items']>()
+
+  async function fetchOwnerWalletSearch(walletAddress: string, queryKey: string, isRefresh: boolean) {
+    let sortedItems = sortedOwnerWalletItemsByQueryKey.get(queryKey)
+    if (isRefresh || !sortedItems) {
+      const nftClasses = await fetchAllNFTClassesByOwnerWalletAddress(walletAddress)
+      sortedItems = sortNFTClassesByDatePublished(nftClasses)
+        .map(nftClass => ({
+          classId: normalizeNFTClassId(nftClass.address),
+          title: nftClass.name || '',
+          imageUrl: nftClass.metadata?.image || '',
+          minPrice: undefined,
+        }))
+      sortedOwnerWalletItemsByQueryKey.set(queryKey, sortedItems)
+    }
+
+    const pageSize = 100
+    const offset = isRefresh ? 0 : Number(bookstoreSearchResultsByQueryMap.value[queryKey]?.nextKey || 0)
+    const end = offset + pageSize
+    const nextKey = end < sortedItems.length ? end.toString() : undefined
+    await updateSearchResults(queryKey, sortedItems.slice(offset, end), nextKey, isRefresh)
   }
 
   async function fetchSearchResults(
@@ -368,7 +379,7 @@ export const useBookstoreStore = defineStore('bookstore', () => {
       }
       else if (type === 'owner_wallet') {
         if (checkIsEVMAddress(searchTerm)) {
-          await fetchOwnerWalletSearch(searchTerm, queryKey)
+          await fetchOwnerWalletSearch(searchTerm, queryKey, isRefresh)
         }
       }
       else {
@@ -440,9 +451,9 @@ export const useBookstoreStore = defineStore('bookstore', () => {
         })
       })
 
-      // Append the first page of each publisher wallet's books.
+      // Append the first page of each publisher wallet's books, newest publication first.
       walletResults.forEach((result) => {
-        result?.data?.forEach((nftClass) => {
+        sortNFTClassesByDatePublished(result?.data ?? []).forEach((nftClass) => {
           const classId = normalizeNFTClassId(nftClass.address)
           if (seen.has(classId)) return
           seen.add(classId)

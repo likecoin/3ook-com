@@ -104,22 +104,26 @@ export function fetchNFTClassesByOwnerWalletAddress(walletAddress: string, optio
 }
 
 // Walks every page, since a publisher's whole catalogue must be in hand
-// before it can be ordered by publication date.
-export async function fetchAllNFTClassesByOwnerWalletAddress(walletAddress: string, options: Omit<IndexerQueryOptions, 'key'> = {}) {
-  const limit = options.limit || 100
+// before it can be ordered by publication date. A large page keeps the
+// biggest catalogues (~500 books) to a single round trip.
+export async function fetchAllNFTClassesByOwnerWalletAddress(walletAddress: string) {
+  const limit = 500
   const classes: NFTClassWithTokenId[] = []
+  // Guards against an indexer cursor that cycles (A→B→A), as in the bookshelf.
+  const visitedKeys = new Set<string>()
   let key: string | undefined
   do {
-    const result = await fetchNFTClassesByOwnerWalletAddress(walletAddress, { ...options, limit, key })
+    if (key) visitedKeys.add(key)
+    const result = await fetchNFTClassesByOwnerWalletAddress(walletAddress, { limit, key })
     classes.push(...result.data)
     key = getIndexerNextKey(result, limit)?.toString()
-  } while (key)
+  } while (key && !visitedKeys.has(key))
   return classes
 }
 
 function getDatePublishedTime(nftClass: NFTClass) {
   const time = Date.parse(nftClass.metadata?.datePublished || '')
-  return Number.isNaN(time) ? undefined : time
+  return Number.isNaN(time) ? -Infinity : time
 }
 
 // Newest publication first. Books without a valid datePublished go last,
@@ -127,11 +131,8 @@ function getDatePublishedTime(nftClass: NFTClass) {
 export function sortNFTClassesByDatePublished<T extends NFTClass>(nftClasses: T[]) {
   return nftClasses
     .map(nftClass => ({ nftClass, time: getDatePublishedTime(nftClass) }))
-    .sort((a, b) => {
-      if (a.time === undefined) return b.time === undefined ? 0 : 1
-      if (b.time === undefined) return -1
-      return b.time - a.time
-    })
+    // Two undated books give -Infinity - -Infinity = NaN, so fall back to a tie.
+    .sort((a, b) => (b.time - a.time) || 0)
     .map(({ nftClass }) => nftClass)
 }
 
