@@ -30,11 +30,12 @@
         <template #trailing>
           <div class="relative flex justify-end items-center gap-2">
             <BottomSlideover
-              :title="$t('reader_display_options_button')"
+              :title="$t('reader_settings_button')"
               body-class="max-h-[40vh] select-none"
             >
               <UButton
-                icon="i-material-symbols-text-fields-rounded"
+                icon="i-material-symbols-settings-outline-rounded"
+                :aria-label="$t('reader_settings_button')"
                 variant="ghost"
                 color="neutral"
               />
@@ -107,6 +108,19 @@
                       />
                     </div>
                   </div>
+                </div>
+                <div
+                  v-if="isVolumeKeyPagingSupported"
+                  class="flex items-center justify-between gap-4 px-6 pb-4"
+                >
+                  <span
+                    class="text-sm font-medium"
+                    v-text="$t('reader_volume_key_paging_label')"
+                  />
+                  <USwitch
+                    v-model="isVolumeKeyPagingEnabled"
+                    :aria-label="$t('reader_volume_key_paging_label')"
+                  />
                 </div>
                 <div class="px-6 pb-6">
                   <UButton
@@ -1903,6 +1917,15 @@ function turnPageRight(method: ReaderNavigationMethod) {
     nextPage(method)
   }
 }
+
+const {
+  isEnabled: isVolumeKeyPagingEnabled,
+  isSupported: isVolumeKeyPagingSupported,
+} = useVolumeKeyPaging({
+  isActive: () => !isReaderLoading.value,
+  onNextPage: () => nextPage('volume_key'),
+  onPreviousPage: () => prevPage('volume_key'),
+})
 
 function adjustFontSize(size: number) {
   const index = fontSize.value ? FONT_SIZE_OPTIONS.indexOf(fontSize.value) : DEFAULT_FONT_SIZE_INDEX

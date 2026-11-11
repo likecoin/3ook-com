@@ -25,7 +25,7 @@ interface ReadingSessionOptions {
 }
 
 function buildNavigationCounts(): Record<ReaderNavigationMethod, number> {
-  return { arrow: 0, key: 0, swipe_h: 0, swipe_v: 0, tap: 0 }
+  return { arrow: 0, key: 0, swipe_h: 0, swipe_v: 0, tap: 0, volume_key: 0 }
 }
 
 export function useReadingSession(options: ReadingSessionOptions) {
@@ -66,7 +66,7 @@ export function useReadingSession(options: ReadingSessionOptions) {
   }
 
   resetSession()
-  const { idle } = useIdle(IDLE_TIMEOUT_MS, {
+  const { idle, reset: resetIdleTimer } = useIdle(IDLE_TIMEOUT_MS, {
     events: ['scroll', 'touchstart', 'keydown', 'pointermove'],
   })
   const visibility = useDocumentVisibility()
@@ -130,6 +130,9 @@ export function useReadingSession(options: ReadingSessionOptions) {
 
   function recordNavigation(method: ReaderNavigationMethod) {
     navigationCounts[method] += 1
+    // Volume-key turns arrive over the native bridge without any DOM event,
+    // so the turn itself has to count as activity.
+    resetIdleTimer()
   }
 
   function drainAccumulators(cap: number) {
@@ -217,6 +220,7 @@ export function useReadingSession(options: ReadingSessionOptions) {
       nav_swipe_h: navigationCounts.swipe_h,
       nav_swipe_v: navigationCounts.swipe_v,
       nav_tap: navigationCounts.tap,
+      nav_volume_key: navigationCounts.volume_key,
     })
   }
 

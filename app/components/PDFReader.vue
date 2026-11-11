@@ -87,7 +87,7 @@
       <template #trailing>
         <div class="flex items-center gap-2">
           <USlideover
-            :title="$t('reader_display_options_button')"
+            :title="$t('reader_settings_button')"
             :close="{
               color: 'neutral',
               variant: 'outline',
@@ -101,7 +101,8 @@
             }"
           >
             <UButton
-              icon="i-material-symbols-page-info-outline-rounded"
+              icon="i-material-symbols-settings-outline-rounded"
+              :aria-label="$t('reader_settings_button')"
               variant="ghost"
               color="neutral"
             />
@@ -117,6 +118,19 @@
               <div class="flex items-center justify-between gap-4 mt-3 py-3">
                 <span class="text-sm">{{ $t('reader_right_to_left') }}</span>
                 <USwitch v-model="isRightToLeft" />
+              </div>
+              <div
+                v-if="isVolumeKeyPagingSupported"
+                class="flex items-center justify-between gap-4 py-3"
+              >
+                <span
+                  class="text-sm"
+                  v-text="$t('reader_volume_key_paging_label')"
+                />
+                <USwitch
+                  v-model="isVolumeKeyPagingEnabled"
+                  :aria-label="$t('reader_volume_key_paging_label')"
+                />
               </div>
             </template>
           </USlideover>
@@ -1118,6 +1132,14 @@ function previousPage(method: ReaderNavigationMethod) {
   currentPage.value = previous
   emit('navigate', method)
 }
+
+const {
+  isEnabled: isVolumeKeyPagingEnabled,
+  isSupported: isVolumeKeyPagingSupported,
+} = useVolumeKeyPaging({
+  onNextPage: () => nextPage('volume_key'),
+  onPreviousPage: () => previousPage('volume_key'),
+})
 
 function handleContainerTap(event: MouseEvent) {
   // Desktop uses the side arrows; only tap-to-turn on small/touch screens.
