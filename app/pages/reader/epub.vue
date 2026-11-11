@@ -817,7 +817,7 @@ function applyWritingModeToDocument(document: Document) {
   // Override only when enforcing (user picked a mode, or vertical manuscript);
   // otherwise let the book's own CSS declare writing-mode so epub.js sizes
   // columns from it.
-  if (!shouldEnforceWritingMode.value) return
+  if (!shouldEnforceWritingMode.value || isPrePaginatedPage(document)) return
   const documentElement = document.documentElement
   const body = document.body
   if (!documentElement || !body) return
@@ -895,9 +895,7 @@ function applyTheme() {
   // otherwise it changes the initial column layout calc and can skew
   // textWidth/textHeight on the first rendered page.
   if (shouldEnforceWritingMode.value) {
-    const writingModeStyles = getWritingModeStyles()
-    themeRules.html = writingModeStyles
-    Object.assign(bodyCSS, writingModeStyles)
+    Object.assign(themeRules, getWritingModeThemeRules(getWritingModeStyles()))
   }
   rendition.value.themes.default(themeRules)
   rendition.value.themes.fontSize(`${fontSize.value}px`)
@@ -1244,9 +1242,9 @@ async function loadEPub() {
     removePagingScrollListener = useEventListener(pagingContainer, 'scroll', handlePagingScroll)
   }
   book.spine!.hooks.content.register((document: Document, section: Section) => {
-    applyWritingModeToDocument(document)
     // Resolves both a fixed-layout book and a per-itemref override in a reflowable one.
     if (book.locations.isPrePaginated(section)) markPrePaginatedPage(document)
+    applyWritingModeToDocument(document)
   })
   currentRendition.hooks.content.register((contents: Contents) => {
     markVerticalWritingPage(contents.document)
