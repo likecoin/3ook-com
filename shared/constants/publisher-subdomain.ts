@@ -1,4 +1,4 @@
-import { formatLikerIdHandle } from '../utils/liker-id'
+import { formatLikerIdHandle, parseFromQuery, parseLikerIdHandle } from '../utils/liker-id'
 import type { StoreListingRouteName } from './store-routes'
 import { getStorePublisherRouteName } from './store-routes'
 
@@ -25,6 +25,13 @@ const BLOCKED_PATHS = ['/manifest.webmanifest', '/sw.js']
 
 function getHostname(host: string) {
   return host.split(':')[0]?.toLowerCase() || ''
+}
+
+// Only an approved publisher's `from` names a storefront worth returning to;
+// other handles are affiliates or sharers, whose profiles may list no books.
+export function getPublisherSubdomainLikerIdFromHandle(from: string): string {
+  const likerId = parseLikerIdHandle(parseFromQuery(from).from)
+  return likerId && PUBLISHER_SUBDOMAIN_LIKER_IDS.includes(likerId) ? likerId : ''
 }
 
 let cachedBaseURL: string | undefined
@@ -80,6 +87,19 @@ export function getLocalePathPrefixes(i18n: {
 
 export function getStorePublisherPath(likerId: string, localePrefix = '') {
   return `${localePrefix}/${PUBLISHER_SUBDOMAIN_LISTING_ROUTE_NAME}/${formatLikerIdHandle(likerId)}`
+}
+
+// A subdomain hands book links to the apex as a full page load, so its origin
+// is what the referrer keeps of the storefront a book was opened from.
+export function getPublisherSubdomainLikerIdFromReferrer(referrer: string, baseURL: string): string {
+  if (!referrer) return ''
+  try {
+    const host = getPublisherSubdomainHost(new URL(referrer).host, baseURL)
+    return host.type === 'publisher' ? host.likerId : ''
+  }
+  catch {
+    return ''
+  }
 }
 
 export type PublisherSubdomainAction =

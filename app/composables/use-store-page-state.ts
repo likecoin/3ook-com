@@ -10,6 +10,8 @@ export function useStorePageState(routeName: MaybeRefOrGetter<string> = 'store')
   const lastScrollPosition = useState<number>(`${name}-last-scroll-position`, () => 0)
   const lastVisitedTag = useState<string>(`${name}-last-visited-tag`, () => '')
   const lastVisitedQuery = useState<Record<string, string>>(`${name}-last-visited-query`, () => ({}))
+  // Tag and query alone can't rebuild a publisher storefront, so keep the whole path.
+  const lastListingPath = useState<string>(`${name}-last-listing-path`, () => '')
 
   function save(tag: string, query: Record<string, string>) {
     if (import.meta.client) {
@@ -17,6 +19,7 @@ export function useStorePageState(routeName: MaybeRefOrGetter<string> = 'store')
     }
     lastVisitedTag.value = tag
     lastVisitedQuery.value = { ...query }
+    lastListingPath.value = route.fullPath
   }
 
   function restoreScroll() {
@@ -31,6 +34,7 @@ export function useStorePageState(routeName: MaybeRefOrGetter<string> = 'store')
     lastScrollPosition.value = 0
     lastVisitedTag.value = ''
     lastVisitedQuery.value = {}
+    lastListingPath.value = ''
     if (import.meta.client) {
       window.scrollTo({
         top: 0,
@@ -61,6 +65,7 @@ export function useStorePageState(routeName: MaybeRefOrGetter<string> = 'store')
   }
 
   return {
+    lastListingPath: readonly(lastListingPath),
     save,
     restoreScroll,
     clear,

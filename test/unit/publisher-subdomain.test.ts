@@ -7,6 +7,8 @@ import {
   getLocalePathPrefixes,
   getPublisherSubdomainAction,
   getPublisherSubdomainHost,
+  getPublisherSubdomainLikerIdFromHandle,
+  getPublisherSubdomainLikerIdFromReferrer,
 } from '~~/shared/constants/publisher-subdomain'
 
 const { mockNavigateTo, mockHost } = vi.hoisted(() => ({
@@ -113,6 +115,35 @@ describe('getPublisherSubdomainAction', () => {
     expect(getAction('/pricing')).toEqual({ type: 'apex', path: '/pricing' })
     expect(getAction('/store/@someone')).toEqual({ type: 'apex', path: '/store/@someone' })
     expect(getAction('/library/@ckxpress')).toEqual({ type: 'apex', path: '/library/@ckxpress' })
+  })
+})
+
+describe('getPublisherSubdomainLikerIdFromHandle', () => {
+  it('names an approved publisher from its handle', () => {
+    expect(getPublisherSubdomainLikerIdFromHandle('@bookmatter')).toBe('bookmatter')
+    expect(getPublisherSubdomainLikerIdFromHandle('@BookMatter?fbclid=abc')).toBe('bookmatter')
+  })
+
+  it('ignores affiliates, sharers, and bare channel strings', () => {
+    expect(getPublisherSubdomainLikerIdFromHandle('@someone')).toBe('')
+    expect(getPublisherSubdomainLikerIdFromHandle('bookmatter')).toBe('')
+    expect(getPublisherSubdomainLikerIdFromHandle('')).toBe('')
+  })
+})
+
+describe('getPublisherSubdomainLikerIdFromReferrer', () => {
+  const getLikerId = (referrer: string) => getPublisherSubdomainLikerIdFromReferrer(referrer, 'https://3ook.com')
+
+  it('names the storefront a subdomain referrer came from', () => {
+    expect(getLikerId('https://ckxpress.3ook.com/')).toBe('ckxpress')
+  })
+
+  it('ignores the apex, unclaimed subdomains, other sites, and malformed values', () => {
+    expect(getLikerId('https://3ook.com/store/@ckxpress')).toBe('')
+    expect(getLikerId('https://someone.3ook.com/')).toBe('')
+    expect(getLikerId('https://www.google.com/')).toBe('')
+    expect(getLikerId('not a url')).toBe('')
+    expect(getLikerId('')).toBe('')
   })
 })
 

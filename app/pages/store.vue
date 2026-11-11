@@ -155,9 +155,18 @@
 </template>
 
 <script setup lang="ts">
+import {
+  getPublisherSubdomainLikerIdFromHandle,
+  getPublisherSubdomainLikerIdFromReferrer,
+} from '~~/shared/constants/publisher-subdomain'
+import { getStorePublisherRouteName } from '~~/shared/constants/store-routes'
+
 const { t: $t } = useI18n()
 const localeRoute = useLocaleRoute()
 const route = useRoute()
+const router = useRouter()
+const getRouteQuery = useRouteQuery()
+const { public: { baseURL } } = useRuntimeConfig()
 const getRouteBaseNameString = useRouteBaseNameString()
 const queryCache = useQueryCache()
 const { isApp } = useAppDetection()
@@ -262,8 +271,21 @@ async function handleLibraryLogoClick() {
 
 async function handleBackButtonClick() {
   useLogEvent('product_page_back_button_click')
+  const listingPath = storePageState.lastListingPath.value
+  if (listingPath) {
+    // Retrace the step when it leads straight to that listing, so it comes back as left;
+    // otherwise, e.g. returning from the reader, history would only loop through the book.
+    if (window.history.state?.back === listingPath) router.back()
+    else await navigateTo(listingPath)
+    return
+  }
+  // A subdomain storefront leaves no listing behind, so name it by the referrer;
+  // `from` only stands in when that is stripped, since it may carry another referrer.
+  const publisherLikerId = getPublisherSubdomainLikerIdFromReferrer(document.referrer, baseURL)
+    || getPublisherSubdomainLikerIdFromHandle(getRouteQuery('from'))
   await navigateTo(localeRoute({
-    name: listingRouteName.value,
+    name: publisherLikerId ? getStorePublisherRouteName(listingRouteName.value) : listingRouteName.value,
+    params: publisherLikerId ? { userId: publisherLikerId } : undefined,
     query: route.query,
   }))
 }
