@@ -103,6 +103,38 @@ export function fetchNFTClassesByOwnerWalletAddress(walletAddress: string, optio
   })
 }
 
+// Walks every page, since a publisher's whole catalogue must be in hand
+// before it can be ordered by publication date.
+export async function fetchAllNFTClassesByOwnerWalletAddress(walletAddress: string, options: Omit<IndexerQueryOptions, 'key'> = {}) {
+  const limit = options.limit || 100
+  const classes: NFTClassWithTokenId[] = []
+  let key: string | undefined
+  do {
+    const result = await fetchNFTClassesByOwnerWalletAddress(walletAddress, { ...options, limit, key })
+    classes.push(...result.data)
+    key = getIndexerNextKey(result, limit)?.toString()
+  } while (key)
+  return classes
+}
+
+function getDatePublishedTime(nftClass: NFTClass) {
+  const time = Date.parse(nftClass.metadata?.datePublished || '')
+  return Number.isNaN(time) ? undefined : time
+}
+
+// Newest publication first. Books without a valid datePublished go last,
+// keeping their incoming (chain) order since the sort is stable.
+export function sortNFTClassesByDatePublished<T extends NFTClass>(nftClasses: T[]) {
+  return nftClasses
+    .map(nftClass => ({ nftClass, time: getDatePublishedTime(nftClass) }))
+    .sort((a, b) => {
+      if (a.time === undefined) return b.time === undefined ? 0 : 1
+      if (b.time === undefined) return -1
+      return b.time - a.time
+    })
+    .map(({ nftClass }) => nftClass)
+}
+
 function escapeCommasForFilter(value: string): string {
   return value.replaceAll(',', '%2C')
 }

@@ -331,31 +331,18 @@ export const useBookstoreStore = defineStore('bookstore', () => {
     }
   }
 
-  async function fetchOwnerWalletSearch(walletAddress: string, queryKey: string, isRefresh: boolean) {
-    const options = {
-      limit: 100,
-      key: isRefresh ? undefined : bookstoreSearchResultsByQueryMap.value[queryKey]?.nextKey,
-      isBooksOnly: true,
-    }
-
-    const result = await fetchNFTClassesByOwnerWalletAddress(walletAddress, options)
-
-    if (result) {
-      const nftClasses = result.data.map(item => ({
-        ...item,
-        address: normalizeNFTClassId(item.address),
+  // Loads the whole catalogue in one go so it can be ordered by publication
+  // date rather than chain listing order; there is no next page to load.
+  async function fetchOwnerWalletSearch(walletAddress: string, queryKey: string) {
+    const nftClasses = await fetchAllNFTClassesByOwnerWalletAddress(walletAddress, { isBooksOnly: true })
+    const mappedItems = sortNFTClassesByDatePublished(nftClasses)
+      .map(nftClass => ({
+        classId: normalizeNFTClassId(nftClass.address),
+        title: nftClass.name || '',
+        imageUrl: nftClass.metadata?.image || '',
+        minPrice: undefined,
       }))
-      const mappedItems = nftClasses
-        .map(nftClass => ({
-          classId: nftClass.address,
-          title: nftClass.name || '',
-          imageUrl: nftClass.metadata?.image || '',
-          minPrice: undefined,
-        }))
-
-      const nextKey = getIndexerNextKey(result, options.limit)?.toString()
-      await updateSearchResults(queryKey, mappedItems, nextKey, isRefresh)
-    }
+    await updateSearchResults(queryKey, mappedItems, undefined, true)
   }
 
   async function fetchSearchResults(
@@ -381,7 +368,7 @@ export const useBookstoreStore = defineStore('bookstore', () => {
       }
       else if (type === 'owner_wallet') {
         if (checkIsEVMAddress(searchTerm)) {
-          await fetchOwnerWalletSearch(searchTerm, queryKey, isRefresh)
+          await fetchOwnerWalletSearch(searchTerm, queryKey)
         }
       }
       else {
