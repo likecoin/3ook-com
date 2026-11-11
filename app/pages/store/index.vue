@@ -524,6 +524,7 @@ const pageTitle = computed(() => isLibraryTab.value ? $t('library_tab_title') : 
 const pageDescription = computed(() => isLibraryTab.value ? $t('library_tab_description') : $t('store_page_description'))
 
 const tagDescription = computed(() => {
+  if (publisherPageTitle.value) return publisherPageTitle.value
   if (storeDescription.value) return storeDescription.value
   if (searchModeContext.value) return searchModeContext.value.description
   if (!isStakingTagId.value) {
@@ -578,7 +579,19 @@ const canonicalURL = computed(() => {
   return `${baseURL}${path}${queryString ? `?${queryString}` : ''}`
 })
 
+// A publisher storefront's title doubles as its meta description, so a search
+// result reads as the publisher's own pitch rather than a generic listing blurb.
+const publisherPageTitle = computed(() => {
+  if (isLibraryTab.value || !routeUserId.value || !storeEntity.value) return ''
+  return getPublisherPageTitle({
+    displayName: storeEntity.value.displayName,
+    description: storeEntity.value.description,
+    suffix: $t('store_publisher_page_title_suffix'),
+  })
+})
+
 const ogTitle = computed(() => {
+  if (publisherPageTitle.value) return publisherPageTitle.value
   if (searchModeContext.value) {
     return `${searchModeContext.value.titlePrefix}${searchModeContext.value.label} - ${pageTitle.value}`
   }
@@ -977,6 +990,8 @@ useHead(() => {
 
   return {
     title: ogTitle.value,
+    // The publisher title already ends with the brand, so skip the app-wide suffix.
+    ...(publisherPageTitle.value ? { titleTemplate: '%s' } : {}),
     meta,
     link,
     script,
