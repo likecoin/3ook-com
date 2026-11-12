@@ -83,8 +83,7 @@
           v-model="selectedPlan"
           v-model:quantity="selectedQuantity"
           :trial-period-days="0"
-          :gift-month-quantity="[3, 6]"
-          :gift-year-quantity="[2]"
+          :gift-options="GIFT_PLUS_OPTIONS"
         />
       </div>
 
