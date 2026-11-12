@@ -545,6 +545,7 @@ import type { AccordionItem } from '@nuxt/ui'
 import MarkdownIt from 'markdown-it'
 import type { ProductActionButtonsProps } from '~/components/ProductActionButtons.props'
 import type { PlusUpsellSlot } from '~~/shared/constants/analytics'
+import { PAID_TRIAL_PRICE } from '~~/shared/constants/pricing'
 
 const bookPurchaseSessionAPI = useBookPurchaseSessionAPI()
 const route = useRoute()
@@ -583,10 +584,15 @@ const { open: openTippingModal } = useTipping()
 const intercom = useIntercom()
 const {
   isLikerPlus,
+  isExpiredLikerPlus,
   PLUS_BOOK_PURCHASE_DISCOUNT,
   getPlusDiscountRate,
   openUpsellPlusModalIfEligible,
 } = useSubscriptionModal()
+const {
+  currency: subscriptionCurrency,
+  convertToDisplayCurrency,
+} = useSubscriptionPricing()
 
 const shippingReturnRefundURL = computed(() => getDocsArticleURL('shippingReturnRefund', locale.value))
 // A non-NFT edition is never auto-delivered, but it is shipped, not author-signed.
@@ -790,14 +796,41 @@ const isPreviewCTAVisible = computed(() => (
   && (!isPlusReadingCTAVisible.value || isPlusReadingUpsellEligible.value)
 ))
 // In the library "borrow" is enough; the store spells out where the book comes from.
-const plusReadingCTALabel = computed(() => {
-  if (isBookBorrowed.value) return $t('product_page_read_button_label')
+const plusReadingBorrowLabel = computed(() => {
   if (isLibrary.value) {
     return bookInfo.isFreeBorrowEnabled.value
       ? $t('product_page_borrow_for_free_button_label')
       : $t('product_page_plus_reading_borrow')
   }
   return $t('product_page_borrow_from_library_button_label')
+})
+// The paid trial is the cheapest way in. The app subscribes through the stores,
+// whose intro offers differ, so it keeps the plain label.
+const plusReadingTrialPrice = computed(() => {
+  if (isApp.value || !isPlusReadingUpsellEligible.value) return null
+  // A `?trial=` override is not carried to /member, so it gets no price here.
+  if (getRouteQuery('trial')) return null
+  // /member may drop the trial for a referring affiliate, so wait for its config.
+  const affiliateConfig = linkAffiliateConfig.value
+  if (from.value && !affiliateConfig) return null
+  const { trialPeriodDays } = getPlusTrialPeriod({
+    isExpiredLikerPlus: isExpiredLikerPlus.value,
+    isAffiliateGiftOnTrialDisabled: (
+      affiliateConfig?.active === true
+      && affiliateConfig.giftOnTrial === false
+      && !!affiliateConfig.giftBooks?.length
+    ),
+  })
+  if (!resolveIsPaidTrial(trialPeriodDays)) return null
+  return `${subscriptionCurrency.value}$${convertToDisplayCurrency(PAID_TRIAL_PRICE)}`
+})
+const plusReadingCTALabel = computed(() => {
+  if (isBookBorrowed.value) return $t('product_page_read_button_label')
+  if (!plusReadingTrialPrice.value) return plusReadingBorrowLabel.value
+  return $t('product_page_plus_reading_cta_with_trial_price', {
+    label: plusReadingBorrowLabel.value,
+    price: plusReadingTrialPrice.value,
+  })
 })
 
 // Read is a quiet secondary action for Plus members (outline); non-Plus owners get a prominent solid button instead.

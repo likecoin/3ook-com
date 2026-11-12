@@ -927,6 +927,7 @@
   "product_page_plus_promo_title": "Free month of Plus included",
   "product_page_plus_promo_title_yearly": "Free year of Plus included",
   "product_page_plus_reading_borrow": "Borrow",
+  "product_page_plus_reading_cta_with_trial_price": "{label} (from {price})",
   "product_page_plus_reading_label": "Borrowable",
   "product_page_preview_button_label": "Preview",
   "product_page_preview_content_login_prompt": "Log in to read the preview content",
