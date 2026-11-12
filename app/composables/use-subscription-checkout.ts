@@ -46,6 +46,7 @@ export function useSubscriptionCheckout() {
   const isProcessingSubscription = ref(false)
 
   const { handleError } = useErrorHandler()
+  const { ensureLoggedIn } = useLoginGuard()
 
   // Backend-webhook model: after a native purchase, RevenueCat notifies our
   // backend which flips `isLikerPlus`. Re-fetch the session a few times to
@@ -147,8 +148,7 @@ export function useSubscriptionCheckout() {
 
     if (!hasLoggedIn.value) {
       useLogEvent('subscription_login_required')
-      await accountStore.login()
-      if (!hasLoggedIn.value) return
+      if (!await ensureLoggedIn()) return
     }
     // Only after login: a guest may turn out to be subscribed already.
     const isSubscribed = await redirectIfSubscribed({ plan, tier })

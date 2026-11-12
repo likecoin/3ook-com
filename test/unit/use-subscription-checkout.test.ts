@@ -64,7 +64,10 @@ mockNuxtImport('useAccountStore', () => () => ({
   login: mockLogin,
   savePlusRedirectRoute: vi.fn(),
 }))
-mockNuxtImport('useUserSession', () => () => ({ user: { value: { likerId: 'liker1' } } }))
+mockNuxtImport('useUserSession', () => () => ({
+  loggedIn: mockHasLoggedIn,
+  user: { value: { likerId: 'liker1' } },
+}))
 mockNuxtImport('useLocaleRoute', () => () => (route: unknown) => route)
 mockNuxtImport('useRouteQuery', () => () => () => '')
 mockNuxtImport('useToast', () => () => ({ add: vi.fn() }))
@@ -303,6 +306,13 @@ describe('useSubscriptionCheckout guest login', () => {
     const { startSubscription } = useSubscriptionCheckout()
     await startSubscription({ plan: 'yearly' })
     expect(mockLogin).toHaveBeenCalled()
+    expect(mockPurchase).not.toHaveBeenCalled()
+  })
+
+  it('stops without throwing when login fails', async () => {
+    mockLogin.mockRejectedValue(new Error('EMAIL_ALREADY_USED'))
+    const { startSubscription } = useSubscriptionCheckout()
+    await expect(startSubscription({ plan: 'yearly' })).resolves.toBeUndefined()
     expect(mockPurchase).not.toHaveBeenCalled()
   })
 })
