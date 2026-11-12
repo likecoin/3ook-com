@@ -586,6 +586,7 @@ const publisherPageTitle = computed(() => {
   return getPublisherPageTitle({
     displayName: storeEntity.value.displayName,
     description: storeEntity.value.description,
+    isCurated: storeEntity.value.isCurated,
     suffix: $t('store_publisher_page_title_suffix'),
   })
 })

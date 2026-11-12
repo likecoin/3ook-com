@@ -22,6 +22,17 @@ describe('getPublisherPageTitle', () => {
     expect(getPublisherPageTitle({ displayName: '本事出版', description: ' \n\t ', suffix })).toBe(expected)
   })
 
+  it('returns an empty string for a curated storefront', () => {
+    expect(getPublisherPageTitle({
+      displayName: 'Karen',
+      description: '書印出來以後，書本身就有自己的生命。',
+      isCurated: true,
+      suffix,
+    })).toBe('')
+    expect(getPublisherPageTitle({ displayName: 'Karen', isCurated: false, suffix }))
+      .toBe('Karen - 3ook.com 電子書')
+  })
+
   it('trims and collapses line breaks into single spaces', () => {
     expect(getPublisherPageTitle({
       displayName: 'Press',
