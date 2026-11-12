@@ -102,6 +102,12 @@ export function getPublisherSubdomainLikerIdFromReferrer(referrer: string, baseU
   }
 }
 
+// Until the router records an entry of its own, the previous history entry is still the referrer.
+// `position` is the entry's index at load, unlike `length`, which also counts forward entries.
+export function getIsReferrerPreviousHistoryEntry(state: { back?: unknown, position?: unknown } | null): boolean {
+  return !state?.back && typeof state?.position === 'number' && state.position > 0
+}
+
 // Derived from the apex, so each environment reaches its own subdomains (e.g. <id>.sepolia.3ook.com).
 export function getPublisherSubdomainURL(likerId: string, baseURL: string, path = '/'): string {
   try {
