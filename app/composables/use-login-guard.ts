@@ -7,10 +7,10 @@ export function useLoginGuard() {
   const { handleError } = useErrorHandler()
 
   // Resolves true only when the user is logged in and the action may proceed.
-  async function ensureLoggedIn(): Promise<boolean> {
+  async function ensureLoggedIn({ title }: { title?: string } = {}): Promise<boolean> {
     if (hasLoggedIn.value) return true
     try {
-      await accountStore.login()
+      await accountStore.login({ title })
     }
     catch (error) {
       await handleError(error)

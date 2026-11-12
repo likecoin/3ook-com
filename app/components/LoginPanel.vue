@@ -5,6 +5,11 @@
       :height="44"
       @click="logoClickCount++"
     />
+    <h2
+      v-if="title"
+      class="mt-4 text-lg font-bold text-center text-highlighted"
+      v-text="title"
+    />
 
     <form
       class="mt-6 flex flex-col gap-2"
@@ -102,6 +107,7 @@
 <script setup lang="ts">
 import { useConnect } from '@wagmi/vue'
 
+defineProps<{ title?: string }>()
 const emit = defineEmits<{ connect: [{ id: string, email?: string }] }>()
 
 const { t: $t, locale } = useI18n()
