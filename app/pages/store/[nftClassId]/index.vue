@@ -651,6 +651,7 @@ const plusReadingTagRoute = computed(() =>
 
 const { handleError } = useErrorHandler()
 const { ensureLoggedIn } = useLoginGuard()
+const { canStartSubscribeFlow } = useNativeIAP()
 const { getAnalyticsParameters } = useAnalytics()
 const { fetchBookRecommendations } = useBookRecommendations()
 // Which surface sent the reader to this book; rides every conversion event below.
@@ -1622,6 +1623,9 @@ async function handlePlusReadButtonClick() {
     is_free_borrow_enabled: bookInfo.isFreeBorrowEnabled.value,
     is_borrowed: isBookBorrowed.value,
   })
+
+  // Shells without IAP bounce the membership page, so a signed-out member must log in here.
+  if (!canStartSubscribeFlow.value && !await ensureLoggedIn()) return
 
   // Non-Plus users, guests included, go to the membership page and log in at checkout;
   // a free edition instead lets them borrow without a subscription.
