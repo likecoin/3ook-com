@@ -87,6 +87,16 @@
                   class="font-semibold"
                   v-text="item.originalPrice"
                 />
+                <span
+                  v-if="item.plusMemberPrice"
+                  class="flex items-center gap-1 text-xs text-muted"
+                >
+                  <span v-text="item.plusMemberPrice" />
+                  <PlusBadge
+                    role="img"
+                    aria-label="Plus"
+                  />
+                </span>
               </template>
             </span>
           </div>

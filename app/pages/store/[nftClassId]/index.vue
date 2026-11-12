@@ -1177,11 +1177,19 @@ const pricingItems = computed(() => {
         && (isNonNFT.value || willPlusDiscountApply.value)
         && item.price > 0
       )
+      const isPlusMemberPriceTeased = (
+        !isLikerPlus.value
+        && !isNonNFT.value
+        && !isDisplayOnly.value
+        && isAffiliatePlusDiscountAllowed.value
+        && item.price > 0
+      )
       return {
         ...item,
         label: item.isAutoDeliver || isNonNFT.value ? item.name : $t('product_page_edition_title', { name: item.name }),
         originalPrice: formatPrice(item.price, item.priceInDecimalByCurrency),
         discountedPrice: isMemberPriceShown ? formatMemberPrice({ ...item, isNonNFT: isNonNFT.value }, PLUS_BOOK_PURCHASE_DISCOUNT) : null,
+        plusMemberPrice: isPlusMemberPriceTeased ? formatMemberPrice(item, PLUS_BOOK_PURCHASE_DISCOUNT) : null,
         isSelected: index === selectedPricingItemIndex.value,
         renderedDescription: renderDescription(item.description || ''),
       }
