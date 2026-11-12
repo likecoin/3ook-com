@@ -10,15 +10,19 @@ function truncateByCodePoints(text: string, maxLength: number) {
   return `${chars.slice(0, maxLength - 1).join('').trimEnd()}…`
 }
 
+// Empty for a curated storefront, which keeps the listing title and voice pitch.
 export function getPublisherPageTitle({
   displayName,
   description,
+  isCurated,
   suffix,
 }: {
   displayName: string
   description?: string
+  isCurated?: boolean
   suffix: string
 }) {
+  if (isCurated) return ''
   const summary = truncateByCodePoints(
     (description || '').replace(/\s+/g, ' ').trim(),
     PUBLISHER_PAGE_TITLE_DESCRIPTION_MAX_LENGTH,
