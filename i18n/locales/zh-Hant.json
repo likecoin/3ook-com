@@ -1079,8 +1079,6 @@
   "store_affiliate_prefix": "選書推薦：",
   "store_affiliate_publishers_label": "適用出版社",
   "store_author_prefix": "作者：",
-  "store_entity_role_curated": "選書推薦",
-  "store_entity_role_owner": "擁有者",
   "store_fetch_items_error": "無法載入書本",
   "store_fetch_items_error_retry_button_label": "重新載入",
   "store_fetch_more_items_error": "無法載入更多書本",

@@ -3,7 +3,7 @@
     <header
       v-if="isHeaderVisible"
       :class="[
-        ...(isListingRoute ? ['sticky', 'top-0'] : []),
+        ...(isHeaderSticky ? ['sticky', 'top-0'] : []),
         'z-1',
         'w-full',
 
@@ -24,18 +24,23 @@
           v-if="isSearchHeaderVisible"
           class="flex items-center gap-1 phone:gap-2 w-full"
         >
+          <!--
+          Owner listings lead with the brand mark, since the owner's name and avatar
+          render as the page <h1> below; the app has no logo, so it keeps the close button.
+          -->
+          <StoreHeaderLogo
+            v-if="storeEntity && !isApp"
+            :to="defaultListingRoute"
+            :is-library-tab="isLibraryTab"
+            @click="handleEntityLogoClick"
+          />
           <PillButton
+            v-else
             :to="defaultListingRoute"
             icon="i-material-symbols-close-rounded"
           />
 
-          <!-- The owner's name and avatar render as the listing's <h1> in the page body. -->
-          <p
-            v-if="storeEntity"
-            class="text-sm text-muted truncate"
-            v-text="storeEntityBreadcrumb"
-          />
-          <h1 v-else-if="searchModeContext">
+          <h1 v-if="!storeEntity && searchModeContext">
             <PillButton
               is-active
               is-static
@@ -61,42 +66,14 @@
               @click="handleBackButtonClick"
             />
 
-            <UButton
-              v-else-if="isListingRoute && !isApp && !isLibraryTab"
-              key="logo"
+            <StoreHeaderLogo
+              v-else-if="isListingRoute && !isApp"
+              :key="isLibraryTab ? 'library-logo' : 'logo'"
               :to="isDefaultTagId
-                ? localeRoute({ name: 'about', query: { ll_medium: 'about-logo' } })
+                ? localeRoute({ name: 'about', hash: isLibraryTab ? '#library' : undefined, query: { ll_medium: 'about-logo' } })
                 : defaultListingRoute"
-              variant="link"
-              :ui="{
-                base: ['shrink-0', 'p-0 sm:p-0'],
-              }"
-              :title="'3ook.com'"
-              @click="handleLogoClick"
-            >
-              <img
-                src="/logo.svg"
-                alt="3ook.com"
-                class="size-8 laptop:size-9 block"
-              >
-            </UButton>
-
-            <UButton
-              v-else-if="isListingRoute && !isApp && isLibraryTab"
-              key="library-logo"
-              :to="isDefaultTagId
-                ? localeRoute({ name: 'about', hash: '#library', query: { ll_medium: 'about-logo' } })
-                : defaultListingRoute"
-              variant="link"
-              icon="i-3ook-com-library-rounded"
-              color="neutral"
-              :ui="{
-                base: ['shrink-0', 'p-0 sm:p-0'],
-                leadingIcon: ['size-8', 'text-highlighted'],
-              }"
-              :title="$t('library_tab_title')"
-              :aria-label="$t('library_tab_title')"
-              @click="handleLibraryLogoClick"
+              :is-library-tab="isLibraryTab"
+              @click="isLibraryTab ? handleLibraryLogoClick() : handleLogoClick()"
             />
           </Transition>
 
@@ -186,12 +163,8 @@ const {
 } = await useStoreSearchMode()
 
 const isSearchHeaderVisible = computed(() => isListingRoute.value && isSearchMode.value)
-const storeEntityBreadcrumb = computed(() => {
-  if (!storeEntity.value) return ''
-  const section = isLibraryTab.value ? $t('library_tab_title') : $t('store_page_title')
-  const role = storeEntity.value.isCurated ? $t('store_entity_role_curated') : $t('store_entity_role_owner')
-  return `${section} / ${role}`
-})
+// Owner listings let the logo scroll away; their big owner header below carries the identity.
+const isHeaderSticky = computed(() => isListingRoute.value && !storeEntity.value)
 
 // The tag routes always target the listing route, so a tag click on a product
 // page lands back on /store or /library. Listings carry the tag in the path;
@@ -247,6 +220,10 @@ async function handleLogoClick() {
     useLogEvent('store_logo_click')
     storePageState.clear()
   }
+}
+
+function handleEntityLogoClick() {
+  useLogEvent(isLibraryTab.value ? 'library_logo_click' : 'store_logo_click')
 }
 
 async function handleLibraryLogoClick() {

@@ -24,16 +24,16 @@
     </section>
 
     <!--
-    Desktop centres name and description beside the avatar via the 1fr rows;
+    Desktop top-aligns the avatar so a long description can't drift it below the name;
     phone keeps only the name beside it and wraps the description below.
     -->
     <header
       v-if="storeEntity"
       :class="[
         'section-container',
-        'grid grid-cols-[auto_1fr] items-center',
+        'grid grid-cols-[auto_1fr] items-center tablet:items-start',
         'gap-x-4 tablet:gap-x-9',
-        'tablet:grid-rows-[1fr_auto_auto_1fr]',
+        'tablet:grid-rows-[auto_1fr]',
         'pt-6 pb-1 tablet:pb-8',
       ]"
     >
@@ -41,15 +41,18 @@
         :src="storeEntity.avatarSrc"
         :alt="storeEntity.displayName"
         icon="i-material-symbols-person-2-rounded"
-        :ui="{ root: 'size-21 tablet:size-28 laptop:size-32 text-5xl laptop:text-6xl border-2 border-theme-black dark:border-muted tablet:row-span-4' }"
+        :ui="{ root: 'size-21 tablet:size-28 laptop:size-32 text-5xl laptop:text-6xl border-2 border-theme-black dark:border-muted tablet:row-span-2' }"
       />
       <h1
-        class="min-w-0 text-4xl tablet:text-5xl laptop:text-[3.5rem] text-highlighted font-black leading-tight wrap-anywhere tablet:row-start-2 tablet:col-start-2"
+        :class="[
+          'min-w-0 text-4xl tablet:text-5xl laptop:text-[3.5rem] text-highlighted font-black leading-tight wrap-anywhere',
+          accountDescription ? 'tablet:pt-3.5' : 'tablet:row-span-2 tablet:self-center',
+        ]"
         v-text="storeEntity.displayName"
       />
       <ExpandableContent
         v-if="accountDescription"
-        class="col-span-full tablet:col-span-1 tablet:col-start-2 tablet:row-start-3 mt-3.5 tablet:mt-1.5 max-w-155"
+        class="col-span-full tablet:col-span-1 tablet:col-start-2 mt-3.5 tablet:mt-1.5 max-w-155"
       >
         <p
           class="text-muted tablet:text-lg whitespace-pre-line"
