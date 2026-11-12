@@ -155,11 +155,14 @@
 </template>
 
 <script setup lang="ts">
+import { withQuery } from 'ufo'
+
 import {
   getPublisherSubdomainLikerIdFromHandle,
   getPublisherSubdomainLikerIdFromReferrer,
+  getPublisherSubdomainURL,
 } from '~~/shared/constants/publisher-subdomain'
-import { getStorePublisherRouteName } from '~~/shared/constants/store-routes'
+import { STORE_PUBLISHER_ROOT_ROUTE_NAME, getStorePublisherRouteName } from '~~/shared/constants/store-routes'
 
 const { t: $t } = useI18n()
 const localeRoute = useLocaleRoute()
@@ -283,6 +286,16 @@ async function handleBackButtonClick() {
   // `from` only stands in when that is stripped, since it may carry another referrer.
   const publisherLikerId = getPublisherSubdomainLikerIdFromReferrer(document.referrer, baseURL)
     || getPublisherSubdomainLikerIdFromHandle(getRouteQuery('from'))
+  // The subdomain only serves the store tab, and the app stays on the apex,
+  // where an external URL could open the browser instead of the WebView.
+  if (publisherLikerId && !isApp.value && !isLibraryTab.value) {
+    const rootPath = localeRoute({ name: STORE_PUBLISHER_ROOT_ROUTE_NAME })?.path
+    const subdomainURL = getPublisherSubdomainURL(publisherLikerId, baseURL, rootPath)
+    if (subdomainURL) {
+      await navigateTo(withQuery(subdomainURL, route.query), { external: true })
+      return
+    }
+  }
   await navigateTo(localeRoute({
     name: publisherLikerId ? getStorePublisherRouteName(listingRouteName.value) : listingRouteName.value,
     params: publisherLikerId ? { userId: publisherLikerId } : undefined,

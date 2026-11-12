@@ -9,6 +9,7 @@ import {
   getPublisherSubdomainHost,
   getPublisherSubdomainLikerIdFromHandle,
   getPublisherSubdomainLikerIdFromReferrer,
+  getPublisherSubdomainURL,
 } from '~~/shared/constants/publisher-subdomain'
 
 const { mockNavigateTo, mockHost } = vi.hoisted(() => ({
@@ -144,6 +145,19 @@ describe('getPublisherSubdomainLikerIdFromReferrer', () => {
     expect(getLikerId('https://www.google.com/')).toBe('')
     expect(getLikerId('not a url')).toBe('')
     expect(getLikerId('')).toBe('')
+  })
+})
+
+describe('getPublisherSubdomainURL', () => {
+  it('puts the storefront under the apex of each environment', () => {
+    expect(getPublisherSubdomainURL('bookmatter', 'https://3ook.com')).toBe('https://bookmatter.3ook.com/')
+    expect(getPublisherSubdomainURL('bookmatter', 'https://sepolia.3ook.com', '/en'))
+      .toBe('https://bookmatter.sepolia.3ook.com/en')
+    expect(getPublisherSubdomainURL('ckxpress', 'http://localhost:3000')).toBe('http://ckxpress.localhost:3000/')
+  })
+
+  it('gives up on a malformed base URL', () => {
+    expect(getPublisherSubdomainURL('bookmatter', '')).toBe('')
   })
 })
 

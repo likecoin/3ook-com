@@ -102,6 +102,17 @@ export function getPublisherSubdomainLikerIdFromReferrer(referrer: string, baseU
   }
 }
 
+// Derived from the apex, so each environment reaches its own subdomains (e.g. <id>.sepolia.3ook.com).
+export function getPublisherSubdomainURL(likerId: string, baseURL: string, path = '/'): string {
+  try {
+    const { protocol, host } = new URL(baseURL)
+    return `${protocol}//${likerId}.${host}${path}`
+  }
+  catch {
+    return ''
+  }
+}
+
 export type PublisherSubdomainAction =
   | { type: 'pass' }
   | { type: 'notFound' }
