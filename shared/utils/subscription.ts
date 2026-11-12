@@ -3,7 +3,7 @@ export function clampGiftQuantity(value: unknown): number {
   return Number.isFinite(quantity) && quantity > 0 ? quantity : 1
 }
 
-// The gift periods sold on /gift/plus.
+// The gift periods sold on /gift/plus, each also listed as a card on the gift tag.
 export const GIFT_PLUS_OPTIONS: readonly { period: SubscriptionPlan, quantity: number }[] = [
   { period: 'monthly', quantity: 1 },
   { period: 'monthly', quantity: 3 },
@@ -11,6 +11,11 @@ export const GIFT_PLUS_OPTIONS: readonly { period: SubscriptionPlan, quantity: n
   { period: 'yearly', quantity: 1 },
   { period: 'yearly', quantity: 2 },
 ]
+
+export function findGiftPlusOption(period: unknown, quantity: unknown) {
+  const count = clampGiftQuantity(quantity)
+  return GIFT_PLUS_OPTIONS.find(option => option.period === period && option.quantity === count)
+}
 
 const STATUS_TO_PLAN: Record<LikerPlusStatus, SubscriptionPlan> = {
   month: 'monthly',

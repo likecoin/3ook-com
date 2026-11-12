@@ -195,8 +195,11 @@ useHead({
   ],
 })
 
-const selectedPlan = ref<SubscriptionPlan>('yearly')
-const selectedQuantity = ref(1)
+// A gift card in the store links here with its period preselected.
+const getRouteQuery = useRouteQuery()
+const linkedOption = findGiftPlusOption(getRouteQuery('period'), getRouteQuery('quantity'))
+const selectedPlan = ref<SubscriptionPlan>(linkedOption?.period ?? 'yearly')
+const selectedQuantity = ref(linkedOption?.quantity ?? 1)
 const selectedPlanLabel = computed(() => (selectedPlan.value === 'yearly'
   ? $t('pricing_page_n_years', { count: selectedQuantity.value })
   : $t('pricing_page_n_months', { count: selectedQuantity.value })))

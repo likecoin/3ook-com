@@ -249,10 +249,15 @@
           @open="handleBookstoreItemOpen($event, index)"
           @visible="handleBookstoreItemVisible"
         />
-        <GiftPlusStoreCard
-          v-if="isGiftPlusCardVisible"
-          :ll-medium="itemLLMedium"
-        />
+        <template v-if="isGiftPlusCardVisible">
+          <GiftPlusStoreCard
+            v-for="option in GIFT_PLUS_OPTIONS"
+            :key="`${option.period}-${option.quantity}`"
+            :period="option.period"
+            :quantity="option.quantity"
+            :ll-medium="itemLLMedium"
+          />
+        </template>
       </ul>
 
       <footer
@@ -448,8 +453,8 @@ const {
 // The monthly chart is an ordinary CMS tag,
 // whose Airtable book order is the rank — the layout switch is all the id buys.
 const isLibraryChartTag = computed(() => isLibraryTab.value && getIsLibraryChartTagId(tagId.value))
-// Plus gifting checks out through its own Stripe flow, not the cart, so it rides
-// on the gift tag as a card. Web only: /gift/plus bounces app users to the store.
+// Plus gifting checks out through its own Stripe flow, not the cart, so each gift
+// period rides on the gift tag as a card. Web only: /gift/plus bounces app users to the store.
 const isGiftPlusCardVisible = computed(() => !isApp.value
   && !isLibraryTab.value
   && !isSearchMode.value
