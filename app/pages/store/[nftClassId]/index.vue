@@ -1473,6 +1473,7 @@ async function handlePurchaseButtonClick() {
   useLogEvent('add_to_cart', formattedLogPayload.value)
   try {
     isPurchasing.value = true
+    let isUpsellSkipped = false
     // Free books skip the Plus upsell and proceed to the tipping/donation flow when eligible.
     if (!isSelectedPricingItemFree.value && !isApp.value && !isRedirectedFromUpsell.value && !bookInfo.isUpsellDisabled.value && !bookInfo.isPlusPromoEnabled.value) {
       const upsellCloseReason = await openUpsellPlusModalIfEligible({
@@ -1486,11 +1487,14 @@ async function handlePurchaseButtonClick() {
         isAudioHidden: bookInfo.isAudioHidden.value,
       })
       if (upsellCloseReason === 'subscribe' || upsellCloseReason === 'dismiss') return
+      isUpsellSkipped = upsellCloseReason === 'skip'
     }
 
     // Guests see the upsell before login, so its subscribe path logs in at checkout.
     if (!hasLoggedIn.value) {
-      await accountStore.login()
+      await accountStore.login({
+        title: isUpsellSkipped ? $t('login_panel_title_purchase') : undefined,
+      })
       if (!hasLoggedIn.value) return
     }
 

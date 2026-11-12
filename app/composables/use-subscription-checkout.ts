@@ -148,7 +148,8 @@ export function useSubscriptionCheckout() {
 
     if (!hasLoggedIn.value) {
       useLogEvent('subscription_login_required')
-      if (!await ensureLoggedIn()) return
+      const loginTitle = isCivicTier ? undefined : $t('login_panel_title_plus')
+      if (!await ensureLoggedIn({ title: loginTitle })) return
     }
     // Only after login: a guest may turn out to be subscribed already.
     const isSubscribed = await redirectIfSubscribed({ plan, tier })

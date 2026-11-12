@@ -305,7 +305,7 @@ describe('useSubscriptionCheckout guest login', () => {
   it('stops when the guest dismisses login', async () => {
     const { startSubscription } = useSubscriptionCheckout()
     await startSubscription({ plan: 'yearly' })
-    expect(mockLogin).toHaveBeenCalled()
+    expect(mockLogin).toHaveBeenCalledWith({ title: 'login_panel_title_plus' })
     expect(mockPurchase).not.toHaveBeenCalled()
   })
 
