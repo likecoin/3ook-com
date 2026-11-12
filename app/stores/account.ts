@@ -578,6 +578,7 @@ export const useAccountStore = defineStore('account', () => {
           // Meta collapses the browser + server pair into one conversion.
           transaction_id: walletAddress?.toLowerCase(),
         })
+        useSetLogSignUp(walletAddress)
       }
 
       // Prepare message for login
