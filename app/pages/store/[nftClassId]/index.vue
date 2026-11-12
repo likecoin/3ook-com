@@ -933,9 +933,11 @@ const from = computed(() => getRouteQuery('from') || undefined)
 // When the link affiliate (`?from=@likerId`) has opted in, Plus members keep
 // their 20% discount and the affiliate absorbs the cost from their channel share.
 const { config: linkAffiliateConfig } = useAffiliateConfig(from)
+const isAffiliatePlusDiscountAllowed = computed(
+  () => !from.value || !!linkAffiliateConfig.value?.isPlusDiscountAllowed,
+)
 const willPlusDiscountApply = computed(
-  () => isLikerPlus.value
-    && (!from.value || !!linkAffiliateConfig.value?.isPlusDiscountAllowed),
+  () => isLikerPlus.value && isAffiliatePlusDiscountAllowed.value,
 )
 
 const utmCampaignMessage = computed(() => {
