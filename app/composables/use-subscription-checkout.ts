@@ -145,13 +145,14 @@ export function useSubscriptionCheckout() {
     useLogEvent('subscription_button_click', subscriptionClickPayload)
     useLogEvent(`subscription_button_click_${plan}`, subscriptionClickPayload)
 
-    const isSubscribed = await redirectIfSubscribed({ plan, tier })
-    if (isSubscribed) return
     if (!hasLoggedIn.value) {
       useLogEvent('subscription_login_required')
       await accountStore.login()
       if (!hasLoggedIn.value) return
     }
+    // Only after login: a guest may turn out to be subscribed already.
+    const isSubscribed = await redirectIfSubscribed({ plan, tier })
+    if (isSubscribed) return
 
     // In the native app, route Plus purchases through StoreKit / Play Billing
     // (RevenueCat) instead of Stripe. RevenueCat is keyed by likerId (the backend
