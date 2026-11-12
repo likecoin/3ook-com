@@ -1623,11 +1623,8 @@ async function handlePlusReadButtonClick() {
     is_borrowed: isBookBorrowed.value,
   })
 
-  // Guests are prompted to log in or register before reaching the membership page.
-  if (!await ensureLoggedIn()) return
-
-  // Non-Plus users are routed to the membership page to subscribe, unless the
-  // book has a free edition — then they may borrow it without a subscription.
+  // Non-Plus users, guests included, go to the membership page and log in at checkout;
+  // a free edition instead lets them borrow without a subscription.
   if (isPlusReadingUpsellEligible.value) {
     // Only this branch is an upsell — the event above also covers Plus members
     // and free borrows, which never reach the membership page.
@@ -1641,6 +1638,8 @@ async function handlePlusReadButtonClick() {
     }))
     return
   }
+
+  if (!await ensureLoggedIn()) return
 
   // Refresh borrowed books so the shelf reflects this borrow after a fresh login.
   bookshelfStore.lazyFetchPlusReadingBooks().catch((error) => {
