@@ -158,6 +158,7 @@
 import { withQuery } from 'ufo'
 
 import {
+  getIsReferrerPreviousHistoryEntry,
   getPublisherSubdomainLikerIdFromHandle,
   getPublisherSubdomainLikerIdFromReferrer,
   getPublisherSubdomainURL,
@@ -284,11 +285,16 @@ async function handleBackButtonClick() {
   }
   // A subdomain storefront leaves no listing behind, so name it by the referrer;
   // `from` only stands in when that is stripped, since it may carry another referrer.
-  const publisherLikerId = getPublisherSubdomainLikerIdFromReferrer(document.referrer, baseURL)
-    || getPublisherSubdomainLikerIdFromHandle(getRouteQuery('from'))
+  const referrerLikerId = getPublisherSubdomainLikerIdFromReferrer(document.referrer, baseURL)
+  const publisherLikerId = referrerLikerId || getPublisherSubdomainLikerIdFromHandle(getRouteQuery('from'))
   // The subdomain only serves the store tab, and the app stays on the apex,
   // where an external URL could open the browser instead of the WebView.
   if (publisherLikerId && !isApp.value && !isLibraryTab.value) {
+    // Going back to the storefront's own entry keeps its scroll, which a fresh load would lose.
+    if (referrerLikerId && getIsReferrerPreviousHistoryEntry(window.history.state)) {
+      window.history.back()
+      return
+    }
     const rootPath = localeRoute({ name: STORE_PUBLISHER_ROOT_ROUTE_NAME })?.path
     const subdomainURL = getPublisherSubdomainURL(publisherLikerId, baseURL, rootPath)
     if (subdomainURL) {

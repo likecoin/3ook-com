@@ -4,6 +4,7 @@ import publisherSubdomainMiddleware from '~/middleware/publisher-subdomain.globa
 import { STORE_PUBLISHER_ROOT_ROUTE_NAME } from '~~/shared/constants/store-routes'
 import {
   PUBLISHER_SUBDOMAIN_LIKER_IDS,
+  getIsReferrerPreviousHistoryEntry,
   getLocalePathPrefixes,
   getPublisherSubdomainAction,
   getPublisherSubdomainHost,
@@ -145,6 +146,30 @@ describe('getPublisherSubdomainLikerIdFromReferrer', () => {
     expect(getLikerId('https://www.google.com/')).toBe('')
     expect(getLikerId('not a url')).toBe('')
     expect(getLikerId('')).toBe('')
+  })
+})
+
+describe('getIsReferrerPreviousHistoryEntry', () => {
+  it('goes back to the referrer from the first router entry of the document', () => {
+    expect(getIsReferrerPreviousHistoryEntry({ back: null, position: 3 })).toBe(true)
+  })
+
+  it('leaves a referrer the router has already moved past', () => {
+    expect(getIsReferrerPreviousHistoryEntry({ back: '/store/0xabc', position: 4 })).toBe(false)
+  })
+
+  it('leaves a freshly opened tab with nothing to go back to', () => {
+    expect(getIsReferrerPreviousHistoryEntry({ back: null, position: 0 })).toBe(false)
+  })
+
+  it('leaves the first entry of a tab even with forward entries after it', () => {
+    // A new tab that followed a link and came back: history.length is 2, but nothing precedes it.
+    const state = { back: null, position: 0, forward: '/store/0xdef' }
+    expect(getIsReferrerPreviousHistoryEntry(state)).toBe(false)
+  })
+
+  it('leaves a state the router has not written', () => {
+    expect(getIsReferrerPreviousHistoryEntry(null)).toBe(false)
   })
 })
 
