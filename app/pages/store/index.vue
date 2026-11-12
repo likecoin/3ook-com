@@ -204,7 +204,8 @@
           :priority="index < columnMax"
           :ll-medium="itemLLMedium"
           :should-show-plus-reading-icon="!isLibraryTab"
-          :is-library="isLibraryTab"
+          :is-library="isLibraryTab && !getIsStoreBookInLibrary(item)"
+          :is-link-disabled="getIsStoreBookInApp(item)"
           :tag="tagId"
           :ll-source="GRID_LL_SOURCE"
           @open="handleBookstoreItemOpen($event, index)"
@@ -293,6 +294,7 @@ const isAdultContentEnabled = useAdultContentSetting()
 // browsable, and its product page explains why it cannot be bought.
 const { getIsRegionRestricted } = useBookRegionGate()
 const { isApp } = useAppDetection()
+const openStoreBookAppNotice = useStoreBookAppNotice()
 const intercom = useIntercom()
 // Effective Plus (canonical flag OR optimistic device-store entitlement) so a
 // just-subscribed member isn't briefly treated as non-Plus before the webhook lands.
@@ -774,9 +776,20 @@ const EMPTY_PRODUCTS: BookstoreItemList = {
   nextItemsKey: undefined,
 }
 
+// Library text search lists store books too, after the Plus-reading ones.
+const isLibraryTextSearch = computed(() => isLibraryTab.value && searchQuery.value.startsWith('q:'))
+
+function getIsStoreBookInLibrary(item: BookstoreItem): boolean {
+  return isLibraryTextSearch.value && !getIsPlusReading(item)
+}
+
+function getIsStoreBookInApp(item: BookstoreItem): boolean {
+  return isApp.value && getIsStoreBookInLibrary(item)
+}
+
 const products = computed<BookstoreItemList>(() => {
   const base = baseProducts.value ?? EMPTY_PRODUCTS
-  if (!isLibraryTab.value) return base
+  if (!isLibraryTab.value || isLibraryTextSearch.value) return base
   return {
     ...base,
     items: base.items.filter(getIsPlusReading),
@@ -1088,6 +1101,9 @@ const hasForYouFetchError = ref(false)
 const isAwaitingForYouStaking = ref(false)
 
 function handleBookstoreItemOpen(classId: string, index: number) {
+  const item = products.value.items[index]
+  if (item && getIsStoreBookInApp(item)) openStoreBookAppNotice()
+
   // The click sits behind the same gate as the impression: a For You click has
   // no `*_books_view` to divide it by.
   if (isForYouFeedVisible.value) {
