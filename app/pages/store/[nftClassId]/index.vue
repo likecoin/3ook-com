@@ -1472,10 +1472,6 @@ async function handlePurchaseButtonClick() {
   useLogEvent('add_to_cart', formattedLogPayload.value)
   try {
     isPurchasing.value = true
-    if (!hasLoggedIn.value) {
-      await accountStore.login()
-      if (!hasLoggedIn.value) return
-    }
     // Free books skip the Plus upsell and proceed to the tipping/donation flow when eligible.
     if (!isSelectedPricingItemFree.value && !isApp.value && !isRedirectedFromUpsell.value && !bookInfo.isUpsellDisabled.value && !bookInfo.isPlusPromoEnabled.value) {
       const upsellCloseReason = await openUpsellPlusModalIfEligible({
@@ -1489,6 +1485,12 @@ async function handlePurchaseButtonClick() {
         isAudioHidden: bookInfo.isAudioHidden.value,
       })
       if (upsellCloseReason === 'subscribe' || upsellCloseReason === 'dismiss') return
+    }
+
+    // Guests see the upsell before login, so its subscribe path logs in at checkout.
+    if (!hasLoggedIn.value) {
+      await accountStore.login()
+      if (!hasLoggedIn.value) return
     }
 
     let customPrice: number | undefined = undefined
