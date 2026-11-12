@@ -24,6 +24,41 @@
     </section>
 
     <!--
+    Desktop centres name and description beside the avatar via the 1fr rows;
+    phone keeps only the name beside it and wraps the description below.
+    -->
+    <header
+      v-if="storeEntity"
+      :class="[
+        'section-container',
+        'grid grid-cols-[auto_1fr] items-center',
+        'gap-x-4 tablet:gap-x-9',
+        'tablet:grid-rows-[1fr_auto_auto_1fr]',
+        'pt-6 pb-1 tablet:pb-8',
+      ]"
+    >
+      <UAvatar
+        :src="storeEntity.avatarSrc"
+        :alt="storeEntity.displayName"
+        icon="i-material-symbols-person-2-rounded"
+        :ui="{ root: 'size-21 tablet:size-28 laptop:size-32 text-5xl laptop:text-6xl border-2 border-theme-black dark:border-muted tablet:row-span-4' }"
+      />
+      <h1
+        class="min-w-0 text-4xl tablet:text-5xl laptop:text-[3.5rem] text-highlighted font-black leading-tight wrap-anywhere tablet:row-start-2 tablet:col-start-2"
+        v-text="storeEntity.displayName"
+      />
+      <ExpandableContent
+        v-if="accountDescription"
+        class="col-span-full tablet:col-span-1 tablet:col-start-2 tablet:row-start-3 mt-3.5 tablet:mt-1.5 max-w-155"
+      >
+        <p
+          class="text-muted tablet:text-lg whitespace-pre-line"
+          v-text="accountDescription"
+        />
+      </ExpandableContent>
+    </header>
+
+    <!--
     Affiliate publisher drill-down: header chrome, not a grid section.
     The affiliate view loads only each publisher's first page,
     so link to the full owner_wallet listing.
@@ -119,17 +154,17 @@
       </section>
 
       <section
-        v-if="storeDescription"
+        v-if="entity && entityDescription"
         class="w-full mb-8 self-start text-left"
       >
         <h2
           class="text-2xl font-bold text-highlighted mb-2"
-          v-text="storeDescriptionTitle"
+          v-text="entity.name"
         />
         <ExpandableContent>
           <p
             class="text-muted whitespace-pre-line"
-            v-text="storeDescription"
+            v-text="entityDescription"
           />
         </ExpandableContent>
       </section>
@@ -867,11 +902,10 @@ const entityDescription = computed(() => {
 // `?publisher=` filter describes that entity from book metadata instead.
 const accountDescription = computed(() => (entity.value ? '' : storeEntity.value?.description || ''))
 const storeDescription = computed(() => entityDescription.value || accountDescription.value)
-const storeDescriptionTitle = computed(() => entity.value?.name || storeEntity.value?.displayName || '')
 
 const structuredDataEntity = computed(() => {
   if (entity.value) return entity.value
-  if (accountDescription.value) return { type: 'Organization' as const, name: storeDescriptionTitle.value }
+  if (accountDescription.value) return { type: 'Organization' as const, name: storeEntity.value?.displayName || '' }
   return null
 })
 

@@ -29,31 +29,12 @@
             icon="i-material-symbols-close-rounded"
           />
 
-          <!--
-          One chip for every publisher identity: the /store/@<id> route, ?affiliate=
-          and ?owner_wallet= all resolve to the same shape in useStoreSearchMode.
-          -->
-          <div
+          <!-- The owner's name and avatar render as the listing's <h1> in the page body. -->
+          <p
             v-if="storeEntity"
-            class="flex items-center min-w-0 ring-inset ring-2 ring-theme-black dark:ring-muted bg-(--app-bg) rounded-full"
-          >
-            <UAvatar
-              :src="storeEntity.avatarSrc"
-              :alt="storeEntity.displayName"
-              icon="i-material-symbols-person-2-rounded"
-              :ui="{ root: 'size-8 tablet:size-9 border border-2 border-theme-black dark:border-muted' }"
-            />
-            <div class="flex flex-col justify-center min-w-0 pt-0.5 pl-2 pr-4">
-              <span
-                class="text-[0.625rem] tablet:text-xs text-muted uppercase tracking-wide leading-none"
-                v-text="storeEntity.titlePrefix"
-              />
-              <h1
-                class="-mt-1 font-bold text-sm tablet:text-default truncate"
-                v-text="storeEntity.displayName"
-              />
-            </div>
-          </div>
+            class="text-sm text-muted truncate"
+            v-text="storeEntityBreadcrumb"
+          />
           <h1 v-else-if="searchModeContext">
             <PillButton
               is-active
@@ -205,6 +186,12 @@ const {
 } = await useStoreSearchMode()
 
 const isSearchHeaderVisible = computed(() => isListingRoute.value && isSearchMode.value)
+const storeEntityBreadcrumb = computed(() => {
+  if (!storeEntity.value) return ''
+  const section = isLibraryTab.value ? $t('library_tab_title') : $t('store_page_title')
+  const role = storeEntity.value.isCurated ? $t('store_entity_role_curated') : $t('store_entity_role_owner')
+  return `${section} / ${role}`
+})
 
 // The tag routes always target the listing route, so a tag click on a product
 // page lands back on /store or /library. Listings carry the tag in the path;
