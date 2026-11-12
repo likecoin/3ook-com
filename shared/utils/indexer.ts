@@ -103,6 +103,39 @@ export function fetchNFTClassesByOwnerWalletAddress(walletAddress: string, optio
   })
 }
 
+// Walks every page, since a publisher's whole catalogue must be in hand
+// before it can be ordered by publication date. A large page keeps the
+// biggest catalogues (~500 books) to a single round trip.
+export async function fetchAllNFTClassesByOwnerWalletAddress(walletAddress: string) {
+  const limit = 500
+  const classes: NFTClassWithTokenId[] = []
+  // Guards against an indexer cursor that cycles (A→B→A), as in the bookshelf.
+  const visitedKeys = new Set<string>()
+  let key: string | undefined
+  do {
+    if (key) visitedKeys.add(key)
+    const result = await fetchNFTClassesByOwnerWalletAddress(walletAddress, { limit, key })
+    classes.push(...result.data)
+    key = getIndexerNextKey(result, limit)?.toString()
+  } while (key && !visitedKeys.has(key))
+  return classes
+}
+
+function getDatePublishedTime(nftClass: NFTClass) {
+  const time = Date.parse(nftClass.metadata?.datePublished || '')
+  return Number.isNaN(time) ? -Infinity : time
+}
+
+// Newest publication first. Books without a valid datePublished go last,
+// keeping their incoming (chain) order since the sort is stable.
+export function sortNFTClassesByDatePublished<T extends NFTClass>(nftClasses: T[]) {
+  return nftClasses
+    .map(nftClass => ({ nftClass, time: getDatePublishedTime(nftClass) }))
+    // Two undated books give -Infinity - -Infinity = NaN, so fall back to a tie.
+    .sort((a, b) => (b.time - a.time) || 0)
+    .map(({ nftClass }) => nftClass)
+}
+
 function escapeCommasForFilter(value: string): string {
   return value.replaceAll(',', '%2C')
 }

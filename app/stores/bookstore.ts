@@ -331,31 +331,29 @@ export const useBookstoreStore = defineStore('bookstore', () => {
     }
   }
 
+  // The whole catalogue, sorted, is held here and paged out locally, so each
+  // page only waits on its own rows' bookstore info, not the full catalogue's.
+  const sortedOwnerWalletItemsByQueryKey = new Map<string, BookstoreSearchResults['items']>()
+
   async function fetchOwnerWalletSearch(walletAddress: string, queryKey: string, isRefresh: boolean) {
-    const options = {
-      limit: 100,
-      key: isRefresh ? undefined : bookstoreSearchResultsByQueryMap.value[queryKey]?.nextKey,
-      isBooksOnly: true,
-    }
-
-    const result = await fetchNFTClassesByOwnerWalletAddress(walletAddress, options)
-
-    if (result) {
-      const nftClasses = result.data.map(item => ({
-        ...item,
-        address: normalizeNFTClassId(item.address),
-      }))
-      const mappedItems = nftClasses
+    let sortedItems = sortedOwnerWalletItemsByQueryKey.get(queryKey)
+    if (isRefresh || !sortedItems) {
+      const nftClasses = await fetchAllNFTClassesByOwnerWalletAddress(walletAddress)
+      sortedItems = sortNFTClassesByDatePublished(nftClasses)
         .map(nftClass => ({
-          classId: nftClass.address,
+          classId: normalizeNFTClassId(nftClass.address),
           title: nftClass.name || '',
           imageUrl: nftClass.metadata?.image || '',
           minPrice: undefined,
         }))
-
-      const nextKey = getIndexerNextKey(result, options.limit)?.toString()
-      await updateSearchResults(queryKey, mappedItems, nextKey, isRefresh)
+      sortedOwnerWalletItemsByQueryKey.set(queryKey, sortedItems)
     }
+
+    const pageSize = 100
+    const offset = isRefresh ? 0 : Number(bookstoreSearchResultsByQueryMap.value[queryKey]?.nextKey || 0)
+    const end = offset + pageSize
+    const nextKey = end < sortedItems.length ? end.toString() : undefined
+    await updateSearchResults(queryKey, sortedItems.slice(offset, end), nextKey, isRefresh)
   }
 
   async function fetchSearchResults(
@@ -453,9 +451,9 @@ export const useBookstoreStore = defineStore('bookstore', () => {
         })
       })
 
-      // Append the first page of each publisher wallet's books.
+      // Append the first page of each publisher wallet's books, newest publication first.
       walletResults.forEach((result) => {
-        result?.data?.forEach((nftClass) => {
+        sortNFTClassesByDatePublished(result?.data ?? []).forEach((nftClass) => {
           const classId = normalizeNFTClassId(nftClass.address)
           if (seen.has(classId)) return
           seen.add(classId)
