@@ -93,17 +93,44 @@
 
     <!-- Price info for store mode -->
     <div
-      class="flex items-center justify-between mt-[0.5lh] text-highlighted"
+      :class="[
+        'flex justify-between mt-[0.5lh] text-highlighted',
+        isLikerPlus ? 'items-center' : 'items-end',
+      ]"
     >
-      <div v-if="!isLibrary && (!isApp || price === 0)">
-        <span
-          v-if="formattedDiscountPrice"
-          v-text="formattedDiscountPrice"
-        />
-        <span
-          :class="{ 'text-xs ml-0.5 text-muted line-through': formattedDiscountPrice }"
-          v-text="formattedPrice"
-        />
+      <div
+        v-if="!isLibrary && (!isApp || price === 0)"
+        class="flex flex-col"
+      >
+        <div>
+          <span
+            v-if="formattedDiscountPrice"
+            v-text="formattedDiscountPrice"
+          />
+          <span
+            :class="{ 'text-xs ml-0.5 text-muted line-through': formattedDiscountPrice }"
+            v-text="formattedPrice"
+          />
+        </div>
+        <!--
+          Kept for every non-member card so a free book stays level with its row;
+          left empty, it moves above the price so the price sits at the bottom.
+        -->
+        <div
+          v-if="!isLikerPlus"
+          :class="[
+            'flex items-center gap-1 h-lh text-xs text-muted',
+            { '-order-1': !formattedPlusMemberPrice },
+          ]"
+        >
+          <template v-if="formattedPlusMemberPrice">
+            <span v-text="formattedPlusMemberPrice" />
+            <PlusBadge
+              role="img"
+              aria-label="Plus"
+            />
+          </template>
+        </div>
       </div>
 
       <UIcon
@@ -207,6 +234,7 @@ const { isLikerPlus, PLUS_BOOK_PURCHASE_DISCOUNT } = useSubscription()
 const { isApp } = useAppDetection()
 
 const getRouteQuery = useRouteQuery()
+const getRouteParam = useRouteParam()
 const publisherSubdomainLikerId = usePublisherSubdomainLikerId()
 
 const productPageRoute = computed(() => {
@@ -261,6 +289,27 @@ const formattedDiscountPrice = computed(() => {
     plusPrice,
     plusPriceInDecimalByCurrency,
     isNonNFT: bookInfo.isNonNFT.value,
+  }, PLUS_BOOK_PURCHASE_DISCOUNT)
+})
+
+// Non-NFT goods show their own member price only to eligible members.
+// A referrer (`from`, publisher storefront or subdomain) may withhold the discount,
+// and the grid cannot check that without a fetch, so referred visits get no teaser.
+const formattedPlusMemberPrice = computed(() => {
+  if (
+    isLikerPlus.value
+    || getRouteQuery('from')
+    || getRouteParam('userId')
+    || publisherSubdomainLikerId
+    || price.value <= 0
+    || bookInfo.isDisplayOnly.value
+    || bookInfo.isNonNFT.value
+  ) {
+    return null
+  }
+  return formatMemberPrice({
+    price: price.value,
+    priceInDecimalByCurrency: priceCurrencyOverride.value,
   }, PLUS_BOOK_PURCHASE_DISCOUNT)
 })
 
