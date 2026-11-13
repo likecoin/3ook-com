@@ -68,11 +68,14 @@ function handleStoreShortcut() {
 }
 
 // The shelf filters its own books on `/`;
-// anywhere else lands on the store search box, opened via `?search=1`.
+// anywhere else lands on a search box opened via `?search=1`,
+// the library's when the store is hidden (in the app) or the library is already open.
 function handleSearchShortcut(event: KeyboardEvent) {
-  if (getRouteBaseNameString().startsWith('shelf')) return
+  const routeBaseName = getRouteBaseNameString()
+  if (routeBaseName.startsWith('shelf')) return
   event.preventDefault()
-  navigateTo(localeRoute({ name: 'store', query: { search: '1' } }))
+  const name = isApp.value || routeBaseName.startsWith('library') ? 'library' : 'store'
+  navigateTo(localeRoute({ name, query: { search: '1' } }))
 }
 
 useKeyboardShortcuts({
