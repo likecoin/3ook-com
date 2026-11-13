@@ -21,7 +21,7 @@ export function useKeyboardShortcuts(
   })
   return useEventListener(eventTarget, 'keydown', (event: KeyboardEvent) => {
     if (options.isEnabled !== undefined && !toValue(options.isEnabled)) return
-    if (getIsKeyboardShortcutBlocked(event)) return
+    if (getIsKeyboardShortcutBlocked(event) || getIsKeyReservedByFocusedControl(event)) return
     toValue(shortcuts)[event.key]?.(event)
   })
 }
