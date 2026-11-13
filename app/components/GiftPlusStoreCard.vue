@@ -17,7 +17,7 @@
     >
       <div class="gift-plus-glow absolute inset-0" />
       <span
-        class="gift-plus-watermark absolute left-[5cqw] top-[18.6cqw] font-black leading-none text-[42.9cqw] tracking-[-0.03em] select-none"
+        class="gift-plus-watermark absolute inset-x-0 top-[18.6cqw] text-center whitespace-nowrap font-black leading-none text-[42.9cqw] tracking-[-0.03em] select-none"
         aria-hidden="true"
       >Plus</span>
       <UIcon
