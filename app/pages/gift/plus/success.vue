@@ -212,7 +212,7 @@ const { t: $t } = useI18n()
 const localeRoute = useLocaleRoute()
 const { handleError } = useErrorHandler()
 const plusGiftSessionAPI = usePlusGiftSessionAPI()
-const { yearlyPrice, monthlyPrice, getMonthsPrice } = useSubscription()
+const { yearlyPrice, monthlyPrice, getGiftPrice } = useSubscription()
 
 const getRouteQuery = useRouteQuery()
 const route = useRoute()
@@ -241,9 +241,7 @@ const period = computed(() => (getRouteQuery('period') as SubscriptionPlan) || '
 const quantity = computed(() => clampGiftQuantity(getRouteQuery('quantity')))
 const isRedirected = computed(() => !!getRouteQuery('redirect'))
 
-const giftPrice = computed(() => period.value === 'yearly'
-  ? yearlyPrice.value * quantity.value
-  : getMonthsPrice(quantity.value))
+const giftPrice = computed(() => getGiftPrice(period.value, quantity.value))
 
 const planLabel = computed(() => {
   if (period.value === 'yearly') {
