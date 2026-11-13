@@ -3,9 +3,9 @@ import type { MaybeRefOrGetter } from 'vue'
 export type KeyboardShortcutMap = Record<string, (event: KeyboardEvent) => void>
 
 export interface UseKeyboardShortcutsOptions {
-  // Defaults to the app window. The EPUB reader also binds the rendition iframe,
+  // Defaults to the app window. The EPUB reader also binds the rendition iframes,
   // so a click inside the book doesn't silence the shortcuts.
-  target?: MaybeRefOrGetter<Window | undefined>
+  target?: MaybeRefOrGetter<Window | Window[] | undefined>
   isEnabled?: MaybeRefOrGetter<boolean>
 }
 
