@@ -4,6 +4,7 @@
  * `isPlusReadingEnabled`, the user not owning it, no `nft_id` in the route
  * (an owned read always carries one), and either active Plus or a free edition
  * (which any logged-in user may borrow). Used by both the EPUB and PDF readers.
+ * An owned read instead returns any borrow left over from before the purchase.
  */
 export function usePlusReadingTracker(params: {
   nftClassId: MaybeRef<string>
@@ -12,13 +13,13 @@ export function usePlusReadingTracker(params: {
   hasFreeEdition: Ref<boolean>
   nftId: Ref<string | undefined>
 }) {
-  const { loggedIn: hasLoggedIn } = useUserSession()
+  const { loggedIn: hasLoggedIn, user } = useUserSession()
   const { isLikerPlus } = useSubscription()
   const queryCache = useQueryCache()
   const bookshelfStore = useBookshelfStore()
 
   const nftClassIdRef = computed(() => toValue(params.nftClassId))
-  const { checkOwnership } = useUserBookOwnership(nftClassIdRef)
+  const { isOwner, checkOwnership } = useUserBookOwnership(nftClassIdRef)
   // The surface that led to this read, snapshotted before any in-reader navigation.
   const entryLinkTagProperties = useEntryLinkTagProperties()
 
@@ -46,15 +47,39 @@ export function usePlusReadingTracker(params: {
     return isLikerPlus.value || params.hasFreeEdition.value
   }
 
+  // A purchase supersedes the borrow: drop the stale library record
+  // rather than asking the user to return a book they already own.
+  async function returnBorrowIfOwned(snapshot: { likerId?: string, nftClassId: string }) {
+    if (params.isUploadedBook.value || !hasLoggedIn.value) return
+    // `getIsBorrowed` has already resolved ownership unless the route's nft_id proved it.
+    if (!params.nftId.value && !isOwner.value) return
+    await bookshelfStore.lazyFetchPlusReadingBooks()
+    // A logout, account switch or in-place switch to another book meanwhile
+    // would return the wrong borrow, or send the DELETE under the new session.
+    if (
+      !hasLoggedIn.value
+      || user.value?.likerId !== snapshot.likerId
+      || nftClassIdRef.value !== snapshot.nftClassId
+    ) return
+    const normalizedNFTClassId = normalizeNFTClassId(snapshot.nftClassId)
+    if (!bookshelfStore.plusReadingBookIds.includes(normalizedNFTClassId)) return
+    useLogEvent('plus_reading_auto_return', { nft_class_id: snapshot.nftClassId })
+    await bookshelfStore.removePlusReadingBook(normalizedNFTClassId)
+  }
+
   async function registerIfBorrowed() {
     if (!import.meta.client) return
+    const snapshot = { likerId: user.value?.likerId, nftClassId: nftClassIdRef.value }
     try {
       isLibraryBook.value = await getIsBorrowed()
     }
     finally {
       settleLibraryBookCheck(isLibraryBook.value)
     }
-    if (!isLibraryBook.value) return
+    if (!isLibraryBook.value) {
+      await returnBorrowIfOwned(snapshot)
+      return
+    }
 
     // Read borrow state before registration mutates it to tell first borrows from re-opens.
     useLogEvent('plus_reading_borrow', {
