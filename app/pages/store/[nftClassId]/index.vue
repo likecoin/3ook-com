@@ -651,6 +651,7 @@ const plusReadingTagRoute = computed(() =>
 
 const { handleError } = useErrorHandler()
 const { ensureLoggedIn } = useLoginGuard()
+const { canStartSubscribeFlow } = useNativeIAP()
 const { getAnalyticsParameters } = useAnalytics()
 const { fetchBookRecommendations } = useBookRecommendations()
 // Which surface sent the reader to this book; rides every conversion event below.
@@ -1472,10 +1473,6 @@ async function handlePurchaseButtonClick() {
   useLogEvent('add_to_cart', formattedLogPayload.value)
   try {
     isPurchasing.value = true
-    if (!hasLoggedIn.value) {
-      await accountStore.login()
-      if (!hasLoggedIn.value) return
-    }
     // Free books skip the Plus upsell and proceed to the tipping/donation flow when eligible.
     if (!isSelectedPricingItemFree.value && !isApp.value && !isRedirectedFromUpsell.value && !bookInfo.isUpsellDisabled.value && !bookInfo.isPlusPromoEnabled.value) {
       const upsellCloseReason = await openUpsellPlusModalIfEligible({
@@ -1489,6 +1486,12 @@ async function handlePurchaseButtonClick() {
         isAudioHidden: bookInfo.isAudioHidden.value,
       })
       if (upsellCloseReason === 'subscribe' || upsellCloseReason === 'dismiss') return
+    }
+
+    // Guests see the upsell before login, so its subscribe path logs in at checkout.
+    if (!hasLoggedIn.value) {
+      await accountStore.login({ title: $t('login_panel_title_purchase') })
+      if (!hasLoggedIn.value) return
     }
 
     let customPrice: number | undefined = undefined
@@ -1621,11 +1624,11 @@ async function handlePlusReadButtonClick() {
     is_borrowed: isBookBorrowed.value,
   })
 
-  // Guests are prompted to log in or register before reaching the membership page.
-  if (!await ensureLoggedIn()) return
+  // Shells without IAP bounce the membership page, so a signed-out member must log in here.
+  if (!canStartSubscribeFlow.value && !await ensureLoggedIn()) return
 
-  // Non-Plus users are routed to the membership page to subscribe, unless the
-  // book has a free edition — then they may borrow it without a subscription.
+  // Non-Plus users, guests included, go to the membership page and log in at checkout;
+  // a free edition instead lets them borrow without a subscription.
   if (isPlusReadingUpsellEligible.value) {
     // Only this branch is an upsell — the event above also covers Plus members
     // and free borrows, which never reach the membership page.
@@ -1639,6 +1642,8 @@ async function handlePlusReadButtonClick() {
     }))
     return
   }
+
+  if (!await ensureLoggedIn()) return
 
   // Refresh borrowed books so the shelf reflects this borrow after a fresh login.
   bookshelfStore.lazyFetchPlusReadingBooks().catch((error) => {

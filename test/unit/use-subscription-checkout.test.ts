@@ -8,10 +8,13 @@ const {
   mockAnalyticsParams,
   mockEmbeddedVariant,
   mockFetchCheckoutLink,
+  mockHasLoggedIn,
   mockIsApp,
   mockIsIAPSupported,
   mockIsLikerPlus,
   mockLogEvent,
+  mockLogin,
+  mockNavigateTo,
   mockPurchase,
   mockRefreshSessionInfo,
   mockSetSession,
@@ -24,10 +27,13 @@ const {
     paymentId: string
     priceId?: string
   }> => ({ paymentId: '' })),
+  mockHasLoggedIn: { value: true },
   mockIsApp: { value: true },
   mockIsIAPSupported: { value: true },
   mockIsLikerPlus: { value: false },
   mockLogEvent: vi.fn(),
+  mockLogin: vi.fn(),
+  mockNavigateTo: vi.fn(),
   mockPurchase: vi.fn(async (_options: { attributes: Record<string, string> }) => (
     { status: 'success' as const, message: '' }
   )),
@@ -45,7 +51,7 @@ mockNuxtImport('useSubscription', () => () => ({
   isLikerPlus: mockIsLikerPlus,
   isCivicMember: { value: false },
   isPlanPeriodUpgrade: () => false,
-  hasLoggedIn: { value: true },
+  hasLoggedIn: mockHasLoggedIn,
   getCheckoutCurrency: () => 'usd',
 }))
 mockNuxtImport('usePlusSessionAPI', () => () => ({
@@ -55,10 +61,13 @@ mockNuxtImport('usePlusSessionAPI', () => () => ({
 mockNuxtImport('useI18n', () => () => ({ t: (key: string) => key }))
 mockNuxtImport('useAccountStore', () => () => ({
   refreshSessionInfo: mockRefreshSessionInfo,
-  login: vi.fn(),
+  login: mockLogin,
   savePlusRedirectRoute: vi.fn(),
 }))
-mockNuxtImport('useUserSession', () => () => ({ user: { value: { likerId: 'liker1' } } }))
+mockNuxtImport('useUserSession', () => () => ({
+  loggedIn: mockHasLoggedIn,
+  user: { value: { likerId: 'liker1' } },
+}))
 mockNuxtImport('useLocaleRoute', () => () => (route: unknown) => route)
 mockNuxtImport('useRouteQuery', () => () => () => '')
 mockNuxtImport('useToast', () => () => ({ add: vi.fn() }))
@@ -76,7 +85,7 @@ mockNuxtImport('useABTest', () => () => ({ captureExposure: () => mockEmbeddedVa
 mockNuxtImport('useErrorHandler', () => () => ({ handleError: vi.fn() }))
 mockNuxtImport('useLogEvent', () => mockLogEvent)
 mockNuxtImport('requestNativeStoreReview', () => () => {})
-mockNuxtImport('navigateTo', () => async () => {})
+mockNuxtImport('navigateTo', () => mockNavigateTo)
 
 function getPurchasedAttributes() {
   return mockPurchase.mock.calls[0]![0].attributes
@@ -94,6 +103,9 @@ beforeEach(() => {
   mockAnalyticsParams.value = {}
   mockIsLikerPlus.value = false
   mockLogEvent.mockClear()
+  mockHasLoggedIn.value = true
+  mockLogin.mockReset()
+  mockNavigateTo.mockReset()
   mockIsApp.value = true
   mockIsIAPSupported.value = true
   mockEmbeddedVariant.value = null
@@ -270,5 +282,37 @@ describe('useSubscriptionCheckout checkout event period', () => {
     await startSubscription({ plan })
     expect(getLoggedEvent('add_to_cart')).toMatchObject({ period })
     expect(getLoggedEvent('begin_checkout')).toMatchObject({ period })
+  })
+})
+
+describe('useSubscriptionCheckout guest login', () => {
+  beforeEach(() => {
+    mockHasLoggedIn.value = false
+  })
+
+  it('sends a guest who logs in as a subscriber to the account page', async () => {
+    mockLogin.mockImplementation(() => {
+      mockHasLoggedIn.value = true
+      mockIsLikerPlus.value = true
+    })
+    const { startSubscription } = useSubscriptionCheckout()
+    await startSubscription({ plan: 'yearly' })
+    expect(mockLogEvent).toHaveBeenCalledWith('subscription_login_required')
+    expect(mockNavigateTo).toHaveBeenCalledWith({ name: 'account' })
+    expect(mockPurchase).not.toHaveBeenCalled()
+  })
+
+  it('stops when the guest dismisses login', async () => {
+    const { startSubscription } = useSubscriptionCheckout()
+    await startSubscription({ plan: 'yearly' })
+    expect(mockLogin).toHaveBeenCalledWith({ title: 'login_panel_title_plus' })
+    expect(mockPurchase).not.toHaveBeenCalled()
+  })
+
+  it('stops without throwing when login fails', async () => {
+    mockLogin.mockRejectedValue(new Error('EMAIL_ALREADY_USED'))
+    const { startSubscription } = useSubscriptionCheckout()
+    await expect(startSubscription({ plan: 'yearly' })).resolves.toBeUndefined()
+    expect(mockPurchase).not.toHaveBeenCalled()
   })
 })

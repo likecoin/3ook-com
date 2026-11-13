@@ -470,7 +470,7 @@ export const useAccountStore = defineStore('account', () => {
     assertConnectedWalletMatchesAccount(restored.address)
   }
 
-  async function login({ connectorId: preferredConnectorId, email: preferredEmail, isRetry = false }: { connectorId?: string, email?: string, isRetry?: boolean } = {}) {
+  async function login({ connectorId: preferredConnectorId, email: preferredEmail, title, isRetry = false }: { connectorId?: string, email?: string, title?: string, isRetry?: boolean } = {}) {
     let connectorId: string | undefined = preferredConnectorId
     try {
       isLoggingIn.value = true
@@ -486,7 +486,7 @@ export const useAccountStore = defineStore('account', () => {
       if (!connectorId || !connectors.some((c: { id: string }) => c.id === connectorId) || isMagicWithoutEmail()) {
         useLogEvent('login_panel_open')
         // Cast because the Lazy* async-component wrapper hides LoginModal's close-payload from useOverlay's inference
-        const result = await loginModal.open().result as { id: string, email?: string } | undefined
+        const result = await loginModal.open({ title }).result as { id: string, email?: string } | undefined
         connectorId = result?.id
         magicEmail = result?.email
       }
@@ -652,7 +652,7 @@ export const useAccountStore = defineStore('account', () => {
       await handleError(error)
       // Retry once; the reopened panel is the recovery affordance.
       if (isRetry) return
-      return login({ isRetry: true })
+      return login({ title, isRetry: true })
     }
     finally {
       isLoggingIn.value = false

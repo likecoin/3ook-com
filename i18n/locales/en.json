@@ -779,6 +779,8 @@
   "login_panel_privacy_link": "Privacy Policy",
   "login_panel_terms_link": "Terms of Service",
   "login_panel_terms_notice": "By signing in, you confirm that you have read and agree to the {terms} and {privacy}.",
+  "login_panel_title_plus": "Join Plus",
+  "login_panel_title_purchase": "Log in to purchase",
   "maintenance_page_description": "Our website is undergoing maintenance to bring you a better experience. We’ll be back shortly!",
   "maintenance_page_title": "🚧 Under maintenance 🚧",
   "other_file_type": "Other",
