@@ -67,6 +67,11 @@ function handleStoreShortcut() {
   navigateToTab('store')
 }
 
+const listingPageStates = {
+  store: useStorePageState('store'),
+  library: useStorePageState('library'),
+}
+
 // The shelf filters its own books on `/`;
 // anywhere else lands on a search box opened via `?search=1`,
 // the library's when the store is hidden (in the app) or the library is already open.
@@ -75,6 +80,9 @@ function handleSearchShortcut(event: KeyboardEvent) {
   if (routeBaseName.startsWith('shelf')) return
   event.preventDefault()
   const name = isApp.value || routeBaseName.startsWith('library') ? 'library' : 'store'
+  // Otherwise the listing restores its saved query on mount,
+  // which swaps the header to search results and unmounts the box.
+  listingPageStates[name].clear()
   navigateTo(localeRoute({ name, query: { search: '1' } }))
 }
 
