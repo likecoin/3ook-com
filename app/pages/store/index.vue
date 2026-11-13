@@ -219,7 +219,7 @@
       </ol>
 
       <ul
-        v-else-if="itemsCount > 0"
+        v-else-if="itemsCount > 0 || isGiftPlusCardVisible"
         :class="[
           ...gridClasses,
 
@@ -271,7 +271,7 @@
       </footer>
 
       <div
-        v-if="hasMoreItems && itemsCount > 0"
+        v-if="hasMoreItems && (itemsCount > 0 || isGiftTag)"
         ref="infiniteScrollDetector"
         class="flex justify-center py-48"
       >
@@ -455,11 +455,10 @@ const {
 const isLibraryChartTag = computed(() => isLibraryTab.value && getIsLibraryChartTagId(tagId.value))
 // Plus gifting checks out through its own Stripe flow, not the cart, so each gift
 // period rides on the gift tag as a card. Web only: /gift/plus bounces app users to the store.
-const isGiftPlusCardVisible = computed(() => !isApp.value
-  && !isLibraryTab.value
-  && !isSearchMode.value
-  && getIsGiftTagId(tagId.value)
-  && !hasMoreItems.value)
+const isGiftTag = computed(() => !isLibraryTab.value && !isSearchMode.value && getIsGiftTagId(tagId.value))
+// The cards render even when region filtering empties the product list,
+// so the gift tag keeps paging through filtered-out pages to reach the end.
+const isGiftPlusCardVisible = computed(() => !isApp.value && isGiftTag.value && !hasMoreItems.value)
 // The header shows the editor's copy verbatim;
 // `tagDescription` falls back to boilerplate
 // that reads fine in meta and badly on the page.
@@ -875,7 +874,12 @@ const storeListStatus = computed(() => {
   if (isProfileListingEmpty.value) return 'no-items' as const
   if (isLoadingInitialItems.value) return 'loading' as const
   if (isSearchResultEmpty.value) return 'search-empty' as const
-  if (itemsCount.value === 0 && !products.value.isFetchingItems && products.value.hasFetchedItems) return 'no-items' as const
+  if (
+    itemsCount.value === 0
+    && !products.value.isFetchingItems
+    && products.value.hasFetchedItems
+    && !isGiftPlusCardVisible.value
+  ) return 'no-items' as const
   return null
 })
 
