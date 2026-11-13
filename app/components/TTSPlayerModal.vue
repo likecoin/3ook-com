@@ -56,7 +56,7 @@
           class="flex justify-center laptop:mt-8 laptop:mb-10 z-20"
         >
           <BookCover
-            class="w-[120px] tablet:w-[150px] shrink-0"
+            class="w-[min(80px,10svh)] tablet:w-[min(150px,15svh)] shrink-0"
             :src="bookCoverSrc"
             :alt="bookTitle"
             :is-vertical-center="true"
