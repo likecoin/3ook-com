@@ -5,6 +5,7 @@ body {
   --app-bg: var(--color-theme-white);
   --ui-text-highlighted: var(--color-theme-black);
   --intercom-launcher-offset: calc(env(safe-area-inset-bottom) + 56px);
+  --intercom-launcher-bottom: calc(var(--intercom-launcher-offset) + 20px);
   @apply bg-(--app-bg);
 }
 
@@ -140,7 +141,7 @@ body {
 
 .intercom-launcher,
 .intercom-app > [class*="intercom-with-namespace-"] {
-  bottom: calc(var(--intercom-launcher-offset) + 20px) !important;
+  bottom: var(--intercom-launcher-bottom) !important;
 }
 
 /* Reader loading transition animation */
