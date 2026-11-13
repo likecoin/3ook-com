@@ -124,11 +124,11 @@ const giftPlusRoute = computed(() => localeRoute({
   color: transparent;
   background-image: linear-gradient(
     165deg,
-    rgb(255 255 255 / 0.14) 0%,
-    rgb(255 255 255 / 0.04) 50%,
-    rgb(80 227 194 / calc(var(--glow-alpha) * 0.8)) 100%
+    rgb(255 255 255 / 0.10) 0%,
+    rgb(255 255 255 / 0.03) 50%,
+    rgb(80 227 194 / calc(var(--glow-alpha) * 0.6)) 100%
   );
   background-clip: text;
-  text-shadow: 0 -1px 0 rgb(255 255 255 / 0.12);
+  text-shadow: 0 -1px 0 rgb(255 255 255 / 0.08);
 }
 </style>
