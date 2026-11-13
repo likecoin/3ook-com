@@ -250,8 +250,8 @@ const props = withDefaults(defineProps<{
   yearlyBadgeText?: string
   monthlyBadgeText?: string
   promoPricing?: PricingPagePromoPricing
-  giftMonthQuantity?: number[]
-  giftYearQuantity?: number[]
+  // Gift mode lists exactly these periods in place of the plain monthly/yearly pair.
+  giftOptions?: readonly { period: SubscriptionPlan, quantity: number }[]
 }>(), {
   tier: 'plus',
   isYearlyHidden: false,
@@ -268,8 +268,7 @@ const props = withDefaults(defineProps<{
   yearlyBadgeText: undefined,
   monthlyBadgeText: undefined,
   promoPricing: undefined,
-  giftMonthQuantity: () => [],
-  giftYearQuantity: () => [],
+  giftOptions: () => [],
 })
 
 const { t: $t } = useI18n()
@@ -286,7 +285,7 @@ const {
   hasYearlyDiscount,
   currency,
   convertToDisplayCurrency,
-  getMonthsPrice,
+  getGiftPrice,
 } = useSubscriptionPricing()
 const { formatConvertedPrice } = useCurrency()
 const { getIAPPlanPrice } = useNativeIAP()
@@ -312,7 +311,7 @@ const selectedKey = computed({
 })
 
 const isCivic = computed(() => props.tier === 'civic')
-const isGiftMode = computed(() => props.giftMonthQuantity.length > 0 || props.giftYearQuantity.length > 0)
+const isGiftMode = computed(() => props.giftOptions.length > 0)
 // Civic has no trial, so its selector never shows trial pricing or hints.
 const effectiveTrialPeriodDays = computed(() => (isCivic.value ? 0 : props.trialPeriodDays))
 const civicYearlyDiscountPercent = computed(() =>
@@ -343,24 +342,16 @@ function getMonthlyEquivalent(yearlyPrice: number, comparableMonthlyPrice: numbe
 }
 
 const plans = computed(() => {
-  const values: { value: SubscriptionPlan, quantity: number }[] = []
-  const yearQuantity = [...props.giftYearQuantity].filter(years => years > 1).sort((a, b) => b - a)
-  yearQuantity.forEach((years) => {
-    values.push({ value: 'yearly', quantity: years })
-  })
-  if (!props.isYearlyHidden) {
-    values.push({ value: 'yearly', quantity: 1 })
-  }
-  [...props.giftMonthQuantity]
-    .filter(months => months > 1)
-    .sort((a, b) => b - a)
-    .forEach((months) => {
-      values.push({ value: 'monthly', quantity: months })
-    })
-  if (!props.isMonthlyHidden) {
-    values.push({ value: 'monthly', quantity: 1 })
-  }
-  return values.map(({ value, quantity }) => {
+  // Longest commitment first: years before months, more before fewer.
+  const values = isGiftMode.value
+    ? [...props.giftOptions].sort((a, b) => (a.period === b.period
+        ? b.quantity - a.quantity
+        : (a.period === 'yearly' ? -1 : 1)))
+    : [
+        ...(props.isYearlyHidden ? [] : [{ period: 'yearly' as const, quantity: 1 }]),
+        ...(props.isMonthlyHidden ? [] : [{ period: 'monthly' as const, quantity: 1 }]),
+      ]
+  return values.map(({ period: value, quantity }) => {
     const key = quantity > 1 ? `${value}-${quantity}` : value
 
     if (quantity > 1) {
@@ -376,7 +367,7 @@ const plans = computed(() => {
         perUnit: isYears
           ? $t('pricing_page_price_per_n_years', { count: quantity })
           : $t('pricing_page_price_per_n_months', { count: quantity }),
-        price: isYears ? yearlyPrice.value * quantity : getMonthsPrice(quantity),
+        price: getGiftPrice(value, quantity),
         priceString: undefined,
         originalPrice: 0,
         hasDiscount: false,
