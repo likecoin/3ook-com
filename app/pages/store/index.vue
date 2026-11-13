@@ -1535,9 +1535,9 @@ onMounted(async () => {
 
 onBeforeRouteLeave((to) => {
   // Keep scroll/tag state only when staying within the same tab (store ↔ store,
-  // library ↔ library); switching tabs or leaving clears it.
+  // library ↔ library); switching tabs, leaving or the `/` search shortcut clears it.
   const toBaseName = getRouteBaseNameString(to)
-  if (toBaseName && toBaseName.startsWith(listingRouteName.value)) {
+  if (toBaseName && toBaseName.startsWith(listingRouteName.value) && to.query.search !== '1') {
     // Save the 'default' marker, not the resolved id: the default listing's URL
     // carries no tag, and its id shifts with login state anyway.
     storePageState.save(isDefaultTagId.value ? 'default' : tagId.value, route.query as Record<string, string>)
