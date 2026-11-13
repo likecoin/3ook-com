@@ -1,8 +1,8 @@
 import type { AffiliatePublicConfig } from '~~/shared/types/affiliate'
 
+// Fetched for every visitor, not just Plus members: non-members are shown the
+// member price too, which an opted-out affiliate link must hide.
 export function useAffiliateConfig(affiliateId: MaybeRefOrGetter<string | undefined>) {
-  const { user } = useUserSession()
-
   const loadedConfig = useState<AffiliatePublicConfig | null>('affiliate-config', () => null)
   const loadedFrom = useState<string | null>('affiliate-config-loaded-from', () => null)
   const isLoading = useState<boolean>('affiliate-config-loading', () => false)
@@ -15,7 +15,7 @@ export function useAffiliateConfig(affiliateId: MaybeRefOrGetter<string | undefi
   async function fetchConfig() {
     const fromValue = toValue(affiliateId)
     const likerId = parseLikerIdHandle(fromValue)
-    if (!fromValue || !likerId || !user.value?.isLikerPlus) {
+    if (!fromValue || !likerId) {
       clearLoaded()
       return
     }
@@ -29,8 +29,8 @@ export function useAffiliateConfig(affiliateId: MaybeRefOrGetter<string | undefi
       const config = await $fetch<AffiliatePublicConfig>(
         `/api/affiliate/${encodeURIComponent(likerId)}`,
       )
-      // Re-check after await: discard if affiliateId changed or user lost Plus.
-      if (!user.value?.isLikerPlus || toValue(affiliateId) !== requestedFrom) return
+      // Re-check after await: discard if affiliateId changed.
+      if (toValue(affiliateId) !== requestedFrom) return
       loadedConfig.value = config
       loadedFrom.value = requestedFrom
     }
@@ -47,10 +47,11 @@ export function useAffiliateConfig(affiliateId: MaybeRefOrGetter<string | undefi
     }
   }
 
-  watchImmediate(
-    [() => toValue(affiliateId), () => user.value?.isLikerPlus],
-    fetchConfig,
-  )
+  // Client only: an unawaited SSR fetch would serialize isLoading as true,
+  // and the client watcher would then skip the fetch for good.
+  if (import.meta.client) {
+    watchImmediate(() => toValue(affiliateId), fetchConfig)
+  }
 
   return {
     config: loadedConfig,

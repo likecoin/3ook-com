@@ -72,6 +72,16 @@
           v-if="isLikerPlus && selectedPricingItem?.discountedPrice"
           class="inline-block"
         />
+        <span
+          v-if="selectedPricingItem?.plusMemberPrice"
+          class="inline-flex items-center gap-1 ml-2 align-middle text-xs font-normal text-muted"
+        >
+          <span v-text="selectedPricingItem.plusMemberPrice" />
+          <PlusBadge
+            role="img"
+            aria-label="Plus"
+          />
+        </span>
       </span>
 
       <ProductActionButtons

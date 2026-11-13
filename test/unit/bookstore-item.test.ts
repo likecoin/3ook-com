@@ -6,6 +6,7 @@ const { mockState } = vi.hoisted(() => ({
   mockState: { subdomainLikerId: '', query: {} as Record<string, string> },
 }))
 
+mockNuxtImport('usePaymentCurrency', () => () => ({ displayCurrency: ref('usd') }))
 mockNuxtImport('usePublisherSubdomainLikerId', () => () => mockState.subdomainLikerId)
 mockNuxtImport('useRouteQuery', () => () => (key: string) => mockState.query[key] || '')
 // The real one pulls in the bookshelf store, which needs wagmi; only the route
@@ -81,5 +82,23 @@ describe('BookstoreItem', () => {
     const links = await getBookLinks({ variant: 'chart', rank: 1 })
 
     expect(links.map(url => url.searchParams.get('from'))).toEqual(['@ckxpress'])
+  })
+
+  it('shows a non-member the Plus price under a paid book', async () => {
+    const wrapper = await mountSuspended(BookstoreItem, {
+      props: { nftClassId: NFT_CLASS_ID, price: 9.99 },
+    })
+
+    expect(wrapper.text()).toContain('US$9.99')
+    expect(wrapper.text()).toContain('US$7.99')
+    expect(wrapper.find('svg').exists()).toBe(true)
+  })
+
+  it('shows no Plus price under a free book', async () => {
+    const wrapper = await mountSuspended(BookstoreItem, {
+      props: { nftClassId: NFT_CLASS_ID, price: 0 },
+    })
+
+    expect(wrapper.find('svg').exists()).toBe(false)
   })
 })
