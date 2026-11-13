@@ -4,6 +4,7 @@
          so it holds at every grid column width. -->
     <NuxtLink
       :to="giftPlusRoute"
+      :aria-label="title"
       :class="[
         'group',
         '@container relative overflow-hidden',
@@ -43,7 +44,7 @@
     <div class="mt-2 min-h-[3.2lh]">
       <div
         class="laptop:text-base text-highlighted font-semibold line-clamp-2"
-        v-text="$t('store_gift_plus_card_title', { period: periodLabel })"
+        v-text="title"
       />
       <div
         class="h-lh mt-[0.5lh] truncate leading-none text-xs text-toned"
@@ -76,6 +77,7 @@ const isYearly = computed(() => props.period === 'yearly')
 const periodLabel = computed(() => (isYearly.value
   ? $t('pricing_page_n_years', { count: props.quantity })
   : $t('pricing_page_n_months', { count: props.quantity })))
+const title = computed(() => $t('store_gift_plus_card_title', { period: periodLabel.value }))
 const unitLabel = computed(() => $t(isYearly.value
   ? 'store_gift_plus_card_unit_years'
   : 'store_gift_plus_card_unit_months'))
