@@ -128,6 +128,7 @@ const { t: $t } = useI18n()
 const localeRoute = useLocaleRoute()
 const { isApp } = useAppDetection()
 const openStoreBookAppNotice = useStoreBookAppNotice()
+const route = useRoute()
 
 const isSearchInputOpen = ref(false)
 const searchInputValue = ref('')
@@ -160,6 +161,17 @@ function handleSearchTagClick() {
   useLogEvent(props.isLibraryTab ? 'library_tag_search_click' : 'store_tag_search_click')
   searchInputValue.value = ''
 }
+
+// The layout's `/` shortcut arrives as `?search=1`;
+// drop it once the box is open so a reload or a shared link doesn't reopen it.
+onMounted(() => {
+  watch(() => route.query.search, (value) => {
+    if (value !== '1') return
+    isSearchInputOpen.value = true
+    const { search: _search, ...query } = route.query
+    navigateTo({ query }, { replace: true })
+  }, { immediate: true })
+})
 
 async function handleSearchSuggestionSelect(suggestion: StoreSearchSuggestion) {
   useLogEvent(props.isLibraryTab ? 'library_search_suggestion_click' : 'store_search_suggestion_click', {

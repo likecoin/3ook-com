@@ -972,6 +972,9 @@ useHead({
 })
 const renditionElement = useTemplateRef<HTMLDivElement>('reader')
 const renditionViewWindow = ref<Window | undefined>(undefined)
+// Every iframe in epub.js's paging buffer, so the shortcuts follow whichever one is on screen.
+// Keyed by view, since a destroyed view has already dropped its window by `removed`.
+const renditionViewWindows = shallowRef(new Map<EpubView, Window>())
 
 let isTouchGestureActive = false
 let selectionCommitTimer: ReturnType<typeof setTimeout> | undefined
@@ -1241,6 +1244,7 @@ async function loadEPub() {
     spread: 'none',
   })
   rendition.value = currentRendition
+  renditionViewWindows.value = new Map()
   // The paging container outlives every section render, so bind it once here
   // rather than in `rendered`.
   removePagingScrollListener?.()
@@ -1271,6 +1275,7 @@ async function loadEPub() {
     // buffer, so this can be a neighbour, not the visible page — the section
     // index comes from the authoritative `relocated` handler instead.
     renditionViewWindow.value = view.window
+    renditionViewWindows.value = new Map(renditionViewWindows.value).set(view, view.window)
     isPageLoading.value = false
     // Detection can force a re-render, and that clears the rendition — leave it
     // to a later `rendered` rather than wiping the display chain's own page.
@@ -1474,6 +1479,13 @@ async function loadEPub() {
     }
 
     renderAnnotations()
+  })
+
+  currentRendition.on('removed', (_section: Section, view: EpubView) => {
+    if (rendition.value !== currentRendition) return
+    const windows = new Map(renditionViewWindows.value)
+    windows.delete(view)
+    renditionViewWindows.value = windows
   })
 
   currentRendition.on('relocated', (location: Location) => {
@@ -2705,27 +2717,47 @@ async function handleBookmarkDelete(bookmark: Annotation) {
   }
 }
 
-const isShiftPressed = useKeyModifier('Shift')
-onKeyStroke('ArrowRight', () => {
-  turnPageRight('key')
-})
-onKeyStroke('ArrowLeft', () => {
-  turnPageLeft('key')
-})
-onKeyStroke('ArrowDown', () => {
-  nextPage('key')
-})
-onKeyStroke('ArrowUp', () => {
-  prevPage('key')
-})
-onKeyStroke('Space', () => {
-  if (isShiftPressed.value) {
-    prevPage('key')
-  }
-  else {
-    nextPage('key')
-  }
-})
+// Mirrors the header's back button: a previewer leaves to the product page.
+function exitReader() {
+  navigateTo(backRoute.value ?? localeRoute({ name: 'shelf' }))
+}
+
+// j/k follow the arrows rather than vim, so both pairs respect the writing direction.
+const readerShortcuts: KeyboardShortcutMap = {
+  'j': () => turnPageLeft('key'),
+  'ArrowLeft': () => turnPageLeft('key'),
+  'k': () => turnPageRight('key'),
+  'ArrowRight': () => turnPageRight('key'),
+  'ArrowUp': () => prevPage('key'),
+  'ArrowDown': () => nextPage('key'),
+  ' ': (event) => {
+    event.preventDefault()
+    if (event.shiftKey) {
+      prevPage('key')
+    }
+    else {
+      nextPage('key')
+    }
+  },
+  '/': (event) => {
+    // Firefox opens its own quick-find bar on `/`.
+    event.preventDefault()
+    readerSearch.value?.open()
+  },
+  '*': () => {
+    if (isReaderLoading.value || !currentBookmarkCfi.value) return
+    handleBookmarkToggle()
+  },
+  'Escape': exitReader,
+  'f': exitReader,
+  'F': exitReader,
+}
+
+// The annotation menu has no focus trap, so the shortcut guard can't see it;
+// overlays that do trap focus are already covered there.
+const readerShortcutOptions = { isEnabled: () => !isAnnotationMenuVisible.value }
+useKeyboardShortcuts(readerShortcuts, readerShortcutOptions)
+useKeyboardShortcuts(readerShortcuts, { ...readerShortcutOptions, target: () => [...renditionViewWindows.value.values()] })
 
 onBeforeUnmount(() => {
   cleanUpClickListener?.()
@@ -2742,6 +2774,7 @@ onBeforeUnmount(() => {
   clearTimeout(selectionCommitTimer)
   renderedHighlights.clear()
   renditionViewWindow.value = undefined
+  renditionViewWindows.value = new Map()
   isUnmounting = true
   destroyBookWhenSettled(loadedBook.value ?? rendition.value)
   rendition.value = undefined

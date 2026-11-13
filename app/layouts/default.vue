@@ -54,6 +54,50 @@ defineProps({
 
 const { isApp, isAndroid } = useAppDetection()
 
+const localeRoute = useLocaleRoute()
+const getRouteBaseNameString = useRouteBaseNameString()
+
+function navigateToTab(name: string) {
+  navigateTo(localeRoute({ name }))
+}
+
+// The app hides the store tab, so the shortcut stays hidden there too.
+function handleStoreShortcut() {
+  if (isApp.value) return
+  navigateToTab('store')
+}
+
+const listingPageStates = {
+  store: useStorePageState('store'),
+  library: useStorePageState('library'),
+}
+
+// The shelf filters its own books on `/`;
+// anywhere else lands on a search box opened via `?search=1`,
+// the library's when the store is hidden (in the app) or the library is already open.
+function handleSearchShortcut(event: KeyboardEvent) {
+  const routeBaseName = getRouteBaseNameString()
+  if (routeBaseName.startsWith('shelf')) return
+  event.preventDefault()
+  const name = isApp.value || routeBaseName.startsWith('library') ? 'library' : 'store'
+  // Otherwise the listing restores its saved query on mount,
+  // which swaps the header to search results and unmounts the box.
+  listingPageStates[name].clear()
+  navigateTo(localeRoute({ name, query: { search: '1' } }))
+}
+
+useKeyboardShortcuts({
+  's': handleStoreShortcut,
+  'S': handleStoreShortcut,
+  'l': () => navigateToTab('library'),
+  'L': () => navigateToTab('library'),
+  'f': () => navigateToTab('shelf'),
+  'F': () => navigateToTab('shelf'),
+  'c': () => navigateToTab('cart'),
+  'C': () => navigateToTab('cart'),
+  '/': handleSearchShortcut,
+})
+
 // iOS app handles pull-to-refresh natively in RN WebView
 const isPullToRefreshEnabled = computed(() => isApp.value && isAndroid.value)
 

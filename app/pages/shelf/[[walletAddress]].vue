@@ -740,6 +740,16 @@ function handleClearSearch() {
   searchInputValue.value = ''
 }
 
+// The app-wide `/` defers to this one: the input only renders on my own shelf,
+// and Firefox would otherwise open its quick-find bar.
+useKeyboardShortcuts({
+  '/': (event) => {
+    if (!isMyBookshelf.value || isSearchOpen.value) return
+    event.preventDefault()
+    handleToggleSearch()
+  },
+})
+
 const shelfTabs = computed(() => {
   const tabs: { value: ShelfTab, label: string }[] = []
   // Not metadata-gated (my shelf only), so the tab doesn't flash while metadata hydrates.

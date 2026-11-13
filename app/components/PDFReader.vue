@@ -181,6 +181,7 @@
             </template>
           </ReaderLeftSidebar>
           <ReaderSearch
+            ref="readerSearch"
             v-model:open="isSearchOpen"
             :search-handler="handleSearchPDF"
             @navigate="handleSearchNavigate"
@@ -230,7 +231,6 @@
     <div class="relative grow">
       <button
         type="button"
-        data-reader-nav
         :aria-label="$t('reader_page_previous_button')"
         :disabled="isAtFirstPage"
         :class="[
@@ -247,7 +247,6 @@
       </button>
       <button
         type="button"
-        data-reader-nav
         :aria-label="$t('reader_page_next_button')"
         :disabled="isAtLastPage"
         :class="[
@@ -371,6 +370,7 @@ const props = defineProps<Props>()
 
 const toast = useToast()
 const { t: $t } = useI18n()
+const localeRoute = useLocaleRoute()
 const bookSettingsStore = useBookSettingsStore()
 
 const ttsButtonSizeABTest = useABTest({
@@ -394,6 +394,7 @@ const leftTextLayer = useTemplateRef<HTMLDivElement>('leftTextLayer')
 const rightTextLayer = useTemplateRef<HTMLDivElement>('rightTextLayer')
 const scrollableContainer = useTemplateRef<HTMLDivElement>('scrollableContainer')
 const pageInput = useTemplateRef<HTMLInputElement>('pageInput')
+const readerSearch = useTemplateRef<{ open: () => void } | null>('readerSearch')
 const pagePaddingClasses = ['p-4', 'laptop:px-12', 'laptop:pt-6', 'pb-[64px]']
 
 const {
@@ -1197,27 +1198,13 @@ function onPageInputChange(event: Event) {
   input.value = String(clampedCurrentPage.value)
 }
 
-function isInteractiveElement(el: EventTarget | null): boolean {
-  if (!el || !(el instanceof HTMLElement)) return false
-  const tag = el.tagName
-  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || tag === 'BUTTON' || tag === 'A' || el.isContentEditable
-}
-
-function isPageNavButton(el: EventTarget | null): boolean {
-  return el instanceof HTMLElement && el.hasAttribute('data-reader-nav')
-}
-
 function handleKeydown(event: KeyboardEvent) {
-  // The side arrows keep focus after a click, so shortcuts must keep working
-  // while one is focused — except the keys that natively activate it.
-  if (isPageNavButton(event.target)) {
-    if (event.key === ' ' || event.key === 'Enter') return
-  }
-  else if (isInteractiveElement(event.target)) {
-    return
-  }
+  if (getIsKeyboardShortcutTargetBlocked(event) || getIsKeyReservedByFocusedControl(event)) return
 
   const ctrl = event.ctrlKey || event.metaKey
+  // The zoom cases need Ctrl/Cmd themselves,
+  // so the bare-key guard is applied per case rather than up here.
+  const isBareKeyBlocked = getIsKeyboardShortcutBlocked(event)
 
   switch (event.key) {
     case 'ArrowLeft':
@@ -1225,6 +1212,31 @@ function handleKeydown(event: KeyboardEvent) {
       break
     case 'ArrowRight':
       nextPage('key')
+      break
+    case 'j':
+      if (isBareKeyBlocked) break
+      previousPage('key')
+      break
+    case 'k':
+      if (isBareKeyBlocked) break
+      nextPage('key')
+      break
+    case '/':
+      if (isBareKeyBlocked) break
+      // Firefox opens its own quick-find bar on `/`.
+      event.preventDefault()
+      readerSearch.value?.open()
+      break
+    case '*':
+      if (isBareKeyBlocked || !isDocumentReady.value) break
+      handleBookmarkToggle()
+      break
+    case 'Escape':
+    case 'f':
+    case 'F':
+      if (isBareKeyBlocked) break
+      // Mirrors the header's back button: a previewer leaves to the product page.
+      navigateTo(props.backTo ?? localeRoute({ name: 'shelf' }))
       break
     case '+':
     case '=':
