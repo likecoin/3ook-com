@@ -133,21 +133,28 @@
         </div>
       </div>
 
+      <!-- The library icon sits on the lowest row of the card: the rank if any, else the price. -->
       <UIcon
-        v-if="isPlusReadingIconVisible"
+        v-if="isPlusReadingIconVisible && likeRank <= 0"
         class="size-4 shrink-0"
         name="i-3ook-com-library-outline-rounded"
         :title="$t('product_page_plus_reading_label')"
       />
     </div>
 
-    <div class="text-xs font-mono h-lh">
+    <div class="flex items-end justify-between text-xs font-mono h-lh">
       <NuxtLink
         v-if="likeRank > 0"
         :to="stakingRoute"
       >
         #{{ likeRank }}
       </NuxtLink>
+      <UIcon
+        v-if="isPlusReadingIconVisible && likeRank > 0"
+        class="size-4 shrink-0"
+        name="i-3ook-com-library-outline-rounded"
+        :title="$t('product_page_plus_reading_label')"
+      />
     </div>
   </li>
 </template>
