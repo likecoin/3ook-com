@@ -3,10 +3,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import BookstoreItem from '~/components/BookstoreItem.vue'
 
 const { mockState } = vi.hoisted(() => ({
-  mockState: { subdomainLikerId: '', query: {} as Record<string, string> },
+  mockState: {
+    subdomainLikerId: '',
+    query: {} as Record<string, string>,
+    currency: 'usd',
+    merchPricingItem: undefined as Record<string, unknown> | undefined,
+  },
 }))
 
-mockNuxtImport('usePaymentCurrency', () => () => ({ displayCurrency: ref('usd') }))
+mockNuxtImport('usePaymentCurrency', () => () => ({ displayCurrency: computed(() => mockState.currency) }))
 mockNuxtImport('usePublisherSubdomainLikerId', () => () => mockState.subdomainLikerId)
 mockNuxtImport('useRouteQuery', () => () => (key: string) => mockState.query[key] || '')
 // The real one pulls in the bookshelf store, which needs wagmi; only the route
@@ -18,10 +23,10 @@ mockNuxtImport('useBookInfo', () => ({ nftClassId }: { nftClassId: string }) => 
     name: ref(''),
     authorName: ref(''),
     minPrice: ref(0),
-    minPricingItem: ref(undefined),
+    minPricingItem: ref(mockState.merchPricingItem),
     isPlusReadingEnabled: ref(false),
     isDisplayOnly: ref(false),
-    isNonNFT: ref(false),
+    isNonNFT: ref(!!mockState.merchPricingItem),
     nftClassOwnerWalletAddress: ref(''),
     getAuthorPageRoute: () => ({ name: 'store' }),
     getProductPageRoute: ({ query }: { query?: Record<string, string> }) => localeRoute({
@@ -46,7 +51,29 @@ async function getBookLinks(props: Record<string, unknown> = {}) {
 beforeEach(() => {
   mockState.subdomainLikerId = ''
   mockState.query = {}
+  mockState.currency = 'usd'
+  setUser(null)
+  mockState.merchPricingItem = undefined
 })
+
+// Mocking useUserSession would also break the i18n plugin, so seed its state.
+function setUser(user: Record<string, unknown> | null) {
+  useState('nuxt-session').value = user && { user }
+}
+
+// A BOOX reader: HK$1,998, or HK$1,698 for yearly Plus.
+async function mountMerchItem() {
+  mockState.currency = 'hkd'
+  mockState.merchPricingItem = {
+    price: 249.99,
+    priceInDecimalByCurrency: { hkd: 199800 },
+    plusPrice: 214.99,
+    plusPriceInDecimalByCurrency: { hkd: 169800 },
+  }
+  return mountSuspended(BookstoreItem, {
+    props: { nftClassId: NFT_CLASS_ID, price: 249.99, priceOverride: { hkd: 199800 } },
+  })
+}
 
 describe('BookstoreItem', () => {
   it('tags book links with the subdomain publisher as from', async () => {
@@ -84,14 +111,24 @@ describe('BookstoreItem', () => {
     expect(links.map(url => url.searchParams.get('from'))).toEqual(['@ckxpress'])
   })
 
-  it('shows a non-member the Plus price under a paid book', async () => {
+  it('shows a non-member the Plus price chip under a paid book', async () => {
     const wrapper = await mountSuspended(BookstoreItem, {
       props: { nftClassId: NFT_CLASS_ID, price: 9.99 },
     })
 
     expect(wrapper.text()).toContain('US$9.99')
     expect(wrapper.text()).toContain('US$7.99')
-    expect(wrapper.find('svg').exists()).toBe(true)
+    expect(wrapper.find('.line-through').exists()).toBe(false)
+  })
+
+  it('shows a Plus member the chip over the struck-through list price', async () => {
+    setUser({ isLikerPlus: true, likerPlusPeriod: 'month' })
+    const wrapper = await mountSuspended(BookstoreItem, {
+      props: { nftClassId: NFT_CLASS_ID, price: 9.99 },
+    })
+
+    expect(wrapper.text()).toContain('US$7.99')
+    expect(wrapper.find('.line-through').text()).toBe('US$9.99')
   })
 
   it('shows no Plus price under a free book', async () => {
@@ -99,6 +136,47 @@ describe('BookstoreItem', () => {
       props: { nftClassId: NFT_CLASS_ID, price: 0 },
     })
 
-    expect(wrapper.find('svg').exists()).toBe(false)
+    expect(wrapper.findComponent({ name: 'PlusPriceChip' }).exists()).toBe(false)
+  })
+
+  it('shows no Plus price under a book on a referred visit', async () => {
+    mockState.query = { from: '@zkcjwp' }
+    const wrapper = await mountSuspended(BookstoreItem, {
+      props: { nftClassId: NFT_CLASS_ID, price: 9.99 },
+    })
+
+    expect(wrapper.findComponent({ name: 'PlusPriceChip' }).exists()).toBe(false)
+  })
+
+  it('teases a gift item\'s annual member price to a non-member', async () => {
+    const wrapper = await mountMerchItem()
+    const chip = wrapper.findComponent({ name: 'PlusPriceChip' })
+
+    expect(wrapper.text()).toContain('HK$1,998')
+    expect(chip.props()).toMatchObject({ price: 'HK$1,698', isYearly: true })
+    expect(wrapper.find('.line-through').exists()).toBe(false)
+  })
+
+  it('teases a gift item\'s annual member price to a monthly Plus member', async () => {
+    setUser({ isLikerPlus: true, likerPlusPeriod: 'month' })
+    const wrapper = await mountMerchItem()
+
+    expect(wrapper.findComponent({ name: 'PlusPriceChip' }).props('price')).toBe('HK$1,698')
+    expect(wrapper.find('.line-through').exists()).toBe(false)
+  })
+
+  it('teases a gift item\'s annual member price on a referred visit', async () => {
+    mockState.query = { from: '@zkcjwp' }
+    const wrapper = await mountMerchItem()
+
+    expect(wrapper.findComponent({ name: 'PlusPriceChip' }).props('price')).toBe('HK$1,698')
+  })
+
+  it('gives a yearly Plus member the gift item\'s member price', async () => {
+    setUser({ isLikerPlus: true, likerPlusPeriod: 'year' })
+    const wrapper = await mountMerchItem()
+
+    expect(wrapper.findComponent({ name: 'PlusPriceChip' }).props('price')).toBe('HK$1,698')
+    expect(wrapper.find('.line-through').text()).toBe('HK$1,998')
   })
 })
