@@ -301,18 +301,21 @@ const formattedDiscountPrice = computed(() => {
   return formatMemberPrice(memberPricedItem.value, PLUS_BOOK_PURCHASE_DISCOUNT)
 })
 
-// Non-NFT goods show their own member price only to eligible members.
-// A referrer (`from`, publisher storefront or subdomain) may withhold the discount,
-// and the grid cannot check that without a fetch, so referred visits get no teaser.
+// A referrer (`from`, publisher storefront or subdomain) may withhold the book discount,
+// which the grid cannot check without a fetch; a non-NFT member price applies on any channel.
+const isReferred = computed(() => !!(
+  getRouteQuery('from')
+  || getRouteParam('userId')
+  || publisherSubdomainLikerId
+))
+
+// Teased to whoever is not paying it, so monthly Plus still sees a non-NFT member price.
 const formattedPlusMemberPrice = computed(() => {
   if (
     formattedDiscountPrice.value
-    || getRouteQuery('from')
-    || getRouteParam('userId')
-    || publisherSubdomainLikerId
+    || (isReferred.value && !bookInfo.isNonNFT.value)
     || price.value <= 0
     || bookInfo.isDisplayOnly.value
-    || bookInfo.isNonNFT.value
   ) {
     return null
   }

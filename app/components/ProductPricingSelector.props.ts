@@ -3,8 +3,9 @@ export interface ProductPricingSelectorItem {
   label?: string
   originalPrice: string
   discountedPrice: string | null
-  // The Plus price shown to a non-member under the list price.
+  // The Plus price shown under the list price to whoever is not paying it.
   plusMemberPrice?: string | null
+  plusMemberPriceNote?: string
   isSelected: boolean
   isSoldOut?: boolean
   renderedDescription: string

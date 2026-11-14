@@ -585,6 +585,7 @@ const intercom = useIntercom()
 const {
   isLikerPlus,
   isExpiredLikerPlus,
+  likerPlusPeriod,
   PLUS_BOOK_PURCHASE_DISCOUNT,
   getPlusDiscountRate,
   openUpsellPlusModalIfEligible,
@@ -1212,11 +1213,11 @@ const pricingItems = computed(() => {
       )
       const memberPricedItem = { ...item, isNonNFT: isNonNFT.value }
       const discountedPrice = isMemberPriceShown ? formatMemberPrice(memberPricedItem, PLUS_BOOK_PURCHASE_DISCOUNT) : null
+      // Teased to whoever is not paying it, so monthly Plus still sees a non-NFT member price.
       const plusMemberPrice = (
         !discountedPrice
-        && !isNonNFT.value
         && !isDisplayOnly.value
-        && isAffiliatePlusDiscountAllowed.value
+        && (isNonNFT.value || isAffiliatePlusDiscountAllowed.value)
         && item.price > 0
       )
         ? formatPlusPrice(memberPricedItem, PLUS_BOOK_PURCHASE_DISCOUNT)
@@ -1227,6 +1228,10 @@ const pricingItems = computed(() => {
         originalPrice: formatPrice(item.price, item.priceInDecimalByCurrency),
         discountedPrice,
         plusMemberPrice,
+        // An annual trialist is held back by the trial, which switching plans would not lift.
+        plusMemberPriceNote: plusMemberPrice && isNonNFT.value && likerPlusPeriod.value === 'month'
+          ? $t('product_page_plus_price_yearly_only_note')
+          : undefined,
         isSelected: index === selectedPricingItemIndex.value,
         renderedDescription: renderDescription(item.description || ''),
       }

@@ -95,6 +95,11 @@
               </template>
             </span>
           </div>
+          <p
+            v-if="item.plusMemberPriceNote && !item.isSoldOut && !isPriceHidden"
+            class="mt-2 text-xs text-muted text-left"
+            v-text="item.plusMemberPriceNote"
+          />
           <div
             v-if="item.renderedDescription"
             class="markdown whitespace-normal text-left mt-2"

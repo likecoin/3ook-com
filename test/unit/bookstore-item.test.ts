@@ -148,6 +148,30 @@ describe('BookstoreItem', () => {
     expect(wrapper.findComponent({ name: 'PlusPriceChip' }).exists()).toBe(false)
   })
 
+  it('teases a gift item\'s annual member price to a non-member', async () => {
+    const wrapper = await mountMerchItem()
+    const chip = wrapper.findComponent({ name: 'PlusPriceChip' })
+
+    expect(wrapper.text()).toContain('HK$1,998')
+    expect(chip.props()).toMatchObject({ price: 'HK$1,698', isYearly: true })
+    expect(wrapper.find('.line-through').exists()).toBe(false)
+  })
+
+  it('teases a gift item\'s annual member price to a monthly Plus member', async () => {
+    setUser({ isLikerPlus: true, likerPlusPeriod: 'month' })
+    const wrapper = await mountMerchItem()
+
+    expect(wrapper.findComponent({ name: 'PlusPriceChip' }).props('price')).toBe('HK$1,698')
+    expect(wrapper.find('.line-through').exists()).toBe(false)
+  })
+
+  it('teases a gift item\'s annual member price on a referred visit', async () => {
+    mockState.query = { from: '@zkcjwp' }
+    const wrapper = await mountMerchItem()
+
+    expect(wrapper.findComponent({ name: 'PlusPriceChip' }).props('price')).toBe('HK$1,698')
+  })
+
   it('gives a yearly Plus member the gift item\'s member price', async () => {
     setUser({ isLikerPlus: true, likerPlusPeriod: 'year' })
     const wrapper = await mountMerchItem()
