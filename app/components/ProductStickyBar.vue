@@ -55,34 +55,26 @@
         </UDropdownMenu>
       </UFieldGroup>
 
-      <span
-        v-if="actionButtons.isCheckoutVisible && !isPriceHidden"
-        class="space-x-0.5 text-xl font-semibold leading-none"
+      <div
+        v-if="actionButtons.isCheckoutVisible && !isPriceHidden && selectedPricingItem"
+        class="flex flex-col items-start gap-1"
       >
         <span
-          v-if="selectedPricingItem?.discountedPrice"
-          :class="{ 'text-theme-cyan': selectedPricingItem?.discountedPrice }"
-          v-text="selectedPricingItem?.discountedPrice"
+          :class="selectedPricingItem.discountedPrice
+            ? 'text-xs text-muted line-through'
+            : 'text-xl font-semibold leading-none'"
+          v-text="selectedPricingItem.originalPrice"
         />
-        <span
-          :class="{ 'text-xs text-dimmed line-through': selectedPricingItem?.discountedPrice }"
-          v-text="selectedPricingItem?.originalPrice"
+        <!-- A struck-through list price always sits at the bottom. -->
+        <PlusMemberPrice
+          v-if="selectedPricingItem.discountedPrice || selectedPricingItem.plusMemberPrice"
+          :class="{ '-order-1': selectedPricingItem.discountedPrice }"
+          :price="selectedPricingItem.discountedPrice || selectedPricingItem.plusMemberPrice || ''"
+          :is-yearly="isPlusPriceYearly"
+          is-label-first
+          :size="selectedPricingItem.discountedPrice ? 'xl' : 'sm'"
         />
-        <PlusBadge
-          v-if="isLikerPlus && selectedPricingItem?.discountedPrice"
-          class="inline-block"
-        />
-        <span
-          v-if="selectedPricingItem?.plusMemberPrice"
-          class="inline-flex items-center gap-1 ml-2 align-middle text-xs font-normal text-muted"
-        >
-          <span v-text="selectedPricingItem.plusMemberPrice" />
-          <PlusBadge
-            role="img"
-            aria-label="Plus"
-          />
-        </span>
-      </span>
+      </div>
 
       <ProductActionButtons
         v-bind="actionButtons"

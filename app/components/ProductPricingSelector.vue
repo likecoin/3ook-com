@@ -70,34 +70,19 @@
               v-else-if="!isPriceHidden"
               class="flex flex-col items-end text-right"
             >
-              <template v-if="item?.discountedPrice">
-                <span class="flex flex-nowrap items-center text-highlighted font-semibold">
-                  <span v-text="item.discountedPrice" />
-                  <PlusBadge
-                    v-if="isLikerPlus"
-                    class="ml-1"
-                  />
-                </span>
-                <span class="text-xs text-dimmed line-through">
-                  <span v-text="item.originalPrice" />
-                </span>
-              </template>
-              <template v-else>
-                <span
-                  class="font-semibold"
-                  v-text="item.originalPrice"
-                />
-                <span
-                  v-if="item.plusMemberPrice"
-                  class="flex items-center gap-1 text-xs text-muted"
-                >
-                  <span v-text="item.plusMemberPrice" />
-                  <PlusBadge
-                    role="img"
-                    aria-label="Plus"
-                  />
-                </span>
-              </template>
+              <span
+                :class="item.discountedPrice ? 'mt-1 text-xs text-muted line-through' : 'font-semibold'"
+                v-text="item.originalPrice"
+              />
+              <!-- A struck-through list price always sits at the bottom. -->
+              <PlusMemberPrice
+                v-if="item.discountedPrice || item.plusMemberPrice"
+                :class="item.discountedPrice ? '-order-1' : 'mt-1'"
+                :price="item.discountedPrice || item.plusMemberPrice || ''"
+                :is-yearly="isPlusPriceYearly"
+                is-label-first
+                :size="item.discountedPrice ? 'base' : 'sm'"
+              />
             </span>
           </div>
           <div

@@ -808,6 +808,8 @@
   "plus_downgrade_submit_button": "Switch to Plus",
   "plus_downgrade_success_toast_description": "Your plan changes to Plus at your next renewal.",
   "plus_downgrade_success_toast_title": "Switching to Plus",
+  "plus_price_chip_label": "Plus member",
+  "plus_price_chip_label_yearly": "Plus annual member",
   "plus_subscribe_cta_continue": "Continue",
   "plus_subscribe_cta_custom_voice_free": "Try TTS Now",
   "plus_subscribe_cta_enjoy_offer": "Join Plus Now",

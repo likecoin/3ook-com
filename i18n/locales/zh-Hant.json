@@ -808,6 +808,8 @@
   "plus_downgrade_submit_button": "轉為 Plus",
   "plus_downgrade_success_toast_description": "你的方案將於下次續訂時轉為 Plus。",
   "plus_downgrade_success_toast_title": "即將轉為 Plus",
+  "plus_price_chip_label": "Plus 會員",
+  "plus_price_chip_label_yearly": "Plus 年費會員",
   "plus_subscribe_cta_continue": "繼續",
   "plus_subscribe_cta_custom_voice_free": "免費試聽",
   "plus_subscribe_cta_enjoy_offer": "立即加入 Plus 會員",

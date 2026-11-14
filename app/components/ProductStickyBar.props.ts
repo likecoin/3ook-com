@@ -8,7 +8,7 @@ export interface ProductStickyBarProps {
   isUserBookOwner: boolean
   isPriceHidden: boolean
   readButtonVariant: 'outline' | 'solid'
-  isLikerPlus: boolean
+  isPlusPriceYearly: boolean
   pricingItems: ProductPricingSelectorItem[]
   selectedPricingItem?: ProductPricingSelectorItem
   stickyEditionDropdownItems: DropdownMenuItem[]
