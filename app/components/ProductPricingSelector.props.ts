@@ -13,7 +13,7 @@ export interface ProductPricingSelectorItem {
 export interface ProductPricingSelectorProps {
   items: ProductPricingSelectorItem[]
   isPriceHidden?: boolean
-  isLikerPlus: boolean
+  isPlusPriceYearly: boolean
   contentTypes: string[]
   isDownloadable: boolean
   isTtsSupported: boolean

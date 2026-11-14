@@ -55,34 +55,33 @@
         </UDropdownMenu>
       </UFieldGroup>
 
-      <span
-        v-if="actionButtons.isCheckoutVisible && !isPriceHidden"
-        class="space-x-0.5 text-xl font-semibold leading-none"
+      <div
+        v-if="actionButtons.isCheckoutVisible && !isPriceHidden && selectedPricingItem"
+        class="flex flex-col items-start gap-1"
       >
-        <span
-          v-if="selectedPricingItem?.discountedPrice"
-          :class="{ 'text-theme-cyan': selectedPricingItem?.discountedPrice }"
-          v-text="selectedPricingItem?.discountedPrice"
-        />
-        <span
-          :class="{ 'text-xs text-dimmed line-through': selectedPricingItem?.discountedPrice }"
-          v-text="selectedPricingItem?.originalPrice"
-        />
-        <PlusBadge
-          v-if="isLikerPlus && selectedPricingItem?.discountedPrice"
-          class="inline-block"
-        />
-        <span
-          v-if="selectedPricingItem?.plusMemberPrice"
-          class="inline-flex items-center gap-1 ml-2 align-middle text-xs font-normal text-muted"
-        >
-          <span v-text="selectedPricingItem.plusMemberPrice" />
-          <PlusBadge
-            role="img"
-            aria-label="Plus"
+        <template v-if="selectedPricingItem.discountedPrice">
+          <PlusPriceChip
+            :price="selectedPricingItem.discountedPrice"
+            :is-yearly="isPlusPriceYearly"
+            size="md"
           />
-        </span>
-      </span>
+          <span
+            class="text-xs text-muted line-through"
+            v-text="selectedPricingItem.originalPrice"
+          />
+        </template>
+        <template v-else>
+          <span
+            class="text-xl font-semibold leading-none"
+            v-text="selectedPricingItem.originalPrice"
+          />
+          <PlusPriceChip
+            v-if="selectedPricingItem.plusMemberPrice"
+            :price="selectedPricingItem.plusMemberPrice"
+            :is-yearly="isPlusPriceYearly"
+          />
+        </template>
+      </div>
 
       <ProductActionButtons
         v-bind="actionButtons"
