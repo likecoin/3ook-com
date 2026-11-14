@@ -73,18 +73,24 @@ export default function () {
     return formatCurrencyAmount(discountedPrice, displayCurrency.value)
   }
 
-  // Mirrors checkout: books take the flat Plus discount, non-NFT products only
-  // their explicit member price and only for eligible members, so the two never
-  // stack. Callers gate books on Plus themselves; null means show list price.
-  function formatMemberPrice(
+  // The price a Plus member pays, whether or not this user qualifies for it:
+  // books take the flat discount, non-NFT products only their explicit member price.
+  function formatPlusPrice(
     { price, priceInDecimalByCurrency, plusPrice, plusPriceInDecimalByCurrency, isNonNFT }: MemberPricedItem,
     discountRate: number,
   ): string | null {
     if (isNonNFT) {
-      if (plusPrice === undefined || !isPlusPriceEligible.value) return null
+      if (plusPrice === undefined) return null
       return formatCurrencyAmount(resolvePrice(plusPrice, plusPriceInDecimalByCurrency), displayCurrency.value)
     }
     return formatDiscountedPrice(price, discountRate, priceInDecimalByCurrency)
+  }
+
+  // Mirrors checkout: a non-NFT member price goes only to eligible members,
+  // so it never stacks with the book discount. Callers gate books on Plus themselves.
+  function formatMemberPrice(item: MemberPricedItem, discountRate: number): string | null {
+    if (item.isNonNFT && !isPlusPriceEligible.value) return null
+    return formatPlusPrice(item, discountRate)
   }
 
   function convertPrice(
@@ -103,6 +109,7 @@ export default function () {
   return {
     formatPrice,
     formatDiscountedPrice,
+    formatPlusPrice,
     formatMemberPrice,
     convertPrice,
     formatConvertedPrice,

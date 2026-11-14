@@ -397,7 +397,7 @@
                 v-if="pricingItems.length && !isLibrary && !bookInfo.isRegionUnsupported.value"
                 :items="pricingItems"
                 :is-price-hidden="isPriceHidden"
-                :is-liker-plus="isLikerPlus"
+                :is-plus-price-yearly="isNonNFT"
                 :content-types="bookInfo.contentTypes.value"
                 :is-downloadable="!isNonNFT && bookInfo.isDownloadable.value"
                 :is-tts-supported="!isNonNFT && !bookInfo.isAudioHidden.value && !isStoreTTSPlusReadingOnly"
@@ -478,7 +478,7 @@
         :is-user-book-owner="isUserBookOwner"
         :is-price-hidden="isPriceHidden"
         :read-button-variant="readButtonVariant"
-        :is-liker-plus="isLikerPlus"
+        :is-plus-price-yearly="isNonNFT"
         :pricing-items="pricingItems"
         :selected-pricing-item="selectedPricingItem"
         :sticky-edition-dropdown-items="stickyEditionDropdownItems"
@@ -574,7 +574,7 @@ const getRouteBaseName = useRouteBaseName()
 const getRouteParam = useRouteParam()
 const getRouteQuery = useRouteQuery()
 const { t: $t, locale } = useI18n()
-const { formatPrice, formatMemberPrice } = useCurrency()
+const { formatPrice, formatPlusPrice, formatMemberPrice } = useCurrency()
 const { getCheckoutCurrency } = usePaymentCurrency()
 const { loggedIn: hasLoggedIn, user } = useUserSession()
 const accountStore = useAccountStore()
@@ -585,6 +585,7 @@ const intercom = useIntercom()
 const {
   isLikerPlus,
   isExpiredLikerPlus,
+  likerPlusPeriod,
   PLUS_BOOK_PURCHASE_DISCOUNT,
   getPlusDiscountRate,
   openUpsellPlusModalIfEligible,
@@ -1210,19 +1211,27 @@ const pricingItems = computed(() => {
         && (isNonNFT.value || willPlusDiscountApply.value)
         && item.price > 0
       )
-      const isPlusMemberPriceTeased = (
-        !isLikerPlus.value
-        && !isNonNFT.value
+      const memberPricedItem = { ...item, isNonNFT: isNonNFT.value }
+      const discountedPrice = isMemberPriceShown ? formatMemberPrice(memberPricedItem, PLUS_BOOK_PURCHASE_DISCOUNT) : null
+      // Teased to whoever is not paying it, so monthly Plus still sees a non-NFT member price.
+      const plusMemberPrice = (
+        !discountedPrice
         && !isDisplayOnly.value
-        && isAffiliatePlusDiscountAllowed.value
+        && (isNonNFT.value || isAffiliatePlusDiscountAllowed.value)
         && item.price > 0
       )
+        ? formatPlusPrice(memberPricedItem, PLUS_BOOK_PURCHASE_DISCOUNT)
+        : null
       return {
         ...item,
         label: item.isAutoDeliver || isNonNFT.value ? item.name : $t('product_page_edition_title', { name: item.name }),
         originalPrice: formatPrice(item.price, item.priceInDecimalByCurrency),
-        discountedPrice: isMemberPriceShown ? formatMemberPrice({ ...item, isNonNFT: isNonNFT.value }, PLUS_BOOK_PURCHASE_DISCOUNT) : null,
-        plusMemberPrice: isPlusMemberPriceTeased ? formatMemberPrice(item, PLUS_BOOK_PURCHASE_DISCOUNT) : null,
+        discountedPrice,
+        plusMemberPrice,
+        // An annual trialist is held back by the trial, which switching plans would not lift.
+        plusMemberPriceNote: plusMemberPrice && isNonNFT.value && likerPlusPeriod.value === 'month'
+          ? $t('product_page_plus_price_yearly_only_note')
+          : undefined,
         isSelected: index === selectedPricingItemIndex.value,
         renderedDescription: renderDescription(item.description || ''),
       }

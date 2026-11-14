@@ -92,44 +92,27 @@
     </div>
 
     <!-- Price info for store mode -->
-    <div
-      :class="[
-        'flex justify-between mt-[0.5lh] text-highlighted',
-        isLikerPlus ? 'items-center' : 'items-end',
-      ]"
-    >
+    <div class="flex items-end justify-between mt-[0.5lh] text-highlighted">
       <div
         v-if="!isLibrary && (!isApp || price === 0)"
-        class="flex flex-col"
+        class="flex flex-col min-w-0"
       >
-        <div>
+        <div class="flex items-center h-lh">
           <span
-            v-if="formattedDiscountPrice"
-            v-text="formattedDiscountPrice"
-          />
-          <span
-            :class="{ 'text-xs ml-0.5 text-muted line-through': formattedDiscountPrice }"
+            :class="{ 'text-xs text-muted line-through': formattedDiscountPrice }"
             v-text="formattedPrice"
           />
         </div>
         <!--
-          Kept for every non-member card so a free book stays level with its row;
-          left empty, it moves above the price so the price sits at the bottom.
+          Kept on every card so a free book stays level with its row;
+          unless it is a teaser, it moves above so the struck or sole price sits at the bottom.
         -->
-        <div
-          v-if="!isLikerPlus"
-          :class="[
-            'flex items-center gap-1 h-lh text-xs text-muted',
-            { '-order-1': !formattedPlusMemberPrice },
-          ]"
-        >
-          <template v-if="formattedPlusMemberPrice">
-            <span v-text="formattedPlusMemberPrice" />
-            <PlusBadge
-              role="img"
-              aria-label="Plus"
-            />
-          </template>
+        <div :class="['flex items-center h-lh', { '-order-1': !formattedPlusMemberPrice }]">
+          <PlusMemberPrice
+            v-if="formattedPlusRowPrice"
+            :price="formattedPlusRowPrice"
+            :is-yearly="bookInfo.isNonNFT.value"
+          />
         </div>
       </div>
 
@@ -232,7 +215,7 @@ const props = defineProps({
 
 const emit = defineEmits(['visible', 'open'])
 
-const { formatPrice, formatMemberPrice } = useCurrency()
+const { formatPrice, formatPlusPrice, formatMemberPrice } = useCurrency()
 const queryCache = useQueryCache()
 const bookInfo = useBookInfo({ nftClassId: props.nftClassId })
 const { getResizedImageURL } = useImageResize()
@@ -287,38 +270,45 @@ const isPlusReadingIconVisible = computed(() =>
   props.shouldShowPlusReadingIcon && bookInfo.isPlusReadingEnabled.value,
 )
 
-const formattedDiscountPrice = computed(() => {
-  if (!isLikerPlus.value || price.value <= 0 || bookInfo.isDisplayOnly.value) return null
+const memberPricedItem = computed(() => {
   const { plusPrice, plusPriceInDecimalByCurrency } = bookInfo.minPricingItem.value ?? {}
-  return formatMemberPrice({
+  return {
     price: price.value,
     priceInDecimalByCurrency: priceCurrencyOverride.value,
     plusPrice,
     plusPriceInDecimalByCurrency,
     isNonNFT: bookInfo.isNonNFT.value,
-  }, PLUS_BOOK_PURCHASE_DISCOUNT)
+  }
 })
 
-// Non-NFT goods show their own member price only to eligible members.
-// A referrer (`from`, publisher storefront or subdomain) may withhold the discount,
-// and the grid cannot check that without a fetch, so referred visits get no teaser.
+const formattedDiscountPrice = computed(() => {
+  if (!isLikerPlus.value || price.value <= 0 || bookInfo.isDisplayOnly.value) return null
+  return formatMemberPrice(memberPricedItem.value, PLUS_BOOK_PURCHASE_DISCOUNT)
+})
+
+// A referrer (`from`, publisher storefront or subdomain) may withhold the book discount,
+// which the grid cannot check without a fetch; a non-NFT member price applies on any channel.
+const isReferred = computed(() => !!(
+  getRouteQuery('from')
+  || getRouteParam('userId')
+  || publisherSubdomainLikerId
+))
+
+// Teased to whoever is not paying it, so monthly Plus still sees a non-NFT member price.
 const formattedPlusMemberPrice = computed(() => {
   if (
-    isLikerPlus.value
-    || getRouteQuery('from')
-    || getRouteParam('userId')
-    || publisherSubdomainLikerId
+    formattedDiscountPrice.value
+    || (isReferred.value && !bookInfo.isNonNFT.value)
     || price.value <= 0
     || bookInfo.isDisplayOnly.value
-    || bookInfo.isNonNFT.value
   ) {
     return null
   }
-  return formatMemberPrice({
-    price: price.value,
-    priceInDecimalByCurrency: priceCurrencyOverride.value,
-  }, PLUS_BOOK_PURCHASE_DISCOUNT)
+  return formatPlusPrice(memberPricedItem.value, PLUS_BOOK_PURCHASE_DISCOUNT)
 })
+
+// The member price this user pays, else the one teased to them.
+const formattedPlusRowPrice = computed(() => formattedDiscountPrice.value || formattedPlusMemberPrice.value)
 
 // An impression is what the reader saw, so it waits for the observer on every
 // cover: `lazy` is set from the widest breakpoint's column count, which on a
