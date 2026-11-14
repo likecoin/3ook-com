@@ -2,12 +2,25 @@ import { describe, expect, it, vi } from 'vitest'
 import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 import useCurrency from '~/composables/use-currency'
 
-const { mockDisplayCurrency } = vi.hoisted(() => ({
+const { mockDisplayCurrency, mockUser } = vi.hoisted(() => ({
   mockDisplayCurrency: { value: 'usd' as 'usd' | 'hkd' | 'twd' },
+  mockUser: { value: null as Record<string, unknown> | null },
 }))
 
 mockNuxtImport('useI18n', () => () => ({ t: (key: string) => key }))
 mockNuxtImport('usePaymentCurrency', () => () => ({ displayCurrency: mockDisplayCurrency }))
+mockNuxtImport('useUserSession', () => () => ({
+  user: mockUser,
+  loggedIn: computed(() => !!mockUser.value),
+}))
+
+const MERCH = {
+  price: 249.99,
+  priceInDecimalByCurrency: { hkd: 199800 },
+  plusPrice: 214.99,
+  plusPriceInDecimalByCurrency: { hkd: 169800 },
+  isNonNFT: true,
+}
 
 describe('useCurrency', () => {
   it('formats USD prices with two fraction digits', () => {
@@ -53,5 +66,21 @@ describe('useCurrency', () => {
     mockDisplayCurrency.value = 'hkd'
     const { formatConvertedPrice } = useCurrency()
     expect(formatConvertedPrice(1234)).toBe('HK$1,234')
+  })
+
+  it('formats a non-NFT Plus price for anyone', () => {
+    mockDisplayCurrency.value = 'hkd'
+    mockUser.value = null
+    const { formatPlusPrice } = useCurrency()
+    expect(formatPlusPrice(MERCH, 0.2)).toBe('HK$1,698')
+    expect(formatPlusPrice({ ...MERCH, plusPrice: undefined }, 0.2)).toBeNull()
+  })
+
+  it('gives the non-NFT member price only to yearly Plus members', () => {
+    mockDisplayCurrency.value = 'hkd'
+    mockUser.value = { isLikerPlus: true, likerPlusPeriod: 'month' }
+    expect(useCurrency().formatMemberPrice(MERCH, 0.2)).toBeNull()
+    mockUser.value = { isLikerPlus: true, likerPlusPeriod: 'year' }
+    expect(useCurrency().formatMemberPrice(MERCH, 0.2)).toBe('HK$1,698')
   })
 })

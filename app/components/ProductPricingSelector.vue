@@ -70,36 +70,36 @@
               v-else-if="!isPriceHidden"
               class="flex flex-col items-end text-right"
             >
-              <template v-if="item?.discountedPrice">
-                <span class="flex flex-nowrap items-center text-highlighted font-semibold">
-                  <span v-text="item.discountedPrice" />
-                  <PlusBadge
-                    v-if="isLikerPlus"
-                    class="ml-1"
-                  />
-                </span>
-                <span class="text-xs text-dimmed line-through">
-                  <span v-text="item.originalPrice" />
-                </span>
+              <template v-if="item.discountedPrice">
+                <PlusPriceChip
+                  :price="item.discountedPrice"
+                  :is-yearly="isPlusPriceYearly"
+                  size="md"
+                />
+                <span
+                  class="mt-1 text-xs text-muted line-through"
+                  v-text="item.originalPrice"
+                />
               </template>
               <template v-else>
                 <span
                   class="font-semibold"
                   v-text="item.originalPrice"
                 />
-                <span
+                <PlusPriceChip
                   v-if="item.plusMemberPrice"
-                  class="flex items-center gap-1 text-xs text-muted"
-                >
-                  <span v-text="item.plusMemberPrice" />
-                  <PlusBadge
-                    role="img"
-                    aria-label="Plus"
-                  />
-                </span>
+                  class="mt-1"
+                  :price="item.plusMemberPrice"
+                  :is-yearly="isPlusPriceYearly"
+                />
               </template>
             </span>
           </div>
+          <p
+            v-if="item.plusMemberPriceNote && !item.isSoldOut && !isPriceHidden"
+            class="mt-2 text-xs text-muted text-left"
+            v-text="item.plusMemberPriceNote"
+          />
           <div
             v-if="item.renderedDescription"
             class="markdown whitespace-normal text-left mt-2"
