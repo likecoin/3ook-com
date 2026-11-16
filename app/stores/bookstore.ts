@@ -349,7 +349,7 @@ export const useBookstoreStore = defineStore('bookstore', () => {
   }
 
   async function fetchSearchResults(
-    type: 'q' | 'author' | 'publisher' | 'owner_wallet' | 'genre',
+    type: 'q' | 'author' | 'publisher' | 'owner_wallet' | 'genre' | 'keyword',
     searchTerm: string,
     {
       isRefresh = false,
@@ -368,6 +368,9 @@ export const useBookstoreStore = defineStore('bookstore', () => {
       }
       else if (type === 'genre') {
         await fetchProductListingSearch(fetchBookstoreCMSPublicationsByGenre, searchTerm, queryKey, { isRefresh, isLibrary })
+      }
+      else if (type === 'keyword') {
+        await fetchProductListingSearch(fetchBookstoreCMSPublicationsByKeyword, searchTerm, queryKey, { isRefresh, isLibrary })
       }
       else if (type === 'owner_wallet') {
         if (checkIsEVMAddress(searchTerm)) {
