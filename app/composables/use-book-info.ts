@@ -58,7 +58,7 @@ export default function (
   const isShipped = computed(() => getIsShippedProduct(bookstoreInfo.value?.productType))
 
   // Non-NFT products have no chain class, so their title and cover live on the listing.
-  // Books keep reading chain metadata, which is the published record of the work.
+  // Books keep the chain cover, and useEVMBookInfo already puts the listing name first.
   const listingAwareName = computed(() => (isNonNFT.value
     ? getLocalizedCopy(bookstoreInfo.value?.nameByLocale, bookstoreInfo.value?.name)
     : bookInfo.name.value))

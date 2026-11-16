@@ -181,6 +181,9 @@ declare global {
     hideUpsell: boolean
     enableCustomMessagePage: boolean
     name: string
+    alternativeHeadline?: string
+    isbn?: string
+    datePublished?: string
     description: string
     descriptionFull?: string
     // Optional per-locale copy; the plain strings above stay the fallback.

@@ -10,8 +10,14 @@ export function useEVMBookInfo(
 
   const contentMetadata = computed(() => nftClass.value?.metadata)
 
-  const name = computed(() => contentMetadata.value?.name || '')
-  const alternativeHeadline = computed(() => contentMetadata.value?.alternativeHeadline)
+  // The listing holds staff corrections not yet signed to chain, so it wins;
+  // an empty string there means unset, not a deliberate blank.
+  const bookstoreInfo = computed(() => getBookstoreInfoByNFTClassIdFromCache(queryCache, toValue(nftClassId)))
+
+  const name = computed(() => bookstoreInfo.value?.name || contentMetadata.value?.name || '')
+  const alternativeHeadline = computed(() => (
+    bookstoreInfo.value?.alternativeHeadline || contentMetadata.value?.alternativeHeadline
+  ))
   const description = computed(() => contentMetadata.value?.description || '')
 
   const author = computed(() => contentMetadata.value?.author)
@@ -19,11 +25,11 @@ export function useEVMBookInfo(
 
   const coverSrc = computed(() => normalizeURIToHTTP(contentMetadata.value?.thumbnailUrl || contentMetadata.value?.image))
 
-  const isbn = computed(() => contentMetadata.value?.isbn)
+  const isbn = computed(() => bookstoreInfo.value?.isbn || contentMetadata.value?.isbn)
   const inLanguage = computed(() => contentMetadata.value?.inLanguage)
 
   const publishedDate = computed(() => {
-    const datePublished = contentMetadata.value?.datePublished
+    const datePublished = bookstoreInfo.value?.datePublished || contentMetadata.value?.datePublished
     return datePublished ? new Date(datePublished) : undefined
   })
 
