@@ -270,30 +270,13 @@ export const useBookstoreStore = defineStore('bookstore', () => {
     state.isFetching = false
   }
 
-  async function fetchTextSearch(searchTerm: string, queryKey: string, { isRefresh, isLibrary }: Required<BookstoreSearchOptions>) {
-    const result = await fetchBookstoreCMSPublicationsBySearchTerm(searchTerm, {
-      offset: isRefresh ? undefined : bookstoreSearchResultsByQueryMap.value[queryKey]?.nextKey,
-      ts: getTimestampRoundedToMinute(),
-      isLibrary,
-    })
-
-    const mappedItems = result.records
-      .filter(item => item.classId && item.title && item.imageUrl)
-      .map(item => ({
-        classId: normalizeNFTClassId(item.classId),
-        title: item.title!,
-        imageUrl: item.imageUrl!,
-        minPrice: item.minPrice,
-        minPriceInDecimalByCurrency: item.minPriceInDecimalByCurrency,
-        restrictedTerritories: item.restrictedTerritories,
-        isPlusReadingEnabled: item.isPlusReadingEnabled,
-      }))
-
-    await updateSearchResults(queryKey, mappedItems, result.offset, isRefresh)
-  }
-
-  async function fetchGenreSearch(genre: string, queryKey: string, { isRefresh, isLibrary }: Required<BookstoreSearchOptions>) {
-    const result = await fetchBookstoreCMSPublicationsByGenre(genre, {
+  async function fetchProductListingSearch(
+    fetchProducts: typeof fetchBookstoreCMSPublicationsBySearchTerm,
+    searchTerm: string,
+    queryKey: string,
+    { isRefresh, isLibrary }: Required<BookstoreSearchOptions>,
+  ) {
+    const result = await fetchProducts(searchTerm, {
       offset: isRefresh ? undefined : bookstoreSearchResultsByQueryMap.value[queryKey]?.nextKey,
       ts: getTimestampRoundedToMinute(),
       isLibrary,
@@ -381,10 +364,10 @@ export const useBookstoreStore = defineStore('bookstore', () => {
 
     try {
       if (type === 'q') {
-        await fetchTextSearch(searchTerm, queryKey, { isRefresh, isLibrary })
+        await fetchProductListingSearch(fetchBookstoreCMSPublicationsBySearchTerm, searchTerm, queryKey, { isRefresh, isLibrary })
       }
       else if (type === 'genre') {
-        await fetchGenreSearch(searchTerm, queryKey, { isRefresh, isLibrary })
+        await fetchProductListingSearch(fetchBookstoreCMSPublicationsByGenre, searchTerm, queryKey, { isRefresh, isLibrary })
       }
       else if (type === 'owner_wallet') {
         if (checkIsEVMAddress(searchTerm)) {
