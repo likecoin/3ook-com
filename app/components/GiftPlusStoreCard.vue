@@ -13,13 +13,14 @@
         'bg-theme-black',
         'shadow-[0_2px_4px_0_rgba(0,0,0,0.10)]',
       ]"
-      :style="{ '--glow-alpha': glow.alpha, '--glow-radius': glow.radius }"
     >
-      <div class="gift-plus-glow absolute inset-0" />
-      <span
-        class="gift-plus-watermark absolute inset-x-0 top-[18.6cqw] text-center whitespace-nowrap font-black leading-none text-[42.9cqw] tracking-[-0.03em] select-none"
-        aria-hidden="true"
-      >Plus</span>
+      <img
+        class="absolute inset-0 size-full"
+        :src="backgroundSrc"
+        alt=""
+        loading="lazy"
+        decoding="async"
+      >
       <UIcon
         class="absolute left-[9cqw] top-[9cqw] size-[14.7cqw] text-theme-cyan transition-transform group-hover:scale-110"
         name="i-material-symbols-featured-seasonal-and-gifts-rounded"
@@ -62,6 +63,12 @@
 </template>
 
 <script setup lang="ts">
+import bg1m from '@/assets/images/gift-plus/1m.webp'
+import bg3m from '@/assets/images/gift-plus/3m.webp'
+import bg6m from '@/assets/images/gift-plus/6m.webp'
+import bg1y from '@/assets/images/gift-plus/1y.webp'
+import bg2y from '@/assets/images/gift-plus/2y.webp'
+
 const props = defineProps<{
   period: SubscriptionPlan
   quantity: number
@@ -82,19 +89,13 @@ const unitLabel = computed(() => $t(isYearly.value
   ? 'store_gift_plus_card_unit_years'
   : 'store_gift_plus_card_unit_months'))
 
-// The mint glow grows with the gift length,
-// so the cards read as one series while longer gifts look richer.
-// One step per GIFT_PLUS_OPTIONS entry, shortest first; radius is in cqw.
-const GLOW_STEPS = [
-  { alpha: 0.16, radius: 70 },
-  { alpha: 0.24, radius: 76 },
-  { alpha: 0.32, radius: 80 },
-  { alpha: 0.42, radius: 85 },
-  { alpha: 0.55, radius: 89 },
-] as const
-const glow = computed(() => {
+// Exported from Figma at 3x with the glow and the glass "Plus" baked in,
+// since CSS cannot reproduce Figma's glass refraction.
+// One image per GIFT_PLUS_OPTIONS entry, in the same order.
+const BACKGROUNDS = [bg1m, bg3m, bg6m, bg1y, bg2y]
+const backgroundSrc = computed(() => {
   const index = GIFT_PLUS_OPTIONS.findIndex(o => o.period === props.period && o.quantity === props.quantity)
-  return GLOW_STEPS[Math.min(Math.max(index, 0), GLOW_STEPS.length - 1)]!
+  return BACKGROUNDS[Math.max(index, 0)]
 })
 
 const formattedPrice = computed(() => formatConvertedPrice(getGiftPrice(props.period, props.quantity)))
@@ -108,29 +109,3 @@ const giftPlusRoute = computed(() => localeRoute({
   },
 }))
 </script>
-
-<style scoped>
-.gift-plus-glow {
-  background: radial-gradient(
-    circle calc(var(--glow-radius) * 1cqw) at 94% 94%,
-    rgb(80 227 194 / var(--glow-alpha)),
-    transparent
-  );
-}
-
-/* A CSS stand-in for the Figma glass effect:
-   a light-to-mint gradient clipped to the glyphs, lit along the top edge.
-   No text stroke,
-   since it traces the overlapping contours inside the system font's glyphs. */
-.gift-plus-watermark {
-  color: transparent;
-  background-image: linear-gradient(
-    165deg,
-    rgb(255 255 255 / 0.10) 0%,
-    rgb(255 255 255 / 0.03) 50%,
-    rgb(80 227 194 / calc(var(--glow-alpha) * 0.6)) 100%
-  );
-  background-clip: text;
-  text-shadow: 0 -1px 0 rgb(255 255 255 / 0.08);
-}
-</style>
