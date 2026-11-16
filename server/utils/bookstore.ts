@@ -70,6 +70,11 @@ interface BookstoreListingFetchOptions {
   isLibrary?: boolean
 }
 
+// Only `/list` reads `keyword`, narrowing to books that carry it as an exact keyword.
+interface BookstoreBookListingFetchOptions extends BookstoreListingFetchOptions {
+  keyword?: string
+}
+
 // Kept off the shared options bag: only this listing narrows by filter, and a `filter` the
 // other fetchers silently drop would pass an unfiltered list off as a filtered one.
 interface BookstorePopularListingFetchOptions extends BookstoreListingFetchOptions {
@@ -179,7 +184,8 @@ export async function fetchBookstoreBookListing(
     pageSize = MAX_BOOKSTORE_PAGE_SIZE,
     nextKey: key,
     isLibrary = false,
-  }: BookstoreListingFetchOptions = {},
+    keyword,
+  }: BookstoreBookListingFetchOptions = {},
 ): Promise<FetchBookstoreCMSProductsResponseData> {
   const fetch = getLikeCoinAPIFetch()
   const { list, nextKey } = await fetch<NFTBookListResponse>(path, {
@@ -187,6 +193,7 @@ export async function fetchBookstoreBookListing(
       limit: pageSize,
       key: key ? Number(key) : undefined,
       library: isLibrary ? '1' : undefined,
+      keyword,
     },
   })
   return {
