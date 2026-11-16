@@ -1432,7 +1432,9 @@ async function fetchItems({ lazy = false, isRefresh = false } = {}): Promise<boo
   }
   if (isSearchMode.value) {
     try {
-      const [type, searchTerm] = searchQuery.value.split(':', 2)
+      // Only the first colon ends the type; a search term may contain colons of its own.
+      const [type, ...searchTermParts] = searchQuery.value.split(':')
+      const searchTerm = searchTermParts.join(':')
       if (type === 'affiliate' && searchTerm) {
         await bookstoreStore.fetchAffiliateBooks(searchTerm, {
           isRefresh,
