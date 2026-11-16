@@ -198,22 +198,22 @@
             </li>
             <li
               v-for="tag in descriptionTags"
-              :key="tag"
+              :key="tag.label"
             >
               <UButton
-                :label="tag"
+                :label="tag.label"
                 :to="localeRoute({
                   name: listingRouteName,
                   query: {
-                    q: tag,
-                    ll_medium: `keyword-${tag}`,
+                    [tag.queryKey]: tag.label,
+                    ll_medium: `keyword-${tag.label}`,
                     ll_source: 'product-page',
                   },
                 })"
                 variant="subtle"
                 color="neutral"
                 :ui="{ base: 'rounded-full' }"
-                @click="handleKeywordClick(tag)"
+                @click="handleKeywordClick(tag.label)"
               />
             </li>
             <li v-if="!isNonNFT && !bookInfo.isAudioHidden.value && !isStoreTTSPlusReadingOnly">
@@ -1014,22 +1014,23 @@ const isPlusPromoBannerVisible = computed(() => {
   )
 })
 
+// Keywords open the exact-match keyword listing;
+// the format and download labels aren't keywords, so they stay a text search.
 const descriptionTags = computed(() => {
-  const tags: string[] = []
-
-  if (bookInfo.keywords.value) {
-    tags.push(...bookInfo.keywords.value)
+  const tags = new Map<string, 'keyword' | 'q'>()
+  const addTag = (label: string, queryKey: 'keyword' | 'q') => {
+    if (!tags.has(label)) tags.set(label, queryKey)
   }
 
-  if (bookInfo.contentTypes.value) {
-    tags.push(...bookInfo.contentTypes.value.map(type => type.toUpperCase()))
-  }
+  bookInfo.keywords.value.forEach(keyword => addTag(keyword, 'keyword'))
+
+  bookInfo.contentTypes.value.forEach(type => addTag(type.toUpperCase(), 'q'))
 
   if (!isLibrary.value && bookInfo.isDownloadable.value) {
-    tags.push($t('reading_method_download_file'))
+    addTag($t('reading_method_download_file'), 'q')
   }
 
-  return [...new Set(tags)]
+  return [...tags].map(([label, queryKey]) => ({ label, queryKey }))
 })
 
 const ogTitle = computed(() => {

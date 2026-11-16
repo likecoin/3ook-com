@@ -33,6 +33,11 @@ export function isBookstoreBuiltInListType(value: string): value is BookstoreBui
   return (BOOKSTORE_BUILT_IN_LIST_TYPES as readonly string[]).includes(value)
 }
 
+// Book pages show keywords as hashtags, so a copied `#絕版重生` names the same keyword.
+export function normalizeBookKeyword(keyword: string): string {
+  return keyword.trim().replace(/^#+/, '').trim()
+}
+
 export function getBookstoreScopedKey(key: string, isLibrary: boolean) {
   return isLibrary ? `library:${key}` : key
 }
