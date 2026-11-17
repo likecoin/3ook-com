@@ -104,6 +104,14 @@
                   :is-library="isLibrary"
                 />
               </li>
+              <li v-if="publishedDateLabel">
+                <div v-text="$t('product_page_date_published_label')" />
+                <time
+                  class="block py-2 font-medium text-highlighted"
+                  :datetime="bookInfo.formattedPublishedDate.value"
+                  v-text="publishedDateLabel"
+                />
+              </li>
             </ul>
           </div>
         </div>
@@ -670,6 +678,13 @@ const { isApp } = useAppDetection()
 const nftClassId = computed(() => getRouteParam('nftClassId'))
 // The product page renders the owner, so it opts into fetching their profile.
 const bookInfo = useBookInfo({ nftClassId, isOwnerInfoEnabled: true })
+// datePublished is a calendar date parsed as UTC midnight,
+// so format in UTC to avoid showing the previous day west of GMT.
+const publishedDateLabel = computed(() => {
+  const date = bookInfo.publishedDate.value
+  if (!date) return ''
+  return new Intl.DateTimeFormat(locale.value, { dateStyle: 'long', timeZone: 'UTC' }).format(date)
+})
 // A non-NFT product mints no token, so an on-chain ownership read would only fail.
 const { isOwner: isUserBookOwner } = useUserBookOwnership(
   computed(() => (bookInfo.isNonNFT.value ? '' : nftClassId.value)),
