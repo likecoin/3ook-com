@@ -769,7 +769,7 @@ const baseProducts = computed<BookstoreItemList>(() => {
         id: item.nftClassId,
         classId: item.nftClassId,
         title: bookInfo?.name || '',
-        imageUrl: bookInfo?.thumbnailUrl || '',
+        imageUrl: bookInfo?.productImageUrl || '',
         minPrice: undefined,
         totalStaked: item.totalStaked,
         stakerCount: item.stakerCount,

@@ -209,7 +209,7 @@ const cartItems = computed<CheckoutItem[]>(() => {
       ? {
           name: (bookstoreInfo.nameByLocale && localeString(bookstoreInfo.nameByLocale as Record<string, string>)) || bookstoreInfo.name || '',
           authorName,
-          coverSrc: getResizedNormalizedImageURL(bookstoreInfo.thumbnailUrl, { size: 600 }),
+          coverSrc: bookstoreInfo.thumbnails?.medium.url || '',
         }
       : {
           name: localeString(bookstoreInfo.name || nftClass!.name) || '',
