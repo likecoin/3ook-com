@@ -16,7 +16,7 @@
     >
       <img
         class="absolute inset-0 size-full"
-        :src="backgroundSrc"
+        :src="coverSrc"
         alt=""
         loading="lazy"
         decoding="async"
@@ -63,11 +63,7 @@
 </template>
 
 <script setup lang="ts">
-import bg1m from '@/assets/images/gift-plus/1m.webp'
-import bg3m from '@/assets/images/gift-plus/3m.webp'
-import bg6m from '@/assets/images/gift-plus/6m.webp'
-import bg1y from '@/assets/images/gift-plus/1y.webp'
-import bg2y from '@/assets/images/gift-plus/2y.webp'
+import coverSrc from '@/assets/images/gift-plus-cover.webp'
 
 const props = defineProps<{
   period: SubscriptionPlan
@@ -88,15 +84,6 @@ const title = computed(() => $t('store_gift_plus_card_title', { period: periodLa
 const unitLabel = computed(() => $t(isYearly.value
   ? 'store_gift_plus_card_unit_years'
   : 'store_gift_plus_card_unit_months'))
-
-// Exported from Figma at 3x with the glow and the glass "Plus" baked in,
-// since CSS cannot reproduce Figma's glass refraction.
-// One image per GIFT_PLUS_OPTIONS entry, in the same order.
-const BACKGROUNDS = [bg1m, bg3m, bg6m, bg1y, bg2y]
-const backgroundSrc = computed(() => {
-  const index = GIFT_PLUS_OPTIONS.findIndex(o => o.period === props.period && o.quantity === props.quantity)
-  return BACKGROUNDS[Math.max(index, 0)]
-})
 
 const formattedPrice = computed(() => formatConvertedPrice(getGiftPrice(props.period, props.quantity)))
 
