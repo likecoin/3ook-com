@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col gap-2 laptop:gap-3">
     <header
-      v-if="!isYearlyHidden && !isMonthlyHidden"
+      v-if="hasPlanChoice"
       class="flex items-center justify-between mb-1 laptop:hidden"
     >
       <slot name="header-left" />
@@ -69,7 +69,7 @@
         'before:pointer-events-none',
         'hover:before:bg-theme-black/5',
 
-        !plan.isSelected && !isYearlyHidden && !isMonthlyHidden
+        !plan.isSelected && hasPlanChoice
           ? 'max-laptop:hidden'
           : '',
       ]"
@@ -104,7 +104,7 @@
             plan.isSelected
               ? 'bg-theme-black dark:bg-theme-cyan border-theme-black dark:border-theme-cyan'
               : 'bg-transparent border-theme-black/40 dark:border-theme-cyan/40',
-            !isYearlyHidden && !isMonthlyHidden ? 'max-laptop:hidden' : '',
+            hasPlanChoice ? 'max-laptop:hidden' : '',
           ]"
         >
           <UIcon
@@ -442,4 +442,6 @@ const plans = computed(() => {
 })
 
 const toggleOptions = computed(() => plans.value.map(p => ({ key: p.key, label: p.label })))
+// A single plan (e.g. a gift card's preselected period) needs no toggle or radio.
+const hasPlanChoice = computed(() => plans.value.length > 1)
 </script>

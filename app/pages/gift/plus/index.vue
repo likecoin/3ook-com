@@ -83,7 +83,7 @@
           v-model="selectedPlan"
           v-model:quantity="selectedQuantity"
           :trial-period-days="0"
-          :gift-options="GIFT_PLUS_OPTIONS"
+          :gift-options="giftOptions"
         />
       </div>
 
@@ -200,6 +200,8 @@ const getRouteQuery = useRouteQuery()
 const linkedOption = findGiftPlusOption(getRouteQuery('period'), getRouteQuery('quantity'))
 const selectedPlan = ref<SubscriptionPlan>(linkedOption?.period ?? 'yearly')
 const selectedQuantity = ref(linkedOption?.quantity ?? 1)
+// The card already chose the period, so only that one is offered.
+const giftOptions = linkedOption ? [linkedOption] : GIFT_PLUS_OPTIONS
 const selectedPlanLabel = computed(() => (selectedPlan.value === 'yearly'
   ? $t('pricing_page_n_years', { count: selectedQuantity.value })
   : $t('pricing_page_n_months', { count: selectedQuantity.value })))
