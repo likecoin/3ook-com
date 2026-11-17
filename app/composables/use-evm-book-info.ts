@@ -24,7 +24,9 @@ export function useEVMBookInfo(
 
   const publishedDate = computed(() => {
     const datePublished = contentMetadata.value?.datePublished
-    return datePublished ? new Date(datePublished) : undefined
+    if (!datePublished) return undefined
+    const date = new Date(datePublished)
+    return Number.isNaN(date.getTime()) ? undefined : date
   })
 
   const releasedDate = computed(() => {
