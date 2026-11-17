@@ -178,6 +178,8 @@
 <script setup lang="ts">
 const { t: $t } = useI18n()
 const localeRoute = useLocaleRoute()
+const router = useRouter()
+const getRouteBaseName = useRouteBaseName()
 const { isApp } = useAppDetection()
 const { handleError } = useErrorHandler()
 const plusGiftSessionAPI = usePlusGiftSessionAPI()
@@ -292,7 +294,15 @@ async function handleCheckout() {
 }
 
 function handleCancel() {
-  navigateTo(localeRoute({ name: 'store' }))
+  // Retrace the step to the listing that linked here, keeping its scroll; other entries,
+  // e.g. a direct visit or the success page's "gift another", land on the gift tag.
+  const back = window.history.state?.back
+  const isFromStoreListing = (
+    typeof back === 'string'
+    && getIsStoreListingRouteName(String(getRouteBaseName(router.resolve(back)) ?? ''))
+  )
+  if (isFromStoreListing) router.back()
+  else navigateTo(localeRoute({ name: 'store', params: { tagId: GIFT_TAG_ID } }))
 }
 
 onMounted(async () => {
