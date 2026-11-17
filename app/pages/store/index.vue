@@ -1556,9 +1556,14 @@ onMounted(async () => {
 
 onBeforeRouteLeave((to) => {
   // Keep scroll/tag state only when staying within the same tab (store ↔ store,
-  // library ↔ library); switching tabs, leaving or the `/` search shortcut clears it.
+  // library ↔ library) or opening a gift card's /gift/plus, which returns here like a
+  // product page; switching tabs, leaving or the `/` search shortcut clears it.
   const toBaseName = getRouteBaseNameString(to)
-  if (toBaseName && toBaseName.startsWith(listingRouteName.value) && to.query.search !== '1') {
+  const shouldKeepState = (
+    (toBaseName.startsWith(listingRouteName.value) || toBaseName === 'gift-plus')
+    && to.query.search !== '1'
+  )
+  if (shouldKeepState) {
     // Save the 'default' marker, not the resolved id: the default listing's URL
     // carries no tag, and its id shifts with login state anyway.
     storePageState.save(isDefaultTagId.value ? 'default' : tagId.value, route.query as Record<string, string>)
