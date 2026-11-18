@@ -281,6 +281,12 @@
           name="material-symbols-progress-activity"
           size="48"
         />
+        <UButton
+          v-else-if="isAutoLoadPaused"
+          :label="$t('store_load_more_button')"
+          variant="outline"
+          @click="loadMoreItems"
+        />
       </div>
 
       <!-- In-app browse hides the store, so point native users to the full catalogue as plain text. -->
@@ -1574,32 +1580,38 @@ onBeforeRouteLeave((to) => {
 })
 
 const isLoadingMore = ref(false)
-watch(
-  shouldLoadMore,
-  async (isSentinelVisible) => {
-    // Serialize: an async watch isn't re-entrancy-safe, so a sentinel
-    // visibility flip mid-fetch could otherwise stack overlapping runs (and
-    // duplicate error modals).
-    if (!isSentinelVisible || isLoadingMore.value) return
-    isLoadingMore.value = true
-    try {
-      const tagIdAtStart = tagId.value
-      await fetchWhileSentinelVisible({
-        fetchPage: fetchItems,
-        getCursor: () => products.value.nextItemsKey,
-        isSentinelStillVisible: async () => {
-          await nextTick()
-          // Observer callbacks land after the next frame's rendering step.
-          await new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve)))
-          return shouldLoadMore.value && tagId.value === tagIdAtStart
-        },
-      })
-    }
-    finally {
-      isLoadingMore.value = false
-    }
-  },
-)
+// The listing where auto-paging stopped at its cap with the sentinel still in view,
+// since the observer won't re-fire until the sentinel leaves and re-enters.
+// Keyed by URL so the button can't carry over to another tag or search.
+const autoLoadPausedPath = ref<string>()
+const isAutoLoadPaused = computed(() => autoLoadPausedPath.value === route.fullPath)
+async function loadMoreItems() {
+  // Serialize: both the sentinel watcher and the Load more button call this,
+  // and overlapping runs would stack fetches (and duplicate error modals).
+  if (isLoadingMore.value) return
+  isLoadingMore.value = true
+  try {
+    const pathAtStart = route.fullPath
+    const tagIdAtStart = tagId.value
+    const hasHitCap = await fetchWhileSentinelVisible({
+      fetchPage: fetchItems,
+      getCursor: () => products.value.nextItemsKey,
+      isSentinelStillVisible: async () => {
+        await nextTick()
+        // Observer callbacks land after the next frame's rendering step.
+        await new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve)))
+        return shouldLoadMore.value && tagId.value === tagIdAtStart
+      },
+    })
+    autoLoadPausedPath.value = hasHitCap ? pathAtStart : undefined
+  }
+  finally {
+    isLoadingMore.value = false
+  }
+}
+watch(shouldLoadMore, (isSentinelVisible) => {
+  if (isSentinelVisible) loadMoreItems()
+})
 
 async function handleFetchItemsErrorRetryButtonClick() {
   useLogEvent('store_fetch_items_error_retry', { tag_id: tagId.value })

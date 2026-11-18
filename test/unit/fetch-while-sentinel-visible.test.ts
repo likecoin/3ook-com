@@ -34,8 +34,9 @@ describe('fetchWhileSentinelVisible', () => {
       { cursor: 'p4', isSentinelVisible: true },
       { cursor: 'p5' },
     ])
-    await fetchWhileSentinelVisible(options)
+    const hasHitCap = await fetchWhileSentinelVisible(options)
     expect(state.fetches).toBe(4)
+    expect(hasHitCap).toBe(false)
   })
 
   it('stops once the cursor is exhausted', async () => {
@@ -72,7 +73,8 @@ describe('fetchWhileSentinelVisible', () => {
     const { state, options } = createListing(
       Array.from({ length: 10 }, (_, i) => ({ cursor: `p${i + 2}`, isSentinelVisible: true })),
     )
-    await fetchWhileSentinelVisible({ ...options, maxPages: 3 })
+    const hasHitCap = await fetchWhileSentinelVisible({ ...options, maxPages: 3 })
     expect(state.fetches).toBe(3)
+    expect(hasHitCap).toBe(true)
   })
 })
