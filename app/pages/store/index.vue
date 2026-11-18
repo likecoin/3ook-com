@@ -1583,23 +1583,17 @@ watch(
     if (!isSentinelVisible || isLoadingMore.value) return
     isLoadingMore.value = true
     try {
-      const countBefore = products.value.items.length
-      const didFetch = await fetchItems()
-      // Recovering an expired offset (422) re-fetches page 1 in place to mint a
-      // fresh cursor without adding items. The IntersectionObserver won't
-      // re-fire because the sentinel hasn't moved, so the spinner would hang
-      // despite a usable cursor. If the fetch succeeded but the list didn't
-      // grow and a cursor remains, advance once more so pagination continues.
-      // Gating on success avoids re-firing (and re-erroring) after a failure.
-      if (
-        didFetch
-        && shouldLoadMore.value
-        && hasMoreItems.value
-        && !!products.value.nextItemsKey
-        && products.value.items.length <= countBefore
-      ) {
-        await fetchItems()
-      }
+      const tagIdAtStart = tagId.value
+      await fetchWhileSentinelVisible({
+        fetchPage: fetchItems,
+        getCursor: () => products.value.nextItemsKey,
+        isSentinelStillVisible: async () => {
+          await nextTick()
+          // Observer callbacks land after the next frame's rendering step.
+          await new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve)))
+          return shouldLoadMore.value && tagId.value === tagIdAtStart
+        },
+      })
     }
     finally {
       isLoadingMore.value = false
