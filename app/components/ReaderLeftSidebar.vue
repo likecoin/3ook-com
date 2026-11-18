@@ -48,7 +48,9 @@
 <script setup lang="ts">
 import type { ReaderLeftSidebarProps, ReaderLeftSidebarTab } from './ReaderLeftSidebar.props'
 
-const props = defineProps<ReaderLeftSidebarProps>()
+const props = withDefaults(defineProps<ReaderLeftSidebarProps>(), {
+  hasBookmarks: true,
+})
 
 const emit = defineEmits<{
   (e: 'trigger-click'): void
@@ -73,12 +75,14 @@ const tabItems = computed<TabItem[]>(() => [
     label: t('reader_toc_title'),
     icon: 'i-material-symbols-toc-rounded',
   },
-  {
-    value: 'bookmarks',
-    slot: 'bookmarks',
-    label: t('reader_bookmarks_title'),
-    icon: 'i-material-symbols-bookmarks-rounded',
-  },
+  ...(props.hasBookmarks
+    ? [{
+        value: 'bookmarks' as const,
+        slot: 'bookmarks' as const,
+        label: t('reader_bookmarks_title'),
+        icon: 'i-material-symbols-bookmarks-rounded',
+      }]
+    : []),
   ...(props.hasAnnotations
     ? [{
         value: 'annotations' as const,
