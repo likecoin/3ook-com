@@ -29,15 +29,19 @@ const { t: $t } = useI18n()
 
 const nftClassId = computed(() => getRouteQuery('nft_class_id'))
 const nftId = computed(() => getRouteQuery('nft_id'))
+const isStandaloneMode = useStandaloneReaderMode()
 
-if (!nftClassId.value) {
+if (!nftClassId.value && !isStandaloneMode.value) {
   await navigateTo(localeRoute({ name: 'shelf', query: route.query }))
 }
 
 // Uploaded books skip the NFT-only guards below — they're not on-chain, so
 // there's no class to own, nothing to lowercase, and no nft_id to default.
 const isUploadedBook = getRouteQuery('source') === 'upload'
-if (isUploadedBook) {
+if (isStandaloneMode.value) {
+  // A local file preview has no book record to load or guard.
+}
+else if (isUploadedBook) {
   const uploadedBooksStore = useUploadedBooksStore()
   await uploadedBooksStore.fetchItems()
   const bookInfo = useUploadedBookInfo({ bookId: nftClassId })
