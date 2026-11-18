@@ -582,6 +582,7 @@ function handleLocalEPUBSelect(file: File) {
   // Re-picking an edited copy of the same book keeps its position and layout.
   if (file.name !== localEPUBFile.value?.name) {
     currentCfi.value = ''
+    percentage.value = 0
     hasPickedLocalWritingMode.value = false
   }
   localEPUBFile.value = file
