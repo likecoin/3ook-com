@@ -1594,7 +1594,16 @@ async function loadMoreItems() {
     const pathAtStart = route.fullPath
     const tagIdAtStart = tagId.value
     const hasHitCap = await fetchWhileSentinelVisible({
-      fetchPage: fetchItems,
+      fetchPage: async () => {
+        // The store skips a fetch while one for the same listing is in flight (e.g. the
+        // background refresh on return), which would read as a stalled cursor, so wait it out.
+        if (products.value.isFetchingItems) {
+          await until(() => products.value.isFetchingItems).toBe(false)
+          // `products` follows the route, so a switch mid-wait would page the new listing.
+          if (route.fullPath !== pathAtStart) return false
+        }
+        return fetchItems()
+      },
       getCursor: () => products.value.nextItemsKey,
       isSentinelStillVisible: async () => {
         await nextTick()
