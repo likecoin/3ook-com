@@ -205,6 +205,7 @@
             </ReaderLeftSidebar>
             <ReaderSearch
               ref="readerSearch"
+              :key="localEPUBVersion"
               v-model:open="isSearchOpen"
               :search-handler="handleSearchEPUB"
               @navigate="handleSearchNavigate"
@@ -554,6 +555,8 @@ const { loadingLabel, loadingPercentage, isLoadedFromCache, loadFileAsBuffer, ab
 const isOnline = useOnline()
 
 const localEPUBFile = shallowRef<File>()
+// Remounts the search panel so it can't hold results from a replaced file.
+const localEPUBVersion = ref(0)
 const isLocalEPUBDropzoneVisible = computed(() => isStandaloneMode.value && !localEPUBFile.value)
 const { open: openLocalEPUBDialog, onChange: onLocalEPUBDialogChange } = useFileDialog({
   accept: '.epub,application/epub+zip',
@@ -573,9 +576,13 @@ function handleLocalEPUBSelect(file: File) {
     })
     return
   }
-  // Re-picking an edited copy of the same book keeps the reading position.
+  // Search results and a footnote return point into the previous file.
+  dismissFootnoteReturn()
+  localEPUBVersion.value += 1
+  // Re-picking an edited copy of the same book keeps its position and layout.
   if (file.name !== localEPUBFile.value?.name) {
     currentCfi.value = ''
+    hasPickedLocalWritingMode.value = false
   }
   localEPUBFile.value = file
   startReaderLoad()
