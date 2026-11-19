@@ -83,8 +83,7 @@
           v-model="selectedPlan"
           v-model:quantity="selectedQuantity"
           :trial-period-days="0"
-          :gift-month-quantity="[3, 6]"
-          :gift-year-quantity="[2]"
+          :gift-options="giftOptions"
         />
       </div>
 
@@ -179,6 +178,8 @@
 <script setup lang="ts">
 const { t: $t } = useI18n()
 const localeRoute = useLocaleRoute()
+const router = useRouter()
+const getRouteBaseName = useRouteBaseName()
 const { isApp } = useAppDetection()
 const { handleError } = useErrorHandler()
 const plusGiftSessionAPI = usePlusGiftSessionAPI()
@@ -196,8 +197,13 @@ useHead({
   ],
 })
 
-const selectedPlan = ref<SubscriptionPlan>('yearly')
-const selectedQuantity = ref(1)
+// A gift card in the store links here with its period preselected.
+const getRouteQuery = useRouteQuery()
+const linkedOption = findGiftPlusOption(getRouteQuery('period'), getRouteQuery('quantity'))
+const selectedPlan = ref<SubscriptionPlan>(linkedOption?.period ?? 'yearly')
+const selectedQuantity = ref(linkedOption?.quantity ?? 1)
+// The card already chose the period, so only that one is offered.
+const giftOptions = linkedOption ? [linkedOption] : GIFT_PLUS_OPTIONS
 const selectedPlanLabel = computed(() => (selectedPlan.value === 'yearly'
   ? $t('pricing_page_n_years', { count: selectedQuantity.value })
   : $t('pricing_page_n_months', { count: selectedQuantity.value })))
@@ -288,7 +294,15 @@ async function handleCheckout() {
 }
 
 function handleCancel() {
-  navigateTo(localeRoute({ name: 'store' }))
+  // Retrace the step to the listing that linked here, keeping its scroll; other entries,
+  // e.g. a direct visit or the success page's "gift another", land on the gift tag.
+  const back = window.history.state?.back
+  const isFromStoreListing = (
+    typeof back === 'string'
+    && getIsStoreListingRouteName(String(getRouteBaseName(router.resolve(back)) ?? ''))
+  )
+  if (isFromStoreListing) router.back()
+  else navigateTo(localeRoute({ name: 'store', params: { tagId: GIFT_TAG_ID } }))
 }
 
 onMounted(async () => {

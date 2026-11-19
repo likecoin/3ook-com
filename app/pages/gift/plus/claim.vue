@@ -217,7 +217,7 @@ const { handleError } = useErrorHandler()
 const plusGiftSessionAPI = usePlusGiftSessionAPI()
 const accountStore = useAccountStore()
 const { loggedIn: hasLoggedIn, user } = useUserSession()
-const { yearlyPrice, getMonthsPrice } = useSubscription()
+const { getGiftPrice } = useSubscription()
 
 const getRouteQuery = useRouteQuery()
 
@@ -244,9 +244,7 @@ const cartId = computed(() => getRouteQuery('cart_id') as string || '')
 const claimingToken = computed(() => getRouteQuery('claiming_token') as string || '')
 
 const isYearly = computed(() => period.value === 'yearly')
-const giftPrice = computed(() => isYearly.value
-  ? yearlyPrice.value * quantity.value
-  : getMonthsPrice(quantity.value))
+const giftPrice = computed(() => getGiftPrice(period.value, quantity.value))
 
 const planLabel = computed(() => {
   if (isYearly.value) {

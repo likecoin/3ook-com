@@ -10,7 +10,7 @@ export function useSubscription() {
     yearlyPrice,
     civicMonthlyPrice,
     civicYearlyPrice,
-    getMonthsPrice,
+    getGiftPrice,
     getTierPrice,
   } = useSubscriptionPricing()
 
@@ -69,7 +69,7 @@ export function useSubscription() {
     monthlyPrice,
     civicYearlyPrice,
     civicMonthlyPrice,
-    getMonthsPrice,
+    getGiftPrice,
     getTierPrice,
     currency,
 

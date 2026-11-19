@@ -219,7 +219,7 @@
       </ol>
 
       <ul
-        v-else-if="itemsCount > 0"
+        v-else-if="itemsCount > 0 || isGiftPlusCardVisible"
         :class="[
           ...gridClasses,
 
@@ -249,6 +249,15 @@
           @open="handleBookstoreItemOpen($event, index)"
           @visible="handleBookstoreItemVisible"
         />
+        <template v-if="isGiftPlusCardVisible">
+          <GiftPlusStoreCard
+            v-for="option in GIFT_PLUS_OPTIONS"
+            :key="`${option.period}-${option.quantity}`"
+            :period="option.period"
+            :quantity="option.quantity"
+            :ll-medium="itemLLMedium"
+          />
+        </template>
       </ul>
 
       <footer
@@ -262,7 +271,7 @@
       </footer>
 
       <div
-        v-if="hasMoreItems && itemsCount > 0"
+        v-if="hasMoreItems && (itemsCount > 0 || isGiftTag)"
         ref="infiniteScrollDetector"
         class="flex justify-center py-48"
       >
@@ -271,6 +280,12 @@
           class="animate-spin"
           name="material-symbols-progress-activity"
           size="48"
+        />
+        <UButton
+          v-else-if="isAutoLoadPaused"
+          :label="$t('store_load_more_button')"
+          variant="outline"
+          @click="loadMoreItems"
         />
       </div>
 
@@ -291,6 +306,7 @@ import { LOGGED_IMPRESSION_COUNT, isBookstoreBuiltInListType } from '~~/shared/u
 import { getStorePublisherRouteName } from '~~/shared/constants/store-routes'
 import { formatLikerIdHandle } from '~~/shared/utils/liker-id'
 import { getStoreTagIdFromRoute } from '~/composables/use-store-tags'
+import { getIsGiftTagId } from '~/utils/gift-tag'
 import { getIsLibraryChartTagId } from '~/utils/library-chart'
 
 // Per-tag, so not a static `colorMode`: this page also serves /store.
@@ -443,6 +459,12 @@ const {
 // The monthly chart is an ordinary CMS tag,
 // whose Airtable book order is the rank — the layout switch is all the id buys.
 const isLibraryChartTag = computed(() => isLibraryTab.value && getIsLibraryChartTagId(tagId.value))
+// Plus gifting checks out through its own Stripe flow, not the cart, so each gift
+// period rides on the gift tag as a card. Web only: /gift/plus bounces app users to the store.
+const isGiftTag = computed(() => !isLibraryTab.value && !isSearchMode.value && getIsGiftTagId(tagId.value))
+// The cards render even when region filtering empties the product list,
+// so the gift tag keeps paging through filtered-out pages to reach the end.
+const isGiftPlusCardVisible = computed(() => !isApp.value && isGiftTag.value && !hasMoreItems.value)
 // The header shows the editor's copy verbatim;
 // `tagDescription` falls back to boilerplate
 // that reads fine in meta and badly on the page.
@@ -858,7 +880,12 @@ const storeListStatus = computed(() => {
   if (isProfileListingEmpty.value) return 'no-items' as const
   if (isLoadingInitialItems.value) return 'loading' as const
   if (isSearchResultEmpty.value) return 'search-empty' as const
-  if (itemsCount.value === 0 && !products.value.isFetchingItems && products.value.hasFetchedItems) return 'no-items' as const
+  if (
+    itemsCount.value === 0
+    && !products.value.isFetchingItems
+    && products.value.hasFetchedItems
+    && !isGiftPlusCardVisible.value
+  ) return 'no-items' as const
   return null
 })
 
@@ -1535,9 +1562,14 @@ onMounted(async () => {
 
 onBeforeRouteLeave((to) => {
   // Keep scroll/tag state only when staying within the same tab (store ↔ store,
-  // library ↔ library); switching tabs, leaving or the `/` search shortcut clears it.
+  // library ↔ library) or opening a gift card's /gift/plus, which returns here like a
+  // product page; switching tabs, leaving or the `/` search shortcut clears it.
   const toBaseName = getRouteBaseNameString(to)
-  if (toBaseName && toBaseName.startsWith(listingRouteName.value) && to.query.search !== '1') {
+  const shouldKeepState = (
+    (toBaseName.startsWith(listingRouteName.value) || toBaseName === 'gift-plus')
+    && to.query.search !== '1'
+  )
+  if (shouldKeepState) {
     // Save the 'default' marker, not the resolved id: the default listing's URL
     // carries no tag, and its id shifts with login state anyway.
     storePageState.save(isDefaultTagId.value ? 'default' : tagId.value, route.query as Record<string, string>)
@@ -1548,38 +1580,47 @@ onBeforeRouteLeave((to) => {
 })
 
 const isLoadingMore = ref(false)
-watch(
-  shouldLoadMore,
-  async (isSentinelVisible) => {
-    // Serialize: an async watch isn't re-entrancy-safe, so a sentinel
-    // visibility flip mid-fetch could otherwise stack overlapping runs (and
-    // duplicate error modals).
-    if (!isSentinelVisible || isLoadingMore.value) return
-    isLoadingMore.value = true
-    try {
-      const countBefore = products.value.items.length
-      const didFetch = await fetchItems()
-      // Recovering an expired offset (422) re-fetches page 1 in place to mint a
-      // fresh cursor without adding items. The IntersectionObserver won't
-      // re-fire because the sentinel hasn't moved, so the spinner would hang
-      // despite a usable cursor. If the fetch succeeded but the list didn't
-      // grow and a cursor remains, advance once more so pagination continues.
-      // Gating on success avoids re-firing (and re-erroring) after a failure.
-      if (
-        didFetch
-        && shouldLoadMore.value
-        && hasMoreItems.value
-        && !!products.value.nextItemsKey
-        && products.value.items.length <= countBefore
-      ) {
-        await fetchItems()
-      }
-    }
-    finally {
-      isLoadingMore.value = false
-    }
-  },
-)
+// The listing where auto-paging stopped at its cap with the sentinel still in view,
+// since the observer won't re-fire until the sentinel leaves and re-enters.
+// Keyed by URL so the button can't carry over to another tag or search.
+const autoLoadPausedPath = ref<string>()
+const isAutoLoadPaused = computed(() => autoLoadPausedPath.value === route.fullPath)
+async function loadMoreItems() {
+  // Serialize: both the sentinel watcher and the Load more button call this,
+  // and overlapping runs would stack fetches (and duplicate error modals).
+  if (isLoadingMore.value) return
+  isLoadingMore.value = true
+  try {
+    const pathAtStart = route.fullPath
+    const tagIdAtStart = tagId.value
+    const hasHitCap = await fetchWhileSentinelVisible({
+      fetchPage: async () => {
+        // The store skips a fetch while one for the same listing is in flight (e.g. the
+        // background refresh on return), which would read as a stalled cursor, so wait it out.
+        if (products.value.isFetchingItems) {
+          await until(() => products.value.isFetchingItems).toBe(false)
+          // `products` follows the route, so a switch mid-wait would page the new listing.
+          if (route.fullPath !== pathAtStart) return false
+        }
+        return fetchItems()
+      },
+      getCursor: () => products.value.nextItemsKey,
+      isSentinelStillVisible: async () => {
+        await nextTick()
+        // Observer callbacks land after the next frame's rendering step.
+        await new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve)))
+        return shouldLoadMore.value && tagId.value === tagIdAtStart
+      },
+    })
+    autoLoadPausedPath.value = hasHitCap ? pathAtStart : undefined
+  }
+  finally {
+    isLoadingMore.value = false
+  }
+}
+watch(shouldLoadMore, (isSentinelVisible) => {
+  if (isSentinelVisible) loadMoreItems()
+})
 
 async function handleFetchItemsErrorRetryButtonClick() {
   useLogEvent('store_fetch_items_error_retry', { tag_id: tagId.value })
