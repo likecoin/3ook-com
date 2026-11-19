@@ -5,7 +5,7 @@
       @after-leave="handleLoadingScreenAfterLeave"
     >
       <BookLoadingScreen
-        v-if="isReaderLoading && !isLocalEPUBDropzoneVisible"
+        v-if="isReaderLoading && !isLocalEPUBPickerVisible"
         class="absolute inset-0"
         cover-class="mt-[8vh]"
         is-back-to-shelf-button-visible
@@ -16,25 +16,23 @@
         :loading-progress="loadingPercentage"
       />
     </Transition>
-    <ReaderLocalEPUBDropzone
-      v-if="isLocalEPUBDropzoneVisible"
-      class="absolute inset-0 z-10"
-      @browse="openLocalEPUBDialog"
-      @select="handleLocalEPUBSelect"
-    />
     <div
       class="relative flex flex-col w-full grow transition-opacity ease-out duration-[600ms] delay-[400ms]"
-      :class="{ 'opacity-0 pointer-events-none': isReaderLoading }"
-      :aria-hidden="isReaderLoading"
+      :class="{ 'opacity-0 pointer-events-none': isReaderLoading && !isLocalEPUBPickerVisible }"
+      :aria-hidden="isReaderLoading && !isLocalEPUBPickerVisible"
     >
       <ReaderHeader
         :book-name="bookName"
         :chapter-title="activeNavItemLabel"
         :is-preview="isPreviewMode"
+        :is-home-logo-visible="isStandaloneMode"
         :back-to="backRoute"
       >
         <template #trailing>
-          <div class="relative flex justify-end items-center gap-2">
+          <div
+            v-if="!isLocalEPUBPickerVisible"
+            class="relative flex justify-end items-center gap-2"
+          >
             <UButton
               v-if="isStandaloneMode"
               icon="i-material-symbols-upload-file-outline-rounded"
@@ -256,6 +254,12 @@
       </ReaderHeader>
 
       <div class="relative flex grow gap-4">
+        <ReaderLocalEPUBDropzone
+          v-if="isLocalEPUBPickerVisible || isDraggingLocalEPUB"
+          class="absolute inset-0 z-20"
+          :is-active="isDraggingLocalEPUB"
+          @browse="openLocalEPUBDialog()"
+        />
         <div class="relative w-full flex flex-col grow laptop:pt-6 pb-[64px]">
           <div class="relative grow w-full flex items-center">
             <div
@@ -557,16 +561,28 @@ const isOnline = useOnline()
 const localEPUBFile = shallowRef<File>()
 // Remounts the search panel so it can't hold results from a replaced file.
 const localEPUBVersion = ref(0)
-const isLocalEPUBDropzoneVisible = computed(() => isStandaloneMode.value && !localEPUBFile.value)
+const isLocalEPUBPickerVisible = computed(() => isStandaloneMode.value && !localEPUBFile.value)
 const { open: openLocalEPUBDialog, onChange: onLocalEPUBDialogChange } = useFileDialog({
   accept: '.epub,application/epub+zip',
   multiple: false,
   reset: true,
 })
-onLocalEPUBDialogChange((files) => {
+onLocalEPUBDialogChange(handleLocalEPUBFiles)
+// Listens on the whole page, so a file can be dropped anywhere, even mid-read:
+// the dropzone then covers the book iframe, which would otherwise take the drop.
+const { isOverDropZone: isDraggingLocalEPUB } = useDropZone(
+  () => (import.meta.client && isStandaloneMode.value ? document : null),
+  {
+    multiple: false,
+    preventDefaultForUnhandled: true,
+    onDrop: handleLocalEPUBFiles,
+  },
+)
+
+function handleLocalEPUBFiles(files: ArrayLike<File> | null) {
   const file = files?.[0]
   if (file) handleLocalEPUBSelect(file)
-})
+}
 
 function handleLocalEPUBSelect(file: File) {
   if (!file.name.toLowerCase().endsWith('.epub')) {

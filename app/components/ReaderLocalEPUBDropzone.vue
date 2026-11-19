@@ -1,18 +1,13 @@
 <template>
-  <div class="flex flex-col justify-center items-center p-6 bg-default">
+  <div class="flex p-4 laptop:p-6 bg-default">
     <button
       type="button"
       :class="[
-        'flex flex-col items-center justify-center gap-2',
-        'w-full max-w-md p-10',
-        'border border-dashed rounded-lg transition-colors *:pointer-events-none',
-        isDraggingOver ? 'border-inverted' : 'border-accented hover:border-inverted',
+        'flex flex-col flex-1 items-center justify-center gap-2 p-10',
+        'border-2 border-dashed rounded-lg transition-colors',
+        props.isActive ? 'border-primary bg-primary/10' : 'border-accented hover:border-inverted',
       ]"
       @click="emit('browse')"
-      @dragenter.prevent="isDraggingOver = true"
-      @dragover.prevent
-      @dragleave.prevent="isDraggingOver = false"
-      @drop.prevent="handleDrop"
     >
       <UIcon
         name="i-material-symbols-upload-file-outline-rounded"
@@ -32,16 +27,11 @@
 </template>
 
 <script setup lang="ts">
-const emit = defineEmits<{
-  (e: 'browse'): void
-  (e: 'select', file: File): void
+const props = defineProps<{
+  isActive?: boolean
 }>()
 
-const isDraggingOver = ref(false)
-
-function handleDrop(event: DragEvent) {
-  isDraggingOver.value = false
-  const file = event.dataTransfer?.files?.[0]
-  if (file) emit('select', file)
-}
+const emit = defineEmits<{
+  (e: 'browse'): void
+}>()
 </script>

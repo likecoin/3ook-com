@@ -16,6 +16,18 @@
   >
     <div class="flex items-center gap-4 min-w-0">
       <UButton
+        v-if="props.isHomeLogoVisible"
+        class="shrink-0 p-0 sm:p-0"
+        variant="link"
+        color="neutral"
+        title="3ook.com"
+        aria-label="3ook.com"
+        :to="localeRoute({ name: 'store' })"
+      >
+        <AppLogo :height="32" />
+      </UButton>
+      <UButton
+        v-else
         class="-mx-2 shrink-0"
         color="neutral"
         variant="ghost"
@@ -72,6 +84,11 @@ const props = defineProps({
     default: '',
   },
   isPreview: {
+    type: Boolean,
+    default: false,
+  },
+  // Swaps the back button for a home link, for readers with no book page to return to.
+  isHomeLogoVisible: {
     type: Boolean,
     default: false,
   },
