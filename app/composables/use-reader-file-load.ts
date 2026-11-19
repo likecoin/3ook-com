@@ -21,6 +21,8 @@ interface UseReaderFileLoadOptions {
   abortLoad: () => void
   // Runs when the error modal closes; defaults to leaving for the shelf.
   onErrorClose?: () => void
+  // Defaults to true; turn off for a load with no network fetch to wedge.
+  isForegroundRetryEnabled?: boolean
 }
 
 export default function useReaderFileLoad({
@@ -33,6 +35,7 @@ export default function useReaderFileLoad({
   recoverLoadError,
   abortLoad,
   onErrorClose,
+  isForegroundRetryEnabled = true,
 }: UseReaderFileLoadOptions) {
   const { t: $t } = useI18n()
   const localeRoute = useLocaleRoute()
@@ -124,6 +127,7 @@ export default function useReaderFileLoad({
   // abort the wedged attempt and retry instead of waiting out the stall timeout.
   const visibility = useDocumentVisibility()
   watch(visibility, (state) => {
+    if (!isForegroundRetryEnabled) return
     if (state !== 'visible') {
       wasHiddenWhileLoading ||= isReaderLoading.value
       return

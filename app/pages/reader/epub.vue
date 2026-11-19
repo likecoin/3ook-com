@@ -626,6 +626,8 @@ const { startReaderLoad, afterLoadingScreen, handleLoadingScreenAfterLeave } = u
   handleError,
   recoverLoadError: replaceStaleNFTId,
   abortLoad,
+  // A local file can't wedge like a network fetch, and a retry would race the original parse.
+  isForegroundRetryEnabled: !isStandaloneMode.value,
   // A file that fails to open sends the user back to pick another one.
   onErrorClose: isStandaloneMode.value
     ? () => {
