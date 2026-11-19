@@ -53,11 +53,15 @@
       />
     </div>
 
+    <!--
+      Stand-ins for BookstoreItem's Plus member price row above the price
+      and its rank row below, so the grid baselines line up.
+    -->
+    <div class="h-lh mt-[0.5lh]" />
     <div
-      class="h-lh mt-[0.5lh] text-highlighted"
+      class="h-lh text-highlighted"
       v-text="formattedPrice"
     />
-    <!-- Stand-in for BookstoreItem's rank row, so the grid baselines line up -->
     <div class="h-lh text-xs" />
   </li>
 </template>
