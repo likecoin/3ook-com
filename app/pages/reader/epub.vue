@@ -585,6 +585,8 @@ function handleLocalEPUBFiles(files: ArrayLike<File> | null) {
 }
 
 function handleLocalEPUBSelect(file: File) {
+  // loadEPub() can't be superseded mid-parse, so a pick waits for the open to finish.
+  if (isReaderLoading.value && localEPUBFile.value) return
   if (!file.name.toLowerCase().endsWith('.epub')) {
     toast.add({
       title: $t('reader_standalone_invalid_file'),
