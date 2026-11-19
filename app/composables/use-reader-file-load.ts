@@ -19,6 +19,10 @@ interface UseReaderFileLoadOptions {
   // Aborts the wedged in-flight book fetch so the retry doesn't wait out the
   // stall timeout. From the page's own useBookFileLoader instance.
   abortLoad: () => void
+  // Runs when the error modal closes; defaults to leaving for the shelf.
+  onErrorClose?: () => void
+  // Defaults to true; turn off for a load with no network fetch to wedge.
+  isForegroundRetryEnabled?: boolean
 }
 
 export default function useReaderFileLoad({
@@ -30,6 +34,8 @@ export default function useReaderFileLoad({
   handleError,
   recoverLoadError,
   abortLoad,
+  onErrorClose,
+  isForegroundRetryEnabled = true,
 }: UseReaderFileLoadOptions) {
   const { t: $t } = useI18n()
   const localeRoute = useLocaleRoute()
@@ -104,9 +110,9 @@ export default function useReaderFileLoad({
             isLogError: true,
           },
         },
-        onClose: () => {
+        onClose: onErrorClose ?? (() => {
           navigateTo(localeRoute({ name: 'shelf' }))
-        },
+        }),
       })
       // Clear the loading state so a dismissed error modal doesn't strand the
       // reader on the loading bar (and so a later foreground resume, which gates
@@ -121,6 +127,7 @@ export default function useReaderFileLoad({
   // abort the wedged attempt and retry instead of waiting out the stall timeout.
   const visibility = useDocumentVisibility()
   watch(visibility, (state) => {
+    if (!isForegroundRetryEnabled) return
     if (state !== 'visible') {
       wasHiddenWhileLoading ||= isReaderLoading.value
       return

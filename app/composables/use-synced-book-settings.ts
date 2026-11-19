@@ -5,6 +5,8 @@ interface UseSyncedBookSettingsOptions<T> {
   key: BookSettingKey
   defaultValue: T
   namespace?: string
+  // Keeps the value in memory only, for a book with no server record to sync to.
+  isLocalOnly?: boolean
 }
 
 export function getBookSettingDbKey<
@@ -26,7 +28,10 @@ export function useSyncedBookSettings<T>({
   key,
   defaultValue,
   namespace,
+  isLocalOnly = false,
 }: UseSyncedBookSettingsOptions<T>): Ref<T> {
+  if (isLocalOnly) return ref(defaultValue) as Ref<T>
+
   const { loggedIn: hasLoggedIn } = useUserSession()
   const bookSettingsStore = useBookSettingsStore()
 

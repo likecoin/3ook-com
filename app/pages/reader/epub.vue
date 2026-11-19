@@ -5,12 +5,12 @@
       @after-leave="handleLoadingScreenAfterLeave"
     >
       <BookLoadingScreen
-        v-if="isReaderLoading"
+        v-if="isReaderLoading && !isLocalEPUBPickerVisible"
         class="absolute inset-0"
         cover-class="mt-[8vh]"
         is-back-to-shelf-button-visible
         :back-to="backRoute"
-        :book-name="bookInfo.name.value"
+        :book-name="bookName"
         :book-cover-src="bookCoverSrc"
         :loading-label="loadingLabel"
         :loading-progress="loadingPercentage"
@@ -18,17 +18,29 @@
     </Transition>
     <div
       class="relative flex flex-col w-full grow transition-opacity ease-out duration-[600ms] delay-[400ms]"
-      :class="{ 'opacity-0 pointer-events-none': isReaderLoading }"
-      :aria-hidden="isReaderLoading"
+      :class="{ 'opacity-0 pointer-events-none': isReaderLoading && !isLocalEPUBPickerVisible }"
+      :aria-hidden="isReaderLoading && !isLocalEPUBPickerVisible"
     >
       <ReaderHeader
-        :book-name="bookInfo.name.value"
+        :book-name="bookName"
         :chapter-title="activeNavItemLabel"
         :is-preview="isPreviewMode"
+        :is-home-logo-visible="isStandaloneMode"
         :back-to="backRoute"
       >
         <template #trailing>
-          <div class="relative flex justify-end items-center gap-2">
+          <div
+            v-if="!isLocalEPUBPickerVisible"
+            class="relative flex justify-end items-center gap-2"
+          >
+            <UButton
+              v-if="isStandaloneMode"
+              icon="i-material-symbols-upload-file-outline-rounded"
+              :aria-label="$t('reader_standalone_replace_file_button')"
+              variant="ghost"
+              color="neutral"
+              @click="openLocalEPUBDialog()"
+            />
             <BottomSlideover
               :title="$t('reader_settings_button')"
               body-class="max-h-[40vh] select-none"
@@ -135,7 +147,8 @@
             <ReaderLeftSidebar
               v-model:open="isLeftSidebarOpen"
               v-model:tab="leftSidebarTab"
-              has-annotations
+              :has-annotations="!isStandaloneMode"
+              :has-bookmarks="!isStandaloneMode"
               :disabled="isReaderLoading"
               @trigger-click="handleLeftSidebarTriggerClick"
             >
@@ -190,11 +203,13 @@
             </ReaderLeftSidebar>
             <ReaderSearch
               ref="readerSearch"
+              :key="localEPUBVersion"
               v-model:open="isSearchOpen"
               :search-handler="handleSearchEPUB"
               @navigate="handleSearchNavigate"
             />
             <UButton
+              v-if="!isStandaloneMode"
               :aria-label="$t('reader_bookmark_button')"
               :icon="isCurrentPageBookmarked ? 'i-material-symbols-bookmark-rounded' : 'i-material-symbols-bookmark-outline-rounded'"
               :disabled="isReaderLoading || !currentBookmarkCfi"
@@ -203,6 +218,7 @@
               @click="handleBookmarkToggle"
             />
             <UButton
+              v-if="!isStandaloneMode"
               :class="[
                 'laptop:hidden',
                 { 'opacity-50 cursor-not-allowed': isReaderLoading || isAudioUnlicensed },
@@ -215,6 +231,7 @@
               @click="handleTTSButtonClick"
             />
             <UTooltip
+              v-if="!isStandaloneMode"
               :disabled="!isAudioHidden || isAudioPending"
               :text="isAudioPlusRequired
                 ? $t('reader_text_to_speech_plus_reading_only')
@@ -237,6 +254,12 @@
       </ReaderHeader>
 
       <div class="relative flex grow gap-4">
+        <ReaderLocalEPUBDropzone
+          v-if="isLocalEPUBPickerVisible || isDraggingLocalEPUB"
+          class="absolute inset-0 z-20"
+          :is-active="isDraggingLocalEPUB"
+          @browse="openLocalEPUBDialog()"
+        />
         <div class="relative w-full flex flex-col grow laptop:pt-6 pb-[64px]">
           <div class="relative grow w-full flex items-center">
             <div
@@ -372,11 +395,11 @@ import type { ReaderNavigationMethod } from '~~/shared/constants/analytics'
 import { ANNOTATION_COLORS_MAP, ANNOTATION_TEXT_MAX_LENGTH } from '~~/shared/constants/annotations'
 import { SEARCH_MAX_RESULTS } from '~~/shared/constants/reader-search'
 
-// Remount when `source` or `preview` changes in place, since both are read once:
+// Remount when `source`, `preview` or `standalone` changes in place, since all are read once:
 // useReader() picks its composable from `source` at setup,
 // and the book file (preview or full) loads only on mount.
 definePageMeta({
-  key: route => `reader-epub-${route.query.source === 'upload' ? 'upload' : 'nft'}${route.query.preview === '1' ? '-preview' : ''}`,
+  key: route => `reader-epub-${route.query.source === 'upload' ? 'upload' : 'nft'}${route.query.preview === '1' ? '-preview' : ''}${route.query.standalone === '1' ? '-standalone' : ''}`,
 })
 
 declare interface EpubView {
@@ -390,8 +413,14 @@ const config = useRuntimeConfig()
 const { loggedIn: hasLoggedIn } = useUserSession()
 const route = useRoute()
 const localeRoute = useLocaleRoute()
-if (!hasLoggedIn.value) {
+const isStandaloneMode = useStandaloneReaderMode()
+if (!hasLoggedIn.value && !isStandaloneMode.value) {
   await navigateTo(localeRoute({ name: 'account', query: route.query }))
+}
+
+// A local file has no book to attribute events to, so it stays out of analytics.
+function logReaderEvent(...args: Parameters<typeof useLogEvent>) {
+  if (!isStandaloneMode.value) useLogEvent(...args)
 }
 
 const toast = useToast()
@@ -414,9 +443,10 @@ const {
   replaceStaleNFTId,
 } = useReader()
 
+// A standalone preview has no on-chain class to borrow, same as an uploaded book.
 const { isLibraryBook, libraryBookCheck } = usePlusReadingTracker({
   nftClassId,
-  isUploadedBook,
+  isUploadedBook: computed(() => isUploadedBook.value || isStandaloneMode.value),
   isPlusReadingEnabled: bookInfo.isPlusReadingEnabled,
   hasFreeEdition: bookInfo.hasFreeEdition,
   nftId,
@@ -446,7 +476,7 @@ const { openPreviewEndModal, handlePreviewEndBoundary } = usePreviewEndModal({
 const { handleBookEndBoundary } = useBookEndModal({
   nftClassId,
   isLibraryBook,
-  isEnabled: !isPreviewMode.value && !isUploadedBook.value,
+  isEnabled: !isPreviewMode.value && !isUploadedBook.value && !isStandaloneMode.value,
 })
 
 const { fetchCustomVoice } = useCustomVoice()
@@ -454,6 +484,7 @@ const { fetchConfig: fetchPlusAffiliateConfig } = usePlusAffiliate()
 
 const ttsButtonSizeABTest = useABTest({
   experimentKey: 'reader-tts-button-icon-size',
+  enabled: !isStandaloneMode.value,
 })
 const ttsButtonUI = computed(() =>
   ttsButtonSizeABTest.isVariant('large')
@@ -465,7 +496,7 @@ const ttsButtonUI = computed(() =>
 )
 
 onMounted(() => {
-  if (hasLoggedIn.value) {
+  if (hasLoggedIn.value && !isStandaloneMode.value) {
     fetchCustomVoice()
     fetchPlusAffiliateConfig()
   }
@@ -475,12 +506,13 @@ const {
   shouldShowTTSTryModal,
   showTTSTryModal,
 } = useTTSTryModal()
-const {
-  readingProgress,
-} = useReaderProgress({
-  nftClassId: nftClassId.value,
-  bookProgressKeyPrefix: bookProgressKeyPrefix.value,
-})
+// A local file has no server record, so its progress lives only in memory.
+const readingProgress = isStandaloneMode.value
+  ? ref(0)
+  : useReaderProgress({
+    nftClassId: nftClassId.value,
+    bookProgressKeyPrefix: bookProgressKeyPrefix.value,
+  }).readingProgress
 
 const {
   highlights: annotations,
@@ -526,6 +558,55 @@ const { loadingLabel, loadingPercentage, isLoadedFromCache, loadFileAsBuffer, ab
 
 const isOnline = useOnline()
 
+const localEPUBFile = shallowRef<File>()
+// Remounts the search panel so it can't hold results from a replaced file.
+const localEPUBVersion = ref(0)
+const isLocalEPUBPickerVisible = computed(() => isStandaloneMode.value && !localEPUBFile.value)
+const { open: openLocalEPUBDialog, onChange: onLocalEPUBDialogChange } = useFileDialog({
+  accept: '.epub,application/epub+zip',
+  multiple: false,
+  reset: true,
+})
+onLocalEPUBDialogChange(handleLocalEPUBFiles)
+// Listens on the whole page, so a file can be dropped anywhere, even mid-read:
+// the dropzone then covers the book iframe, which would otherwise take the drop.
+const { isOverDropZone: isDraggingLocalEPUB } = useDropZone(
+  () => (import.meta.client && isStandaloneMode.value ? document : null),
+  {
+    multiple: false,
+    preventDefaultForUnhandled: true,
+    onDrop: handleLocalEPUBFiles,
+  },
+)
+
+function handleLocalEPUBFiles(files: ArrayLike<File> | null) {
+  const file = files?.[0]
+  if (file) handleLocalEPUBSelect(file)
+}
+
+function handleLocalEPUBSelect(file: File) {
+  // loadEPub() can't be superseded mid-parse, so a pick waits for the open to finish.
+  if (isReaderLoading.value && localEPUBFile.value) return
+  if (!file.name.toLowerCase().endsWith('.epub')) {
+    toast.add({
+      title: $t('reader_standalone_invalid_file'),
+      color: 'error',
+    })
+    return
+  }
+  // Search results and a footnote return point into the previous file.
+  dismissFootnoteReturn()
+  localEPUBVersion.value += 1
+  // Re-picking an edited copy of the same book keeps its position and layout.
+  if (file.name !== localEPUBFile.value?.name) {
+    currentCfi.value = ''
+    percentage.value = 0
+    hasPickedLocalWritingMode.value = false
+  }
+  localEPUBFile.value = file
+  startReaderLoad()
+}
+
 const { getBookLoadErrorActions } = useReaderErrorActions({
   readerType: 'epub',
   nftClassId,
@@ -541,13 +622,23 @@ const { startReaderLoad, afterLoadingScreen, handleLoadingScreenAfterLeave } = u
   getErrorTitle: () => isOnline.value
     ? $t('error_reader_load_epub_failed')
     : $t('error_reader_book_not_available_offline'),
-  getErrorActions: getBookLoadErrorActions,
+  getErrorActions: isStandaloneMode.value ? undefined : getBookLoadErrorActions,
   handleError,
   recoverLoadError: replaceStaleNFTId,
   abortLoad,
+  // A local file can't wedge like a network fetch, and a retry would race the original parse.
+  isForegroundRetryEnabled: !isStandaloneMode.value,
+  // A file that fails to open sends the user back to pick another one.
+  onErrorClose: isStandaloneMode.value
+    ? () => {
+        localEPUBFile.value = undefined
+      }
+    : undefined,
 })
 
 onMounted(() => {
+  // A local file has nothing to fetch, and loads once the user picks it.
+  if (isStandaloneMode.value) return
   // Kick off background fetches without awaiting so offline / slow API calls
   // don't block the cache-first EPUB load.
   bookSettingsStore.ensureInitialized(nftClassId.value)
@@ -570,6 +661,10 @@ onMounted(() => {
 // checks that pin the event handlers to their own rendition would never match.
 const rendition = shallowRef<Rendition>()
 const loadedBook = shallowRef<Book>()
+const bookName = computed(() => {
+  if (!isStandaloneMode.value) return bookInfo.name.value
+  return loadedBook.value?.packaging?.metadata?.title || localEPUBFile.value?.name || ''
+})
 const isTTSExtracting = ref(false)
 const sectionHrefByFilename = ref<Record<string, string>>({})
 const navItems = ref<NavItem[]>([])
@@ -580,6 +675,7 @@ const activeNavItemLabel = computed(() => {
 const activeNavItemHref = ref<string | undefined>()
 const activeTTSElementIndex = useSyncedBookSettings<number | undefined>({
   nftClassId: nftClassId.value,
+  isLocalOnly: isStandaloneMode.value,
   key: 'activeTTSElementIndex',
   defaultValue: undefined,
   namespace: 'epub',
@@ -669,7 +765,7 @@ const { recordNavigation } = useReadingSession({
   chapterIndex: currentSectionIndex,
   isLibraryBook,
   isPreview: isPreviewMode,
-  isEnabled: !isUploadedBook.value,
+  isEnabled: !isUploadedBook.value && !isStandaloneMode.value,
 })
 
 const percentage = ref(0)
@@ -705,6 +801,7 @@ function dismissFootnoteReturn() {
 }
 const currentCfi = useSyncedBookSettings({
   nftClassId: nftClassId.value,
+  isLocalOnly: isStandaloneMode.value,
   key: 'cfi',
   defaultValue: '',
   namespace: 'epub',
@@ -720,6 +817,7 @@ const SELECTION_CHANGE_DEBOUNCE_MS = 300
 const SELECTION_COMMIT_DELAY_MS = 50
 const fontSize = useSyncedBookSettings({
   nftClassId: nftClassId.value,
+  isLocalOnly: isStandaloneMode.value,
   key: 'fontSize',
   defaultValue: FONT_SIZE_OPTIONS[DEFAULT_FONT_SIZE_INDEX],
   namespace: 'epub',
@@ -728,6 +826,7 @@ const fontSize = useSyncedBookSettings({
 const DEFAULT_LINE_HEIGHT = 1.6
 const lineHeight = useSyncedBookSettings({
   nftClassId: nftClassId.value,
+  isLocalOnly: isStandaloneMode.value,
   key: 'lineHeight',
   defaultValue: DEFAULT_LINE_HEIGHT,
   namespace: 'epub',
@@ -759,11 +858,15 @@ const detectedNaturalWritingMode = ref<EpubWritingMode>()
 const originalWritingMode = computed(() => detectedNaturalWritingMode.value ?? FALLBACK_WRITING_MODE)
 const writingModeSetting = useSyncedBookSettings<EpubWritingMode>({
   nftClassId: nftClassId.value,
+  isLocalOnly: isStandaloneMode.value,
   key: WRITING_MODE_SETTING_KEY,
   defaultValue: FALLBACK_WRITING_MODE,
   namespace: EPUB_SETTING_NAMESPACE,
 })
+// A local file never syncs, so its pick is tracked here instead of in the store.
+const hasPickedLocalWritingMode = ref(false)
 const hasSavedWritingMode = computed(() => {
+  if (isStandaloneMode.value) return hasPickedLocalWritingMode.value
   return bookSettingsStore.getSettings(nftClassId.value)?.[WRITING_MODE_DB_KEY] !== undefined
 })
 const writingMode = computed(() => {
@@ -1123,7 +1226,7 @@ async function handleDisplayFailure(error: unknown, target: string | undefined, 
   // Silent is a different test — a ToC jump hides its own modal but may hit one.
   console[hasFallbackAttempt ? 'warn' : 'error'](`Error occurred when displaying${target ? ` ${target}` : ''} in rendition of ${nftClassId.value}`, error)
   // A fallback display recovers most of these, so keep them measurable.
-  useLogEvent('reader_epub_display_failed', {
+  logReaderEvent('reader_epub_display_failed', {
     nft_class_id: nftClassId.value,
     error_message: getErrorEventMessage(error),
     is_silent_error: isSilentError,
@@ -1168,10 +1271,12 @@ async function loadEPub() {
   // if this page instance is reused across books.
   detectedNaturalWritingMode.value = undefined
   hasEnforcedDefaultVerticalMode = false
-  const buffer = await loadFileAsBuffer(bookFileURLWithCORS.value, {
-    cacheKey: bookFileCacheKey.value,
-    isCustomMessageEnabled: isCustomMessageEnabled.value,
-  })
+  const buffer = isStandaloneMode.value
+    ? await localEPUBFile.value?.arrayBuffer()
+    : await loadFileAsBuffer(bookFileURLWithCORS.value, {
+      cacheKey: bookFileCacheKey.value,
+      isCustomMessageEnabled: isCustomMessageEnabled.value,
+    })
   if (!buffer) {
     return
   }
@@ -1207,7 +1312,8 @@ async function loadEPub() {
       // Break sections by 1000 chars for calculating percentage
       book.locations!.generate(1000).then(() => {
         try {
-          if (window.localStorage) {
+          // Every local file would share one cache key.
+          if (window.localStorage && !isStandaloneMode.value) {
             window.localStorage.setItem(locationCacheKey, book.locations!.save())
           }
         }
@@ -1534,7 +1640,9 @@ async function loadEPub() {
   // and resolve the saved CFI only once font-size/line-height/cfi have arrived:
   // injecting font-size/line-height *after* anchoring reflows the chapter and
   // strands the restore on an earlier page than the one that was saved.
-  await bookSettingsStore.ensureInitialized(nftClassId.value)
+  if (!isStandaloneMode.value) {
+    await bookSettingsStore.ensureInitialized(nftClassId.value)
+  }
   await nextTick()
   applyTheme()
   // A saved (or forced) writing mode overrides the DOM but not epub.js's
@@ -1569,6 +1677,8 @@ async function loadEPub() {
   // arming TTS and playback on it.
   if (isUnmounting || rendition.value !== currentRendition) return
   hasDisplayedInitialLocation = true
+  // TTS isn't offered for a local file.
+  if (isStandaloneMode.value) return
 
   // Clear stale TTS index from previous session so it doesn't override current page position
   activeTTSElementIndex.value = undefined
@@ -1901,7 +2011,7 @@ function adjustFontSize(size: number) {
   const newValue = FONT_SIZE_OPTIONS[index + size]
   if (newValue && newValue !== fontSize.value) {
     fontSize.value = newValue
-    useLogEvent('reader_setting_changed', { nft_class_id: nftClassId.value, setting: 'font_size', value: newValue })
+    logReaderEvent('reader_setting_changed', { nft_class_id: nftClassId.value, setting: 'font_size', value: newValue })
   }
 }
 
@@ -1917,7 +2027,7 @@ function adjustLineHeight(delta: number) {
   const newHeight = Math.round((lineHeight.value + delta) * 10) / 10
   if (newHeight !== lineHeight.value) {
     lineHeight.value = newHeight
-    useLogEvent('reader_setting_changed', { nft_class_id: nftClassId.value, setting: 'line_height', value: newHeight })
+    logReaderEvent('reader_setting_changed', { nft_class_id: nftClassId.value, setting: 'line_height', value: newHeight })
   }
 }
 
@@ -1933,10 +2043,11 @@ async function setWritingMode(mode: EpubWritingMode) {
   if (mode === writingMode.value && hasSavedWritingMode.value) return
 
   writingModeSetting.value = mode
+  hasPickedLocalWritingMode.value = true
   applyWritingModeToLoadedSections()
   applyTheme()
   await rerenderRenditionAtCurrentLocation()
-  useLogEvent('reader_setting_changed', { nft_class_id: nftClassId.value, setting: 'writing_mode', value: mode })
+  logReaderEvent('reader_setting_changed', { nft_class_id: nftClassId.value, setting: 'writing_mode', value: mode })
 }
 
 async function restoreDefaultDisplayOptions() {
@@ -1947,6 +2058,7 @@ async function restoreDefaultDisplayOptions() {
   fontSize.value = FONT_SIZE_OPTIONS[DEFAULT_FONT_SIZE_INDEX]
   lineHeight.value = DEFAULT_LINE_HEIGHT
   writingModeSetting.value = originalWritingMode.value
+  hasPickedLocalWritingMode.value = true
   const hasFontSizeChanged = previousFontSize !== fontSize.value
   const hasLineHeightChanged = previousLineHeight !== lineHeight.value
   const hasWritingModeChanged = previousWritingMode !== writingMode.value
@@ -1963,21 +2075,21 @@ async function restoreDefaultDisplayOptions() {
   }
 
   if (hasFontSizeChanged) {
-    useLogEvent('reader_setting_changed', {
+    logReaderEvent('reader_setting_changed', {
       nft_class_id: nftClassId.value,
       setting: 'font_size',
       value: fontSize.value,
     })
   }
   if (hasLineHeightChanged) {
-    useLogEvent('reader_setting_changed', {
+    logReaderEvent('reader_setting_changed', {
       nft_class_id: nftClassId.value,
       setting: 'line_height',
       value: lineHeight.value,
     })
   }
   if (previousWritingMode !== writingMode.value) {
-    useLogEvent('reader_setting_changed', {
+    logReaderEvent('reader_setting_changed', {
       nft_class_id: nftClassId.value,
       setting: 'writing_mode',
       value: writingMode.value,
@@ -1989,11 +2101,11 @@ const activeNavItemElements = useTemplateRef<HTMLLIElement[]>('activeNavItemElem
 
 function handleLeftSidebarTriggerClick() {
   if (isLeftSidebarOpen.value) return
-  leftSidebarTab.value = navItems.value.length ? 'toc' : 'annotations'
+  leftSidebarTab.value = navItems.value.length || isStandaloneMode.value ? 'toc' : 'annotations'
 }
 
 async function handleTOCTabShown() {
-  useLogEvent('reader_toc_open', { nft_class_id: nftClassId.value })
+  logReaderEvent('reader_toc_open', { nft_class_id: nftClassId.value })
   await nextTick()
   if (!isLeftSidebarOpen.value || leftSidebarTab.value !== 'toc') return
   activeNavItemElements.value?.[0]?.scrollIntoView({ block: 'center', inline: 'center' })
@@ -2123,7 +2235,7 @@ async function handleSearchNavigate(result: ReaderSearchResult) {
   finally {
     isPageLoading.value = false
   }
-  useLogEvent('reader_search_navigate', { nft_class_id: nftClassId.value })
+  logReaderEvent('reader_search_navigate', { nft_class_id: nftClassId.value })
 }
 
 function getTTSPlusPaywallOptions() {
@@ -2136,7 +2248,7 @@ function getTTSPlusPaywallOptions() {
 function handleTTSButtonClick() {
   if (isAudioPending.value) return
   if (isAudioPlusRequired.value) {
-    useLogEvent('reader_tts_plus_reading_only_click', {
+    logReaderEvent('reader_tts_plus_reading_only_click', {
       nft_class_id: nftClassId.value,
       trigger: 'tts_button',
     })
@@ -2149,7 +2261,7 @@ function handleTTSButtonClick() {
       duration: 3000,
       progress: false,
     })
-    useLogEvent('reader_tts_button_disabled', { nft_class_id: nftClassId.value })
+    logReaderEvent('reader_tts_button_disabled', { nft_class_id: nftClassId.value })
     return
   }
   onClickTTSPlay()
@@ -2176,7 +2288,7 @@ async function handleFootnoteReturn() {
   finally {
     isPageLoading.value = false
   }
-  useLogEvent('reader_footnote_return', { nft_class_id: nftClassId.value })
+  logReaderEvent('reader_footnote_return', { nft_class_id: nftClassId.value })
 }
 
 function handleLeftArrowButtonClick() {
@@ -2303,7 +2415,8 @@ function handleAnnotationClick(annotationId: string) {
 let isClearingSelection = false
 
 function handleTextSelection(viewWindow: Window) {
-  if (isClearingSelection) return
+  // Every action in the annotation menu needs a book record on the server.
+  if (isClearingSelection || isStandaloneMode.value) return
 
   const selection = viewWindow.getSelection()
   const text = selection?.toString().trim()
@@ -2406,7 +2519,7 @@ async function handleAnnotationColorSelect(color: AnnotationColor) {
 
     const saved = await saveAnnotation(newAnnotation.id, createData)
     if (saved && saved.type === 'highlight') {
-      useLogEvent('annotation_created', { nft_class_id: nftClassId.value })
+      logReaderEvent('annotation_created', { nft_class_id: nftClassId.value })
       // Re-render with server-assigned ID
       removeAnnotationHighlight(newCfi)
       addAnnotationHighlight(saved)
@@ -2482,13 +2595,13 @@ async function handleAnnotationAddNote() {
 }
 
 function formatCopyText(text: string) {
-  // An uploaded book has no store page, so it gets the title alone.
-  const productPagePath = 'getProductPageRoute' in bookInfo
+  // An uploaded book or a local file has no store page, so it gets the title alone.
+  const productPagePath = !isStandaloneMode.value && 'getProductPageRoute' in bookInfo
     ? bookInfo.getProductPageRoute({ llMedium: 'copy', llSource: 'reader' })?.path
     : undefined
   const attribution = productPagePath
-    ? `${bookInfo.name.value}\n${config.public.baseURL}${productPagePath}`
-    : bookInfo.name.value
+    ? `${bookName.value}\n${config.public.baseURL}${productPagePath}`
+    : bookName.value
   return `${text.slice(0, COPY_CHAR_LIMIT)}\n\n${attribution}`
 }
 
@@ -2504,7 +2617,7 @@ async function handleAnnotationCopy() {
     color: isCopied ? 'success' : 'error',
   })
   if (isCopied) {
-    useLogEvent('reader_annotation_copy', {
+    logReaderEvent('reader_annotation_copy', {
       nft_class_id: nftClassId.value,
       is_uploaded_book: isUploadedBook.value,
     })
@@ -2527,7 +2640,7 @@ function handleAnnotationReportIssue() {
   const subject = $t('reader_annotation_report_issue_email_subject', { bookName: bookInfo.name.value })
   showNewMessageWithVisibility(prefillMessage, subject)
 
-  useLogEvent('reader_annotation_report_issue', {
+  logReaderEvent('reader_annotation_report_issue', {
     nft_class_id: nftClassId.value,
     is_uploaded_book: isUploadedBook.value,
   })
@@ -2597,7 +2710,7 @@ async function handleAnnotationModalDelete() {
 
   const success = await deleteAnnotation(current.id)
   if (success) {
-    useLogEvent('annotation_deleted', { nft_class_id: nftClassId.value })
+    logReaderEvent('annotation_deleted', { nft_class_id: nftClassId.value })
   }
   else {
     addAnnotationHighlight(current)
@@ -2646,7 +2759,7 @@ async function handleBookmarkToggle() {
     const id = currentBookmark.value.id
     const success = await deleteAnnotation(id)
     if (success) {
-      useLogEvent('bookmark_deleted', { nft_class_id: nftClassId.value })
+      logReaderEvent('bookmark_deleted', { nft_class_id: nftClassId.value })
     }
     else {
       toast.add({
@@ -2669,7 +2782,7 @@ async function handleBookmarkToggle() {
   const optimistic = createAnnotation(createData)
   const saved = await saveAnnotation(optimistic.id, createData)
   if (saved) {
-    useLogEvent('bookmark_created', { nft_class_id: nftClassId.value })
+    logReaderEvent('bookmark_created', { nft_class_id: nftClassId.value })
   }
   else {
     toast.add({
@@ -2707,7 +2820,7 @@ async function handleBookmarkNavigate(bookmark: Annotation) {
 async function handleBookmarkDelete(bookmark: Annotation) {
   const success = await deleteAnnotation(bookmark.id)
   if (success) {
-    useLogEvent('bookmark_deleted', { nft_class_id: nftClassId.value })
+    logReaderEvent('bookmark_deleted', { nft_class_id: nftClassId.value })
   }
   else {
     toast.add({
@@ -2745,7 +2858,7 @@ const readerShortcuts: KeyboardShortcutMap = {
     readerSearch.value?.open()
   },
   '*': () => {
-    if (isReaderLoading.value || !currentBookmarkCfi.value) return
+    if (isStandaloneMode.value || isReaderLoading.value || !currentBookmarkCfi.value) return
     handleBookmarkToggle()
   },
   'Escape': exitReader,
