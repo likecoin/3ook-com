@@ -10,9 +10,9 @@
       :is="props.to ? NuxtLink : 'div'"
       :class="[
         'group',
+        'relative',
         {
           'cursor-pointer': isClickable,
-          'relative': isShowPlaceholder || hasShadow || hasOverlay,
           'w-full': isShowPlaceholder || hasShadow || hasOverlay,
           'h-full': isShowPlaceholder,
         },
@@ -20,36 +20,19 @@
       :to="props.to"
       @click="emit('click', $event)"
     >
-      <img
-        v-if="hasShadow && imageSrc && !hasError"
-        :src="imageSrc"
-        alt=""
+      <div
         aria-hidden="true"
-        decoding="async"
-        :loading="props.lazy ? 'lazy' : 'eager'"
-        :fetchpriority="props.priority ? 'high' : undefined"
         :class="[
-          'absolute',
-          'inset-0',
-          'w-full',
-          'h-full',
-          'object-cover',
-          props.roundedClass,
-          hasLoaded ? 'opacity-20' : 'opacity-0',
-          'brightness-50',
-          'blur-xl',
-          'scale-110',
-          'origin-[top_center]',
-          '-translate-x-[10px]',
-          'pointer-events-none',
-          ...opacityTransitionClass,
+          'book-cover-edge',
+          { 'book-cover-edge--shadow': hasShadow },
+          ...bookLayerClass,
         ]"
-      >
+      />
       <img
         ref="imgElement"
         :class="[
           coverClass,
-          { relative: hasShadow },
+          'relative',
           'bg-white dark:bg-black',
           !isShowPlaceholder ? 'opacity-100' : 'opacity-0',
           { 'blur-xl': !hasLoaded },
@@ -65,6 +48,13 @@
         @load="handleImageLoad"
         @error="handleImageError"
       >
+      <div
+        aria-hidden="true"
+        :class="[
+          'book-cover-finish',
+          ...bookLayerClass,
+        ]"
+      />
       <div
         :class="[
           coverClass,
@@ -92,13 +82,7 @@
 
       <div
         v-if="hasOverlay"
-        :class="[
-          'absolute',
-          'inset-0',
-          'pointer-events-none',
-          props.roundedClass,
-          ...(isClickable ? [...coverTransitionClass, ...coverHoverScaleClass] : []),
-        ]"
+        :class="layerBaseClass"
       >
         <slot name="overlay" />
       </div>
@@ -113,6 +97,8 @@ import { NuxtLink } from '#components'
 
 export const BOOK_COVER_MAX_RETRY_COUNT = 2
 export const BOOK_COVER_RETRY_DELAY_MS = 1500
+// Near-square corners of a printed book; skeletons share it to keep the same shape.
+export const BOOK_COVER_ROUNDED_CLASS = 'rounded-xs'
 </script>
 
 <script setup lang="ts">
@@ -144,10 +130,6 @@ const props = defineProps({
   priority: {
     type: Boolean,
     default: false,
-  },
-  roundedClass: {
-    type: String,
-    default: 'rounded-lg',
   },
 })
 const emit = defineEmits(['click'])
@@ -188,12 +170,9 @@ const coverClass = computed(() => {
   const classes = [
     'w-full',
     'h-auto',
-    'border-l',
-    'border-t',
-    'border-muted',
-    props.roundedClass,
+    BOOK_COVER_ROUNDED_CLASS,
     ...coverTransitionClass,
-    { 'shadow-[0_2px_4px_0_rgba(0,0,0,0.10)]': props.hasShadow },
+    { 'shadow-[0_1px_3px_0_rgb(0_0_0/0.22)]': props.hasShadow },
   ]
   if (isClickable.value) {
     classes.push(
@@ -203,6 +182,23 @@ const coverClass = computed(() => {
   }
   return classes
 })
+
+// Layers stacked on the cover follow its hover scale.
+const layerBaseClass = computed(() => [
+  'absolute',
+  'inset-0',
+  'pointer-events-none',
+  BOOK_COVER_ROUNDED_CLASS,
+  'transition-[opacity,scale]',
+  ...transitionTimingClass,
+  ...(isClickable.value ? coverHoverScaleClass : []),
+])
+
+// Edge and finish layers also fade in with the cover image.
+const bookLayerClass = computed(() => [
+  ...layerBaseClass.value,
+  isShowPlaceholder.value ? 'opacity-0' : 'opacity-100',
+])
 
 // Cache-busting query makes the browser refetch instead of reusing the failed response.
 function getRetryImageURL(src: string, attempt: number) {
@@ -266,3 +262,30 @@ function handleImageError() {
   hasError.value = true
 }
 </script>
+
+<style scoped>
+/*
+ * Book style from the 3ook.com Graphic Design file, measured on a 388px cover.
+ * Percentage margins resolve against the cover width, so the page block scales with the book.
+ */
+.book-cover-edge {
+  margin: 1.75% -1.75% -0.44% 1.75%;
+  background-image: linear-gradient(to bottom, #e3dfd6, #c2beb3);
+}
+
+.book-cover-edge--shadow {
+  box-shadow:
+    0 6px 12px rgb(26 31 28 / 16%),
+    0 12px 24px rgb(26 31 28 / 12%);
+}
+
+/* Hinge (spine fold, 8.5% of the width), sheen, then a hairline inner shadow. */
+.book-cover-finish {
+  background-image:
+    linear-gradient(to right, rgb(0 0 0 / 22%), rgb(255 255 255 / 18%) 35%, rgb(0 0 0 / 10%) 60%, transparent),
+    linear-gradient(135deg, rgb(255 255 255 / 10%), transparent 45%, rgb(0 0 0 / 8%));
+  background-repeat: no-repeat;
+  background-size: 8.5% 100%, 100% 100%;
+  box-shadow: inset 0 0 2px rgb(0 0 0 / 12%);
+}
+</style>
