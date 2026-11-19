@@ -64,7 +64,7 @@ export default function (
     : bookInfo.name.value))
 
   const listingAwareCoverSrc = computed(() => (isNonNFT.value
-    ? normalizeURIToHTTP(bookstoreInfo.value?.thumbnailUrl)
+    ? bookstoreInfo.value?.productImageUrl || ''
     : bookInfo.coverSrc.value))
 
   const bookReviewInfo = computed(() => {

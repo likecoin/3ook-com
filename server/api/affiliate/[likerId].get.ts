@@ -24,7 +24,7 @@ export default defineEventHandler(async (event): Promise<AffiliatePublicConfig> 
           ['bookstore'],
         )
         name = metadata?.bookstoreInfo?.name
-        cover = metadata?.bookstoreInfo?.thumbnailUrl
+        cover = metadata?.bookstoreInfo?.thumbnails?.small.url
       }
       catch { /* ignore */ }
       return {

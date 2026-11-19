@@ -1,7 +1,7 @@
 export interface StoreSearchSuggestion {
   classId: string
   title: string
-  thumbnailUrl?: string
+  coverSrc?: string
   isPlusReadingEnabled?: boolean
 }
 
@@ -94,9 +94,9 @@ export function useStoreSearchSuggestions(
           .map(record => ({
             classId: normalizeNFTClassId(record.classId),
             title: record.title!,
-            // Route the raw (possibly ipfs://) thumbnailUrl through the resize proxy
+            // Route the raw (possibly ipfs://) imageUrl through the resize proxy
             // once here so the CSP-safe URL isn't rebuilt on every keystroke re-render.
-            thumbnailUrl: record.imageUrl ? getResizedNormalizedImageURL(record.imageUrl, { size: 100 }) : undefined,
+            coverSrc: record.imageUrl ? getResizedNormalizedImageURL(record.imageUrl, { size: 100 }) : undefined,
             isPlusReadingEnabled: record.isPlusReadingEnabled,
           }))
         // Search records carry no restrictedTerritories, so resolve the bookstore

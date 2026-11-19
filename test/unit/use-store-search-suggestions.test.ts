@@ -64,8 +64,8 @@ describe('useStoreSearchSuggestions', () => {
 
     expect(mockFetch).toHaveBeenCalledOnce()
     expect(suggestions.value).toEqual([
-      { classId: 'a', title: 'Book A', thumbnailUrl: 'resized:ipfs://a:100' },
-      { classId: 'b', title: 'Book B', thumbnailUrl: undefined },
+      { classId: 'a', title: 'Book A', coverSrc: 'resized:ipfs://a:100' },
+      { classId: 'b', title: 'Book B', coverSrc: undefined },
     ])
   })
 
@@ -98,7 +98,7 @@ describe('useStoreSearchSuggestions', () => {
     await flush()
 
     expect(suggestions.value).toEqual([
-      { classId: 'a', title: 'Book A', thumbnailUrl: 'resized:ipfs://a:100' },
+      { classId: 'a', title: 'Book A', coverSrc: 'resized:ipfs://a:100' },
     ])
   })
 
@@ -145,7 +145,7 @@ describe('useStoreSearchSuggestions', () => {
     await flush()
 
     expect(mockFetch).toHaveBeenCalledOnce()
-    expect(suggestions.value).toEqual([{ classId: 'a', title: 'A', thumbnailUrl: 'resized:ipfs://a:100' }])
+    expect(suggestions.value).toEqual([{ classId: 'a', title: 'A', coverSrc: 'resized:ipfs://a:100' }])
   })
 
   it('ignores a stale response so it cannot overwrite a newer term', async () => {
@@ -170,7 +170,7 @@ describe('useStoreSearchSuggestions', () => {
     resolvers[0]!({ records: [{ classId: 'old', title: 'Old', imageUrl: 'ipfs://old' }] })
     await flush()
 
-    expect(suggestions.value).toEqual([{ classId: 'new', title: 'New', thumbnailUrl: 'resized:ipfs://new:100' }])
+    expect(suggestions.value).toEqual([{ classId: 'new', title: 'New', coverSrc: 'resized:ipfs://new:100' }])
   })
 
   it('serves a repeated term from cache without refetching', async () => {
@@ -189,7 +189,7 @@ describe('useStoreSearchSuggestions', () => {
     await vi.advanceTimersByTimeAsync(DEBOUNCE_MS)
 
     expect(mockFetch).toHaveBeenCalledOnce()
-    expect(suggestions.value).toEqual([{ classId: 'a', title: 'A', thumbnailUrl: 'resized:ipfs://a:100' }])
+    expect(suggestions.value).toEqual([{ classId: 'a', title: 'A', coverSrc: 'resized:ipfs://a:100' }])
   })
 
   it('flags isLoading only while a fetch is in flight', async () => {

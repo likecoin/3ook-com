@@ -455,7 +455,7 @@ export const useBookstoreStore = defineStore('bookstore', () => {
         items.push({
           classId,
           title: info.name,
-          imageUrl: info.thumbnailUrl,
+          imageUrl: info.productImageUrl || '',
           isPlusReadingEnabled: info.isPlusReadingEnabled,
         })
       })

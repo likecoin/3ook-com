@@ -24,7 +24,7 @@ interface NFTBookListingInfo {
   id?: string
   classId?: string
   name?: string
-  thumbnailUrl?: string
+  productImageUrl?: string
   inLanguage?: string
   isAdultOnly?: boolean
   restrictedTerritories?: string[]
@@ -112,7 +112,7 @@ function normalizeBookListingToProduct(book: NFTBookListingInfo): BookstoreCMSPr
     id: book.classId || book.id || '',
     classId: book.classId,
     title: book.name,
-    imageUrl: book.thumbnailUrl,
+    imageUrl: book.productImageUrl,
     locales: book.inLanguage ? [book.inLanguage] : undefined,
     isDRMFree: book.hideDownload === false,
     isAdultOnly: book.isAdultOnly || undefined,

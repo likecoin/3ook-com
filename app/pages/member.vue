@@ -105,7 +105,7 @@
             >
               <BookCover
                 class="w-16 aspect-auto"
-                :src="getGiftBookCover(book.cover)"
+                :src="book.cover"
                 :alt="book.name || `${$t('pricing_page_affiliate_gift_label')} ${index + 1}`"
                 has-shadow
               />
@@ -235,7 +235,6 @@ const affiliateVoiceNames = computed(() => {
 })
 const affiliateSampleVoices = computed(() => activeAffiliate.value?.customVoices ?? [])
 
-const { getResizedNormalizedImageURL } = useImageResize()
 const giftBooks = computed(() => activeAffiliate.value?.giftBooks ?? [])
 const selectedGiftClassId = ref<string | undefined>(undefined)
 // Default to the first book and keep the pick valid as the list changes
@@ -248,9 +247,6 @@ watch(giftBooks, (books) => {
 const selectedGiftBook = computed(() =>
   giftBooks.value.find(b => b.classId === selectedGiftClassId.value),
 )
-function getGiftBookCover(src?: string) {
-  return src ? getResizedNormalizedImageURL(src, { size: 300 }) : ''
-}
 
 const isGiftsListScrollable = computed(() => giftBooks.value.length > 2)
 const giftsListEl = useTemplateRef<HTMLElement>('giftsListEl')

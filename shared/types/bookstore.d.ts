@@ -193,7 +193,12 @@ declare global {
     author: BookEntity
     genre?: string
     keywords?: string[]
-    thumbnailUrl: string
+    // HTTPS URL of the original cover; `thumbnails` are resized copies of it.
+    productImageUrl?: string
+    thumbnails?: {
+      small: { url: string, width: number }
+      medium: { url: string, width: number }
+    }
     usageInfo: string
     tableOfContents?: string
     previewContent?: string

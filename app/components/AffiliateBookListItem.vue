@@ -24,13 +24,9 @@ const props = defineProps<{ nftClassId: string }>()
 const emit = defineEmits<{ navigate: [] }>()
 
 const queryCache = useQueryCache()
-const { getResizedNormalizedImageURL } = useImageResize()
 const { bookstoreInfo, productPageRoute } = useBookInfo({ nftClassId: toRef(props, 'nftClassId') })
 
-const cover = computed(() => {
-  const url = bookstoreInfo.value?.thumbnailUrl
-  return url ? getResizedNormalizedImageURL(url, { size: 300 }) : ''
-})
+const cover = computed(() => bookstoreInfo.value?.thumbnails?.small.url || '')
 
 onMounted(() => {
   ensureNFTClassAggregatedMetadataThroughCache(queryCache, props.nftClassId).catch(() => { /* ignore */ })

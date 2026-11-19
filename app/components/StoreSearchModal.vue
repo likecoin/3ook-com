@@ -102,8 +102,8 @@
             @click="handleSearchSuggestionSelect(suggestion)"
           >
             <img
-              v-if="suggestion.thumbnailUrl"
-              :src="suggestion.thumbnailUrl"
+              v-if="suggestion.coverSrc"
+              :src="suggestion.coverSrc"
               alt=""
               class="h-12 w-9 shrink-0 rounded object-cover"
               loading="lazy"
