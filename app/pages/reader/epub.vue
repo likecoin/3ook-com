@@ -418,7 +418,7 @@ if (!hasLoggedIn.value && !isStandaloneMode.value) {
   await navigateTo(localeRoute({ name: 'account', query: route.query }))
 }
 
-// A local file preview is internal use, so it stays out of analytics.
+// A local file has no book to attribute events to, so it stays out of analytics.
 function logReaderEvent(...args: Parameters<typeof useLogEvent>) {
   if (!isStandaloneMode.value) useLogEvent(...args)
 }
