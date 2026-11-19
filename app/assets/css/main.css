@@ -129,6 +129,21 @@ body {
   margin-bottom: 1em;
 }
 
+/* Dark tint, opaque on the left for legible text, fading full-width into the backdrop.
+   The 70% tint floor keeps the right from going fully transparent,
+   so the left↔right contrast stays gentle. */
+.dark-backdrop-banner {
+  --banner-tint: var(--color-theme-black);
+  background-color: var(--banner-tint);
+  background-image:
+    linear-gradient(
+      to right,
+      var(--banner-tint),
+      color-mix(in oklab, var(--banner-tint) 70%, transparent)
+    ),
+    var(--backdrop-image);
+}
+
 .hide-scrollbar {
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE 10+ */

@@ -13,7 +13,7 @@
     variant="subtle"
     :style="{ '--backdrop-image': `url(${backdropImageSrc})` }"
     :ui="{
-      root: 'store-intro-banner rounded-xl bg-cover tablet:bg-size-[60%] bg-no-repeat bg-right light:ring-0',
+      root: 'dark-backdrop-banner rounded-xl bg-cover tablet:bg-size-[60%] bg-no-repeat bg-right light:ring-0',
       wrapper: 'pr-16',
       title: 'flex items-center gap-1.5 font-bold text-theme-cyan text-lg',
       description: 'text-theme-white',
@@ -131,20 +131,3 @@ function handleCTAClick() {
   useLogPlusUpsell('click', { llMedium: 'store-intro', llSource: 'store' })
 }
 </script>
-
-<style scoped>
-/* Dark tint, opaque on the left for legible text, fading full-width into the
-   backdrop. The 70% tint floor keeps the right from going fully transparent so
-   the left↔right contrast stays gentle. */
-.store-intro-banner {
-  --banner-tint: var(--color-theme-black);
-  background-color: var(--banner-tint);
-  background-image:
-    linear-gradient(
-      to right,
-      var(--banner-tint),
-      color-mix(in oklab, var(--banner-tint) 70%, transparent)
-    ),
-    var(--backdrop-image);
-}
-</style>
