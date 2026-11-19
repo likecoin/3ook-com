@@ -66,18 +66,6 @@ export function getLibraryChartHoverClass(tier: LibraryChartRankTier): string {
   return getIsLibraryChartHighlighted(tier) ? 'hover:bg-theme-cyan/25' : 'hover:bg-theme-white/12'
 }
 
-// The radius tracks the artwork: a bigger cover carries a rounder corner.
-export function getLibraryChartCoverRoundedClass(tier: LibraryChartRankTier): string {
-  switch (tier) {
-    case 'hero':
-      return 'rounded-lg tablet:rounded-xl'
-    case 'highlight':
-      return 'rounded-md tablet:rounded-lg'
-    default:
-      return 'rounded-md'
-  }
-}
-
 export function getLibraryChartCoverClass(tier: LibraryChartRankTier): string {
   switch (tier) {
     case 'hero':
@@ -115,7 +103,6 @@ export interface LibraryChartItemClasses {
   surface: string
   card: string
   cover: string
-  coverRounded: string
   rank: string
   title: string
 }
@@ -133,7 +120,6 @@ export function getLibraryChartItemClasses(rank: number): LibraryChartItemClasse
     surface,
     card: `${surface} ${getLibraryChartHoverClass(tier)}`,
     cover: getLibraryChartCoverClass(tier),
-    coverRounded: getLibraryChartCoverRoundedClass(tier),
     rank: getLibraryChartRankClass(tier),
     title: getLibraryChartTitleClass(tier),
   }

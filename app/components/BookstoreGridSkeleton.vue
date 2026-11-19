@@ -10,7 +10,7 @@
       :key="index"
       :class="['flex flex-col justify-end text-sm', getGridItemClassesByIndex(index - 1)]"
     >
-      <USkeleton class="bg-skeleton w-full aspect-2/3 rounded-lg" />
+      <USkeleton :class="['bg-skeleton w-full aspect-2/3', BOOK_COVER_ROUNDED_CLASS]" />
 
       <div class="mt-2 min-h-[3.2lh]">
         <!-- Sized to stay under the 3.2lh min above, so that min governs the
@@ -36,6 +36,8 @@
 </template>
 
 <script setup lang="ts">
+import { BOOK_COVER_ROUNDED_CLASS } from '~/components/BookCover.vue'
+
 // Two full rows at the widest breakpoint; maxRows below trims it back to two
 // rows at every narrower one, so the placeholder never runs off the fold.
 const SKELETON_COUNT = GRID_COLUMN_MAX * 2

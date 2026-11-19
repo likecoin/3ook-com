@@ -28,7 +28,6 @@
 
       <BookCover
         :class="['shrink-0', chart.cover]"
-        :rounded-class="chart.coverRounded"
         :src="bookCoverSrc"
         :alt="bookName || $t('book_cover_link_label')"
         :lazy="props.lazy"
