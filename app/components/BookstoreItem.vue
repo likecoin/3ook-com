@@ -144,7 +144,7 @@
 
 <script setup lang="ts">
 import type { LocationQueryRaw } from 'vue-router'
-import { formatLikerIdHandle, normalizeLikerId, parseLikerIdHandle } from '~~/shared/utils/liker-id'
+import { formatLikerIdHandle } from '~~/shared/utils/liker-id'
 
 const props = defineProps({
   nftClassId: {
@@ -210,6 +210,11 @@ const props = defineProps({
   rank: {
     type: Number,
     default: 0,
+  },
+  // Set where a referrer that has not opted in would withhold the Plus book discount.
+  isPlusDiscountWithheld: {
+    type: Boolean,
+    default: false,
   },
 })
 
@@ -281,41 +286,13 @@ const memberPricedItem = computed(() => {
   }
 })
 
-// A publisher storefront refers the books it lists: by `from` once the query middleware
-// has tagged the link, else by the storefront itself. `?affiliate=` and `?owner_wallet=` tag nothing, yet still count.
-const queryOwnerWallet = computed(() => getRouteQuery('owner_wallet'))
-const { data: ownerWalletInfo } = useLikerInfoByWalletAddressQuery(queryOwnerWallet)
-const referrerLikerId = computed(() => {
-  // A bare channel string names no affiliate, so it can never opt in.
-  const from = getRouteQuery('from')
-  if (from) return parseLikerIdHandle(from) || ''
-  return (
-    getRouteParam('userId')
-    || publisherSubdomainLikerId
-    || normalizeLikerId(getRouteQuery('affiliate'))
-    || ownerWalletInfo.value?.likerId
-    || ''
-  )
-})
-const isReferred = computed(() => !!(
-  getRouteQuery('from')
-  || referrerLikerId.value
-  || queryOwnerWallet.value
-))
-
-// Mirrors the book page: a referrer withholds the book discount unless it opted in,
-// while a non-NFT member price applies on any channel.
-const { data: referrerAffiliateConfig } = useAffiliateStoreConfigQuery(referrerLikerId)
-const isPlusDiscountWithheld = computed(() => (
-  isReferred.value
-  && !bookInfo.isNonNFT.value
-  && !referrerAffiliateConfig.value?.isPlusDiscountAllowed
-))
+// The listing knows its referrer and whether it opted in; a non-NFT member price applies on any channel.
+const isBookDiscountWithheld = computed(() => props.isPlusDiscountWithheld && !bookInfo.isNonNFT.value)
 
 const formattedDiscountPrice = computed(() => {
   if (
     !isLikerPlus.value
-    || isPlusDiscountWithheld.value
+    || isBookDiscountWithheld.value
     || price.value <= 0
     || bookInfo.isDisplayOnly.value
   ) {
@@ -324,11 +301,20 @@ const formattedDiscountPrice = computed(() => {
   return formatMemberPrice(memberPricedItem.value, PLUS_BOOK_PURCHASE_DISCOUNT)
 })
 
+// A referrer (`from`, publisher storefront or subdomain) may withhold the book discount,
+// which the grid cannot check without a fetch; a non-NFT member price applies on any channel.
+const isReferred = computed(() => !!(
+  getRouteQuery('from')
+  || getRouteParam('userId')
+  || publisherSubdomainLikerId
+))
+
 // Teased to whoever is not paying it, so monthly Plus still sees a non-NFT member price.
 const formattedPlusMemberPrice = computed(() => {
   if (
     formattedDiscountPrice.value
-    || isPlusDiscountWithheld.value
+    || isBookDiscountWithheld.value
+    || (isReferred.value && !bookInfo.isNonNFT.value)
     || price.value <= 0
     || bookInfo.isDisplayOnly.value
   ) {

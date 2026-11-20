@@ -1,5 +1,4 @@
 import type { DefineQueryOptions, EntryKey, QueryCache } from '@pinia/colada'
-import { useQuery } from '@pinia/colada'
 import type { AffiliatePublicConfig } from '~~/shared/types/affiliate'
 
 const AFFILIATE_STORE_CONFIG_QUERY_KEY = 'affiliate-store-config'
@@ -34,15 +33,4 @@ export function getAffiliateStoreConfigByLikerIdFromCache(
   likerId: string,
 ): AffiliatePublicConfig | null {
   return queryCache.getQueryData<AffiliatePublicConfig>(getAffiliateStoreConfigQueryKey(likerId)) ?? null
-}
-
-// One entry per Liker ID, so a navigation between storefronts never reads the other's config.
-// Unlike the explicit fetches above, a reader reuses any cached entry: every card mounts one.
-export function useAffiliateStoreConfigQuery(likerId: MaybeRefOrGetter<string>) {
-  return useQuery(() => ({
-    ...getAffiliateStoreConfigQueryOptions(toValue(likerId)),
-    staleTime: Infinity,
-    // Client-gated like the liker info queries: SSR fetches stay on the awaited helpers.
-    enabled: import.meta.client && !!toValue(likerId),
-  }))
 }

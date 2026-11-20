@@ -6,9 +6,6 @@ const { mockState } = vi.hoisted(() => ({
   mockState: {
     subdomainLikerId: '',
     query: {} as Record<string, string>,
-    params: {} as Record<string, string>,
-    ownerWalletLikerId: '',
-    isPlusDiscountAllowedByReferrer: {} as Record<string, boolean>,
     currency: 'usd',
     merchPricingItem: undefined as Record<string, unknown> | undefined,
   },
@@ -17,18 +14,6 @@ const { mockState } = vi.hoisted(() => ({
 mockNuxtImport('usePaymentCurrency', () => () => ({ displayCurrency: computed(() => mockState.currency) }))
 mockNuxtImport('usePublisherSubdomainLikerId', () => () => mockState.subdomainLikerId)
 mockNuxtImport('useRouteQuery', () => () => (key: string) => mockState.query[key] || '')
-mockNuxtImport('useRouteParam', () => () => (key: string) => mockState.params[key] || '')
-mockNuxtImport('useLikerInfoByWalletAddressQuery', () => (wallet: MaybeRefOrGetter<string>) => ({
-  data: computed(() => (toValue(wallet) && mockState.ownerWalletLikerId
-    ? { likerId: mockState.ownerWalletLikerId }
-    : undefined)),
-}))
-mockNuxtImport('useAffiliateStoreConfigQuery', () => (likerId: MaybeRefOrGetter<string>) => ({
-  data: computed(() => {
-    const value = toValue(likerId)
-    return value ? { active: false, isPlusDiscountAllowed: !!mockState.isPlusDiscountAllowedByReferrer[value] } : undefined
-  }),
-}))
 // The real one pulls in the bookshelf store, which needs wagmi; only the route
 // builder matters here, and it takes the card's query as given.
 mockNuxtImport('useBookInfo', () => ({ nftClassId }: { nftClassId: string }) => {
@@ -66,9 +51,6 @@ async function getBookLinks(props: Record<string, unknown> = {}) {
 beforeEach(() => {
   mockState.subdomainLikerId = ''
   mockState.query = {}
-  mockState.params = {}
-  mockState.ownerWalletLikerId = ''
-  mockState.isPlusDiscountAllowedByReferrer = {}
   mockState.currency = 'usd'
   setUser(null)
   mockState.merchPricingItem = undefined
@@ -84,7 +66,7 @@ function getPlusRowClasses(wrapper: Awaited<ReturnType<typeof mountSuspended>>) 
 }
 
 // A BOOX reader: HK$1,998, or HK$1,698 for yearly Plus.
-async function mountMerchItem() {
+async function mountMerchItem(props: Record<string, unknown> = {}) {
   mockState.currency = 'hkd'
   mockState.merchPricingItem = {
     price: 249.99,
@@ -93,7 +75,7 @@ async function mountMerchItem() {
     plusPriceInDecimalByCurrency: { hkd: 169800 },
   }
   return mountSuspended(BookstoreItem, {
-    props: { nftClassId: NFT_CLASS_ID, price: 249.99, priceOverride: { hkd: 199800 } },
+    props: { nftClassId: NFT_CLASS_ID, price: 249.99, priceOverride: { hkd: 199800 }, ...props },
   })
 }
 
@@ -172,66 +154,23 @@ describe('BookstoreItem', () => {
     expect(wrapper.findComponent({ name: 'PlusMemberPrice' }).exists()).toBe(false)
   })
 
-  describe('on a publisher storefront', () => {
-    async function mountPlusMemberItem() {
-      setUser({ isLikerPlus: true, likerPlusPeriod: 'month' })
-      return mountSuspended(BookstoreItem, {
-        props: { nftClassId: NFT_CLASS_ID, price: 9.99 },
-      })
-    }
-
-    it.each([
-      ['the publisher route', () => { mockState.params = { userId: 'ckxpress' } }],
-      ['the publisher subdomain', () => { mockState.subdomainLikerId = 'ckxpress' }],
-      ['an owner wallet listing', () => {
-        mockState.query = { owner_wallet: '0xabc' }
-        mockState.ownerWalletLikerId = 'ckxpress'
-      }],
-      ['an owner wallet listing without a Liker ID', () => { mockState.query = { owner_wallet: '0xabc' } }],
-      ['an affiliate listing', () => { mockState.query = { affiliate: 'ckxpress' } }],
-    ])('withholds the member price from a Plus member on %s', async (_, setup) => {
-      setup()
-      const wrapper = await mountPlusMemberItem()
-
-      expect(wrapper.findComponent({ name: 'PlusMemberPrice' }).exists()).toBe(false)
-      expect(wrapper.find('.line-through').exists()).toBe(false)
-      expect(wrapper.text()).toContain('US$9.99')
+  it('withholds the member price from a Plus member when the listing says so', async () => {
+    setUser({ isLikerPlus: true, likerPlusPeriod: 'month' })
+    const wrapper = await mountSuspended(BookstoreItem, {
+      props: { nftClassId: NFT_CLASS_ID, price: 9.99, isPlusDiscountWithheld: true },
     })
 
-    it.each([
-      ['the publisher route', () => { mockState.params = { userId: 'ckxpress' } }],
-      ['the publisher subdomain', () => { mockState.subdomainLikerId = 'ckxpress' }],
-      ['an owner wallet listing', () => {
-        mockState.query = { owner_wallet: '0xabc' }
-        mockState.ownerWalletLikerId = 'ckxpress'
-      }],
-      ['an affiliate listing', () => { mockState.query = { affiliate: '@ckxpress' } }],
-    ])('keeps the member price on %s when the publisher allows it', async (_, setup) => {
-      setup()
-      mockState.isPlusDiscountAllowedByReferrer = { ckxpress: true }
-      const wrapper = await mountPlusMemberItem()
+    expect(wrapper.findComponent({ name: 'PlusMemberPrice' }).exists()).toBe(false)
+    expect(wrapper.find('.line-through').exists()).toBe(false)
+    expect(wrapper.text()).toContain('US$9.99')
+  })
 
-      expect(wrapper.findComponent({ name: 'PlusMemberPrice' }).props('price')).toBe('US$7.99')
-      expect(wrapper.find('.line-through').text()).toBe('US$9.99')
+  it('withholds the teased member price from a non-member when the listing says so', async () => {
+    const wrapper = await mountSuspended(BookstoreItem, {
+      props: { nftClassId: NFT_CLASS_ID, price: 9.99, isPlusDiscountWithheld: true },
     })
 
-    it('follows an explicit referrer over the storefront', async () => {
-      mockState.params = { userId: 'ckxpress' }
-      mockState.query = { from: '@zkcjwp' }
-      mockState.isPlusDiscountAllowedByReferrer = { ckxpress: true }
-      const wrapper = await mountPlusMemberItem()
-
-      expect(wrapper.findComponent({ name: 'PlusMemberPrice' }).exists()).toBe(false)
-    })
-
-    it('withholds the member price behind a channel referrer', async () => {
-      mockState.params = { userId: 'ckxpress' }
-      mockState.query = { from: 'newsletter' }
-      mockState.isPlusDiscountAllowedByReferrer = { ckxpress: true }
-      const wrapper = await mountPlusMemberItem()
-
-      expect(wrapper.findComponent({ name: 'PlusMemberPrice' }).exists()).toBe(false)
-    })
+    expect(wrapper.findComponent({ name: 'PlusMemberPrice' }).exists()).toBe(false)
   })
 
   it('teases a gift item\'s annual member price to a non-member', async () => {
@@ -256,6 +195,14 @@ describe('BookstoreItem', () => {
     const wrapper = await mountMerchItem()
 
     expect(wrapper.findComponent({ name: 'PlusMemberPrice' }).props('price')).toBe('HK$1,698')
+  })
+
+  it('keeps a gift item\'s member price where the listing withholds the book discount', async () => {
+    setUser({ isLikerPlus: true, likerPlusPeriod: 'year' })
+    const wrapper = await mountMerchItem({ isPlusDiscountWithheld: true })
+
+    expect(wrapper.findComponent({ name: 'PlusMemberPrice' }).props('price')).toBe('HK$1,698')
+    expect(wrapper.find('.line-through').text()).toBe('HK$1,998')
   })
 
   it('gives a yearly Plus member the gift item\'s member price', async () => {

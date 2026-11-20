@@ -22,6 +22,7 @@
         :ll-medium="getItemLLMedium(classId)"
         :ll-source="llSource"
         :is-library="isLibrary"
+        :is-plus-discount-withheld="isPlusDiscountWithheld"
         @open="handleBookOpen($event, index)"
       />
     </ul>
@@ -43,12 +44,14 @@ const props = withDefaults(defineProps<{
   isLibrary?: boolean
   // Fixed 3-column layout for narrow containers (e.g. modals).
   isCompact?: boolean
+  isPlusDiscountWithheld?: boolean
 }>(), {
   title: '',
   llMedium: undefined,
   llSource: '',
   isLibrary: false,
   isCompact: false,
+  isPlusDiscountWithheld: false,
   maxRows: 0,
   feed: undefined,
 })

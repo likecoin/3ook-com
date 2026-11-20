@@ -213,6 +213,7 @@
           :is-library="isLibraryTab"
           :tag="tagId"
           :ll-source="GRID_LL_SOURCE"
+          :is-plus-discount-withheld="isPlusDiscountWithheld"
           @open="handleBookstoreItemOpen($event, index)"
           @visible="handleBookstoreItemVisible"
         />
@@ -246,6 +247,7 @@
           :is-link-disabled="getIsStoreBookInApp(item)"
           :tag="tagId"
           :ll-source="GRID_LL_SOURCE"
+          :is-plus-discount-withheld="isPlusDiscountWithheld"
           @open="handleBookstoreItemOpen($event, index)"
           @visible="handleBookstoreItemVisible"
         />
@@ -385,6 +387,14 @@ const {
   storeEntity,
   searchModeContext,
 } = await useStoreSearchMode()
+
+// Books opened from a storefront carry it as their referrer, so the book page withholds
+// the Plus discount unless that publisher opted in. A config never loaded counts as no.
+const isPlusDiscountWithheld = computed(() => {
+  const storefrontLikerId = routeUserId.value || queryAffiliate.value
+  if (!storefrontLikerId) return !!queryOwnerWallet.value
+  return !getAffiliateStoreConfigByLikerIdFromCache(queryCache, storefrontLikerId)?.isPlusDiscountAllowed
+})
 
 // Set by the post-purchase redirect (plus/success) to greet a just-subscribed member.
 const queryWelcome = computed(() => getRouteQuery('welcome', ''))
