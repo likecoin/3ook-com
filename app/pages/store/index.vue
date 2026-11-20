@@ -213,6 +213,7 @@
           :is-library="isLibraryTab"
           :tag="tagId"
           :ll-source="GRID_LL_SOURCE"
+          :is-plus-discount-hidden="isPlusDiscountHidden"
           @open="handleBookstoreItemOpen($event, index)"
           @visible="handleBookstoreItemVisible"
         />
@@ -246,6 +247,7 @@
           :is-link-disabled="getIsStoreBookInApp(item)"
           :tag="tagId"
           :ll-source="GRID_LL_SOURCE"
+          :is-plus-discount-hidden="isPlusDiscountHidden"
           @open="handleBookstoreItemOpen($event, index)"
           @visible="handleBookstoreItemVisible"
         />
@@ -310,7 +312,7 @@ import { FetchError } from 'ofetch'
 
 import { LOGGED_IMPRESSION_COUNT, isBookstoreBuiltInListType } from '~~/shared/utils/bookstore'
 import { getStorePublisherRouteName } from '~~/shared/constants/store-routes'
-import { formatLikerIdHandle } from '~~/shared/utils/liker-id'
+import { formatLikerIdHandle, parseLikerIdHandle } from '~~/shared/utils/liker-id'
 import { getStoreTagIdFromRoute } from '~/composables/use-store-tags'
 import { getIsGiftTagId } from '~/utils/gift-tag'
 import { getIsLibraryChartTagId } from '~/utils/library-chart'
@@ -385,6 +387,30 @@ const {
   storeEntity,
   searchModeContext,
 } = await useStoreSearchMode()
+
+// Books opened from a storefront carry it as their referrer, so the book page withholds
+// the Plus discount unless that publisher opted in. A config never loaded counts as no.
+const isStorefront = computed(() => !!(routeUserId.value || queryAffiliate.value || queryOwnerWallet.value))
+// An explicit `from` survives into the book page, so it outranks the storefront itself.
+const storefrontReferrerLikerId = computed(() => {
+  if (!isStorefront.value) return ''
+  const from = getRouteQuery('from')
+  if (from) return parseLikerIdHandle(from) || ''
+  return routeUserId.value || queryAffiliate.value
+})
+// Undefined off a storefront, leaving each card to its own referral check.
+const isPlusDiscountHidden = computed(() => {
+  if (!isStorefront.value) return undefined
+  const likerId = storefrontReferrerLikerId.value
+  if (!likerId) return true
+  return !getAffiliateStoreConfigByLikerIdFromCache(queryCache, likerId)?.isPlusDiscountAllowed
+})
+if (import.meta.client) {
+  watch(storefrontReferrerLikerId, (likerId) => {
+    if (!likerId || getAffiliateStoreConfigByLikerIdFromCache(queryCache, likerId)) return
+    fetchAffiliateStoreConfigThroughCache(queryCache, likerId).catch(() => {})
+  }, { immediate: true })
+}
 
 // Set by the post-purchase redirect (plus/success) to greet a just-subscribed member.
 const queryWelcome = computed(() => getRouteQuery('welcome', ''))

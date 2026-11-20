@@ -468,6 +468,7 @@
         :feed="feedRecommendations"
         :ll-source="nftClassId"
         :is-library="isLibrary"
+        :is-plus-discount-hidden="!isAffiliatePlusDiscountAllowed"
         :max-rows="MAX_RECOMMENDED_ROWS"
       />
     </div>

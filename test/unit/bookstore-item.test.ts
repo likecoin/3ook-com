@@ -66,7 +66,7 @@ function getPlusRowClasses(wrapper: Awaited<ReturnType<typeof mountSuspended>>) 
 }
 
 // A BOOX reader: HK$1,998, or HK$1,698 for yearly Plus.
-async function mountMerchItem() {
+async function mountMerchItem(props: Record<string, unknown> = {}) {
   mockState.currency = 'hkd'
   mockState.merchPricingItem = {
     price: 249.99,
@@ -75,7 +75,7 @@ async function mountMerchItem() {
     plusPriceInDecimalByCurrency: { hkd: 169800 },
   }
   return mountSuspended(BookstoreItem, {
-    props: { nftClassId: NFT_CLASS_ID, price: 249.99, priceOverride: { hkd: 199800 } },
+    props: { nftClassId: NFT_CLASS_ID, price: 249.99, priceOverride: { hkd: 199800 }, ...props },
   })
 }
 
@@ -154,6 +154,34 @@ describe('BookstoreItem', () => {
     expect(wrapper.findComponent({ name: 'PlusMemberPrice' }).exists()).toBe(false)
   })
 
+  it('hides the member price from a Plus member when the listing says so', async () => {
+    setUser({ isLikerPlus: true, likerPlusPeriod: 'month' })
+    const wrapper = await mountSuspended(BookstoreItem, {
+      props: { nftClassId: NFT_CLASS_ID, price: 9.99, isPlusDiscountHidden: true },
+    })
+
+    expect(wrapper.findComponent({ name: 'PlusMemberPrice' }).exists()).toBe(false)
+    expect(wrapper.find('.line-through').exists()).toBe(false)
+    expect(wrapper.text()).toContain('US$9.99')
+  })
+
+  it('hides the teased member price from a non-member when the listing says so', async () => {
+    const wrapper = await mountSuspended(BookstoreItem, {
+      props: { nftClassId: NFT_CLASS_ID, price: 9.99, isPlusDiscountHidden: true },
+    })
+
+    expect(wrapper.findComponent({ name: 'PlusMemberPrice' }).exists()).toBe(false)
+  })
+
+  it('teases the member price on a referred visit when the listing allows it', async () => {
+    mockState.query = { from: '@zkcjwp' }
+    const wrapper = await mountSuspended(BookstoreItem, {
+      props: { nftClassId: NFT_CLASS_ID, price: 9.99, isPlusDiscountHidden: false },
+    })
+
+    expect(wrapper.findComponent({ name: 'PlusMemberPrice' }).props('price')).toBe('US$7.99')
+  })
+
   it('teases a gift item\'s annual member price to a non-member', async () => {
     const wrapper = await mountMerchItem()
     const memberPrice = wrapper.findComponent({ name: 'PlusMemberPrice' })
@@ -176,6 +204,14 @@ describe('BookstoreItem', () => {
     const wrapper = await mountMerchItem()
 
     expect(wrapper.findComponent({ name: 'PlusMemberPrice' }).props('price')).toBe('HK$1,698')
+  })
+
+  it('keeps a gift item\'s member price where the listing hides the book discount', async () => {
+    setUser({ isLikerPlus: true, likerPlusPeriod: 'year' })
+    const wrapper = await mountMerchItem({ isPlusDiscountHidden: true })
+
+    expect(wrapper.findComponent({ name: 'PlusMemberPrice' }).props('price')).toBe('HK$1,698')
+    expect(wrapper.find('.line-through').text()).toBe('HK$1,998')
   })
 
   it('gives a yearly Plus member the gift item\'s member price', async () => {
