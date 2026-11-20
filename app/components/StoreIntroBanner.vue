@@ -108,10 +108,9 @@ const actions = computed(() => [{
   color: 'neutral' as const,
   variant: 'outline' as const,
   trailingIcon: 'i-material-symbols-arrow-forward-rounded',
-  ui: {
-    label: 'light:text-inverted',
-    trailingIcon: 'light:text-inverted',
-  },
+  // The banner is always dark, so style for it in both modes;
+  // neutral outline's light-mode hover would go white-on-white.
+  class: 'text-theme-white hover:bg-theme-white/15 active:bg-theme-white/25',
   onClick: handleCTAClick,
 }])
 
