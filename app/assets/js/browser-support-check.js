@@ -6,6 +6,10 @@
  * Kept as raw ES5 rather than the toString() pattern of
  * shared/utils/chunk-guard.ts: that form is transpiled by the bundler, which
  * cannot guarantee the syntax parses on the engines this exists to catch.
+ *
+ * Contains no literal double quote:
+ * nuxt-security pairs quotes across the whole <head> before adding CSP nonces,
+ * so a stray one strips the nonce from every later tag, the module entry included.
  */
 (function () {
   var VERSION = '__3OOK_COMMIT_SHA__'
@@ -53,7 +57,7 @@
     },
     'en': {
       title: 'Your browser is out of date',
-      body: 'This browser is missing features 3ook.com needs, so the page cannot display correctly. Please update your browser and try again. On Android, also update "Android System WebView".',
+      body: 'This browser is missing features 3ook.com needs, so the page cannot display correctly. Please update your browser and try again. On Android, also update \x22Android System WebView\x22.',
       details: 'Technical details (for customer support)',
       copy: 'Copy details',
       copied: 'Copied',
@@ -67,7 +71,7 @@
     + 'body{overflow:hidden}'
     + '.bsc{position:fixed;top:0;right:0;bottom:0;left:0;z-index:2147483647;overflow:auto;padding:24px;'
     + 'background:#f9f9f9;color:#131313;-webkit-text-size-adjust:100%;'
-    + 'font:16px/1.6 system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif}'
+    + 'font:16px/1.6 system-ui,-apple-system,Helvetica Neue,Arial,sans-serif}'
     + '.bsc-box{max-width:36em;margin:0 auto;padding:24px 0}'
     // Explicit weight and underline: Tailwind's preflight may already be
     // applied and strips both from h1/a.
@@ -152,7 +156,7 @@
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
+      .replace(/\x22/g, '&quot;')
       .replace(/'/g, '&#39;')
   }
 
@@ -198,18 +202,18 @@
     var overlay = document.createElement('div')
     overlay.className = 'bsc'
     overlay.innerHTML = ''
-      + '<div class="bsc-box">'
+      + '<div class=bsc-box>'
       + '<h1>' + escapeHTML(texts.title) + '</h1>'
       + '<p>' + escapeHTML(texts.body) + '</p>'
-      + '<p class="bsc-versions">' + escapeHTML(MIN_VERSIONS) + '</p>'
+      + '<p class=bsc-versions>' + escapeHTML(MIN_VERSIONS) + '</p>'
       // Above the details block: expanding that pushed the only usable action
       // off the bottom of a small e-ink screen.
-      + '<p><a class="bsc-proceed" data-proceed href="#">' + escapeHTML(texts.proceed) + '</a></p>'
-      + '<details class="bsc-details">'
+      + '<p><a class=bsc-proceed data-proceed href=#>' + escapeHTML(texts.proceed) + '</a></p>'
+      + '<details class=bsc-details>'
       + '<summary>' + escapeHTML(texts.details) + '</summary>'
-      + '<pre class="bsc-report">' + escapeHTML(report) + '</pre>'
-      + '<p><button type="button" class="bsc-copy" data-copy>' + escapeHTML(texts.copy) + '</button>'
-      + '<a data-email href="#">' + escapeHTML(texts.email) + '</a></p>'
+      + '<pre class=bsc-report>' + escapeHTML(report) + '</pre>'
+      + '<p><button type=button class=bsc-copy data-copy>' + escapeHTML(texts.copy) + '</button>'
+      + '<a data-email href=#>' + escapeHTML(texts.email) + '</a></p>'
       + '</details>'
       + '</div>'
 
