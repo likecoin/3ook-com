@@ -283,13 +283,13 @@ function handleImageError() {
     0 12px 24px rgb(26 31 28 / 12%);
 }
 
-/* Hinge (spine fold, 8.5% of the width), sheen, then a hairline inner shadow. */
+/* Hinge (spine fold, 5% of the width; narrower than Figma's 8.5%), sheen, then a hairline inner shadow. */
 .book-cover-finish {
   background-image:
     linear-gradient(to right, rgb(0 0 0 / 22%), rgb(255 255 255 / 18%) 35%, rgb(0 0 0 / 10%) 60%, transparent),
     linear-gradient(135deg, rgb(255 255 255 / 10%), transparent 45%, rgb(0 0 0 / 8%));
   background-repeat: no-repeat;
-  background-size: 8.5% 100%, 100% 100%;
+  background-size: 5% 100%, 100% 100%;
   box-shadow: inset 0 0 2px rgb(0 0 0 / 12%);
 }
 </style>
