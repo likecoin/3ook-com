@@ -213,7 +213,7 @@ const props = defineProps({
   },
   // The listing's decision on the Plus book discount; left undefined, the card
   // falls back to its own referral check. The default keeps Vue from casting it to false.
-  isPlusDiscountWithheld: {
+  isPlusDiscountHidden: {
     type: Boolean,
     default: undefined,
   },
@@ -288,12 +288,12 @@ const memberPricedItem = computed(() => {
 })
 
 // A non-NFT member price applies on any channel.
-const isBookDiscountWithheld = computed(() => !!props.isPlusDiscountWithheld && !bookInfo.isNonNFT.value)
+const isBookDiscountHidden = computed(() => !!props.isPlusDiscountHidden && !bookInfo.isNonNFT.value)
 
 const formattedDiscountPrice = computed(() => {
   if (
     !isLikerPlus.value
-    || isBookDiscountWithheld.value
+    || isBookDiscountHidden.value
     || price.value <= 0
     || bookInfo.isDisplayOnly.value
   ) {
@@ -314,7 +314,7 @@ const isReferred = computed(() => !!(
 const formattedPlusMemberPrice = computed(() => {
   if (
     formattedDiscountPrice.value
-    || (!bookInfo.isNonNFT.value && (props.isPlusDiscountWithheld ?? isReferred.value))
+    || (!bookInfo.isNonNFT.value && (props.isPlusDiscountHidden ?? isReferred.value))
     || price.value <= 0
     || bookInfo.isDisplayOnly.value
   ) {

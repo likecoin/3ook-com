@@ -22,7 +22,7 @@
         :ll-medium="getItemLLMedium(classId)"
         :ll-source="llSource"
         :is-library="isLibrary"
-        :is-plus-discount-withheld="isPlusDiscountWithheld"
+        :is-plus-discount-hidden="isPlusDiscountHidden"
         @open="handleBookOpen($event, index)"
       />
     </ul>
@@ -45,14 +45,14 @@ const props = withDefaults(defineProps<{
   // Fixed 3-column layout for narrow containers (e.g. modals).
   isCompact?: boolean
   // Passed through to each card; undefined leaves the card to its own referral check.
-  isPlusDiscountWithheld?: boolean
+  isPlusDiscountHidden?: boolean
 }>(), {
   title: '',
   llMedium: undefined,
   llSource: '',
   isLibrary: false,
   isCompact: false,
-  isPlusDiscountWithheld: undefined,
+  isPlusDiscountHidden: undefined,
   maxRows: 0,
   feed: undefined,
 })

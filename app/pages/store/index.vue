@@ -213,7 +213,7 @@
           :is-library="isLibraryTab"
           :tag="tagId"
           :ll-source="GRID_LL_SOURCE"
-          :is-plus-discount-withheld="isPlusDiscountWithheld"
+          :is-plus-discount-hidden="isPlusDiscountHidden"
           @open="handleBookstoreItemOpen($event, index)"
           @visible="handleBookstoreItemVisible"
         />
@@ -247,7 +247,7 @@
           :is-link-disabled="getIsStoreBookInApp(item)"
           :tag="tagId"
           :ll-source="GRID_LL_SOURCE"
-          :is-plus-discount-withheld="isPlusDiscountWithheld"
+          :is-plus-discount-hidden="isPlusDiscountHidden"
           @open="handleBookstoreItemOpen($event, index)"
           @visible="handleBookstoreItemVisible"
         />
@@ -399,7 +399,7 @@ const storefrontReferrerLikerId = computed(() => {
   return routeUserId.value || queryAffiliate.value
 })
 // Undefined off a storefront, leaving each card to its own referral check.
-const isPlusDiscountWithheld = computed(() => {
+const isPlusDiscountHidden = computed(() => {
   if (!isStorefront.value) return undefined
   const likerId = storefrontReferrerLikerId.value
   if (!likerId) return true

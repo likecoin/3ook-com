@@ -154,10 +154,10 @@ describe('BookstoreItem', () => {
     expect(wrapper.findComponent({ name: 'PlusMemberPrice' }).exists()).toBe(false)
   })
 
-  it('withholds the member price from a Plus member when the listing says so', async () => {
+  it('hides the member price from a Plus member when the listing says so', async () => {
     setUser({ isLikerPlus: true, likerPlusPeriod: 'month' })
     const wrapper = await mountSuspended(BookstoreItem, {
-      props: { nftClassId: NFT_CLASS_ID, price: 9.99, isPlusDiscountWithheld: true },
+      props: { nftClassId: NFT_CLASS_ID, price: 9.99, isPlusDiscountHidden: true },
     })
 
     expect(wrapper.findComponent({ name: 'PlusMemberPrice' }).exists()).toBe(false)
@@ -165,9 +165,9 @@ describe('BookstoreItem', () => {
     expect(wrapper.text()).toContain('US$9.99')
   })
 
-  it('withholds the teased member price from a non-member when the listing says so', async () => {
+  it('hides the teased member price from a non-member when the listing says so', async () => {
     const wrapper = await mountSuspended(BookstoreItem, {
-      props: { nftClassId: NFT_CLASS_ID, price: 9.99, isPlusDiscountWithheld: true },
+      props: { nftClassId: NFT_CLASS_ID, price: 9.99, isPlusDiscountHidden: true },
     })
 
     expect(wrapper.findComponent({ name: 'PlusMemberPrice' }).exists()).toBe(false)
@@ -176,7 +176,7 @@ describe('BookstoreItem', () => {
   it('teases the member price on a referred visit when the listing allows it', async () => {
     mockState.query = { from: '@zkcjwp' }
     const wrapper = await mountSuspended(BookstoreItem, {
-      props: { nftClassId: NFT_CLASS_ID, price: 9.99, isPlusDiscountWithheld: false },
+      props: { nftClassId: NFT_CLASS_ID, price: 9.99, isPlusDiscountHidden: false },
     })
 
     expect(wrapper.findComponent({ name: 'PlusMemberPrice' }).props('price')).toBe('US$7.99')
@@ -206,9 +206,9 @@ describe('BookstoreItem', () => {
     expect(wrapper.findComponent({ name: 'PlusMemberPrice' }).props('price')).toBe('HK$1,698')
   })
 
-  it('keeps a gift item\'s member price where the listing withholds the book discount', async () => {
+  it('keeps a gift item\'s member price where the listing hides the book discount', async () => {
     setUser({ isLikerPlus: true, likerPlusPeriod: 'year' })
-    const wrapper = await mountMerchItem({ isPlusDiscountWithheld: true })
+    const wrapper = await mountMerchItem({ isPlusDiscountHidden: true })
 
     expect(wrapper.findComponent({ name: 'PlusMemberPrice' }).props('price')).toBe('HK$1,698')
     expect(wrapper.find('.line-through').text()).toBe('HK$1,998')
