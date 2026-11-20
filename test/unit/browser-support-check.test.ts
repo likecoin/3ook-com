@@ -10,6 +10,18 @@ const SCRIPT = readFileSync(
   'utf8',
 )
 
+// Lifted from the installed plugin rather than copied,
+// so an upgrade that changes its quote masking is exercised here too.
+function loadInjectNonceToTags() {
+  const source = readFileSync(
+    new URL('../../node_modules/nuxt-security/dist/runtime/nitro/plugins/40-cspSsrNonce.js', import.meta.url),
+    'utf8',
+  )
+  const start = source.indexOf('const LINK_RE')
+  const end = source.indexOf('export default')
+  return new Function(`${source.slice(start, end)}\nreturn injectNonceToTags`)() as (html: string, nonce: string) => string
+}
+
 interface SetupOptions {
   hasColorMix?: boolean
   hasStructuredClone?: boolean
@@ -72,6 +84,21 @@ describe('browser support check', () => {
   // parse on them too — modern syntax here would throw before it can warn.
   it('parses as ES5', () => {
     expect(() => parse(SCRIPT, { ecmaVersion: 5 })).not.toThrow()
+  })
+
+  it('leaves the CSP nonce on every tag that follows it in <head>', () => {
+    expect(SCRIPT).not.toContain('"')
+
+    const head = [
+      `<script>${SCRIPT}</script>`,
+      '<script type="importmap">{"imports":{"#entry":"/_nuxt/entry.js"}}</script>',
+      '<script type="module" src="/_nuxt/entry.js" crossorigin></script>',
+      '<link rel="modulepreload" crossorigin href="/_nuxt/chunk.js">',
+      '<link rel="stylesheet" href="/_nuxt/entry.css" crossorigin>',
+    ].join('')
+    const tags = loadInjectNonceToTags()(head, 'abc').match(/<(?:script|link)\b[^>]*>/g)
+    expect(tags).toHaveLength(5)
+    for (const tag of tags!) expect(tag).toContain('nonce="abc"')
   })
 
   it('stays out of the way on a supported browser', () => {
