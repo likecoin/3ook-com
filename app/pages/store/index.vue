@@ -472,12 +472,14 @@ const isStoreIntroBannerVisible = computed(() =>
 
 // A publisher's owner_wallet listing is often a first landing, e.g. from a shared link or ad,
 // so keep the Plus upsell in reach while scrolling.
+// Only our own links (`from=liker_land`) show it, so a publisher's storefront stays theirs by default.
 // Dismissal lasts for the tab session, so a later visit through another link still sees it.
 const isOwnerWalletPlusCTADismissed = useSessionStorage('3ook_owner_wallet_plus_cta_dismissed', false)
 const isOwnerWalletPlusCTAVisible = computed(() =>
   isMounted.value
   && !isOwnerWalletPlusCTADismissed.value
   && !!ownerWallet.value
+  && checkIsFromLikerLand(getRouteQuery('from'))
   && !isApp.value
   && !isPlusOrDevicePlus.value
   && !isWelcomeBannerVisible.value,
