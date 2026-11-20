@@ -25,7 +25,7 @@
         :class="[
           'book-cover-edge',
           { 'book-cover-edge--shadow': hasShadow },
-          ...bookLayerClass,
+          ...layerBaseClass,
         ]"
       />
       <img
@@ -49,13 +49,6 @@
         @error="handleImageError"
       >
       <div
-        aria-hidden="true"
-        :class="[
-          'book-cover-finish',
-          ...bookLayerClass,
-        ]"
-      />
-      <div
         :class="[
           coverClass,
           'absolute',
@@ -63,14 +56,24 @@
           'justify-center',
           'items-center',
           'inset-0',
-          'bg-skeleton',
+          'bg-default',
           'pointer-events-none',
           isShowPlaceholder ? 'opacity-100' : 'opacity-0',
-          { 'animate-pulse': !hasLoaded },
         ]"
       >
+        <!-- Translucent tint on an opaque base, so the paper edge behind doesn't show through. -->
+        <div
+          :class="[
+            'absolute',
+            'inset-0',
+            'bg-skeleton',
+            BOOK_COVER_ROUNDED_CLASS,
+            { 'animate-pulse': !hasLoaded },
+          ]"
+        />
         <UIcon
           :class="[
+            'relative',
             'text-dimmed/50',
             hasError || !props.src ? 'opacity-100' : 'opacity-0',
             ...opacityTransitionClass,
@@ -79,6 +82,13 @@
           size="100"
         />
       </div>
+      <div
+        aria-hidden="true"
+        :class="[
+          'book-cover-finish',
+          ...layerBaseClass,
+        ]"
+      />
 
       <div
         v-if="hasOverlay"
@@ -183,21 +193,15 @@ const coverClass = computed(() => {
   return classes
 })
 
-// Layers stacked on the cover follow its hover scale.
+// Layers stacked on the cover, or its placeholder, follow its hover scale.
 const layerBaseClass = computed(() => [
   'absolute',
   'inset-0',
   'pointer-events-none',
   BOOK_COVER_ROUNDED_CLASS,
-  'transition-[opacity,scale]',
+  'transition-[scale]',
   ...transitionTimingClass,
   ...(isClickable.value ? coverHoverScaleClass : []),
-])
-
-// Edge and finish layers also fade in with the cover image.
-const bookLayerClass = computed(() => [
-  ...layerBaseClass.value,
-  isShowPlaceholder.value ? 'opacity-0' : 'opacity-100',
 ])
 
 // Cache-busting query makes the browser refetch instead of reusing the failed response.
