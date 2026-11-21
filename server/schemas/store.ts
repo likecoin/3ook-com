@@ -1,6 +1,7 @@
 import * as v from 'valibot'
 
 import { checkIsEVMAddress } from '~~/shared/utils'
+import { normalizeBookKeyword } from '~~/shared/utils/bookstore'
 
 const PaginationFields = {
   limit: v.optional(v.union([v.string(), v.array(v.string())])),
@@ -38,6 +39,16 @@ export const StoreSearchQuerySchema = v.object({
       val => !!(Array.isArray(val) ? val[0] : val),
       'SEARCH_TERM_REQUIRED',
     ),
+  ),
+  ...PaginationFields,
+  ...LibraryFilterField,
+})
+
+export const StoreKeywordQuerySchema = v.object({
+  keyword: v.pipe(
+    v.union([v.string(), v.array(v.string())]),
+    v.transform(val => normalizeBookKeyword((Array.isArray(val) ? val[0] : val) || '')),
+    v.minLength(1, 'KEYWORD_REQUIRED'),
   ),
   ...PaginationFields,
   ...LibraryFilterField,

@@ -149,6 +149,28 @@ export function fetchBookstoreCMSPublicationsByGenre(genre: string, {
   })
 }
 
+export function fetchBookstoreCMSPublicationsByKeyword(keyword: string, {
+  offset,
+  limit = MAX_BOOKSTORE_PAGE_SIZE,
+  ts,
+  isLibrary = false,
+}: {
+  offset?: string
+  limit?: number
+  ts?: number
+  isLibrary?: boolean
+} = {}) {
+  return apiFetch<FetchBookstoreCMSProductsResponseData>('/store/keyword', {
+    query: {
+      keyword,
+      offset,
+      limit,
+      ts,
+      library: isLibrary ? '1' : undefined,
+    },
+  })
+}
+
 export function fetchBookstoreCMSTagsForAll() {
   return apiFetch<FetchBookstoreCMSTagsResponseData>('/store/tags')
 }
