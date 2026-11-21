@@ -24,7 +24,7 @@
             'bg-skeleton',
             'shrink-0 aspect-2/3',
             chart.cover,
-            chart.coverRounded,
+            BOOK_COVER_ROUNDED_CLASS,
           ]"
         />
 
@@ -43,6 +43,8 @@
 </template>
 
 <script setup lang="ts">
+import { BOOK_COVER_ROUNDED_CLASS } from '~/components/BookCover.vue'
+
 // Built once rather than per binding:
 // the tier alone was resolved six times a row from the template.
 const rows = Array.from(
