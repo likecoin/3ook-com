@@ -303,11 +303,15 @@ const formattedDiscountPrice = computed(() => {
 
 // A referrer (`from`, publisher storefront or subdomain) may withhold the book discount,
 // which the grid cannot check without a fetch; a non-NFT member price applies on any channel.
-const isReferred = computed(() => !!(
-  getRouteQuery('from')
-  || getRouteParam('userId')
-  || publisherSubdomainLikerId
-))
+// Our own `from=liker_land` is no referrer: checkout keeps the discount on it.
+const isReferred = computed(() => {
+  const from = getRouteQuery('from')
+  return !!(
+    (from && !checkIsFromLikerLand(from))
+    || getRouteParam('userId')
+    || publisherSubdomainLikerId
+  )
+})
 
 // Teased to whoever is not paying it, so monthly Plus still sees a non-NFT member price.
 const formattedPlusMemberPrice = computed(() => {

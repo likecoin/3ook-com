@@ -49,7 +49,7 @@ export function useBookPurchaseSessionAPI() {
   function createNFTBookPurchase({
     email,
     nftClassId,
-    from = 'liker_land',
+    from = DEFAULT_FROM_CHANNEL,
     customPrice,
     priceIndex,
     coupon,
@@ -133,7 +133,7 @@ export function useBookPurchaseSessionAPI() {
     items: CartItem[],
     {
       email,
-      from = 'liker_land',
+      from = DEFAULT_FROM_CHANNEL,
       coupon,
       currency,
       giftInfo,

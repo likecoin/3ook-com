@@ -154,6 +154,15 @@ describe('BookstoreItem', () => {
     expect(wrapper.findComponent({ name: 'PlusMemberPrice' }).exists()).toBe(false)
   })
 
+  it('shows the Plus price on our own from=liker_land visit', async () => {
+    mockState.query = { from: 'liker_land' }
+    const wrapper = await mountSuspended(BookstoreItem, {
+      props: { nftClassId: NFT_CLASS_ID, price: 9.99 },
+    })
+
+    expect(wrapper.text()).toContain('US$7.99')
+  })
+
   it('hides the member price from a Plus member when the listing says so', async () => {
     setUser({ isLikerPlus: true, likerPlusPeriod: 'month' })
     const wrapper = await mountSuspended(BookstoreItem, {
