@@ -401,6 +401,7 @@ const storefrontReferrerLikerId = computed(() => {
 // Undefined off a storefront, leaving each card to its own referral check.
 const isPlusDiscountHidden = computed(() => {
   if (!isStorefront.value) return undefined
+  if (checkIsFromLikerLand(getRouteQuery('from'))) return false
   const likerId = storefrontReferrerLikerId.value
   if (!likerId) return true
   return !getAffiliateStoreConfigByLikerIdFromCache(queryCache, likerId)?.isPlusDiscountAllowed
