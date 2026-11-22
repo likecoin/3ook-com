@@ -1061,6 +1061,7 @@ let removeSwipeListener: (() => void) | undefined
 let removeSelectAllByHotkeyListener: (() => void) | undefined
 let removeFindHotkeyListener: (() => void) | undefined
 let removeCopyListener: (() => void) | undefined
+let removeMouseDownListener: (() => void) | undefined
 let removeMouseUpListener: (() => void) | undefined
 let removeSelectionChangeListener: (() => void) | undefined
 let removeContextMenuListener: (() => void) | undefined
@@ -1095,6 +1096,13 @@ function shouldHoldPinnedPagingScroll() {
   // `isCollapsed` avoids serialising the whole range on every scroll event.
   const selection = renditionViewWindow.value?.getSelection()
   return !!selection && !selection.isCollapsed
+}
+
+function pinPagingScroll() {
+  const container = rendition.value?.manager?.container
+  pinnedPagingScroll = container
+    ? { left: container.scrollLeft, top: container.scrollTop }
+    : undefined
 }
 
 function handlePagingScroll() {
@@ -1532,6 +1540,12 @@ async function loadEPub() {
       }
     }, { capture: true })
 
+    removeMouseDownListener?.()
+    // Touch browsers send a compatibility mousedown after the tap, which must not re-pin.
+    if (!isIOS.value && !isAndroid.value) {
+      removeMouseDownListener = useEventListener(view.window, 'mousedown', pinPagingScroll)
+    }
+
     if (removeMouseUpListener) {
       removeMouseUpListener()
     }
@@ -1549,10 +1563,7 @@ async function loadEPub() {
       // Drop a pending commit so a quick re-grab never reads the selection
       // mid-drag, which would clear the range under the finger on iOS.
       clearTimeout(selectionCommitTimer)
-      const container = rendition.value?.manager?.container
-      pinnedPagingScroll = container
-        ? { left: container.scrollLeft, top: container.scrollTop }
-        : undefined
+      pinPagingScroll()
       isTouchGestureActive = true
     }, { passive: true, capture: true })
 
@@ -2887,6 +2898,7 @@ onBeforeUnmount(() => {
   removeSelectAllByHotkeyListener?.()
   removeFindHotkeyListener?.()
   removeCopyListener?.()
+  removeMouseDownListener?.()
   removeMouseUpListener?.()
   removeSelectionChangeListener?.()
   removeContextMenuListener?.()
