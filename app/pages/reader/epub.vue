@@ -1087,14 +1087,20 @@ let selectionCommitTimer: ReturnType<typeof setTimeout> | undefined
 // and drop the pin before we move the page ourselves.
 let pinnedPagingScroll: { left: number, top: number } | undefined
 
+// Page turns drop the pin before scrolling, so anything else moving the page
+// mid-gesture is the browser. Android can report a collapsed selection then,
+// so hold for the whole touch there; otherwise only while text is selected.
+function shouldHoldPinnedPagingScroll() {
+  if (isAndroid.value && isTouchGestureActive) return true
+  // `isCollapsed` avoids serialising the whole range on every scroll event.
+  const selection = renditionViewWindow.value?.getSelection()
+  return !!selection && !selection.isCollapsed
+}
+
 function handlePagingScroll() {
   const container = rendition.value?.manager?.container
   if (!container || !pinnedPagingScroll) return
-  // A tap that turns the page must still scroll, and it leaves no selection
-  // behind — so only counteract while text is actually selected. `isCollapsed`
-  // avoids serialising the whole range on every scroll event.
-  const selection = renditionViewWindow.value?.getSelection()
-  if (!selection || selection.isCollapsed) {
+  if (!shouldHoldPinnedPagingScroll()) {
     pinnedPagingScroll.left = container.scrollLeft
     pinnedPagingScroll.top = container.scrollTop
     return
