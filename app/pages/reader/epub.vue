@@ -1127,10 +1127,11 @@ function handlePagingScroll() {
 type SelectionEdgeTurn = 'next' | 'prev'
 const SELECTION_EDGE_HOLD_MS = 500
 const SELECTION_EDGE_ZONE_PX = 24
-// `null` while a tracked mouse or finger drag is away from the edges, which outranks the focus;
-// Android handle drags fire no touch events, leaving the focus as the only signal.
+// `null` marks a mouse or finger drag tracked away from the edges, where the dragged end decides;
+// Android handle drags fire no touch events, so the dragged end is their only signal.
 let selectionEdgePointerTurn: SelectionEdgeTurn | null | undefined
-let selectionEdgeFocusTurn: SelectionEdgeTurn | undefined
+let selectionEdgeEndTurn: SelectionEdgeTurn | undefined
+let lastSelectionEnds: [Node | null, number, Node | null, number] | undefined
 let pendingSelectionEdgeTurn: SelectionEdgeTurn | undefined
 let selectionEdgeTimer: ReturnType<typeof setTimeout> | undefined
 
@@ -1156,22 +1157,34 @@ function getPointerSelectionEdgeTurn(viewWindow: Window, clientX: number) {
   return null
 }
 
-// Blocked autoscroll can still carry the focus onto the page beyond:
+// Blocked autoscroll can still carry the dragged end onto the page beyond:
 // past the right or left edge in horizontal layouts, below or above it in vertical ones.
-function getFocusSelectionEdgeTurn(viewWindow: Window): SelectionEdgeTurn | undefined {
+function getSelectionEndEdgeTurn(viewWindow: Window): SelectionEdgeTurn | undefined {
   const selection = viewWindow.getSelection()
+  const previousEnds = lastSelectionEnds
+  lastSelectionEnds = selection
+    ? [selection.anchorNode, selection.anchorOffset, selection.focusNode, selection.focusOffset]
+    : undefined
   if (!selection?.focusNode || selection.isCollapsed) return undefined
+  // A start-handle drag can move the anchor alone, so measure whichever end moved.
+  const isAnchorDragged = (
+    !!previousEnds
+    && previousEnds[2] === selection.focusNode
+    && previousEnds[3] === selection.focusOffset
+    && (previousEnds[0] !== selection.anchorNode || previousEnds[1] !== selection.anchorOffset)
+  )
   const pageRect = getPageRectInFrame(viewWindow.frameElement)
   if (!pageRect) return undefined
   const range = viewWindow.document.createRange()
-  range.setStart(selection.focusNode, selection.focusOffset)
-  const focusRect = range.getClientRects()[0]
-  if (!focusRect) return undefined
-  const y = focusRect.top + focusRect.height / 2
+  if (isAnchorDragged) range.setStart(selection.anchorNode!, selection.anchorOffset)
+  else range.setStart(selection.focusNode, selection.focusOffset)
+  const endRect = range.getClientRects()[0]
+  if (!endRect) return undefined
+  const y = endRect.top + endRect.height / 2
   if (y > pageRect.bottom) return 'next'
   if (y < pageRect.top) return 'prev'
-  if (focusRect.left < pageRect.left) return getSelectionEdgeTurnForSide(true)
-  if (focusRect.left > pageRect.right) return getSelectionEdgeTurnForSide(false)
+  if (endRect.left < pageRect.left) return getSelectionEdgeTurnForSide(true)
+  if (endRect.left > pageRect.right) return getSelectionEdgeTurnForSide(false)
   return undefined
 }
 
@@ -1187,9 +1200,7 @@ function hasPageInSection(turn: SelectionEdgeTurn) {
 }
 
 function updateSelectionEdgeHold(viewWindow: Window) {
-  const turn = selectionEdgePointerTurn === undefined
-    ? selectionEdgeFocusTurn
-    : selectionEdgePointerTurn ?? undefined
+  const turn = selectionEdgePointerTurn ?? selectionEdgeEndTurn
   if (turn === pendingSelectionEdgeTurn) return
   clearTimeout(selectionEdgeTimer)
   pendingSelectionEdgeTurn = turn
@@ -1201,13 +1212,13 @@ function updateSelectionEdgeHold(viewWindow: Window) {
 function resetSelectionEdgeHold() {
   clearTimeout(selectionEdgeTimer)
   selectionEdgePointerTurn = undefined
-  selectionEdgeFocusTurn = undefined
+  selectionEdgeEndTurn = undefined
   pendingSelectionEdgeTurn = undefined
 }
 
 async function turnPageAtSelectionEdge(viewWindow: Window, turn: SelectionEdgeTurn) {
   pendingSelectionEdgeTurn = undefined
-  selectionEdgeFocusTurn = undefined
+  selectionEdgeEndTurn = undefined
   if (viewWindow.getSelection()?.isCollapsed !== false || !hasPageInSection(turn)) return
   await (turn === 'next' ? nextPage() : prevPage())
   // The turn dropped the pin; restore it for the rest of the drag.
@@ -1702,7 +1713,7 @@ async function loadEPub() {
     }
     const selectionEdgeListeners = [
       useEventListener(view.window.document, 'selectionchange', () => {
-        selectionEdgeFocusTurn = getFocusSelectionEdgeTurn(view.window)
+        selectionEdgeEndTurn = getSelectionEndEdgeTurn(view.window)
         updateSelectionEdgeHold(view.window)
       }),
       useEventListener(view.window, 'mousemove', (event: MouseEvent) => {
@@ -1713,6 +1724,8 @@ async function loadEPub() {
         if (touch) trackSelectionEdgePointer(touch.clientX)
       }, { passive: true }),
       useEventListener(view.window, ['mouseup', 'touchend', 'touchcancel'], resetSelectionEdgeHold),
+      // A drag released over the reader chrome never reaches the iframe.
+      useEventListener(window, ['mouseup', 'blur'], resetSelectionEdgeHold),
     ]
     removeSelectionEdgeListeners = () => selectionEdgeListeners.forEach(stop => stop())
 
