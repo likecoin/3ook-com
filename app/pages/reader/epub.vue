@@ -1976,27 +1976,27 @@ async function setActiveNavItem(item: NavItem, {
   return false
 }
 
-// Every caller is a page-turn gesture, so these report the turn themselves.
+// Page-turn gestures pass their method to be counted; extending a selection passes none.
 // Clamped-away turns report nothing and skip the spinner: epub.js ignores a
 // next()/prev() past either end, so no `relocated` would arrive to clear it.
-function nextPage(method: ReaderNavigationMethod) {
+function nextPage(method?: ReaderNavigationMethod) {
   if (isAtLastPage.value) return
   activeTTSElementIndex.value = undefined
   isPageLoading.value = true
   isAnnotationMenuVisible.value = false
   pinnedPagingScroll = undefined
-  rendition.value?.next()
-  recordNavigation(method)
+  if (method) recordNavigation(method)
+  return rendition.value?.next()
 }
 
-function prevPage(method: ReaderNavigationMethod) {
+function prevPage(method?: ReaderNavigationMethod) {
   if (isAtFirstPage.value) return
   activeTTSElementIndex.value = undefined
   isPageLoading.value = true
   isAnnotationMenuVisible.value = false
   pinnedPagingScroll = undefined
-  rendition.value?.prev()
-  recordNavigation(method)
+  if (method) recordNavigation(method)
+  return rendition.value?.prev()
 }
 
 function turnPageLeft(method: ReaderNavigationMethod) {
