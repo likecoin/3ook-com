@@ -1068,6 +1068,7 @@ let removeContextMenuListener: (() => void) | undefined
 let removeTouchStartListener: (() => void) | undefined
 let removeTouchEndListener: (() => void) | undefined
 let removePagingScrollListener: (() => void) | undefined
+let removeSelectionEdgeListeners: (() => void) | undefined
 const { isIntercomVisible, showNewMessageWithVisibility } = useIntercomVisibility()
 useHead({
   htmlAttrs: {
@@ -1118,6 +1119,104 @@ function handlePagingScroll() {
   }
   if (container.scrollTop !== pinnedPagingScroll.top) {
     container.scrollTop = pinnedPagingScroll.top
+  }
+}
+
+// With autoscroll pinned, a selection reaches the next page by being held at the page edge,
+// as in Apple Books: a pause there turns the page, a pass across it doesn't.
+type SelectionEdgeTurn = 'next' | 'prev'
+const SELECTION_EDGE_HOLD_MS = 500
+const SELECTION_EDGE_ZONE_PX = 24
+// `null` while a tracked mouse or finger drag is away from the edges, which outranks the focus;
+// Android handle drags fire no touch events, leaving the focus as the only signal.
+let selectionEdgePointerTurn: SelectionEdgeTurn | null | undefined
+let selectionEdgeFocusTurn: SelectionEdgeTurn | undefined
+let pendingSelectionEdgeTurn: SelectionEdgeTurn | undefined
+let selectionEdgeTimer: ReturnType<typeof setTimeout> | undefined
+
+function getSelectionEdgeTurnForSide(isLeft: boolean): SelectionEdgeTurn {
+  return isLeft === shouldFlipFromRightToLeft.value ? 'next' : 'prev'
+}
+
+// The visible page in the coordinates of a section iframe, which spans every page of the section.
+function getPageRectInFrame(frame?: Element | null) {
+  const pageRect = rendition.value?.manager?.container?.getBoundingClientRect()
+  const frameRect = frame?.getBoundingClientRect()
+  if (!pageRect || !frameRect) return undefined
+  const left = pageRect.left - frameRect.left
+  const top = pageRect.top - frameRect.top
+  return { left, top, right: left + pageRect.width, bottom: top + pageRect.height }
+}
+
+function getPointerSelectionEdgeTurn(viewWindow: Window, clientX: number) {
+  const pageRect = getPageRectInFrame(viewWindow.frameElement)
+  if (!pageRect) return null
+  if (clientX <= pageRect.left + SELECTION_EDGE_ZONE_PX) return getSelectionEdgeTurnForSide(true)
+  if (clientX >= pageRect.right - SELECTION_EDGE_ZONE_PX) return getSelectionEdgeTurnForSide(false)
+  return null
+}
+
+// Blocked autoscroll can still carry the focus onto the page beyond:
+// past the right or left edge in horizontal layouts, below or above it in vertical ones.
+function getFocusSelectionEdgeTurn(viewWindow: Window): SelectionEdgeTurn | undefined {
+  const selection = viewWindow.getSelection()
+  if (!selection?.focusNode || selection.isCollapsed) return undefined
+  const pageRect = getPageRectInFrame(viewWindow.frameElement)
+  if (!pageRect) return undefined
+  const range = viewWindow.document.createRange()
+  range.setStart(selection.focusNode, selection.focusOffset)
+  const focusRect = range.getClientRects()[0]
+  if (!focusRect) return undefined
+  const y = focusRect.top + focusRect.height / 2
+  if (y > pageRect.bottom) return 'next'
+  if (y < pageRect.top) return 'prev'
+  if (focusRect.left < pageRect.left) return getSelectionEdgeTurnForSide(true)
+  if (focusRect.left > pageRect.right) return getSelectionEdgeTurnForSide(false)
+  return undefined
+}
+
+// epub.js loads the neighbouring section past either end, which would drop the selection.
+function hasPageInSection(turn: SelectionEdgeTurn) {
+  const container = rendition.value?.manager?.container
+  if (!container) return false
+  const isVerticalPaging = container.scrollHeight > container.clientHeight + 1
+  const offset = isVerticalPaging ? container.scrollTop : Math.abs(container.scrollLeft)
+  const pageSize = isVerticalPaging ? container.clientHeight : container.clientWidth
+  const totalSize = isVerticalPaging ? container.scrollHeight : container.scrollWidth
+  return turn === 'next' ? offset + pageSize < totalSize - 1 : offset > 1
+}
+
+function updateSelectionEdgeHold(viewWindow: Window) {
+  const turn = selectionEdgePointerTurn === undefined
+    ? selectionEdgeFocusTurn
+    : selectionEdgePointerTurn ?? undefined
+  if (turn === pendingSelectionEdgeTurn) return
+  clearTimeout(selectionEdgeTimer)
+  pendingSelectionEdgeTurn = turn
+  if (turn) {
+    selectionEdgeTimer = setTimeout(() => turnPageAtSelectionEdge(viewWindow, turn), SELECTION_EDGE_HOLD_MS)
+  }
+}
+
+function resetSelectionEdgeHold() {
+  clearTimeout(selectionEdgeTimer)
+  selectionEdgePointerTurn = undefined
+  selectionEdgeFocusTurn = undefined
+  pendingSelectionEdgeTurn = undefined
+}
+
+async function turnPageAtSelectionEdge(viewWindow: Window, turn: SelectionEdgeTurn) {
+  pendingSelectionEdgeTurn = undefined
+  selectionEdgeFocusTurn = undefined
+  if (viewWindow.getSelection()?.isCollapsed !== false || !hasPageInSection(turn)) return
+  await (turn === 'next' ? nextPage() : prevPage())
+  // The turn dropped the pin; restore it for the rest of the drag.
+  pinPagingScroll()
+  // A pointer still resting at the edge keeps turning, one page per hold.
+  updateSelectionEdgeHold(viewWindow)
+  // Android handle drags fire no release event to bring the menu back.
+  if (selectionEdgePointerTurn === undefined && !isTouchGestureActive) {
+    handleTextSelection(viewWindow)
   }
 }
 
@@ -1594,6 +1693,28 @@ async function loadEPub() {
       handleTextSelection(view.window)
     }, SELECTION_CHANGE_DEBOUNCE_MS)
     removeSelectionChangeListener = useEventListener(view.window.document, 'selectionchange', debouncedSelectionChange)
+
+    removeSelectionEdgeListeners?.()
+    resetSelectionEdgeHold()
+    const trackSelectionEdgePointer = (clientX: number) => {
+      selectionEdgePointerTurn = getPointerSelectionEdgeTurn(view.window, clientX)
+      updateSelectionEdgeHold(view.window)
+    }
+    const selectionEdgeListeners = [
+      useEventListener(view.window.document, 'selectionchange', () => {
+        selectionEdgeFocusTurn = getFocusSelectionEdgeTurn(view.window)
+        updateSelectionEdgeHold(view.window)
+      }),
+      useEventListener(view.window, 'mousemove', (event: MouseEvent) => {
+        if (event.buttons & 1) trackSelectionEdgePointer(event.clientX)
+      }),
+      useEventListener(view.window, 'touchmove', (event: TouchEvent) => {
+        const touch = event.touches[0]
+        if (touch) trackSelectionEdgePointer(touch.clientX)
+      }, { passive: true }),
+      useEventListener(view.window, ['mouseup', 'touchend', 'touchcancel'], resetSelectionEdgeHold),
+    ]
+    removeSelectionEdgeListeners = () => selectionEdgeListeners.forEach(stop => stop())
 
     if (removeContextMenuListener) {
       removeContextMenuListener()
@@ -2905,7 +3026,9 @@ onBeforeUnmount(() => {
   removeTouchStartListener?.()
   removeTouchEndListener?.()
   removePagingScrollListener?.()
+  removeSelectionEdgeListeners?.()
   clearTimeout(selectionCommitTimer)
+  resetSelectionEdgeHold()
   renderedHighlights.clear()
   renditionViewWindow.value = undefined
   renditionViewWindows.value = new Map()
