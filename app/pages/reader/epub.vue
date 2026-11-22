@@ -2555,6 +2555,25 @@ function handleAnnotationClick(annotationId: string) {
 
 let isClearingSelection = false
 
+// A selection carried over from another page also spans columns scrolled out of view,
+// so anchor the menu to the part on the visible page.
+function getOnPageRangeRect(range: Range, iframe?: Element | null) {
+  const pageRect = getPageRectInFrame(iframe)
+  if (!pageRect) return undefined
+  const onPageRects = Array.from(range.getClientRects()).filter(rect => (
+    rect.right > pageRect.left
+    && rect.left < pageRect.right
+    && rect.bottom > pageRect.top
+    && rect.top < pageRect.bottom
+  ))
+  if (!onPageRects.length) return undefined
+  const left = Math.min(...onPageRects.map(rect => rect.left))
+  const top = Math.min(...onPageRects.map(rect => rect.top))
+  const right = Math.max(...onPageRects.map(rect => rect.right))
+  const bottom = Math.max(...onPageRects.map(rect => rect.bottom))
+  return { left, top, bottom, width: right - left }
+}
+
 function handleTextSelection(viewWindow: Window) {
   // Every action in the annotation menu needs a book record on the server.
   if (isClearingSelection || isStandaloneMode.value) return
@@ -2587,9 +2606,9 @@ function handleTextSelection(viewWindow: Window) {
     selectedCfi.value = cfiRange
     selectedChapterTitle.value = activeNavItemLabel.value
 
-    const rect = range.getBoundingClientRect()
     const iframe = renditionElement.value?.querySelector('iframe')
     const iframeRect = iframe?.getBoundingClientRect()
+    const rect = getOnPageRangeRect(range, iframe) ?? range.getBoundingClientRect()
 
     if (iframeRect) {
       annotationMenuPosition.value = {
