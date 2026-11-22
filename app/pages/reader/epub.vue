@@ -1351,14 +1351,17 @@ async function loadEPub() {
   })
   rendition.value = currentRendition
   renditionViewWindows.value = new Map()
-  // The paging container outlives every section render, so bind it once here
-  // rather than in `rendered`.
+  // epub.js creates the paging container only after the book opens, past renderTo()'s return,
+  // and it outlives every section render — so bind on `attached`, not in `rendered`.
   removePagingScrollListener?.()
   removePagingScrollListener = undefined
-  const pagingContainer = currentRendition.manager?.container
-  if (pagingContainer) {
+  currentRendition.on('attached', () => {
+    if (isUnmounting || rendition.value !== currentRendition) return
+    const pagingContainer = currentRendition.manager?.container
+    if (!pagingContainer) return
+    removePagingScrollListener?.()
     removePagingScrollListener = useEventListener(pagingContainer, 'scroll', handlePagingScroll)
-  }
+  })
   book.spine!.hooks.content.register((document: Document, section: Section) => {
     // Resolves both a fixed-layout book and a per-itemref override in a reflowable one.
     if (book.locations.isPrePaginated(section)) markPrePaginatedPage(document)
