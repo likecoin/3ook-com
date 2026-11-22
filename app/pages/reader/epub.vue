@@ -1061,6 +1061,7 @@ let removeSwipeListener: (() => void) | undefined
 let removeSelectAllByHotkeyListener: (() => void) | undefined
 let removeFindHotkeyListener: (() => void) | undefined
 let removeCopyListener: (() => void) | undefined
+let removeMouseDownListener: (() => void) | undefined
 let removeMouseUpListener: (() => void) | undefined
 let removeSelectionChangeListener: (() => void) | undefined
 let removeContextMenuListener: (() => void) | undefined
@@ -1087,14 +1088,27 @@ let selectionCommitTimer: ReturnType<typeof setTimeout> | undefined
 // and drop the pin before we move the page ourselves.
 let pinnedPagingScroll: { left: number, top: number } | undefined
 
+// Page turns drop the pin before scrolling, so anything else moving the page
+// mid-gesture is the browser. Android can report a collapsed selection then,
+// so hold for the whole touch there; otherwise only while text is selected.
+function shouldHoldPinnedPagingScroll() {
+  if (isAndroid.value && isTouchGestureActive) return true
+  // `isCollapsed` avoids serialising the whole range on every scroll event.
+  const selection = renditionViewWindow.value?.getSelection()
+  return !!selection && !selection.isCollapsed
+}
+
+function pinPagingScroll() {
+  const container = rendition.value?.manager?.container
+  pinnedPagingScroll = container
+    ? { left: container.scrollLeft, top: container.scrollTop }
+    : undefined
+}
+
 function handlePagingScroll() {
   const container = rendition.value?.manager?.container
   if (!container || !pinnedPagingScroll) return
-  // A tap that turns the page must still scroll, and it leaves no selection
-  // behind — so only counteract while text is actually selected. `isCollapsed`
-  // avoids serialising the whole range on every scroll event.
-  const selection = renditionViewWindow.value?.getSelection()
-  if (!selection || selection.isCollapsed) {
+  if (!shouldHoldPinnedPagingScroll()) {
     pinnedPagingScroll.left = container.scrollLeft
     pinnedPagingScroll.top = container.scrollTop
     return
@@ -1351,14 +1365,17 @@ async function loadEPub() {
   })
   rendition.value = currentRendition
   renditionViewWindows.value = new Map()
-  // The paging container outlives every section render, so bind it once here
-  // rather than in `rendered`.
+  // epub.js creates the paging container only after the book opens, past renderTo()'s return,
+  // and it outlives every section render — so bind on `attached`, not in `rendered`.
   removePagingScrollListener?.()
   removePagingScrollListener = undefined
-  const pagingContainer = currentRendition.manager?.container
-  if (pagingContainer) {
+  currentRendition.on('attached', () => {
+    if (isUnmounting || rendition.value !== currentRendition) return
+    const pagingContainer = currentRendition.manager?.container
+    if (!pagingContainer) return
+    removePagingScrollListener?.()
     removePagingScrollListener = useEventListener(pagingContainer, 'scroll', handlePagingScroll)
-  }
+  })
   book.spine!.hooks.content.register((document: Document, section: Section) => {
     // Resolves both a fixed-layout book and a per-itemref override in a reflowable one.
     if (book.locations.isPrePaginated(section)) markPrePaginatedPage(document)
@@ -1523,6 +1540,12 @@ async function loadEPub() {
       }
     }, { capture: true })
 
+    removeMouseDownListener?.()
+    // Touch browsers send a compatibility mousedown after the tap, which must not re-pin.
+    if (!isIOS.value && !isAndroid.value) {
+      removeMouseDownListener = useEventListener(view.window, 'mousedown', pinPagingScroll)
+    }
+
     if (removeMouseUpListener) {
       removeMouseUpListener()
     }
@@ -1540,10 +1563,7 @@ async function loadEPub() {
       // Drop a pending commit so a quick re-grab never reads the selection
       // mid-drag, which would clear the range under the finger on iOS.
       clearTimeout(selectionCommitTimer)
-      const container = rendition.value?.manager?.container
-      pinnedPagingScroll = container
-        ? { left: container.scrollLeft, top: container.scrollTop }
-        : undefined
+      pinPagingScroll()
       isTouchGestureActive = true
     }, { passive: true, capture: true })
 
@@ -2878,6 +2898,7 @@ onBeforeUnmount(() => {
   removeSelectAllByHotkeyListener?.()
   removeFindHotkeyListener?.()
   removeCopyListener?.()
+  removeMouseDownListener?.()
   removeMouseUpListener?.()
   removeSelectionChangeListener?.()
   removeContextMenuListener?.()
