@@ -1099,19 +1099,49 @@ function shouldHoldPinnedPagingScroll() {
   return !!selection && !selection.isCollapsed
 }
 
-function pinPagingScroll() {
+// Vertical writing modes page down the container rather than across it.
+function isVerticalPaging(container: HTMLElement) {
+  return container.scrollHeight > container.clientHeight + 1
+}
+
+function getPagingStep(container: HTMLElement) {
+  const layout = rendition.value?.manager?.layout
+  return isVerticalPaging(container)
+    ? layout?.height || container.clientHeight
+    : layout?.delta || container.clientWidth
+}
+
+// epub.js only ever scrolls by whole pages, so any other offset is drift from the browser's autoscroll.
+function getAlignedPagingScroll(container: HTMLElement) {
+  const step = getPagingStep(container)
+  const snap = (offset: number) => {
+    const aligned = Math.round(offset / step) * step
+    return Math.abs(aligned - offset) > 1 ? aligned : offset
+  }
+  return isVerticalPaging(container)
+    ? { left: container.scrollLeft, top: snap(container.scrollTop) }
+    : { left: snap(container.scrollLeft), top: container.scrollTop }
+}
+
+function alignPagingScroll() {
   const container = rendition.value?.manager?.container
-  pinnedPagingScroll = container
-    ? { left: container.scrollLeft, top: container.scrollTop }
-    : undefined
+  if (!container) return undefined
+  const aligned = getAlignedPagingScroll(container)
+  if (container.scrollLeft !== aligned.left) container.scrollLeft = aligned.left
+  if (container.scrollTop !== aligned.top) container.scrollTop = aligned.top
+  return aligned
+}
+
+function pinPagingScroll() {
+  pinnedPagingScroll = alignPagingScroll()
 }
 
 function handlePagingScroll() {
   const container = rendition.value?.manager?.container
   if (!container || !pinnedPagingScroll) return
   if (!shouldHoldPinnedPagingScroll()) {
-    pinnedPagingScroll.left = container.scrollLeft
-    pinnedPagingScroll.top = container.scrollTop
+    // Track the page rather than the raw offset, so the next hold also undoes any drift.
+    pinnedPagingScroll = getAlignedPagingScroll(container)
     return
   }
   if (container.scrollLeft !== pinnedPagingScroll.left) {
@@ -1192,11 +1222,20 @@ function getSelectionEndEdgeTurn(viewWindow: Window): SelectionEdgeTurn | undefi
 function hasPageInSection(turn: SelectionEdgeTurn) {
   const container = rendition.value?.manager?.container
   if (!container) return false
-  const isVerticalPaging = container.scrollHeight > container.clientHeight + 1
-  const offset = isVerticalPaging ? container.scrollTop : Math.abs(container.scrollLeft)
-  const pageSize = isVerticalPaging ? container.clientHeight : container.clientWidth
-  const totalSize = isVerticalPaging ? container.scrollHeight : container.scrollWidth
+  const isVertical = isVerticalPaging(container)
+  const offset = isVertical ? container.scrollTop : Math.abs(container.scrollLeft)
+  const pageSize = isVertical ? container.clientHeight : container.clientWidth
+  const totalSize = isVertical ? container.scrollHeight : container.scrollWidth
   return turn === 'next' ? offset + pageSize < totalSize - 1 : offset > 1
+}
+
+function getTurnedPagingScroll(container: HTMLElement, turn: SelectionEdgeTurn) {
+  const aligned = getAlignedPagingScroll(container)
+  const step = getPagingStep(container) * (turn === 'next' ? 1 : -1)
+  if (isVerticalPaging(container)) return { ...aligned, top: aligned.top + step }
+  // Horizontal right-to-left pages scroll towards negative offsets.
+  const sign = rendition.value?.settings.direction === EPUB_TEXT_DIRECTIONS.rtl ? -1 : 1
+  return { ...aligned, left: aligned.left + step * sign }
 }
 
 function updateSelectionEdgeHold(viewWindow: Window) {
@@ -1219,11 +1258,16 @@ function resetSelectionEdgeHold() {
 async function turnPageAtSelectionEdge(viewWindow: Window, turn: SelectionEdgeTurn) {
   pendingSelectionEdgeTurn = undefined
   selectionEdgeEndTurn = undefined
-  if (viewWindow.getSelection()?.isCollapsed !== false || !hasPageInSection(turn)) return
-  await (turn === 'next' ? nextPage() : prevPage())
+  const container = rendition.value?.manager?.container
+  if (!container || viewWindow.getSelection()?.isCollapsed !== false || !hasPageInSection(turn)) return
+  const targetScroll = getTurnedPagingScroll(container, turn)
+  const pageTurn = turn === 'next' ? nextPage() : prevPage()
+  // Android keeps autoscrolling while the handle rests at the edge, and the turn is queued:
+  // pin the page it lands on instead of leaving the container free until then.
+  pinnedPagingScroll = targetScroll
+  await pageTurn
   // A reload or re-render during the turn has already reset the hold for its new view.
   if (isUnmounting || renditionViewWindow.value !== viewWindow) return
-  // The turn dropped the pin; restore it for the rest of the drag.
   pinPagingScroll()
   // A pointer still resting at the edge keeps turning, one page per hold.
   updateSelectionEdgeHold(viewWindow)
@@ -1725,7 +1769,10 @@ async function loadEPub() {
         const touch = event.touches[0]
         if (touch) trackSelectionEdgePointer(touch.clientX)
       }, { passive: true }),
-      useEventListener(view.window, ['mouseup', 'touchend', 'touchcancel'], resetSelectionEdgeHold),
+      useEventListener(view.window, ['mouseup', 'touchend', 'touchcancel'], () => {
+        resetSelectionEdgeHold()
+        alignPagingScroll()
+      }),
       // A drag released over the reader chrome never reaches the iframe.
       useEventListener(window, ['mouseup', 'blur'], resetSelectionEdgeHold),
     ]
