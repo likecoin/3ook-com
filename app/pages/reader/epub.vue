@@ -1221,6 +1221,8 @@ async function turnPageAtSelectionEdge(viewWindow: Window, turn: SelectionEdgeTu
   selectionEdgeEndTurn = undefined
   if (viewWindow.getSelection()?.isCollapsed !== false || !hasPageInSection(turn)) return
   await (turn === 'next' ? nextPage() : prevPage())
+  // A reload or re-render during the turn has already reset the hold for its new view.
+  if (isUnmounting || renditionViewWindow.value !== viewWindow) return
   // The turn dropped the pin; restore it for the rest of the drag.
   pinPagingScroll()
   // A pointer still resting at the edge keeps turning, one page per hold.
