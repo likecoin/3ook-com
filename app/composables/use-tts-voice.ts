@@ -15,6 +15,15 @@ interface TTSVoiceOptions {
   affiliateVoices?: Ref<AffiliateVoiceData[]> | ComputedRef<AffiliateVoiceData[]>
 }
 
+const ELEVENLABS_VOICE_OPTIONS = [
+  { label: 'Chun Wai (ElevenLabs v4) - 粵語', value: 'zh-HK_el_chunwai' },
+  { label: 'Suk Yee (ElevenLabs v4) - 粵語', value: 'zh-HK_el_sukyee' },
+  { label: 'Phoebe (ElevenLabs v4) - 粵語', value: 'zh-HK_el_phoebe' },
+  { label: 'Kevin Tu (ElevenLabs v4) - 國語', value: 'zh-TW_el_kevintu' },
+  { label: 'Liang (ElevenLabs v4) - 國語', value: 'zh-TW_el_liang' },
+]
+const ELEVENLABS_VOICE_IDS = new Set(ELEVENLABS_VOICE_OPTIONS.map(option => option.value))
+
 export function useTTSVoice(options: TTSVoiceOptions = {}) {
   const { bookLanguage, customVoice, affiliateVoices } = options
 
@@ -42,25 +51,25 @@ export function useTTSVoice(options: TTSVoiceOptions = {}) {
       { label: '粵語女聲', value: 'zh-HK_0' },
       { label: '國語男聲', value: 'zh-TW_1' },
       { label: '國語女聲', value: 'zh-TW_0' },
-      { label: 'Chun Wai (ElevenLabs v4) - 粵語', value: 'zh-HK_el_chunwai' },
-      { label: 'Suk Yee (ElevenLabs v4) - 粵語', value: 'zh-HK_el_sukyee' },
-      { label: 'Phoebe (ElevenLabs v4) - 粵語', value: 'zh-HK_el_phoebe' },
-      { label: 'Kevin Tu (ElevenLabs v4) - 國語', value: 'zh-TW_el_kevintu' },
-      { label: 'Liang (ElevenLabs v4) - 國語', value: 'zh-TW_el_liang' },
     )
   }
 
+  const isElevenLabsFlagEnabled = useFeatureFlagEnabled('tts-elevenlabs')
+
   const availableTTSLanguageVoiceOptions = computed(() => {
+    const voiceOptions = config.public.isTestnet || isElevenLabsFlagEnabled.value
+      ? [...ttsLanguageVoiceOptions, ...ELEVENLABS_VOICE_OPTIONS]
+      : ttsLanguageVoiceOptions
     const language = toValue(bookLanguage)
     if (language) {
       if (language.toLowerCase().startsWith('zh')) {
-        return ttsLanguageVoiceOptions.filter(option => option.value.startsWith('zh'))
+        return voiceOptions.filter(option => option.value.startsWith('zh'))
       }
       if (language.toLowerCase().startsWith('en')) {
-        return ttsLanguageVoiceOptions.filter(option => option.value.startsWith('en'))
+        return voiceOptions.filter(option => option.value.startsWith('en'))
       }
     }
-    return ttsLanguageVoiceOptions
+    return voiceOptions
   })
 
   const isBookEnglish = computed(() => {
@@ -116,6 +125,8 @@ export function useTTSVoice(options: TTSVoiceOptions = {}) {
   watch(availableTTSLanguageVoiceOptions, (voiceOptions) => {
     const current = ttsLanguageVoice.value
     if (!current || isAffiliateVoiceId(current) || current === 'custom') return
+    // Flags load after mount; keep a saved ElevenLabs voice until they settle.
+    if (ELEVENLABS_VOICE_IDS.has(current) && isElevenLabsFlagEnabled.value === undefined) return
     if (!voiceOptions.some(option => option.value === current)) {
       const base = stripTTSVoiceVersion(current)
       // Highest version wins, not list order — testnet lists v26 alongside v28.

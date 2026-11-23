@@ -33,8 +33,8 @@ const VOICE_CONFIG: Record<string, VoiceConfig> = {
   // Pinned to the older model so QA can compare it against the default Phoebe.
   // Exposed only in the testnet voice list (client-gated).
   [PHOEBE_V26_VOICE_ID]: { providerVoiceId: 'three_book_phoebe_v3', model: 'speech-2.6-hd', displayName: 'Phoebe 2.6' },
-  // ElevenLabs v4 library voices under testnet evaluation (client-gated). Keys
-  // must not end in `_v<digits>`, which would parse as a voice version.
+  // ElevenLabs v4 voices, listed on testnet and behind the `tts-elevenlabs` flag.
+  // Keys must not end in `_v<digits>`, which would parse as a voice version.
   el_chunwai: { provider: 'elevenlabs', providerVoiceId: '2HZgeWhEm3MJfPZ0MsrV', model: 'eleven_v4', displayName: 'Chun Wai' },
   el_sukyee: { provider: 'elevenlabs', providerVoiceId: '7rrBp44bogxpbQBDkenR', model: 'eleven_v4', displayName: 'Suk Yee' },
   el_kevintu: { provider: 'elevenlabs', providerVoiceId: 'BrbEfHMQu0fyclQR7lfh', model: 'eleven_v4', displayName: 'Kevin Tu' },
