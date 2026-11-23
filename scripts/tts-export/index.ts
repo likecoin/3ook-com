@@ -13,6 +13,7 @@ import {
   getProviderVoiceId,
   getVoiceDisplayName,
   isCachedTTSPronunciationStale,
+  isElevenLabsVoiceId,
   LANG_MAPPING,
   MinimaxTTSProvider,
   TTS_PRONUNCIATION_VERSION,
@@ -187,6 +188,9 @@ export async function main(argv: string[]) {
   const minimaxVoiceId = getProviderVoiceId(voiceId)
   if (!minimaxVoiceId) {
     throw new Error(`Unknown --voice "${voiceId}"`)
+  }
+  if (isElevenLabsVoiceId(voiceId)) {
+    throw new Error(`--voice "${voiceId}" is an ElevenLabs voice; this exporter only supports Minimax`)
   }
   if (values['write-cache'] && !values.execute) {
     throw new Error('--write-cache requires --execute')
