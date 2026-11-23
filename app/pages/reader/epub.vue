@@ -1088,6 +1088,8 @@ let selectionCommitTimer: ReturnType<typeof setTimeout> | undefined
 // epub.js's location bookkeeping. Pin the offset while a selection is dragged,
 // and drop the pin before we move the page ourselves.
 let pinnedPagingScroll: { left: number, top: number } | undefined
+// Where an in-flight selection-edge turn lands; the pin lets epub.js scroll there and nowhere else.
+let pagingTurnTarget: { left: number, top: number } | undefined
 
 // Page turns drop the pin before scrolling, so anything else moving the page
 // mid-gesture is the browser. Android can report a collapsed selection then,
@@ -1144,6 +1146,12 @@ function handlePagingScroll() {
     pinnedPagingScroll = getAlignedPagingScroll(container)
     return
   }
+  if (pagingTurnTarget) {
+    const aligned = getAlignedPagingScroll(container)
+    if (aligned.left === pagingTurnTarget.left && aligned.top === pagingTurnTarget.top) {
+      pinnedPagingScroll = pagingTurnTarget
+    }
+  }
   if (container.scrollLeft !== pinnedPagingScroll.left) {
     container.scrollLeft = pinnedPagingScroll.left
   }
@@ -1164,6 +1172,7 @@ let selectionEdgePointerTurn: SelectionEdgeTurn | null | undefined
 let selectionEdgeEndTurn: SelectionEdgeTurn | undefined
 let lastSelectionEnds: [Node | null, number, Node | null, number] | undefined
 let pendingSelectionEdgeTurn: SelectionEdgeTurn | undefined
+let isSelectionEdgeTurning = false
 let selectionEdgeTimer: ReturnType<typeof setTimeout> | undefined
 
 function getSelectionEdgeTurnForSide(isLeft: boolean): SelectionEdgeTurn {
@@ -1240,6 +1249,8 @@ function getTurnedPagingScroll(container: HTMLElement, turn: SelectionEdgeTurn) 
 }
 
 function updateSelectionEdgeHold(viewWindow: Window, holdMs = SELECTION_EDGE_HOLD_MS) {
+  // Until the queued turn lands, the selection still measures against the page being left.
+  if (isSelectionEdgeTurning) return
   const turn = selectionEdgePointerTurn ?? selectionEdgeEndTurn
   if (turn === pendingSelectionEdgeTurn) return
   clearTimeout(selectionEdgeTimer)
@@ -1261,15 +1272,25 @@ async function turnPageAtSelectionEdge(viewWindow: Window, turn: SelectionEdgeTu
   selectionEdgeEndTurn = undefined
   const container = rendition.value?.manager?.container
   if (!container || viewWindow.getSelection()?.isCollapsed !== false || !hasPageInSection(turn)) return
+  const startScroll = getAlignedPagingScroll(container)
   const targetScroll = getTurnedPagingScroll(container, turn)
   const pageTurn = turn === 'next' ? nextPage() : prevPage()
   // Android keeps autoscrolling while the handle rests at the edge, and the turn is queued:
-  // pin the page it lands on instead of leaving the container free until then.
-  pinnedPagingScroll = targetScroll
-  await pageTurn
+  // hold the page until epub.js scrolls to the target, instead of leaving the container free.
+  pinnedPagingScroll = startScroll
+  pagingTurnTarget = targetScroll
+  isSelectionEdgeTurning = true
+  try {
+    await pageTurn
+  }
+  finally {
+    isSelectionEdgeTurning = false
+    pagingTurnTarget = undefined
+  }
   // A reload or re-render during the turn has already reset the hold for its new view.
   if (isUnmounting || renditionViewWindow.value !== viewWindow) return
   pinPagingScroll()
+  selectionEdgeEndTurn = undefined
   // A pointer still resting at the edge keeps turning, at a steadier pace than the first hold.
   updateSelectionEdgeHold(viewWindow, SELECTION_EDGE_REPEAT_MS)
   // Android handle drags fire no release event to bring the menu back.
