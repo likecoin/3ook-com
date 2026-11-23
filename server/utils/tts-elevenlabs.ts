@@ -21,7 +21,7 @@ function getElevenLabsAPIKey(): string {
 // Generation metadata rides response headers, so it settles with the response
 // rather than at the end of the stream as Minimax's SSE aggregate does.
 function getElevenLabsResponseInfo(response: Response): { extraInfo: TTSExtraInfo, traceId?: string } {
-  const characterCost = Number(response.headers.get('character-cost'))
+  const characterCost = Number(response.headers.get('character-cost') ?? Number.NaN)
   return {
     extraInfo: { usageCharacters: Number.isFinite(characterCost) ? characterCost : undefined },
     traceId: response.headers.get('request-id') ?? undefined,
