@@ -1068,6 +1068,7 @@ let removeContextMenuListener: (() => void) | undefined
 let removeTouchStartListener: (() => void) | undefined
 let removeTouchEndListener: (() => void) | undefined
 let removePagingScrollListener: (() => void) | undefined
+let removeSelectionEdgeListeners: (() => void) | undefined
 const { isIntercomVisible, showNewMessageWithVisibility } = useIntercomVisibility()
 useHead({
   htmlAttrs: {
@@ -1087,6 +1088,8 @@ let selectionCommitTimer: ReturnType<typeof setTimeout> | undefined
 // epub.js's location bookkeeping. Pin the offset while a selection is dragged,
 // and drop the pin before we move the page ourselves.
 let pinnedPagingScroll: { left: number, top: number } | undefined
+// Where an in-flight selection-edge turn lands; the pin lets epub.js scroll there and nowhere else.
+let pagingTurnTarget: { left: number, top: number } | undefined
 
 // Page turns drop the pin before scrolling, so anything else moving the page
 // mid-gesture is the browser. Android can report a collapsed selection then,
@@ -1098,26 +1101,201 @@ function shouldHoldPinnedPagingScroll() {
   return !!selection && !selection.isCollapsed
 }
 
-function pinPagingScroll() {
+// Vertical writing modes page down the container rather than across it.
+function isVerticalPaging(container: HTMLElement) {
+  return container.scrollHeight > container.clientHeight + 1
+}
+
+function getPagingStep(container: HTMLElement) {
+  const layout = rendition.value?.manager?.layout
+  return isVerticalPaging(container)
+    ? layout?.height || container.clientHeight
+    : layout?.delta || container.clientWidth
+}
+
+// epub.js only ever scrolls by whole pages, so any other offset is drift from the browser's autoscroll.
+function getAlignedPagingScroll(container: HTMLElement) {
+  const step = getPagingStep(container)
+  const snap = (offset: number) => {
+    const aligned = Math.round(offset / step) * step
+    return Math.abs(aligned - offset) > 1 ? aligned : offset
+  }
+  return isVerticalPaging(container)
+    ? { left: container.scrollLeft, top: snap(container.scrollTop) }
+    : { left: snap(container.scrollLeft), top: container.scrollTop }
+}
+
+function alignPagingScroll() {
   const container = rendition.value?.manager?.container
-  pinnedPagingScroll = container
-    ? { left: container.scrollLeft, top: container.scrollTop }
-    : undefined
+  if (!container) return undefined
+  const aligned = getAlignedPagingScroll(container)
+  if (container.scrollLeft !== aligned.left) container.scrollLeft = aligned.left
+  if (container.scrollTop !== aligned.top) container.scrollTop = aligned.top
+  return aligned
+}
+
+function pinPagingScroll() {
+  pinnedPagingScroll = alignPagingScroll()
 }
 
 function handlePagingScroll() {
   const container = rendition.value?.manager?.container
   if (!container || !pinnedPagingScroll) return
   if (!shouldHoldPinnedPagingScroll()) {
-    pinnedPagingScroll.left = container.scrollLeft
-    pinnedPagingScroll.top = container.scrollTop
+    // Track the page rather than the raw offset, so the next hold also undoes any drift.
+    pinnedPagingScroll = getAlignedPagingScroll(container)
     return
+  }
+  if (pagingTurnTarget) {
+    const aligned = getAlignedPagingScroll(container)
+    if (aligned.left === pagingTurnTarget.left && aligned.top === pagingTurnTarget.top) {
+      pinnedPagingScroll = pagingTurnTarget
+    }
   }
   if (container.scrollLeft !== pinnedPagingScroll.left) {
     container.scrollLeft = pinnedPagingScroll.left
   }
   if (container.scrollTop !== pinnedPagingScroll.top) {
     container.scrollTop = pinnedPagingScroll.top
+  }
+}
+
+// With autoscroll pinned, a selection reaches the next page by being held at the page edge,
+// as in Apple Books: a pause there turns the page, a pass across it doesn't.
+type SelectionEdgeTurn = 'next' | 'prev'
+const SELECTION_EDGE_HOLD_MS = 800
+const SELECTION_EDGE_REPEAT_MS = 1000
+const SELECTION_EDGE_ZONE_PX = 24
+// `null` marks a mouse or finger drag tracked away from the edges, where the dragged end decides;
+// Android handle drags fire no touch events, so the dragged end is their only signal.
+let selectionEdgePointerTurn: SelectionEdgeTurn | null | undefined
+let selectionEdgeEndTurn: SelectionEdgeTurn | undefined
+let lastSelectionEnds: [Node | null, number, Node | null, number] | undefined
+let pendingSelectionEdgeTurn: SelectionEdgeTurn | undefined
+let isSelectionEdgeTurning = false
+let selectionEdgeTimer: ReturnType<typeof setTimeout> | undefined
+
+function getSelectionEdgeTurnForSide(isLeft: boolean): SelectionEdgeTurn {
+  return isLeft === shouldFlipFromRightToLeft.value ? 'next' : 'prev'
+}
+
+// The visible page in the coordinates of a section iframe, which spans every page of the section.
+function getPageRectInFrame(frame?: Element | null) {
+  const pageRect = rendition.value?.manager?.container?.getBoundingClientRect()
+  const frameRect = frame?.getBoundingClientRect()
+  if (!pageRect || !frameRect) return undefined
+  const left = pageRect.left - frameRect.left
+  const top = pageRect.top - frameRect.top
+  return { left, top, right: left + pageRect.width, bottom: top + pageRect.height }
+}
+
+function getPointerSelectionEdgeTurn(viewWindow: Window, clientX: number) {
+  const pageRect = getPageRectInFrame(viewWindow.frameElement)
+  if (!pageRect) return null
+  if (clientX <= pageRect.left + SELECTION_EDGE_ZONE_PX) return getSelectionEdgeTurnForSide(true)
+  if (clientX >= pageRect.right - SELECTION_EDGE_ZONE_PX) return getSelectionEdgeTurnForSide(false)
+  return null
+}
+
+// Blocked autoscroll can still carry the dragged end onto the page beyond:
+// past the right or left edge in horizontal layouts, below or above it in vertical ones.
+function getSelectionEndEdgeTurn(viewWindow: Window): SelectionEdgeTurn | undefined {
+  const selection = viewWindow.getSelection()
+  const previousEnds = lastSelectionEnds
+  lastSelectionEnds = selection
+    ? [selection.anchorNode, selection.anchorOffset, selection.focusNode, selection.focusOffset]
+    : undefined
+  if (!selection?.focusNode || selection.isCollapsed) return undefined
+  // A start-handle drag can move the anchor alone, so measure whichever end moved.
+  const isAnchorDragged = (
+    !!previousEnds
+    && previousEnds[2] === selection.focusNode
+    && previousEnds[3] === selection.focusOffset
+    && (previousEnds[0] !== selection.anchorNode || previousEnds[1] !== selection.anchorOffset)
+  )
+  const pageRect = getPageRectInFrame(viewWindow.frameElement)
+  if (!pageRect) return undefined
+  const range = viewWindow.document.createRange()
+  if (isAnchorDragged) range.setStart(selection.anchorNode!, selection.anchorOffset)
+  else range.setStart(selection.focusNode, selection.focusOffset)
+  const endRect = range.getClientRects()[0]
+  if (!endRect) return undefined
+  const y = endRect.top + endRect.height / 2
+  if (y > pageRect.bottom) return 'next'
+  if (y < pageRect.top) return 'prev'
+  if (endRect.left < pageRect.left) return getSelectionEdgeTurnForSide(true)
+  if (endRect.left > pageRect.right) return getSelectionEdgeTurnForSide(false)
+  return undefined
+}
+
+// epub.js loads the neighbouring section past either end, which would drop the selection.
+function hasPageInSection(turn: SelectionEdgeTurn) {
+  const container = rendition.value?.manager?.container
+  if (!container) return false
+  const isVertical = isVerticalPaging(container)
+  const offset = isVertical ? container.scrollTop : Math.abs(container.scrollLeft)
+  const pageSize = isVertical ? container.clientHeight : container.clientWidth
+  const totalSize = isVertical ? container.scrollHeight : container.scrollWidth
+  return turn === 'next' ? offset + pageSize < totalSize - 1 : offset > 1
+}
+
+function getTurnedPagingScroll(container: HTMLElement, turn: SelectionEdgeTurn) {
+  const aligned = getAlignedPagingScroll(container)
+  const step = getPagingStep(container) * (turn === 'next' ? 1 : -1)
+  if (isVerticalPaging(container)) return { ...aligned, top: aligned.top + step }
+  // Horizontal right-to-left pages scroll towards negative offsets.
+  const sign = rendition.value?.settings.direction === EPUB_TEXT_DIRECTIONS.rtl ? -1 : 1
+  return { ...aligned, left: aligned.left + step * sign }
+}
+
+function updateSelectionEdgeHold(viewWindow: Window, holdMs = SELECTION_EDGE_HOLD_MS) {
+  // Until the queued turn lands, the selection still measures against the page being left.
+  if (isSelectionEdgeTurning) return
+  const turn = selectionEdgePointerTurn ?? selectionEdgeEndTurn
+  if (turn === pendingSelectionEdgeTurn) return
+  clearTimeout(selectionEdgeTimer)
+  pendingSelectionEdgeTurn = turn
+  if (turn) {
+    selectionEdgeTimer = setTimeout(() => turnPageAtSelectionEdge(viewWindow, turn), holdMs)
+  }
+}
+
+function resetSelectionEdgeHold() {
+  clearTimeout(selectionEdgeTimer)
+  selectionEdgePointerTurn = undefined
+  selectionEdgeEndTurn = undefined
+  pendingSelectionEdgeTurn = undefined
+}
+
+async function turnPageAtSelectionEdge(viewWindow: Window, turn: SelectionEdgeTurn) {
+  pendingSelectionEdgeTurn = undefined
+  selectionEdgeEndTurn = undefined
+  const container = rendition.value?.manager?.container
+  if (!container || viewWindow.getSelection()?.isCollapsed !== false || !hasPageInSection(turn)) return
+  const startScroll = getAlignedPagingScroll(container)
+  const targetScroll = getTurnedPagingScroll(container, turn)
+  const pageTurn = turn === 'next' ? nextPage() : prevPage()
+  // Android keeps autoscrolling while the handle rests at the edge, and the turn is queued:
+  // hold the page until epub.js scrolls to the target, instead of leaving the container free.
+  pinnedPagingScroll = startScroll
+  pagingTurnTarget = targetScroll
+  isSelectionEdgeTurning = true
+  try {
+    await pageTurn
+  }
+  finally {
+    isSelectionEdgeTurning = false
+    pagingTurnTarget = undefined
+  }
+  // A reload or re-render during the turn has already reset the hold for its new view.
+  if (isUnmounting || renditionViewWindow.value !== viewWindow) return
+  pinPagingScroll()
+  selectionEdgeEndTurn = undefined
+  // A pointer still resting at the edge keeps turning, at a steadier pace than the first hold.
+  updateSelectionEdgeHold(viewWindow, SELECTION_EDGE_REPEAT_MS)
+  // Android handle drags fire no release event to bring the menu back.
+  if (selectionEdgePointerTurn === undefined && !isTouchGestureActive) {
+    handleTextSelection(viewWindow)
   }
 }
 
@@ -1595,6 +1773,33 @@ async function loadEPub() {
     }, SELECTION_CHANGE_DEBOUNCE_MS)
     removeSelectionChangeListener = useEventListener(view.window.document, 'selectionchange', debouncedSelectionChange)
 
+    removeSelectionEdgeListeners?.()
+    resetSelectionEdgeHold()
+    const trackSelectionEdgePointer = (clientX: number) => {
+      selectionEdgePointerTurn = getPointerSelectionEdgeTurn(view.window, clientX)
+      updateSelectionEdgeHold(view.window)
+    }
+    const selectionEdgeListeners = [
+      useEventListener(view.window.document, 'selectionchange', () => {
+        selectionEdgeEndTurn = getSelectionEndEdgeTurn(view.window)
+        updateSelectionEdgeHold(view.window)
+      }),
+      useEventListener(view.window, 'mousemove', (event: MouseEvent) => {
+        if (event.buttons & 1) trackSelectionEdgePointer(event.clientX)
+      }),
+      useEventListener(view.window, 'touchmove', (event: TouchEvent) => {
+        const touch = event.touches[0]
+        if (touch) trackSelectionEdgePointer(touch.clientX)
+      }, { passive: true }),
+      useEventListener(view.window, ['mouseup', 'touchend', 'touchcancel'], () => {
+        resetSelectionEdgeHold()
+        alignPagingScroll()
+      }),
+      // A drag released over the reader chrome never reaches the iframe.
+      useEventListener(window, ['mouseup', 'blur'], resetSelectionEdgeHold),
+    ]
+    removeSelectionEdgeListeners = () => selectionEdgeListeners.forEach(stop => stop())
+
     if (removeContextMenuListener) {
       removeContextMenuListener()
     }
@@ -1976,27 +2181,27 @@ async function setActiveNavItem(item: NavItem, {
   return false
 }
 
-// Every caller is a page-turn gesture, so these report the turn themselves.
+// Page-turn gestures pass their method to be counted; extending a selection passes none.
 // Clamped-away turns report nothing and skip the spinner: epub.js ignores a
 // next()/prev() past either end, so no `relocated` would arrive to clear it.
-function nextPage(method: ReaderNavigationMethod) {
+function nextPage(method?: ReaderNavigationMethod) {
   if (isAtLastPage.value) return
   activeTTSElementIndex.value = undefined
   isPageLoading.value = true
   isAnnotationMenuVisible.value = false
   pinnedPagingScroll = undefined
-  rendition.value?.next()
-  recordNavigation(method)
+  if (method) recordNavigation(method)
+  return rendition.value?.next()
 }
 
-function prevPage(method: ReaderNavigationMethod) {
+function prevPage(method?: ReaderNavigationMethod) {
   if (isAtFirstPage.value) return
   activeTTSElementIndex.value = undefined
   isPageLoading.value = true
   isAnnotationMenuVisible.value = false
   pinnedPagingScroll = undefined
-  rendition.value?.prev()
-  recordNavigation(method)
+  if (method) recordNavigation(method)
+  return rendition.value?.prev()
 }
 
 function turnPageLeft(method: ReaderNavigationMethod) {
@@ -2434,6 +2639,25 @@ function handleAnnotationClick(annotationId: string) {
 
 let isClearingSelection = false
 
+// A selection carried over from another page also spans columns scrolled out of view,
+// so anchor the menu to the part on the visible page.
+function getOnPageRangeRect(range: Range, iframe?: Element | null) {
+  const pageRect = getPageRectInFrame(iframe)
+  if (!pageRect) return undefined
+  const onPageRects = Array.from(range.getClientRects()).filter(rect => (
+    rect.right > pageRect.left
+    && rect.left < pageRect.right
+    && rect.bottom > pageRect.top
+    && rect.top < pageRect.bottom
+  ))
+  if (!onPageRects.length) return undefined
+  const left = Math.min(...onPageRects.map(rect => rect.left))
+  const top = Math.min(...onPageRects.map(rect => rect.top))
+  const right = Math.max(...onPageRects.map(rect => rect.right))
+  const bottom = Math.max(...onPageRects.map(rect => rect.bottom))
+  return { left, top, bottom, width: right - left }
+}
+
 function handleTextSelection(viewWindow: Window) {
   // Every action in the annotation menu needs a book record on the server.
   if (isClearingSelection || isStandaloneMode.value) return
@@ -2466,9 +2690,9 @@ function handleTextSelection(viewWindow: Window) {
     selectedCfi.value = cfiRange
     selectedChapterTitle.value = activeNavItemLabel.value
 
-    const rect = range.getBoundingClientRect()
     const iframe = renditionElement.value?.querySelector('iframe')
     const iframeRect = iframe?.getBoundingClientRect()
+    const rect = getOnPageRangeRect(range, iframe) ?? range.getBoundingClientRect()
 
     if (iframeRect) {
       annotationMenuPosition.value = {
@@ -2905,7 +3129,9 @@ onBeforeUnmount(() => {
   removeTouchStartListener?.()
   removeTouchEndListener?.()
   removePagingScrollListener?.()
+  removeSelectionEdgeListeners?.()
   clearTimeout(selectionCommitTimer)
+  resetSelectionEdgeHold()
   renderedHighlights.clear()
   renditionViewWindow.value = undefined
   renditionViewWindows.value = new Map()
