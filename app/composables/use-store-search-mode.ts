@@ -1,6 +1,7 @@
 import { FetchError } from 'ofetch'
 
 import { getGenreI18nKey } from '~~/shared/constants/book-categories'
+import { normalizeBookKeyword } from '~~/shared/utils/bookstore'
 import { normalizeLikerId } from '~~/shared/utils/liker-id'
 
 // Search-mode state shared by the store.vue header and the listing body.
@@ -19,6 +20,7 @@ export async function useStoreSearchMode() {
   const queryPublisherName = computed(() => getRouteQuery('publisher', ''))
   const queryOwnerWallet = computed(() => getRouteQuery('owner_wallet', ''))
   const queryGenre = computed(() => getRouteQuery('genre', ''))
+  const queryKeyword = computed(() => normalizeBookKeyword(getRouteQuery('keyword', '')))
   // Normalize a stray leading `@` so it resolves the same as a bare Liker ID.
   const queryAffiliate = computed(() => normalizeLikerId(getRouteQuery('affiliate', '')))
   // `/store/@<likerId>`: the `@` is literal in the route path, so the param
@@ -158,6 +160,7 @@ export async function useStoreSearchMode() {
     if (queryPublisherName.value) return `publisher:${queryPublisherName.value}`
     if (ownerWallet.value) return `owner_wallet:${ownerWallet.value}`
     if (queryGenre.value) return `genre:${queryGenre.value}`
+    if (queryKeyword.value) return `keyword:${queryKeyword.value}`
     return ''
   })
 
@@ -251,6 +254,13 @@ export async function useStoreSearchMode() {
         description: $t(isLibraryTab.value ? 'library_page_genre_description' : 'store_page_genre_description', { genre: localizedGenreName.value }),
       }
     }
+    if (queryKeyword.value) {
+      return {
+        label: queryKeyword.value,
+        titlePrefix: $t('store_keyword_prefix'),
+        description: $t(isLibraryTab.value ? 'library_page_keyword_description' : 'store_page_keyword_description', { keyword: queryKeyword.value }),
+      }
+    }
     return null
   })
 
@@ -272,6 +282,7 @@ export async function useStoreSearchMode() {
     queryPublisherName,
     queryOwnerWallet,
     queryGenre,
+    queryKeyword,
     queryAffiliate,
     routeUserId,
     profileDisplayName,

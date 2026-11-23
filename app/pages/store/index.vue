@@ -370,6 +370,7 @@ const {
   queryPublisherName,
   queryOwnerWallet,
   queryGenre,
+  queryKeyword,
   queryAffiliate,
   routeUserId,
   profileDisplayName,
@@ -677,6 +678,9 @@ const canonicalURL = computed(() => {
   }
   if (queryGenre.value) {
     canonicalParams.set('genre', queryGenre.value)
+  }
+  if (queryKeyword.value) {
+    canonicalParams.set('keyword', queryKeyword.value)
   }
   if (queryAffiliate.value) {
     canonicalParams.set('affiliate', queryAffiliate.value)
@@ -1504,7 +1508,9 @@ async function fetchItems({ lazy = false, isRefresh = false } = {}): Promise<boo
   }
   if (isSearchMode.value) {
     try {
-      const [type, searchTerm] = searchQuery.value.split(':', 2)
+      // Only the first colon ends the type; a search term may contain colons of its own.
+      const [type, ...searchTermParts] = searchQuery.value.split(':')
+      const searchTerm = searchTermParts.join(':')
       if (type === 'affiliate' && searchTerm) {
         await bookstoreStore.fetchAffiliateBooks(searchTerm, {
           isRefresh,
@@ -1513,7 +1519,7 @@ async function fetchItems({ lazy = false, isRefresh = false } = {}): Promise<boo
       }
       else if (type && searchTerm) {
         await bookstoreStore.fetchSearchResults(
-          type as 'q' | 'author' | 'publisher' | 'owner_wallet' | 'genre',
+          type as Parameters<typeof bookstoreStore.fetchSearchResults>[0],
           searchTerm,
           {
             isRefresh,
