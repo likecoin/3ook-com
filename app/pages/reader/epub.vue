@@ -431,6 +431,7 @@ const bookSettingsStore = useBookSettingsStore()
 const {
   nftClassId,
   nftId,
+  fileIndex,
   isUploadedBook,
   isPreviewMode,
   backRoute,
@@ -1407,6 +1408,8 @@ async function displayRenditionAtCurrentLocation() {
   await displayRendition(undefined, { attempt: candidates.length })
 }
 
+const EPUB_EVENT_TARGET_MAX_LENGTH = 200
+
 async function handleDisplayFailure(error: unknown, target: string | undefined, {
   isSilentError,
   hasFallbackAttempt,
@@ -1424,6 +1427,14 @@ async function handleDisplayFailure(error: unknown, target: string | undefined, 
     is_silent_error: isSilentError,
     has_fallback_attempt: hasFallbackAttempt,
     has_target: !!target,
+    // A saved position is shared by every file variant of the book,
+    // so record which variant failed it; the CFI's leading steps name the spine position.
+    target: target?.slice(0, EPUB_EVENT_TARGET_MAX_LENGTH),
+    spine_length: rendition.value?.book?.spine?.length,
+    file_index: fileIndex.value,
+    is_preview: isPreviewMode.value,
+    is_custom_message_enabled: isCustomMessageEnabled.value,
+    is_loaded_from_cache: isLoadedFromCache.value,
     is_target_missing: isTargetMissing,
     // Rung of the caller's fallback ladder, so a retry that recovers stays
     // countable apart from the failure that started it.
