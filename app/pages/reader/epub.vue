@@ -392,6 +392,7 @@ import ePub, {
 } from '@likecoin/epub-ts'
 import type { ReaderLeftSidebarTab } from '~/components/ReaderLeftSidebar.props'
 import type { ReaderNavigationMethod } from '~~/shared/constants/analytics'
+import type { EPUBHrefContext } from '~/utils/reader'
 import { ANNOTATION_COLORS_MAP, ANNOTATION_TEXT_MAX_LENGTH } from '~~/shared/constants/annotations'
 import { SEARCH_MAX_RESULTS } from '~~/shared/constants/reader-search'
 
@@ -667,7 +668,8 @@ const bookName = computed(() => {
   return loadedBook.value?.packaging?.metadata?.title || localEPUBFile.value?.name || ''
 })
 const isTTSExtracting = ref(false)
-const sectionHrefByFilename = ref<Record<string, string>>({})
+const epubHrefContext = shallowRef<EPUBHrefContext>({ spineHrefs: [] })
+let navHrefBySpineHref = new Map<string, string>()
 const navItems = ref<NavItem[]>([])
 const activeNavItemLabel = computed(() => {
   const item = navItems.value.find(item => item.href === activeNavItemHref.value)
@@ -1530,13 +1532,16 @@ async function loadEPub() {
     console.warn('Failed to get location cache:', error)
   }
 
+  const hrefs: string[] = []
   book.spine!.each((section: Section) => {
-    if (!section.href) return
-    const filename = getHrefBaseFilename(section.href)
-    if (!filename) return
-    sectionHrefByFilename.value[filename] = section.href
+    if (section.href) hrefs.push(section.href)
   })
   navItems.value = toc.filter((item): item is NavItem => item !== null)
+  epubHrefContext.value = {
+    spineHrefs: hrefs,
+    navPath: book.packaging?.navPath || book.packaging?.ncxPath,
+  }
+  navHrefBySpineHref = getEPUBNavHrefBySpineHref(navItems.value.map(item => item.href), epubHrefContext.value)
 
   activeNavItemHref.value = book.spine!.first()!.href
   currentPageHref.value = activeNavItemHref.value ?? ''
@@ -1841,7 +1846,7 @@ async function loadEPub() {
     isAtLastPage.value = !!location.atEnd
     const href = location.start.href
     currentPageHref.value = href
-    activeNavItemHref.value = resolveActiveNavItemHref(href)
+    activeNavItemHref.value = navHrefBySpineHref.get(href)
     if (isPreviewMode.value) {
       handlePreviewEndBoundary(href.endsWith(PREVIEW_END_PAGE_HREF_SUFFIX))
     }
@@ -1975,27 +1980,6 @@ function isExternalLink(href: string): boolean {
 
 function getHrefBasePath(href: string): string {
   return href.split('#')[0] ?? href
-}
-
-function getHrefBaseFilename(href: string): string {
-  const path = getHrefBasePath(href)
-  return path.split('/').pop() ?? path
-}
-
-// TOC hrefs and spine hrefs often disagree (TOC may use anchors like
-// `ch5.xhtml#sec-1` while the spine lists `OEBPS/ch5.xhtml`), so strict
-// equality can't be relied on to locate the active chapter. Fall back to
-// filename matching, preferring the unanchored (chapter-start) entry.
-function resolveActiveNavItemHref(pageHref: string): string | undefined {
-  if (!pageHref) return undefined
-  if (navItems.value.some(item => item.href === pageHref)) return pageHref
-
-  const pageFilename = getHrefBaseFilename(pageHref)
-  const sectionItems = navItems.value.filter(item => getHrefBaseFilename(item.href) === pageFilename)
-  if (!sectionItems.length) return undefined
-
-  const unanchored = sectionItems.find(item => !item.href.includes('#'))
-  return (unanchored ?? sectionItems[0])?.href
 }
 
 function findNextNavItemAfterTOC(navItems: NavItem[]): NavItem | undefined {
@@ -2135,13 +2119,7 @@ async function setActiveNavItem(item: NavItem, {
   // Explicit TOC navigation isn't a footnote jump; drop any pending return.
   dismissFootnoteReturn()
 
-  // The nav item's href and the spine's can name one file by different paths.
-  const anchor = item.href.split('#')[1]
-  const filename = getHrefBaseFilename(item.href)
-  let spineHref = filename ? sectionHrefByFilename.value[filename] : undefined
-  if (spineHref && anchor) {
-    spineHref = `${spineHref}#${anchor}`
-  }
+  const spineHref = getEPUBSpineHref(item.href, epubHrefContext.value)
 
   // epub.js fails the whole display on a target the spine can't resolve, so
   // start from the spine's own href when the nav one misses: the jump then
