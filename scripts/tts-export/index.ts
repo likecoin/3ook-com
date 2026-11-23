@@ -9,8 +9,8 @@ import { getIsRetryableHTTPError } from '../../shared/utils/http-status'
 import { generateTTSCacheKey, getTTSCacheBucket } from '../../server/utils/storage'
 import {
   createTTSPronunciationSigGetter,
-  getMinimaxModel,
-  getMinimaxVoiceId,
+  getTTSModel,
+  getProviderVoiceId,
   getVoiceDisplayName,
   isCachedTTSPronunciationStale,
   LANG_MAPPING,
@@ -184,7 +184,7 @@ export async function main(argv: string[]) {
   if (!LANGUAGES.includes(language)) {
     throw new Error(`Invalid --language "${language}", expected ${LANGUAGES.join(' | ')}`)
   }
-  const minimaxVoiceId = getMinimaxVoiceId(voiceId)
+  const minimaxVoiceId = getProviderVoiceId(voiceId)
   if (!minimaxVoiceId) {
     throw new Error(`Unknown --voice "${voiceId}"`)
   }
@@ -194,7 +194,7 @@ export async function main(argv: string[]) {
   const limit = parsePositiveInt(values.limit, '--limit')
   const concurrency = parsePositiveInt(values.concurrency, '--concurrency') ?? 4
 
-  const model = getMinimaxModel({ voiceId, language })
+  const model = getTTSModel({ voiceId, language })
   const sourceName = getSourceName(values.epub)
   const outDir = resolve(values.out || join('tts-export-out', sourceName))
   await mkdir(outDir, { recursive: true })
