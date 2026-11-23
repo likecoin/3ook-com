@@ -821,6 +821,8 @@ export function useTextToSpeech(options: TTSOptions) {
       isShowTextToSpeechOptions.value = true
       if (!ttsLanguageVoiceValues.value.includes(ttsLanguageVoice.value)) {
         await ttsVoiceFlagsPromise
+        // A stop while flags loaded dismissed the player; don't start behind it.
+        if (!isShowTextToSpeechOptions.value) return
         if (!ttsLanguageVoiceValues.value.includes(ttsLanguageVoice.value)) {
           ttsLanguageVoice.value = ttsLanguageVoiceValues.value[0]
         }
