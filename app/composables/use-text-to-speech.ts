@@ -98,6 +98,7 @@ export function useTextToSpeech(options: TTSOptions) {
     activeTTSLanguageVoiceLabel,
     ttsLanguageVoiceOptionsWithAvatars,
     ttsLanguageVoiceValues,
+    ttsVoiceFlagsPromise,
     setTTSLanguageVoice,
   } = useTTSVoice({
     bookLanguage,
@@ -819,7 +820,10 @@ export function useTextToSpeech(options: TTSOptions) {
     try {
       isShowTextToSpeechOptions.value = true
       if (!ttsLanguageVoiceValues.value.includes(ttsLanguageVoice.value)) {
-        ttsLanguageVoice.value = ttsLanguageVoiceValues.value[0]
+        await ttsVoiceFlagsPromise
+        if (!ttsLanguageVoiceValues.value.includes(ttsLanguageVoice.value)) {
+          ttsLanguageVoice.value = ttsLanguageVoiceValues.value[0]
+        }
       }
 
       if (index !== null) {

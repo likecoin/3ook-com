@@ -55,6 +55,9 @@ export function useTTSVoice(options: TTSVoiceOptions = {}) {
   }
 
   const isElevenLabsFlagEnabled = useFeatureFlagEnabled('tts-elevenlabs')
+  // Settles once flags load (or time out), so a play tap can wait before
+  // dropping a saved voice that the flag has not listed yet.
+  const ttsVoiceFlagsPromise = fetchFeatureFlagEnabled('tts-elevenlabs')
 
   const availableTTSLanguageVoiceOptions = computed(() => {
     const voiceOptions = config.public.isTestnet || isElevenLabsFlagEnabled.value
@@ -219,6 +222,7 @@ export function useTTSVoice(options: TTSVoiceOptions = {}) {
     activeTTSLanguageVoiceLabel,
     ttsLanguageVoiceOptionsWithAvatars,
     ttsLanguageVoiceValues,
+    ttsVoiceFlagsPromise,
     getVoiceAvatar,
     setTTSLanguageVoice,
   }
