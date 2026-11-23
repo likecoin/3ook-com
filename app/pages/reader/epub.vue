@@ -1155,7 +1155,8 @@ function handlePagingScroll() {
 // With autoscroll pinned, a selection reaches the next page by being held at the page edge,
 // as in Apple Books: a pause there turns the page, a pass across it doesn't.
 type SelectionEdgeTurn = 'next' | 'prev'
-const SELECTION_EDGE_HOLD_MS = 500
+const SELECTION_EDGE_HOLD_MS = 800
+const SELECTION_EDGE_REPEAT_MS = 1000
 const SELECTION_EDGE_ZONE_PX = 24
 // `null` marks a mouse or finger drag tracked away from the edges, where the dragged end decides;
 // Android handle drags fire no touch events, so the dragged end is their only signal.
@@ -1238,13 +1239,13 @@ function getTurnedPagingScroll(container: HTMLElement, turn: SelectionEdgeTurn) 
   return { ...aligned, left: aligned.left + step * sign }
 }
 
-function updateSelectionEdgeHold(viewWindow: Window) {
+function updateSelectionEdgeHold(viewWindow: Window, holdMs = SELECTION_EDGE_HOLD_MS) {
   const turn = selectionEdgePointerTurn ?? selectionEdgeEndTurn
   if (turn === pendingSelectionEdgeTurn) return
   clearTimeout(selectionEdgeTimer)
   pendingSelectionEdgeTurn = turn
   if (turn) {
-    selectionEdgeTimer = setTimeout(() => turnPageAtSelectionEdge(viewWindow, turn), SELECTION_EDGE_HOLD_MS)
+    selectionEdgeTimer = setTimeout(() => turnPageAtSelectionEdge(viewWindow, turn), holdMs)
   }
 }
 
@@ -1269,8 +1270,8 @@ async function turnPageAtSelectionEdge(viewWindow: Window, turn: SelectionEdgeTu
   // A reload or re-render during the turn has already reset the hold for its new view.
   if (isUnmounting || renditionViewWindow.value !== viewWindow) return
   pinPagingScroll()
-  // A pointer still resting at the edge keeps turning, one page per hold.
-  updateSelectionEdgeHold(viewWindow)
+  // A pointer still resting at the edge keeps turning, at a steadier pace than the first hold.
+  updateSelectionEdgeHold(viewWindow, SELECTION_EDGE_REPEAT_MS)
   // Android handle drags fire no release event to bring the menu back.
   if (selectionEdgePointerTurn === undefined && !isTouchGestureActive) {
     handleTextSelection(viewWindow)
