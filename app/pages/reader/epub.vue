@@ -1465,6 +1465,15 @@ async function displayRendition(target?: string, {
   }
   try {
     await displayInRendition(target)
+    // Only failures log otherwise, so this is what tells a recovered open from a stranded one.
+    if (attempt > 0) {
+      logReaderEvent('reader_epub_display_recovered', {
+        nft_class_id: nftClassId.value,
+        attempt,
+        has_target: !!target,
+        is_preview: isPreviewMode.value,
+      })
+    }
     return true
   }
   catch (error) {
