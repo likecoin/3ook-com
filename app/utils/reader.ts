@@ -500,6 +500,26 @@ export function getEPUBNavHrefBySpineHref(navHrefs: string[], context: EPUBHrefC
   return navHrefBySpineHref
 }
 
+/**
+ * Display targets to try in order, deduplicated.
+ * A ToC href the spine misses is swapped for the spine's own spelling;
+ * a miss with no match stays, so its failure is still logged before the next fallback.
+ */
+export function getEPUBDisplayCandidates(
+  targets: (string | undefined)[],
+  { spine, hrefContext }: {
+    spine: Parameters<typeof isEPUBTargetInSpine>[0]
+    hrefContext: EPUBHrefContext
+  },
+): string[] {
+  const candidates = targets.flatMap((target) => {
+    if (!target) return []
+    if (target.startsWith('epubcfi(') || isEPUBTargetInSpine(spine, target)) return [target]
+    return [getEPUBSpineHref(target, hrefContext) ?? target]
+  })
+  return [...new Set(candidates)]
+}
+
 // WebKit refuses a canvas past roughly 16.7M pixels, and refuses it silently:
 // the backing store is dropped, page.render() still resolves, and the reader
 // paints nothing. A retina device at full zoom clears that ceiling on its own.

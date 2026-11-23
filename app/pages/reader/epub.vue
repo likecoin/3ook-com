@@ -1393,21 +1393,25 @@ async function displayRenditionAtCurrentLocation() {
   if (!hasDisplayedInitialLocation) return
 
   renderedThemeVersion = themeVersion
-  // A target the loaded spine no longer resolves drops the reader on page one,
-  // so step through the nearest known sections before that last resort.
-  // `currentPageHref` is epub.js's own spine href, so it resolves where the
-  // nav hrefs below may not.
-  const fallbackTargets = [
+  await displayRenditionWithFallback([
     target,
     currentPageHref.value,
     activeNavItemHref.value,
     findNextNavItemAfterTOC(navItems.value)?.href,
-  ]
-  const candidates = [...new Set(fallbackTargets.filter(Boolean))]
+  ])
+}
+
+// A target the loaded spine no longer resolves drops the reader on page one,
+// so step through the nearest known sections before that last resort.
+async function displayRenditionWithFallback(targets: (string | undefined)[]) {
+  const candidates = getEPUBDisplayCandidates(targets, {
+    spine: rendition.value?.book?.spine,
+    hrefContext: epubHrefContext.value,
+  })
   for (const [attempt, candidate] of candidates.entries()) {
-    if (await displayRendition(candidate, { isSilentError: true, attempt })) return
+    if (await displayRendition(candidate, { isSilentError: true, attempt })) return true
   }
-  await displayRendition(undefined, { attempt: candidates.length })
+  return displayRendition(undefined, { attempt: candidates.length })
 }
 
 const EPUB_EVENT_TARGET_MAX_LENGTH = 200
@@ -1894,24 +1898,13 @@ async function loadEPub() {
   }
   isPageLoading.value = true
 
-  let hasDisplayed = false
-  if (currentCfi.value) {
-    hasDisplayed = await displayRendition(currentCfi.value, { isSilentError: true })
-  }
-  if (!hasDisplayed) {
-    const fallbackItem = findNextNavItemAfterTOC(navItems.value)
-    if (fallbackItem) {
-      // A preview keeps the full nav document, so this first chapter may have
-      // been truncated away — fall through to the spine below when it has.
-      hasDisplayed = await setActiveNavItem(fallbackItem, { isSilentError: true })
-    }
-  }
-  if (!hasDisplayed) {
-    hasDisplayed = await displayRendition()
-    if (!hasDisplayed) {
-      return
-    }
-  }
+  // A preview keeps the full nav document, so its first chapter may have been
+  // truncated away too; the ladder then ends on the spine's first section.
+  const hasDisplayed = await displayRenditionWithFallback([
+    currentCfi.value,
+    findNextNavItemAfterTOC(navItems.value)?.href,
+  ])
+  if (!hasDisplayed) return
   // The deferred destroy lets a display that started before unmount, or before
   // a retry swapped in a new rendition, still resolve — so a truthy
   // `hasDisplayed` can belong to a page that is already gone. Stop before
@@ -2106,13 +2099,7 @@ async function extractTTSSegments(book: Book) {
   return { segments: mergeShortTTSSegments(segments), chapterTitles }
 }
 
-// Resolves to whether the nav item was actually displayed, so a caller that
-// has a fallback (the cold-open jump below) can take it instead of assuming
-// the jump landed.
-async function setActiveNavItem(item: NavItem, {
-  isSilentError = false,
-  hasFallbackAttempt = isSilentError,
-}: { isSilentError?: boolean, hasFallbackAttempt?: boolean } = {}) {
+async function setActiveNavItem(item: NavItem) {
   activeTTSElementIndex.value = undefined
   activeNavItemHref.value = item.href
   isPageLoading.value = true
@@ -2128,46 +2115,33 @@ async function setActiveNavItem(item: NavItem, {
   const primaryHref = isNavHrefInSpine || !spineHref ? item.href : spineHref
 
   // Skipped when the spine href already went first: retrying it would only
-  // repeat the same failure. Without it this rung is the only one, so a silent
-  // jump here can still end at the modal below.
+  // repeat the same failure.
   const hasSpineRetry = !!spineHref && spineHref !== primaryHref
-  let hasDisplayed = await displayRendition(primaryHref, {
+  if (await displayRendition(primaryHref, {
     isSilentError: true,
-    hasFallbackAttempt: hasFallbackAttempt || hasSpineRetry,
+    hasFallbackAttempt: hasSpineRetry,
     attempt: 0,
-  })
-  if (hasDisplayed) return true
+  })) return
 
-  if (hasSpineRetry) {
-    // Preview mode handles the failure below with its own CTA, so stay silent
-    // here to avoid stacking an error modal in front of it.
-    hasDisplayed = await displayRendition(spineHref, {
-      isSilentError: isSilentError || isPreviewMode.value,
-      // The truncated-chapter CTA is the designed outcome, not a break.
-      hasFallbackAttempt: hasFallbackAttempt || isPreviewMode.value,
-      attempt: 1,
-    })
-    if (hasDisplayed) {
-      return true
-    }
-  }
+  // Preview mode handles the failure below with its own CTA, so stay silent here
+  // to avoid stacking an error modal in front of it: that CTA is the designed outcome.
+  if (hasSpineRetry && await displayRendition(spineHref, {
+    isSilentError: isPreviewMode.value,
+    hasFallbackAttempt: isPreviewMode.value,
+    attempt: 1,
+  })) return
+
   // Nothing was rendered, so stop showing the page spinner before handing the
-  // failure to the CTA or the error modal. A silent caller owns the spinner
-  // itself — clearing it would blank the page until its fallback paints.
-  if (!isSilentError) {
-    isPageLoading.value = false
-  }
+  // failure to the CTA or the error modal.
+  isPageLoading.value = false
   // In preview mode the ToC still lists chapters beyond the truncation point
   // (the server keeps the nav doc intact), so a failed jump means the chapter
   // was cut — offer the purchase/subscribe CTA instead of an error.
-  if (isPreviewMode.value && !isSilentError) {
+  if (isPreviewMode.value) {
     await openPreviewEndModal('toc')
-    return false
+    return
   }
-  if (!isSilentError) {
-    await errorModal.open({ description: $t('reader_epub_rendition_display_failed') }).result
-  }
-  return false
+  await errorModal.open({ description: $t('reader_epub_rendition_display_failed') }).result
 }
 
 // Page-turn gestures pass their method to be counted; extending a selection passes none.

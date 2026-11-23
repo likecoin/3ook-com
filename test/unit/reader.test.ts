@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { checkIsAnnotationEditGesture, clampPDFPageNumber, findOfflineBookCopy, getBookFileCacheKey, getClampedCanvasPixelRatio, getEPUBNavHrefBySpineHref, getEPUBSpineHref, isEPUBTargetInSpine, isLikelyGarbledPDFText, isPDFCorpusUnreadable, isValidPDFPageNumber } from '~/utils/reader'
+import { checkIsAnnotationEditGesture, clampPDFPageNumber, findOfflineBookCopy, getBookFileCacheKey, getClampedCanvasPixelRatio, getEPUBDisplayCandidates, getEPUBNavHrefBySpineHref, getEPUBSpineHref, isEPUBTargetInSpine, isLikelyGarbledPDFText, isPDFCorpusUnreadable, isValidPDFPageNumber } from '~/utils/reader'
 // ?raw, not node:fs: the nuxt test environment stubs fs via unenv.
 import epubPageSource from '~~/app/pages/reader/epub.vue?raw'
 
@@ -286,6 +286,37 @@ describe('getEPUBNavHrefBySpineHref', () => {
 
   it('has no entry for a section the ToC does not list', () => {
     expect(getEPUBNavHrefBySpineHref(['../A/ch1.xhtml'], context).has('B/ch2.xhtml')).toBe(false)
+  })
+})
+
+describe('getEPUBDisplayCandidates', () => {
+  const spineHrefs = ['OEBPS/Text/ch1.xhtml', 'OEBPS/Text/ch2.xhtml']
+  const spine = { get: (target?: string) => spineHrefs.includes(target?.split('#')[0] ?? '') ? {} : null }
+  const options = { spine, hrefContext: { spineHrefs, navPath: 'OEBPS/Text/nav.xhtml' } }
+
+  it('keeps targets the spine resolves, in order', () => {
+    expect(getEPUBDisplayCandidates(['OEBPS/Text/ch2.xhtml', 'OEBPS/Text/ch1.xhtml'], options))
+      .toEqual(['OEBPS/Text/ch2.xhtml', 'OEBPS/Text/ch1.xhtml'])
+  })
+
+  it('swaps a nav href the spine misses for the spine spelling', () => {
+    expect(getEPUBDisplayCandidates(['ch2.xhtml#sec'], options)).toEqual(['OEBPS/Text/ch2.xhtml#sec'])
+  })
+
+  // The stale position is still tried first, so its failure is logged with the
+  // target, and the ladder falls through to the first chapter after it.
+  it('keeps a stale saved position ahead of its fallbacks', () => {
+    const staleCfi = 'epubcfi(/6/20!/4/2/1:0)'
+    expect(getEPUBDisplayCandidates([staleCfi, 'ch1.xhtml'], options)).toEqual([staleCfi, 'OEBPS/Text/ch1.xhtml'])
+  })
+
+  it('keeps an href no section matches, so its miss is still reported', () => {
+    expect(getEPUBDisplayCandidates(['gone.xhtml'], options)).toEqual(['gone.xhtml'])
+  })
+
+  it('drops empty targets and repeats', () => {
+    expect(getEPUBDisplayCandidates(['', undefined, 'ch1.xhtml', 'OEBPS/Text/ch1.xhtml'], options))
+      .toEqual(['OEBPS/Text/ch1.xhtml'])
   })
 })
 
