@@ -3,7 +3,7 @@
 // environment stubs out node:crypto, which tts-minimax.ts touches at import
 // time (TTS_PRONUNCIATION_VERSION), so import fails there. Run under real Node.
 import { describe, expect, it } from 'vitest'
-import { applyInlinePronunciation, getTTSModel, getProviderVoiceId, getTTSPronunciationDictionary, injectTTSPauseMarkers, isElevenLabsVoiceId, isKnownVoiceId, resolveVoiceId } from '~~/server/utils/tts-minimax'
+import { applyInlinePronunciation, getTTSModel, getProviderVoiceId, getTTSPronunciationDictionary, getTTSPronunciationStamp, injectTTSPauseMarkers, isElevenLabsVoiceId, isKnownVoiceId, NO_PRONUNCIATION_SIG, resolveVoiceId, TTS_PRONUNCIATION_VERSION } from '~~/server/utils/tts-minimax'
 import { parseTTSVoiceVersion } from '~~/shared/utils/tts-voice-version'
 
 const MARKER = '<#0.01#>'
@@ -129,6 +129,16 @@ describe('ElevenLabs voices', () => {
   it('leaves Minimax voices on the Minimax provider', () => {
     expect(isElevenLabsVoiceId('phoebe_v28')).toBe(false)
     expect(isElevenLabsVoiceId('unknown_voice')).toBe(false)
+  })
+
+  it('stamps ElevenLabs audio outside the pronunciation dictionary', () => {
+    const text = '沈迷'
+    const elevenLabs = getTTSPronunciationStamp('el_chunwai', 'zh-HK', text)
+    expect(elevenLabs.dictVersion).toBe('none')
+    expect(elevenLabs.getExpectedSig()).toBe(NO_PRONUNCIATION_SIG)
+
+    const minimax = getTTSPronunciationStamp('phoebe', 'zh-HK', text)
+    expect(minimax.dictVersion).toBe(TTS_PRONUNCIATION_VERSION['zh-HK'])
   })
 })
 
