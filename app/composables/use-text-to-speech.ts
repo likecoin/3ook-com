@@ -548,7 +548,8 @@ export function useTextToSpeech(options: TTSOptions) {
         from_voice: oldLanguage || undefined,
         to_voice: newLanguage || undefined,
       })
-      restartTextToSpeech()
+      // A fallback during start is loaded by that start; restarting would cancel it.
+      if (!isStartingTextToSpeech.value) restartTextToSpeech()
       useLogEvent('tts_language_change', payload)
     }
   })
