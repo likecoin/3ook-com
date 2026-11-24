@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { checkIsAnnotationEditGesture, clampPDFPageNumber, findOfflineBookCopy, getBookFileCacheKey, getClampedCanvasPixelRatio, isEPUBTargetInSpine, isLikelyGarbledPDFText, isPDFCorpusUnreadable, isValidPDFPageNumber } from '~/utils/reader'
+import { checkIsAnnotationEditGesture, clampPDFPageNumber, findOfflineBookCopy, getBookFileCacheKey, getClampedCanvasPixelRatio, getEPUBDisplayCandidates, getEPUBNavHrefBySpineHref, getEPUBSpineHref, isEPUBTargetInSpine, isLikelyGarbledPDFText, isPDFCorpusUnreadable, isValidPDFPageNumber } from '~/utils/reader'
 // ?raw, not node:fs: the nuxt test environment stubs fs via unenv.
 import epubPageSource from '~~/app/pages/reader/epub.vue?raw'
 
@@ -198,6 +198,125 @@ describe('isEPUBTargetInSpine', () => {
 
   it('lets the display attempt decide when there is no spine to check', () => {
     expect(isEPUBTargetInSpine(undefined, 'ch1.xhtml')).toBe(true)
+  })
+})
+
+describe('getEPUBSpineHref', () => {
+  const context = { spineHrefs: ['Text/ch1.xhtml', 'Text/第二章.xhtml'], navPath: 'Text/nav.xhtml' }
+
+  it('resolves a ToC href against the nav document', () => {
+    expect(getEPUBSpineHref('ch1.xhtml', context)).toBe('Text/ch1.xhtml')
+    expect(getEPUBSpineHref('./ch1.xhtml', context)).toBe('Text/ch1.xhtml')
+    expect(getEPUBSpineHref('Text/ch1.xhtml', { ...context, navPath: 'toc.ncx' })).toBe('Text/ch1.xhtml')
+  })
+
+  it('accepts a ToC href written relative to the OPF instead', () => {
+    expect(getEPUBSpineHref('Text/ch1.xhtml', context)).toBe('Text/ch1.xhtml')
+    expect(getEPUBSpineHref('../Text/ch1.xhtml', { spineHrefs: context.spineHrefs })).toBe('Text/ch1.xhtml')
+  })
+
+  it('keeps the anchor of the ToC href', () => {
+    expect(getEPUBSpineHref('ch1.xhtml#sec-1', context)).toBe('Text/ch1.xhtml#sec-1')
+  })
+
+  it('matches a percent-encoded path to the spelled-out one', () => {
+    expect(getEPUBSpineHref(`${encodeURIComponent('第二章')}.xhtml`, context)).toBe('Text/第二章.xhtml')
+  })
+
+  it('returns nothing for a file the spine does not have', () => {
+    expect(getEPUBSpineHref('ch9.xhtml', context)).toBeUndefined()
+  })
+
+  it('keeps a malformed escape as spelled', () => {
+    expect(getEPUBSpineHref('100%.xhtml', { spineHrefs: ['Text/100%.xhtml'], navPath: 'Text/nav.xhtml' })).toBe('Text/100%.xhtml')
+  })
+
+  it('collapses parent segments before matching', () => {
+    const nested = { spineHrefs: ['A/ch1.xhtml', 'A/B/ch1.xhtml'], navPath: 'nav.xhtml' }
+    expect(getEPUBSpineHref('A/B/../ch1.xhtml', nested)).toBe('A/ch1.xhtml')
+    expect(getEPUBSpineHref('A/./B/ch1.xhtml', nested)).toBe('A/B/ch1.xhtml')
+  })
+
+  it('tells sections that share a filename apart by their directory', () => {
+    const shared = { spineHrefs: ['A/ch1.xhtml', 'B/ch1.xhtml'], navPath: 'Nav/nav.xhtml' }
+    expect(getEPUBSpineHref('../A/ch1.xhtml', shared)).toBe('A/ch1.xhtml')
+    expect(getEPUBSpineHref('../B/ch1.xhtml', shared)).toBe('B/ch1.xhtml')
+    expect(getEPUBSpineHref('ch1.xhtml', shared)).toBeUndefined()
+  })
+
+  // A preview keeps the full ToC but cuts later chapters from the spine,
+  // so the jump must fail into the purchase CTA rather than land on a namesake.
+  it('does not trade a missing directory for a namesake elsewhere', () => {
+    expect(getEPUBSpineHref('../B/ch1.xhtml', { spineHrefs: ['A/ch1.xhtml'], navPath: 'Nav/nav.xhtml' })).toBeUndefined()
+    expect(getEPUBSpineHref('ch1.xhtml', { spineHrefs: ['A/ch1.xhtml'], navPath: 'B/nav.xhtml' })).toBeUndefined()
+    expect(getEPUBSpineHref('../B/ch1.xhtml', { spineHrefs: ['A/ch1.xhtml'] })).toBeUndefined()
+  })
+
+  it('prefers an exact spelling over another section\'s decoded one', () => {
+    const mixed = { spineHrefs: ['A/a%20b.xhtml', 'B/a b.xhtml'], navPath: 'nav.xhtml' }
+    expect(getEPUBSpineHref('A/a%20b.xhtml', mixed)).toBe('A/a%20b.xhtml')
+    expect(getEPUBSpineHref('B/a b.xhtml', mixed)).toBe('B/a b.xhtml')
+  })
+})
+
+describe('getEPUBNavHrefBySpineHref', () => {
+  const context = { spineHrefs: ['A/ch1.xhtml', 'B/ch1.xhtml', 'B/ch2.xhtml'], navPath: 'Nav/nav.xhtml' }
+
+  it('prefers the chapter-start entry of each section', () => {
+    const lookup = getEPUBNavHrefBySpineHref(['../B/ch2.xhtml#sec-1', '../B/ch2.xhtml'], context)
+    expect(lookup.get('B/ch2.xhtml')).toBe('../B/ch2.xhtml')
+  })
+
+  it('prefers an entry that names the section exactly', () => {
+    const lookup = getEPUBNavHrefBySpineHref(['../B/ch2.xhtml', 'B/ch2.xhtml'], context)
+    expect(lookup.get('B/ch2.xhtml')).toBe('B/ch2.xhtml')
+  })
+
+  it('keeps sections that share a filename apart', () => {
+    const lookup = getEPUBNavHrefBySpineHref(['../A/ch1.xhtml', '../B/ch1.xhtml'], context)
+    expect(lookup.get('A/ch1.xhtml')).toBe('../A/ch1.xhtml')
+    expect(lookup.get('B/ch1.xhtml')).toBe('../B/ch1.xhtml')
+  })
+
+  it('agrees with the section epub.js displays for an href the spine names', () => {
+    const lookup = getEPUBNavHrefBySpineHref(['ch1.xhtml'], { spineHrefs: ['ch1.xhtml', 'B/ch1.xhtml'], navPath: 'B/nav.xhtml' })
+    expect(lookup.get('ch1.xhtml')).toBe('ch1.xhtml')
+    expect(lookup.has('B/ch1.xhtml')).toBe(false)
+  })
+
+  it('has no entry for a section the ToC does not list', () => {
+    expect(getEPUBNavHrefBySpineHref(['../A/ch1.xhtml'], context).has('B/ch2.xhtml')).toBe(false)
+  })
+})
+
+describe('getEPUBDisplayCandidates', () => {
+  const spineHrefs = ['OEBPS/Text/ch1.xhtml', 'OEBPS/Text/ch2.xhtml']
+  const spine = { get: (target?: string) => spineHrefs.includes(target?.split('#')[0] ?? '') ? {} : null }
+  const options = { spine, hrefContext: { spineHrefs, navPath: 'OEBPS/Text/nav.xhtml' } }
+
+  it('keeps targets the spine resolves, in order', () => {
+    expect(getEPUBDisplayCandidates(['OEBPS/Text/ch2.xhtml', 'OEBPS/Text/ch1.xhtml'], options))
+      .toEqual(['OEBPS/Text/ch2.xhtml', 'OEBPS/Text/ch1.xhtml'])
+  })
+
+  it('swaps a nav href the spine misses for the spine spelling', () => {
+    expect(getEPUBDisplayCandidates(['ch2.xhtml#sec'], options)).toEqual(['OEBPS/Text/ch2.xhtml#sec'])
+  })
+
+  // The stale position is still tried first, so its failure is logged with the
+  // target, and the ladder falls through to the first chapter after it.
+  it('keeps a stale saved position ahead of its fallbacks', () => {
+    const staleCfi = 'epubcfi(/6/20!/4/2/1:0)'
+    expect(getEPUBDisplayCandidates([staleCfi, 'ch1.xhtml'], options)).toEqual([staleCfi, 'OEBPS/Text/ch1.xhtml'])
+  })
+
+  it('keeps an href no section matches, so its miss is still reported', () => {
+    expect(getEPUBDisplayCandidates(['gone.xhtml'], options)).toEqual(['gone.xhtml'])
+  })
+
+  it('drops empty targets and repeats', () => {
+    expect(getEPUBDisplayCandidates(['', undefined, 'ch1.xhtml', 'OEBPS/Text/ch1.xhtml'], options))
+      .toEqual(['OEBPS/Text/ch1.xhtml'])
   })
 })
 

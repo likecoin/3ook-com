@@ -413,6 +413,113 @@ export function isEPUBTargetInSpine(
   }
 }
 
+export interface EPUBHrefContext {
+  /** Spine section hrefs, relative to the OPF as epub.js keeps them. */
+  spineHrefs: string[]
+  /** The nav or NCX document the ToC hrefs are relative to, itself relative to the OPF. */
+  navPath?: string
+}
+
+// Collapses `.` and `..` the way a URL resolver does; a `..` above the root has nothing to pop.
+function normalizeEPUBPathSegments(segments: string[]): string[] {
+  const normalized: string[] = []
+  for (const segment of segments) {
+    if (!segment || segment === '.') continue
+    if (segment === '..') normalized.pop()
+    else normalized.push(segment)
+  }
+  return normalized
+}
+
+function getEPUBHrefPath(href: string, isDecoded: boolean): string {
+  const path = href.split('#')[0] ?? ''
+  if (!isDecoded) return path
+  try {
+    return decodeURIComponent(path)
+  }
+  catch {
+    // A malformed escape keeps its raw spelling.
+    return path
+  }
+}
+
+function findEPUBSpineHref(href: string, { spineHrefs, navPath }: EPUBHrefContext, isDecoded: boolean) {
+  const spinePaths = spineHrefs.map(spineHref => normalizeEPUBPathSegments(getEPUBHrefPath(spineHref, isDecoded).split('/')).join('/'))
+  const hrefSegments = getEPUBHrefPath(href, isDecoded).split('/')
+  if (navPath) {
+    // Some books write ToC hrefs relative to the OPF rather than the nav document, so try both bases,
+    // but no looser match: a preview's cut chapter must not land on a namesake in another directory.
+    const navDirectory = getEPUBHrefPath(navPath, isDecoded).split('/').slice(0, -1)
+    for (const base of [navDirectory, []]) {
+      const index = spinePaths.indexOf(normalizeEPUBPathSegments([...base, ...hrefSegments]).join('/'))
+      if (index >= 0) return spineHrefs[index]
+    }
+    return undefined
+  }
+  // Without a nav document to resolve against, accept the one section whose path ends with every segment the href names.
+  const tail = normalizeEPUBPathSegments(hrefSegments).join('/')
+  if (!tail) return undefined
+  const matches = spineHrefs.filter((_, index) => spinePaths[index] === tail || spinePaths[index]?.endsWith(`/${tail}`))
+  return matches.length === 1 ? matches[0] : undefined
+}
+
+/**
+ * The spine's own href for a ToC href, keeping its anchor.
+ * A ToC href is relative to the nav document and may percent-encode its path,
+ * while epub.js only resolves the spine's own spelling.
+ */
+export function getEPUBSpineHref(href: string, context: EPUBHrefContext): string | undefined {
+  const path = href.split('#')[0] ?? ''
+  // epub.js displays an href that already names a spine section as is, so agree with the page it shows.
+  const spineHref = (context.spineHrefs.includes(path) ? path : undefined)
+    ?? findEPUBSpineHref(href, context, false)
+    ?? findEPUBSpineHref(href, context, true)
+  if (!spineHref) return undefined
+  const anchor = href.split('#')[1]
+  return anchor ? `${spineHref}#${anchor}` : spineHref
+}
+
+/**
+ * The ToC entry to mark for each spine section, built once per book so a page turn is a lookup.
+ * A section prefers the entry naming it exactly, then its unanchored (chapter-start) entry.
+ */
+export function getEPUBNavHrefBySpineHref(navHrefs: string[], context: EPUBHrefContext): Map<string, string> {
+  const navHrefBySpineHref = new Map<string, string>()
+  const getRank = (navHref: string, spineHref: string) => {
+    if (navHref === spineHref) return 2
+    return navHref.includes('#') ? 0 : 1
+  }
+  for (const navHref of navHrefs) {
+    const spineHref = getEPUBSpineHref(navHref, context)?.split('#')[0]
+    if (!spineHref) continue
+    const current = navHrefBySpineHref.get(spineHref)
+    if (current === undefined || getRank(navHref, spineHref) > getRank(current, spineHref)) {
+      navHrefBySpineHref.set(spineHref, navHref)
+    }
+  }
+  return navHrefBySpineHref
+}
+
+/**
+ * Display targets to try in order, deduplicated.
+ * A ToC href the spine misses is swapped for the spine's own spelling;
+ * a miss with no match stays, so its failure is still logged before the next fallback.
+ */
+export function getEPUBDisplayCandidates(
+  targets: (string | undefined)[],
+  { spine, hrefContext }: {
+    spine: Parameters<typeof isEPUBTargetInSpine>[0]
+    hrefContext: EPUBHrefContext
+  },
+): string[] {
+  const candidates = targets.flatMap((target) => {
+    if (!target) return []
+    if (target.startsWith('epubcfi(') || isEPUBTargetInSpine(spine, target)) return [target]
+    return [getEPUBSpineHref(target, hrefContext) ?? target]
+  })
+  return [...new Set(candidates)]
+}
+
 // WebKit refuses a canvas past roughly 16.7M pixels, and refuses it silently:
 // the backing store is dropped, page.render() still resolves, and the reader
 // paints nothing. A retina device at full zoom clears that ceiling on its own.

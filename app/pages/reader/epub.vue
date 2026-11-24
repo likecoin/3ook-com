@@ -392,6 +392,7 @@ import ePub, {
 } from '@likecoin/epub-ts'
 import type { ReaderLeftSidebarTab } from '~/components/ReaderLeftSidebar.props'
 import type { ReaderNavigationMethod } from '~~/shared/constants/analytics'
+import type { EPUBHrefContext } from '~/utils/reader'
 import { ANNOTATION_COLORS_MAP, ANNOTATION_TEXT_MAX_LENGTH } from '~~/shared/constants/annotations'
 import { SEARCH_MAX_RESULTS } from '~~/shared/constants/reader-search'
 
@@ -431,6 +432,7 @@ const bookSettingsStore = useBookSettingsStore()
 const {
   nftClassId,
   nftId,
+  fileIndex,
   isUploadedBook,
   isPreviewMode,
   backRoute,
@@ -666,7 +668,8 @@ const bookName = computed(() => {
   return loadedBook.value?.packaging?.metadata?.title || localEPUBFile.value?.name || ''
 })
 const isTTSExtracting = ref(false)
-const sectionHrefByFilename = ref<Record<string, string>>({})
+const epubHrefContext = shallowRef<EPUBHrefContext>({ spineHrefs: [] })
+let navHrefBySpineHref = new Map<string, string>()
 const navItems = ref<NavItem[]>([])
 const activeNavItemLabel = computed(() => {
   const item = navItems.value.find(item => item.href === activeNavItemHref.value)
@@ -1390,22 +1393,28 @@ async function displayRenditionAtCurrentLocation() {
   if (!hasDisplayedInitialLocation) return
 
   renderedThemeVersion = themeVersion
-  // A target the loaded spine no longer resolves drops the reader on page one,
-  // so step through the nearest known sections before that last resort.
-  // `currentPageHref` is epub.js's own spine href, so it resolves where the
-  // nav hrefs below may not.
-  const fallbackTargets = [
+  await displayRenditionWithFallback([
     target,
     currentPageHref.value,
     activeNavItemHref.value,
     findNextNavItemAfterTOC(navItems.value)?.href,
-  ]
-  const candidates = [...new Set(fallbackTargets.filter(Boolean))]
-  for (const [attempt, candidate] of candidates.entries()) {
-    if (await displayRendition(candidate, { isSilentError: true, attempt })) return
-  }
-  await displayRendition(undefined, { attempt: candidates.length })
+  ])
 }
+
+// A target the loaded spine no longer resolves drops the reader on page one,
+// so step through the nearest known sections before that last resort.
+async function displayRenditionWithFallback(targets: (string | undefined)[]) {
+  const candidates = getEPUBDisplayCandidates(targets, {
+    spine: rendition.value?.book?.spine,
+    hrefContext: epubHrefContext.value,
+  })
+  for (const [attempt, candidate] of candidates.entries()) {
+    if (await displayRendition(candidate, { isSilentError: true, attempt })) return true
+  }
+  return displayRendition(undefined, { attempt: candidates.length })
+}
+
+const EPUB_EVENT_TARGET_MAX_LENGTH = 200
 
 async function handleDisplayFailure(error: unknown, target: string | undefined, {
   isSilentError,
@@ -1424,6 +1433,14 @@ async function handleDisplayFailure(error: unknown, target: string | undefined, 
     is_silent_error: isSilentError,
     has_fallback_attempt: hasFallbackAttempt,
     has_target: !!target,
+    // A saved position is shared by every file variant of the book,
+    // so record which variant failed it; the CFI's leading steps name the spine position.
+    target: target?.slice(0, EPUB_EVENT_TARGET_MAX_LENGTH),
+    spine_length: rendition.value?.book?.spine?.length,
+    file_index: fileIndex.value,
+    is_preview: isPreviewMode.value,
+    is_custom_message_enabled: isCustomMessageEnabled.value,
+    is_loaded_from_cache: isLoadedFromCache.value,
     is_target_missing: isTargetMissing,
     // Rung of the caller's fallback ladder, so a retry that recovers stays
     // countable apart from the failure that started it.
@@ -1448,6 +1465,15 @@ async function displayRendition(target?: string, {
   }
   try {
     await displayInRendition(target)
+    // Only failures log otherwise, so this is what tells a recovered open from a stranded one.
+    if (attempt > 0) {
+      logReaderEvent('reader_epub_display_recovered', {
+        nft_class_id: nftClassId.value,
+        attempt,
+        has_target: !!target,
+        is_preview: isPreviewMode.value,
+      })
+    }
     return true
   }
   catch (error) {
@@ -1519,13 +1545,16 @@ async function loadEPub() {
     console.warn('Failed to get location cache:', error)
   }
 
+  const hrefs: string[] = []
   book.spine!.each((section: Section) => {
-    if (!section.href) return
-    const filename = getHrefBaseFilename(section.href)
-    if (!filename) return
-    sectionHrefByFilename.value[filename] = section.href
+    if (section.href) hrefs.push(section.href)
   })
   navItems.value = toc.filter((item): item is NavItem => item !== null)
+  epubHrefContext.value = {
+    spineHrefs: hrefs,
+    navPath: book.packaging?.navPath || book.packaging?.ncxPath,
+  }
+  navHrefBySpineHref = getEPUBNavHrefBySpineHref(navItems.value.map(item => item.href), epubHrefContext.value)
 
   activeNavItemHref.value = book.spine!.first()!.href
   currentPageHref.value = activeNavItemHref.value ?? ''
@@ -1830,7 +1859,7 @@ async function loadEPub() {
     isAtLastPage.value = !!location.atEnd
     const href = location.start.href
     currentPageHref.value = href
-    activeNavItemHref.value = resolveActiveNavItemHref(href)
+    activeNavItemHref.value = navHrefBySpineHref.get(href)
     if (isPreviewMode.value) {
       handlePreviewEndBoundary(href.endsWith(PREVIEW_END_PAGE_HREF_SUFFIX))
     }
@@ -1878,24 +1907,13 @@ async function loadEPub() {
   }
   isPageLoading.value = true
 
-  let hasDisplayed = false
-  if (currentCfi.value) {
-    hasDisplayed = await displayRendition(currentCfi.value, { isSilentError: true })
-  }
-  if (!hasDisplayed) {
-    const fallbackItem = findNextNavItemAfterTOC(navItems.value)
-    if (fallbackItem) {
-      // A preview keeps the full nav document, so this first chapter may have
-      // been truncated away — fall through to the spine below when it has.
-      hasDisplayed = await setActiveNavItem(fallbackItem, { isSilentError: true })
-    }
-  }
-  if (!hasDisplayed) {
-    hasDisplayed = await displayRendition()
-    if (!hasDisplayed) {
-      return
-    }
-  }
+  // A preview keeps the full nav document, so its first chapter may have been
+  // truncated away too; the ladder then ends on the spine's first section.
+  const hasDisplayed = await displayRenditionWithFallback([
+    currentCfi.value,
+    findNextNavItemAfterTOC(navItems.value)?.href,
+  ])
+  if (!hasDisplayed) return
   // The deferred destroy lets a display that started before unmount, or before
   // a retry swapped in a new rendition, still resolve — so a truthy
   // `hasDisplayed` can belong to a page that is already gone. Stop before
@@ -1964,27 +1982,6 @@ function isExternalLink(href: string): boolean {
 
 function getHrefBasePath(href: string): string {
   return href.split('#')[0] ?? href
-}
-
-function getHrefBaseFilename(href: string): string {
-  const path = getHrefBasePath(href)
-  return path.split('/').pop() ?? path
-}
-
-// TOC hrefs and spine hrefs often disagree (TOC may use anchors like
-// `ch5.xhtml#sec-1` while the spine lists `OEBPS/ch5.xhtml`), so strict
-// equality can't be relied on to locate the active chapter. Fall back to
-// filename matching, preferring the unanchored (chapter-start) entry.
-function resolveActiveNavItemHref(pageHref: string): string | undefined {
-  if (!pageHref) return undefined
-  if (navItems.value.some(item => item.href === pageHref)) return pageHref
-
-  const pageFilename = getHrefBaseFilename(pageHref)
-  const sectionItems = navItems.value.filter(item => getHrefBaseFilename(item.href) === pageFilename)
-  if (!sectionItems.length) return undefined
-
-  const unanchored = sectionItems.find(item => !item.href.includes('#'))
-  return (unanchored ?? sectionItems[0])?.href
 }
 
 function findNextNavItemAfterTOC(navItems: NavItem[]): NavItem | undefined {
@@ -2111,26 +2108,14 @@ async function extractTTSSegments(book: Book) {
   return { segments: mergeShortTTSSegments(segments), chapterTitles }
 }
 
-// Resolves to whether the nav item was actually displayed, so a caller that
-// has a fallback (the cold-open jump below) can take it instead of assuming
-// the jump landed.
-async function setActiveNavItem(item: NavItem, {
-  isSilentError = false,
-  hasFallbackAttempt = isSilentError,
-}: { isSilentError?: boolean, hasFallbackAttempt?: boolean } = {}) {
+async function setActiveNavItem(item: NavItem) {
   activeTTSElementIndex.value = undefined
   activeNavItemHref.value = item.href
   isPageLoading.value = true
   // Explicit TOC navigation isn't a footnote jump; drop any pending return.
   dismissFootnoteReturn()
 
-  // The nav item's href and the spine's can name one file by different paths.
-  const anchor = item.href.split('#')[1]
-  const filename = getHrefBaseFilename(item.href)
-  let spineHref = filename ? sectionHrefByFilename.value[filename] : undefined
-  if (spineHref && anchor) {
-    spineHref = `${spineHref}#${anchor}`
-  }
+  const spineHref = getEPUBSpineHref(item.href, epubHrefContext.value)
 
   // epub.js fails the whole display on a target the spine can't resolve, so
   // start from the spine's own href when the nav one misses: the jump then
@@ -2139,46 +2124,33 @@ async function setActiveNavItem(item: NavItem, {
   const primaryHref = isNavHrefInSpine || !spineHref ? item.href : spineHref
 
   // Skipped when the spine href already went first: retrying it would only
-  // repeat the same failure. Without it this rung is the only one, so a silent
-  // jump here can still end at the modal below.
+  // repeat the same failure.
   const hasSpineRetry = !!spineHref && spineHref !== primaryHref
-  let hasDisplayed = await displayRendition(primaryHref, {
+  if (await displayRendition(primaryHref, {
     isSilentError: true,
-    hasFallbackAttempt: hasFallbackAttempt || hasSpineRetry,
+    hasFallbackAttempt: hasSpineRetry,
     attempt: 0,
-  })
-  if (hasDisplayed) return true
+  })) return
 
-  if (hasSpineRetry) {
-    // Preview mode handles the failure below with its own CTA, so stay silent
-    // here to avoid stacking an error modal in front of it.
-    hasDisplayed = await displayRendition(spineHref, {
-      isSilentError: isSilentError || isPreviewMode.value,
-      // The truncated-chapter CTA is the designed outcome, not a break.
-      hasFallbackAttempt: hasFallbackAttempt || isPreviewMode.value,
-      attempt: 1,
-    })
-    if (hasDisplayed) {
-      return true
-    }
-  }
+  // Preview mode handles the failure below with its own CTA, so stay silent here
+  // to avoid stacking an error modal in front of it: that CTA is the designed outcome.
+  if (hasSpineRetry && await displayRendition(spineHref, {
+    isSilentError: isPreviewMode.value,
+    hasFallbackAttempt: isPreviewMode.value,
+    attempt: 1,
+  })) return
+
   // Nothing was rendered, so stop showing the page spinner before handing the
-  // failure to the CTA or the error modal. A silent caller owns the spinner
-  // itself — clearing it would blank the page until its fallback paints.
-  if (!isSilentError) {
-    isPageLoading.value = false
-  }
+  // failure to the CTA or the error modal.
+  isPageLoading.value = false
   // In preview mode the ToC still lists chapters beyond the truncation point
   // (the server keeps the nav doc intact), so a failed jump means the chapter
   // was cut — offer the purchase/subscribe CTA instead of an error.
-  if (isPreviewMode.value && !isSilentError) {
+  if (isPreviewMode.value) {
     await openPreviewEndModal('toc')
-    return false
+    return
   }
-  if (!isSilentError) {
-    await errorModal.open({ description: $t('reader_epub_rendition_display_failed') }).result
-  }
-  return false
+  await errorModal.open({ description: $t('reader_epub_rendition_display_failed') }).result
 }
 
 // Page-turn gestures pass their method to be counted; extending a selection passes none.
