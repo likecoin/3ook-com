@@ -13,6 +13,14 @@ export function formatLikerIdHandle(likerId: string): string {
   return `@${normalizeLikerId(likerId)}`
 }
 
+// Our own channel in `from`, as opposed to an affiliate handle.
+// Checkout pays no commission on it and keeps the Plus discount (api-public's checkIsFromLikerLand).
+export const DEFAULT_FROM_CHANNEL = 'liker_land'
+
+export function checkIsFromLikerLand(from?: string): boolean {
+  return from === DEFAULT_FROM_CHANNEL
+}
+
 // Liker ID of an `@`-prefixed handle; undefined otherwise (e.g. bare channel strings)
 export function parseLikerIdHandle(handle?: string): string | undefined {
   return handle?.startsWith('@') ? normalizeLikerId(handle) : undefined

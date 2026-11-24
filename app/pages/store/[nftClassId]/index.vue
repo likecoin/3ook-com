@@ -829,7 +829,7 @@ const plusReadingTrialPrice = computed(() => {
   if (getRouteQuery('trial')) return null
   // /member may drop the trial for a referring affiliate, so wait for its config.
   const affiliateConfig = linkAffiliateConfig.value
-  if (from.value && !affiliateConfig) return null
+  if (isAffiliateFrom.value && !affiliateConfig) return null
   const { trialPeriodDays } = getPlusTrialPeriod({
     isExpiredLikerPlus: isExpiredLikerPlus.value,
     isAffiliateGiftOnTrialDisabled: (
@@ -979,12 +979,14 @@ const bookCoverSrc = computed(() => getResizedImageURL(bookInfo.coverSrc.value, 
 const selectedPricingItemIndex = ref(Number(getRouteQuery('price_index') || 0))
 
 const from = computed(() => getRouteQuery('from') || undefined)
+// Our own `from=liker_land` is no affiliate: checkout keeps the Plus discount on it.
+const isAffiliateFrom = computed(() => !!from.value && !checkIsFromLikerLand(from.value))
 
 // When the link affiliate (`?from=@likerId`) has opted in, Plus members keep
 // their 20% discount and the affiliate absorbs the cost from their channel share.
 const { config: linkAffiliateConfig } = useAffiliateConfig(from)
 const isAffiliatePlusDiscountAllowed = computed(
-  () => !from.value || !!linkAffiliateConfig.value?.isPlusDiscountAllowed,
+  () => !isAffiliateFrom.value || !!linkAffiliateConfig.value?.isPlusDiscountAllowed,
 )
 const willPlusDiscountApply = computed(
   () => isLikerPlus.value && isAffiliatePlusDiscountAllowed.value,
