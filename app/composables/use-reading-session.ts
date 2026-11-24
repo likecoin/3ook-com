@@ -211,7 +211,6 @@ export function useReadingSession(options: ReadingSessionOptions) {
       start_progress: payload.startProgress,
       end_progress: payload.endProgress,
       is_liker_plus_at_event_time: !!sessionUser.value?.isLikerPlus,
-      // Mirrors isPaidPlus in server/utils/api-user.ts — the rev-share eligible population.
       is_paid_plus_at_event_time: !!sessionUser.value?.isLikerPlus && !sessionUser.value?.isLikerPlusTrial,
       is_library_book: !!isLibraryBook?.value,
       is_preview: !!isPreview?.value,

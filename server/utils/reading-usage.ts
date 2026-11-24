@@ -20,7 +20,6 @@ interface RecordPacedReadingUsageInput {
   nftClassId: string
   sessionId: string
   isLikerPlus: boolean
-  isPaidPlus: boolean
   isBorrowed: boolean
   // 試閱 sessions read the server-truncated file. isBorrowed is never true for
   // a preview (so it can't fund rev-share), but ES needs the flag to segment
@@ -58,7 +57,6 @@ export async function recordPacedReadingUsage(input: RecordPacedReadingUsageInpu
     nftClassId,
     sessionId,
     isLikerPlus,
-    isPaidPlus,
     isBorrowed,
     isPreview,
     paced,
@@ -99,10 +97,9 @@ export async function recordPacedReadingUsage(input: RecordPacedReadingUsageInpu
   }
 
   // No-ops internally only when every paced delta is zero; otherwise forwards
-  // rev-share-eligible and non-library engagement separately. Awaited so it
-  // settles before the serverless handler returns.
+  // library and non-library engagement separately.
+  // Awaited so it settles before the serverless handler returns.
   await forwardReadingUsage({
-    isPaidPlus,
     isBorrowed,
     readerWallet: wallet,
     classId: nftClassId,
