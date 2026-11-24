@@ -403,7 +403,9 @@ const isPlusDiscountHidden = computed(() => {
   if (!isStorefront.value) return undefined
   if (checkIsFromLikerLand(getRouteQuery('from'))) return false
   const likerId = storefrontReferrerLikerId.value
-  if (!likerId) return true
+  // An owner_wallet listing names no referrer and its book links carry none, so checkout keeps
+  // the discount; a `from` that is no handle still withholds it.
+  if (!likerId) return !!getRouteQuery('from')
   return !getAffiliateStoreConfigByLikerIdFromCache(queryCache, likerId)?.isPlusDiscountAllowed
 })
 if (import.meta.client) {
