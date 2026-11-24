@@ -67,8 +67,6 @@
 </template>
 
 <script setup lang="ts">
-import coverSrc from '@/assets/images/gift-plus-cover.webp'
-
 const props = defineProps<{
   period: SubscriptionPlan
   quantity: number
@@ -79,6 +77,7 @@ const { t: $t } = useI18n()
 const localeRoute = useLocaleRoute()
 const { getGiftPrice, yearlyDiscountPercent } = useSubscriptionPricing()
 const { formatConvertedPrice } = useCurrency()
+const { coverSrc } = useGiftPlusArtwork()
 
 const isYearly = computed(() => props.period === 'yearly')
 const periodLabel = computed(() => (isYearly.value
