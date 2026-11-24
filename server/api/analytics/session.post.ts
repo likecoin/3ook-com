@@ -3,7 +3,7 @@ import { ReadingSessionSchema } from '~~/server/schemas/analytics'
 const COMPLETION_THRESHOLD = 95
 
 export default defineEventHandler(async (event) => {
-  const { wallet, isLikerPlus, isPaidPlus } = await requireUserWalletWithStatus(event)
+  const { wallet, isLikerPlus } = await requireUserWalletWithStatus(event)
   const body = await readValidatedBody(event, createValidator(ReadingSessionSchema))
 
   const {
@@ -50,7 +50,6 @@ export default defineEventHandler(async (event) => {
         nftClassId,
         sessionId,
         isLikerPlus,
-        isPaidPlus,
         isBorrowed,
         isPreview,
         paced,

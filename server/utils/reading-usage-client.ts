@@ -2,7 +2,6 @@ import { randomUUID } from 'node:crypto'
 import { API_MAX_RETRIES } from '~~/shared/utils/fetch-retry'
 
 interface ReadingUsageInput {
-  isPaidPlus: boolean
   isBorrowed: boolean
   readerWallet: string
   classId: string
@@ -17,11 +16,12 @@ interface ReadingUsageInput {
  * Forwards paced reading/TTS usage to the likecoin-api reading-usage ledger.
  * The shared service secret (not the user JWT) is what proves the usage passed through
  * this backend's wall-clock pacing — the anti-fraud boundary the payout pipeline trusts.
- * Splits each delta into the rev-share-eligible slice (paid Plus + borrowed) that funds
- * the payout pool and the non-library remainder (owned/non-Plus reads) that the API
- * records for publisher engagement stats only. Best-effort: errors are logged, never
- * thrown, so it never blocks reading-session bookkeeping; still awaited so it settles
- * before the serverless handler returns.
+ * Borrowed reads go as library time, the rest as non-library engagement for publisher stats.
+ * isBorrowed is only ever true for a current Plus reader (see incrementBookReadingTime);
+ * whether that Plus is funded (paid vs trial, VIP, 100% coupon) is left to the API,
+ * which demotes unfunded library time to non-library against the reader's Plus record.
+ * Best-effort: errors are logged, never thrown, so it never blocks session bookkeeping;
+ * still awaited so it settles before the serverless handler returns.
  *
  * Each call carries a unique `id` so the API can dedup retries: the ledger increments are
  * non-idempotent, but ofetch resends the same body (same id) on a transient `<no response>`,
@@ -29,16 +29,8 @@ interface ReadingUsageInput {
  * stay paired with the API-side dedup (deploy the API before this).
  */
 export async function forwardReadingUsage(input: ReadingUsageInput): Promise<void> {
-  const { readerWallet, classId, ipCountry } = input
-  // Rev-share funds only borrowed (Plus-library) reads by paid (non-trial) Plus; the
-  // rest is non-library engagement, reported to publishers but never funding the pool.
-  const isRevShareEligible = input.isPaidPlus && input.isBorrowed
-  const readingTimeMs = isRevShareEligible ? input.readingTimeMs : 0
-  const ttsTimeMs = isRevShareEligible ? input.ttsTimeMs : 0
-  const nonLibraryReadingTimeMs = isRevShareEligible ? 0 : input.readingTimeMs
-  const nonLibraryTtsTimeMs = isRevShareEligible ? 0 : input.ttsTimeMs
-  if (readingTimeMs <= 0 && ttsTimeMs <= 0
-    && nonLibraryReadingTimeMs <= 0 && nonLibraryTtsTimeMs <= 0) return
+  const { isBorrowed, readerWallet, classId, readingTimeMs, ttsTimeMs, ipCountry } = input
+  if (readingTimeMs <= 0 && ttsTimeMs <= 0) return
 
   const config = useRuntimeConfig()
   const token = config.plusReadingServiceToken
@@ -53,10 +45,10 @@ export async function forwardReadingUsage(input: ReadingUsageInput): Promise<voi
         id: randomUUID(),
         readerWallet,
         classId,
-        readingTimeMs,
-        ttsTimeMs,
-        nonLibraryReadingTimeMs,
-        nonLibraryTtsTimeMs,
+        readingTimeMs: isBorrowed ? readingTimeMs : 0,
+        ttsTimeMs: isBorrowed ? ttsTimeMs : 0,
+        nonLibraryReadingTimeMs: isBorrowed ? 0 : readingTimeMs,
+        nonLibraryTtsTimeMs: isBorrowed ? 0 : ttsTimeMs,
         ipCountry,
       },
       // Opt this POST into retry (the wrapper leaves payload methods at 0 by default);

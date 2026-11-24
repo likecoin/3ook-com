@@ -27,17 +27,9 @@ export async function requireUserSessionWithWallet(event: H3Event): Promise<{
 export async function requireUserWalletWithStatus(event: H3Event): Promise<{
   wallet: string
   isLikerPlus: boolean
-  // Paid (non-trial) Plus. Reading-library revenue share excludes trial usage, so
-  // forwards to the API gate on this, not on isLikerPlus (which includes trial).
-  isPaidPlus: boolean
 }> {
   const { session, wallet } = await requireUserSessionWithWallet(event)
-  const isLikerPlus = !!session.user.isLikerPlus
-  return {
-    wallet,
-    isLikerPlus,
-    isPaidPlus: isLikerPlus && !session.user.isLikerPlusTrial,
-  }
+  return { wallet, isLikerPlus: !!session.user.isLikerPlus }
 }
 
 export async function requireUserWallet(event: H3Event): Promise<string> {
