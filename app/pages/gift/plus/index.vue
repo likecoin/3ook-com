@@ -1,7 +1,10 @@
 <template>
   <main class="flex flex-col min-h-screen">
     <!-- Header Section -->
-    <div class="bg-theme-black">
+    <div
+      :class="['bg-theme-black', { 'hero-backdrop': heroBackdropSrc }]"
+      :style="heroBackdropSrc ? { '--backdrop-image': `url(${heroBackdropSrc})` } : undefined"
+    >
       <div class="px-4 py-2">
         <UButton
           class="group"
@@ -187,6 +190,7 @@ const { loggedIn: hasLoggedIn, user } = useUserSession()
 const accountStore = useAccountStore()
 const { getCheckoutCurrency } = usePaymentCurrency()
 const { getAnalyticsParameters } = useAnalytics()
+const { heroBackdropSrc } = useGiftPlusArtwork()
 
 definePageMeta({ colorMode: 'light' })
 
@@ -316,3 +320,19 @@ onMounted(async () => {
   }
 })
 </script>
+
+<style scoped>
+/* The top fade keeps the back button readable over the book wall. */
+.hero-backdrop {
+  background-image:
+    linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--color-theme-black) 90%, transparent) 0,
+      color-mix(in oklab, var(--color-theme-black) 70%, transparent) 56px,
+      transparent 120px
+    ),
+    var(--backdrop-image);
+  background-position: center;
+  background-size: cover;
+}
+</style>

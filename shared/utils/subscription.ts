@@ -12,6 +12,14 @@ export const GIFT_PLUS_OPTIONS: readonly { period: SubscriptionPlan, quantity: n
   { period: 'yearly', quantity: 2 },
 ]
 
+// The 《Q版特工》 gift artwork runs through 2026-12-31 Hong Kong time,
+// then the cards and /gift/plus fall back to the default artwork.
+const GIFT_PLUS_Q_AGENT_PROMO_END_AT = Date.parse('2027-01-01T00:00:00+08:00')
+
+export function isGiftPlusQAgentPromoActive(now: number = Date.now()): boolean {
+  return now < GIFT_PLUS_Q_AGENT_PROMO_END_AT
+}
+
 export function findGiftPlusOption(period: unknown, quantity: unknown) {
   const count = clampGiftQuantity(quantity)
   return GIFT_PLUS_OPTIONS.find(option => option.period === period && option.quantity === count)
