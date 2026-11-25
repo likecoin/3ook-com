@@ -9,10 +9,11 @@ import { getIsRetryableHTTPError } from '../../shared/utils/http-status'
 import { generateTTSCacheKey, getTTSCacheBucket } from '../../server/utils/storage'
 import {
   createTTSPronunciationSigGetter,
-  getMinimaxModel,
-  getMinimaxVoiceId,
+  getTTSModel,
+  getProviderVoiceId,
   getVoiceDisplayName,
   isCachedTTSPronunciationStale,
+  isElevenLabsVoiceId,
   LANG_MAPPING,
   MinimaxTTSProvider,
   TTS_PRONUNCIATION_VERSION,
@@ -184,9 +185,12 @@ export async function main(argv: string[]) {
   if (!LANGUAGES.includes(language)) {
     throw new Error(`Invalid --language "${language}", expected ${LANGUAGES.join(' | ')}`)
   }
-  const minimaxVoiceId = getMinimaxVoiceId(voiceId)
+  const minimaxVoiceId = getProviderVoiceId(voiceId)
   if (!minimaxVoiceId) {
     throw new Error(`Unknown --voice "${voiceId}"`)
+  }
+  if (isElevenLabsVoiceId(voiceId)) {
+    throw new Error(`--voice "${voiceId}" is an ElevenLabs voice; this exporter only supports Minimax`)
   }
   if (values['write-cache'] && !values.execute) {
     throw new Error('--write-cache requires --execute')
@@ -194,7 +198,7 @@ export async function main(argv: string[]) {
   const limit = parsePositiveInt(values.limit, '--limit')
   const concurrency = parsePositiveInt(values.concurrency, '--concurrency') ?? 4
 
-  const model = getMinimaxModel({ voiceId, language })
+  const model = getTTSModel({ voiceId, language })
   const sourceName = getSourceName(values.epub)
   const outDir = resolve(values.out || join('tts-export-out', sourceName))
   await mkdir(outDir, { recursive: true })
