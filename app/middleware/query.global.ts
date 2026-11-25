@@ -1,25 +1,8 @@
 import type { LocationQueryRaw, RouteLocationNormalized } from 'vue-router'
 
+import { CARRY_ON_QUERY_KEYS } from '~~/shared/constants/carry-on-query'
 import { STORE_PUBLISHER_ROOT_ROUTE_NAME } from '~~/shared/constants/store-routes'
 import { formatLikerIdHandle } from '~~/shared/utils/liker-id'
-
-const CARRY_ON_QUERY_KEYS = [
-  // Sorted by alphabetical order
-  'app',
-  'fbclid',
-  'from',
-  'gad_source',
-  'gclid',
-  'll_medium',
-  'll_source',
-  'maintenance',
-  'srsltid',
-  'utm_campaign',
-  'utm_content',
-  'utm_medium',
-  'utm_source',
-  'utm_term',
-]
 
 const LINK_TAG_QUERY_KEYS = ['ll_medium', 'll_source'] as const
 
