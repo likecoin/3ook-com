@@ -39,6 +39,7 @@
 </template>
 
 <script setup lang="ts">
+import { CARRY_ON_QUERY_KEYS } from '~~/shared/constants/carry-on-query'
 import { SNAP_BACK_DURATION } from '~~/shared/constants/pull-to-refresh'
 
 defineProps({
@@ -54,6 +55,7 @@ defineProps({
 
 const { isApp, isAndroid } = useAppDetection()
 
+const route = useRoute()
 const localeRoute = useLocaleRoute()
 const getRouteBaseNameString = useRouteBaseNameString()
 
@@ -83,7 +85,14 @@ function handleSearchShortcut(event: KeyboardEvent) {
   // Otherwise the listing restores its saved query on mount,
   // which swaps the header to search results and unmounts the box.
   listingPageStates[name].clear()
-  navigateTo(localeRoute({ name, query: { search: '1' } }))
+  const searchRoute = localeRoute({ name, query: { search: '1' } })
+  // Once open, the box drops `search`, which lands back on this very page when the URL holds only carried keys;
+  // a push would then leave a duplicate entry for the back button.
+  const isLandingOnCurrentPage = (
+    searchRoute?.path === route.path
+    && Object.keys(route.query).every(key => CARRY_ON_QUERY_KEYS.includes(key))
+  )
+  navigateTo(searchRoute, { replace: isLandingOnCurrentPage })
 }
 
 useKeyboardShortcuts({
