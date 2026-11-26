@@ -11,14 +11,14 @@
     "iconUrl": "https://3ook.com/maskable-icon-1024x1024.png",
     "splashImageUrl": "https://3ook.com/maskable-icon-200x200.png",
     "splashBackgroundColor": "#131313",
-    "subtitle": "Read, Listen, Own",
-    "description": "3ook.com — Read, Listen, Own. The 3rd-gen bookstore ecosystem where authors and readers co-create a decentralized home for books and periodicals. By merging AI-enhanced experiences with Web3 ownership, we safeguard the freedom to read and the integrity of our shared history.",
+    "subtitle": "Read, Listen, Borrow",
+    "description": "3ook.com — Read, Listen, Borrow. The ebook platform where authors and readers co-create a home for books.",
     "primaryCategory": "shopping",
     "tags": ["books", "reading", "audiobooks", "bookstore"],
     "heroImageUrl": "https://3ook.com/images/og/default.jpg",
-    "tagline": "Read, Listen, Own",
+    "tagline": "Read, Listen, Borrow",
     "ogTitle": "3ook.com",
-    "ogDescription": "3ook.com — Read, Listen, Own. The 3rd-gen bookstore ecosystem where authors and readers co-create a decentralized home for books and periodicals.",
+    "ogDescription": "3ook.com — Read, Listen, Borrow. Chinese ebooks with Cantonese and Mandarin narration.",
     "ogImageUrl": "https://3ook.com/images/og/default.jpg"
   }
 }
