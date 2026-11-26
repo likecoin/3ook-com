@@ -57,22 +57,9 @@ const props = withDefaults(defineProps<{
   feed: undefined,
 })
 
-const queryCache = useQueryCache()
-const isAdultContentEnabled = useAdultContentSetting()
-const { getIsRegionRestricted } = useBookRegionGate()
+const { getIsBookVisible } = useBookVisibility()
 
-// The feed's candidate pools carry no `isHidden` flag, so live bookstore info is
-// the only place hidden books can be dropped. Unresolved info keeps the book —
-// a slow or failed metadata fetch must not blank the grid.
-const visibleNFTClassIds = computed(() => props.nftClassIds.filter((nftClassId) => {
-  const bookstoreInfo = getBookstoreInfoByNFTClassIdFromCache(queryCache, nftClassId)
-  // null is a resolved "no listing"; undefined is merely unresolved.
-  if (bookstoreInfo === null) return false
-  if (bookstoreInfo?.isHidden) return false
-  if (!isAdultContentEnabled.value && bookstoreInfo?.isAdultOnly) return false
-  if (getIsRegionRestricted(bookstoreInfo?.restrictedTerritories)) return false
-  return true
-}))
+const visibleNFTClassIds = computed(() => props.nftClassIds.filter(getIsBookVisible))
 
 const { gridClasses, getGridItemClassesByIndex, getVisibleCount, hasRowTrimming } = usePaginatedGrid({
   itemsCount: computed(() => visibleNFTClassIds.value.length),
