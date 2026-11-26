@@ -70,6 +70,7 @@ const emit = defineEmits<{
 
 const { t: $t } = useI18n()
 const { setTTSLanguageVoice } = useTTSVoice()
+const { dismissTTSVoicePrompt } = useTTSVoicePrompt()
 const { samples: ttsSamples } = useTTSSamplesPlayer()
 
 function handleRemindMeLater() {
@@ -84,6 +85,8 @@ function handleVoiceClick(sample: { id: string, languageVoice: string }) {
   const { id: sampleId, languageVoice } = sample
 
   setTTSLanguageVoice(languageVoice)
+  // The choice is already made here, so the player skips its first-time voice prompt.
+  dismissTTSVoicePrompt()
   useLogEvent('tts_try_voice_selected', {
     nft_class_id: props.nftClassId,
     sample: sampleId,
