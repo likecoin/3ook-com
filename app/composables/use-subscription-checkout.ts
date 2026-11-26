@@ -35,13 +35,6 @@ export function useSubscriptionCheckout() {
   const { isIAPSupported, purchase: purchaseViaIAP } = useNativeIAP()
   const { isCivicOfferable } = usePlusEligibility()
   const runtimeConfig = useRuntimeConfig()
-  // Defer exposure to the checkout decision point (post-login) instead of mount,
-  // so only treatment-eligible users are counted and we avoid re-bucketing across
-  // the login boundary (the cause of the earlier sample-ratio mismatch).
-  const embeddedCheckoutABTest = useABTest({
-    experimentKey: 'plus-embedded-checkout',
-    manualExposure: true,
-  })
 
   const isProcessingSubscription = ref(false)
 
@@ -347,17 +340,13 @@ export function useSubscriptionCheckout() {
         }))
       }
       else {
-        // Only web Stripe users can receive the treatment — app users always get
-        // the hosted flow, so capture exposure here (not on mount) to keep the
-        // experiment population clean.
-        const isEmbeddedCheckoutEligible = (
+        // Embedded won the plus-embedded-checkout experiment on the web;
+        // the app WebView keeps the hosted flow.
+        const isEmbeddedCheckoutEnabled = (
           !isApp.value
           && !!runtimeConfig.public.stripePublishableKey
         )
-        const embeddedVariant = isEmbeddedCheckoutEligible
-          ? embeddedCheckoutABTest.captureExposure()
-          : null
-        const uiMode: CheckoutUIMode = embeddedVariant === 'test' ? 'embedded' : 'hosted'
+        const uiMode: CheckoutUIMode = isEmbeddedCheckoutEnabled ? 'embedded' : 'hosted'
         const checkoutPayload = {
           period: plan,
           tier,
