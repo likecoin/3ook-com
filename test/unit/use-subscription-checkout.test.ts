@@ -6,7 +6,6 @@ import { useSubscriptionCheckout } from '~/composables/use-subscription-checkout
 
 const {
   mockAnalyticsParams,
-  mockEmbeddedVariant,
   mockFetchCheckoutLink,
   mockHasLoggedIn,
   mockIsApp,
@@ -20,7 +19,6 @@ const {
   mockSetSession,
 } = vi.hoisted(() => ({
   mockAnalyticsParams: { value: {} as Record<string, string | undefined> },
-  mockEmbeddedVariant: { value: null as string | null },
   mockFetchCheckoutLink: vi.fn(async (_payload: FetchLikerPlusCheckoutLinkPayload): Promise<{
     url?: string
     clientSecret?: string
@@ -81,7 +79,6 @@ mockNuxtImport('useNativeIAP', () => () => ({
   purchase: mockPurchase,
 }))
 mockNuxtImport('usePlusEligibility', () => () => ({ isCivicOfferable: { value: true } }))
-mockNuxtImport('useABTest', () => () => ({ captureExposure: () => mockEmbeddedVariant.value }))
 mockNuxtImport('useErrorHandler', () => () => ({ handleError: vi.fn() }))
 mockNuxtImport('useLogEvent', () => mockLogEvent)
 mockNuxtImport('requestNativeStoreReview', () => () => {})
@@ -108,7 +105,6 @@ beforeEach(() => {
   mockNavigateTo.mockReset()
   mockIsApp.value = true
   mockIsIAPSupported.value = true
-  mockEmbeddedVariant.value = null
   mockPurchase.mockClear()
   mockSetSession.mockClear()
   mockFetchCheckoutLink.mockReset().mockResolvedValue({
@@ -190,7 +186,6 @@ describe('useSubscriptionCheckout embedded checkout replay payload', () => {
     publicConfig.stripePublishableKey = 'pk_test'
     mockIsApp.value = false
     mockIsIAPSupported.value = false
-    mockEmbeddedVariant.value = 'test'
   })
 
   // The config object is shared with the rest of the file, so put it back.
@@ -240,8 +235,8 @@ describe('useSubscriptionCheckout embedded checkout replay payload', () => {
     })
   })
 
-  it('keeps the hosted variant off the replay store', async () => {
-    mockEmbeddedVariant.value = 'control'
+  it('falls back to hosted without a publishable key', async () => {
+    useRuntimeConfig().public.stripePublishableKey = ''
     // A clientSecret alongside the url keeps uiMode the only thing that can send
     // this to the store.
     mockFetchCheckoutLink.mockResolvedValue({
