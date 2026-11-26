@@ -626,7 +626,7 @@ export default defineNuxtConfig({
     manifest: {
       name: '3ook.com',
       short_name: '3ook.com',
-      description: 'Read, Listen, Own — 3rd-gen decentralized bookstore',
+      description: 'Read, Listen, Own — 3rd-gen bookstore',
       theme_color: '#131313',
       background_color: '#f9f9f9',
       orientation: 'portrait',
