@@ -24,11 +24,11 @@ export function useBookSocialShare(options: BookSocialShareOptions) {
 
   const config = useRuntimeConfig()
   const { t: $t } = useI18n()
-  const { user } = useUserSession()
+  const { publicLikerId } = usePublicLikerId()
 
   function getShortLink(utmSource: string) {
     // The logged-in sharer takes the affiliate credit over the original `?from=@likerId`
-    const likerId = user.value?.likerId || parseLikerIdHandle(from.value)
+    const likerId = publicLikerId.value || parseLikerIdHandle(from.value)
     const slug = formatShortLinkSlug({
       nftClassId: nftClassId.value,
       priceIndex: priceIndex.value,
