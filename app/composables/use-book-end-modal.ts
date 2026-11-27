@@ -17,8 +17,12 @@ export function useBookEndModal(params: {
 
   const bookInfo = useBookInfo({ nftClassId: params.nftClassId })
 
+  const localeRoute = useLocaleRoute()
+  const { isApp } = useAppDetection()
   const overlay = useOverlay()
   const modal = overlay.create(BookEndModal)
+  // Book cards navigate by link, which would otherwise leave this app-root overlay open.
+  useCloseOverlayOnNavigate(() => modal.close())
   // Once per read: re-reading the last pages must not re-prompt.
   let hasShown = false
   // Arm only once the reader has been somewhere before the end, so restoring
@@ -36,13 +40,24 @@ export function useBookEndModal(params: {
       is_borrowed: isBorrowed,
     })
 
-    const result = await modal.open({ isBorrowed }).result as BookEndModalResult | undefined
+    const result = await modal.open({ nftClassId, isBorrowed }).result as BookEndModalResult | undefined
 
     if (result === 'collect') {
       useLogEvent('reader_book_end_collect_click', { nft_class_id: nftClassId })
       await navigateTo(bookInfo.getProductPageRoute({
         llMedium: 'book-end',
         llSource: 'reader',
+      }))
+    }
+    else if (result === 'explore') {
+      useLogEvent('reader_book_end_explore_click', {
+        nft_class_id: nftClassId,
+        is_borrowed: isBorrowed,
+      })
+      await navigateTo(localeRoute({
+        // The app hides the store.
+        name: isBorrowed || isApp.value ? 'library' : 'store',
+        query: { ll_medium: 'book-end', ll_source: 'reader' },
       }))
     }
   }

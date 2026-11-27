@@ -2,25 +2,30 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 import { useBookEndModal } from '~/composables/use-book-end-modal'
 
-const { mockModalOpen, mockLogEvent } = vi.hoisted(() => ({
+const { mockModalOpen, mockLogEvent, mockNavigateTo } = vi.hoisted(() => ({
   mockModalOpen: vi.fn(),
   mockLogEvent: vi.fn(),
+  mockNavigateTo: vi.fn(),
 }))
 
 mockNuxtImport('useOverlay', () => () => ({
-  create: () => ({ open: mockModalOpen }),
+  create: () => ({ open: mockModalOpen, close: vi.fn() }),
 }))
 
 mockNuxtImport('useLogEvent', () => mockLogEvent)
+
+mockNuxtImport('navigateTo', () => mockNavigateTo)
+
+mockNuxtImport('useLocaleRoute', () => () => (route: unknown) => route)
 
 mockNuxtImport('useBookInfo', () => () => ({
   getProductPageRoute: () => ({}),
 }))
 
-function setup() {
+function setup({ isLibraryBook = false } = {}) {
   return useBookEndModal({
     nftClassId: '0xabc',
-    isLibraryBook: ref(false),
+    isLibraryBook: ref(isLibraryBook),
     isEnabled: true,
   }).handleBookEndBoundary
 }
@@ -29,6 +34,7 @@ beforeEach(() => {
   mockModalOpen.mockReset()
   mockModalOpen.mockReturnValue({ result: Promise.resolve(undefined) })
   mockLogEvent.mockClear()
+  mockNavigateTo.mockClear()
 })
 
 describe('useBookEndModal', () => {
@@ -73,5 +79,15 @@ describe('useBookEndModal', () => {
     handleBookEndBoundary(false)
     handleBookEndBoundary(true)
     expect(mockModalOpen).not.toHaveBeenCalled()
+  })
+
+  it('sends a borrowed reader who explores to the library', async () => {
+    mockModalOpen.mockReturnValue({ result: Promise.resolve('explore') })
+    const handleBookEndBoundary = setup({ isLibraryBook: true })
+    handleBookEndBoundary(false)
+    handleBookEndBoundary(true)
+    await vi.waitFor(() => expect(mockNavigateTo).toHaveBeenCalledOnce())
+    expect(mockModalOpen).toHaveBeenCalledWith({ nftClassId: '0xabc', isBorrowed: true })
+    expect(mockNavigateTo).toHaveBeenCalledWith(expect.objectContaining({ name: 'library' }))
   })
 })

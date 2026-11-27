@@ -1,7 +1,8 @@
-export type BookEndModalResult = 'collect' | 'dismiss'
+export type BookEndModalResult = 'collect' | 'explore' | 'dismiss'
 
 export interface BookEndModalProps {
-  // A borrowed Plus-library read gets the purchase upsell;
+  nftClassId: string
+  // A borrowed library read gets the purchase card;
   // an owned one only gets told where the book went.
   isBorrowed?: boolean
 }
