@@ -19,6 +19,7 @@ mockNuxtImport('fetchLikerPublicInfoByWalletAddress', () => mockFetchByWallet)
 
 const responseData = {
   user: 'alice',
+  handle: 'alicewong',
   displayName: 'Alice',
   avatar: 'https://example.com/alice.png',
   cosmosWallet: 'cosmos1alice',
@@ -29,6 +30,7 @@ const responseData = {
 
 const normalizedInfo = {
   likerId: 'alice',
+  handle: 'alicewong',
   displayName: 'Alice',
   avatarSrc: 'https://example.com/alice.png',
   cosmosWallet: 'cosmos1alice',
