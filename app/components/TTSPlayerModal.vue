@@ -333,7 +333,7 @@ const { fetchConfig: fetchPlusAffiliateConfig, voicesForBook } = usePlusAffiliat
 
 const {
   ownerWallet: bookOwnerWallet,
-  ownerLikerId: bookOwnerLikerId,
+  ownerPublicLikerId: bookOwnerPublicLikerId,
   upsellVoices: bookOwnerUpsellVoices,
 } = useBookOwnerAffiliate(() => props.nftClassId)
 
@@ -948,7 +948,7 @@ const selectedTTSLanguageVoice = computed({
   get: () => ttsLanguageVoice.value,
   set: (val: string) => {
     if (val && affiliateUpsellVoiceValues.value.has(val)) {
-      const likerId = bookOwnerLikerId.value
+      const likerId = bookOwnerPublicLikerId.value
       if (likerId) {
         navigateTo(localeRoute({
           name: 'member',

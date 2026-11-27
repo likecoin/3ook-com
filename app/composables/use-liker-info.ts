@@ -4,7 +4,9 @@ import { useQuery, useQueryCache } from '@pinia/colada'
 export const LIKER_INFO_QUERY_KEY = 'liker-info'
 
 export interface LikerInfo {
+  // Internal id, stable across renames; links meant for people use `handle || likerId`.
   likerId?: string
+  handle?: string
   displayName?: string
   avatarSrc?: string
   cosmosWallet?: string
@@ -24,6 +26,7 @@ interface LikerInfoQueryOptions {
 export function normalizeLikerInfoFromResponseData(data?: LikerInfoResponseData): LikerInfo {
   return {
     likerId: data?.user,
+    handle: data?.handle,
     displayName: data?.displayName,
     avatarSrc: data?.avatar,
     cosmosWallet: data?.cosmosWallet,

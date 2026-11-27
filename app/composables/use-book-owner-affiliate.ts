@@ -20,7 +20,8 @@ export function useBookOwnerAffiliate(
   // fetchConfig below drives the fetch (it chains the /affiliate call off the
   // resolved liker id), so this observer only mirrors the cache.
   const ownerInfoQuery = useLikerInfoByWalletAddressQuery(ownerWallet, { enabled: false })
-  const ownerLikerId = computed(() => ownerInfoQuery.data.value?.likerId)
+  const ownerPublicLikerId = computed(() =>
+    ownerInfoQuery.data.value?.handle || ownerInfoQuery.data.value?.likerId)
 
   async function fetchConfig() {
     if (user.value?.isLikerPlus) {
@@ -59,7 +60,7 @@ export function useBookOwnerAffiliate(
   return {
     config: loadedConfig,
     ownerWallet,
-    ownerLikerId,
+    ownerPublicLikerId,
     upsellVoices,
     fetchConfig,
   }
